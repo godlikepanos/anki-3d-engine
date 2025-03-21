@@ -53,6 +53,7 @@ void SetAllFields(TestAllTypes* m) {
   m->set_optional_foreign_enum(
       UNITTEST::FOREIGN_BAZ);
   m->mutable_optional_lazy_message()->set_bb(45);
+  m->mutable_optional_unverified_lazy_message()->set_bb(46);
   m->add_repeated_int32(100);
   m->add_repeated_string("asdf");
   m->add_repeated_bytes("jkl;");
@@ -81,6 +82,8 @@ void ExpectAllFieldsSet(const TestAllTypes& m) {
             m.optional_foreign_enum());
   EXPECT_EQ(true, m.has_optional_lazy_message());
   EXPECT_EQ(45, m.optional_lazy_message().bb());
+  EXPECT_EQ(true, m.has_optional_unverified_lazy_message());
+  EXPECT_EQ(46, m.optional_unverified_lazy_message().bb());
 
   EXPECT_EQ(1, m.repeated_int32_size());
   EXPECT_EQ(100, m.repeated_int32(0));
@@ -128,6 +131,17 @@ TEST(LITE_TEST_NAME, Swap) {
   EXPECT_EQ("3456", msg1.optional_string());
   EXPECT_EQ("123", msg2.optional_string());
   EXPECT_EQ(msg1.ByteSize(), msg2.ByteSize() + 1);
+}
+
+TEST(LITE_TEST_NAME, OneofHazzers) {
+  TestAllTypes msg;
+  msg.set_oneof_uint32(1);
+  msg.set_oneof_string("test");
+
+  EXPECT_EQ(true, msg.has_oneof_string());
+  EXPECT_EQ(false, msg.has_oneof_uint32());
+  EXPECT_EQ(false, msg.has_oneof_bytes());
+  EXPECT_EQ(false, msg.has_oneof_nested_message());
 }
 
 }  // namespace

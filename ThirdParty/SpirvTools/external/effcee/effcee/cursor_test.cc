@@ -35,7 +35,7 @@ TEST(Cursor, AdvanceReturnsTheCursorItself) {
 TEST(Cursor, RemainingBeginsEqualToText) {
   const char* original = "The Smiths";
   Cursor c(original);
-  EXPECT_THAT(c.remaining().begin(), Eq(original));
+  EXPECT_THAT(c.remaining().data(), Eq(original));
 }
 
 TEST(Cursor, RemainingDiminishesByPreviousAdvanceCalls) {
@@ -43,13 +43,13 @@ TEST(Cursor, RemainingDiminishesByPreviousAdvanceCalls) {
   Cursor c(original);
   c.Advance(4);
   EXPECT_THAT(c.remaining(), Eq("Smiths are a great 80s band"));
-  EXPECT_THAT(c.remaining().begin(), Eq(original + 4));
+  EXPECT_THAT(c.remaining().data(), Eq(original + 4));
   c.Advance(11);
   EXPECT_THAT(c.remaining(), Eq("a great 80s band"));
-  EXPECT_THAT(c.remaining().begin(), Eq(original + 15));
+  EXPECT_THAT(c.remaining().data(), Eq(original + 15));
   c.Advance(c.remaining().size());
   EXPECT_THAT(c.remaining(), Eq(""));
-  EXPECT_THAT(c.remaining().begin(), Eq(original + 31));
+  EXPECT_THAT(c.remaining().data(), Eq(original + 31));
 }
 
 // Exhausted method
@@ -74,7 +74,7 @@ TEST(Cursor, RestOfLineOnEmptyReturnsEmpty) {
   const char* original = "";
   Cursor c(original);
   EXPECT_THAT(c.RestOfLine(), Eq(""));
-  EXPECT_THAT(c.RestOfLine().begin(), Eq(original));
+  EXPECT_THAT(c.RestOfLine().data(), Eq(original));
 }
 
 TEST(Cursor, RestOfLineWithoutNewline) {
@@ -108,15 +108,15 @@ TEST(Cursor, AdvanceLineWalksThroughTextByLineAndCountsLines) {
   c.AdvanceLine();
   EXPECT_THAT(c.line_num(), Eq(2));
   EXPECT_THAT(c.remaining(), Eq("Of an era\nIs here"));
-  EXPECT_THAT(c.remaining().begin(), Eq(original + 8));
+  EXPECT_THAT(c.remaining().data(), Eq(original + 8));
   c.AdvanceLine();
   EXPECT_THAT(c.line_num(), Eq(3));
   EXPECT_THAT(c.remaining(), Eq("Is here"));
-  EXPECT_THAT(c.remaining().begin(), Eq(original + 18));
+  EXPECT_THAT(c.remaining().data(), Eq(original + 18));
   c.AdvanceLine();
   EXPECT_THAT(c.line_num(), Eq(4));
   EXPECT_THAT(c.remaining(), Eq(""));
-  EXPECT_THAT(c.remaining().begin(), Eq(original + 25));
+  EXPECT_THAT(c.remaining().data(), Eq(original + 25));
 }
 
 TEST(Cursor, AdvanceLineIsNoopAfterEndIsReached) {
@@ -136,42 +136,42 @@ TEST(Cursor, AdvanceLineIsNoopAfterEndIsReached) {
 
 TEST(LineMessage, SubtextIsFirst) {
   StringPiece text("Foo\nBar");
-  StringPiece subtext(text.begin(), 3);
+  StringPiece subtext(text.data(), 3);
   EXPECT_THAT(LineMessage(text, subtext, "loves quiche"),
               Eq(":1:1: loves quiche\nFoo\n^\n"));
 }
 
 TEST(LineMessage, SubtextDoesNotEndInNewline) {
   StringPiece text("Foo\nBar");
-  StringPiece subtext(text.begin()+4, 3);
+  StringPiece subtext(text.data() + 4, 3);
   EXPECT_THAT(LineMessage(text, subtext, "loves quiche"),
               Eq(":2:1: loves quiche\nBar\n^\n"));
 }
 
 TEST(LineMessage, SubtextPartwayThroughItsLine) {
   StringPiece text("Food Life\nBar");
-  StringPiece subtext(text.begin() + 5, 3); // "Lif"
+  StringPiece subtext(text.data() + 5, 3);  // "Lif"
   EXPECT_THAT(LineMessage(text, subtext, "loves quiche"),
               Eq(":1:6: loves quiche\nFood Life\n     ^\n"));
 }
 
 TEST(LineMessage, SubtextOnSubsequentLine) {
   StringPiece text("Food Life\nBar Fight\n");
-  StringPiece subtext(text.begin() + 14, 5); // "Fight"
+  StringPiece subtext(text.data() + 14, 5);  // "Fight"
   EXPECT_THAT(LineMessage(text, subtext, "loves quiche"),
               Eq(":2:5: loves quiche\nBar Fight\n    ^\n"));
 }
 
 TEST(LineMessage, SubtextIsEmptyAndInMiddle) {
   StringPiece text("Food");
-  StringPiece subtext(text.begin() + 2, 0);
+  StringPiece subtext(text.data() + 2, 0);
   EXPECT_THAT(LineMessage(text, subtext, "loves quiche"),
               Eq(":1:3: loves quiche\nFood\n  ^\n"));
 }
 
 TEST(LineMessage, SubtextIsEmptyAndAtVeryEnd) {
   StringPiece text("Food");
-  StringPiece subtext(text.begin() + 4, 0);
+  StringPiece subtext(text.data() + 4, 0);
   EXPECT_THAT(LineMessage(text, subtext, "loves quiche"),
               Eq(":1:5: loves quiche\nFood\n    ^\n"));
 }

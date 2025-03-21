@@ -18,7 +18,7 @@ if(NOT COMMAND find_host_package)
   endmacro()
 endif()
 
-find_host_package(PythonInterp 3 REQUIRED)
+find_host_package(Python3)
 
 option(DISABLE_RTTI "Disable RTTI in builds")
 if(DISABLE_RTTI)
@@ -47,15 +47,7 @@ if(WIN32)
 	 "Use the shared CRT with MSVC instead of the static CRT"
 	 ${EFFCEE_ENABLE_SHARED_CRT})
   if (NOT EFFCEE_ENABLE_SHARED_CRT)
-    if(MSVC)
-      # Link executables statically by replacing /MD with /MT everywhere.
-      foreach(flag_var
-	  CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-	  CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-	if(${flag_var} MATCHES "/MD")
-	  string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-	endif(${flag_var} MATCHES "/MD")
-      endforeach(flag_var)
-    endif(MSVC)
+    # Tell MSVC to Link executables statically.
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   endif(NOT EFFCEE_ENABLE_SHARED_CRT)
 endif(WIN32)

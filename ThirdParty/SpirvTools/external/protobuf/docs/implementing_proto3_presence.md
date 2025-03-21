@@ -13,7 +13,7 @@ optional fields. First-party code generators developed by Google are being
 updated already. However third-party code generators will need to be updated
 independently by their authors. This includes:
 
-- implementations of Protocol Buffers for other languges.
+- implementations of Protocol Buffers for other languages.
 - alternate implementations of Protocol Buffers that target specialized use
   cases.
 - RPC code generators that create generated APIs for service calls.
@@ -30,7 +30,7 @@ Presence tracking was added to proto3 in response to user feedback, both from
 inside Google and [from open-source
 users](https://github.com/protocolbuffers/protobuf/issues/1606). The [proto3
 wrapper
-types](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/wrappers.proto)
+types](https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/wrappers.proto)
 were previously the only supported presence mechanism for proto3. Users have
 pointed to both efficiency and usability issues with the wrapper types.
 
@@ -261,7 +261,7 @@ bool FieldHasPresence(const google::protobuf::FieldDescriptor* field) {
 Old:
 
 ```c++
-bool FieldIsInOneof(const google::protobuf::FielDescriptor* field) {
+bool FieldIsInOneof(const google::protobuf::FieldDescriptor* field) {
   return field->containing_oneof() != nullptr;
 }
 ```
@@ -269,7 +269,7 @@ bool FieldIsInOneof(const google::protobuf::FielDescriptor* field) {
 New:
 
 ```c++
-bool FieldIsInOneof(const google::protobuf::FielDescriptor* field) {
+bool FieldIsInOneof(const google::protobuf::FieldDescriptor* field) {
   // real_containing_oneof() returns nullptr for synthetic oneofs.
   return field->real_containing_oneof() != nullptr;
 }

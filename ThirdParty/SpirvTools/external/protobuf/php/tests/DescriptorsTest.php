@@ -1,7 +1,5 @@
 <?php
 
-require_once('generated/Descriptors/TestDescriptorsEnum.php');
-require_once('generated/Descriptors/TestDescriptorsMessage.php');
 require_once('test_base.php');
 require_once('test_util.php');
 
@@ -85,10 +83,10 @@ class DescriptorsTest extends TestBase
         $this->assertSame($class, $desc->getClass());
 
         $this->assertInstanceOf('\Google\Protobuf\FieldDescriptor', $desc->getField(0));
-        $this->assertSame(7, $desc->getFieldCount());
+        $this->assertSame(8, $desc->getFieldCount());
 
         $this->assertInstanceOf('\Google\Protobuf\OneofDescriptor', $desc->getOneofDecl(0));
-        $this->assertSame(1, $desc->getOneofDeclCount());
+        $this->assertSame(2, $desc->getOneofDeclCount());
     }
 
     public function testDescriptorForIncludedMessage()
@@ -108,7 +106,7 @@ class DescriptorsTest extends TestBase
 
     public function testEnumDescriptor()
     {
-        // WARNINIG - we need to do this so that TestDescriptorsEnum is registered!!?
+        // WARNING - we need to do this so that TestDescriptorsEnum is registered!!?
         new TestDescriptorsMessage();
 
         $pool = DescriptorPool::getGeneratedPool();
@@ -182,6 +180,7 @@ class DescriptorsTest extends TestBase
         $this->assertSame(self::GPBTYPE_MESSAGE, $fieldDesc->getType());
         $this->assertInstanceOf('\Google\Protobuf\Descriptor', $fieldDesc->getMessageType());
         $this->assertFalse($fieldDesc->isMap());
+        $this->assertNull($fieldDesc->getContainingOneof());
 
         // Oneof int field
         // Tested further in testOneofDescriptor()
@@ -191,6 +190,21 @@ class DescriptorsTest extends TestBase
         $this->assertSame(self::GPBLABEL_OPTIONAL, $fieldDesc->getLabel());
         $this->assertSame(self::GPBTYPE_INT32, $fieldDesc->getType());
         $this->assertFalse($fieldDesc->isMap());
+        $this->assertSame($fieldDesc->getContainingOneof(), $fieldDesc->getRealContainingOneof());
+
+        $oneofDesc = $fieldDesc->getContainingOneof();
+        $this->assertSame('my_oneof', $oneofDesc->getName());
+
+        // Proto3 optional it field.
+        // Tested further in testOneofDescriptor()
+        $fieldDesc = $fieldDescMap[52];
+        $this->assertSame('proto3_optional_int32', $fieldDesc->getName());
+        $this->assertSame(52, $fieldDesc->getNumber());
+        $this->assertSame(self::GPBLABEL_OPTIONAL, $fieldDesc->getLabel());
+        $this->assertSame(self::GPBTYPE_INT32, $fieldDesc->getType());
+        $this->assertFalse($fieldDesc->isMap());
+        $this->assertNull($fieldDesc->getRealContainingOneof());
+        $this->assertNotNull($fieldDesc->getContainingOneof());
 
         // Map int-enum field
         $fieldDesc = $fieldDescMap[71];
@@ -205,22 +219,20 @@ class DescriptorsTest extends TestBase
         $this->assertSame(self::GPBTYPE_ENUM, $mapDesc->getField(1)->getType());
     }
 
-    /**
-     * @expectedException \Exception
-     */
     public function testFieldDescriptorEnumException()
     {
+        $this->expectException(Exception::class);
+
         $pool = DescriptorPool::getGeneratedPool();
         $desc = $pool->getDescriptorByClassName(get_class(new TestDescriptorsMessage()));
         $fieldDesc = $desc->getField(0);
         $fieldDesc->getEnumType();
     }
 
-    /**
-     * @expectedException \Exception
-     */
     public function testFieldDescriptorMessageException()
     {
+        $this->expectException(Exception::class);
+
         $pool = DescriptorPool::getGeneratedPool();
         $desc = $pool->getDescriptorByClassName(get_class(new TestDescriptorsMessage()));
         $fieldDesc = $desc->getField(0);

@@ -2,9 +2,8 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-# Old enough to support Ubuntu Bionic,
-# but just the MAJOR.MINOR components.
-cmake_minimum_required(VERSION 3.10)
+# https://github.com/google/oss-policies-info/blob/main/foundational-cxx-support-matrix.md
+cmake_minimum_required(VERSION 3.13)
 
 project(RE2 CXX)
 include(CMakePackageConfigHelpers)
@@ -24,23 +23,22 @@ option(RE2_BUILD_FRAMEWORK "build RE2 as a framework" OFF)
 
 # CMake seems to have no way to enable/disable testing per subproject,
 # so we provide an option similar to BUILD_TESTING, but just for RE2.
-option(RE2_BUILD_TESTING "enable testing for RE2" ON)
+option(RE2_BUILD_TESTING "enable testing for RE2" OFF)
 
 # The pkg-config Requires: field.
 set(REQUIRES)
 
 # ABI version
 # http://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html
-set(SONAME 10)
+set(SONAME 11)
 
 set(EXTRA_TARGET_LINK_LIBRARIES)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  if(MSVC_VERSION LESS 1900)
-    message(FATAL_ERROR "you need Visual Studio 2015 or later")
+  if(MSVC_VERSION LESS 1920)
+    message(FATAL_ERROR "you need Visual Studio 2019 or later")
   endif()
   if(BUILD_SHARED_LIBS)
-    # See http://www.kitware.com/blog/home/post/939 for details.
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
   endif()
   # CMake defaults to /W3, but some users like /W4 (or /Wall) and /WX,
@@ -61,8 +59,36 @@ if(UNIX)
   find_package(Threads REQUIRED)
 endif()
 
+set(ABSL_DEPS
+    absl_absl_check
+    absl_absl_log
+    absl_base
+    absl_core_headers
+    absl_fixed_array
+    absl_flags
+    absl_flat_hash_map
+    absl_flat_hash_set
+    absl_hash
+    absl_inlined_vector
+    absl_optional
+    absl_span
+    absl_str_format
+    absl_strings
+    absl_synchronization
+    )
+
+# If a top-level project has called add_directory(abseil-cpp) already (possibly
+# indirectly), let that take precedence over any copy of Abseil that might have
+# been installed on the system. And likewise for ICU, GoogleTest and Benchmark.
+if(NOT TARGET absl::base)
+  find_package(absl REQUIRED)
+endif()
+list(APPEND REQUIRES ${ABSL_DEPS})
+
 if(RE2_USE_ICU)
-  find_package(ICU REQUIRED COMPONENTS uc)
+  if(NOT TARGET ICU::uc)
+    find_package(ICU REQUIRED COMPONENTS uc)
+  endif()
   add_definitions(-DRE2_USE_ICU)
   list(APPEND REQUIRES icu-uc)
 endif()
@@ -71,6 +97,8 @@ if(USEPCRE)
   add_definitions(-DUSEPCRE)
   list(APPEND EXTRA_TARGET_LINK_LIBRARIES pcre)
 endif()
+
+list(JOIN REQUIRES " " REQUIRES)
 
 set(RE2_SOURCES
     re2/bitmap256.cc
@@ -90,7 +118,6 @@ set(RE2_SOURCES
     re2/regexp.cc
     re2/set.cc
     re2/simplify.cc
-    re2/stringpiece.cc
     re2/tostring.cc
     re2/unicode_casefold.cc
     re2/unicode_groups.cc
@@ -106,7 +133,7 @@ set(RE2_HEADERS
     )
 
 add_library(re2 ${RE2_SOURCES})
-target_compile_features(re2 PUBLIC cxx_std_11)
+target_compile_features(re2 PUBLIC cxx_std_14)
 target_include_directories(re2 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 # CMake gives "set_target_properties called with incorrect number of arguments."
 # errors if we don't quote ${RE2_HEADERS}, so quote it despite prevailing style.
@@ -125,11 +152,25 @@ if(UNIX)
   target_link_libraries(re2 PUBLIC Threads::Threads)
 endif()
 
+foreach(dep ${ABSL_DEPS})
+  # Work around https://gitlab.kitware.com/cmake/cmake/-/issues/16899. >:(
+  string(PREPEND dep "^")
+  string(REGEX REPLACE "\\^absl_" "absl::" dep ${dep})
+  target_link_libraries(re2 PUBLIC ${dep})
+endforeach()
+
 if(RE2_USE_ICU)
   target_link_libraries(re2 PUBLIC ICU::uc)
 endif()
 
 if(RE2_BUILD_TESTING)
+  if(NOT TARGET GTest::gtest)
+    find_package(GTest REQUIRED)
+  endif()
+  if(NOT TARGET benchmark::benchmark)
+    find_package(benchmark REQUIRED)
+  endif()
+
   set(TESTING_SOURCES
       re2/testing/backtrack.cc
       re2/testing/dump.cc
@@ -141,9 +182,12 @@ if(RE2_BUILD_TESTING)
       util/pcre.cc
       )
 
-  add_library(testing STATIC ${TESTING_SOURCES})
-  target_compile_features(testing PUBLIC cxx_std_11)
-  target_link_libraries(testing PUBLIC re2)
+  add_library(testing ${TESTING_SOURCES})
+  if(BUILD_SHARED_LIBS AND WIN32)
+    target_compile_definitions(testing PRIVATE -DRE2_BUILD_TESTING_DLL)
+  endif()
+  target_compile_features(testing PUBLIC cxx_std_14)
+  target_link_libraries(testing PUBLIC re2 GTest::gtest)
 
   set(TEST_TARGETS
       charclass_test
@@ -174,16 +218,22 @@ if(RE2_BUILD_TESTING)
       )
 
   foreach(target ${TEST_TARGETS})
-    add_executable(${target} re2/testing/${target}.cc util/test.cc)
-    target_compile_features(${target} PUBLIC cxx_std_11)
-    target_link_libraries(${target} testing ${EXTRA_TARGET_LINK_LIBRARIES})
+    add_executable(${target} re2/testing/${target}.cc)
+    if(BUILD_SHARED_LIBS AND WIN32)
+      target_compile_definitions(${target} PRIVATE -DRE2_CONSUME_TESTING_DLL)
+    endif()
+    target_compile_features(${target} PUBLIC cxx_std_14)
+    target_link_libraries(${target} PUBLIC testing GTest::gtest_main ${EXTRA_TARGET_LINK_LIBRARIES})
     add_test(NAME ${target} COMMAND ${target})
   endforeach()
 
   foreach(target ${BENCHMARK_TARGETS})
-    add_executable(${target} re2/testing/${target}.cc util/benchmark.cc)
-    target_compile_features(${target} PUBLIC cxx_std_11)
-    target_link_libraries(${target} testing ${EXTRA_TARGET_LINK_LIBRARIES})
+    add_executable(${target} re2/testing/${target}.cc)
+    if(BUILD_SHARED_LIBS AND WIN32)
+      target_compile_definitions(${target} PRIVATE -DRE2_CONSUME_TESTING_DLL)
+    endif()
+    target_compile_features(${target} PUBLIC cxx_std_14)
+    target_link_libraries(${target} PUBLIC testing benchmark::benchmark_main ${EXTRA_TARGET_LINK_LIBRARIES})
   endforeach()
 endif()
 

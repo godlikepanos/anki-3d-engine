@@ -25,7 +25,7 @@ namespace effcee {
 // This does not implement the equivalents of FileCheck options:
 //   --match-full-lines
 //   --strict-whitespace
-//   --implicit-ch3eck-not
+//   --implicit-check-not
 //   --enable-var-scope
 
 using StringPiece = re2::StringPiece;

@@ -185,4 +185,36 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 	return Error::kNone;
 }
 
+StringList ShaderReflectionDescriptorRelated::toString() const
+{
+	StringList list;
+	for(U32 s = 0; s < kMaxRegisterSpaces; ++s)
+	{
+		for(U32 i = 0; i < m_bindingCounts[s]; ++i)
+		{
+			list.pushBackSprintf("space: %u, register: %u, type: %u", s, m_bindings[s][i].m_registerBindingPoint, m_bindings[s][i].m_type);
+		}
+	}
+
+	list.pushBackSprintf("Fast constants: %u", m_fastConstantsSize);
+	list.pushBackSprintf("Has VK bindless sets: %u", m_hasVkBindlessDescriptorSet);
+
+	return list;
+}
+
+StringList ShaderReflection::toString() const
+{
+	StringList list = m_descriptor.toString();
+
+	for(VertexAttributeSemantic attrib : EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(m_vertex.m_vertexAttributeMask))
+	{
+		list.pushBackSprintf("Vert attrib: %u", attrib);
+	}
+
+	list.pushBackSprintf("Color RT mask: %u", m_pixel.m_colorRenderTargetWritemask.getData()[0]);
+	list.pushBackSprintf("Discards: %u", m_pixel.m_discards);
+
+	return list;
+}
+
 } // end namespace anki

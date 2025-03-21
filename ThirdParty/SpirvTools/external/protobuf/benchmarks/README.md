@@ -4,8 +4,8 @@
 This directory contains benchmarking schemas and data sets that you
 can use to test a variety of performance scenarios against your
 protobuf language runtime. If you are looking for performance
-numbers of officially support languages, see [here](
-https://github.com/protocolbuffers/protobuf/blob/master/docs/performance.md)
+numbers of officially supported languages, see [Protobuf Performance](
+https://github.com/protocolbuffers/protobuf/blob/main/docs/performance.md).
 
 ## Prerequisite
 
@@ -19,10 +19,8 @@ We are using [google/benchmark](https://github.com/google/benchmark) as the
 benchmark tool for testing cpp. This will be automatically made during build the
 cpp benchmark.
 
-The cpp protobuf performance can be improved by linking with [tcmalloc library](
-https://gperftools.github.io/gperftools/tcmalloc.html). For using tcmalloc, you
-need to build [gpertools](https://github.com/gperftools/gperftools) to generate
-libtcmallc.so library.
+The cpp protobuf performance can be improved by linking with
+[TCMalloc](https://google.github.io/tcmalloc).
 
 ### Java
 We're using maven to build the java benchmarks, which is the same as to build
@@ -63,7 +61,7 @@ PHP benchmark's requirement is the same as PHP protobuf's requirements. The benc
 include PHP protobuf's src and build the c extension if required.
 
 ### Node.js
-Node.js benchmark need [node](https://nodejs.org/en/)(higher than V6) and [npm](https://www.npmjs.com/) package manager installed. This benchmark is using the [benchmark](https://www.npmjs.com/package/benchmark) framework to test, which needn't to manually install. And another prerequisite is [protobuf js](https://github.com/protocolbuffers/protobuf/tree/master/js), which needn't to manually install either
+Node.js benchmark need [node](https://nodejs.org/en/)(higher than V6) and [npm](https://www.npmjs.com/) package manager installed. This benchmark is using the [benchmark](https://www.npmjs.com/package/benchmark) framework to test, which needn't to manually install. And another prerequisite is [protobuf js](https://github.com/protocolbuffers/protobuf/tree/main/js), which needn't to manually install either
 
 ### C#
 The C# benchmark code is built as part of the main Google.Protobuf
@@ -71,25 +69,23 @@ solution. It requires the .NET Core SDK, and depends on
 [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet), which
 will be downloaded automatically.
 
-### Big data
-
-There's some optional big testing data which is not included in the directory
-initially, you need to run the following command to download the testing data:
-
-```
-$ ./download_data.sh
-```
-
-After doing this the big data file will automatically generated in the
-benchmark directory.
-
 ## Run instructions
 
 To run all the benchmark dataset:
 
 ### Java:
 
+First build the Java binary in the usual way with Maven:
+
 ```
+$ cd java
+$ mvn install
+```
+
+Assuming that completes successfully,
+
+```
+$ cd ../benchmarks
 $ make java
 ```
 
@@ -135,7 +131,7 @@ $ make go
 
 
 ### PHP
-We have two version of php protobuf implemention: pure php, php with c extension. To run these version benchmark, you need to:
+We have two version of php protobuf implementation: pure php, php with c extension. To run these version benchmark, you need to:
 #### Pure PHP
 ```
 $ make php

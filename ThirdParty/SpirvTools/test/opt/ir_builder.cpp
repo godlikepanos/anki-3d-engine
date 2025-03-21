@@ -12,18 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
+#include "source/opt/ir_builder.h"
+
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "effcee/effcee.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source/opt/basic_block.h"
 #include "source/opt/build_module.h"
 #include "source/opt/instruction.h"
-#include "source/opt/ir_builder.h"
 #include "source/opt/type_manager.h"
 #include "spirv-tools/libspirv.hpp"
 
@@ -254,6 +252,38 @@ OpFunctionEnd
   InstructionBuilder builder(context.get(),
                              &*context->module()->begin()->begin()->begin());
   EXPECT_NE(nullptr, builder.AddSelect(3u, 4u, 5u, 6u));
+
+  Match(text, context.get());
+}
+
+TEST_F(IRBuilderTest, AddVariable) {
+  // Use Private beacuse its' enun is 7 which is higher
+  // than the ID limit.
+  const std::string text = R"(
+; CHECK: [[uint:%\w+]] = OpTypeInt 32 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer Private [[uint]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] Private
+; CHECK: OpTypeFloat
+OpCapability Kernel
+OpCapability VectorComputeINTEL
+OpCapability Linkage
+OpExtension "SPV_INTEL_vector_compute"
+OpMemoryModel Logical OpenCL
+%1 = OpTypeInt 32 0
+%2 = OpTypePointer Private %1
+%3 = OpTypeFloat 32
+)";
+
+  std::unique_ptr<IRContext> context =
+      BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
+  EXPECT_NE(nullptr, context) << text;
+
+  auto* float_ty = context->get_def_use_mgr()->GetDef(3);
+  InstructionBuilder builder(context.get(), float_ty);
+  auto* var = builder.AddVariable(2u, uint32_t(spv::StorageClass::Private));
+  EXPECT_NE(nullptr, var);
+
+  context->get_def_use_mgr()->AnalyzeInstDefUse(var);  // should not assert
 
   Match(text, context.get());
 }

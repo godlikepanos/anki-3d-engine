@@ -37,6 +37,7 @@ use Google\Protobuf\FieldMask;
 use Google\Protobuf\Internal\GPBType;
 use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\MapField;
+use function bccomp;
 
 function camel2underscore($input) {
     preg_match_all(
@@ -168,7 +169,7 @@ class GPBUtil
     public static function checkFloat(&$var)
     {
         if (is_float($var) || is_numeric($var)) {
-            $var = floatval($var);
+            $var = unpack("f", pack("f", $var))[1];
         } else {
             throw new \Exception("Expect float.");
         }
@@ -279,15 +280,17 @@ class GPBUtil
             "do"=>0, "echo"=>0, "else"=>0, "elseif"=>0, "empty"=>0,
             "enddeclare"=>0, "endfor"=>0, "endforeach"=>0, "endif"=>0,
             "endswitch"=>0, "endwhile"=>0, "eval"=>0, "exit"=>0, "extends"=>0,
-            "final"=>0, "for"=>0, "foreach"=>0, "function"=>0, "global"=>0,
-            "goto"=>0, "if"=>0, "implements"=>0, "include"=>0,
-            "include_once"=>0, "instanceof"=>0, "insteadof"=>0, "interface"=>0,
-            "isset"=>0, "list"=>0, "namespace"=>0, "new"=>0, "or"=>0,
-            "print"=>0, "private"=>0, "protected"=>0, "public"=>0, "require"=>0,
-            "require_once"=>0, "return"=>0, "static"=>0, "switch"=>0,
-            "throw"=>0, "trait"=>0, "try"=>0, "unset"=>0, "use"=>0, "var"=>0,
-            "while"=>0, "xor"=>0, "int"=>0, "float"=>0, "bool"=>0, "string"=>0,
-            "true"=>0, "false"=>0, "null"=>0, "void"=>0, "iterable"=>0
+            "final"=>0, "finally"=>0, "fn"=>0, "for"=>0, "foreach"=>0,
+            "function"=>0, "global"=>0, "goto"=>0, "if"=>0, "implements"=>0,
+            "include"=>0, "include_once"=>0, "instanceof"=>0, "insteadof"=>0,
+            "interface"=>0, "isset"=>0, "list"=>0, "match"=>0, "namespace"=>0,
+            "new"=>0, "or"=>0, "parent"=>0, "print"=>0, "private"=>0,
+            "protected"=>0,"public"=>0, "readonly" => 0,"require"=>0,
+            "require_once"=>0,"return"=>0, "self"=>0, "static"=>0, "switch"=>0,
+            "throw"=>0,"trait"=>0, "try"=>0,"unset"=>0, "use"=>0, "var"=>0,
+            "while"=>0,"xor"=>0, "yield"=>0, "int"=>0, "float"=>0, "bool"=>0,
+            "string"=>0,"true"=>0, "false"=>0, "null"=>0, "void"=>0,
+            "iterable"=>0
         );
 
         if (array_key_exists(strtolower($classname), $reserved_words)) {
@@ -299,6 +302,27 @@ class GPBUtil
         }
 
         return "";
+    }
+
+    private static function getPreviouslyUnreservedClassNamePrefix(
+        $classname,
+        $file_proto)
+    {
+        $previously_unreserved_words = array(
+            "readonly"=>0
+        );
+
+        if (array_key_exists(strtolower($classname), $previously_unreserved_words)) {
+            $option = $file_proto->getOptions();
+            $prefix = is_null($option) ? "" : $option->getPhpClassPrefix();
+            if ($prefix !== "") {
+                return $prefix;
+            }
+
+            return "";
+        }
+
+        return self::getClassNamePrefix($classname, $file_proto);
     }
 
     public static function getLegacyClassNameWithoutPackage(
@@ -320,6 +344,17 @@ class GPBUtil
         return implode('\\', $parts);
     }
 
+    private static function getPreviouslyUnreservedClassNameWithoutPackage(
+        $name,
+        $file_proto)
+    {
+        $parts = explode('.', $name);
+        foreach ($parts as $i => $part) {
+            $parts[$i] = static::getPreviouslyUnreservedClassNamePrefix($parts[$i], $file_proto) . $parts[$i];
+        }
+        return implode('\\', $parts);
+    }
+
     public static function getFullClassName(
         $proto,
         $containing,
@@ -327,7 +362,8 @@ class GPBUtil
         &$message_name_without_package,
         &$classname,
         &$legacy_classname,
-        &$fullname)
+        &$fullname,
+        &$previous_classname)
     {
         // Full name needs to start with '.'.
         $message_name_without_package = $proto->getName();
@@ -348,6 +384,9 @@ class GPBUtil
         $legacy_class_name_without_package =
             static::getLegacyClassNameWithoutPackage(
                 $message_name_without_package, $file_proto);
+        $previous_class_name_without_package =
+            static::getPreviouslyUnreservedClassNameWithoutPackage(
+                $message_name_without_package, $file_proto);
 
         $option = $file_proto->getOptions();
         if (!is_null($option) && $option->hasPhpNamespace()) {
@@ -356,10 +395,13 @@ class GPBUtil
                 $classname = $namespace . "\\" . $class_name_without_package;
                 $legacy_classname =
                     $namespace . "\\" . $legacy_class_name_without_package;
+                $previous_classname =
+                    $namespace . "\\" . $previous_class_name_without_package;
                 return;
             } else {
                 $classname = $class_name_without_package;
                 $legacy_classname = $legacy_class_name_without_package;
+                $previous_classname = $previous_class_name_without_package;
                 return;
             }
         }
@@ -367,6 +409,7 @@ class GPBUtil
         if ($package === "") {
             $classname = $class_name_without_package;
             $legacy_classname = $legacy_class_name_without_package;
+            $previous_classname = $previous_class_name_without_package;
         } else {
             $parts = array_map('ucwords', explode('.', $package));
             foreach ($parts as $i => $part) {
@@ -379,6 +422,11 @@ class GPBUtil
             $legacy_classname =
                 implode('\\', array_map('ucwords', explode('.', $package))).
                 "\\".$legacy_class_name_without_package;
+            $previous_classname =
+                implode('\\', array_map('ucwords', explode('.', $package))).
+                "\\".self::getPreviouslyUnreservedClassNamePrefix(
+                    $previous_class_name_without_package, $file_proto).
+                    $previous_class_name_without_package;
         }
     }
 

@@ -178,7 +178,11 @@ PixelOut main(VertOut input)
 	g.m_metallic = (PROBE_TYPE == 0) ? 0.0 : 1.0;
 	g.m_velocity = 1.0;
 
-	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
+	const GBufferPixelOut gbufferOut = packGBuffer(g);
+	output.m_color0 = gbufferOut.m_rt0;
+	output.m_color1 = gbufferOut.m_rt1;
+	output.m_color2 = gbufferOut.m_rt2;
+	output.m_color3 = gbufferOut.m_rt3;
 
 	return output;
 }

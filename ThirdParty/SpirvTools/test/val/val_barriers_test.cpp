@@ -361,7 +361,7 @@ OpControlBarrier %subgroup %subgroup %none
   CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
   EXPECT_THAT(getDiagnosticString(),
-              AnyVUID("VUID-StandaloneSpirv-SubgroupVoteKHR-06997"));
+              AnyVUID("VUID-StandaloneSpirv-SubgroupVoteKHR-07951"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr(
@@ -410,7 +410,7 @@ OpControlBarrier %subgroup %cross_device %none
 TEST_F(ValidateBarriers,
        OpControlBarrierVulkan1p1WorkgroupNonComputeMemoryFailure) {
   const std::string body = R"(
-OpControlBarrier %subgroup %workgroup %acquire
+OpControlBarrier %subgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateVulkanVertexShaderCode(body), SPV_ENV_VULKAN_1_1);
@@ -427,7 +427,7 @@ OpControlBarrier %subgroup %workgroup %acquire
 TEST_F(ValidateBarriers,
        OpControlBarrierVulkan1p1WorkgroupNonComputeExecutionFailure) {
   const std::string body = R"(
-OpControlBarrier %workgroup %subgroup %acquire
+OpControlBarrier %workgroup %subgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateVulkanVertexShaderCode(body), SPV_ENV_VULKAN_1_1);
@@ -442,7 +442,7 @@ OpControlBarrier %workgroup %subgroup %acquire
 
 TEST_F(ValidateBarriers, OpControlBarrierVulkan1p1WorkgroupComputeSuccess) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %acquire
+OpControlBarrier %workgroup %workgroup %acquire_uniform_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_1);
@@ -451,7 +451,7 @@ OpControlBarrier %workgroup %workgroup %acquire
 
 TEST_F(ValidateBarriers, OpControlBarrierVulkan1p1WorkgroupNonComputeSuccess) {
   const std::string body = R"(
-OpControlBarrier %subgroup %subgroup %acquire
+OpControlBarrier %subgroup %subgroup %acquire_uniform_workgroup
 )";
 
   CompileSuccessfully(GenerateVulkanVertexShaderCode(body), SPV_ENV_VULKAN_1_1);
@@ -495,15 +495,15 @@ OpControlBarrier %device %device %acquire_and_release_uniform
                         "AcquireRelease or SequentiallyConsistent"));
 }
 
-// TODO(atgoo@github.com): the corresponding check fails Vulkan CTS,
-// reenable once fixed.
-TEST_F(ValidateBarriers, DISABLED_OpControlBarrierVulkanSubgroupStorageClass) {
+TEST_F(ValidateBarriers, OpControlBarrierVulkanSubgroupStorageClass) {
   const std::string body = R"(
 OpControlBarrier %workgroup %device %acquire_release_subgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-OpControlBarrier-04650"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr(
@@ -511,9 +511,42 @@ OpControlBarrier %workgroup %device %acquire_release_subgroup
           "Vulkan-supported storage class if Memory Semantics is not None"));
 }
 
+TEST_F(ValidateBarriers, OpControlBarrierVulkanAcquireRelease) {
+  const std::string body = R"(
+OpControlBarrier %workgroup %device %acquire_release
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-OpControlBarrier-04650"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "ControlBarrier: expected Memory Semantics to include a "
+          "Vulkan-supported storage class if Memory Semantics is not None"));
+}
+
+TEST_F(ValidateBarriers, OpControlBarrierVulkanWorkgroupMemory) {
+  const std::string body = R"(
+OpControlBarrier %workgroup %workgroup %workgroup_memory
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-OpControlBarrier-10609"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "ControlBarrier: Vulkan specification requires non-zero "
+          "Memory Semantics to have one of the following bits set: Acquire, "
+          "Release, AcquireRelease or SequentiallyConsistent"));
+}
+
 TEST_F(ValidateBarriers, OpControlBarrierSubgroupExecutionFragment1p1) {
   const std::string body = R"(
-OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
+OpControlBarrier %subgroup %subgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Fragment"),
@@ -523,7 +556,7 @@ OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
 
 TEST_F(ValidateBarriers, OpControlBarrierWorkgroupExecutionFragment1p1) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %acquire_release
+OpControlBarrier %workgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Fragment"),
@@ -541,7 +574,7 @@ OpControlBarrier %workgroup %workgroup %acquire_release
 
 TEST_F(ValidateBarriers, OpControlBarrierSubgroupExecutionFragment1p0) {
   const std::string body = R"(
-OpControlBarrier %subgroup %workgroup %acquire_release
+OpControlBarrier %subgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Fragment"),
@@ -556,7 +589,7 @@ OpControlBarrier %subgroup %workgroup %acquire_release
 
 TEST_F(ValidateBarriers, OpControlBarrierSubgroupExecutionVertex1p1) {
   const std::string body = R"(
-OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
+OpControlBarrier %subgroup %subgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Vertex"),
@@ -566,7 +599,7 @@ OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
 
 TEST_F(ValidateBarriers, OpControlBarrierWorkgroupExecutionVertex1p1) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %acquire_release
+OpControlBarrier %workgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Vertex"),
@@ -584,7 +617,7 @@ OpControlBarrier %workgroup %workgroup %acquire_release
 
 TEST_F(ValidateBarriers, OpControlBarrierSubgroupExecutionVertex1p0) {
   const std::string body = R"(
-OpControlBarrier %subgroup %workgroup %acquire_release
+OpControlBarrier %subgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Vertex"),
@@ -599,7 +632,7 @@ OpControlBarrier %subgroup %workgroup %acquire_release
 
 TEST_F(ValidateBarriers, OpControlBarrierSubgroupExecutionGeometry1p1) {
   const std::string body = R"(
-OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
+OpControlBarrier %subgroup %subgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(
@@ -610,7 +643,7 @@ OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
 
 TEST_F(ValidateBarriers, OpControlBarrierWorkgroupExecutionGeometry1p1) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %acquire_release
+OpControlBarrier %workgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(
@@ -629,7 +662,7 @@ OpControlBarrier %workgroup %workgroup %acquire_release
 
 TEST_F(ValidateBarriers, OpControlBarrierSubgroupExecutionGeometry1p0) {
   const std::string body = R"(
-OpControlBarrier %subgroup %workgroup %acquire_release
+OpControlBarrier %subgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(
@@ -646,7 +679,7 @@ OpControlBarrier %subgroup %workgroup %acquire_release
 TEST_F(ValidateBarriers,
        OpControlBarrierSubgroupExecutionTessellationEvaluation1p1) {
   const std::string body = R"(
-OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
+OpControlBarrier %subgroup %subgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "OpCapability Tessellation\n",
@@ -658,7 +691,7 @@ OpControlBarrier %subgroup %subgroup %acquire_release_subgroup
 TEST_F(ValidateBarriers,
        OpControlBarrierWorkgroupExecutionTessellationEvaluation1p1) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %acquire_release
+OpControlBarrier %workgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "OpCapability Tessellation\n",
@@ -678,7 +711,7 @@ OpControlBarrier %workgroup %workgroup %acquire_release
 TEST_F(ValidateBarriers,
        OpControlBarrierSubgroupExecutionTessellationEvaluation1p0) {
   const std::string body = R"(
-OpControlBarrier %subgroup %workgroup %acquire_release
+OpControlBarrier %subgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateShaderCode(body, "OpCapability Tessellation\n",
@@ -687,9 +720,8 @@ OpControlBarrier %subgroup %workgroup %acquire_release
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("OpControlBarrier requires one of the following "
-                        "Execution "
-                        "Models: TessellationControl, GLCompute, Kernel, "
-                        "MeshNV or TaskNV"));
+                        "Execution Models: TessellationControl, GLCompute, "
+                        "Kernel, MeshNV or TaskNV"));
 }
 
 TEST_F(ValidateBarriers, OpMemoryBarrierSuccess) {
@@ -775,7 +807,7 @@ OpMemoryBarrier %subgroup %acquire_release_uniform_workgroup
   CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
   EXPECT_THAT(getDiagnosticString(),
-              AnyVUID("VUID-StandaloneSpirv-SubgroupVoteKHR-06997"));
+              AnyVUID("VUID-StandaloneSpirv-SubgroupVoteKHR-07951"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr(

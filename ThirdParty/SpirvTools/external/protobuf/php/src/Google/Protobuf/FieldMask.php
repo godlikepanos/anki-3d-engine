@@ -62,45 +62,39 @@ use Google\Protobuf\Internal\GPBUtil;
  * and leave the others untouched. If a resource is passed in to
  * describe the updated values, the API ignores the values of all
  * fields not covered by the mask.
- * If a repeated field is specified for an update operation, the existing
- * repeated values in the target resource will be overwritten by the new values.
- * Note that a repeated field is only allowed in the last position of a `paths`
- * string.
+ * If a repeated field is specified for an update operation, new values will
+ * be appended to the existing repeated field in the target resource. Note that
+ * a repeated field is only allowed in the last position of a `paths` string.
  * If a sub-message is specified in the last position of the field mask for an
- * update operation, then the existing sub-message in the target resource is
- * overwritten. Given the target message:
+ * update operation, then new value will be merged into the existing sub-message
+ * in the target resource.
+ * For example, given the target message:
  *     f {
  *       b {
- *         d : 1
- *         x : 2
+ *         d: 1
+ *         x: 2
  *       }
- *       c : 1
+ *       c: [1]
  *     }
  * And an update message:
  *     f {
  *       b {
- *         d : 10
+ *         d: 10
  *       }
+ *       c: [2]
  *     }
  * then if the field mask is:
- *  paths: "f.b"
+ *  paths: ["f.b", "f.c"]
  * then the result will be:
  *     f {
  *       b {
- *         d : 10
+ *         d: 10
+ *         x: 2
  *       }
- *       c : 1
+ *       c: [1, 2]
  *     }
- * However, if the update mask was:
- *  paths: "f.b.d"
- * then the result would be:
- *     f {
- *       b {
- *         d : 10
- *         x : 2
- *       }
- *       c : 1
- *     }
+ * An implementation may provide options to override this default behavior for
+ * repeated and message fields.
  * In order to reset a field's value to the default, the field must
  * be in the mask and set to the default value in the provided resource.
  * Hence, in order to reset all fields of a resource, provide a default
@@ -165,7 +159,7 @@ use Google\Protobuf\Internal\GPBUtil;
  * ## Field Mask Verification
  * The implementation of any API method which has a FieldMask type field in the
  * request should verify the included field paths, and return an
- * `INVALID_ARGUMENT` error if any path is duplicated or unmappable.
+ * `INVALID_ARGUMENT` error if any path is unmappable.
  *
  * Generated from protobuf message <code>google.protobuf.FieldMask</code>
  */
@@ -184,7 +178,7 @@ class FieldMask extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type string[]|\Google\Protobuf\Internal\RepeatedField $paths
+     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $paths
      *           The set of field mask paths.
      * }
      */
@@ -208,7 +202,7 @@ class FieldMask extends \Google\Protobuf\Internal\Message
      * The set of field mask paths.
      *
      * Generated from protobuf field <code>repeated string paths = 1;</code>
-     * @param string[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setPaths($var)

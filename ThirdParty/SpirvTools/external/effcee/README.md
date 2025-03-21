@@ -1,7 +1,5 @@
 # Effcee
 
-[![Linux and OSX Build Status](https://travis-ci.org/google/effcee.svg)](https://travis-ci.org/google/effcee "Linux and OSX Build Status")
-
 Effcee is a C++ library for stateful pattern matching of strings, inspired by
 LLVM's [FileCheck][FileCheck] command.
 
@@ -14,6 +12,7 @@ Effcee:
 -   Has few dependencies:
     -   The C++11 standard library, and
     -   [RE2][RE2] for regular expression matching.
+    -   [Abseil][Abseil] utilities for C++ (via RE2).
 
 ## Example
 
@@ -129,7 +128,9 @@ more information. See also the [`AUTHORS`](AUTHORS) and
 -   `third_party/`: third party open source packages, downloaded separately
 -   [`examples/`](examples): example programs
 
-Effcee depends on the [RE2][RE2] regular expression library.
+Effcee depends on:
+* the [RE2][RE2] regular expression library.
+* the [Abseil][Abseil] utility library for C++.
 
 Effcee tests depend on [Googletest][Googletest] and [Python 3][Python].
 
@@ -145,6 +146,7 @@ git clone https://github.com/google/effcee $SOURCE_DIR
 cd $SOURCE_DIR/third_party
 git clone https://github.com/google/googletest.git
 git clone https://github.com/google/re2.git
+git clone https://github.com/abseil/abseil-cpp.git
 cd $SOURCE_DIR/
 ```
 
@@ -256,8 +258,7 @@ runtime libraries.
 
 On Windows, the following tools should be installed and available on your path:
 
--   Visual Studio 2015 or later. Previous versions of Visual Studio are not
-    usable with RE2 or Googletest.
+-   Visual Studio 2022 or later. Support for VS 2019 is deprecated.
 -   Git - including the associated tools, Bash, `diff`.
 
 ### Build options
@@ -303,4 +304,5 @@ We track bugs using GitHub -- click on the "Issues" button on
 [MinGW]: http://www.mingw.org/
 [Python]: https://www.python.org/
 [RE2]: https://github.com/google/re2
+[Abseil]: https://github.com/abseil/abseil-cpp
 [SPIRV-Tools]: https://github.com/KhronosGroup/SPIRV-Tools

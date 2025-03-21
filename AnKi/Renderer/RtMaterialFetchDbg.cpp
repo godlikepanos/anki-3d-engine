@@ -151,12 +151,19 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
 			cmdb.bindSrv(7, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 
-			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
-			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
-			cmdb.bindUav(2, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+			for(U32 i = 0; i < 6; ++i)
+			{
+				cmdb.bindUav(i, 2, TextureView(getDummyGpuResources().m_texture3DUav.get(), TextureSubresourceDesc::firstSurface()));
+			}
+
+			rgraphCtx.bindUav(7, 2, m_runCtx.m_rt);
+			cmdb.bindUav(8, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
+
+			Vec4 dummy;
+			cmdb.setFastConstants(&dummy, sizeof(dummy));
 
 			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);

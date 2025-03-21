@@ -48,6 +48,7 @@ import java.util.Map;
  * A {@link Reader} that reads from a buffer containing a message serialized with the binary
  * protocol.
  */
+@CheckReturnValue
 @ExperimentalApi
 abstract class BinaryReader implements Reader {
   private static final int FIXED32_MULTIPLE_MASK = FIXED32_SIZE - 1;
@@ -247,6 +248,15 @@ abstract class BinaryReader implements Reader {
 
     private <T> T readMessage(Schema<T> schema, ExtensionRegistryLite extensionRegistry)
         throws IOException {
+      T newInstance = schema.newInstance();
+      mergeMessageField(newInstance, schema, extensionRegistry);
+      schema.makeImmutable(newInstance);
+      return newInstance;
+    }
+
+    @Override
+    public <T> void mergeMessageField(
+        T target, Schema<T> schema, ExtensionRegistryLite extensionRegistry) throws IOException {
       int size = readVarint32();
       requireBytes(size);
 
@@ -256,21 +266,17 @@ abstract class BinaryReader implements Reader {
       limit = newLimit;
 
       try {
-        // Allocate and read the message.
-        T message = schema.newInstance();
-        schema.mergeFrom(message, this, extensionRegistry);
-        schema.makeImmutable(message);
-
+        schema.mergeFrom(target, this, extensionRegistry);
         if (pos != newLimit) {
           throw InvalidProtocolBufferException.parseFailure();
         }
-        return message;
       } finally {
         // Restore the limit.
         limit = prevLimit;
       }
     }
 
+    @Deprecated
     @Override
     public <T> T readGroup(Class<T> clazz, ExtensionRegistryLite extensionRegistry)
         throws IOException {
@@ -278,6 +284,7 @@ abstract class BinaryReader implements Reader {
       return readGroup(Protobuf.getInstance().schemaFor(clazz), extensionRegistry);
     }
 
+    @Deprecated
     @Override
     public <T> T readGroupBySchemaWithCheck(
         Schema<T> schema, ExtensionRegistryLite extensionRegistry) throws IOException {
@@ -287,19 +294,23 @@ abstract class BinaryReader implements Reader {
 
     private <T> T readGroup(Schema<T> schema, ExtensionRegistryLite extensionRegistry)
         throws IOException {
+      T newInstance = schema.newInstance();
+      mergeGroupField(newInstance, schema, extensionRegistry);
+      schema.makeImmutable(newInstance);
+      return newInstance;
+    }
+
+    @Override
+    public <T> void mergeGroupField(
+        T target, Schema<T> schema, ExtensionRegistryLite extensionRegistry) throws IOException {
       int prevEndGroupTag = endGroupTag;
       endGroupTag = WireFormat.makeTag(WireFormat.getTagFieldNumber(tag), WIRETYPE_END_GROUP);
 
       try {
-        // Allocate and read the message.
-        T message = schema.newInstance();
-        schema.mergeFrom(message, this, extensionRegistry);
-        schema.makeImmutable(message);
-
+        schema.mergeFrom(target, this, extensionRegistry);
         if (tag != endGroupTag) {
           throw InvalidProtocolBufferException.parseFailure();
         }
-        return message;
       } finally {
         // Restore the old end group tag.
         endGroupTag = prevEndGroupTag;
@@ -956,6 +967,7 @@ abstract class BinaryReader implements Reader {
       }
     }
 
+    @Deprecated
     @Override
     public <T> void readGroupList(
         List<T> target, Class<T> targetType, ExtensionRegistryLite extensionRegistry)
@@ -964,6 +976,7 @@ abstract class BinaryReader implements Reader {
       readGroupList(target, schema, extensionRegistry);
     }
 
+    @Deprecated
     @Override
     public <T> void readGroupList(
         List<T> target, Schema<T> schema, ExtensionRegistryLite extensionRegistry)

@@ -38,6 +38,6 @@
 	ray.TMax = 100.0; // TODO
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
-	const Vec3 col = payload.m_diffuseColor * 1.0 + (payload.m_worldNormal.xyz / 2.0 + 0.5) * 0.0 + payload.m_rayT * 0.0 + payload.m_emission * 0.0;
+	const Vec3 col = payload.m_diffuseColor * 0.0 + (payload.m_worldNormal.xyz / 2.0 + 0.5) * 1.0 + payload.m_rayT * 0.0 + payload.m_emission * 0.0;
 	g_colorAndPdfTex[DispatchRaysIndex().xy] = Vec4(col, 0.0);
 }

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python3
 #
 # Protocol Buffers - Google's data interchange format
 # Copyright 2015 Google Inc.  All rights reserved.
@@ -134,7 +134,10 @@ def _MacroArgRefRe(macro_arg_names):
 
 class PDDMError(Exception):
   """Error thrown by pddm."""
-  pass
+
+  def __init__(self, message="Error"):
+    self.message = message
+    super().__init__(self.message)
 
 
 class MacroCollection(object):
@@ -318,7 +321,7 @@ class MacroCollection(object):
       # Nothing to do
       return macro.body
     assert len(arg_values) == len(macro.args)
-    args = dict(zip(macro.args, arg_values))
+    args = dict(list(zip(macro.args, arg_values)))
 
     def _lookupArg(match):
       val = args[match.group('name')]
@@ -351,7 +354,7 @@ class MacroCollection(object):
     return macro_arg_ref_re.sub(_lookupArg, macro.body)
 
   def _EvalMacrosRefs(self, text, macro_stack):
-    macro_ref_re = _MacroRefRe(self._macros.keys())
+    macro_ref_re = _MacroRefRe(list(self._macros.keys()))
 
     def _resolveMacro(match):
       return self._Expand(match, macro_stack)
@@ -645,7 +648,7 @@ def main(args):
   opts, extra_args = parser.parse_args(args)
 
   if not extra_args:
-    parser.error('Need atleast one file to process')
+    parser.error('Need at least one file to process')
 
   result = 0
   for a_path in extra_args:

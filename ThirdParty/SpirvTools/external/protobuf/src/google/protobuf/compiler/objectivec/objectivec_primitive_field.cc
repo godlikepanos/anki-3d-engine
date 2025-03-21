@@ -35,8 +35,6 @@
 #include <google/protobuf/compiler/objectivec/objectivec_primitive_field.h>
 #include <google/protobuf/io/printer.h>
 #include <google/protobuf/stubs/strutil.h>
-#include <google/protobuf/wire_format.h>
-#include <google/protobuf/wire_format_lite.h>
 
 namespace google {
 namespace protobuf {
@@ -116,7 +114,7 @@ const char* PrimitiveArrayTypeName(const FieldDescriptor* descriptor) {
 }
 
 void SetPrimitiveVariables(const FieldDescriptor* descriptor,
-                           std::map<string, string>* variables) {
+                           std::map<std::string, std::string>* variables) {
   std::string primitive_name = PrimitiveTypeName(descriptor);
   (*variables)["type"] = primitive_name;
   (*variables)["storage_type"] = primitive_name;
@@ -125,8 +123,8 @@ void SetPrimitiveVariables(const FieldDescriptor* descriptor,
 }  // namespace
 
 PrimitiveFieldGenerator::PrimitiveFieldGenerator(
-    const FieldDescriptor* descriptor, const Options& options)
-    : SingleFieldGenerator(descriptor, options) {
+    const FieldDescriptor* descriptor)
+    : SingleFieldGenerator(descriptor) {
   SetPrimitiveVariables(descriptor, &variables_);
 }
 
@@ -159,8 +157,8 @@ void PrimitiveFieldGenerator::SetExtraRuntimeHasBitsBase(int has_base) {
 }
 
 PrimitiveObjFieldGenerator::PrimitiveObjFieldGenerator(
-    const FieldDescriptor* descriptor, const Options& options)
-    : ObjCObjFieldGenerator(descriptor, options) {
+    const FieldDescriptor* descriptor)
+    : ObjCObjFieldGenerator(descriptor) {
   SetPrimitiveVariables(descriptor, &variables_);
   variables_["property_storage_attribute"] = "copy";
 }
@@ -168,11 +166,11 @@ PrimitiveObjFieldGenerator::PrimitiveObjFieldGenerator(
 PrimitiveObjFieldGenerator::~PrimitiveObjFieldGenerator() {}
 
 RepeatedPrimitiveFieldGenerator::RepeatedPrimitiveFieldGenerator(
-    const FieldDescriptor* descriptor, const Options& options)
-    : RepeatedFieldGenerator(descriptor, options) {
+    const FieldDescriptor* descriptor)
+    : RepeatedFieldGenerator(descriptor) {
   SetPrimitiveVariables(descriptor, &variables_);
 
-  string base_name = PrimitiveArrayTypeName(descriptor);
+  std::string base_name = PrimitiveArrayTypeName(descriptor);
   if (base_name.length()) {
     variables_["array_storage_type"] = "GPB" + base_name + "Array";
   } else {

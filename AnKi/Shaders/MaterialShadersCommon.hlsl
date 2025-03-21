@@ -61,14 +61,6 @@ Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_S
 
 #undef ANKI_REG
 
-struct GBufferPixelOut
-{
-	HVec4 m_color0 : SV_TARGET0;
-	HVec4 m_color1 : SV_TARGET1;
-	HVec4 m_color2 : SV_TARGET2;
-	Vec2 m_color3 : SV_TARGET3;
-};
-
 UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 {
 	UnpackedMeshVertex v;

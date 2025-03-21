@@ -11,6 +11,7 @@
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Shaders/Include/Common.h>
 #include <AnKi/Util/CVarSet.h>
+#include <AnKi/Util/StringList.h>
 
 namespace anki {
 
@@ -1021,6 +1022,8 @@ public:
 			}
 		}
 	}
+
+	StringList toString() const;
 };
 ANKI_END_PACKED_STRUCT
 
@@ -1067,6 +1070,8 @@ public:
 
 	/// Combine shader reflection.
 	static Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c);
+
+	StringList toString() const;
 };
 
 /// Clear values for textures or attachments.

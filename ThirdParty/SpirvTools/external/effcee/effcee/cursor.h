@@ -77,13 +77,14 @@ inline std::string LineMessage(StringPiece text, StringPiece subtext,
                                StringPiece message) {
   Cursor c(text);
   StringPiece full_line = c.RestOfLine();
-  while (subtext.end() - full_line.end() > 0) {
+  const auto* subtext_end = subtext.data() + subtext.size();
+  while (subtext_end - (full_line.data() + full_line.size()) > 0) {
     c.AdvanceLine();
     full_line = c.RestOfLine();
   }
   const char* full_line_newline =
       full_line.find('\n') == StringPiece::npos ? "\n" : "";
-  const size_t column = subtext.begin() - full_line.begin();
+  const auto column = size_t(subtext.data() - full_line.data());
 
   std::ostringstream out;
   out << ":" << c.line_num() << ":" << (1 + column) << ": " << message << "\n"

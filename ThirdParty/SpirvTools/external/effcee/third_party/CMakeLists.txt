@@ -14,6 +14,18 @@ else()
           "Location of googletest source")
 endif()
 
+# Find abseil
+if(absl_SOURCE_DIR)
+  set(EFFCEE_ABSEIL_DIR "${absl_SOURCE_DIR}" CACHE STRING "Location of abseil source" FORCE)
+else()
+  # Allow for abseil-cpp or abseil_cpp
+  if (IS_DIRECTORY "${EFFCEE_THIRD_PARTY_ROOT_DIR}/abseil_cpp")
+    set(EFFCEE_ABSEIL_DIR "${EFFCEE_THIRD_PARTY_ROOT_DIR}/abseil_cpp" CACHE STRING "Location of abseil source")
+  elseif(IS_DIRECTORY "${EFFCEE_THIRD_PARTY_ROOT_DIR}/abseil-cpp")
+    set(EFFCEE_ABSEIL_DIR "${EFFCEE_THIRD_PARTY_ROOT_DIR}/abseil-cpp" CACHE STRING "Location of abseil source")
+  endif()
+endif()
+
 # Find re2
 if(RE2_SOURCE_DIR)
   set(EFFCEE_RE2_DIR "${RE2_SOURCE_DIR}" CACHE STRING "Location of re2 source" FORCE)
@@ -32,6 +44,18 @@ if(EFFCEE_BUILD_TESTING)
   if (NOT TARGET gmock)
     message(FATAL_ERROR "gmock was not found - required for tests")
   endif()
+endif()
+
+if (NOT TARGET absl::base)
+  if (IS_DIRECTORY ${EFFCEE_ABSEIL_DIR})
+    set(ABSL_INTERNAL_AT_LEAST_CXX17 ON)
+    set(ABSL_PROPAGATE_CXX_STD ON)
+    set(ABSL_ENABLE_INSTALL ON)
+    add_subdirectory(${EFFCEE_ABSEIL_DIR} absl EXCLUDE_FROM_ALL)
+  endif()
+endif()
+if (NOT TARGET absl::base)
+  message(FATAL_ERROR "absl was not found - required for compilation")
 endif()
 
 if (NOT TARGET re2)

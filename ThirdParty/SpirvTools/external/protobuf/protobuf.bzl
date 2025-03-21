@@ -79,10 +79,20 @@ def _proto_gen_impl(ctx):
     deps = depset(direct=ctx.files.srcs)
     source_dir = _SourceDir(ctx)
     gen_dir = _GenDir(ctx).rstrip("/")
+    import_flags = []
+        
     if source_dir:
-        import_flags = depset(direct=["-I" + source_dir, "-I" + gen_dir])
+        has_sources = any([src.is_source for src in srcs])
+        if has_sources:
+            import_flags += ["-I" + source_dir]
     else:
-        import_flags = depset(direct=["-I."])
+        import_flags += ["-I."]
+
+    has_generated = any([not src.is_source for src in srcs])
+    if has_generated:
+        import_flags += ["-I" + gen_dir]
+
+    import_flags = depset(direct=import_flags)
 
     for dep in ctx.attr.deps:
         if type(dep.proto.import_flags) == "list":
@@ -156,7 +166,7 @@ def _proto_gen_impl(ctx):
             for out in outs:
                 orig_command = " ".join(
                     ["$(realpath %s)" % ctx.executable.protoc.path] + args +
-                    import_flags_real + ["-I.", src.basename],
+                    import_flags_real + [src.basename],
                 )
                 command = ";".join([
                     'CMD="%s"' % orig_command,
@@ -190,13 +200,13 @@ proto_gen = rule(
         "deps": attr.label_list(providers = ["proto"]),
         "includes": attr.string_list(),
         "protoc": attr.label(
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_single_file = True,
             mandatory = True,
         ),
         "plugin": attr.label(
-            cfg = "host",
+            cfg = "exec",
             allow_files = True,
             executable = True,
         ),
@@ -328,7 +338,12 @@ def _internal_gen_well_known_protos_java_impl(ctx):
     deps = [d[ProtoInfo] for d in ctx.attr.deps]
 
     srcjar = ctx.actions.declare_file("{}.srcjar".format(ctx.attr.name))
-    args.add("--java_out", srcjar)
+    if ctx.attr.javalite:
+        java_out = "lite:%s" % srcjar.path
+    else:
+        java_out = srcjar
+
+    args.add("--java_out", java_out)
 
     descriptors = depset(
         transitive = [dep.transitive_descriptor_sets for dep in deps],
@@ -352,6 +367,7 @@ def _internal_gen_well_known_protos_java_impl(ctx):
         inputs = descriptors,
         outputs = [srcjar],
         arguments = [args],
+        use_default_shell_env = True,
     )
 
     return [
@@ -367,13 +383,80 @@ internal_gen_well_known_protos_java = rule(
             mandatory = True,
             providers = [ProtoInfo],
         ),
+        "javalite": attr.bool(
+            default = False,
+        ),
         "_protoc": attr.label(
             executable = True,
-            cfg = "host",
+            cfg = "exec",
             default = "@com_google_protobuf//:protoc",
         ),
     },
 )
+
+def _internal_gen_kt_protos(ctx):
+    args = ctx.actions.args()
+
+    deps = [d[ProtoInfo] for d in ctx.attr.deps]
+
+    srcjar = ctx.actions.declare_file("{}.srcjar".format(ctx.attr.name))
+    if ctx.attr.lite:
+        out = "lite:%s" % srcjar.path
+    else:
+        out = srcjar
+
+    args.add("--kotlin_out", out)
+
+    descriptors = depset(
+        transitive = [dep.transitive_descriptor_sets for dep in deps],
+    )
+    args.add_joined(
+        "--descriptor_set_in",
+        descriptors,
+        join_with = ctx.configuration.host_path_separator,
+    )
+
+    for dep in deps:
+        if "." == dep.proto_source_root:
+            args.add_all([src.path for src in dep.direct_sources])
+        else:
+            source_root = dep.proto_source_root
+            offset = len(source_root) + 1  # + '/'.
+            args.add_all([src.path[offset:] for src in dep.direct_sources])
+
+    ctx.actions.run(
+        executable = ctx.executable._protoc,
+        inputs = descriptors,
+        outputs = [srcjar],
+        arguments = [args],
+        use_default_shell_env = True,
+    )
+
+    return [
+        DefaultInfo(
+            files = depset([srcjar]),
+        ),
+    ]
+
+internal_gen_kt_protos = rule(
+    implementation = _internal_gen_kt_protos,
+    attrs = {
+        "deps": attr.label_list(
+            mandatory = True,
+            providers = [ProtoInfo],
+        ),
+        "lite": attr.bool(
+            default = False,
+        ),
+        "_protoc": attr.label(
+            executable = True,
+            cfg = "exec",
+            default = "//:protoc",
+        ),
+    },
+)
+
+
 
 def internal_copied_filegroup(name, srcs, strip_prefix, dest, **kwargs):
     """Macro to copy files to a different directory and then create a filegroup.
@@ -394,10 +477,12 @@ def internal_copied_filegroup(name, srcs, strip_prefix, dest, **kwargs):
         name = name + "_genrule",
         srcs = srcs,
         outs = outs,
-        cmd = " && ".join(
+        cmd_bash = " && ".join(
             ["cp $(location %s) $(location %s)" %
-             (s, _RelativeOutputPath(s, strip_prefix, dest)) for s in srcs],
-        ),
+             (s, _RelativeOutputPath(s, strip_prefix, dest)) for s in srcs]),
+        cmd_bat = " && ".join(
+            ["@copy /Y $(location %s) $(location %s) >NUL" %
+             (s, _RelativeOutputPath(s, strip_prefix, dest)) for s in srcs]),
     )
 
     native.filegroup(

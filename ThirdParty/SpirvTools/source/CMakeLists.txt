@@ -13,7 +13,7 @@
 # limitations under the License.
 
 set(GRAMMAR_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_grammar_tables.py")
-set(VIMSYNTAX_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_vim_syntax.py")
+set(VIMSYNTAX_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/vim/generate_syntax.py")
 set(XML_REGISTRY_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_registry_tables.py")
 set(LANG_HEADER_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_language_headers.py")
 
@@ -31,7 +31,7 @@ macro(spvtools_core_tables CONFIG_VERSION)
   set(GRAMMAR_INSTS_INC_FILE "${spirv-tools_BINARY_DIR}/core.insts-${CONFIG_VERSION}.inc")
   set(GRAMMAR_KINDS_INC_FILE "${spirv-tools_BINARY_DIR}/operand.kinds-${CONFIG_VERSION}.inc")
   add_custom_command(OUTPUT ${GRAMMAR_INSTS_INC_FILE} ${GRAMMAR_KINDS_INC_FILE}
-    COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
+    COMMAND Python3::Interpreter ${GRAMMAR_PROCESSING_SCRIPT}
       --spirv-core-grammar=${GRAMMAR_JSON_FILE}
       --extinst-debuginfo-grammar=${DEBUGINFO_GRAMMAR_JSON_FILE}
       --extinst-cldebuginfo100-grammar=${CLDEBUGINFO100_GRAMMAR_JSON_FILE}
@@ -53,7 +53,7 @@ macro(spvtools_enum_string_mapping CONFIG_VERSION)
   set(GRAMMAR_ENUM_STRING_MAPPING_INC_FILE "${spirv-tools_BINARY_DIR}/enum_string_mapping.inc")
   add_custom_command(OUTPUT ${GRAMMAR_EXTENSION_ENUM_INC_FILE}
      ${GRAMMAR_ENUM_STRING_MAPPING_INC_FILE}
-    COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
+    COMMAND Python3::Interpreter ${GRAMMAR_PROCESSING_SCRIPT}
       --spirv-core-grammar=${GRAMMAR_JSON_FILE}
       --extinst-debuginfo-grammar=${DEBUGINFO_GRAMMAR_JSON_FILE}
       --extinst-cldebuginfo100-grammar=${CLDEBUGINFO100_GRAMMAR_JSON_FILE}
@@ -75,7 +75,7 @@ macro(spvtools_vimsyntax CONFIG_VERSION CLVERSION)
   set(OPENCL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.opencl.std.100.grammar.json")
   set(VIMSYNTAX_FILE "${spirv-tools_BINARY_DIR}/spvasm.vim")
   add_custom_command(OUTPUT ${VIMSYNTAX_FILE}
-      COMMAND ${PYTHON_EXECUTABLE} ${VIMSYNTAX_PROCESSING_SCRIPT}
+      COMMAND Python3::Interpreter ${VIMSYNTAX_PROCESSING_SCRIPT}
       --spirv-core-grammar=${GRAMMAR_JSON_FILE}
       --extinst-debuginfo-grammar=${DEBUGINFO_GRAMMAR_JSON_FILE}
       --extinst-glsl-grammar=${GLSL_GRAMMAR_JSON_FILE}
@@ -91,7 +91,7 @@ macro(spvtools_glsl_tables CONFIG_VERSION)
   set(GLSL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.glsl.std.450.grammar.json")
   set(GRAMMAR_INC_FILE "${spirv-tools_BINARY_DIR}/glsl.std.450.insts.inc")
   add_custom_command(OUTPUT ${GRAMMAR_INC_FILE}
-    COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
+    COMMAND Python3::Interpreter ${GRAMMAR_PROCESSING_SCRIPT}
       --extinst-glsl-grammar=${GLSL_GRAMMAR_JSON_FILE}
       --glsl-insts-output=${GRAMMAR_INC_FILE}
       --output-language=c++
@@ -105,7 +105,7 @@ macro(spvtools_opencl_tables CONFIG_VERSION)
   set(OPENCL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.opencl.std.100.grammar.json")
   set(GRAMMAR_INC_FILE "${spirv-tools_BINARY_DIR}/opencl.std.insts.inc")
   add_custom_command(OUTPUT ${GRAMMAR_INC_FILE}
-    COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
+    COMMAND Python3::Interpreter ${GRAMMAR_PROCESSING_SCRIPT}
       --extinst-opencl-grammar=${OPENCL_GRAMMAR_JSON_FILE}
       --opencl-insts-output=${GRAMMAR_INC_FILE}
     DEPENDS ${GRAMMAR_PROCESSING_SCRIPT} ${CORE_GRAMMAR_JSON_FILE} ${OPENCL_GRAMMAR_JSON_FILE}
@@ -120,7 +120,7 @@ macro(spvtools_vendor_tables VENDOR_TABLE SHORT_NAME OPERAND_KIND_PREFIX)
     set(GRAMMAR_FILE "${spirv-tools_SOURCE_DIR}/source/extinst.${VENDOR_TABLE}.grammar.json")
   endif()
   add_custom_command(OUTPUT ${INSTS_FILE}
-    COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
+    COMMAND Python3::Interpreter ${GRAMMAR_PROCESSING_SCRIPT}
       --extinst-vendor-grammar=${GRAMMAR_FILE}
       --vendor-insts-output=${INSTS_FILE}
       --vendor-operand-kind-prefix=${OPERAND_KIND_PREFIX}
@@ -134,7 +134,7 @@ endmacro(spvtools_vendor_tables)
 macro(spvtools_extinst_lang_headers NAME GRAMMAR_FILE)
   set(OUT_H ${spirv-tools_BINARY_DIR}/${NAME}.h)
   add_custom_command(OUTPUT ${OUT_H}
-    COMMAND ${PYTHON_EXECUTABLE} ${LANG_HEADER_PROCESSING_SCRIPT}
+    COMMAND Python3::Interpreter ${LANG_HEADER_PROCESSING_SCRIPT}
       --extinst-grammar=${GRAMMAR_FILE}
       --extinst-output-path=${OUT_H}
     DEPENDS ${LANG_HEADER_PROCESSING_SCRIPT} ${GRAMMAR_FILE}
@@ -156,6 +156,7 @@ spvtools_vendor_tables("debuginfo" "debuginfo" "")
 spvtools_vendor_tables("opencl.debuginfo.100" "cldi100" "CLDEBUG100_")
 spvtools_vendor_tables("nonsemantic.shader.debuginfo.100" "shdi100" "SHDEBUG100_")
 spvtools_vendor_tables("nonsemantic.clspvreflection" "clspvreflection" "")
+spvtools_vendor_tables("nonsemantic.vkspreflection" "vkspreflection" "")
 spvtools_extinst_lang_headers("DebugInfo" ${DEBUGINFO_GRAMMAR_JSON_FILE})
 spvtools_extinst_lang_headers("OpenCLDebugInfo100" ${CLDEBUGINFO100_GRAMMAR_JSON_FILE})
 spvtools_extinst_lang_headers("NonSemanticShaderDebugInfo100" ${VKDEBUGINFO100_GRAMMAR_JSON_FILE})
@@ -168,7 +169,7 @@ set_property(TARGET spirv-tools-vimsyntax PROPERTY FOLDER "SPIRV-Tools utilities
 set(GENERATOR_INC_FILE ${spirv-tools_BINARY_DIR}/generators.inc)
 set(SPIRV_XML_REGISTRY_FILE ${SPIRV_HEADER_INCLUDE_DIR}/spirv/spir-v.xml)
 add_custom_command(OUTPUT ${GENERATOR_INC_FILE}
-  COMMAND ${PYTHON_EXECUTABLE} ${XML_REGISTRY_PROCESSING_SCRIPT}
+  COMMAND Python3::Interpreter ${XML_REGISTRY_PROCESSING_SCRIPT}
     --xml=${SPIRV_XML_REGISTRY_FILE}
     --generator-output=${GENERATOR_INC_FILE}
   DEPENDS ${XML_REGISTRY_PROCESSING_SCRIPT} ${SPIRV_XML_REGISTRY_FILE}
@@ -195,11 +196,14 @@ set(SPIRV_TOOLS_BUILD_VERSION_INC
   ${spirv-tools_BINARY_DIR}/build-version.inc)
 set(SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR
   ${spirv-tools_SOURCE_DIR}/utils/update_build_version.py)
+set(SPIRV_TOOLS_CHANGES_FILE
+  ${spirv-tools_SOURCE_DIR}/CHANGES)
 add_custom_command(OUTPUT ${SPIRV_TOOLS_BUILD_VERSION_INC}
-   COMMAND ${PYTHON_EXECUTABLE}
+   COMMAND Python3::Interpreter
            ${SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR}
-           ${spirv-tools_SOURCE_DIR} ${SPIRV_TOOLS_BUILD_VERSION_INC}
+           ${SPIRV_TOOLS_CHANGES_FILE} ${SPIRV_TOOLS_BUILD_VERSION_INC}
    DEPENDS ${SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR}
+           ${SPIRV_TOOLS_CHANGES_FILE}
    COMMENT "Update build-version.inc in the SPIRV-Tools build directory (if necessary).")
 # Convenience target for standalone generation of the build-version.inc file.
 # This is not required for any dependence chain.
@@ -262,6 +266,7 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/table.h
   ${CMAKE_CURRENT_SOURCE_DIR}/text.h
   ${CMAKE_CURRENT_SOURCE_DIR}/text_handler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/to_string.h
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate.h
 
   ${CMAKE_CURRENT_SOURCE_DIR}/util/bit_vector.cpp
@@ -290,6 +295,7 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/table.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/text.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/text_handler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/to_string.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_adjacency.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_annotation.cpp
@@ -328,6 +334,7 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_ray_tracing_reorder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_scopes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_small_type_uses.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_tensor_layout.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_type.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/decoration.h
   ${CMAKE_CURRENT_SOURCE_DIR}/val/basic_block.cpp
@@ -413,12 +420,6 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
       target_link_libraries(${target} rt)
     endforeach()
   endif()
-endif()
-
-if (ANDROID)
-    foreach(target ${SPIRV_TOOLS_TARGETS})
-        target_link_libraries(${target} PRIVATE android log)
-    endforeach()
 endif()
 
 if(ENABLE_SPIRV_TOOLS_INSTALL)

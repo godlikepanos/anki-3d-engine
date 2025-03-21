@@ -27,6 +27,7 @@ SPVTOOLS_SRC_FILES := \
 		source/table.cpp \
 		source/text.cpp \
 		source/text_handler.cpp \
+		source/to_string.cpp \
 		source/util/bit_vector.cpp \
 		source/util/parse_number.cpp \
 		source/util/string_utils.cpp \
@@ -74,6 +75,7 @@ SPVTOOLS_SRC_FILES := \
 		source/val/validate_ray_tracing_reorder.cpp \
 		source/val/validate_scopes.cpp \
 		source/val/validate_small_type_uses.cpp \
+		source/val/validate_tensor_layout.cpp \
 		source/val/validate_type.cpp
 
 SPVTOOLS_OPT_SRC_FILES := \
@@ -128,14 +130,11 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/inline_pass.cpp \
 		source/opt/inline_exhaustive_pass.cpp \
 		source/opt/inline_opaque_pass.cpp \
-		source/opt/inst_bindless_check_pass.cpp \
-		source/opt/inst_buff_addr_check_pass.cpp \
-		source/opt/inst_debug_printf_pass.cpp \
 		source/opt/instruction.cpp \
 		source/opt/instruction_list.cpp \
-		source/opt/instrument_pass.cpp \
 		source/opt/interface_var_sroa.cpp \
 		source/opt/interp_fixup_pass.cpp \
+		source/opt/invocation_interlock_placement_pass.cpp \
 		source/opt/ir_context.cpp \
 		source/opt/ir_loader.cpp \
 		source/opt/licm_pass.cpp \
@@ -156,7 +155,9 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/loop_utils.cpp \
 		source/opt/mem_pass.cpp \
 		source/opt/merge_return_pass.cpp \
+		source/opt/modify_maximal_reconvergence.cpp \
 		source/opt/module.cpp \
+		source/opt/opextinst_forward_ref_fixup_pass.cpp \
 		source/opt/optimizer.cpp \
 		source/opt/pass.cpp \
 		source/opt/pass_manager.cpp \
@@ -171,17 +172,22 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/remove_unused_interface_variables_pass.cpp \
 		source/opt/replace_desc_array_access_using_var_index.cpp \
 		source/opt/replace_invalid_opc.cpp \
+		source/opt/resolve_binding_conflicts_pass.cpp \
 		source/opt/scalar_analysis.cpp \
 		source/opt/scalar_analysis_simplification.cpp \
 		source/opt/scalar_replacement_pass.cpp \
 		source/opt/set_spec_constant_default_value_pass.cpp \
 		source/opt/simplification_pass.cpp \
+		source/opt/split_combined_image_sampler_pass.cpp \
 		source/opt/spread_volatile_semantics.cpp \
 		source/opt/ssa_rewrite_pass.cpp \
 		source/opt/strength_reduction_pass.cpp \
 		source/opt/strip_debug_info_pass.cpp \
 		source/opt/strip_nonsemantic_info_pass.cpp \
 		source/opt/struct_cfg_analysis.cpp \
+		source/opt/struct_packing_pass.cpp \
+		source/opt/switch_descriptorset_pass.cpp \
+		source/opt/trim_capabilities_pass.cpp \
 		source/opt/type_manager.cpp \
 		source/opt/types.cpp \
 		source/opt/unify_const_pass.cpp \
@@ -285,6 +291,7 @@ $(eval $(call gen_spvtools_vendor_tables,$(SPVTOOLS_OUT_PATH),spv-amd-shader-bal
 $(eval $(call gen_spvtools_vendor_tables,$(SPVTOOLS_OUT_PATH),spv-amd-shader-explicit-vertex-parameter,""))
 $(eval $(call gen_spvtools_vendor_tables,$(SPVTOOLS_OUT_PATH),spv-amd-shader-trinary-minmax,""))
 $(eval $(call gen_spvtools_vendor_tables,$(SPVTOOLS_OUT_PATH),nonsemantic.clspvreflection,""))
+$(eval $(call gen_spvtools_vendor_tables,$(SPVTOOLS_OUT_PATH),nonsemantic.vkspreflection,""))
 
 define gen_spvtools_enum_string_mapping
 $(call generate-file-dir,$(1)/extension_enum.inc.inc)
@@ -311,9 +318,9 @@ define gen_spvtools_build_version_inc
 $(call generate-file-dir,$(1)/dummy_filename)
 $(1)/build-version.inc: \
         $(LOCAL_PATH)/utils/update_build_version.py \
-        $(LOCAL_PATH)
+        $(LOCAL_PATH)/CHANGES
 		@$(HOST_PYTHON) $(LOCAL_PATH)/utils/update_build_version.py \
-		                $(LOCAL_PATH) $(1)/build-version.inc
+		                $(LOCAL_PATH)/CHANGES $(1)/build-version.inc
 		@echo "[$(TARGET_ARCH_ABI)] Generate       : build-version.inc <= CHANGES"
 $(LOCAL_PATH)/source/software_version.cpp: $(1)/build-version.inc
 endef
@@ -340,7 +347,7 @@ LOCAL_C_INCLUDES := \
 		$(SPVTOOLS_OUT_PATH)
 LOCAL_EXPORT_C_INCLUDES := \
 		$(LOCAL_PATH)/include
-LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror
+LOCAL_CXXFLAGS:=-std=c++17 -fno-exceptions -fno-rtti -Werror
 LOCAL_SRC_FILES:= $(SPVTOOLS_SRC_FILES)
 include $(BUILD_STATIC_LIBRARY)
 
@@ -351,7 +358,7 @@ LOCAL_C_INCLUDES := \
 		$(LOCAL_PATH)/source \
 		$(SPVHEADERS_LOCAL_PATH)/include \
 		$(SPVTOOLS_OUT_PATH)
-LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror
+LOCAL_CXXFLAGS:=-std=c++17 -fno-exceptions -fno-rtti -Werror
 LOCAL_STATIC_LIBRARIES:=SPIRV-Tools
 LOCAL_SRC_FILES:= $(SPVTOOLS_OPT_SRC_FILES)
 include $(BUILD_STATIC_LIBRARY)

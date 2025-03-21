@@ -35,6 +35,26 @@
 namespace spvtools {
 namespace opt {
 
+inline std::ostream& operator<<(std::ostream& os,
+                                const effcee::Result::Status ers) {
+  switch (ers) {
+    case effcee::Result::Status::Ok:
+      return os << "effcee::Result::Status::Ok";
+    case effcee::Result::Status::Fail:
+      return os << "effcee::Result::Status::Fail";
+    case effcee::Result::Status::BadOption:
+      return os << "effcee::Result::Status::BadOption";
+    case effcee::Result::Status::NoRules:
+      return os << "effcee::Result::Status::NoRules";
+    case effcee::Result::Status::BadRule:
+      return os << "effcee::Result::Status::BadRule";
+    default:
+      break;
+  }
+  return os << "(invalid effcee::Result::Status " << static_cast<unsigned>(ers)
+            << ")";
+}
+
 // Template class for testing passes. It contains some handy utility methods for
 // running passes and checking results.
 //
@@ -102,23 +122,24 @@ class PassTest : public TestT {
     auto status = Pass::Status::SuccessWithoutChange;
     std::tie(optimized_bin, status) = SinglePassRunToBinary<PassT>(
         assembly, skip_nop, std::forward<Args>(args)...);
-    if (do_validation) {
-      spv_context spvContext = spvContextCreate(env_);
-      spv_diagnostic diagnostic = nullptr;
-      spv_const_binary_t binary = {optimized_bin.data(), optimized_bin.size()};
-      spv_result_t error = spvValidateWithOptions(
-          spvContext, ValidatorOptions(), &binary, &diagnostic);
-      EXPECT_EQ(error, 0);
-      if (error != 0) spvDiagnosticPrint(diagnostic);
-      spvDiagnosticDestroy(diagnostic);
-      spvContextDestroy(spvContext);
-    }
     std::string optimized_asm;
     SpirvTools tools(env_);
     EXPECT_TRUE(
         tools.Disassemble(optimized_bin, &optimized_asm, disassemble_options_))
         << "Disassembling failed for shader:\n"
         << assembly << std::endl;
+    if (do_validation) {
+      spv_context spvContext = spvContextCreate(env_);
+      spv_diagnostic diagnostic = nullptr;
+      spv_const_binary_t binary = {optimized_bin.data(), optimized_bin.size()};
+      spv_result_t error = spvValidateWithOptions(
+          spvContext, ValidatorOptions(), &binary, &diagnostic);
+      EXPECT_EQ(error, 0) << "validation failed for optimized asm:\n"
+                          << optimized_asm;
+      if (error != 0) spvDiagnosticPrint(diagnostic);
+      spvDiagnosticDestroy(diagnostic);
+      spvContextDestroy(spvContext);
+    }
     return std::make_tuple(optimized_asm, status);
   }
 

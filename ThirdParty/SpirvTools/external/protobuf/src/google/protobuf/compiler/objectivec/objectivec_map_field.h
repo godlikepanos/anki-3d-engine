@@ -41,21 +41,23 @@ namespace compiler {
 namespace objectivec {
 
 class MapFieldGenerator : public RepeatedFieldGenerator {
-  friend FieldGenerator* FieldGenerator::Make(const FieldDescriptor* field,
-                                              const Options& options);
+  friend FieldGenerator* FieldGenerator::Make(const FieldDescriptor* field);
 
  public:
-  virtual void FinishInitialization(void);
+  virtual void FinishInitialization(void) override;
 
   MapFieldGenerator(const MapFieldGenerator&) = delete;
   MapFieldGenerator& operator=(const MapFieldGenerator&) = delete;
 
  protected:
-  MapFieldGenerator(const FieldDescriptor* descriptor, const Options& options);
+  explicit MapFieldGenerator(const FieldDescriptor* descriptor);
   virtual ~MapFieldGenerator();
 
-  virtual void DetermineObjectiveCClassDefinitions(std::set<string>* fwd_decls) const;
-  virtual void DetermineForwardDeclarations(std::set<string>* fwd_decls) const;
+  virtual void DetermineObjectiveCClassDefinitions(
+      std::set<std::string>* fwd_decls) const override;
+  virtual void DetermineForwardDeclarations(
+      std::set<std::string>* fwd_decls,
+      bool include_external_types) const override;
 
  private:
   std::unique_ptr<FieldGenerator> value_field_generator_;

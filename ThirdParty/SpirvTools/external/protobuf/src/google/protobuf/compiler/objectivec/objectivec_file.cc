@@ -31,6 +31,7 @@
 #include <google/protobuf/compiler/objectivec/objectivec_file.h>
 #include <google/protobuf/compiler/objectivec/objectivec_enum.h>
 #include <google/protobuf/compiler/objectivec/objectivec_extension.h>
+#include <google/protobuf/compiler/objectivec/objectivec_helpers.h>
 #include <google/protobuf/compiler/objectivec/objectivec_message.h>
 #include <google/protobuf/compiler/code_generator.h>
 #include <google/protobuf/io/printer.h>
@@ -52,9 +53,13 @@ namespace objectivec {
 namespace {
 
 // This is also found in GPBBootstrap.h, and needs to be kept in sync.
-const int32 GOOGLE_PROTOBUF_OBJC_VERSION = 30004;
+const int32_t GOOGLE_PROTOBUF_OBJC_VERSION = 30004;
 
 const char* kHeaderExtension = ".pbobjc.h";
+
+std::string BundledFileName(const FileDescriptor* file) {
+  return "GPB" + FilePathBasename(file) + kHeaderExtension;
+}
 
 // Checks if a message contains any enums definitions (on the message or
 // a nested message under it).
@@ -112,46 +117,77 @@ bool FileContainsExtensions(const FileDescriptor* file) {
   return false;
 }
 
-// Helper for CollectMinimalFileDepsContainingExtensionsWorker that marks all
-// deps as visited and prunes them from the needed files list.
-void PruneFileAndDepsMarkingAsVisited(
-    const FileDescriptor* file,
-    std::vector<const FileDescriptor*>* files,
-    std::set<const FileDescriptor*>* files_visited) {
-  std::vector<const FileDescriptor*>::iterator iter =
-      std::find(files->begin(), files->end(), file);
-  if (iter != files->end()) {
-    files->erase(iter);
-  }
-  files_visited->insert(file);
+bool IsDirectDependency(const FileDescriptor* dep, const FileDescriptor* file) {
   for (int i = 0; i < file->dependency_count(); i++) {
-    PruneFileAndDepsMarkingAsVisited(file->dependency(i), files, files_visited);
+    if (dep == file->dependency(i)) {
+      return true;
+    }
   }
+  return false;
 }
 
-// Helper for CollectMinimalFileDepsContainingExtensions.
-void CollectMinimalFileDepsContainingExtensionsWorker(
-    const FileDescriptor* file,
-    std::vector<const FileDescriptor*>* files,
-    std::set<const FileDescriptor*>* files_visited) {
-  if (files_visited->find(file) != files_visited->end()) {
-    return;
+struct FileDescriptorsOrderedByName {
+  inline bool operator()(const FileDescriptor* a,
+                         const FileDescriptor* b) const {
+    return a->name() < b->name();
   }
-  files_visited->insert(file);
+};
 
-  if (FileContainsExtensions(file)) {
-    files->push_back(file);
-    for (int i = 0; i < file->dependency_count(); i++) {
-      const FileDescriptor* dep = file->dependency(i);
-      PruneFileAndDepsMarkingAsVisited(dep, files, files_visited);
-    }
-  } else {
-    for (int i = 0; i < file->dependency_count(); i++) {
-      const FileDescriptor* dep = file->dependency(i);
-      CollectMinimalFileDepsContainingExtensionsWorker(dep, files,
-                                                       files_visited);
+}  // namespace
+
+FileGenerator::CommonState::CommonState() { }
+
+const FileGenerator::CommonState::MinDepsEntry&
+FileGenerator::CommonState::CollectMinimalFileDepsContainingExtensionsInternal(
+    const FileDescriptor* file) {
+  auto it = deps_info_cache_.find(file);
+  if (it != deps_info_cache_.end()) {
+    return it->second;
+  }
+
+  std::set<const FileDescriptor*> min_deps_collector;
+  std::set<const FileDescriptor*> covered_deps_collector;
+  std::set<const FileDescriptor*> to_prune;
+  for (int i = 0; i < file->dependency_count(); i++) {
+    const FileDescriptor* dep = file->dependency(i);
+    MinDepsEntry dep_info =
+        CollectMinimalFileDepsContainingExtensionsInternal(dep);
+
+    // Everything the dep covered, this file will also cover.
+    covered_deps_collector.insert(dep_info.covered_deps.begin(), dep_info.covered_deps.end());
+    // Prune everything from the dep's covered list in case another dep lists it
+    // as a min dep.
+    to_prune.insert(dep_info.covered_deps.begin(), dep_info.covered_deps.end());
+
+    // Does the dep have any extensions...
+    if (dep_info.has_extensions) {
+      // Yes -> Add this file, prune its min_deps and add them to the covered deps.
+      min_deps_collector.insert(dep);
+      to_prune.insert(dep_info.min_deps.begin(), dep_info.min_deps.end());
+      covered_deps_collector.insert(dep_info.min_deps.begin(), dep_info.min_deps.end());
+    } else {
+      // No -> Just use its min_deps.
+      min_deps_collector.insert(dep_info.min_deps.begin(), dep_info.min_deps.end());
     }
   }
+
+  const bool file_has_exts = FileContainsExtensions(file);
+
+  // Fast path: if nothing to prune or there was only one dep, the prune work is
+  // a waste, skip it.
+  if (to_prune.empty() || file->dependency_count() == 1) {
+    return deps_info_cache_.insert(
+        {file, {file_has_exts, min_deps_collector, covered_deps_collector}}).first->second;
+  }
+
+  std::set<const FileDescriptor*> min_deps;
+  std::copy_if(min_deps_collector.begin(), min_deps_collector.end(),
+               std::inserter(min_deps, min_deps.end()),
+               [&](const FileDescriptor* value){
+    return to_prune.find(value) == to_prune.end();
+  });
+  return deps_info_cache_.insert(
+      {file, {file_has_exts, min_deps, covered_deps_collector}}).first->second;
 }
 
 // Collect the deps of the given file that contain extensions. This can be used to
@@ -163,44 +199,36 @@ void CollectMinimalFileDepsContainingExtensionsWorker(
 // There are comments about what the expected code should be line and limited
 // testing objectivec/Tests/GPBUnittestProtos2.m around compilation (#imports
 // specifically).
-void CollectMinimalFileDepsContainingExtensions(
-    const FileDescriptor* file,
-    std::vector<const FileDescriptor*>* files) {
-  std::set<const FileDescriptor*> files_visited;
-  for (int i = 0; i < file->dependency_count(); i++) {
-    const FileDescriptor* dep = file->dependency(i);
-    CollectMinimalFileDepsContainingExtensionsWorker(dep, files,
-                                                     &files_visited);
-  }
+const std::vector<const FileDescriptor*>
+FileGenerator::CommonState::CollectMinimalFileDepsContainingExtensions(
+    const FileDescriptor* file) {
+  std::set<const FileDescriptor*> min_deps =
+    CollectMinimalFileDepsContainingExtensionsInternal(file).min_deps;
+  // Sort the list since pointer order isn't stable across runs.
+  std::vector<const FileDescriptor*> result(min_deps.begin(), min_deps.end());
+  std::sort(result.begin(), result.end(), FileDescriptorsOrderedByName());
+  return result;
 }
 
-bool IsDirectDependency(const FileDescriptor* dep, const FileDescriptor* file) {
-  for (int i = 0; i < file->dependency_count(); i++) {
-    if (dep == file->dependency(i)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-}  // namespace
-
-FileGenerator::FileGenerator(const FileDescriptor *file, const Options& options)
+FileGenerator::FileGenerator(const FileDescriptor* file,
+                             const GenerationOptions& generation_options,
+                             CommonState& common_state)
     : file_(file),
+      generation_options_(generation_options),
+      common_state_(common_state),
       root_class_name_(FileClassName(file)),
-      is_bundled_proto_(IsProtobufLibraryBundledProtoFile(file)),
-      options_(options) {
+      is_bundled_proto_(IsProtobufLibraryBundledProtoFile(file)) {
   for (int i = 0; i < file_->enum_type_count(); i++) {
-    EnumGenerator *generator = new EnumGenerator(file_->enum_type(i));
+    EnumGenerator* generator = new EnumGenerator(file_->enum_type(i));
     enum_generators_.emplace_back(generator);
   }
   for (int i = 0; i < file_->message_type_count(); i++) {
-    MessageGenerator *generator =
-        new MessageGenerator(root_class_name_, file_->message_type(i), options_);
+    MessageGenerator* generator =
+        new MessageGenerator(root_class_name_, file_->message_type(i));
     message_generators_.emplace_back(generator);
   }
   for (int i = 0; i < file_->extension_count(); i++) {
-    ExtensionGenerator *generator =
+    ExtensionGenerator* generator =
         new ExtensionGenerator(root_class_name_, file_->extension(i));
     extension_generators_.emplace_back(generator);
   }
@@ -208,14 +236,18 @@ FileGenerator::FileGenerator(const FileDescriptor *file, const Options& options)
 
 FileGenerator::~FileGenerator() {}
 
-void FileGenerator::GenerateHeader(io::Printer *printer) {
-  std::vector<string> headers;
+void FileGenerator::GenerateHeader(io::Printer* printer) {
+  std::vector<std::string> headers;
   // Generated files bundled with the library get minimal imports, everything
   // else gets the wrapper so everything is usable.
   if (is_bundled_proto_) {
     headers.push_back("GPBDescriptor.h");
     headers.push_back("GPBMessage.h");
     headers.push_back("GPBRootObject.h");
+    for (int i = 0; i < file_->dependency_count(); i++) {
+      const std::string header_name = BundledFileName(file_->dependency(i));
+      headers.push_back(header_name);
+    }
   } else {
     headers.push_back("GPBProtocolBuffers.h");
   }
@@ -237,16 +269,26 @@ void FileGenerator::GenerateHeader(io::Printer *printer) {
       "\n",
       "google_protobuf_objc_version", StrCat(GOOGLE_PROTOBUF_OBJC_VERSION));
 
-  // #import any headers for "public imports" in the proto file.
+  // The bundled protos (WKTs) don't use of forward declarations.
+  bool headers_use_forward_declarations =
+      generation_options_.headers_use_forward_declarations && !is_bundled_proto_;
+
   {
     ImportWriter import_writer(
-        options_.generate_for_named_framework,
-        options_.named_framework_to_proto_path_mappings_path,
-        options_.runtime_import_prefix,
-        is_bundled_proto_);
-    const string header_extension(kHeaderExtension);
-    for (int i = 0; i < file_->public_dependency_count(); i++) {
-      import_writer.AddFile(file_->public_dependency(i), header_extension);
+        generation_options_.generate_for_named_framework,
+        generation_options_.named_framework_to_proto_path_mappings_path,
+        generation_options_.runtime_import_prefix,
+        /* include_wkt_imports = */ false);
+    const std::string header_extension(kHeaderExtension);
+    if (headers_use_forward_declarations) {
+      // #import any headers for "public imports" in the proto file.
+      for (int i = 0; i < file_->public_dependency_count(); i++) {
+        import_writer.AddFile(file_->public_dependency(i), header_extension);
+      }
+    } else {
+      for (int i = 0; i < file_->dependency_count(); i++) {
+        import_writer.AddFile(file_->dependency(i), header_extension);
+      }
     }
     import_writer.Print(printer);
   }
@@ -264,11 +306,13 @@ void FileGenerator::GenerateHeader(io::Printer *printer) {
       "CF_EXTERN_C_BEGIN\n"
       "\n");
 
-  std::set<string> fwd_decls;
+  std::set<std::string> fwd_decls;
   for (const auto& generator : message_generators_) {
-    generator->DetermineForwardDeclarations(&fwd_decls);
+    generator->DetermineForwardDeclarations(
+        &fwd_decls,
+        /* include_external_types = */ headers_use_forward_declarations);
   }
-  for (std::set<string>::const_iterator i(fwd_decls.begin());
+  for (std::set<std::string>::const_iterator i(fwd_decls.begin());
        i != fwd_decls.end(); ++i) {
     printer->Print("$value$;\n", "value", *i);
   }
@@ -336,10 +380,13 @@ void FileGenerator::GenerateHeader(io::Printer *printer) {
       "// @@protoc_insertion_point(global_scope)\n");
 }
 
-void FileGenerator::GenerateSource(io::Printer *printer) {
+void FileGenerator::GenerateSource(io::Printer* printer) {
   // #import the runtime support.
-  std::vector<string> headers;
+  std::vector<std::string> headers;
   headers.push_back("GPBProtocolBuffers_RuntimeSupport.h");
+  if (is_bundled_proto_) {
+    headers.push_back(BundledFileName(file_));
+  }
   PrintFileRuntimePreamble(printer, headers);
 
   // Enums use atomic in the generated code, so add the system import as needed.
@@ -349,31 +396,37 @@ void FileGenerator::GenerateSource(io::Printer *printer) {
         "\n");
   }
 
-  std::vector<const FileDescriptor*> deps_with_extensions;
-  CollectMinimalFileDepsContainingExtensions(file_, &deps_with_extensions);
+  std::vector<const FileDescriptor*> deps_with_extensions =
+    common_state_.CollectMinimalFileDepsContainingExtensions(file_);
+
+  // The bundled protos (WKTs) don't use of forward declarations.
+  bool headers_use_forward_declarations =
+      generation_options_.headers_use_forward_declarations && !is_bundled_proto_;
 
   {
     ImportWriter import_writer(
-        options_.generate_for_named_framework,
-        options_.named_framework_to_proto_path_mappings_path,
-        options_.runtime_import_prefix,
-        is_bundled_proto_);
-    const string header_extension(kHeaderExtension);
+        generation_options_.generate_for_named_framework,
+        generation_options_.named_framework_to_proto_path_mappings_path,
+        generation_options_.runtime_import_prefix,
+        /* include_wkt_imports = */ false);
+    const std::string header_extension(kHeaderExtension);
 
     // #import the header for this proto file.
     import_writer.AddFile(file_, header_extension);
 
-    // #import the headers for anything that a plain dependency of this proto
-    // file (that means they were just an include, not a "public" include).
-    std::set<string> public_import_names;
-    for (int i = 0; i < file_->public_dependency_count(); i++) {
-      public_import_names.insert(file_->public_dependency(i)->name());
-    }
-    for (int i = 0; i < file_->dependency_count(); i++) {
-      const FileDescriptor *dep = file_->dependency(i);
-      bool public_import = (public_import_names.count(dep->name()) != 0);
-      if (!public_import) {
-        import_writer.AddFile(dep, header_extension);
+    if (headers_use_forward_declarations) {
+      // #import the headers for anything that a plain dependency of this proto
+      // file (that means they were just an include, not a "public" include).
+      std::set<std::string> public_import_names;
+      for (int i = 0; i < file_->public_dependency_count(); i++) {
+        public_import_names.insert(file_->public_dependency(i)->name());
+      }
+      for (int i = 0; i < file_->dependency_count(); i++) {
+        const FileDescriptor *dep = file_->dependency(i);
+        bool public_import = (public_import_names.count(dep->name()) != 0);
+        if (!public_import) {
+          import_writer.AddFile(dep, header_extension);
+        }
       }
     }
 
@@ -381,7 +434,7 @@ void FileGenerator::GenerateSource(io::Printer *printer) {
     // imported so it can get merged into the root's extensions registry.
     // See the Note by CollectMinimalFileDepsContainingExtensions before
     // changing this.
-    for (std::vector<const FileDescriptor *>::iterator iter =
+    for (std::vector<const FileDescriptor*>::iterator iter =
              deps_with_extensions.begin();
          iter != deps_with_extensions.end(); ++iter) {
       if (!IsDirectDependency(*iter, file_)) {
@@ -400,7 +453,7 @@ void FileGenerator::GenerateSource(io::Printer *printer) {
     }
   }
 
-  std::set<string> fwd_decls;
+  std::set<std::string> fwd_decls;
   for (const auto& generator : message_generators_) {
     generator->DetermineObjectiveCClassDefinitions(&fwd_decls);
   }
@@ -421,7 +474,7 @@ void FileGenerator::GenerateSource(io::Printer *printer) {
       "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n");
   if (includes_oneof) {
     // The generated code for oneof's uses direct ivar access, suppress the
-    // warning incase developer turn that on in the context they compile the
+    // warning in case developer turn that on in the context they compile the
     // generated code.
     printer->Print(
         "#pragma clang diagnostic ignored \"-Wdirect-ivar-access\"\n");
@@ -498,10 +551,10 @@ void FileGenerator::GenerateSource(io::Printer *printer) {
     } else {
       printer->Print(
           "// Merge in the imports (direct or indirect) that defined extensions.\n");
-      for (std::vector<const FileDescriptor *>::iterator iter =
+      for (std::vector<const FileDescriptor*>::iterator iter =
                deps_with_extensions.begin();
            iter != deps_with_extensions.end(); ++iter) {
-        const string root_class_name(FileClassName((*iter)));
+        const std::string root_class_name(FileClassName((*iter)));
         printer->Print(
             "[registry addExtensions:[$dependency$ extensionRegistry]];\n",
             "dependency", root_class_name);
@@ -531,7 +584,7 @@ void FileGenerator::GenerateSource(io::Printer *printer) {
 
   // File descriptor only needed if there are messages to use it.
   if (!message_generators_.empty()) {
-    std::map<string, string> vars;
+    std::map<std::string, std::string> vars;
     vars["root_class_name"] = root_class_name_;
     vars["package"] = file_->package();
     vars["objc_prefix"] = FileClassPrefix(file_);
@@ -592,14 +645,33 @@ void FileGenerator::GenerateSource(io::Printer *printer) {
 // files. This currently only supports the runtime coming from a framework
 // as defined by the official CocoaPod.
 void FileGenerator::PrintFileRuntimePreamble(
-    io::Printer* printer, const std::vector<string>& headers_to_import) const {
+    io::Printer* printer,
+    const std::vector<std::string>& headers_to_import) const {
   printer->Print(
       "// Generated by the protocol buffer compiler.  DO NOT EDIT!\n"
       "// source: $filename$\n"
       "\n",
       "filename", file_->name());
-  ImportWriter::PrintRuntimeImports(
-      printer, headers_to_import, options_.runtime_import_prefix, true);
+
+  if (is_bundled_proto_) {
+    // This is basically a clone of ImportWriter::PrintRuntimeImports() but
+    // without the CPP symbol gate, since within the bundled files, that isn't
+    // needed.
+    std::string import_prefix = generation_options_.runtime_import_prefix;
+    if (!import_prefix.empty()) {
+      import_prefix += "/";
+    }
+    for (const auto& header : headers_to_import) {
+      printer->Print(
+          "#import \"$import_prefix$$header$\"\n",
+          "import_prefix", import_prefix,
+          "header", header);
+    }
+  } else {
+    ImportWriter::PrintRuntimeImports(
+        printer, headers_to_import, generation_options_.runtime_import_prefix, true);
+  }
+
   printer->Print("\n");
 }
 

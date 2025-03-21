@@ -60,7 +60,7 @@ bool CompareFieldNumbers(const FieldDescriptor* d1, const FieldDescriptor* d2) {
 
 MessageGenerator::MessageGenerator(const Descriptor* descriptor,
                                    const Options* options)
-    : SourceGeneratorBase(descriptor->file(), options),
+    : SourceGeneratorBase(options),
       descriptor_(descriptor),
       has_bit_field_count_(0),
       end_tag_(GetGroupEndTag(descriptor)),
@@ -112,7 +112,7 @@ void MessageGenerator::AddSerializableAttribute(io::Printer* printer) {
 }
 
 void MessageGenerator::Generate(io::Printer* printer) {
-  std::map<string, string> vars;
+  std::map<std::string, std::string> vars;
   vars["class_name"] = class_name();
   vars["access_level"] = class_access_level();
 
@@ -238,8 +238,8 @@ void MessageGenerator::Generate(io::Printer* printer) {
     printer->Print("None = 0,\n");
     for (int j = 0; j < oneof->field_count(); j++) {
       const FieldDescriptor* field = oneof->field(j);
-      printer->Print("$field_property_name$ = $index$,\n",
-                     "field_property_name", GetPropertyName(field),
+      printer->Print("$oneof_case_name$ = $index$,\n",
+                     "oneof_case_name", GetOneofCaseName(field),
                      "index", StrCat(field->number()));
     }
     printer->Outdent();
@@ -374,7 +374,7 @@ bool MessageGenerator::HasNestedGeneratedTypes()
 }
 
 void MessageGenerator::GenerateCloningCode(io::Printer* printer) {
-  std::map<string, string> vars;
+  std::map<std::string, std::string> vars;
   WriteGeneratedCodeAttributes(printer);
   vars["class_name"] = class_name();
     printer->Print(
@@ -403,10 +403,10 @@ void MessageGenerator::GenerateCloningCode(io::Printer* printer) {
     for (int j = 0; j < oneof->field_count(); j++) {
       const FieldDescriptor* field = oneof->field(j);
       std::unique_ptr<FieldGeneratorBase> generator(CreateFieldGeneratorInternal(field));
-      vars["field_property_name"] = GetPropertyName(field);
+      vars["oneof_case_name"] = GetOneofCaseName(field);
       printer->Print(
           vars,
-          "case $property_name$OneofCase.$field_property_name$:\n");
+          "case $property_name$OneofCase.$oneof_case_name$:\n");
       printer->Indent();
       generator->GenerateCloningCode(printer);
       printer->Print("break;\n");
@@ -438,7 +438,7 @@ void MessageGenerator::GenerateFreezingCode(io::Printer* printer) {
 }
 
 void MessageGenerator::GenerateFrameworkMethods(io::Printer* printer) {
-    std::map<string, string> vars;
+    std::map<std::string, std::string> vars;
     vars["class_name"] = class_name();
 
     // Equality
@@ -605,7 +605,7 @@ void MessageGenerator::GenerateMergingMethods(io::Printer* printer) {
   // Note:  These are separate from GenerateMessageSerializationMethods()
   //   because they need to be generated even for messages that are optimized
   //   for code size.
-  std::map<string, string> vars;
+  std::map<std::string, std::string> vars;
   vars["class_name"] = class_name();
 
   WriteGeneratedCodeAttributes(printer);
@@ -635,10 +635,10 @@ void MessageGenerator::GenerateMergingMethods(io::Printer* printer) {
     printer->Indent();
     for (int j = 0; j < oneof->field_count(); j++) {
       const FieldDescriptor* field = oneof->field(j);
-      vars["field_property_name"] = GetPropertyName(field);
+      vars["oneof_case_name"] = GetOneofCaseName(field);
       printer->Print(
         vars,
-        "case $property_name$OneofCase.$field_property_name$:\n");
+        "case $property_name$OneofCase.$oneof_case_name$:\n");
       printer->Indent();
       std::unique_ptr<FieldGeneratorBase> generator(CreateFieldGeneratorInternal(field));
       generator->GenerateMergingCode(printer);
@@ -685,7 +685,7 @@ void MessageGenerator::GenerateMergingMethods(io::Printer* printer) {
 }
 
 void MessageGenerator::GenerateMainParseLoop(io::Printer* printer, bool use_parse_context) {
-  std::map<string, string> vars;
+  std::map<std::string, std::string> vars;
   vars["maybe_ref_input"] = use_parse_context ? "ref input" : "input";
 
   printer->Print(
@@ -717,7 +717,7 @@ void MessageGenerator::GenerateMainParseLoop(io::Printer* printer, bool use_pars
     const FieldDescriptor* field = fields_by_number()[i];
     internal::WireFormatLite::WireType wt =
         internal::WireFormat::WireTypeForFieldType(field->type());
-    uint32 tag = internal::WireFormatLite::MakeTag(field->number(), wt);
+    uint32_t tag = internal::WireFormatLite::MakeTag(field->number(), wt);
     // Handle both packed and unpacked repeated fields with the same Read*Array call;
     // the two generated cases are the packed and unpacked tags.
     // TODO(jonskeet): Check that is_packable is equivalent to

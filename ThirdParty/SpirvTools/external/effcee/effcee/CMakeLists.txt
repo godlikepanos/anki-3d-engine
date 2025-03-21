@@ -6,6 +6,7 @@ effcee_default_compile_options(effcee)
 target_include_directories(effcee
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/.. ${EFFCEE_RE2_DIR})
 target_link_libraries(effcee PUBLIC re2 ${CMAKE_THREADS_LIB_INIT})
+set_target_properties(effcee PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # TODO(dneto): Avoid installing gtest and gtest_main. ?!
 install(

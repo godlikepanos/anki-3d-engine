@@ -234,8 +234,14 @@ fi
 objectivec/generate_well_known_types.sh --check-only -j "${NUM_MAKE_JOBS}"
 
 header "Checking on the ObjC Runtime Code"
-objectivec/DevTools/pddm_tests.py
-if ! objectivec/DevTools/pddm.py --dry-run objectivec/*.[hm] objectivec/Tests/*.[hm] ; then
+# Some of the kokoro machines don't have python3 yet, so fall back to python if need be.
+if hash python3 >/dev/null 2>&1 ; then
+  LOCAL_PYTHON=python3
+else
+  LOCAL_PYTHON=python
+fi
+"${LOCAL_PYTHON}" objectivec/DevTools/pddm_tests.py
+if ! "${LOCAL_PYTHON}" objectivec/DevTools/pddm.py --dry-run objectivec/*.[hm] objectivec/Tests/*.[hm] ; then
   echo ""
   echo "Update by running:"
   echo "   objectivec/DevTools/pddm.py objectivec/*.[hm] objectivec/Tests/*.[hm]"
@@ -285,11 +291,11 @@ if [[ "${DO_XCODE_IOS_TESTS}" == "yes" ]] ; then
           -destination "platform=iOS Simulator,name=iPhone 4s,OS=8.1" # 32bit
           -destination "platform=iOS Simulator,name=iPhone 7,OS=latest" # 64bit
           # 10.x also seems to often fail running destinations in parallel (with
-          # 32bit one include atleast)
+          # 32bit one include at least)
           -disable-concurrent-destination-testing
       )
       ;;
-    11.*)
+    11.* | 12.* | 13.* | 14.*)
       # Dropped 32bit as Apple doesn't seem support the simulators either.
       XCODEBUILD_TEST_BASE_IOS+=(
           -destination "platform=iOS Simulator,name=iPhone 8,OS=latest" # 64bit
@@ -352,11 +358,14 @@ if [[ "${DO_XCODE_TVOS_TESTS}" == "yes" ]] ; then
       echo "ERROR: Xcode 10.0 or higher is required to build the test suite." 1>&2
       exit 11
       ;;
-    10.* | 11.* )
+    10.* | 11.* | 12.*)
       XCODEBUILD_TEST_BASE_TVOS+=(
-        # Test on the oldest and current.
-        -destination "platform=tvOS Simulator,name=Apple TV,OS=11.0"
         -destination "platform=tvOS Simulator,name=Apple TV 4K,OS=latest"
+      )
+      ;;
+    13.* | 14.*)
+      XCODEBUILD_TEST_BASE_TVOS+=(
+        -destination "platform=tvOS Simulator,name=Apple TV 4K (2nd generation),OS=latest"
       )
       ;;
     * )

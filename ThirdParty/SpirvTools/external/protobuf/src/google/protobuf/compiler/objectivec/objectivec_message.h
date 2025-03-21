@@ -35,7 +35,6 @@
 #include <set>
 #include <vector>
 #include <google/protobuf/compiler/objectivec/objectivec_field.h>
-#include <google/protobuf/compiler/objectivec/objectivec_helpers.h>
 #include <google/protobuf/compiler/objectivec/objectivec_oneof.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/io/printer.h>
@@ -50,9 +49,8 @@ class EnumGenerator;
 
 class MessageGenerator {
  public:
-  MessageGenerator(const string& root_classname,
-                   const Descriptor* descriptor,
-                   const Options& options);
+  MessageGenerator(const std::string& root_classname,
+                   const Descriptor* descriptor);
   ~MessageGenerator();
 
   MessageGenerator(const MessageGenerator&) = delete;
@@ -63,8 +61,9 @@ class MessageGenerator {
   void GenerateMessageHeader(io::Printer* printer);
   void GenerateSource(io::Printer* printer);
   void GenerateExtensionRegistrationSource(io::Printer* printer);
-  void DetermineObjectiveCClassDefinitions(std::set<string>* fwd_decls);
-  void DetermineForwardDeclarations(std::set<string>* fwd_decls);
+  void DetermineObjectiveCClassDefinitions(std::set<std::string>* fwd_decls);
+  void DetermineForwardDeclarations(std::set<std::string>* fwd_decls,
+                                    bool include_external_types);
 
   // Checks if the message or a nested message includes a oneof definition.
   bool IncludesOneOfDefinition() const;
@@ -81,11 +80,11 @@ class MessageGenerator {
   void GenerateDescriptionOneFieldSource(io::Printer* printer,
                                          const FieldDescriptor* field);
 
-  const string root_classname_;
+  const std::string root_classname_;
   const Descriptor* descriptor_;
   FieldGeneratorMap field_generators_;
-  const string class_name_;
-  const string deprecated_attribute_;
+  const std::string class_name_;
+  const std::string deprecated_attribute_;
   std::vector<std::unique_ptr<ExtensionGenerator>> extension_generators_;
   std::vector<std::unique_ptr<EnumGenerator>> enum_generators_;
   std::vector<std::unique_ptr<MessageGenerator>> nested_message_generators_;

@@ -81,14 +81,13 @@ const char* MapEntryTypeName(const FieldDescriptor* descriptor, bool isKey) {
 
 }  // namespace
 
-MapFieldGenerator::MapFieldGenerator(const FieldDescriptor* descriptor,
-                                     const Options& options)
-    : RepeatedFieldGenerator(descriptor, options) {
+MapFieldGenerator::MapFieldGenerator(const FieldDescriptor* descriptor)
+    : RepeatedFieldGenerator(descriptor) {
   const FieldDescriptor* key_descriptor =
       descriptor->message_type()->map_key();
   const FieldDescriptor* value_descriptor =
       descriptor->message_type()->map_value();
-  value_field_generator_.reset(FieldGenerator::Make(value_descriptor, options));
+  value_field_generator_.reset(FieldGenerator::Make(value_descriptor));
 
   // Pull over some variables_ from the value.
   variables_["field_type"] = value_field_generator_->variable("field_type");
@@ -96,20 +95,21 @@ MapFieldGenerator::MapFieldGenerator(const FieldDescriptor* descriptor,
   variables_["default_name"] = value_field_generator_->variable("default_name");
 
   // Build custom field flags.
-  std::vector<string> field_flags;
+  std::vector<std::string> field_flags;
   field_flags.push_back("GPBFieldMapKey" + GetCapitalizedType(key_descriptor));
   // Pull over the current text format custom name values that was calculated.
   if (variables_["fieldflags"].find("GPBFieldTextFormatNameCustom") !=
-      string::npos) {
+      std::string::npos) {
     field_flags.push_back("GPBFieldTextFormatNameCustom");
   }
   // Pull over some info from the value's flags.
-  const string& value_field_flags =
+  const std::string& value_field_flags =
       value_field_generator_->variable("fieldflags");
-  if (value_field_flags.find("GPBFieldHasDefaultValue") != string::npos) {
+  if (value_field_flags.find("GPBFieldHasDefaultValue") != std::string::npos) {
     field_flags.push_back("GPBFieldHasDefaultValue");
   }
-  if (value_field_flags.find("GPBFieldHasEnumDescriptor") != string::npos) {
+  if (value_field_flags.find("GPBFieldHasEnumDescriptor") !=
+      std::string::npos) {
     field_flags.push_back("GPBFieldHasEnumDescriptor");
   }
 
@@ -127,7 +127,7 @@ MapFieldGenerator::MapFieldGenerator(const FieldDescriptor* descriptor,
         "NSMutableDictionary<NSString*, " +
         value_field_generator_->variable("storage_type") + "*>";
   } else {
-    string class_name("GPB");
+    std::string class_name("GPB");
     class_name += MapEntryTypeName(key_descriptor, true);
     class_name += MapEntryTypeName(value_descriptor, false);
     class_name += "Dictionary";
@@ -152,7 +152,7 @@ void MapFieldGenerator::FinishInitialization(void) {
   // Use the array_comment support in RepeatedFieldGenerator to output what the
   // values in the map are.
   const FieldDescriptor* value_descriptor =
-      descriptor_->message_type()->FindFieldByName("value");
+      descriptor_->message_type()->map_value();
   if (GetObjectiveCType(value_descriptor) == OBJECTIVECTYPE_ENUM) {
     variables_["array_comment"] =
         "// |" + variables_["name"] + "| values are |" + value_field_generator_->variable("storage_type") + "|\n";
@@ -160,28 +160,35 @@ void MapFieldGenerator::FinishInitialization(void) {
 }
 
 void MapFieldGenerator::DetermineForwardDeclarations(
-    std::set<string>* fwd_decls) const {
-  RepeatedFieldGenerator::DetermineForwardDeclarations(fwd_decls);
+    std::set<std::string>* fwd_decls,
+    bool include_external_types) const {
+  RepeatedFieldGenerator::DetermineForwardDeclarations(
+      fwd_decls, include_external_types);
   const FieldDescriptor* value_descriptor =
-      descriptor_->message_type()->FindFieldByName("value");
-  if (GetObjectiveCType(value_descriptor) == OBJECTIVECTYPE_MESSAGE) {
-    const string& value_storage_type =
+      descriptor_->message_type()->map_value();
+  // Within a file there is no requirement on the order of the messages, so
+  // local references need a forward declaration. External files (not WKTs),
+  // need one when requested.
+  if (GetObjectiveCType(value_descriptor) == OBJECTIVECTYPE_MESSAGE &&
+      ((include_external_types &&
+        !IsProtobufLibraryBundledProtoFile(value_descriptor->file())) ||
+       descriptor_->file() == value_descriptor->file())) {
+    const std::string& value_storage_type =
         value_field_generator_->variable("storage_type");
     fwd_decls->insert("@class " + value_storage_type);
   }
 }
 
 void MapFieldGenerator::DetermineObjectiveCClassDefinitions(
-    std::set<string>* fwd_decls) const {
+    std::set<std::string>* fwd_decls) const {
   // Class name is already in "storage_type".
   const FieldDescriptor* value_descriptor =
-      descriptor_->message_type()->FindFieldByName("value");
+      descriptor_->message_type()->map_value();
   if (GetObjectiveCType(value_descriptor) == OBJECTIVECTYPE_MESSAGE) {
     fwd_decls->insert(ObjCClassDeclaration(
         value_field_generator_->variable("storage_type")));
   }
 }
-
 
 }  // namespace objectivec
 }  // namespace compiler

@@ -139,7 +139,7 @@ struct VertOut
 #endif
 
 #if GBUFFER
-	HVec3 m_normal : NORMAL;
+	ANKI_RELAXED_PRECISION Vec3 m_normal : NORMAL;
 #endif
 
 #if VISUALIZE_MESHLETS
@@ -167,7 +167,7 @@ struct MeshPerVertOut
 #endif
 
 #if GBUFFER
-	HVec3 m_normal : NORMAL;
+	ANKI_RELAXED_PRECISION Vec3 m_normal : NORMAL;
 #endif
 };
 
@@ -612,9 +612,7 @@ GBufferPixelOut main(
 	}
 #		endif
 
-	GBufferPixelOut output;
-	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
-	return output;
+	return packGBuffer(g);
 }
 #	endif
 #endif // ANKI_PIXEL_SHADER
@@ -687,6 +685,8 @@ GBufferPixelOut main(
 // ===========================================================================
 #if ANKI_TECHNIQUE_RtMaterialFetch
 
+#	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN && ANKI_PLATFORM_MOBILE
+
 #	if ANKI_CLOSEST_HIT_SHADER
 [[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D
 
@@ -737,9 +737,18 @@ GBufferPixelOut main(
 	payload.m_emission = emission;
 
 	// Normal
+#		if USE_POSITION_FETCH_NORMALS
+	const Vec3 pos0 = gl_HitTriangleVertexPositions[0];
+	const Vec3 pos1 = gl_HitTriangleVertexPositions[1];
+	const Vec3 pos2 = gl_HitTriangleVertexPositions[2];
+
+	Vec3 normal = cross(pos1 - pos0, pos2 - pos1);
+#		else
+	Vec3 normal = vert0.m_normal * bary.x + vert1.m_normal * bary.y + vert2.m_normal * bary.z;
+#		endif
+
 	const Mat3x4 worldTransform = g_transforms[g_gpuSceneRenderable.m_worldTransformsIndex];
 
-	Vec3 normal = vert0.m_normal * bary.x + vert1.m_normal * bary.y + vert2.m_normal * bary.z;
 	normal = mul(worldTransform, Vec4(normal, 0.0));
 	normal = normalize(normal);
 

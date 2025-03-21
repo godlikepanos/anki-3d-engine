@@ -23,8 +23,15 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 	{
 		lines.pushBackSprintf(ANKI_TAB "bin%05u \n", count++);
 
+		String reflectionStr;
+		code.m_reflection.toString().join("\n" ANKI_TAB ANKI_TAB, reflectionStr);
+
+		lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", reflectionStr.cstr());
+
 		if(options.m_writeGlsl)
 		{
+			lines.pushBack(ANKI_TAB ANKI_TAB "----\n");
+
 			spirv_cross::CompilerGLSL::Options options;
 			options.vulkan_semantics = true;
 			options.version = 460;
@@ -47,6 +54,8 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 
 		if(options.m_writeSpirv)
 		{
+			lines.pushBack(ANKI_TAB ANKI_TAB "----\n");
+
 			spv_context context = spvContextCreate(SPV_ENV_UNIVERSAL_1_5);
 
 			const U32 disOptions = SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES | SPV_BINARY_TO_TEXT_OPTION_NO_HEADER;

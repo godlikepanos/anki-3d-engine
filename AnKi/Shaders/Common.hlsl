@@ -160,11 +160,31 @@ U32 checkStructuredBuffer(T buff, U32 idx)
 
 // Need extra decoration for per-primitive stuff in Vulkan. Remove when https://github.com/microsoft/DirectXShaderCompiler/issues/6862 is fixed
 #if ANKI_GR_BACKEND_VULKAN
-#	define ANKI_PER_PRIMITIVE_VAR [[vk::ext_extension("SPV_EXT_mesh_shader")]] [[vk::ext_capability(5283 /*MeshShadingEXT*/)]]
-#	define ANKI_PER_PRIMITIVE_MEMBER [[vk::ext_decorate(5271 /*PerPrimitiveEXT*/)]]
+#	define SpvCapabilityMeshShadingEXT 5283
+#	define SpvDecorationPerPrimitiveEXT 5271
+
+#	define ANKI_PER_PRIMITIVE_VAR [[vk::ext_extension("SPV_EXT_mesh_shader")]] [[vk::ext_capability(SpvCapabilityMeshShadingEXT)]]
+#	define ANKI_PER_PRIMITIVE_MEMBER \
+		[[vk::ext_extension("SPV_EXT_mesh_shader")]] [[vk::ext_decorate(SpvDecorationPerPrimitiveEXT)]] [[vk::ext_capability( \
+			SpvCapabilityMeshShadingEXT)]]
 #else
 #	define ANKI_PER_PRIMITIVE_VAR
 #	define ANKI_PER_PRIMITIVE_MEMBER
+#endif
+
+#if ANKI_GR_BACKEND_VULKAN && ANKI_CLOSEST_HIT_SHADER
+#	define SpvBuiltInHitTriangleVertexPositionsKHR 5335
+#	define SpvCapabilityRayTracingPositionFetchKHR 5336
+
+[[vk::ext_extension("SPV_KHR_ray_tracing_position_fetch")]] [[vk::ext_capability(SpvCapabilityRayTracingPositionFetchKHR)]] [[vk::ext_builtin_input(
+	SpvBuiltInHitTriangleVertexPositionsKHR)]] const static Vec3 gl_HitTriangleVertexPositions[3];
+#endif
+
+#if ANKI_GR_BACKEND_VULKAN
+#	define SpvDecorationRelaxedPrecision 0
+#	define ANKI_RELAXED_PRECISION [[vk::ext_decorate(SpvDecorationRelaxedPrecision)]]
+#else
+#	define ANKI_RELAXED_PRECISION
 #endif
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))

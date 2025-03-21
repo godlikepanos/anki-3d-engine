@@ -102,8 +102,15 @@ bool Check::Matches(StringPiece* input, StringPiece* captured,
 
   std::unordered_map<int, std::string> var_def_indices;
 
+  // Construct a regex for the check patterns.  Anchor to the start
+  // of the input string, but also match any prefix. Do this so we
+  // can easily skip over any prefix without having to re-match the
+  // text.
   std::ostringstream consume_regex;
-  int num_captures = 1;  // The outer capture.
+  // Match any minimal prefix, then start a constructed grouping for the
+  // pattern of interest.
+  consume_regex << ".*?(";
+  int num_captures = 2;  // The outer capture, and the constructed capture.
   for (auto& part : parts_) {
     consume_regex << part->Regex(*vars);
     const auto var_def_name = part->VarDefName();
@@ -112,13 +119,14 @@ bool Check::Matches(StringPiece* input, StringPiece* captured,
     }
     num_captures += part->NumCapturingGroups();
   }
+  consume_regex << ")";  // Finish the constructed grouping.
   std::unique_ptr<StringPiece[]> captures(new StringPiece[num_captures]);
   const bool matched = RE2(consume_regex.str())
-                           .Match(*input, 0, input->size(), RE2::UNANCHORED,
+                           .Match(*input, 0, input->size(), RE2::ANCHOR_START,
                                   captures.get(), num_captures);
   if (matched) {
-    *captured = captures[0];
-    input->remove_prefix(captured->end() - input->begin());
+    *captured = captures[1];
+    input->remove_prefix(captures[0].size());
     // Update the variable mapping.
     for (auto& var_def_index : var_def_indices) {
       const int index = var_def_index.first;

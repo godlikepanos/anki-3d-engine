@@ -60,12 +60,10 @@ add_spvtools_unittest(TARGET opt
        inline_opaque_test.cpp
        inline_test.cpp
        insert_extract_elim_test.cpp
-       inst_bindless_check_test.cpp
-       inst_buff_addr_check_test.cpp
-       inst_debug_printf_test.cpp
        instruction_list_test.cpp
        instruction_test.cpp
        interface_var_sroa_test.cpp
+       invocation_interlock_placement_test.cpp
        interp_fixup_test.cpp
        ir_builder.cpp
        ir_context_test.cpp
@@ -77,8 +75,10 @@ add_spvtools_unittest(TARGET opt
        local_single_block_elim.cpp
        local_single_store_elim_test.cpp
        local_ssa_elim_test.cpp
+       modify_maximal_reconvergence_test.cpp
        module_test.cpp
        module_utils.h
+       opextinst_forward_ref_fixup_pass_test.cpp
        optimizer_test.cpp
        pass_manager_test.cpp
        pass_merge_return_test.cpp
@@ -94,15 +94,20 @@ add_spvtools_unittest(TARGET opt
        relax_float_ops_test.cpp
        replace_desc_array_access_using_var_index_test.cpp
        replace_invalid_opc_test.cpp
+       resolve_binding_conflicts_pass_test.cpp
        scalar_analysis.cpp
        scalar_replacement_test.cpp
        set_spec_const_default_value_test.cpp
        simplification_test.cpp
+       split_combined_image_sampler_pass_test.cpp
        spread_volatile_semantics_test.cpp
        strength_reduction_test.cpp
        strip_debug_info_test.cpp
        strip_nonsemantic_info_test.cpp
        struct_cfg_analysis_test.cpp
+       struct_packing_test.cpp
+       switch_descriptorset_test.cpp
+       trim_capabilities_pass_test.cpp
        type_manager_test.cpp
        types_test.cpp
        unify_const_test.cpp
@@ -115,3 +120,12 @@ add_spvtools_unittest(TARGET opt
   LIBS SPIRV-Tools-opt
   PCH_FILE pch_test_opt
 )
+if (NOT "${SPIRV_SKIP_TESTS}" AND TARGET gmock_main)
+  if (MSVC)
+    if (${MSVC_VERSION} LESS 1920)
+      # The VS 2017 debug build requires /bigobj on test_opt
+      # https://github.com/KhronosGroup/SPIRV-Tools/issues/5335
+      target_compile_options(test_opt PRIVATE /bigobj)
+    endif()
+  endif()
+endif()

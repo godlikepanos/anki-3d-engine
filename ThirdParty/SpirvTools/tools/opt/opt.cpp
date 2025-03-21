@@ -181,6 +181,14 @@ Options (in lexicographical order):)",
                must be in OpAccessChain instructions with a literal index for
                the first index.)");
   printf(R"(
+  --descriptor-composite-scalar-replacement
+               Same as descriptor-scalar-replacement, but only impacts composite/structs.
+               For details, see --descriptor-scalar-replacement help.)");
+  printf(R"(
+  --descriptor-array-scalar-replacement
+               Same as descriptor-scalar-replacement, but only impacts arrays.
+               For details, see --descriptor-scalar-replacement help.)");
+  printf(R"(
   --eliminate-dead-branches
                Convert conditional branches with constant condition to the
                indicated unconditional branch. Delete all resulting dead
@@ -335,6 +343,12 @@ Options (in lexicographical order):)",
                These conditions are guaranteed to be met after running
                dead-branch elimination.)");
   printf(R"(
+  --modify-maximal-reconvergence=[add|remove]
+               Add or remove the MaximallyReconvergesKHR execution mode to all
+               entry points in the module.
+               Note: when adding the execution mode, no attempt is made to
+               determine if any ray tracing repack instructions are used.)");
+  printf(R"(
   --loop-unswitch
                Hoists loop-invariant conditionals out of loops by duplicating
                the loop on each branch of the conditional and adjusting each
@@ -392,6 +406,11 @@ Options (in lexicographical order):)",
                Ensure that the optimizer preserves all bindings declared within
                the module, even when those bindings are unused.)");
   printf(R"(
+  --preserve-interface
+               Ensure that input and output variables are not removed from the
+               shader, even if they are unused. Note that this option applies to
+               all passes that will be run regardless of the order of the flags.)");
+  printf(R"(
   --preserve-spec-constants
                Ensure that the optimizer preserves all specialization constants declared
                within the module, even when those constants are unused.)");
@@ -436,15 +455,21 @@ Options (in lexicographical order):)",
                instructions.)");
   printf(R"(
   --remove-unused-interface-variables
-               Removes variables referenced on the |OpEntryPoint| instruction 
-               that are not referenced in the entry point function or any function 
-               in its call tree.  Note that this could cause the shader interface 
+               Removes variables referenced on the |OpEntryPoint| instruction
+               that are not referenced in the entry point function or any function
+               in its call tree.  Note that this could cause the shader interface
                to no longer match other shader stages.)");
   printf(R"(
   --replace-invalid-opcode
                Replaces instructions whose opcode is valid for shader modules,
                but not for the current shader stage.  To have an effect, all
                entry points must have the same execution model.)");
+  printf(R"(
+  --resolve-binding-conflicts
+               Renumber bindings to avoid conflicts.
+               When an image and sampler share the same desriptor set and binding,
+               increment the binding number of the sampler. Recursively ripple
+               to higher-numbered bindings until all conflicts resolved resolved.)");
   printf(R"(
   --ssa-rewrite
                Replace loads and stores to function local variables with
@@ -482,6 +507,11 @@ Options (in lexicographical order):)",
                is invalid, the optimizer may fail or generate incorrect code.
                This options should be used rarely, and with caution.)");
   printf(R"(
+  --split-combined-image-sampler
+               Replace combined image sampler variables and parameters into
+               pairs of images and samplers.  New variables have the same
+               bindings as the original variable.)");
+  printf(R"(
   --strength-reduction
                Replaces instructions with equivalent and less expensive ones.)");
   printf(R"(
@@ -496,6 +526,14 @@ Options (in lexicographical order):)",
                covers reflection information defined by
                SPV_GOOGLE_hlsl_functionality1 and SPV_KHR_non_semantic_info)");
   printf(R"(
+  --struct-packing=name:rule
+               Re-assign layout offsets to a given struct according to
+               its packing rules.)");
+  printf(R"(
+  --switch-descriptorset=<from>:<to>
+               Switch any DescriptoSet decorations using the value <from> to
+               the new value <to>.)");
+  printf(R"(
   --target-env=<env>
                Set the target environment. Without this flag the target
                environment defaults to spv1.5. <env> must be one of
@@ -509,6 +547,10 @@ Options (in lexicographical order):)",
                prints CPU/WALL/USR/SYS time (and RSS if possible), but note that
                USR/SYS time are returned by getrusage() and can have a small
                error.)");
+  printf(R"(
+  --trim-capabilities
+               Remove unnecessary capabilities and extensions declared within the
+               module.)");
   printf(R"(
   --upgrade-memory-model
                Upgrades the Logical GLSL450 memory model to Logical VulkanKHR.
@@ -697,6 +739,7 @@ OptStatus ParseFlags(int argc, const char** argv,
                      spvtools::ValidatorOptions* validator_options,
                      spvtools::OptimizerOptions* optimizer_options) {
   std::vector<std::string> pass_flags;
+  bool preserve_interface = true;
   for (int argi = 1; argi < argc; ++argi) {
     const char* cur_arg = argv[argi];
     if ('-' == cur_arg[0]) {
@@ -786,6 +829,8 @@ OptStatus ParseFlags(int argc, const char** argv,
         validator_options->SetSkipBlockLayout(true);
       } else if (0 == strcmp(cur_arg, "--relax-struct-store")) {
         validator_options->SetRelaxStructStore(true);
+      } else if (0 == strcmp(cur_arg, "--preserve-interface")) {
+        preserve_interface = true;
       } else {
         // Some passes used to accept the form '--pass arg', canonicalize them
         // to '--pass=arg'.
@@ -808,7 +853,7 @@ OptStatus ParseFlags(int argc, const char** argv,
     }
   }
 
-  if (!optimizer->RegisterPassesFromFlags(pass_flags)) {
+  if (!optimizer->RegisterPassesFromFlags(pass_flags, preserve_interface)) {
     return {OPT_STOP, 1};
   }
 
@@ -842,7 +887,7 @@ int main(int argc, const char** argv) {
   }
 
   std::vector<uint32_t> binary;
-  if (!ReadBinaryFile<uint32_t>(in_file, &binary)) {
+  if (!ReadBinaryFile(in_file, &binary)) {
     return 1;
   }
 

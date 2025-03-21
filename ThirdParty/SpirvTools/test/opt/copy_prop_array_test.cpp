@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
 #include <string>
 
 #include "gmock/gmock.h"
@@ -1943,6 +1942,290 @@ OpFunctionEnd
 
   SinglePassRunAndCheck<CopyPropagateArrays>(text, text, false);
 }
+
+// If the size of an array used in an OpCompositeInsert is not known at compile
+// time, then we should not propagate the array, because we do not have a single
+// array that represents the final value.
+TEST_F(CopyPropArrayPassTest, SpecConstSizedArray) {
+  const std::string text = R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %2 "main"
+OpExecutionMode %2 OriginUpperLeft
+%void = OpTypeVoid
+%4 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%uint = OpTypeInt 32 0
+%7 = OpSpecConstant %uint 32
+%_arr_int_7 = OpTypeArray %int %7
+%int_63 = OpConstant %int 63
+%uint_0 = OpConstant %uint 0
+%bool = OpTypeBool
+%int_0 = OpConstant %int 0
+%int_587202566 = OpConstant %int 587202566
+%false = OpConstantFalse %bool
+%_ptr_Function__arr_int_7 = OpTypePointer Function %_arr_int_7
+%16 = OpUndef %_arr_int_7
+%2 = OpFunction %void None %4
+%17 = OpLabel
+%18 = OpVariable %_ptr_Function__arr_int_7 Function
+%19 = OpCompositeInsert %_arr_int_7 %int_0 %16 0
+OpStore %18 %19
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<CopyPropagateArrays>(text, text, false);
+}
+
+TEST_F(CopyPropArrayPassTest, InterpolateFunctions) {
+  const std::string before = R"(OpCapability InterpolationFunction
+OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %in_var_COLOR
+OpExecutionMode %main OriginUpperLeft
+OpSource HLSL 680
+OpName %in_var_COLOR "in.var.COLOR"
+OpName %main "main"
+OpName %offset "offset"
+OpDecorate %in_var_COLOR Location 0
+%int = OpTypeInt 32 1
+%int_0 = OpConstant %int 0
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%v2float = OpTypeVector %float 2
+%v4float = OpTypeVector %float 4
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%void = OpTypeVoid
+%19 = OpTypeFunction %void
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+%in_var_COLOR = OpVariable %_ptr_Input_v4float Input
+%main = OpFunction %void None %19
+%20 = OpLabel
+%45 = OpVariable %_ptr_Function_v4float Function
+%25 = OpLoad %v4float %in_var_COLOR
+OpStore %45 %25
+; CHECK: OpExtInst %v4float %1 InterpolateAtCentroid %in_var_COLOR
+%52 = OpExtInst %v4float %1 InterpolateAtCentroid %45
+; CHECK: OpExtInst %v4float %1 InterpolateAtSample %in_var_COLOR %int_0
+%54 = OpExtInst %v4float %1 InterpolateAtSample %45 %int_0
+%offset = OpCompositeConstruct %v2float %float_0 %float_0
+; CHECK: OpExtInst %v4float %1 InterpolateAtOffset %in_var_COLOR %offset
+%56 = OpExtInst %v4float %1 InterpolateAtOffset %45 %offset
+OpReturn
+OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER |
+                        SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
+  SinglePassRunAndMatch<CopyPropagateArrays>(before, false);
+}
+
+TEST_F(CopyPropArrayPassTest, InterpolateMultiPropagation) {
+  const std::string before = R"(OpCapability InterpolationFunction
+OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %in_var_COLOR
+OpExecutionMode %main OriginUpperLeft
+OpSource HLSL 680
+OpName %in_var_COLOR "in.var.COLOR"
+OpName %main "main"
+OpName %param_var_color "param.var.color"
+OpDecorate %in_var_COLOR Location 0
+%float = OpTypeFloat 32
+%v4float = OpTypeVector %float 4
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%void = OpTypeVoid
+%19 = OpTypeFunction %void
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+%in_var_COLOR = OpVariable %_ptr_Input_v4float Input
+%main = OpFunction %void None %19
+%20 = OpLabel
+%45 = OpVariable %_ptr_Function_v4float Function
+%param_var_color = OpVariable %_ptr_Function_v4float Function
+%25 = OpLoad %v4float %in_var_COLOR
+OpStore %param_var_color %25
+; CHECK: OpExtInst %v4float %1 InterpolateAtCentroid %in_var_COLOR
+%52 = OpExtInst %v4float %1 InterpolateAtCentroid %param_var_color
+%49 = OpLoad %v4float %param_var_color
+OpStore %45 %49
+; CHECK: OpExtInst %v4float %1 InterpolateAtCentroid %in_var_COLOR
+%54 = OpExtInst %v4float %1 InterpolateAtCentroid %45
+OpReturn
+OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER |
+                        SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
+  SinglePassRunAndMatch<CopyPropagateArrays>(before, false);
+}
+
+TEST_F(CopyPropArrayPassTest, PropagateScalar) {
+  const std::string before = R"(OpCapability InterpolationFunction
+OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %in_var_SV_InstanceID
+OpExecutionMode %main OriginUpperLeft
+OpSource HLSL 680
+OpName %in_var_SV_InstanceID "in.var.SV_InstanceID"
+OpName %main "main"
+OpDecorate %in_var_SV_InstanceID Location 0
+%float = OpTypeFloat 32
+%v4float = OpTypeVector %float 4
+%_ptr_Input_float = OpTypePointer Input %float
+%void = OpTypeVoid
+%19 = OpTypeFunction %void
+%_ptr_Function_float = OpTypePointer Function %float
+%in_var_SV_InstanceID = OpVariable %_ptr_Input_float Input
+%main = OpFunction %void None %19
+%20 = OpLabel
+%45 = OpVariable %_ptr_Function_float Function
+%25 = OpLoad %v4float %in_var_SV_InstanceID
+OpStore %45 %25
+; CHECK: OpExtInst %v4float %1 InterpolateAtCentroid %in_var_SV_InstanceID
+%52 = OpExtInst %v4float %1 InterpolateAtCentroid %45
+OpReturn
+OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER |
+                        SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
+  SinglePassRunAndMatch<CopyPropagateArrays>(before, false);
+}
+
+TEST_F(CopyPropArrayPassTest, StoreToAccessChain) {
+  const std::string before = R"(OpCapability InterpolationFunction
+OpCapability MeshShadingEXT
+OpExtension "SPV_EXT_mesh_shader"
+OpMemoryModel Logical GLSL450
+OpEntryPoint MeshEXT %1 "main" %2 %3
+OpExecutionMode %1 LocalSize 128 1 1
+OpExecutionMode %1 OutputTrianglesEXT
+OpExecutionMode %1 OutputVertices 64
+OpExecutionMode %1 OutputPrimitivesEXT 126
+OpDecorate %3 Flat
+OpDecorate %3 Location 2
+%uint = OpTypeInt 32 0
+%uint_4 = OpConstant %uint 4
+%uint_32 = OpConstant %uint 32
+%_arr_uint_uint_32 = OpTypeArray %uint %uint_32
+%_struct_8 = OpTypeStruct %_arr_uint_uint_32
+%_ptr_TaskPayloadWorkgroupEXT__struct_8 = OpTypePointer TaskPayloadWorkgroupEXT %_struct_8
+%uint_64 = OpConstant %uint 64
+%_arr_uint_uint_64 = OpTypeArray %uint %uint_64
+%_ptr_Output__arr_uint_uint_64 = OpTypePointer Output %_arr_uint_uint_64
+%void = OpTypeVoid
+%14 = OpTypeFunction %void
+%_ptr_Function_uint = OpTypePointer Function %uint
+%_ptr_Function__arr_uint_uint_32 = OpTypePointer Function %_arr_uint_uint_32
+%_ptr_Output_uint = OpTypePointer Output %uint
+%2 = OpVariable %_ptr_TaskPayloadWorkgroupEXT__struct_8 TaskPayloadWorkgroupEXT
+%3 = OpVariable %_ptr_Output__arr_uint_uint_64 Output
+%1 = OpFunction %void None %14
+%18 = OpLabel
+%19 = OpVariable %_ptr_Function__arr_uint_uint_32 Function
+%20 = OpLoad %_struct_8 %2
+%21 = OpCompositeExtract %_arr_uint_uint_32 %20 0
+; CHECK: %28 = OpAccessChain %_ptr_TaskPayloadWorkgroupEXT__arr_uint_uint_32 %2 %uint_0
+OpStore %19 %21
+; CHECK: %22 = OpAccessChain %_ptr_TaskPayloadWorkgroupEXT_uint %28 %uint_4
+%22 = OpAccessChain %_ptr_Function_uint %19 %uint_4
+%23 = OpLoad %uint %22
+%24 = OpAccessChain %_ptr_Output_uint %3 %uint_4
+OpStore %24 %23
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  SinglePassRunAndMatch<CopyPropagateArrays>(before, true);
+}
+
+TEST_F(CopyPropArrayPassTest, PropCopyLogical) {
+  const std::string before = R"(
+; CHECK: [[v4array_ptr:%\w+]] = OpTypePointer Uniform %14
+; CHECK: [[v4_ptr:%\w+]] = OpTypePointer Uniform %7
+; CHECK: [[ac:%\w+]] = OpAccessChain [[v4array_ptr]] %19 %21 %33
+; CHECK: %47 = OpAccessChain [[v4_ptr]] [[ac]] %37
+      OpCapability Shader
+ %1 = OpExtInstImport "GLSL.std.450"
+      OpMemoryModel Logical GLSL450
+      OpEntryPoint Vertex %4 "main" %19 %30 %32
+      OpSource GLSL 430
+      OpName %4 "main"
+      OpDecorate %14 ArrayStride 16
+      OpDecorate %15 ArrayStride 16
+      OpMemberDecorate %16 0 Offset 0
+      OpMemberDecorate %16 1 Offset 32
+      OpDecorate %17 Block
+      OpMemberDecorate %17 0 Offset 0
+      OpDecorate %19 Binding 0
+      OpDecorate %19 DescriptorSet 0
+      OpDecorate %28 Block
+      OpMemberDecorate %28 0 BuiltIn Position
+      OpMemberDecorate %28 1 BuiltIn PointSize
+      OpMemberDecorate %28 2 BuiltIn ClipDistance
+      OpDecorate %32 Location 0
+ %2 = OpTypeVoid
+ %3 = OpTypeFunction %2
+ %6 = OpTypeFloat 32
+ %7 = OpTypeVector %6 4
+ %8 = OpTypeInt 32 0
+ %9 = OpConstant %8 2
+%10 = OpTypeArray %7 %9
+%11 = OpTypeStruct %10 %10
+%14 = OpTypeArray %7 %9
+%15 = OpTypeArray %7 %9
+%16 = OpTypeStruct %14 %15
+%17 = OpTypeStruct %16
+%18 = OpTypePointer Uniform %17
+%19 = OpVariable %18 Uniform
+%20 = OpTypeInt 32 1
+%21 = OpConstant %20 0
+%22 = OpTypePointer Uniform %16
+%26 = OpConstant %8 1
+%27 = OpTypeArray %6 %26
+%28 = OpTypeStruct %7 %6 %27
+%29 = OpTypePointer Output %28
+%30 = OpVariable %29 Output
+%31 = OpTypePointer Input %7
+%32 = OpVariable %31 Input
+%33 = OpConstant %8 0
+%34 = OpTypePointer Input %6
+%38 = OpTypePointer Function %7
+%41 = OpTypePointer Output %7
+%43 = OpTypePointer Function %10
+ %4 = OpFunction %2 None %3
+ %5 = OpLabel
+%44 = OpVariable %43 Function
+%23 = OpAccessChain %22 %19 %21
+%24 = OpLoad %16 %23
+%25 = OpCopyLogical %11 %24
+%46 = OpCompositeExtract %10 %25 0
+      OpStore %44 %46
+%35 = OpAccessChain %34 %32 %33
+%36 = OpLoad %6 %35
+%37 = OpConvertFToS %20 %36
+%47 = OpAccessChain %38 %44 %37
+%40 = OpLoad %7 %47
+%42 = OpAccessChain %41 %30 %21
+      OpStore %42 %40
+      OpReturn
+      OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_6);
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
+  SinglePassRunAndMatch<CopyPropagateArrays>(before, true);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

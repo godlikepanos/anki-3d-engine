@@ -1,8 +1,30 @@
 # Contributing to Protocol Buffers
 
-We welcome your contributions to protocol buffers. This doc describes the
+We welcome some types of contributions to protocol buffers. This doc describes the
 process to contribute patches to protobuf and the general guidelines we
 expect contributors to follow.
+
+## What We Accept
+
+* Bug fixes with unit tests demonstrating the problem are very welcome.
+  We also appreciate bug reports, even when they don't come with a patch.
+  Bug fixes without tests are usually not accepted.
+* New APIs and features with adequate test coverage and documentation
+  may be accepted if they do not compromise backwards 
+  compatibility. However there's a fairly high bar of usefulness a new public
+  method must clear before it will be accepted. Features that are fine in 
+  isolation are often rejected because they don't have enough impact to justify the 
+  conceptual burden and ongoing maintenance cost. It's best to file an issue 
+  and get agreement from maintainers on the value of a new feature before
+  working on a PR.
+* Performance optimizations may be accepted if they have convincing benchmarks that demonstrate 
+  an improvement and they do not significantly increase complexity.  
+* Changes to existing APIs are almost never accepted. Stability and
+  backwards compatibility are paramount. In the unlikely event a breaking change 
+  is required, it must usually be implemented in google3 first. 
+* Changes to the wire and text formats are never accepted. Any breaking change
+  to these formats would have to be implemented as a completely new format.
+  We cannot begin generating protos that cannot be parsed by existing code.
 
 ## Before You Start
 
@@ -31,11 +53,11 @@ conforming.
 
 ## Contributing Process
 
-Most pull requests should go to the master branch and the change will be
+Most pull requests should go to the main branch and the change will be
 included in the next major/minor version release (e.g., 3.6.0 release). If you
 need to include a bug fix in a patch release (e.g., 3.5.2), make sure it’s
-already merged to master, and then create a pull request cherry-picking the
-commits from master branch to the release branch (e.g., branch 3.5.x).
+already merged to main, and then create a pull request cherry-picking the
+commits from main branch to the release branch (e.g., branch 3.5.x).
 
 For each pull request, a protobuf team member will be assigned to review the
 pull request. For minor cleanups, the pull request may be merged right away
@@ -58,7 +80,7 @@ the final release.
 * Create small PRs that are narrowly focused on addressing a single concern.
   We often receive PRs that are trying to fix several things at a time, but if
   only one fix is considered acceptable, nothing gets merged and both author's
-  & review's time is wasted. Create more PRs to address different concerns and
+  & reviewer's time is wasted. Create more PRs to address different concerns and
   everyone will be happy.
 * For speculative changes, consider opening an issue and discussing it first.
   If you are suggesting a behavioral or API change, make sure you get explicit
@@ -74,9 +96,9 @@ the final release.
   of inactivity.
 * Maintain clean commit history and use meaningful commit messages. PRs with
   messy commit history are difficult to review and won't be merged. Use rebase
-  -i upstream/master to curate your commit history and/or to bring in latest
-  changes from master (but avoid rebasing in the middle of a code review).
-* Keep your PR up to date with upstream/master (if there are merge conflicts,
+  -i upstream/main to curate your commit history and/or to bring in latest
+  changes from main (but avoid rebasing in the middle of a code review).
+* Keep your PR up to date with upstream/main (if there are merge conflicts,
   we can't really merge your change).
 * All tests need to be passing before your change can be merged. We recommend
   you run tests locally before creating your PR to catch breakages early on.

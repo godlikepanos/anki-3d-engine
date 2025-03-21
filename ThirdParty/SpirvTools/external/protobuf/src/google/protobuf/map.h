@@ -37,6 +37,7 @@
 #ifndef GOOGLE_PROTOBUF_MAP_H__
 #define GOOGLE_PROTOBUF_MAP_H__
 
+
 #include <functional>
 #include <initializer_list>
 #include <iterator>
@@ -50,16 +51,22 @@
 #include <string_view>
 #endif  // defined(__cpp_lib_string_view)
 
+#if !defined(GOOGLE_PROTOBUF_NO_RDTSC) && defined(__APPLE__)
+#include <mach/mach_time.h>
+#endif
+
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/generated_enum_util.h>
 #include <google/protobuf/map_type_handler.h>
+#include <google/protobuf/port.h>
 #include <google/protobuf/stubs/hash.h>
 
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
 #endif
 
+// Must be included last.
 #include <google/protobuf/port_def.inc>
 
 namespace google {
@@ -76,12 +83,12 @@ struct is_proto_enum;
 namespace internal {
 template <typename Derived, typename Key, typename T,
           WireFormatLite::FieldType key_wire_type,
-          WireFormatLite::FieldType value_wire_type, int default_enum_value>
+          WireFormatLite::FieldType value_wire_type>
 class MapFieldLite;
 
 template <typename Derived, typename Key, typename T,
           WireFormatLite::FieldType key_wire_type,
-          WireFormatLite::FieldType value_wire_type, int default_enum_value>
+          WireFormatLite::FieldType value_wire_type>
 class MapField;
 
 template <typename Key, typename T>
@@ -105,11 +112,16 @@ class MapAllocator {
   using size_type = size_t;
   using difference_type = ptrdiff_t;
 
-  MapAllocator() : arena_(nullptr) {}
-  explicit MapAllocator(Arena* arena) : arena_(arena) {}
+  constexpr MapAllocator() : arena_(nullptr) {}
+  explicit constexpr MapAllocator(Arena* arena) : arena_(arena) {}
   template <typename X>
   MapAllocator(const MapAllocator<X>& allocator)  // NOLINT(runtime/explicit)
       : arena_(allocator.arena()) {}
+
+  // MapAllocator does not support alignments beyond 8. Technically we should
+  // support up to std::max_align_t, but this fails with ubsan and tcmalloc
+  // debug allocation logic which assume 8 as default alignment.
+  static_assert(alignof(value_type) <= 8, "");
 
   pointer allocate(size_type n, const void* /* hint */ = nullptr) {
     // If arena is not given, malloc needs to be called which doesn't
@@ -118,23 +130,17 @@ class MapAllocator {
       return static_cast<pointer>(::operator new(n * sizeof(value_type)));
     } else {
       return reinterpret_cast<pointer>(
-          Arena::CreateArray<uint8>(arena_, n * sizeof(value_type)));
+          Arena::CreateArray<uint8_t>(arena_, n * sizeof(value_type)));
     }
   }
 
   void deallocate(pointer p, size_type n) {
     if (arena_ == nullptr) {
-#if defined(__GXX_DELETE_WITH_SIZE__) || defined(__cpp_sized_deallocation)
-      ::operator delete(p, n * sizeof(value_type));
-#else
-      (void)n;
-      ::operator delete(p);
-#endif
+      internal::SizedDelete(p, n * sizeof(value_type));
     }
   }
 
-#if __cplusplus >= 201103L && !defined(GOOGLE_PROTOBUF_OS_APPLE) && \
-    !defined(GOOGLE_PROTOBUF_OS_NACL) &&                            \
+#if !defined(GOOGLE_PROTOBUF_OS_APPLE) && !defined(GOOGLE_PROTOBUF_OS_NACL) && \
     !defined(GOOGLE_PROTOBUF_OS_EMSCRIPTEN)
   template <class NodeType, class... Args>
   void construct(NodeType* p, Args&&... args) {
@@ -183,7 +189,7 @@ class MapAllocator {
 
  private:
   using DestructorSkippable_ = void;
-  Arena* const arena_;
+  Arena* arena_;
 };
 
 template <typename T>
@@ -252,19 +258,94 @@ struct TransparentSupport<std::string> {
 };
 #endif  // defined(__cpp_lib_string_view)
 
+template <typename Key>
+using TreeForMap =
+    std::map<KeyForTree<Key>, void*, typename TransparentSupport<Key>::less,
+             MapAllocator<std::pair<const KeyForTree<Key>, void*>>>;
+
+inline bool TableEntryIsEmpty(void* const* table, size_t b) {
+  return table[b] == nullptr;
+}
+inline bool TableEntryIsNonEmptyList(void* const* table, size_t b) {
+  return table[b] != nullptr && table[b] != table[b ^ 1];
+}
+inline bool TableEntryIsTree(void* const* table, size_t b) {
+  return !TableEntryIsEmpty(table, b) && !TableEntryIsNonEmptyList(table, b);
+}
+inline bool TableEntryIsList(void* const* table, size_t b) {
+  return !TableEntryIsTree(table, b);
+}
+
+// This captures all numeric types.
+inline size_t MapValueSpaceUsedExcludingSelfLong(bool) { return 0; }
+inline size_t MapValueSpaceUsedExcludingSelfLong(const std::string& str) {
+  return StringSpaceUsedExcludingSelfLong(str);
+}
+template <typename T,
+          typename = decltype(std::declval<const T&>().SpaceUsedLong())>
+size_t MapValueSpaceUsedExcludingSelfLong(const T& message) {
+  return message.SpaceUsedLong() - sizeof(T);
+}
+
+constexpr size_t kGlobalEmptyTableSize = 1;
+PROTOBUF_EXPORT extern void* const kGlobalEmptyTable[kGlobalEmptyTableSize];
+
+// Space used for the table, trees, and nodes.
+// Does not include the indirect space used. Eg the data of a std::string.
+template <typename Key>
+PROTOBUF_NOINLINE size_t SpaceUsedInTable(void** table, size_t num_buckets,
+                                          size_t num_elements,
+                                          size_t sizeof_node) {
+  size_t size = 0;
+  // The size of the table.
+  size += sizeof(void*) * num_buckets;
+  // All the nodes.
+  size += sizeof_node * num_elements;
+  // For each tree, count the overhead of the those nodes.
+  // Two buckets at a time because we only care about trees.
+  for (size_t b = 0; b < num_buckets; b += 2) {
+    if (internal::TableEntryIsTree(table, b)) {
+      using Tree = TreeForMap<Key>;
+      Tree* tree = static_cast<Tree*>(table[b]);
+      // Estimated cost of the red-black tree nodes, 3 pointers plus a
+      // bool (plus alignment, so 4 pointers).
+      size += tree->size() *
+              (sizeof(typename Tree::value_type) + sizeof(void*) * 4);
+    }
+  }
+  return size;
+}
+
+template <typename Map,
+          typename = typename std::enable_if<
+              !std::is_scalar<typename Map::key_type>::value ||
+              !std::is_scalar<typename Map::mapped_type>::value>::type>
+size_t SpaceUsedInValues(const Map* map) {
+  size_t size = 0;
+  for (const auto& v : *map) {
+    size += internal::MapValueSpaceUsedExcludingSelfLong(v.first) +
+            internal::MapValueSpaceUsedExcludingSelfLong(v.second);
+  }
+  return size;
+}
+
+inline size_t SpaceUsedInValues(const void*) { return 0; }
+
 }  // namespace internal
 
 // This is the class for Map's internal value_type. Instead of using
 // std::pair as value_type, we use this class which provides us more control of
 // its process of construction and destruction.
 template <typename Key, typename T>
-struct MapPair {
+struct PROTOBUF_ATTRIBUTE_STANDALONE_DEBUG MapPair {
   using first_type = const Key;
   using second_type = T;
 
   MapPair(const Key& other_first, const T& other_second)
       : first(other_first), second(other_second) {}
   explicit MapPair(const Key& other_first) : first(other_first), second() {}
+  explicit MapPair(Key&& other_first)
+      : first(std::move(other_first)), second() {}
   MapPair(const MapPair& other) : first(other.first), second(other.second) {}
 
   ~MapPair() {}
@@ -308,25 +389,22 @@ class Map {
   using size_type = size_t;
   using hasher = typename internal::TransparentSupport<Key>::hash;
 
-  Map() : arena_(nullptr), default_enum_value_(0) { Init(); }
-  explicit Map(Arena* arena) : arena_(arena), default_enum_value_(0) { Init(); }
+  constexpr Map() : elements_(nullptr) {}
+  explicit Map(Arena* arena) : elements_(arena) {}
 
-  Map(const Map& other)
-      : arena_(nullptr), default_enum_value_(other.default_enum_value_) {
-    Init();
-    insert(other.begin(), other.end());
-  }
+  Map(const Map& other) : Map() { insert(other.begin(), other.end()); }
 
   Map(Map&& other) noexcept : Map() {
-    if (other.arena_) {
+    if (other.arena() != nullptr) {
       *this = other;
     } else {
       swap(other);
     }
   }
+
   Map& operator=(Map&& other) noexcept {
     if (this != &other) {
-      if (arena_ != other.arena_) {
+      if (arena() != other.arena()) {
         *this = other;
       } else {
         swap(other);
@@ -336,22 +414,13 @@ class Map {
   }
 
   template <class InputIt>
-  Map(const InputIt& first, const InputIt& last)
-      : arena_(nullptr), default_enum_value_(0) {
-    Init();
+  Map(const InputIt& first, const InputIt& last) : Map() {
     insert(first, last);
   }
 
-  ~Map() {
-    if (arena_ == nullptr) {
-      clear();
-      delete elements_;
-    }
-  }
+  ~Map() {}
 
  private:
-  void Init() { elements_ = Arena::CreateMessage<InnerMap>(arena_, 0); }
-
   using Allocator = internal::MapAllocator<void*>;
 
   // InnerMap is a generic hash-based map.  It doesn't contain any
@@ -385,23 +454,21 @@ class Map {
   // 9. Except for erase(iterator), any non-const method can reorder iterators.
   // 10. InnerMap uses KeyForTree<Key> when using the Tree representation, which
   //    is either `Key`, if Key is a scalar, or `reference_wrapper<const Key>`
-  //    otherwise. This avoids unncessary copies of string keys, for example.
+  //    otherwise. This avoids unnecessary copies of string keys, for example.
   class InnerMap : private hasher {
    public:
-    explicit InnerMap(size_type n) : InnerMap(nullptr, n) {}
-    InnerMap(Arena* arena, size_type n)
+    explicit constexpr InnerMap(Arena* arena)
         : hasher(),
           num_elements_(0),
-          seed_(Seed()),
-          table_(nullptr),
-          alloc_(arena) {
-      n = TableSize(n);
-      table_ = CreateEmptyTable(n);
-      num_buckets_ = index_of_first_non_null_ = n;
-    }
+          num_buckets_(internal::kGlobalEmptyTableSize),
+          seed_(0),
+          index_of_first_non_null_(internal::kGlobalEmptyTableSize),
+          table_(const_cast<void**>(internal::kGlobalEmptyTable)),
+          alloc_(arena) {}
 
     ~InnerMap() {
-      if (table_ != nullptr) {
+      if (alloc_.arena() == nullptr &&
+          num_buckets_ != internal::kGlobalEmptyTableSize) {
         clear();
         Dealloc<void*>(table_, num_buckets_);
       }
@@ -421,11 +488,7 @@ class Map {
     // The value is a void* pointing to Node. We use void* instead of Node* to
     // avoid code bloat. That way there is only one instantiation of the tree
     // class per key type.
-    using TreeAllocator = typename Allocator::template rebind<
-        std::pair<const internal::KeyForTree<Key>, void*>>::other;
-    using Tree = std::map<internal::KeyForTree<Key>, void*,
-                          typename internal::TransparentSupport<Key>::less,
-                          TreeAllocator>;
+    using Tree = internal::TreeForMap<Key>;
     using TreeIterator = typename Tree::iterator;
 
     static Node* NodeFromTreeIterator(TreeIterator it) {
@@ -564,6 +627,17 @@ class Map {
     using iterator = iterator_base<value_type>;
     using const_iterator = iterator_base<const value_type>;
 
+    Arena* arena() const { return alloc_.arena(); }
+
+    void Swap(InnerMap* other) {
+      std::swap(num_elements_, other->num_elements_);
+      std::swap(num_buckets_, other->num_buckets_);
+      std::swap(seed_, other->seed_);
+      std::swap(index_of_first_non_null_, other->index_of_first_non_null_);
+      std::swap(table_, other->table_);
+      std::swap(alloc_, other->alloc_);
+    }
+
     iterator begin() { return iterator(this); }
     iterator end() { return iterator(); }
     const_iterator begin() const { return const_iterator(this); }
@@ -613,34 +687,36 @@ class Map {
       return iterator(FindHelper(k).first);
     }
 
-    // Insert the key into the map, if not present. In that case, the value will
-    // be value initialized.
-    std::pair<iterator, bool> insert(const Key& k) {
-      std::pair<const_iterator, size_type> p = FindHelper(k);
-      // Case 1: key was already present.
-      if (p.first.node_ != nullptr)
-        return std::make_pair(iterator(p.first), false);
-      // Case 2: insert.
-      if (ResizeIfLoadIsOutOfRange(num_elements_ + 1)) {
-        p = FindHelper(k);
-      }
-      const size_type b = p.second;  // bucket number
-      Node* node;
-      if (alloc_.arena() == nullptr) {
-        node = new Node{value_type(k), nullptr};
-      } else {
-        node = Alloc<Node>(1);
-        Arena::CreateInArenaStorage(const_cast<Key*>(&node->kv.first),
-                                    alloc_.arena(), k);
-        Arena::CreateInArenaStorage(&node->kv.second, alloc_.arena());
-      }
-
-      iterator result = InsertUnique(b, node);
-      ++num_elements_;
-      return std::make_pair(result, true);
+    template <typename K>
+    const_iterator find(const K& k) const {
+      return FindHelper(k).first;
     }
 
-    value_type& operator[](const Key& k) { return *insert(k).first; }
+    // Inserts a new element into the container if there is no element with the
+    // key in the container.
+    // The new element is:
+    //  (1) Constructed in-place with the given args, if mapped_type is not
+    //      arena constructible.
+    //  (2) Constructed in-place with the arena and then assigned with a
+    //      mapped_type temporary constructed with the given args, otherwise.
+    template <typename K, typename... Args>
+    std::pair<iterator, bool> try_emplace(K&& k, Args&&... args) {
+      return ArenaAwareTryEmplace(Arena::is_arena_constructable<mapped_type>(),
+                                  std::forward<K>(k),
+                                  std::forward<Args>(args)...);
+    }
+
+    // Inserts the key into the map, if not present. In that case, the value
+    // will be value initialized.
+    template <typename K>
+    std::pair<iterator, bool> insert(K&& k) {
+      return try_emplace(std::forward<K>(k));
+    }
+
+    template <typename K>
+    value_type& operator[](K&& k) {
+      return *try_emplace(std::forward<K>(k)).first;
+    }
 
     void erase(iterator it) {
       GOOGLE_DCHECK_EQ(it.m_, this);
@@ -675,7 +751,85 @@ class Map {
       }
     }
 
+    size_t SpaceUsedInternal() const {
+      return internal::SpaceUsedInTable<Key>(table_, num_buckets_,
+                                             num_elements_, sizeof(Node));
+    }
+
    private:
+    template <typename K, typename... Args>
+    std::pair<iterator, bool> TryEmplaceInternal(K&& k, Args&&... args) {
+      std::pair<const_iterator, size_type> p = FindHelper(k);
+      // Case 1: key was already present.
+      if (p.first.node_ != nullptr)
+        return std::make_pair(iterator(p.first), false);
+      // Case 2: insert.
+      if (ResizeIfLoadIsOutOfRange(num_elements_ + 1)) {
+        p = FindHelper(k);
+      }
+      const size_type b = p.second;  // bucket number
+      // If K is not key_type, make the conversion to key_type explicit.
+      using TypeToInit = typename std::conditional<
+          std::is_same<typename std::decay<K>::type, key_type>::value, K&&,
+          key_type>::type;
+      Node* node = Alloc<Node>(1);
+      // Even when arena is nullptr, CreateInArenaStorage is still used to
+      // ensure the arena of submessage will be consistent. Otherwise,
+      // submessage may have its own arena when message-owned arena is enabled.
+      // Note: This only works if `Key` is not arena constructible.
+      Arena::CreateInArenaStorage(const_cast<Key*>(&node->kv.first),
+                                  alloc_.arena(),
+                                  static_cast<TypeToInit>(std::forward<K>(k)));
+      // Note: if `T` is arena constructible, `Args` needs to be empty.
+      Arena::CreateInArenaStorage(&node->kv.second, alloc_.arena(),
+                                  std::forward<Args>(args)...);
+
+      iterator result = InsertUnique(b, node);
+      ++num_elements_;
+      return std::make_pair(result, true);
+    }
+
+    // A helper function to perform an assignment of `mapped_type`.
+    // If the first argument is true, then it is a regular assignment.
+    // Otherwise, we first create a temporary and then perform an assignment.
+    template <typename V>
+    static void AssignMapped(std::true_type, mapped_type& mapped, V&& v) {
+      mapped = std::forward<V>(v);
+    }
+    template <typename... Args>
+    static void AssignMapped(std::false_type, mapped_type& mapped,
+                             Args&&... args) {
+      mapped = mapped_type(std::forward<Args>(args)...);
+    }
+
+    // Case 1: `mapped_type` is arena constructible. A temporary object is
+    // created and then (if `Args` are not empty) assigned to a mapped value
+    // that was created with the arena.
+    template <typename K>
+    std::pair<iterator, bool> ArenaAwareTryEmplace(std::true_type, K&& k) {
+      // case 1.1: "default" constructed (e.g. from arena only).
+      return TryEmplaceInternal(std::forward<K>(k));
+    }
+    template <typename K, typename... Args>
+    std::pair<iterator, bool> ArenaAwareTryEmplace(std::true_type, K&& k,
+                                                   Args&&... args) {
+      // case 1.2: "default" constructed + copy/move assignment
+      auto p = TryEmplaceInternal(std::forward<K>(k));
+      if (p.second) {
+        AssignMapped(std::is_same<void(typename std::decay<Args>::type...),
+                                  void(mapped_type)>(),
+                     p.first->second, std::forward<Args>(args)...);
+      }
+      return p;
+    }
+    // Case 2: `mapped_type` is not arena constructible. Using in-place
+    // construction.
+    template <typename... Args>
+    std::pair<iterator, bool> ArenaAwareTryEmplace(std::false_type,
+                                                   Args&&... args) {
+      return TryEmplaceInternal(std::forward<Args>(args)...);
+    }
+
     const_iterator find(const Key& k, TreeIterator* it) const {
       return FindHelper(k, it).first;
     }
@@ -751,6 +905,7 @@ class Map {
     // non-determinism to the map ordering.
     bool ShouldInsertAfterHead(void* node) {
 #ifdef NDEBUG
+      (void)node;
       return false;
 #else
       // Doing modulo with a prime mixes the bits more.
@@ -827,6 +982,15 @@ class Map {
 
     // Resize to the given number of buckets.
     void Resize(size_t new_num_buckets) {
+      if (num_buckets_ == internal::kGlobalEmptyTableSize) {
+        // This is the global empty array.
+        // Just overwrite with a new one. No need to transfer or free anything.
+        num_buckets_ = index_of_first_non_null_ = kMinTableSize;
+        table_ = CreateEmptyTable(num_buckets_);
+        seed_ = Seed();
+        return;
+      }
+
       GOOGLE_DCHECK_GE(new_num_buckets, kMinTableSize);
       void** const old_table = table_;
       const size_type old_table_size = num_buckets_;
@@ -835,9 +999,9 @@ class Map {
       const size_type start = index_of_first_non_null_;
       index_of_first_non_null_ = num_buckets_;
       for (size_type i = start; i < old_table_size; i++) {
-        if (TableEntryIsNonEmptyList(old_table, i)) {
+        if (internal::TableEntryIsNonEmptyList(old_table, i)) {
           TransferList(old_table, i);
-        } else if (TableEntryIsTree(old_table, i)) {
+        } else if (internal::TableEntryIsTree(old_table, i)) {
           TransferTree(old_table, i++);
         }
       }
@@ -873,29 +1037,16 @@ class Map {
     }
 
     bool TableEntryIsEmpty(size_type b) const {
-      return TableEntryIsEmpty(table_, b);
+      return internal::TableEntryIsEmpty(table_, b);
     }
     bool TableEntryIsNonEmptyList(size_type b) const {
-      return TableEntryIsNonEmptyList(table_, b);
+      return internal::TableEntryIsNonEmptyList(table_, b);
     }
     bool TableEntryIsTree(size_type b) const {
-      return TableEntryIsTree(table_, b);
+      return internal::TableEntryIsTree(table_, b);
     }
     bool TableEntryIsList(size_type b) const {
-      return TableEntryIsList(table_, b);
-    }
-    static bool TableEntryIsEmpty(void* const* table, size_type b) {
-      return table[b] == nullptr;
-    }
-    static bool TableEntryIsNonEmptyList(void* const* table, size_type b) {
-      return table[b] != nullptr && table[b] != table[b ^ 1];
-    }
-    static bool TableEntryIsTree(void* const* table, size_type b) {
-      return !TableEntryIsEmpty(table, b) &&
-             !TableEntryIsNonEmptyList(table, b);
-    }
-    static bool TableEntryIsList(void* const* table, size_type b) {
-      return !TableEntryIsTree(table, b);
+      return internal::TableEntryIsList(table_, b);
     }
 
     void TreeConvert(size_type b) {
@@ -942,12 +1093,12 @@ class Map {
     size_type BucketNumber(const K& k) const {
       // We xor the hash value against the random seed so that we effectively
       // have a random hash function.
-      uint64 h = hash_function()(k) ^ seed_;
+      uint64_t h = hash_function()(k) ^ seed_;
 
       // We use the multiplication method to determine the bucket number from
       // the hash value. The constant kPhi (suggested by Knuth) is roughly
       // (sqrt(5) - 1) / 2 * 2^64.
-      constexpr uint64 kPhi = uint64{0x9e3779b97f4a7c15};
+      constexpr uint64_t kPhi = uint64_t{0x9e3779b97f4a7c15};
       return ((kPhi * h) >> 32) & (num_buckets_ - 1);
     }
 
@@ -987,7 +1138,7 @@ class Map {
 
     void** CreateEmptyTable(size_type n) {
       GOOGLE_DCHECK(n >= kMinTableSize);
-      GOOGLE_DCHECK_EQ(n & (n - 1), 0);
+      GOOGLE_DCHECK_EQ(n & (n - 1), 0u);
       void** result = Alloc<void*>(n);
       memset(result, 0, n * sizeof(result[0]));
       return result;
@@ -998,13 +1149,25 @@ class Map {
       // We get a little bit of randomness from the address of the map. The
       // lower bits are not very random, due to alignment, so we discard them
       // and shift the higher bits into their place.
-      size_type s = reinterpret_cast<uintptr_t>(this) >> 12;
-#if defined(__x86_64__) && defined(__GNUC__) && \
-    !defined(GOOGLE_PROTOBUF_NO_RDTSC)
-      uint32 hi, lo;
-      asm("rdtsc" : "=a"(lo), "=d"(hi));
-      s += ((static_cast<uint64>(hi) << 32) | lo);
+      size_type s = reinterpret_cast<uintptr_t>(this) >> 4;
+#if !defined(GOOGLE_PROTOBUF_NO_RDTSC)
+#if defined(__APPLE__)
+      // Use a commpage-based fast time function on Apple environments (MacOS,
+      // iOS, tvOS, watchOS, etc).
+      s += mach_absolute_time();
+#elif defined(__x86_64__) && defined(__GNUC__)
+      uint32_t hi, lo;
+      asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+      s += ((static_cast<uint64_t>(hi) << 32) | lo);
+#elif defined(__aarch64__) && defined(__GNUC__)
+      // There is no rdtsc on ARMv8. CNTVCT_EL0 is the virtual counter of the
+      // system timer. It runs at a different frequency than the CPU's, but is
+      // the best source of time-based entropy we get.
+      uint64_t virtual_timer_value;
+      asm volatile("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
+      s += virtual_timer_value;
 #endif
+#endif  // !defined(GOOGLE_PROTOBUF_NO_RDTSC)
       return s;
     }
 
@@ -1100,23 +1263,29 @@ class Map {
     InnerIt it_;
   };
 
-  iterator begin() { return iterator(elements_->begin()); }
-  iterator end() { return iterator(elements_->end()); }
-  const_iterator begin() const {
-    return const_iterator(iterator(elements_->begin()));
-  }
-  const_iterator end() const {
-    return const_iterator(iterator(elements_->end()));
-  }
+  iterator begin() { return iterator(elements_.begin()); }
+  iterator end() { return iterator(elements_.end()); }
+  const_iterator begin() const { return const_iterator(elements_.begin()); }
+  const_iterator end() const { return const_iterator(elements_.end()); }
   const_iterator cbegin() const { return begin(); }
   const_iterator cend() const { return end(); }
 
   // Capacity
-  size_type size() const { return elements_->size(); }
+  size_type size() const { return elements_.size(); }
   bool empty() const { return size() == 0; }
 
   // Element access
-  T& operator[](const key_type& key) { return (*elements_)[key].second; }
+  template <typename K = key_type>
+  T& operator[](const key_arg<K>& key) {
+    return elements_[key].second;
+  }
+  template <
+      typename K = key_type,
+      // Disable for integral types to reduce code bloat.
+      typename = typename std::enable_if<!std::is_integral<K>::value>::type>
+  T& operator[](key_arg<K>&& key) {
+    return elements_[std::forward<K>(key)].second;
+  }
 
   template <typename K = key_type>
   const T& at(const key_arg<K>& key) const {
@@ -1140,11 +1309,11 @@ class Map {
 
   template <typename K = key_type>
   const_iterator find(const key_arg<K>& key) const {
-    return const_iterator(iterator(elements_->find(key)));
+    return const_iterator(elements_.find(key));
   }
   template <typename K = key_type>
   iterator find(const key_arg<K>& key) {
-    return iterator(elements_->find(key));
+    return iterator(elements_.find(key));
   }
 
   template <typename K = key_type>
@@ -1176,21 +1345,26 @@ class Map {
   }
 
   // insert
-  std::pair<iterator, bool> insert(const value_type& value) {
-    std::pair<typename InnerMap::iterator, bool> p =
-        elements_->insert(value.first);
-    if (p.second) {
-      p.first->second = value.second;
-    }
+  template <typename K, typename... Args>
+  std::pair<iterator, bool> try_emplace(K&& k, Args&&... args) {
+    auto p =
+        elements_.try_emplace(std::forward<K>(k), std::forward<Args>(args)...);
     return std::pair<iterator, bool>(iterator(p.first), p.second);
+  }
+  std::pair<iterator, bool> insert(const value_type& value) {
+    return try_emplace(value.first, value.second);
+  }
+  std::pair<iterator, bool> insert(value_type&& value) {
+    return try_emplace(value.first, std::move(value.second));
+  }
+  template <typename... Args>
+  std::pair<iterator, bool> emplace(Args&&... args) {
+    return insert(value_type(std::forward<Args>(args)...));
   }
   template <class InputIt>
   void insert(InputIt first, InputIt last) {
-    for (InputIt it = first; it != last; ++it) {
-      iterator exist_it = find(it->first);
-      if (exist_it == end()) {
-        operator[](it->first) = it->second;
-      }
+    for (; first != last; ++first) {
+      try_emplace(first->first, first->second);
     }
   }
   void insert(std::initializer_list<value_type> values) {
@@ -1210,7 +1384,7 @@ class Map {
   }
   iterator erase(iterator pos) {
     iterator i = pos++;
-    elements_->erase(i.it_);
+    elements_.erase(i.it_);
     return pos;
   }
   void erase(iterator first, iterator last) {
@@ -1218,7 +1392,7 @@ class Map {
       first = erase(first);
     }
   }
-  void clear() { elements_->clear(); }
+  void clear() { elements_.clear(); }
 
   // Assign
   Map& operator=(const Map& other) {
@@ -1230,9 +1404,8 @@ class Map {
   }
 
   void swap(Map& other) {
-    if (arena_ == other.arena_) {
-      std::swap(default_enum_value_, other.default_enum_value_);
-      std::swap(elements_, other.elements_);
+    if (arena() == other.arena()) {
+      InternalSwap(other);
     } else {
       // TODO(zuguang): optimize this. The temporary copy can be allocated
       // in the same arena as the other message, and the "other = copy" can
@@ -1243,27 +1416,27 @@ class Map {
     }
   }
 
+  void InternalSwap(Map& other) { elements_.Swap(&other.elements_); }
+
   // Access to hasher.  Currently this returns a copy, but it may
   // be modified to return a const reference in the future.
-  hasher hash_function() const { return elements_->hash_function(); }
+  hasher hash_function() const { return elements_.hash_function(); }
 
- private:
-  // Set default enum value only for proto2 map field whose value is enum type.
-  void SetDefaultEnumValue(int default_enum_value) {
-    default_enum_value_ = default_enum_value;
+  size_t SpaceUsedExcludingSelfLong() const {
+    if (empty()) return 0;
+    return elements_.SpaceUsedInternal() + internal::SpaceUsedInValues(this);
   }
 
-  Arena* arena_;
-  int default_enum_value_;
-  InnerMap* elements_;
+ private:
+  Arena* arena() const { return elements_.arena(); }
+  InnerMap elements_;
 
   friend class Arena;
   using InternalArenaConstructable_ = void;
   using DestructorSkippable_ = void;
   template <typename Derived, typename K, typename V,
             internal::WireFormatLite::FieldType key_wire_type,
-            internal::WireFormatLite::FieldType value_wire_type,
-            int default_enum_value>
+            internal::WireFormatLite::FieldType value_wire_type>
   friend class internal::MapFieldLite;
 };
 

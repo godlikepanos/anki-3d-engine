@@ -49,9 +49,9 @@ endfunction(effcee_default_c_compile_options)
 
 function(effcee_default_compile_options TARGET)
   effcee_default_c_compile_options(${TARGET})
+  # RE2's public header requires C++11.  So publicly require C++11
+  target_compile_features(${TARGET} PUBLIC cxx_std_11)
   if (NOT "${MSVC}")
-    # RE2's public header requires C++11.  So publicly required C++11
-    target_compile_options(${TARGET} PUBLIC -std=c++11)
     if (NOT EFFCEE_ENABLE_SHARED_CRT)
       if (WIN32)
         # For MinGW cross compile, statically link to the C++ runtime.

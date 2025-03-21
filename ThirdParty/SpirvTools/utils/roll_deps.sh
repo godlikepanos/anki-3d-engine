@@ -29,14 +29,12 @@ function ExitIfIsInterestingError() {
 }
 
 
-# We are not rolling google test for now. The latest version requires C++14.
-dependencies=("external/effcee/"
-              "external/googletest/"
-              "external/re2/"
-              "external/spirv-headers/")
-
-
-branch="origin/main"
+declare -A dependency_to_branch_map
+dependency_to_branch_map["external/abseil_cpp"]="origin/master"
+dependency_to_branch_map["external/effcee/"]="origin/main"
+dependency_to_branch_map["external/googletest/"]="origin/main"
+dependency_to_branch_map["external/re2/"]="origin/main"
+dependency_to_branch_map["external/spirv-headers/"]="origin/main"
 
 # This script assumes it's parent directory is the repo root.
 repo_path=$(dirname "$0")/..
@@ -54,7 +52,8 @@ old_head=$(git rev-parse HEAD)
 
 set +e
 
-for dep in ${dependencies[@]}; do
+for dep in ${!dependency_to_branch_map[@]}; do
+  branch=${dependency_to_branch_map[$dep]}
   echo "Rolling $dep"
   roll-dep --ignore-dirty-tree --roll-to="${branch}" "${dep}"
   ExitIfIsInterestingError $?

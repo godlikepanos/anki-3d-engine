@@ -114,12 +114,10 @@ SamplerState g_linearClampAnySampler : register(s0);
 		gbuffer.m_roughness = roughness;
 		gbuffer.m_metallic = metalness;
 
-		HVec4 rt0, rt1, rt2;
-		Vec2 rt3;
-		packGBuffer(gbuffer, rt0, rt1, rt2, rt3);
+		const GBufferPixelOut gbufferOut = packGBuffer(gbuffer);
 
-		g_gbuffer0Tex[svDispatchThreadId] = rt0;
-		g_gbuffer1Tex[svDispatchThreadId] = rt1;
-		g_gbuffer2Tex[svDispatchThreadId] = rt2;
+		g_gbuffer0Tex[svDispatchThreadId] = gbufferOut.m_rt0;
+		g_gbuffer1Tex[svDispatchThreadId] = gbufferOut.m_rt1;
+		g_gbuffer2Tex[svDispatchThreadId] = gbufferOut.m_rt2;
 	}
 }

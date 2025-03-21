@@ -1,7 +1,11 @@
 Revision history for Effcee
 
-v2020.0-dev 2020-06-16
- - Start v2020.0-dev
+v2023.0-dev 2020-06-16
+ - Add dependency on Abseil
+ - Set up Kokoro bots
+ - Remove Travis and Appveyor bot support
+ - Avoid hardcoding an exact C++11 requirement at project level.
+ - Avoid subtracting iterators from different string views
 
 v2019.1 2020-06-16
  - Build/CI/release updates

@@ -21,18 +21,18 @@ set SRC=%cd%\github\SPIRV-Tools
 set BUILD_TYPE=%1
 set VS_VERSION=%2
 
-:: Force usage of python 3.6
-set PATH=C:\python36;"C:\Program Files\cmake-3.23.1-windows-x86_64\bin";%PATH%
+:: Force usage of python 3.12, cmake 3.31.2
+set PATH=C:\python312;c:\cmake-3.31.2\bin;%PATH%
 
 :: #########################################
 :: set up msvc build env
 :: #########################################
-if %VS_VERSION% == 2017 (
-  call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-  echo "Using VS 2017..."
-) else if %VS_VERSION% == 2019 (
+if %VS_VERSION% == 2019 (
   call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
   echo "Using VS 2019..."
+) else if %VS_VERSION% == 2022 (
+  call "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvarsall.bat" x64
+  echo "Using VS 2022..."
 )
 
 cd %SRC%
@@ -56,6 +56,11 @@ set CMAKE_FLAGS=-DCMAKE_INSTALL_PREFIX=%KOKORO_ARTIFACTS_DIR%\install -GNinja -D
 :: Build spirv-fuzz
 set CMAKE_FLAGS=%CMAKE_FLAGS% -DSPIRV_BUILD_FUZZER=ON
 
+if "%BUILD_TESTS%" == "NO" (
+  set CMAKE_FLAGS=-DSPIRV_SKIP_TESTS=ON %CMAKE_FLAGS%
+) 
+
+cmake --version
 cmake %CMAKE_FLAGS% ..
 
 if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
@@ -71,10 +76,12 @@ setlocal ENABLEDELAYEDEXPANSION
 :: ################################################
 :: Run the tests
 :: ################################################
-echo "Running Tests... %DATE% %TIME%"
-ctest -C %BUILD_TYPE% --output-on-failure --timeout 300
-if !ERRORLEVEL! NEQ 0 exit /b !ERRORLEVEL!
-echo "Tests Completed %DATE% %TIME%"
+if "%BUILD_TESTS%" NEQ "NO" (
+  echo "Running Tests... %DATE% %TIME%"
+  ctest -C %BUILD_TYPE% --output-on-failure --timeout 300
+  if !ERRORLEVEL! NEQ 0 exit /b !ERRORLEVEL!
+  echo "Tests Completed %DATE% %TIME%"
+)
 
 :: ################################################
 :: Install and package.

@@ -178,7 +178,7 @@ Result Match(StringPiece input, StringPiece checks, const Options& options) {
               // This must be valid since there was an intervening line.
               const auto non_match =
                   Cursor(input)
-                      .Advance(previous_match_end.begin() - input.begin())
+                      .Advance(previous_match_end.data() - input.data())
                       .AdvanceLine()
                       .RestOfLine();
 

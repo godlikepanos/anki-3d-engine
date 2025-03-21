@@ -67,7 +67,8 @@ enum class VulkanExtensions : U32
 	kNVX_image_view_handle = 1u << 14u,
 	kKHR_push_descriptor = 1u << 15u,
 	kEXT_mesh_shader = 1u << 16u,
-	kKHR_fragment_shader_barycentric = 1u << 17u
+	kKHR_fragment_shader_barycentric = 1u << 17u,
+	kKHR_ray_tracing_position_fetch = 1u << 18u,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 

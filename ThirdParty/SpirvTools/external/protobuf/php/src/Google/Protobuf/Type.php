@@ -20,7 +20,7 @@ class Type extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>string name = 1;</code>
      */
-    private $name = '';
+    protected $name = '';
     /**
      * The list of fields.
      *
@@ -44,13 +44,13 @@ class Type extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>.google.protobuf.SourceContext source_context = 5;</code>
      */
-    private $source_context = null;
+    protected $source_context = null;
     /**
      * The source syntax.
      *
      * Generated from protobuf field <code>.google.protobuf.Syntax syntax = 6;</code>
      */
-    private $syntax = 0;
+    protected $syntax = 0;
 
     /**
      * Constructor.
@@ -60,11 +60,11 @@ class Type extends \Google\Protobuf\Internal\Message
      *
      *     @type string $name
      *           The fully qualified message name.
-     *     @type \Google\Protobuf\Field[]|\Google\Protobuf\Internal\RepeatedField $fields
+     *     @type array<\Google\Protobuf\Field>|\Google\Protobuf\Internal\RepeatedField $fields
      *           The list of fields.
-     *     @type string[]|\Google\Protobuf\Internal\RepeatedField $oneofs
+     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $oneofs
      *           The list of types appearing in `oneof` definitions in this type.
-     *     @type \Google\Protobuf\Option[]|\Google\Protobuf\Internal\RepeatedField $options
+     *     @type array<\Google\Protobuf\Option>|\Google\Protobuf\Internal\RepeatedField $options
      *           The protocol buffer options.
      *     @type \Google\Protobuf\SourceContext $source_context
      *           The source context.
@@ -118,7 +118,7 @@ class Type extends \Google\Protobuf\Internal\Message
      * The list of fields.
      *
      * Generated from protobuf field <code>repeated .google.protobuf.Field fields = 2;</code>
-     * @param \Google\Protobuf\Field[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Google\Protobuf\Field>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setFields($var)
@@ -144,7 +144,7 @@ class Type extends \Google\Protobuf\Internal\Message
      * The list of types appearing in `oneof` definitions in this type.
      *
      * Generated from protobuf field <code>repeated string oneofs = 3;</code>
-     * @param string[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setOneofs($var)
@@ -170,7 +170,7 @@ class Type extends \Google\Protobuf\Internal\Message
      * The protocol buffer options.
      *
      * Generated from protobuf field <code>repeated .google.protobuf.Option options = 4;</code>
-     * @param \Google\Protobuf\Option[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Google\Protobuf\Option>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setOptions($var)
@@ -185,11 +185,21 @@ class Type extends \Google\Protobuf\Internal\Message
      * The source context.
      *
      * Generated from protobuf field <code>.google.protobuf.SourceContext source_context = 5;</code>
-     * @return \Google\Protobuf\SourceContext
+     * @return \Google\Protobuf\SourceContext|null
      */
     public function getSourceContext()
     {
         return $this->source_context;
+    }
+
+    public function hasSourceContext()
+    {
+        return isset($this->source_context);
+    }
+
+    public function clearSourceContext()
+    {
+        unset($this->source_context);
     }
 
     /**

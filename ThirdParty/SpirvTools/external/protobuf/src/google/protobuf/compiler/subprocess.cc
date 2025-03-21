@@ -45,8 +45,9 @@
 
 #include <google/protobuf/stubs/logging.h>
 #include <google/protobuf/stubs/common.h>
-#include <google/protobuf/message.h>
 #include <google/protobuf/stubs/substitute.h>
+#include <google/protobuf/message.h>
+#include <google/protobuf/io/io_win32.h>
 
 namespace google {
 namespace protobuf {
@@ -55,7 +56,7 @@ namespace compiler {
 namespace {
 char* portable_strdup(const char* s) {
   char* ns = (char*)malloc(strlen(s) + 1);
-  if (ns != NULL) {
+  if (ns != nullptr) {
     strcpy(ns, s);
   }
   return ns;
@@ -73,15 +74,15 @@ static void CloseHandleOrDie(HANDLE handle) {
 
 Subprocess::Subprocess()
     : process_start_error_(ERROR_SUCCESS),
-      child_handle_(NULL),
-      child_stdin_(NULL),
-      child_stdout_(NULL) {}
+      child_handle_(nullptr),
+      child_stdin_(nullptr),
+      child_stdout_(nullptr) {}
 
 Subprocess::~Subprocess() {
-  if (child_stdin_ != NULL) {
+  if (child_stdin_ != nullptr) {
     CloseHandleOrDie(child_stdin_);
   }
-  if (child_stdout_ != NULL) {
+  if (child_stdout_ != nullptr) {
     CloseHandleOrDie(child_stdout_);
   }
 }
@@ -93,10 +94,10 @@ void Subprocess::Start(const std::string& program, SearchMode search_mode) {
   HANDLE stdout_pipe_read;
   HANDLE stdout_pipe_write;
 
-  if (!CreatePipe(&stdin_pipe_read, &stdin_pipe_write, NULL, 0)) {
+  if (!CreatePipe(&stdin_pipe_read, &stdin_pipe_write, nullptr, 0)) {
     GOOGLE_LOG(FATAL) << "CreatePipe: " << Win32ErrorMessage(GetLastError());
   }
-  if (!CreatePipe(&stdout_pipe_read, &stdout_pipe_write, NULL, 0)) {
+  if (!CreatePipe(&stdout_pipe_read, &stdout_pipe_write, nullptr, 0)) {
     GOOGLE_LOG(FATAL) << "CreatePipe: " << Win32ErrorMessage(GetLastError());
   }
 
@@ -113,7 +114,7 @@ void Subprocess::Start(const std::string& program, SearchMode search_mode) {
   }
 
   // Setup STARTUPINFO to redirect handles.
-  STARTUPINFOA startup_info;
+  STARTUPINFOW startup_info;
   ZeroMemory(&startup_info, sizeof(startup_info));
   startup_info.cb = sizeof(startup_info);
   startup_info.dwFlags = STARTF_USESTDHANDLES;
@@ -125,23 +126,36 @@ void Subprocess::Start(const std::string& program, SearchMode search_mode) {
     GOOGLE_LOG(FATAL) << "GetStdHandle: " << Win32ErrorMessage(GetLastError());
   }
 
+  // get wide string version of program as the path may contain non-ascii characters
+  std::wstring wprogram;
+  if (!io::win32::strings::utf8_to_wcs(program.c_str(), &wprogram)) {
+    GOOGLE_LOG(FATAL) << "utf8_to_wcs: " << Win32ErrorMessage(GetLastError());
+  }
+
   // Invoking cmd.exe allows for '.bat' files from the path as well as '.exe'.
+  std::string command_line = "cmd.exe /c \"" + program + "\"";
+
+  // get wide string version of command line as the path may contain non-ascii characters
+  std::wstring wcommand_line;
+  if (!io::win32::strings::utf8_to_wcs(command_line.c_str(), &wcommand_line)) {
+    GOOGLE_LOG(FATAL) << "utf8_to_wcs: " << Win32ErrorMessage(GetLastError());
+  }
+
   // Using a malloc'ed string because CreateProcess() can mutate its second
   // parameter.
-  char* command_line =
-      portable_strdup(("cmd.exe /c \"" + program + "\"").c_str());
+  wchar_t *wcommand_line_copy = _wcsdup(wcommand_line.c_str());
 
   // Create the process.
   PROCESS_INFORMATION process_info;
 
-  if (CreateProcessA((search_mode == SEARCH_PATH) ? NULL : program.c_str(),
-                     (search_mode == SEARCH_PATH) ? command_line : NULL,
-                     NULL,  // process security attributes
-                     NULL,  // thread security attributes
-                     TRUE,  // inherit handles?
-                     0,     // obscure creation flags
-                     NULL,  // environment (inherit from parent)
-                     NULL,  // current directory (inherit from parent)
+  if (CreateProcessW((search_mode == SEARCH_PATH) ? nullptr : wprogram.c_str(),
+                     (search_mode == SEARCH_PATH) ? wcommand_line_copy : NULL,
+                     nullptr,  // process security attributes
+                     nullptr,  // thread security attributes
+                     TRUE,     // inherit handles?
+                     0,        // obscure creation flags
+                     nullptr,  // environment (inherit from parent)
+                     nullptr,  // current directory (inherit from parent)
                      &startup_info, &process_info)) {
     child_handle_ = process_info.hProcess;
     CloseHandleOrDie(process_info.hThread);
@@ -155,7 +169,7 @@ void Subprocess::Start(const std::string& program, SearchMode search_mode) {
 
   CloseHandleOrDie(stdin_pipe_read);
   CloseHandleOrDie(stdout_pipe_write);
-  free(command_line);
+  free(wcommand_line_copy);
 }
 
 bool Subprocess::Communicate(const Message& input, Message* output,
@@ -165,28 +179,32 @@ bool Subprocess::Communicate(const Message& input, Message* output,
     return false;
   }
 
-  GOOGLE_CHECK(child_handle_ != NULL) << "Must call Start() first.";
+  GOOGLE_CHECK(child_handle_ != nullptr) << "Must call Start() first.";
 
-  std::string input_data = input.SerializeAsString();
+  std::string input_data;
+  if (!input.SerializeToString(&input_data)) {
+    *error = "Failed to serialize request.";
+    return false;
+  }
   std::string output_data;
 
   int input_pos = 0;
 
-  while (child_stdout_ != NULL) {
+  while (child_stdout_ != nullptr) {
     HANDLE handles[2];
     int handle_count = 0;
 
-    if (child_stdin_ != NULL) {
+    if (child_stdin_ != nullptr) {
       handles[handle_count++] = child_stdin_;
     }
-    if (child_stdout_ != NULL) {
+    if (child_stdout_ != nullptr) {
       handles[handle_count++] = child_stdout_;
     }
 
     DWORD wait_result =
         WaitForMultipleObjects(handle_count, handles, FALSE, INFINITE);
 
-    HANDLE signaled_handle = NULL;
+    HANDLE signaled_handle = nullptr;
     if (wait_result >= WAIT_OBJECT_0 &&
         wait_result < WAIT_OBJECT_0 + handle_count) {
       signaled_handle = handles[wait_result - WAIT_OBJECT_0];
@@ -201,7 +219,7 @@ bool Subprocess::Communicate(const Message& input, Message* output,
     if (signaled_handle == child_stdin_) {
       DWORD n;
       if (!WriteFile(child_stdin_, input_data.data() + input_pos,
-                     input_data.size() - input_pos, &n, NULL)) {
+                     input_data.size() - input_pos, &n, nullptr)) {
         // Child closed pipe.  Presumably it will report an error later.
         // Pretend we're done for now.
         input_pos = input_data.size();
@@ -212,27 +230,27 @@ bool Subprocess::Communicate(const Message& input, Message* output,
       if (input_pos == input_data.size()) {
         // We're done writing.  Close.
         CloseHandleOrDie(child_stdin_);
-        child_stdin_ = NULL;
+        child_stdin_ = nullptr;
       }
     } else if (signaled_handle == child_stdout_) {
       char buffer[4096];
       DWORD n;
 
-      if (!ReadFile(child_stdout_, buffer, sizeof(buffer), &n, NULL)) {
+      if (!ReadFile(child_stdout_, buffer, sizeof(buffer), &n, nullptr)) {
         // We're done reading.  Close.
         CloseHandleOrDie(child_stdout_);
-        child_stdout_ = NULL;
+        child_stdout_ = nullptr;
       } else {
         output_data.append(buffer, n);
       }
     }
   }
 
-  if (child_stdin_ != NULL) {
+  if (child_stdin_ != nullptr) {
     // Child did not finish reading input before it closed the output.
     // Presumably it exited with an error.
     CloseHandleOrDie(child_stdin_);
-    child_stdin_ = NULL;
+    child_stdin_ = nullptr;
   }
 
   DWORD wait_result = WaitForSingleObject(child_handle_, INFINITE);
@@ -252,7 +270,7 @@ bool Subprocess::Communicate(const Message& input, Message* output,
   }
 
   CloseHandleOrDie(child_handle_);
-  child_handle_ = NULL;
+  child_handle_ = nullptr;
 
   if (exit_code != 0) {
     *error = strings::Substitute("Plugin failed with status code $0.", exit_code);
@@ -273,9 +291,10 @@ std::string Subprocess::Win32ErrorMessage(DWORD error_code) {
   // WTF?
   FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
                      FORMAT_MESSAGE_IGNORE_INSERTS,
-                 NULL, error_code, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                 nullptr, error_code,
+                 MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
                  (LPSTR)&message,  // NOT A BUG!
-                 0, NULL);
+                 0, nullptr);
 
   std::string result = message;
   LocalFree(message);
@@ -309,7 +328,7 @@ void Subprocess::Start(const std::string& program, SearchMode search_mode) {
   GOOGLE_CHECK(pipe(stdin_pipe) != -1);
   GOOGLE_CHECK(pipe(stdout_pipe) != -1);
 
-  char* argv[2] = {portable_strdup(program.c_str()), NULL};
+  char* argv[2] = {portable_strdup(program.c_str()), nullptr};
 
   child_pid_ = fork();
   if (child_pid_ == -1) {
@@ -368,7 +387,11 @@ bool Subprocess::Communicate(const Message& input, Message* output,
   // Make sure SIGPIPE is disabled so that if the child dies it doesn't kill us.
   SignalHandler* old_pipe_handler = signal(SIGPIPE, SIG_IGN);
 
-  std::string input_data = input.SerializeAsString();
+  std::string input_data;
+  if (!input.SerializeToString(&input_data)) {
+    *error = "Failed to serialize request.";
+    return false;
+  }
   std::string output_data;
 
   int input_pos = 0;
@@ -386,7 +409,7 @@ bool Subprocess::Communicate(const Message& input, Message* output,
       FD_SET(child_stdin_, &write_fds);
     }
 
-    if (select(max_fd + 1, &read_fds, &write_fds, NULL, NULL) < 0) {
+    if (select(max_fd + 1, &read_fds, &write_fds, nullptr, nullptr) < 0) {
       if (errno == EINTR) {
         // Interrupted by signal.  Try again.
         continue;

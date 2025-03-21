@@ -34,7 +34,6 @@
 #include <google/protobuf/compiler/objectivec/objectivec_enum_field.h>
 #include <google/protobuf/compiler/objectivec/objectivec_helpers.h>
 #include <google/protobuf/io/printer.h>
-#include <google/protobuf/wire_format.h>
 
 namespace google {
 namespace protobuf {
@@ -44,8 +43,8 @@ namespace objectivec {
 namespace {
 
 void SetEnumVariables(const FieldDescriptor* descriptor,
-                      std::map<string, string>* variables) {
-  string type = EnumName(descriptor->enum_type());
+                      std::map<std::string, std::string>* variables) {
+  std::string type = EnumName(descriptor->enum_type());
   (*variables)["storage_type"] = type;
   // For non repeated fields, if it was defined in a different file, the
   // property decls need to use "enum NAME" rather than just "NAME" to support
@@ -65,9 +64,8 @@ void SetEnumVariables(const FieldDescriptor* descriptor,
 }
 }  // namespace
 
-EnumFieldGenerator::EnumFieldGenerator(const FieldDescriptor* descriptor,
-                                       const Options& options)
-    : SingleFieldGenerator(descriptor, options) {
+EnumFieldGenerator::EnumFieldGenerator(const FieldDescriptor* descriptor)
+    : SingleFieldGenerator(descriptor) {
   SetEnumVariables(descriptor, &variables_);
 }
 
@@ -116,21 +114,25 @@ void EnumFieldGenerator::GenerateCFunctionImplementations(
 }
 
 void EnumFieldGenerator::DetermineForwardDeclarations(
-    std::set<string>* fwd_decls) const {
-  SingleFieldGenerator::DetermineForwardDeclarations(fwd_decls);
-  // If it is an enum defined in a different file, then we'll need a forward
-  // declaration for it.  When it is in our file, all the enums are output
-  // before the message, so it will be declared before it is needed.
-  if (descriptor_->file() != descriptor_->enum_type()->file()) {
+    std::set<std::string>* fwd_decls,
+    bool include_external_types) const {
+  SingleFieldGenerator::DetermineForwardDeclarations(
+      fwd_decls, include_external_types);
+  // If it is an enum defined in a different file (and not a WKT), then we'll
+  // need a forward declaration for it.  When it is in our file, all the enums
+  // are output before the message, so it will be declared before it is needed.
+  if (include_external_types &&
+      descriptor_->file() != descriptor_->enum_type()->file() &&
+      !IsProtobufLibraryBundledProtoFile(descriptor_->enum_type()->file())) {
     // Enum name is already in "storage_type".
-    const string& name = variable("storage_type");
+    const std::string& name = variable("storage_type");
     fwd_decls->insert("GPB_ENUM_FWD_DECLARE(" + name + ")");
   }
 }
 
 RepeatedEnumFieldGenerator::RepeatedEnumFieldGenerator(
-    const FieldDescriptor* descriptor, const Options& options)
-    : RepeatedFieldGenerator(descriptor, options) {
+    const FieldDescriptor* descriptor)
+    : RepeatedFieldGenerator(descriptor) {
   SetEnumVariables(descriptor, &variables_);
   variables_["array_storage_type"] = "GPBEnumArray";
 }

@@ -25,7 +25,7 @@ cc_library(
     compatible_with = [
     ],
     deps = [
-        "@com_googlesource_code_re2//:re2",
+        "@re2//:re2",
     ],
 )
 
@@ -60,8 +60,8 @@ cc_test(
     srcs = ["effcee/check_test.cc"],
     deps = [
         ":effcee",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -70,8 +70,8 @@ cc_test(
     srcs = ["effcee/cursor_test.cc"],
     deps = [
         ":effcee",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -80,8 +80,8 @@ cc_test(
     srcs = ["effcee/diagnostic_test.cc"],
     deps = [
         ":effcee",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -90,8 +90,8 @@ cc_test(
     srcs = ["effcee/match_test.cc"],
     deps = [
         ":effcee",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -100,8 +100,8 @@ cc_test(
     srcs = ["effcee/options_test.cc"],
     deps = [
         ":effcee",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -110,7 +110,7 @@ cc_test(
     srcs = ["effcee/result_test.cc"],
     deps = [
         ":effcee",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@googletest//:gtest",
     ],
 )

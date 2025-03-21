@@ -53,7 +53,7 @@ TEST(Int128, AllTests) {
   uint128 bigger(2001, 1);
   uint128 biggest(kuint128max);
   uint128 high_low(1, 0);
-  uint128 low_high(0, kuint64max);
+  uint128 low_high(0, std::numeric_limits<uint64_t>::max());
   EXPECT_LT(one, two);
   EXPECT_GT(two, one);
   EXPECT_LT(one, big);
@@ -121,8 +121,8 @@ TEST(Int128, AllTests) {
   big_copy = big;
   EXPECT_EQ(big >> 128, big_copy >>= 128);
 
-  EXPECT_EQ(Uint128High64(biggest), kuint64max);
-  EXPECT_EQ(Uint128Low64(biggest), kuint64max);
+  EXPECT_EQ(Uint128High64(biggest), std::numeric_limits<uint64_t>::max());
+  EXPECT_EQ(Uint128Low64(biggest), std::numeric_limits<uint64_t>::max());
   EXPECT_EQ(zero + one, one);
   EXPECT_EQ(one + one, two);
   EXPECT_EQ(big_minus_one + one, big);
@@ -131,13 +131,13 @@ TEST(Int128, AllTests) {
   EXPECT_EQ(zero - one, biggest);
   EXPECT_EQ(big - big, zero);
   EXPECT_EQ(big - one, big_minus_one);
-  EXPECT_EQ(big + kuint64max, bigger);
+  EXPECT_EQ(big + std::numeric_limits<uint64_t>::max(), bigger);
   EXPECT_EQ(biggest + 1, zero);
   EXPECT_EQ(zero - 1, biggest);
   EXPECT_EQ(high_low - one, low_high);
   EXPECT_EQ(low_high + one, high_low);
   EXPECT_EQ(Uint128High64((uint128(1) << 64) - 1), 0);
-  EXPECT_EQ(Uint128Low64((uint128(1) << 64) - 1), kuint64max);
+  EXPECT_EQ(Uint128Low64((uint128(1) << 64) - 1), std::numeric_limits<uint64_t>::max());
   EXPECT_TRUE(!!one);
   EXPECT_TRUE(!!high_low);
   EXPECT_FALSE(!!zero);
@@ -293,26 +293,20 @@ TEST(Int128, Multiply) {
   }
 
   // Verified with dc.
-  a = uint128(PROTOBUF_ULONGLONG(0xffffeeeeddddcccc),
-              PROTOBUF_ULONGLONG(0xbbbbaaaa99998888));
-  b = uint128(PROTOBUF_ULONGLONG(0x7777666655554444),
-              PROTOBUF_ULONGLONG(0x3333222211110000));
+  a = uint128(uint64_t{0xffffeeeeddddccccu}, uint64_t{0xbbbbaaaa99998888u});
+  b = uint128(uint64_t{0x7777666655554444u}, uint64_t{0x3333222211110000u});
   c = a * b;
-  EXPECT_EQ(uint128(PROTOBUF_ULONGLONG(0x530EDA741C71D4C3),
-                    PROTOBUF_ULONGLONG(0xBF25975319080000)),
-            c);
+  EXPECT_EQ(
+      uint128(uint64_t{0x530EDA741C71D4C3u}, uint64_t{0xBF25975319080000u}), c);
   EXPECT_EQ(0, c - b * a);
   EXPECT_EQ(a * a - b * b, (a + b) * (a - b));
 
   // Verified with dc.
-  a = uint128(PROTOBUF_ULONGLONG(0x0123456789abcdef),
-              PROTOBUF_ULONGLONG(0xfedcba9876543210));
-  b = uint128(PROTOBUF_ULONGLONG(0x02468ace13579bdf),
-              PROTOBUF_ULONGLONG(0xfdb97531eca86420));
+  a = uint128(uint64_t{0x0123456789abcdefu}, uint64_t{0xfedcba9876543210u});
+  b = uint128(uint64_t{0x02468ace13579bdfu}, uint64_t{0xfdb97531eca86420u});
   c = a * b;
-  EXPECT_EQ(uint128(PROTOBUF_ULONGLONG(0x97a87f4f261ba3f2),
-                    PROTOBUF_ULONGLONG(0x342d0bbf48948200)),
-            c);
+  EXPECT_EQ(
+      uint128(uint64_t{0x97a87f4f261ba3f2u}, uint64_t{0x342d0bbf48948200u}), c);
   EXPECT_EQ(0, c - b * a);
   EXPECT_EQ(a*a - b*b, (a+b) * (a-b));
 }
@@ -323,7 +317,7 @@ TEST(Int128, AliasTests) {
   x1 += x1;
   EXPECT_EQ(x2, x1);
 
-  uint128 x3(1, static_cast<uint64>(1) << 63);
+  uint128 x3(1, static_cast<uint64_t>(1) << 63);
   uint128 x4(3, 0);
   x3 += x3;
   EXPECT_EQ(x4, x3);
@@ -359,10 +353,8 @@ TEST(Int128, DivideAndMod) {
   EXPECT_EQ(0, q);
   EXPECT_EQ(0, r);
 
-  a = uint128(PROTOBUF_ULONGLONG(0x530eda741c71d4c3),
-              PROTOBUF_ULONGLONG(0xbf25975319080000));
-  q = uint128(PROTOBUF_ULONGLONG(0x4de2cab081),
-              PROTOBUF_ULONGLONG(0x14c34ab4676e4bab));
+  a = uint128(uint64_t{0x530eda741c71d4c3u}, uint64_t{0xbf25975319080000u});
+  q = uint128(uint64_t{0x4de2cab081u}, uint64_t{0x14c34ab4676e4babu});
   b = uint128(0x1110001);
   r = uint128(0x3eb455);
   ASSERT_EQ(a, q * b + r);  // Sanity-check.
@@ -400,8 +392,8 @@ TEST(Int128, DivideAndMod) {
 
   // Try a large remainder.
   b = a / 2 + 1;
-  uint128 expected_r(PROTOBUF_ULONGLONG(0x29876d3a0e38ea61),
-                     PROTOBUF_ULONGLONG(0xdf92cba98c83ffff));
+  uint128 expected_r(uint64_t{0x29876d3a0e38ea61u},
+                     uint64_t{0xdf92cba98c83ffffu});
   // Sanity checks.
   ASSERT_EQ(a / 2 - 1, expected_r);
   ASSERT_EQ(a, b + expected_r);
@@ -411,10 +403,10 @@ TEST(Int128, DivideAndMod) {
   EXPECT_EQ(expected_r, result_r);
 }
 
-static uint64 RandomUint64() {
-  uint64 v1 = rand();
-  uint64 v2 = rand();
-  uint64 v3 = rand();
+static uint64_t RandomUint64() {
+  uint64_t v1 = rand();
+  uint64_t v2 = rand();
+  uint64_t v3 = rand();
   return v1 * v2 + v3;
 }
 
@@ -471,12 +463,12 @@ TEST(Int128, OStream) {
       {uint128(1, 0), std::ios::oct, 0, '_', "2000000000000000000000"},
       {uint128(1, 0), std::ios::hex, 0, '_', "10000000000000000"},
       // just the top bit
-      {uint128(PROTOBUF_ULONGLONG(0x8000000000000000), 0), std::ios::dec, 0,
-       '_', "170141183460469231731687303715884105728"},
-      {uint128(PROTOBUF_ULONGLONG(0x8000000000000000), 0), std::ios::oct, 0,
-       '_', "2000000000000000000000000000000000000000000"},
-      {uint128(PROTOBUF_ULONGLONG(0x8000000000000000), 0), std::ios::hex, 0,
-       '_', "80000000000000000000000000000000"},
+      {uint128(uint64_t{0x8000000000000000u}, 0), std::ios::dec, 0, '_',
+       "170141183460469231731687303715884105728"},
+      {uint128(uint64_t{0x8000000000000000u}, 0), std::ios::oct, 0, '_',
+       "2000000000000000000000000000000000000000000"},
+      {uint128(uint64_t{0x8000000000000000u}, 0), std::ios::hex, 0, '_',
+       "80000000000000000000000000000000"},
       // maximum uint128 value
       {uint128(-1, -1), std::ios::dec, 0, '_',
        "340282366920938463463374607431768211455"},
@@ -515,3 +507,5 @@ TEST(Int128, OStream) {
 }
 }  // namespace protobuf
 }  // namespace google
+
+#include <google/protobuf/port_undef.inc>

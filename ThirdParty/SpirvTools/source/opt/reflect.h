@@ -16,6 +16,7 @@
 #define SOURCE_OPT_REFLECT_H_
 
 #include "source/latest_version_spirv_header.h"
+#include "source/opcode.h"
 
 namespace spvtools {
 namespace opt {

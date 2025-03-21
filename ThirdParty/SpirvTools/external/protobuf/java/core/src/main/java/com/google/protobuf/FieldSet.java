@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * A class which represents an arbitrary set of fields of some message type. This is used to
@@ -119,10 +120,15 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
   }
 
   /** Make this FieldSet immutable from this point forward. */
-  @SuppressWarnings("unchecked")
   public void makeImmutable() {
     if (isImmutable) {
       return;
+    }
+    for (int i = 0; i < fields.getNumArrayEntries(); ++i) {
+      Entry<T, Object> entry = fields.getArrayEntryAt(i);
+      if (entry.getValue() instanceof GeneratedMessageLite) {
+        ((GeneratedMessageLite<?, ?>) entry.getValue()).makeImmutable();
+      }
     }
     fields.makeImmutable();
     isImmutable = true;
@@ -283,14 +289,14 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
 
       // Wrap the contents in a new list so that the caller cannot change
       // the list's contents after setting it.
-      final List newList = new ArrayList();
+      final List newList = new ArrayList<>();
       newList.addAll((List) value);
       for (final Object element : newList) {
-        verifyType(descriptor.getLiteType(), element);
+        verifyType(descriptor, element);
       }
       value = newList;
     } else {
-      verifyType(descriptor.getLiteType(), value);
+      verifyType(descriptor, value);
     }
 
     if (value instanceof LazyField) {
@@ -354,7 +360,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
       throw new IndexOutOfBoundsException();
     }
 
-    verifyType(descriptor.getLiteType(), value);
+    verifyType(descriptor, value);
     ((List<Object>) list).set(index, value);
   }
 
@@ -369,7 +375,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
           "addRepeatedField() can only be called on repeated fields.");
     }
 
-    verifyType(descriptor.getLiteType(), value);
+    verifyType(descriptor, value);
 
     final Object existingValue = getField(descriptor);
     List<Object> list;
@@ -388,21 +394,20 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
    * (For repeated fields, this checks if the object is the right type to be one element of the
    * field.)
    *
-   * @throws IllegalArgumentException The value is not of the right type.
+   * @throws IllegalArgumentException the value is not of the right type
    */
-  private void verifyType(final WireFormat.FieldType type, final Object value) {
-    if (!isValidType(type, value)) {
-      // TODO(kenton):  When chaining calls to setField(), it can be hard to
-      //   tell from the stack trace which exact call failed, since the whole
-      //   chain is considered one line of code.  It would be nice to print
-      //   more information here, e.g. naming the field.  We used to do that.
-      //   But we can't now that FieldSet doesn't use descriptors.  Maybe this
-      //   isn't a big deal, though, since it would only really apply when using
-      //   reflection and generally people don't chain reflection setters.
+  private void verifyType(final T descriptor, final Object value) {
+    if (!isValidType(descriptor.getLiteType(), value)) {
       throw new IllegalArgumentException(
-          "Wrong object type used with protocol message reflection.");
+          String.format(
+              "Wrong object type used with protocol message reflection.\n"
+              + "Field number: %d, field java type: %s, value type: %s\n",
+              descriptor.getNumber(),
+              descriptor.getLiteType().getJavaType(),
+              value.getClass().getName()));
     }
   }
+
 
   private static boolean isValidType(final WireFormat.FieldType type, final Object value) {
     checkNotNull(value);
@@ -422,10 +427,8 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
       case BYTE_STRING:
         return value instanceof ByteString || value instanceof byte[];
       case ENUM:
-        // TODO(kenton):  Caller must do type checking here, I guess.
         return (value instanceof Integer || value instanceof Internal.EnumLite);
       case MESSAGE:
-        // TODO(kenton):  Caller must do type checking here, I guess.
         return (value instanceof MessageLite) || (value instanceof LazyField);
     }
     return false;
@@ -453,32 +456,34 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
     return true;
   }
 
-  @SuppressWarnings("unchecked")
   private static <T extends FieldDescriptorLite<T>> boolean isInitialized(
       final Map.Entry<T, Object> entry) {
     final T descriptor = entry.getKey();
     if (descriptor.getLiteJavaType() == WireFormat.JavaType.MESSAGE) {
       if (descriptor.isRepeated()) {
-        for (final MessageLite element : (List<MessageLite>) entry.getValue()) {
-          if (!element.isInitialized()) {
+        for (final Object element : (List<?>) entry.getValue()) {
+          if (!isMessageFieldValueInitialized(element)) {
             return false;
           }
         }
       } else {
-        Object value = entry.getValue();
-        if (value instanceof MessageLite) {
-          if (!((MessageLite) value).isInitialized()) {
-            return false;
-          }
-        } else if (value instanceof LazyField) {
-          return true;
-        } else {
-          throw new IllegalArgumentException(
-              "Wrong object type used with protocol message reflection.");
-        }
+        return isMessageFieldValueInitialized(entry.getValue());
       }
     }
     return true;
+  }
+
+  private static boolean isMessageFieldValueInitialized(Object value) {
+    if (value instanceof MessageLiteOrBuilder) {
+      // Message fields cannot have builder values in FieldSet, but can in FieldSet.Builder, and
+      // this method is used by FieldSet.Builder.isInitialized.
+      return ((MessageLiteOrBuilder) value).isInitialized();
+    } else if (value instanceof LazyField) {
+      return true;
+    } else {
+      throw new IllegalArgumentException(
+          "Wrong object type used with protocol message reflection.");
+    }
   }
 
   /**
@@ -549,18 +554,15 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
     }
   }
 
-  // TODO(kenton):  Move static parsing and serialization methods into some
-  //   other class.  Probably WireFormat.
-
   /**
    * Read a field of any primitive type for immutable messages from a CodedInputStream. Enums,
    * groups, and embedded messages are not handled by this method.
    *
-   * @param input The stream from which to read.
-   * @param type Declared type of the field.
-   * @param checkUtf8 When true, check that the input is valid utf8.
-   * @return An object representing the field's value, of the exact type which would be returned by
-   *     {@link Message#getField(Descriptors.FieldDescriptor)} for this field.
+   * @param input the stream from which to read
+   * @param type declared type of the field
+   * @param checkUtf8 When true, check that the input is valid UTF-8
+   * @return an object representing the field's value, of the exact type which would be returned by
+   *     {@link Message#getField(Descriptors.FieldDescriptor)} for this field
    */
   public static Object readPrimitiveField(
       CodedInputStream input, final WireFormat.FieldType type, boolean checkUtf8)
@@ -732,7 +734,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
         for (final Object element : valueList) {
           dataSize += computeElementSizeNoTag(type, element);
         }
-        output.writeRawVarint32(dataSize);
+        output.writeUInt32NoTag(dataSize);
         // Write the data itself, without any tags.
         for (final Object element : valueList) {
           writeElementNoTag(output, type, element);
@@ -827,8 +829,6 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
    */
   static int computeElementSizeNoTag(final WireFormat.FieldType type, final Object value) {
     switch (type) {
-        // Note:  Minor violation of 80-char limit rule here because this would
-        //   actually be harder to read if we wrapped the lines.
       case DOUBLE:
         return CodedOutputStream.computeDoubleSizeNoTag((Double) value);
       case FLOAT:
@@ -900,7 +900,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
         }
         return dataSize
             + CodedOutputStream.computeTagSize(number)
-            + CodedOutputStream.computeRawVarint32Size(dataSize);
+            + CodedOutputStream.computeUInt32SizeNoTag(dataSize);
       } else {
         int size = 0;
         for (final Object element : (List<?>) value) {
@@ -933,8 +933,27 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
       this.isMutable = true;
     }
 
-    /** Creates the FieldSet */
+    /**
+     * Creates the FieldSet
+     *
+     * @throws UninitializedMessageException if a message field is missing required fields.
+     */
     public FieldSet<T> build() {
+      return buildImpl(false);
+    }
+
+    /** Creates the FieldSet but does not validate that all required fields are present. */
+    public FieldSet<T> buildPartial() {
+      return buildImpl(true);
+    }
+
+    /**
+     * Creates the FieldSet.
+     *
+     * @param partial controls whether to do a build() or buildPartial() when converting submessage
+     *     builders to messages.
+     */
+    private FieldSet<T> buildImpl(boolean partial) {
       if (fields.isEmpty()) {
         return FieldSet.emptySet();
       }
@@ -943,7 +962,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
       if (hasNestedBuilders) {
         // Make a copy of the fields map with all Builders replaced by Message.
         fieldsForBuild = cloneAllFieldsMap(fields, /* copyList */ false);
-        replaceBuilders(fieldsForBuild);
+        replaceBuilders(fieldsForBuild, partial);
       }
       FieldSet<T> fieldSet = new FieldSet<>(fieldsForBuild);
       fieldSet.hasLazyField = hasLazyField;
@@ -951,22 +970,22 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
     }
 
     private static <T extends FieldDescriptorLite<T>> void replaceBuilders(
-        SmallSortedMap<T, Object> fieldMap) {
+        SmallSortedMap<T, Object> fieldMap, boolean partial) {
       for (int i = 0; i < fieldMap.getNumArrayEntries(); i++) {
-        replaceBuilders(fieldMap.getArrayEntryAt(i));
+        replaceBuilders(fieldMap.getArrayEntryAt(i), partial);
       }
       for (Map.Entry<T, Object> entry : fieldMap.getOverflowEntries()) {
-        replaceBuilders(entry);
+        replaceBuilders(entry, partial);
       }
     }
 
     private static <T extends FieldDescriptorLite<T>> void replaceBuilders(
-        Map.Entry<T, Object> entry) {
-      entry.setValue(replaceBuilders(entry.getKey(), entry.getValue()));
+        Map.Entry<T, Object> entry, boolean partial) {
+      entry.setValue(replaceBuilders(entry.getKey(), entry.getValue(), partial));
     }
 
     private static <T extends FieldDescriptorLite<T>> Object replaceBuilders(
-        T descriptor, Object value) {
+        T descriptor, Object value, boolean partial) {
       if (value == null) {
         return value;
       }
@@ -981,7 +1000,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
           List<Object> list = (List<Object>) value;
           for (int i = 0; i < list.size(); i++) {
             Object oldElement = list.get(i);
-            Object newElement = replaceBuilder(oldElement);
+            Object newElement = replaceBuilder(oldElement, partial);
             if (newElement != oldElement) {
               // If the list contains a Message.Builder, then make a copy of that list and then
               // modify the Message.Builder into a Message and return the new list. This way, the
@@ -995,14 +1014,21 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
           }
           return list;
         } else {
-          return replaceBuilder(value);
+          return replaceBuilder(value, partial);
         }
       }
       return value;
     }
 
-    private static Object replaceBuilder(Object value) {
-      return (value instanceof MessageLite.Builder) ? ((MessageLite.Builder) value).build() : value;
+    private static Object replaceBuilder(Object value, boolean partial) {
+      if (!(value instanceof MessageLite.Builder)) {
+        return value;
+      }
+      MessageLite.Builder builder = (MessageLite.Builder) value;
+      if (partial) {
+        return builder.buildPartial();
+      }
+      return builder.build();
     }
 
     /** Returns a new Builder using the fields from {@code fieldSet}. */
@@ -1021,7 +1047,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
         if (fields.isImmutable()) {
           result.makeImmutable();
         } else {
-          replaceBuilders(result);
+          replaceBuilders(result, true);
         }
         return result;
       }
@@ -1044,7 +1070,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
      */
     public Object getField(final T descriptor) {
       Object value = getFieldAllowBuilders(descriptor);
-      return replaceBuilders(descriptor, value);
+      return replaceBuilders(descriptor, value, true);
     }
 
     /** Same as {@link #getField(F)}, but allow a {@link MessageLite.Builder} to be returned. */
@@ -1078,15 +1104,14 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
 
         // Wrap the contents in a new list so that the caller cannot change
         // the list's contents after setting it.
-        final List newList = new ArrayList();
-        newList.addAll((List) value);
+        final List newList = new ArrayList((List) value);
         for (final Object element : newList) {
-          verifyType(descriptor.getLiteType(), element);
+          verifyType(descriptor, element);
           hasNestedBuilders = hasNestedBuilders || element instanceof MessageLite.Builder;
         }
         value = newList;
       } else {
-        verifyType(descriptor.getLiteType(), value);
+        verifyType(descriptor, value);
       }
 
       if (value instanceof LazyField) {
@@ -1112,10 +1137,10 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
     public int getRepeatedFieldCount(final T descriptor) {
       if (!descriptor.isRepeated()) {
         throw new IllegalArgumentException(
-            "getRepeatedField() can only be called on repeated fields.");
+            "getRepeatedFieldCount() can only be called on repeated fields.");
       }
 
-      final Object value = getField(descriptor);
+      final Object value = getFieldAllowBuilders(descriptor);
       if (value == null) {
         return 0;
       } else {
@@ -1131,7 +1156,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
         ensureIsMutable();
       }
       Object value = getRepeatedFieldAllowBuilders(descriptor, index);
-      return replaceBuilder(value);
+      return replaceBuilder(value, true);
     }
 
     /**
@@ -1167,12 +1192,12 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
 
       hasNestedBuilders = hasNestedBuilders || value instanceof MessageLite.Builder;
 
-      final Object list = getField(descriptor);
+      final Object list = getFieldAllowBuilders(descriptor);
       if (list == null) {
         throw new IndexOutOfBoundsException();
       }
 
-      verifyType(descriptor.getLiteType(), value);
+      verifyType(descriptor, value);
       ((List<Object>) list).set(index, value);
     }
 
@@ -1190,9 +1215,9 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
 
       hasNestedBuilders = hasNestedBuilders || value instanceof MessageLite.Builder;
 
-      verifyType(descriptor.getLiteType(), value);
+      verifyType(descriptor, value);
 
-      final Object existingValue = getField(descriptor);
+      final Object existingValue = getFieldAllowBuilders(descriptor);
       List<Object> list;
       if (existingValue == null) {
         list = new ArrayList<>();
@@ -1211,15 +1236,20 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
      *
      * @throws IllegalArgumentException The value is not of the right type.
      */
-    private static void verifyType(final WireFormat.FieldType type, final Object value) {
-      if (!FieldSet.isValidType(type, value)) {
+    private void verifyType(final T descriptor, final Object value) {
+      if (!FieldSet.isValidType(descriptor.getLiteType(), value)) {
         // Builder can accept Message.Builder values even though FieldSet will reject.
-        if (type.getJavaType() == WireFormat.JavaType.MESSAGE
+        if (descriptor.getLiteType().getJavaType() == WireFormat.JavaType.MESSAGE
             && value instanceof MessageLite.Builder) {
           return;
         }
         throw new IllegalArgumentException(
-            "Wrong object type used with protocol message reflection.");
+            String.format(
+                "Wrong object type used with protocol message reflection.\n"
+                + "Field number: %d, field java type: %s, value type: %s\n",
+                descriptor.getNumber(),
+                descriptor.getLiteType().getJavaType(),
+                value.getClass().getName()));
       }
     }
 
@@ -1255,7 +1285,7 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
       }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings("unchecked")
     private void mergeFromField(final Map.Entry<T, Object> entry) {
       final T descriptor = entry.getKey();
       Object otherValue = entry.getValue();
@@ -1264,16 +1294,16 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
       }
 
       if (descriptor.isRepeated()) {
-        Object value = getField(descriptor);
+        List<Object> value = (List<Object>) getFieldAllowBuilders(descriptor);
         if (value == null) {
           value = new ArrayList<>();
+          fields.put(descriptor, value);
         }
-        for (Object element : (List) otherValue) {
-          ((List) value).add(FieldSet.cloneIfMutable(element));
+        for (Object element : (List<?>) otherValue) {
+          value.add(FieldSet.cloneIfMutable(element));
         }
-        fields.put(descriptor, value);
       } else if (descriptor.getLiteJavaType() == WireFormat.JavaType.MESSAGE) {
-        Object value = getField(descriptor);
+        Object value = getFieldAllowBuilders(descriptor);
         if (value == null) {
           fields.put(descriptor, FieldSet.cloneIfMutable(otherValue));
         } else {

@@ -45,7 +45,7 @@ build() {
     emcc \
         --bind \
         -I../../include \
-        -std=c++11 \
+        -std=c++17 \
         ../../source/wasm/spirv-tools.cpp \
         source/libSPIRV-Tools.a \
         -o spirv-tools.js \
@@ -70,8 +70,8 @@ build() {
 }
 
 if [ ! -d external/spirv-headers ] ; then
-    echo "Fetching SPIRV-headers"
-    git clone https://github.com/KhronosGroup/SPIRV-Headers.git external/spirv-headers
+    echo "Fetching deps"
+    utils/git-sync-deps
 fi
 
 echo Building ${BASH_REMATCH[1]}

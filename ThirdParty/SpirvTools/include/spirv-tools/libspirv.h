@@ -33,15 +33,19 @@ extern "C" {
 #else
 #define SPIRV_TOOLS_EXPORT __declspec(dllimport)
 #endif
+#define SPIRV_TOOLS_LOCAL
 #else
 #if defined(SPIRV_TOOLS_IMPLEMENTATION)
 #define SPIRV_TOOLS_EXPORT __attribute__((visibility("default")))
+#define SPIRV_TOOLS_LOCAL __attribute__((visibility("hidden")))
 #else
 #define SPIRV_TOOLS_EXPORT
+#define SPIRV_TOOLS_LOCAL
 #endif
 #endif
 #else
 #define SPIRV_TOOLS_EXPORT
+#define SPIRV_TOOLS_LOCAL
 #endif
 
 // Helpers
@@ -143,6 +147,7 @@ typedef enum spv_operand_type_t {
   // may be larger than 32, which would require such a typed literal value to
   // occupy multiple SPIR-V words.
   SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER,
+  SPV_OPERAND_TYPE_LITERAL_FLOAT,  // Always 32-bit float.
 
   // Set 3:  The literal string operand type.
   SPV_OPERAND_TYPE_LITERAL_STRING,
@@ -170,6 +175,7 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_KERNEL_ENQ_FLAGS,              // SPIR-V Sec 3.29
   SPV_OPERAND_TYPE_KERNEL_PROFILING_INFO,         // SPIR-V Sec 3.30
   SPV_OPERAND_TYPE_CAPABILITY,                    // SPIR-V Sec 3.31
+  SPV_OPERAND_TYPE_FPENCODING,                    // SPIR-V Sec 3.51
 
   // NOTE: New concrete enum values should be added at the end.
 
@@ -231,6 +237,8 @@ typedef enum spv_operand_type_t {
   // assemble regardless of where they occur -- literals, IDs, immediate
   // integers, etc.
   SPV_OPERAND_TYPE_OPTIONAL_CIV,
+  // An optional floating point encoding enum
+  SPV_OPERAND_TYPE_OPTIONAL_FPENCODING,
 
   // A variable operand represents zero or more logical operands.
   // In an instruction definition, this may only appear at the end of the
@@ -285,6 +293,40 @@ typedef enum spv_operand_type_t {
   // An optional packed vector format
   SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT,
 
+  // Concrete operand types for cooperative matrix.
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS,
+  // An optional cooperative matrix operands
+  SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS,
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_LAYOUT,
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_USE,
+
+  // Enum type from SPV_INTEL_global_variable_fpga_decorations
+  SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER,
+  // Enum type from SPV_INTEL_global_variable_host_access
+  SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER,
+  // Enum type from SPV_INTEL_cache_controls
+  SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL,
+  // Enum type from SPV_INTEL_cache_controls
+  SPV_OPERAND_TYPE_STORE_CACHE_CONTROL,
+  // Enum type from SPV_INTEL_maximum_registers
+  SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS,
+  // Enum type from SPV_NV_raw_access_chains
+  SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS,
+  // Optional enum type from SPV_NV_raw_access_chains
+  SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS,
+  // Enum type from SPV_NV_tensor_addressing
+  SPV_OPERAND_TYPE_TENSOR_CLAMP_MODE,
+  // Enum type from SPV_NV_cooperative_matrix2
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE,
+  // Enum type from SPV_NV_cooperative_matrix2
+  SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS,
+  // Optional types from SPV_INTEL_subgroup_matrix_multiply_accumulate
+  SPV_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS,
+  SPV_OPERAND_TYPE_OPTIONAL_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS,
+
+  SPV_OPERAND_TYPE_COOPERATIVE_VECTOR_MATRIX_LAYOUT,
+  SPV_OPERAND_TYPE_COMPONENT_TYPE,
+
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
   SPV_OPERAND_TYPE_NUM_OPERAND_TYPES,
@@ -310,6 +352,7 @@ typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100,
   SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
   SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100,
+  SPV_EXT_INST_TYPE_NONSEMANTIC_VKSPREFLECTION,
 
   // Multiple distinct extended instruction set types could return this
   // value, if they are prefixed with NonSemantic. and are otherwise
@@ -354,6 +397,11 @@ typedef enum spv_binary_to_text_options_t {
   SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES = SPV_BIT(6),
   // Add some comments to the generated assembly
   SPV_BINARY_TO_TEXT_OPTION_COMMENT = SPV_BIT(7),
+  // Use nested indentation for more readable SPIR-V
+  SPV_BINARY_TO_TEXT_OPTION_NESTED_INDENT = SPV_BIT(8),
+  // Reorder blocks to match the structured control flow of SPIR-V to increase
+  // readability.
+  SPV_BINARY_TO_TEXT_OPTION_REORDER_BLOCKS = SPV_BIT(9),
   SPV_FORCE_32_BIT_ENUM(spv_binary_to_text_options_t)
 } spv_binary_to_text_options_t;
 
@@ -498,6 +546,7 @@ SPIRV_TOOLS_EXPORT const char* spvSoftwareVersionDetailsString(void);
 //    SPV_ENV_VULKAN_1_1_SPIRV_1_4 ->  SPIR-V 1.4
 //    SPV_ENV_VULKAN_1_2           ->  SPIR-V 1.5
 //    SPV_ENV_VULKAN_1_3           ->  SPIR-V 1.6
+//    SPV_ENV_VULKAN_1_4           ->  SPIR-V 1.6
 // Consult the description of API entry points for specific rules.
 typedef enum {
   SPV_ENV_UNIVERSAL_1_0,  // SPIR-V 1.0 latest revision, no other restrictions.
@@ -535,6 +584,7 @@ typedef enum {
 
   SPV_ENV_UNIVERSAL_1_6,  // SPIR-V 1.6 latest revision, no other restrictions.
   SPV_ENV_VULKAN_1_3,     // Vulkan 1.3 latest revision.
+  SPV_ENV_VULKAN_1_4,     // Vulkan 1.4 latest revision.
 
   SPV_ENV_MAX  // Keep this as the last enum value.
 } spv_target_env;
@@ -683,6 +733,15 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetSkipBlockLayout(
 // Records whether or not the validator should allow the LocalSizeId
 // decoration where the environment otherwise would not allow it.
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowLocalSizeId(
+    spv_validator_options options, bool val);
+
+// Allow Offset (in addition to ConstOffset) for texture operations.
+// Was added for VK_KHR_maintenance8
+SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowOffsetTextureOperand(
+    spv_validator_options options, bool val);
+
+// Allow base operands of some bit operations to be non-32-bit wide.
+SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowVulkan32BitBitwise(
     spv_validator_options options, bool val);
 
 // Whether friendly names should be used in validation error messages.
@@ -949,7 +1008,14 @@ SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassFromFlag(
     spv_optimizer_t* optimizer, const char* flag);
 
 // Registers passes specified by length number of flags in an optimizer object.
+// Passes may remove interface variables that are unused.
 SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassesFromFlags(
+    spv_optimizer_t* optimizer, const char** flags, const size_t flag_count);
+
+// Registers passes specified by length number of flags in an optimizer object.
+// Passes will not remove interface variables.
+SPIRV_TOOLS_EXPORT bool
+spvOptimizerRegisterPassesFromFlagsWhilePreservingTheInterface(
     spv_optimizer_t* optimizer, const char** flags, const size_t flag_count);
 
 // Optimizes the SPIR-V code of size |word_count| pointed to by |binary| and

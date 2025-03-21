@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 /** Schema used for proto2 messages using message_set_wireformat. */
+@CheckReturnValue
 final class MessageSetSchema<T> implements Schema<T> {
   private final MessageLite defaultInstance;
   private final UnknownFieldSchema<?, ?> unknownFieldSchema;
@@ -61,7 +62,13 @@ final class MessageSetSchema<T> implements Schema<T> {
   @SuppressWarnings("unchecked")
   @Override
   public T newInstance() {
-    return (T) defaultInstance.newBuilderForType().buildPartial();
+    // TODO(b/248560713) decide if we're keeping support for Full in schema classes and handle this
+    // better.
+    if (defaultInstance instanceof GeneratedMessageLite) {
+      return (T) ((GeneratedMessageLite<?, ?>) defaultInstance).newMutableInstance();
+    } else {
+      return (T) defaultInstance.newBuilderForType().buildPartial();
+    }
   }
 
   @Override
@@ -132,6 +139,8 @@ final class MessageSetSchema<T> implements Schema<T> {
   public void mergeFrom(
       T message, byte[] data, int position, int limit, ArrayDecoders.Registers registers)
       throws IOException {
+    // TODO(b/248560713) decide if we're keeping support for Full in schema classes and handle this
+    // better.
     UnknownFieldSetLite unknownFields = ((GeneratedMessageLite) message).unknownFields;
     if (unknownFields == UnknownFieldSetLite.getDefaultInstance()) {
       unknownFields = UnknownFieldSetLite.newInstance();
@@ -180,9 +189,12 @@ final class MessageSetSchema<T> implements Schema<T> {
             if (wireType == WireFormat.WIRETYPE_VARINT) {
               position = ArrayDecoders.decodeVarint32(data, position, registers);
               typeId = registers.int1;
+              // TODO(b/248560713) decide if we're keeping support for Full in schema classes and
+              // handle this better.
               extension =
-                  (GeneratedMessageLite.GeneratedExtension<?, ?>) extensionSchema
-                      .findExtensionByNumber(registers.extensionRegistry, defaultInstance, typeId);
+                  (GeneratedMessageLite.GeneratedExtension<?, ?>)
+                      extensionSchema.findExtensionByNumber(
+                          registers.extensionRegistry, defaultInstance, typeId);
               continue;
             }
             break;
@@ -231,7 +243,6 @@ final class MessageSetSchema<T> implements Schema<T> {
    * A helper method for wildcard capture of {@code unknownFieldSchema}. See:
    * https://docs.oracle.com/javase/tutorial/java/generics/capture.html
    */
-  @SuppressWarnings("unchecked")
   private <UT, UB, ET extends FieldSet.FieldDescriptorLite<ET>> void mergeFromHelper(
       UnknownFieldSchema<UT, UB> unknownFieldSchema,
       ExtensionSchema<ET> extensionSchema,
@@ -300,7 +311,7 @@ final class MessageSetSchema<T> implements Schema<T> {
     // The wire format for MessageSet is:
     //   message MessageSet {
     //     repeated group Item = 1 {
-    //       required int32 typeId = 2;
+    //       required uint32 typeId = 2;
     //       required bytes message = 3;
     //     }
     //   }

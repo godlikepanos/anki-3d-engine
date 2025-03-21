@@ -37,6 +37,8 @@
 
 namespace Google\Protobuf\Internal;
 
+use Traversable;
+
 /**
  * MapField is used by generated protocol message classes to manipulate map
  * fields. It can be used like native PHP array.
@@ -129,11 +131,13 @@ class MapField implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * This will also be called for: $ele = $arr[$key]
      *
-     * @param object $key The key of the element to be fetched.
+     * @param int|string $key The key of the element to be fetched.
      * @return object The stored element at given key.
      * @throws \ErrorException Invalid type for index.
      * @throws \ErrorException Non-existing index.
+     * @todo need to add return type mixed (require update php version to 8.0)
      */
+    #[\ReturnTypeWillChange]
     public function offsetGet($key)
     {
         return $this->container[$key];
@@ -144,13 +148,15 @@ class MapField implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * This will also be called for: $arr[$key] = $value
      *
-     * @param object $key The key of the element to be fetched.
+     * @param int|string $key The key of the element to be fetched.
      * @param object $value The element to be assigned.
      * @return void
      * @throws \ErrorException Invalid type for key.
      * @throws \ErrorException Invalid type for value.
      * @throws \ErrorException Non-existing key.
+     * @todo need to add return type void (require update php version to 7.1)
      */
+    #[\ReturnTypeWillChange]
     public function offsetSet($key, $value)
     {
         $this->checkKey($this->key_type, $key);
@@ -205,10 +211,12 @@ class MapField implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * This will also be called for: unset($arr)
      *
-     * @param object $key The key of the element to be removed.
+     * @param int|string $key The key of the element to be removed.
      * @return void
      * @throws \ErrorException Invalid type for key.
+     * @todo need to add return type void (require update php version to 7.1)
      */
+    #[\ReturnTypeWillChange]
     public function offsetUnset($key)
     {
         $this->checkKey($this->key_type, $key);
@@ -220,11 +228,11 @@ class MapField implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * This will also be called for: isset($arr)
      *
-     * @param object $key The key of the element to be removed.
+     * @param int|string $key The key of the element to be removed.
      * @return bool True if the element at the given key exists.
      * @throws \ErrorException Invalid type for key.
      */
-    public function offsetExists($key)
+    public function offsetExists($key): bool
     {
         $this->checkKey($this->key_type, $key);
         return isset($this->container[$key]);
@@ -233,7 +241,7 @@ class MapField implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * @ignore
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         return new MapFieldIter($this->container, $this->key_type);
     }
@@ -245,7 +253,7 @@ class MapField implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @return integer The number of stored elements.
      */
-    public function count()
+    public function count(): int
     {
         return count($this->container);
     }

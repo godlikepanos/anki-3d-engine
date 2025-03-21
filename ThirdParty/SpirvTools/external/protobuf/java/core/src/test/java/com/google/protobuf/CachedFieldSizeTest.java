@@ -30,7 +30,7 @@
 
 package com.google.protobuf;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import protobuf_unittest.UnittestProto.TestPackedTypes;
 import proto3_unittest.UnittestProto3;
@@ -52,14 +52,14 @@ public final class CachedFieldSizeTest {
 
     // Serialize once to cache all field sizes. This will use the experimental runtime because
     // the proto has optimize_for = CODE_SIZE.
-    message.toByteArray();
+    byte[] unused = message.toByteArray();
     // Serialize individual submessages. This will use the generated implementation. If the
     // experimental runtime hasn't set the correct cached size, this will throw an exception.
     byte[] data2 = message.getProto2Child().toByteArray();
     byte[] data3 = message.getProto3Child().toByteArray();
 
     // Make sure the serialized data is correct.
-    assertEquals(message.getProto2Child(), TestPackedTypes.parseFrom(data2));
-    assertEquals(message.getProto3Child(), UnittestProto3.TestPackedTypes.parseFrom(data3));
+    assertThat(TestPackedTypes.parseFrom(data2)).isEqualTo(message.getProto2Child());
+    assertThat(UnittestProto3.TestPackedTypes.parseFrom(data3)).isEqualTo(message.getProto3Child());
   }
 }

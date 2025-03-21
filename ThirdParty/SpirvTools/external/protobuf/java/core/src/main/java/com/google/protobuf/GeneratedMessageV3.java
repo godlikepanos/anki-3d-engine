@@ -43,14 +43,14 @@ import com.google.protobuf.Internal.DoubleList;
 import com.google.protobuf.Internal.FloatList;
 import com.google.protobuf.Internal.IntList;
 import com.google.protobuf.Internal.LongList;
-// In opensource protobuf, we have versioned this GeneratedMessageV3 class to GeneratedMessageV3V3 and
-// in the future may have GeneratedMessageV3V4 etc. This allows us to change some aspects of this
+// In opensource protobuf, we have versioned this GeneratedMessageV3 class to GeneratedMessageV3 and
+// in the future may have GeneratedMessageV4 etc. This allows us to change some aspects of this
 // class without breaking binary compatibility with old generated code that still subclasses
-// the old GeneratedMessageV3 class. To allow these different GeneratedMessageV3V? classes to
-// interoperate (e.g., a GeneratedMessageV3V3 object has a message extension field whose class
-// type is GeneratedMessageV3V4), these classes still share a common parent class AbstractMessage
+// the old GeneratedMessageV3 class. To allow these different GeneratedMessageV? classes to
+// interoperate (e.g., a GeneratedMessageV3 object has a message extension field whose class
+// type is GeneratedMessageV4), these classes still share a common parent class AbstractMessage
 // and are using the same GeneratedMessage.GeneratedExtension class for extension definitions.
-// Since this class becomes GeneratedMessageV3V? in opensource, we have to add an import here
+// Since this class becomes GeneratedMessageV? in opensource, we have to add an import here
 // to be able to use GeneratedMessage.GeneratedExtension. The GeneratedExtension definition in
 // this file is also excluded from opensource to avoid conflict.
 import com.google.protobuf.GeneratedMessage.GeneratedExtension;
@@ -133,6 +133,10 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
     return internalGetFieldAccessorTable().descriptor;
   }
 
+  // TODO(b/248143958): This method should be removed. It enables parsing directly into an
+  // "immutable" message. Have to leave it for now to support old gencode.
+  // @deprecated use newBuilder().mergeFrom() instead
+  @Deprecated
   protected void mergeFromAndMakeImmutableInternal(
       CodedInputStream input, ExtensionRegistryLite extensionRegistry)
       throws InvalidProtocolBufferException {
@@ -299,12 +303,13 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
 
   @Override
   public UnknownFieldSet getUnknownFields() {
-    throw new UnsupportedOperationException(
-        "This is supposed to be overridden by subclasses.");
+    return unknownFields;
   }
 
   /**
    * Called by subclasses to parse an unknown field.
+   *
+   * <p>TODO(b/248153893) remove this method
    *
    * @return {@code true} unless the tag is an end-group tag.
    */
@@ -323,6 +328,8 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
   /**
    * Delegates to parseUnknownField. This method is obsolete, but we must retain it for
    * compatibility with older generated code.
+   *
+   * <p>TODO(b/248153893) remove this method
    */
   protected boolean parseUnknownFieldProto3(
       CodedInputStream input,
@@ -547,8 +554,18 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
     // to dispatch dirty invalidations. See GeneratedMessageV3.BuilderListener.
     private boolean isClean;
 
-    private UnknownFieldSet unknownFields =
-        UnknownFieldSet.getDefaultInstance();
+    /**
+     * This field holds either an {@link UnknownFieldSet} or {@link UnknownFieldSet.Builder}.
+     *
+     * <p>We use an object because it should only be one or the other of those things at a time and
+     * Object is the only common base. This also saves space.
+     *
+     * <p>Conversions are lazy: if {@link #setUnknownFields} is called, this will contain {@link
+     * UnknownFieldSet}. If unknown fields are merged into this builder, the current {@link
+     * UnknownFieldSet} will be converted to a {@link UnknownFieldSet.Builder} and left that way
+     * until either {@link #setUnknownFields} or {@link #buildPartial} or {@link #build} is called.
+     */
+    private Object unknownFieldsOrBuilder = UnknownFieldSet.getDefaultInstance();
 
     protected Builder() {
       this(null);
@@ -604,7 +621,7 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
      */
     @Override
     public BuilderType clear() {
-      unknownFields = UnknownFieldSet.getDefaultInstance();
+      unknownFieldsOrBuilder = UnknownFieldSet.getDefaultInstance();
       onChanged();
       return (BuilderType) this;
     }
@@ -757,7 +774,7 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
     }
 
     private BuilderType setUnknownFieldsInternal(final UnknownFieldSet unknownFields) {
-      this.unknownFields = unknownFields;
+      unknownFieldsOrBuilder = unknownFields;
       onChanged();
       return (BuilderType) this;
     }
@@ -776,12 +793,20 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
     }
 
     @Override
-    public BuilderType mergeUnknownFields(
-        final UnknownFieldSet unknownFields) {
-      return setUnknownFields(
-        UnknownFieldSet.newBuilder(this.unknownFields)
-                       .mergeFrom(unknownFields)
-                       .build());
+    public BuilderType mergeUnknownFields(final UnknownFieldSet unknownFields) {
+      if (UnknownFieldSet.getDefaultInstance().equals(unknownFields)) {
+        return (BuilderType) this;
+      }
+
+      if (UnknownFieldSet.getDefaultInstance().equals(unknownFieldsOrBuilder)) {
+        unknownFieldsOrBuilder = unknownFields;
+        onChanged();
+        return (BuilderType) this;
+      }
+
+      getUnknownFieldSetBuilder().mergeFrom(unknownFields);
+      onChanged();
+      return (BuilderType) this;
     }
 
 
@@ -817,7 +842,50 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
 
     @Override
     public final UnknownFieldSet getUnknownFields() {
-      return unknownFields;
+      if (unknownFieldsOrBuilder instanceof UnknownFieldSet) {
+        return (UnknownFieldSet) unknownFieldsOrBuilder;
+      } else {
+        return ((UnknownFieldSet.Builder) unknownFieldsOrBuilder).buildPartial();
+      }
+    }
+
+    /**
+     * Called by generated subclasses to parse an unknown field.
+     *
+     * @return {@code true} unless the tag is an end-group tag.
+     */
+    protected boolean parseUnknownField(
+        CodedInputStream input, ExtensionRegistryLite extensionRegistry, int tag)
+        throws IOException {
+      if (input.shouldDiscardUnknownFields()) {
+        return input.skipField(tag);
+      }
+      return getUnknownFieldSetBuilder().mergeFieldFrom(tag, input);
+    }
+
+    /** Called by generated subclasses to add to the unknown field set. */
+    protected final void mergeUnknownLengthDelimitedField(int number, ByteString bytes) {
+      getUnknownFieldSetBuilder().mergeLengthDelimitedField(number, bytes);
+    }
+
+    /** Called by generated subclasses to add to the unknown field set. */
+    protected final void mergeUnknownVarintField(int number, int value) {
+      getUnknownFieldSetBuilder().mergeVarintField(number, value);
+    }
+
+    @Override
+    protected UnknownFieldSet.Builder getUnknownFieldSetBuilder() {
+      if (unknownFieldsOrBuilder instanceof UnknownFieldSet) {
+        unknownFieldsOrBuilder = ((UnknownFieldSet) unknownFieldsOrBuilder).toBuilder();
+      }
+      onChanged();
+      return (UnknownFieldSet.Builder) unknownFieldsOrBuilder;
+    }
+
+    @Override
+    protected void setUnknownFieldSetBuilder(UnknownFieldSet.Builder builder) {
+      unknownFieldsOrBuilder = builder;
+      onChanged();
     }
 
     /**
@@ -1609,7 +1677,7 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
     private FieldSet<FieldDescriptor> buildExtensions() {
       return extensions == null
           ? (FieldSet<FieldDescriptor>) FieldSet.emptySet()
-          : extensions.build();
+          : extensions.buildPartial();
     }
 
     @Override
@@ -1815,6 +1883,20 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
       }
     }
 
+    @Override
+    protected boolean parseUnknownField(
+        CodedInputStream input, ExtensionRegistryLite extensionRegistry, int tag)
+        throws IOException {
+      ensureExtensionsIsMutable();
+      return MessageReflection.mergeFieldFrom(
+          input,
+          input.shouldDiscardUnknownFields() ? null : getUnknownFieldSetBuilder(),
+          extensionRegistry,
+          getDescriptorForType(),
+          new MessageReflection.ExtensionBuilderAdapter(extensions),
+          tag);
+    }
+
     private void verifyContainingType(final FieldDescriptor field) {
       if (field.getContainingType() != getDescriptorForType()) {
         throw new IllegalArgumentException(
@@ -1850,6 +1932,7 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
   }
 
   /** Calls invoke and throws a RuntimeException if it fails. */
+  @CanIgnoreReturnValue
   private static Object invokeOrDie(
       final Method method, final Object object, final Object... params) {
     try {
@@ -2130,7 +2213,8 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
       }
 
       public void clear(final Builder builder) {
-        invokeOrDie(clearMethod, builder);
+        // TODO(b/230609037): remove the unused variable
+        Object unused = invokeOrDie(clearMethod, builder);
       }
     }
 
@@ -2213,7 +2297,8 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
 
         @Override
         public void set(final GeneratedMessageV3.Builder<?> builder, final Object value) {
-          invokeOrDie(setMethod, builder, value);
+          // TODO(b/230609037): remove the unused variable
+          Object unused = invokeOrDie(setMethod, builder, value);
         }
 
         @Override
@@ -2228,7 +2313,8 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
 
         @Override
         public void clear(final GeneratedMessageV3.Builder<?> builder) {
-          invokeOrDie(clearMethod, builder);
+          // TODO(b/230609037): remove the unused variable
+          Object unused = invokeOrDie(clearMethod, builder);
         }
       }
 
@@ -2444,13 +2530,15 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
         @Override
         public void setRepeated(
             final GeneratedMessageV3.Builder<?> builder, final int index, final Object value) {
-          invokeOrDie(setRepeatedMethod, builder, index, value);
+          // TODO(b/230609037): remove the unused variable
+          Object unused = invokeOrDie(setRepeatedMethod, builder, index, value);
         }
 
         @Override
         public void addRepeated(
             final GeneratedMessageV3.Builder<?> builder, final Object value) {
-          invokeOrDie(addRepeatedMethod, builder, value);
+          // TODO(b/230609037): remove the unused variable
+          Object unused = invokeOrDie(addRepeatedMethod, builder, value);
         }
 
         @Override
@@ -2465,7 +2553,8 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
 
         @Override
         public void clear(final GeneratedMessageV3.Builder<?> builder) {
-          invokeOrDie(clearMethod, builder);
+          // TODO(b/230609037): remove the unused variable
+          Object unused = invokeOrDie(clearMethod, builder);
         }
       }
 
@@ -2726,8 +2815,7 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
 
       @Override
       public com.google.protobuf.Message.Builder getRepeatedBuilder(Builder builder, int index) {
-        throw new UnsupportedOperationException(
-            "Nested builder not supported for map fields.");
+        throw new UnsupportedOperationException("Map fields cannot be repeated");
       }
     }
 
@@ -2789,8 +2877,9 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
       @Override
       public void set(final Builder builder, final Object value) {
         if (supportUnknownEnumValue) {
-          invokeOrDie(setValueMethod, builder,
-              ((EnumValueDescriptor) value).getNumber());
+          // TODO(b/230609037): remove the unused variable
+          Object unused =
+              invokeOrDie(setValueMethod, builder, ((EnumValueDescriptor) value).getNumber());
           return;
         }
         super.set(builder, invokeOrDie(valueOfMethod, null, value));
@@ -2876,8 +2965,13 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
       @Override
       public void setRepeated(final Builder builder, final int index, final Object value) {
         if (supportUnknownEnumValue) {
-          invokeOrDie(setRepeatedValueMethod, builder, index,
-              ((EnumValueDescriptor) value).getNumber());
+          // TODO(b/230609037): remove the unused variable
+          Object unused =
+              invokeOrDie(
+                  setRepeatedValueMethod,
+                  builder,
+                  index,
+                  ((EnumValueDescriptor) value).getNumber());
           return;
         }
         super.setRepeated(builder, index, invokeOrDie(valueOfMethod, null, value));
@@ -2885,8 +2979,10 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
       @Override
       public void addRepeated(final Builder builder, final Object value) {
         if (supportUnknownEnumValue) {
-          invokeOrDie(addRepeatedValueMethod, builder,
-              ((EnumValueDescriptor) value).getNumber());
+          // TODO(b/230609037): remove the unused variable
+          Object unused =
+              invokeOrDie(
+                  addRepeatedValueMethod, builder, ((EnumValueDescriptor) value).getNumber());
           return;
         }
         super.addRepeated(builder, invokeOrDie(valueOfMethod, null, value));
@@ -2940,7 +3036,8 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
       @Override
       public void set(GeneratedMessageV3.Builder builder, Object value) {
         if (value instanceof ByteString) {
-          invokeOrDie(setBytesMethodBuilder, builder, value);
+          // TODO(b/230609037): remove the unused variable
+          Object unused = invokeOrDie(setBytesMethodBuilder, builder, value);
         } else {
           super.set(builder, value);
         }
@@ -3066,6 +3163,14 @@ public abstract class GeneratedMessageV3 extends AbstractMessage
     }
 
     return (Extension<MessageType, T>) extension;
+  }
+
+  protected static boolean isStringEmpty(final Object value) {
+    if (value instanceof String) {
+      return ((String) value).isEmpty();
+    } else {
+      return ((ByteString) value).isEmpty();
+    }
   }
 
   protected static int computeStringSize(final int fieldNumber, final Object value) {

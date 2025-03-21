@@ -13,7 +13,7 @@ endif(WIN32 AND NOT MSVC)
 
 if(EFFCEE_BUILD_TESTING)
   add_test(NAME effcee-example
-           COMMAND ${PYTHON_EXECUTABLE}
+                  COMMAND Python3::Interpreter
                   effcee-example-driver.py
                   $<TARGET_FILE:effcee-example>
                   example_data.txt

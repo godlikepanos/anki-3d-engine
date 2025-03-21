@@ -164,21 +164,33 @@ struct GbufferInfo
 	Vec2 m_velocity;
 };
 
+struct GBufferPixelOut
+{
+	ANKI_RELAXED_PRECISION Vec4 m_rt0 : SV_Target0;
+	ANKI_RELAXED_PRECISION Vec4 m_rt1 : SV_Target1;
+	ANKI_RELAXED_PRECISION Vec4 m_rt2 : SV_Target2;
+	Vec2 m_rt3 : SV_Target3;
+};
+
 // Populate the G buffer
 template<typename T>
-void packGBuffer(GbufferInfo<T> g, out vector<T, 4> rt0, out vector<T, 4> rt1, out vector<T, 4> rt2, out Vec2 rt3)
+GBufferPixelOut packGBuffer(GbufferInfo<T> g)
 {
+	GBufferPixelOut output;
+
 	const T packedSubsurfaceMetallic = packUnorm2ToUnorm1(vector<T, 2>(g.m_subsurface, g.m_metallic));
 
 	const vector<T, 3> tonemappedEmission = reinhardTonemap(g.m_emission);
 
-	rt0 = vector<T, 4>(g.m_diffuse, packedSubsurfaceMetallic);
-	rt1 = vector<T, 4>(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);
+	output.m_rt0 = vector<T, 4>(g.m_diffuse, packedSubsurfaceMetallic);
+	output.m_rt1 = vector<T, 4>(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);
 
 	const vector<T, 3> encNorm = signedOctEncode(g.m_normal);
-	rt2 = vector<T, 4>(tonemappedEmission.g, encNorm);
+	output.m_rt2 = vector<T, 4>(tonemappedEmission.g, encNorm);
 
-	rt3 = g.m_velocity;
+	output.m_rt3 = g.m_velocity;
+
+	return output;
 }
 
 template<typename T>

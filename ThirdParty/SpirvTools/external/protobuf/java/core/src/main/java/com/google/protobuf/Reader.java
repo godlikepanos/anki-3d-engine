@@ -37,6 +37,7 @@ import java.util.Map;
 /** A reader of fields from a serialized protobuf message. */
 // TODO(nathanmittler): Refactor to allow the reader to allocate properly sized lists.
 @ExperimentalApi
+@CheckReturnValue
 interface Reader {
   /** Value used to indicate that the end of input has been reached. */
   int READ_DONE = Integer.MAX_VALUE;
@@ -156,6 +157,14 @@ interface Reader {
   // TODO(yilunchong): the lack of other opinions for whether to expose this on the interface
   @Deprecated
   <T> T readGroupBySchemaWithCheck(Schema<T> schema, ExtensionRegistryLite extensionRegistry)
+      throws IOException;
+
+  /** Read a message field from the wire format and merge the results into the given target. */
+  <T> void mergeMessageField(T target, Schema<T> schema, ExtensionRegistryLite extensionRegistry)
+      throws IOException;
+
+  /** Read a group field from the wire format and merge the results into the given target. */
+  <T> void mergeGroupField(T target, Schema<T> schema, ExtensionRegistryLite extensionRegistry)
       throws IOException;
 
   /**

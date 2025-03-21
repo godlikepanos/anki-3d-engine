@@ -1,7 +1,5 @@
 <?php
 
-require_once('generated/NoNamespaceEnum.php');
-require_once('generated/NoNamespaceMessage.php');
 require_once('test_base.php');
 require_once('test_util.php');
 
@@ -13,15 +11,15 @@ class GeneratedPhpdocTest extends TestBase
     {
         $class = new ReflectionClass('Foo\TestMessage');
         $doc = $class->getDocComment();
-        $this->assertContains('foo.TestMessage', $doc);
+        $this->assertStringContains('foo.TestMessage', $doc);
     }
 
     public function testPhpDocForConstructor()
     {
         $class = new ReflectionClass('Foo\TestMessage');
         $doc = $class->getMethod('__construct')->getDocComment();
-        $this->assertContains('@param array $data', $doc);
-        $this->assertContains('@type int $optional_int32', $doc);
+        $this->assertStringContains('@param array $data', $doc);
+        $this->assertStringContains('@type int $optional_int32', $doc);
     }
 
     /**
@@ -32,7 +30,7 @@ class GeneratedPhpdocTest extends TestBase
         $class = new ReflectionClass('Foo\TestMessage');
         foreach ($methods as $method) {
             $doc = $class->getMethod($method)->getDocComment();
-            $this->assertContains($expectedDoc, $doc);
+            $this->assertStringContains($expectedDoc, $doc);
         }
     }
 
@@ -165,7 +163,7 @@ class GeneratedPhpdocTest extends TestBase
                     'setRepeatedEnum',
                     'setRepeatedNoNamespaceEnum',
                 ],
-                '@param int[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<int>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
@@ -175,45 +173,45 @@ class GeneratedPhpdocTest extends TestBase
                     'setRepeatedFixed64',
                     'setRepeatedSfixed64',
                 ],
-                '@param int[]|string[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<int>|array<string>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
                     'setRepeatedFloat',
                     'setRepeatedDouble',
                 ],
-                '@param float[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<float>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
                     'setRepeatedBool',
                 ],
-                '@param bool[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<bool>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
                     'setRepeatedString',
                     'setRepeatedBytes',
                 ],
-                '@param string[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<string>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
                     'setRepeatedMessage',
                 ],
-                '@param \Foo\TestMessage\Sub[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<\Foo\TestMessage\Sub>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
                     'setRepeatedRecursive',
                 ],
-                '@param \Foo\TestMessage[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<\Foo\TestMessage>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
                     'setRepeatedNoNamespaceMessage',
                 ],
-                '@param \NoNamespaceMessage[]|\Google\Protobuf\Internal\RepeatedField $var'
+                '@param array<\NoNamespaceMessage>|\Google\Protobuf\Internal\RepeatedField $var'
             ],
             [
                 [
@@ -339,6 +337,13 @@ class GeneratedPhpdocTest extends TestBase
                     'setOptionalNoNamespaceMessage'
                 ],
                 '@param \NoNamespaceMessage $var'
+            ],
+            [
+                [
+                    'setDeprecatedOptionalInt32',
+                    'getDeprecatedOptionalInt32',
+                ],
+                '@deprecated'
             ],
         ];
     }
