@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+# Copyright 2023 The Effcee Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import os
+import subprocess
+
+def run(cmd, directory, fail_ok=False, verbose=False):
+    """Runs a command in a directory and returns its standard output stream.
+
+    Captures and returns the standard error stream.
+
+    Raises a RuntimeError if the command fails to launch or otherwise fails.
+    """
+    if verbose:
+        print(cmd)
+    p = subprocess.Popen(cmd,
+                         cwd=directory,
+                         stdout=subprocess.PIPE)
+    (stdout, _) = p.communicate()
+    if p.returncode != 0 and not fail_ok:
+        raise RuntimeError('Failed to run {} in {}'.format(cmd, directory))
+    return stdout
+
+# This is needed for interpreting the contents of the DEPS file.
+def Var(key):
+    """Returns the value for the given key in the 'vars' dictionary"""
+    return vars[key]
+
+# Get deps dictionary from the DEPS file
+with open('DEPS', mode='r', encoding='utf-8') as f:
+    exec(''.join(f.readlines()))
+# Now 'deps' is a dictionary mapping relative subdirectory name
+# to a repo-and-commit string such as 'https://github.com/google/effcee@v2.20'
+
+for d in sorted(deps.keys()):
+    (repo,commit) = deps[d].split('@')
+    print("{} <-- {} {}".format(d,repo,commit))
+    os.makedirs(d, exist_ok=True)
+    # Clone afresh if needed
+    if not os.path.exists(os.path.join(d, '.git')):
+        run(['git', 'clone', '--single-branch', repo,'.'], d, verbose=True)
+    # Ensure there is a known-good remote
+    if len(run(['git', 'remote', 'get-url', 'known-good'], d, fail_ok=True)) == 0:
+        run(['git', 'remote', 'add', 'known-good', repo], d)
+    # And it has the right remote URL
+    run(['git', 'remote', 'set-url', 'known-good', repo], d)
+    # Fetch if the commit isn't yet present
+    if len(run(['git', 'rev-parse', '--verify', '--quiet', commit + '^{commit}'],
+               d,
+               fail_ok=True)) == 0:
+        run(['git', 'fetch', 'known-good'], d, verbose=True)
+    # Checkout the commit
+    run(['git', 'checkout', commit], d)
+    print()
+
+# vim: expandtab ts=4 sw=4
