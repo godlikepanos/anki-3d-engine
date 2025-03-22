@@ -23,6 +23,7 @@ class AsyncLoader;
 class ResourceManagerModel;
 class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
+class AccelerationStructureScratchAllocator;
 
 /// @addtogroup resource
 /// @{
@@ -75,6 +76,12 @@ public:
 		return *m_fs;
 	}
 
+	ANKI_INTERNAL AccelerationStructureScratchAllocator& getAccelerationStructureScratchAllocator()
+	{
+		ANKI_ASSERT(m_asScratchAlloc);
+		return *m_asScratchAlloc;
+	}
+
 private:
 	template<typename Type>
 	class TypeData
@@ -113,6 +120,7 @@ public \
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
+	AccelerationStructureScratchAllocator* m_asScratchAlloc = nullptr;
 
 	AllTypeData m_allTypes;
 

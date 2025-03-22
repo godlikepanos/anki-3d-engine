@@ -685,7 +685,7 @@ GBufferPixelOut main(
 // ===========================================================================
 #if ANKI_TECHNIQUE_RtMaterialFetch
 
-#	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN && ANKI_PLATFORM_MOBILE
+#	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN&& ANKI_PLATFORM_MOBILE
 
 #	if ANKI_CLOSEST_HIT_SHADER
 [[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D

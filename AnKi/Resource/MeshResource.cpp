@@ -7,6 +7,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshBinaryLoader.h>
 #include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/Resource/AccelerationStructureScratchAllocator.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Core/App.h>
@@ -389,13 +390,20 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			// Build BLASes
 			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
 			{
-				// TODO find a temp buffer
-				BufferInitInfo buffInit("BLAS scratch");
-				buffInit.m_size = submesh.m_blas[lodIdx]->getBuildScratchBufferSize();
-				buffInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
-				BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(buffInit);
+				Bool addBarrier;
+				const BufferView scratchBuff = ResourceManager::getSingleton().getAccelerationStructureScratchAllocator().allocate(
+					submesh.m_blas[lodIdx]->getBuildScratchBufferSize(), addBarrier);
 
-				cmdb->buildAccelerationStructure(submesh.m_blas[lodIdx].get(), BufferView(scratchBuff.get()));
+				if(addBarrier)
+				{
+					BufferBarrierInfo barr;
+					barr.m_bufferView = scratchBuff;
+					barr.m_previousUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
+					barr.m_previousUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
+					cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+				}
+
+				cmdb->buildAccelerationStructure(submesh.m_blas[lodIdx].get(), scratchBuff);
 			}
 
 			// Barriers again
