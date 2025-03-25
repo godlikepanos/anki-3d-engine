@@ -44,6 +44,7 @@ Error IndirectDiffuseClipmaps::init()
 	}
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", {}, m_prog, m_tmpVisGrProg, "Test"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", {}, m_prog, m_visProbesGrProg, "VisualizeProbes"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
 
 	{
@@ -286,6 +287,28 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});
 	}
+}
+
+void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, CommandBuffer& cmdb) const
+{
+	cmdb.bindShaderProgram(m_visProbesGrProg.get());
+
+	const UVec4 consts(0u);
+	cmdb.setFastConstants(&consts, sizeof(consts));
+
+	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+
+	const U32 probeCount = U32(m_clipmapInfo[0].m_probeCounts.x() * m_clipmapInfo[0].m_probeCounts.y() * m_clipmapInfo[0].m_probeCounts.z());
+
+	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+	{
+		for(U32 dir = 0; dir < 6; ++dir)
+		{
+			cmdb.bindSrv(clipmap * 6 + dir, 0, TextureView(m_clipmapVolumes[clipmap].m_directions[dir].get(), TextureSubresourceDesc::all()));
+		}
+	}
+
+	cmdb.draw(PrimitiveTopology::kTriangles, 36, probeCount);
 }
 
 } // end namespace anki

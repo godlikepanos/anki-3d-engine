@@ -51,6 +51,8 @@ public:
 		return m_clipmapInfo;
 	}
 
+	void drawDebugProbes(const RenderingContext& ctx, CommandBuffer& cmdb) const;
+
 private:
 	class ClipmapVolumes
 	{
@@ -68,6 +70,7 @@ private:
 	ShaderProgramPtr m_libraryGrProg;
 	ShaderProgramPtr m_tmpVisGrProg;
 	ShaderProgramPtr m_sbtBuildGrProg;
+	ShaderProgramPtr m_visProbesGrProg;
 
 	RenderTargetDesc m_tmpRtDesc;
 

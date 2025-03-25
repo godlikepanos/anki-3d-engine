@@ -100,6 +100,10 @@ public:
 	{ \
 		ANKI_ASSERT(m_##name2); \
 		return *m_##name2; \
+	} \
+	Bool is##name##Enabled() const \
+	{ \
+		return m_##name2 != nullptr; \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
 

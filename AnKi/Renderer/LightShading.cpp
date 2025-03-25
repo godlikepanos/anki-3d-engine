@@ -19,6 +19,7 @@
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -206,6 +207,12 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Reset state
 		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	}
+
+	// Debug stuff
+	if(g_visualizeGiProbesCVar && getRenderer().isIndirectDiffuseClipmapsEnabled())
+	{
+		getRenderer().getIndirectDiffuseClipmaps().drawDebugProbes(ctx, cmdb);
 	}
 
 	// Forward shading last

@@ -7,6 +7,7 @@
 
 #pragma anki technique RtMaterialFetch rgen
 #pragma anki technique Test comp
+#pragma anki technique VisualizeProbes vert pixel
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Functions.hlsl>
@@ -295,4 +296,121 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 
 	g_outTex[svDispatchThreadId] = Vec4(irradiance, 0.0);
 }
+#endif
+
+// ===========================================================================
+// VisualizeProbes                                                           =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_VisualizeProbes)
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_Position;
+
+	Vec3 m_probeCenter : PROBE_CENTER;
+	UVec3 m_probeTexel : PROBE_TEXEL;
+};
+
+struct VertIn
+{
+	U32 m_svVertexId : SV_VertexID;
+	U32 m_svInstanceId : SV_InstanceID;
+};
+
+struct FragOut
+{
+	Vec4 m_color : SV_Target0;
+	F32 m_svDepth : SV_Depth;
+};
+
+struct Consts
+{
+	U32 m_clipmapIdx;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
+
+Texture3D<Vec4> g_clipmapVolumes[6 * kIndirectDiffuseClipmapCount] : register(t0);
+
+constexpr F32 kSphereRadius = 0.05;
+
+#	if ANKI_VERTEX_SHADER
+// Cube vertex positions indexed via SV_VertexID
+constexpr Vec3 cubeVertices[8] = {Vec3(-1, -1, -1), Vec3(1, -1, -1), Vec3(1, 1, -1), Vec3(-1, 1, -1),
+								  Vec3(-1, -1, 1),  Vec3(1, -1, 1),  Vec3(1, 1, 1),  Vec3(-1, 1, 1)};
+
+// Index order for drawing the cube as a triangle list (36 indices, 12 triangles)
+constexpr U32 cubeIndices[36] = {0, 1, 2, 2, 3, 0, 1, 5, 6, 6, 2, 1, 5, 4, 7, 7, 6, 5, 4, 0, 3, 3, 7, 4, 3, 2, 6, 6, 7, 3, 4, 5, 1, 1, 0, 4};
+
+VertOut main(VertIn input)
+{
+	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
+	const Vec3 camPos = g_globalRendererConstants.m_cameraPosition;
+
+	UVec3 cellCoord;
+	unflatten3dArrayIndex(clipmap.m_probeCounts.x, clipmap.m_probeCounts.y, clipmap.m_probeCounts.z, input.m_svInstanceId, cellCoord.x, cellCoord.y,
+						  cellCoord.z);
+
+	Vec3 clipmapAabbMin, clipmapAabbMax;
+	computeClipmapBounds(clipmap, camPos, clipmapAabbMin, clipmapAabbMax);
+	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+	const Vec3 cellWorldPos = cellCoord * probeSize + probeSize * 0.5 + clipmapAabbMin;
+
+	// Vert pos
+	const U32 index = cubeIndices[input.m_svVertexId];
+	Vec3 vertPos = cubeVertices[index];
+	vertPos *= kSphereRadius;
+	vertPos += cellWorldPos;
+
+	VertOut output;
+	output.m_svPosition = mul(g_globalRendererConstants.m_matrices.m_viewProjectionJitter, Vec4(vertPos, 1.0));
+	output.m_probeCenter = cellWorldPos;
+
+	const UVec3 probeTexelCoord = worldPosToVolumeTexel(clipmap, cellWorldPos);
+	output.m_probeTexel = probeTexelCoord;
+
+	return output;
+}
+#	endif // ANKI_VERTEX_SHADER
+
+#	if ANKI_PIXEL_SHADER
+FragOut main(VertOut input)
+{
+	FragOut output;
+
+	// Compute the far point
+	const Vec2 ndc = uvToNdc(input.m_svPosition.xy / g_globalRendererConstants.m_renderingSize);
+	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, 1.0, 1.0));
+	const Vec3 farPoint = v4.xyz / v4.w;
+
+	// Do sphere to view vec collision
+	const Vec3 rayDir = normalize(farPoint - g_globalRendererConstants.m_cameraPosition);
+	F32 t0, t1;
+	const Bool collides = testRaySphere(g_globalRendererConstants.m_cameraPosition, rayDir, input.m_probeCenter, kSphereRadius, t0, t1);
+
+	if(!collides)
+	{
+		discard;
+	}
+
+	const F32 t = min(t0, t1);
+	const Vec3 collisionPoint = g_globalRendererConstants.m_cameraPosition + rayDir * t;
+
+	const Vec4 p = mul(g_globalRendererConstants.m_matrices.m_viewProjectionJitter, Vec4(collisionPoint, 1.0));
+	output.m_svDepth = p.z / p.w;
+
+	const Vec3 normal = normalize(collisionPoint - input.m_probeCenter);
+
+	const IrradianceDice<F16> dice = loadIrradianceDice<F16>(g_clipmapVolumes, input.m_probeTexel, g_consts.m_clipmapIdx * 6);
+	const HVec3 irradiance = evaluateIrradianceDice<F16>(dice, normal);
+
+	output.m_color = Vec4(irradiance, 0.0);
+	return output;
+}
+#	endif // ANKI_PIXEL_SHADER
+
 #endif
