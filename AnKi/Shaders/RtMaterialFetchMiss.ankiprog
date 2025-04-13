@@ -14,5 +14,5 @@
 	payload.m_diffuseColor = 0.0;
 	payload.m_worldNormal = 0.0;
 	payload.m_emission = 0.0;
-	payload.m_rayT = -1.0;
+	payload.m_rayT = kMaxF32;
 }

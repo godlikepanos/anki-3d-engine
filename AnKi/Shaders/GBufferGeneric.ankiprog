@@ -755,7 +755,9 @@ GBufferPixelOut main(
 	payload.m_worldNormal = normal;
 
 	// Ray T
-	payload.m_rayT = RayTCurrent();
+	const Bool backfacing = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
+
+	payload.m_rayT = RayTCurrent() * (backfacing ? -1.0 : 1.0);
 }
 #	endif
 

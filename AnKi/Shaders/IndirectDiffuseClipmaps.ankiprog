@@ -5,9 +5,14 @@
 
 #pragma anki 16bit
 
-#pragma anki technique RtMaterialFetch rgen
-#pragma anki technique Test comp
-#pragma anki technique VisualizeProbes vert pixel
+#pragma anki mutator RAYS_PER_PROBE_PER_FRAME 32 64
+
+#pragma anki technique RtMaterialFetch rgen mutators
+#pragma anki technique PopulateCaches comp mutators RAYS_PER_PROBE_PER_FRAME
+#pragma anki technique Test comp mutators
+#pragma anki technique VisualizeProbes vert pixel mutators
+
+#define ANKI_ASSERTIONS_ENABLED 1
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Functions.hlsl>
@@ -22,20 +27,13 @@
 #define CLIPMAP_VOLUME 1
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
-Vec3 worldPosToVolumeUvw(Clipmap clipmap, Vec3 worldPos)
-{
-	const Vec3 uvw = frac(worldPos / clipmap.m_size);
-	return uvw;
-}
+constexpr Vec3 kIndirectDiffuseClipmapForwardOffset = Vec3(10.0, 5.0, 10.0); // In meters
 
-UVec3 worldPosToVolumeTexel(Clipmap clipmap, Vec3 worldPos)
+void computeClipmapBounds(Clipmap clipmap, Vec3 cameraPos, Vec3 lookDir, out Vec3 aabbMin, out Vec3 aabbMax)
 {
-	const Vec3 uvw = worldPosToVolumeUvw(clipmap, worldPos);
-	return uvw * clipmap.m_probeCounts;
-}
+	const Vec3 offset = normalize(Vec3(lookDir.x, 0.0, lookDir.z)) * kIndirectDiffuseClipmapForwardOffset;
+	cameraPos += offset;
 
-void computeClipmapBounds(Clipmap clipmap, Vec3 cameraPos, out Vec3 aabbMin, out Vec3 aabbMax)
-{
 	const Vec3 halfSize = clipmap.m_size * 0.5;
 	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
 	const Vec3 roundedPos = round(cameraPos / probeSize) * probeSize;
@@ -43,17 +41,12 @@ void computeClipmapBounds(Clipmap clipmap, Vec3 cameraPos, out Vec3 aabbMin, out
 	aabbMax = roundedPos + halfSize;
 }
 
-void computeClipmapBoundsConservative(Clipmap clipmap, Vec3 cameraPos, out Vec3 aabbMin, out Vec3 aabbMax)
+F32 computeClipmapFade(Clipmap clipmap, Vec3 cameraPos, Vec3 lookDir, Vec3 worldPos)
 {
-	const Vec3 halfSize = clipmap.m_size * 0.5;
-	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
-	const Vec3 roundedPos = round(cameraPos / probeSize) * probeSize;
-	aabbMin = roundedPos - halfSize + probeSize * 0.5;
-	aabbMax = roundedPos + halfSize - probeSize * 0.5;
-}
+	const Vec3 offset = normalize(Vec3(lookDir.x, 0.0, lookDir.z)) * kIndirectDiffuseClipmapForwardOffset;
 
-F32 computeClipmapFade(Clipmap clipmap, Vec3 cameraPos, Vec3 worldPos)
-{
+	cameraPos += offset;
+
 	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
 	const Vec3 halfSize = clipmap.m_size * 0.5;
 	const Vec3 aabbMin = cameraPos - halfSize + probeSize;
@@ -72,21 +65,38 @@ F32 computeClipmapFade(Clipmap clipmap, Vec3 cameraPos, Vec3 worldPos)
 	return fade;
 }
 
-U16 findClipmapOnPosition(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Vec3 cameraPos, Vec3 worldPos, F32 randFactor)
+F32 computeClipmapFade2(Clipmap clipmap, Vec3 cameraPos, Vec3 lookDir, Vec3 worldPos)
 {
-	F32 fade = computeClipmapFade(clipmaps[0], cameraPos, worldPos);
+	Vec3 aabbMin, aabbMax;
+	computeClipmapBounds(clipmap, cameraPos, lookDir, aabbMin, aabbMax);
+
+	if(all(worldPos < aabbMax) && all(worldPos > aabbMin))
+	{
+		return 1.0;
+	}
+	else
+	{
+		return 0.0;
+	}
+}
+
+U16 findClipmapOnPosition(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Vec3 cameraPos, Vec3 lookDir, Vec3 worldPos, F32 randFactor)
+{
+	randFactor = pow2(randFactor);
+
+	F32 fade = computeClipmapFade(clipmaps[0], cameraPos, lookDir, worldPos);
 	if(fade > randFactor)
 	{
 		return 0;
 	}
 
-	fade = computeClipmapFade(clipmaps[1], cameraPos, worldPos);
+	fade = computeClipmapFade(clipmaps[1], cameraPos, lookDir, worldPos);
 	if(fade > randFactor)
 	{
 		return 1;
 	}
 
-	fade = computeClipmapFade(clipmaps[2], cameraPos, worldPos);
+	fade = computeClipmapFade(clipmaps[2], cameraPos, lookDir, worldPos);
 	if(fade > randFactor)
 	{
 		return 2;
@@ -95,62 +105,15 @@ U16 findClipmapOnPosition(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Vec3 c
 	return 3;
 }
 
-SHL1<F16> readClipmap(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Texture3D<Vec4> volumes[3 * kIndirectDiffuseClipmapCount],
-					  SamplerState linearAnyRepeatSampler, Vec3 cameraPos, Vec3 worldPos)
+Vec2 generateRandomUv(U32 sampleIdx, U32 sampleCount, U32 frame)
 {
-	Vec3 clipmapAabbMin, clipmapAabbMax;
-	computeClipmapBoundsConservative(clipmaps[0], cameraPos, clipmapAabbMin, clipmapAabbMax);
-	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
-	{
-		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[0], worldPos);
-		return loadSH<F16>(volumes[0], volumes[1], volumes[2], linearAnyRepeatSampler, uvw);
-	}
-
-	computeClipmapBoundsConservative(clipmaps[1], cameraPos, clipmapAabbMin, clipmapAabbMax);
-	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
-	{
-		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[1], worldPos);
-		return loadSH<F16>(volumes[3], volumes[4], volumes[5], linearAnyRepeatSampler, uvw);
-	}
-
-	computeClipmapBoundsConservative(clipmaps[2], cameraPos, clipmapAabbMin, clipmapAabbMax);
-	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
-	{
-		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[2], worldPos);
-		return loadSH<F16>(volumes[6], volumes[7], volumes[8], linearAnyRepeatSampler, uvw);
-	}
-
-	SHL1<F16> sh = (SHL1<F16>)0;
-	return sh;
+	const UVec3 r = rand3DPCG16(UVec3(frame % 16u, frame % 4u, frame % 32u));
+	return hammersleyRandom16(sampleIdx, sampleCount, r);
 }
 
-IrradianceDice<F16> readClipmap(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Texture3D<Vec4> volumes[6 * kIndirectDiffuseClipmapCount],
-								SamplerState linearAnyRepeatSampler, Vec3 cameraPos, Vec3 worldPos)
+HVec3 generateRandomPointInSphere(U32 sampleIdx, U32 sampleCount, U32 frame)
 {
-	Vec3 clipmapAabbMin, clipmapAabbMax;
-	computeClipmapBoundsConservative(clipmaps[0], cameraPos, clipmapAabbMin, clipmapAabbMax);
-	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
-	{
-		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[0], worldPos);
-		return loadIrradianceDice<F16>(volumes, linearAnyRepeatSampler, uvw, 0);
-	}
-
-	computeClipmapBoundsConservative(clipmaps[1], cameraPos, clipmapAabbMin, clipmapAabbMax);
-	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
-	{
-		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[1], worldPos);
-		return loadIrradianceDice<F16>(volumes, linearAnyRepeatSampler, uvw, 6);
-	}
-
-	computeClipmapBoundsConservative(clipmaps[2], cameraPos, clipmapAabbMin, clipmapAabbMax);
-	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
-	{
-		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[2], worldPos);
-		return loadIrradianceDice<F16>(volumes, linearAnyRepeatSampler, uvw, 12);
-	}
-
-	IrradianceDice<F16> dice = (IrradianceDice<F16>)0;
-	return dice;
+	return octahedronDecode(generateRandomUv(sampleIdx, sampleCount, frame));
 }
 
 // ===========================================================================
@@ -161,7 +124,7 @@ IrradianceDice<F16> readClipmap(Clipmap clipmaps[kIndirectDiffuseClipmapCount], 
 struct Consts
 {
 	U32 m_clipmapIdx;
-	F32 m_padding0;
+	U32 m_raysPerProbeCount;
 	F32 m_padding1;
 	F32 m_padding2;
 };
@@ -172,53 +135,167 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
 
 	// Compute clipmap bounds
+	const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
+	const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
 	Vec3 clipmapAabbMin, clipmapAabbMax;
-	computeClipmapBounds(clipmap, g_globalRendererConstants.m_cameraPosition, clipmapAabbMin, clipmapAabbMax);
+	computeClipmapBounds(clipmap, g_globalRendererConstants.m_cameraPosition, lookDir, clipmapAabbMin, clipmapAabbMax);
 
-	const Vec3 prevCameraPos = g_globalRendererConstants.m_previousMatrices.m_cameraTransform.getTranslationPart();
-	Vec3 prevClipmapAabbMin, prevClipmapAabbMax;
-	computeClipmapBounds(clipmap, prevCameraPos, prevClipmapAabbMin, prevClipmapAabbMax);
+	// Compute probe info. Make sure you shoot coherent rays as much as possible by using the same direction on a specific wave
+	const U32 sampleIdx = DispatchRaysIndex().x / clipmap.m_probeCountsTotal;
+	const U32 probeIdx = DispatchRaysIndex().x % clipmap.m_probeCountsTotal;
 
-	// Compute probe info
+	UVec3 probe3dIdx;
+	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, probe3dIdx.z, probe3dIdx.y,
+						  probe3dIdx.x);
+
 	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
-	const Vec3 cellWorldPos = DispatchRaysIndex().xyz * probeSize + probeSize * 0.5 + clipmapAabbMin;
+	const Vec3 cellWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmapAabbMin;
 
-	const UVec3 probeTexelCoord = worldPosToVolumeTexel(clipmap, cellWorldPos);
-	ANKI_ASSERT(all(probeTexelCoord < clipmap.m_probeCounts));
+	// Trace
+	const HVec3 dir = generateRandomPointInSphere(sampleIdx, g_consts.m_raysPerProbeCount, g_globalRendererConstants.m_frame);
+	const F32 tMax = 1000.0; // TODO
+	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
+	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
+	F32 rayT = 0.0;
+	Bool backfacing = false;
+	const Bool hit = materialRayTrace<F16>(cellWorldPos, dir, 0.0, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
 
-	// Integrate to build the SH
-	IrradianceDice<F16> dice = (IrradianceDice<F16>)0;
-	const U16 sampleCount = 32u;
-
-	for(U16 i = 0; i < sampleCount; ++i)
+	HVec3 radiance;
+	if(backfacing)
 	{
-		HVec3 dir = generateUniformPointOnSphere<F16>(i, sampleCount, g_globalRendererConstants.m_frame);
-
-		const F32 tMax = 1000.0; // TODO
-
-		constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
-
-		GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
-		F32 rayT = 0.0;
-		const Bool hit = materialRayTrace<F16>(cellWorldPos, dir, 0.0, tMax, 1000.0, gbuffer, rayT, traceFlags);
-
-		const Vec3 hitPos = cellWorldPos + dir * rayT;
-		const HVec3 radiance = directLighting<F16>(gbuffer, hitPos, !hit, false, tMax, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
-
-		dice = appendIrradianceDice(dice, dir, radiance, sampleCount);
+		radiance = HVec3(1.0, 0.0, 1.0);
+	}
+	else
+	{
+		const Vec3 hitPos = cellWorldPos + dir * (rayT - 0.01);
+		radiance = directLighting<F16>(gbuffer, hitPos, !hit, false, tMax, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 	}
 
-	// Store the SH
-	const Bool blendWithHistory = all(cellWorldPos > prevClipmapAabbMin) && all(cellWorldPos < prevClipmapAabbMax);
-	if(blendWithHistory)
-	{
-		const IrradianceDice<F16> historyDice = loadIrradianceDice<F16>(g_clipmapVolumes, probeTexelCoord);
-		dice = lerpIrradianceDice<F16>(historyDice, dice, 0.01);
-	}
-
-	storeIrradianceDice(dice, g_clipmapVolumes, probeTexelCoord);
+	// Store result
+	g_lightResultTex[UVec2(probeIdx, sampleIdx)] = HVec4(radiance, 0.0);
 }
 #endif // ANKI_RAY_GEN_SHADER
+
+// ===========================================================================
+// PopulateCaches                                                            =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_PopulateCaches)
+Texture2D<Vec4> g_lightResultTex : register(t0);
+
+RWTexture3D<Vec4> g_radianceVolume : register(u0);
+
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
+
+struct Consts
+{
+	U32 m_clipmapIdx;
+	U32 m_radianceProbeSize; // Size without border
+	F32 m_padding1;
+	F32 m_padding2;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+groupshared U32 g_octCoordValueSet[128]; // TODO
+
+[NumThreads(RAYS_PER_PROBE_PER_FRAME, 1, 1)] void main(U32 svGroupIndex : SV_GroupIndex, UVec3 svGroupId : SV_GroupID)
+{
+	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
+
+	const U32 octPixelCount = g_consts.m_radianceProbeSize * g_consts.m_radianceProbeSize;
+	ANKI_ASSERT(octPixelCount <= 128);
+
+	// Zero groupshared
+	const U32 octPixelsPerThread = (octPixelCount + RAYS_PER_PROBE_PER_FRAME - 1) / RAYS_PER_PROBE_PER_FRAME;
+	for(U32 i = 0; i < octPixelsPerThread; ++i)
+	{
+		const U32 octCoordIdx = svGroupIndex * octPixelsPerThread + i;
+		if(octCoordIdx < octPixelCount)
+		{
+			g_octCoordValueSet[octCoordIdx] = 0;
+		}
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	const U32 sampleIdx = svGroupIndex;
+	const U32 probeIdx = svGroupId.z * clipmap.m_probeCounts.x * clipmap.m_probeCounts.y + svGroupId.y * clipmap.m_probeCounts.x + svGroupId.x;
+
+	// Compute clipmap bounds
+	Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
+	Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
+	Vec3 clipmapAabbMin, clipmapAabbMax;
+	computeClipmapBounds(clipmap, g_globalRendererConstants.m_cameraPosition, lookDir, clipmapAabbMin, clipmapAabbMax);
+
+	// Compute previous frame clipmap bounds
+	cameraTrf = g_globalRendererConstants.m_previousMatrices.m_cameraTransform;
+	lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
+	Vec3 prevClipmapAabbMin, prevClipmapAabbMax;
+	computeClipmapBounds(clipmap, g_globalRendererConstants.m_previousMatrices.m_cameraTransform.getTranslationPart().xyz, lookDir,
+						 prevClipmapAabbMin, prevClipmapAabbMax);
+
+	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+	const Vec3 probeWorldPos = svGroupId * probeSize + probeSize * 0.5 + clipmapAabbMin;
+
+	UVec3 volumeTexCoord = frac(probeWorldPos.xzy / clipmap.m_size.xzy) * clipmap.m_probeCounts.xzy;
+	volumeTexCoord = min(volumeTexCoord, clipmap.m_probeCounts.xzy - 1u);
+
+	const HVec3 radiance = SRV_TEXTURE(g_lightResultTex, UVec2(probeIdx, sampleIdx));
+
+	const Vec2 octUv = generateRandomUv(sampleIdx, U32(RAYS_PER_PROBE_PER_FRAME), g_globalRendererConstants.m_frame);
+	const UVec2 octCoord = min(octUv * g_consts.m_radianceProbeSize, g_consts.m_radianceProbeSize - 1);
+	const U32 octCoordIdx = octCoord.y * g_consts.m_radianceProbeSize + octCoord.x;
+	ANKI_ASSERT(octCoordIdx < octPixelCount);
+
+	const Bool blendWithHistory = all(probeWorldPos > prevClipmapAabbMin) && all(probeWorldPos < prevClipmapAabbMax);
+	HVec3 avgRadiance = 0.0;
+	U32 iterationCount = 0;
+	do
+	{
+		U32 origValue;
+		InterlockedCompareExchange(g_octCoordValueSet[octCoordIdx], iterationCount, iterationCount + 1u, origValue);
+
+		if(origValue == iterationCount)
+		{
+			UVec3 actualVolumeTexCoord;
+			actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_radianceProbeSize + 2) + 1;
+			actualVolumeTexCoord.z = volumeTexCoord.z;
+
+			if(blendWithHistory)
+			{
+				const HVec3 prevValue = UAV_TEXTURE(g_radianceVolume, actualVolumeTexCoord).xyz;
+				avgRadiance = lerp(prevValue, radiance, 0.1);
+			}
+			else
+			{
+				avgRadiance = radiance;
+			}
+
+			UAV_TEXTURE(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
+
+			iterationCount = kMaxU32;
+		}
+		else
+		{
+			++iterationCount;
+		}
+
+		AllMemoryBarrierWithGroupSync();
+	} while(iterationCount < kMaxU32);
+
+	// Set oct borders
+	IVec2 borders[3];
+	const U32 borderCount = octahedronBorder(g_consts.m_radianceProbeSize, octCoord, borders);
+	for(U32 i = 0; i < borderCount; ++i)
+	{
+		IVec3 actualVolumeTexCoord;
+		actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_radianceProbeSize + 2) + 1;
+		actualVolumeTexCoord.xy += borders[i];
+		actualVolumeTexCoord.z = volumeTexCoord.z;
+
+		UAV_TEXTURE(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
+	}
+}
+#endif
 
 // ===========================================================================
 // Test                                                                      =
@@ -228,8 +305,6 @@ Texture2D<Vec4> g_depthTex : register(t0);
 Texture2D<Vec4> g_gbufferRt2 : register(t1);
 
 Texture2D<Vec4> g_blueNoiseTex : register(t2);
-
-Texture3D<Vec4> g_clipmapVolumes[6 * kIndirectDiffuseClipmapCount] : register(t3);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
@@ -263,9 +338,12 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 
 	F32 noise = noise3.x;
 
-	const U16 clipmapIdx =
-		findClipmapOnPosition(g_globalRendererConstants.m_indirectDiffuseClipmaps, g_globalRendererConstants.m_cameraPosition, worldPos, noise);
-	/*if(clipmapIdx == 0)
+	const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
+	const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
+
+	const U16 clipmapIdx = findClipmapOnPosition(g_globalRendererConstants.m_indirectDiffuseClipmaps, g_globalRendererConstants.m_cameraPosition,
+												 lookDir, worldPos, noise);
+	if(clipmapIdx == 0)
 	{
 		g_outTex[svDispatchThreadId] = Vec4(1, 0, 0, 0);
 	}
@@ -281,8 +359,10 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	{
 		g_outTex[svDispatchThreadId] = Vec4(1, 0, 1, 0);
 	}
-	return;*/
 
+	return;
+
+#	if 0
 	if(clipmapIdx >= kIndirectDiffuseClipmapCount)
 	{
 		g_outTex[svDispatchThreadId] = 0.0;
@@ -295,6 +375,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	const HVec3 irradiance = evaluateIrradianceDice<F16>(dice, normal);
 
 	g_outTex[svDispatchThreadId] = Vec4(irradiance, 0.0);
+#	endif
 }
 #endif
 
@@ -303,18 +384,17 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_VisualizeProbes)
 
+struct VertIn
+{
+	U32 m_svVertexId : SV_VertexID;
+	U32 m_svInstanceId : SV_InstanceID;
+};
+
 struct VertOut
 {
 	Vec4 m_svPosition : SV_Position;
 
 	Vec3 m_probeCenter : PROBE_CENTER;
-	UVec3 m_probeTexel : PROBE_TEXEL;
-};
-
-struct VertIn
-{
-	U32 m_svVertexId : SV_VertexID;
-	U32 m_svInstanceId : SV_InstanceID;
 };
 
 struct FragOut
@@ -326,7 +406,7 @@ struct FragOut
 struct Consts
 {
 	U32 m_clipmapIdx;
-	U32 m_padding1;
+	U32 m_radianceProbeSize; // Size without border
 	U32 m_padding2;
 	U32 m_padding3;
 };
@@ -334,7 +414,9 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
-Texture3D<Vec4> g_clipmapVolumes[6 * kIndirectDiffuseClipmapCount] : register(t0);
+Texture3D<Vec4> g_radianceVolume : register(t0);
+
+SamplerState g_linearAnyRepeatSampler : register(s0);
 
 constexpr F32 kSphereRadius = 0.05;
 
@@ -352,11 +434,14 @@ VertOut main(VertIn input)
 	const Vec3 camPos = g_globalRendererConstants.m_cameraPosition;
 
 	UVec3 cellCoord;
-	unflatten3dArrayIndex(clipmap.m_probeCounts.x, clipmap.m_probeCounts.y, clipmap.m_probeCounts.z, input.m_svInstanceId, cellCoord.x, cellCoord.y,
-						  cellCoord.z);
+	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, input.m_svInstanceId, cellCoord.z, cellCoord.y,
+						  cellCoord.x);
+
+	const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
+	const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
 
 	Vec3 clipmapAabbMin, clipmapAabbMax;
-	computeClipmapBounds(clipmap, camPos, clipmapAabbMin, clipmapAabbMax);
+	computeClipmapBounds(clipmap, camPos, lookDir, clipmapAabbMin, clipmapAabbMax);
 	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
 	const Vec3 cellWorldPos = cellCoord * probeSize + probeSize * 0.5 + clipmapAabbMin;
 
@@ -370,9 +455,6 @@ VertOut main(VertIn input)
 	output.m_svPosition = mul(g_globalRendererConstants.m_matrices.m_viewProjectionJitter, Vec4(vertPos, 1.0));
 	output.m_probeCenter = cellWorldPos;
 
-	const UVec3 probeTexelCoord = worldPosToVolumeTexel(clipmap, cellWorldPos);
-	output.m_probeTexel = probeTexelCoord;
-
 	return output;
 }
 #	endif // ANKI_VERTEX_SHADER
@@ -380,6 +462,8 @@ VertOut main(VertIn input)
 #	if ANKI_PIXEL_SHADER
 FragOut main(VertOut input)
 {
+	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
+
 	FragOut output;
 
 	// Compute the far point
@@ -405,10 +489,18 @@ FragOut main(VertOut input)
 
 	const Vec3 normal = normalize(collisionPoint - input.m_probeCenter);
 
-	const IrradianceDice<F16> dice = loadIrradianceDice<F16>(g_clipmapVolumes, input.m_probeTexel, g_consts.m_clipmapIdx * 6);
-	const HVec3 irradiance = evaluateIrradianceDice<F16>(dice, normal);
+	Vec3 uvw = frac(input.m_probeCenter.xzy / clipmap.m_size.xzy);
+	const UVec3 texelCoord = uvw * clipmap.m_probeCounts.xzy;
 
-	output.m_color = Vec4(irradiance, 0.0);
+	uvw.xy = texelCoord.xy * (g_consts.m_radianceProbeSize + 2);
+	uvw.xy += octahedronEncode(normal) * g_consts.m_radianceProbeSize + 1.0;
+	uvw.xy /= clipmap.m_probeCounts.xz * (g_consts.m_radianceProbeSize + 2);
+
+	uvw.z = (texelCoord.z + 0.5) / clipmap.m_probeCounts.y;
+
+	Vec3 radiance = g_radianceVolume.SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0).xyz;
+
+	output.m_color = Vec4(radiance, 0.0);
 	return output;
 }
 #	endif // ANKI_PIXEL_SHADER

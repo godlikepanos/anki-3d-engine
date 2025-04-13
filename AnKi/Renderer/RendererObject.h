@@ -106,7 +106,13 @@ protected:
 	};
 
 	static Error loadShaderProgram(CString filename, std::initializer_list<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
-								   ShaderProgramPtr& grProg, CString technique = {}, ShaderTypeBit shaderTypes = ShaderTypeBit::kNone);
+								   ShaderProgramPtr& grProg, CString technique = {}, ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
+	{
+		return loadShaderProgram(filename, ConstWeakArray<SubMutation>(mutators.begin(), U32(mutators.size())), rsrc, grProg, technique, shaderTypes);
+	}
+
+	static Error loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg,
+								   CString technique = {}, ShaderTypeBit shaderTypes = ShaderTypeBit::kNone);
 
 	static void zeroBuffer(Buffer* buff);
 

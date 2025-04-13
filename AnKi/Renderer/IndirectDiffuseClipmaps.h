@@ -16,18 +16,28 @@ namespace anki {
 
 inline BoolCVar g_rtIndirectDiffuseClipmapsCVar("R", "RtIndirectDiffuseClipmaps", false);
 
-inline NumericCVar<U32> g_indirectDiffuseClipmap0ProbesPerDimCVar("R", "IndirectDiffuseClipmap0ProbesPerDim", 32, 10, 100,
-																  "The cell count of each dimension of 1st clipmap");
-inline NumericCVar<U32> g_indirectDiffuseClipmap1ProbesPerDimCVar("R", "IndirectDiffuseClipmap1ProbesPerDim", 32, 10, 100,
-																  "The cell count of each dimension of 2nd clipmap");
-inline NumericCVar<U32> g_indirectDiffuseClipmap2ProbesPerDimCVar("R", "IndirectDiffuseClipmap2ProbesPerDim", 32, 10, 100,
-																  "The cell count of each dimension of 3rd clipmap");
+inline NumericCVar<U32> g_indirectDiffuseClipmapProbesXZCVar("R", "IndirectDiffuseClipmapProbesXZ", 32, 10, 100,
+															 "The cell count of each dimension of 1st clipmap");
+inline NumericCVar<U32> g_indirectDiffuseClipmapProbesYCVar("R", "IndirectDiffuseClipmapProbesY", 8, 4, 100,
+															"The cell count of each dimension of 1st clipmap");
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap0SizeCVar("R", "IndirectDiffuseClipmap0Size", 32.0, 10.0, 1000.0, "The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap1SizeCVar("R", "IndirectDiffuseClipmap1Size", 64.0, 10.0, 1000.0, "The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap2SizeCVar("R", "IndirectDiffuseClipmap2Size", 128.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap0XZSizeCVar("R", "IndirectDiffuseClipmap0XZSize", 48.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap0YSizeCVar("R", "IndirectDiffuseClipmap0YSize", 12.0, 10.0, 1000.0, "The clipmap size in meters");
 
-/// Ambient global illumination passes.
+inline NumericCVar<F32> g_indirectDiffuseClipmap1XZSizeCVar("R", "IndirectDiffuseClipmap1XZSize", 96.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap1YSizeCVar("R", "IndirectDiffuseClipmap1YSize", 24.0, 10.0, 1000.0, "The clipmap size in meters");
+
+inline NumericCVar<F32> g_indirectDiffuseClipmap2XZSizeCVar("R", "IndirectDiffuseClipmap2XZSize", 192.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap2YSizeCVar("R", "IndirectDiffuseClipmap2YSize", 48.0, 10.0, 1000.0, "The clipmap size in meters");
+
+inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceCacheProbeSize("R", "IndirectDiffuseClipmapLightCacheSize", 10, 5, 30,
+																	   "Size of the octahedral for the light cache");
+inline NumericCVar<U32> g_indirectDiffuseClipmapDistancesProbeSize("R", "IndirectDiffuseClipmapDistanceSize", 10, 5, 22,
+																   "Size of the octahedral for the probe distances");
+inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceProbeSize("R", "IndirectDiffuseClipmapIrradianceSize", 6, 4, 22,
+																	"Size of the octahedral for the irradiance");
+
+/// Indirect diffuse based on clipmaps of probes.
 class IndirectDiffuseClipmaps : public RendererObject
 {
 public:
@@ -54,13 +64,10 @@ public:
 	void drawDebugProbes(const RenderingContext& ctx, CommandBuffer& cmdb) const;
 
 private:
-	class ClipmapVolumes
-	{
-	public:
-		Array<TexturePtr, 6> m_directions;
-	};
+	static constexpr U32 kRaysPerProbePerFrame = 32;
 
-	Array<ClipmapVolumes, kIndirectDiffuseClipmapCount> m_clipmapVolumes;
+	RenderTargetDesc m_radianceDesc;
+	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
 
 	Array<Clipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
 
@@ -68,11 +75,12 @@ private:
 	ShaderProgramResourcePtr m_missProg;
 	ShaderProgramResourcePtr m_sbtProg;
 	ShaderProgramPtr m_libraryGrProg;
+	ShaderProgramPtr m_populateCachesGrProg;
 	ShaderProgramPtr m_tmpVisGrProg;
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_visProbesGrProg;
 
-	RenderTargetDesc m_tmpRtDesc;
+	RenderTargetDesc m_tmpRtDesc; // TODO rm
 
 	ImageResourcePtr m_blueNoiseImg;
 
@@ -80,7 +88,7 @@ private:
 	U32 m_rayGenShaderGroupIdx = kMaxU32;
 	U32 m_missShaderGroupIdx = kMaxU32;
 
-	Bool m_clipmapsImportedOnce = false;
+	Bool m_texturesImportedOnce = false;
 
 	class
 	{

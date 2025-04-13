@@ -278,6 +278,9 @@ template<typename T>
 void InterlockedExchange(T dest, T value, T& originalValue);
 
 template<typename T>
+void InterlockedCompareExchange(T dest, T compareValue, T value, T& originalValue);
+
+template<typename T>
 void InterlockedOr(T dest, T value, T& originalValue);
 
 template<typename T>

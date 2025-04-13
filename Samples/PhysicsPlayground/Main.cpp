@@ -197,7 +197,8 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kH) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? "" : "RtShadows");
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmapsTest") ? "" : "IndirectDiffuseClipmapsTest");
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kP) == 1)

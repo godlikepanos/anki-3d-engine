@@ -681,7 +681,8 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	// Trace
 	GBufferLight<F16> gbuffer;
 	F32 rayT;
-	const Bool hasHitSky = !materialRayTrace(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT);
+	Bool unused;
+	const Bool hasHitSky = !materialRayTrace(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT, unused);
 
 	const Vec3 hitPos = worldPos + reflDir * rayT;
 

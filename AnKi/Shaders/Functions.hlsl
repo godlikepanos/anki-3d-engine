@@ -594,6 +594,15 @@ I32 firstbitlow2(U32 v)
 	return firstbitlow(v);
 }
 
+#if ANKI_SUPPORTS_64BIT_TYPES
+/// The regular firstbitlow in DXC has some issues since it invokes a builtin that is only supposed to be used with
+/// 32bit input. This is an alternative implementation but it expects that the input is not zero.
+U32 countbits2(U64 v)
+{
+	return countbits(U32(v)) + countbits(U32(v >> 32ul));
+}
+#endif
+
 /// Encode the shading rate to be stored in an SRI. The rates should be power of two, can't be zero and can't exceed 4.
 /// So the possible values are 1,2,4
 U32 encodeVrsRate(UVec2 rateXY)
@@ -805,6 +814,49 @@ Vec3 octahedronDecode(Vec2 f)
 	const F32 t = saturate(-n.z);
 	n.xy += select(n.xy >= 0.0, -t, t);
 	return normalize(n);
+}
+
+/// Given the size of the octahedron texture and a texel that belongs to it, return the offsets relative to this texel that belong to the border.
+/// The texSize is without border and the texCoord as well.
+U32 octahedronBorder(IVec2 texSize, IVec2 texCoord, out IVec2 borderTexOffsets[3])
+{
+	U32 borderCount = 0;
+	if(all(texCoord == 0))
+	{
+		borderTexOffsets[borderCount++] = texSize;
+	}
+	else if(texCoord.x == 0 && texCoord.y == texSize.y - 1)
+	{
+		borderTexOffsets[borderCount++] = IVec2(texSize.x, -texSize.y);
+	}
+	else if(all(texCoord == texSize - 1))
+	{
+		borderTexOffsets[borderCount++] = -texSize;
+	}
+	else if(texCoord.x == texSize.x - 1 && texCoord.y == 0)
+	{
+		borderTexOffsets[borderCount++] = IVec2(-texSize.x, texSize.y);
+	}
+
+	if(texCoord.y == 0)
+	{
+		borderTexOffsets[borderCount++] = IVec2((texSize.x - 1) - 2 * texCoord.x, -1);
+	}
+	else if(texCoord.y == texSize.y - 1)
+	{
+		borderTexOffsets[borderCount++] = IVec2((texSize.x - 1) - 2 * texCoord.x, 1);
+	}
+
+	if(texCoord.x == 0)
+	{
+		borderTexOffsets[borderCount++] = IVec2(-1, (texSize.y - 1) - 2 * texCoord.y);
+	}
+	else if(texCoord.x == texSize.x - 1)
+	{
+		borderTexOffsets[borderCount++] = IVec2(1, (texSize.y - 1) - 2 * texCoord.y);
+	}
+
+	return borderCount;
 }
 
 /// Manual texture sampling of a 3D texture.

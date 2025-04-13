@@ -381,13 +381,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(6, 2, pixelsFailedSsrBuff);
 			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
 
-			for(U32 i = 0; i < 6; ++i)
-			{
-				cmdb.bindUav(i, 2, TextureView(getDummyGpuResources().m_texture3DUav.get(), TextureSubresourceDesc::firstSurface()));
-			}
-
-			rgraphCtx.bindUav(7, 2, transientRt1);
-			rgraphCtx.bindUav(8, 2, hitPosAndDepthRt);
+			rgraphCtx.bindUav(0, 2, transientRt1);
+			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());

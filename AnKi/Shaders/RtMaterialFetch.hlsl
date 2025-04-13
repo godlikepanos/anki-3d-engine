@@ -37,6 +37,7 @@ Texture2D<Vec4> g_gbufferRt1 : register(t2, SPACE);
 Texture2D<Vec4> g_gbufferRt2 : register(t3, SPACE);
 #	endif
 Texture2D<Vec4> g_envMap : register(t4, SPACE);
+
 #	if defined(CLIPMAP_VOLUME)
 StructuredBuffer<U32> g_dummyBuff1 : register(t5, SPACE);
 StructuredBuffer<U32> g_dummyBuff2 : register(t6, SPACE);
@@ -44,13 +45,17 @@ StructuredBuffer<U32> g_dummyBuff2 : register(t6, SPACE);
 StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t5, SPACE);
 StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t6, SPACE);
 #	endif
+
 Texture2D<Vec4> g_shadowAtlasTex : register(t7, SPACE);
 
 // UAVs
-RWTexture3D<Vec4> g_clipmapVolumes[6u] : register(u0, SPACE);
-
-RWTexture2D<Vec4> g_colorAndPdfTex : register(u7, SPACE);
-RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u8, SPACE);
+#	if defined(CLIPMAP_VOLUME)
+RWTexture2D<Vec4> g_lightResultTex : register(u0, SPACE);
+RWTexture2D<Vec4> g_dummyUav : register(u1, SPACE);
+#	else
+RWTexture2D<Vec4> g_colorAndPdfTex : register(u0, SPACE);
+RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1, SPACE);
+#	endif
 
 // Samplers
 SamplerState g_linearClampAnySampler : register(s0, SPACE);
@@ -65,7 +70,7 @@ struct GBufferLight
 };
 
 template<typename T>
-Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT,
+Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT, out Bool backfacing,
 					  U32 traceFlags = RAY_FLAG_FORCE_OPAQUE)
 {
 	RtMaterialFetchRayPayload payload;
@@ -82,7 +87,9 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	TraceRay(g_tlas, traceFlags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
 	rayT = payload.m_rayT;
-	const Bool hasHitSky = payload.m_rayT < 0.0;
+	const Bool hasHitSky = rayT == kMaxF32;
+	backfacing = rayT < 0.0;
+	rayT = abs(rayT);
 	if(hasHitSky)
 	{
 		gbuffer = (GBufferLight<T>)0;

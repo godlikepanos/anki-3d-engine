@@ -72,8 +72,8 @@ struct Sky
 
 struct Clipmap
 {
-	Vec3 m_probeCounts;
-	U32 m_padding1;
+	UVec3 m_probeCounts;
+	U32 m_probeCountsTotal;
 
 	Vec3 m_size;
 	F32 m_padding2;

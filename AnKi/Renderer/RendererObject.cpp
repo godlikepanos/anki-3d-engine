@@ -19,7 +19,7 @@ void RendererObject::registerDebugRenderTarget(CString rtName)
 	getRenderer().registerDebugRenderTarget(this, rtName);
 }
 
-Error RendererObject::loadShaderProgram(CString filename, std::initializer_list<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
+Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
 										ShaderProgramPtr& grProg, CString technique, ShaderTypeBit shaderTypes)
 {
 	if(!rsrc.isCreated())
