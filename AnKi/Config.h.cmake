@@ -203,20 +203,20 @@
 #	define ANKI_PURE
 #else
 #	define ANKI_RESTRICT
-#	define ANKI_FORCE_INLINE 
+#	define ANKI_FORCE_INLINE
 #	define ANKI_DONT_INLINE
 #	define ANKI_UNUSED
 #	define ANKI_COLD
 #	define ANKI_HOT
-#	define ANKI_UNREACHABLE() 
+#	define ANKI_UNREACHABLE()
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE
 #endif
 
 namespace anki {
-static inline const char* kAnKiBuildConfigString = 
-"ver " ANKI_VERSION_STR 
+inline constexpr const char* kAnKiBuildConfigString =
+"ver " ANKI_VERSION_STR
 
 ", git hash " ANKI_REVISION
 

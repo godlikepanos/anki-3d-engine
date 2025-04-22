@@ -33,7 +33,7 @@ public:
 	{
 		if(size > kMaxBufferSize)
 		{
-			ANKI_RESOURCE_LOGF("Asked for too much BLAS scratch memory: %llu", size);
+			ANKI_RESOURCE_LOGF("Asked for too much BLAS scratch memory: %zu", size);
 		}
 
 		if(size > m_buffer->getSize())

@@ -192,7 +192,7 @@ StringList ShaderReflectionDescriptorRelated::toString() const
 	{
 		for(U32 i = 0; i < m_bindingCounts[s]; ++i)
 		{
-			list.pushBackSprintf("space: %u, register: %u, type: %u", s, m_bindings[s][i].m_registerBindingPoint, m_bindings[s][i].m_type);
+			list.pushBackSprintf("space: %u, register: %u, type: %u", s, m_bindings[s][i].m_registerBindingPoint, U32(m_bindings[s][i].m_type));
 		}
 	}
 
@@ -208,7 +208,7 @@ StringList ShaderReflection::toString() const
 
 	for(VertexAttributeSemantic attrib : EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(m_vertex.m_vertexAttributeMask))
 	{
-		list.pushBackSprintf("Vert attrib: %u", attrib);
+		list.pushBackSprintf("Vert attrib: %u", U32(attrib));
 	}
 
 	list.pushBackSprintf("Color RT mask: %u", m_pixel.m_colorRenderTargetWritemask.getData()[0]);
