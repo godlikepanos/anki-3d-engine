@@ -65,7 +65,7 @@ ANKI_END_NAMESPACE
 
 #	define constexpr static const
 
-#	if defined(ANKI_ASSERTIONS_ENABLED) && ANKI_ASSERTIONS_ENABLED == 1
+#	if defined(ANKI_ASSERTIONS_ENABLED) && ANKI_ASSERTIONS_ENABLED == 1 && ANKI_GR_BACKEND_VULKAN
 #		define ANKI_ASSERT(x) \
 			if(!(x)) \
 			printf("Assertion failed. Line %i", __LINE__)

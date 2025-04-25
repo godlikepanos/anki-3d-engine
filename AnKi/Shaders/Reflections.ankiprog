@@ -509,7 +509,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 			viewReflDir = normalize(viewHitPoint - viewPos);
 			const Vec3 viewDir = normalize(-viewPos);
-			const F32 alpha = pow2(roughness);
+			const F32 alpha = square(roughness);
 			pdf = pdfVndfIsotropic(viewReflDir, viewDir, alpha, viewNormal);
 
 			ssrSuccess = g_viewHitPointAndSsrSuccess[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].w;
@@ -809,7 +809,7 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 
 	const Vec4 rt1 = g_gbufferRt1[coord];
 	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
-	const F32 alpha = pow2(roughness);
+	const F32 alpha = square(roughness);
 
 	if(kDisableDenoising || tileClass == kClassVeryRough || tileClass == kClassMirror || roughness >= g_consts.m_roughnessCutoffToGiEdges.y
 	   || isMirror(roughness))

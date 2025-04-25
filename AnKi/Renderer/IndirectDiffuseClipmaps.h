@@ -68,6 +68,7 @@ private:
 
 	RenderTargetDesc m_radianceDesc;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
+	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
 
 	Array<Clipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
 
@@ -76,6 +77,7 @@ private:
 	ShaderProgramResourcePtr m_sbtProg;
 	ShaderProgramPtr m_libraryGrProg;
 	ShaderProgramPtr m_populateCachesGrProg;
+	ShaderProgramPtr m_computeIrradianceGrProg;
 	ShaderProgramPtr m_tmpVisGrProg;
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_visProbesGrProg;

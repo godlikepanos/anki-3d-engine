@@ -9,10 +9,11 @@
 
 #pragma anki technique RtMaterialFetch rgen mutators
 #pragma anki technique PopulateCaches comp mutators RAYS_PER_PROBE_PER_FRAME
+#pragma anki technique ComputeIrradiance comp mutators
 #pragma anki technique Test comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
-#define ANKI_ASSERTIONS_ENABLED 1
+// #define ANKI_ASSERTIONS_ENABLED 0
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Functions.hlsl>
@@ -82,7 +83,7 @@ F32 computeClipmapFade2(Clipmap clipmap, Vec3 cameraPos, Vec3 lookDir, Vec3 worl
 
 U16 findClipmapOnPosition(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Vec3 cameraPos, Vec3 lookDir, Vec3 worldPos, F32 randFactor)
 {
-	randFactor = pow2(randFactor);
+	randFactor = square(randFactor);
 
 	F32 fade = computeClipmapFade(clipmaps[0], cameraPos, lookDir, worldPos);
 	if(fade > randFactor)
@@ -239,7 +240,7 @@ groupshared U32 g_octCoordValueSet[128]; // TODO
 	UVec3 volumeTexCoord = frac(probeWorldPos.xzy / clipmap.m_size.xzy) * clipmap.m_probeCounts.xzy;
 	volumeTexCoord = min(volumeTexCoord, clipmap.m_probeCounts.xzy - 1u);
 
-	const HVec3 radiance = SRV_TEXTURE(g_lightResultTex, UVec2(probeIdx, sampleIdx));
+	const HVec3 radiance = TEX(g_lightResultTex, UVec2(probeIdx, sampleIdx));
 
 	const Vec2 octUv = generateRandomUv(sampleIdx, U32(RAYS_PER_PROBE_PER_FRAME), g_globalRendererConstants.m_frame);
 	const UVec2 octCoord = min(octUv * g_consts.m_radianceProbeSize, g_consts.m_radianceProbeSize - 1);
@@ -262,7 +263,7 @@ groupshared U32 g_octCoordValueSet[128]; // TODO
 
 			if(blendWithHistory)
 			{
-				const HVec3 prevValue = UAV_TEXTURE(g_radianceVolume, actualVolumeTexCoord).xyz;
+				const HVec3 prevValue = TEX(g_radianceVolume, actualVolumeTexCoord).xyz;
 				avgRadiance = lerp(prevValue, radiance, 0.1);
 			}
 			else
@@ -270,7 +271,7 @@ groupshared U32 g_octCoordValueSet[128]; // TODO
 				avgRadiance = radiance;
 			}
 
-			UAV_TEXTURE(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
+			TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
 
 			iterationCount = kMaxU32;
 		}
@@ -292,7 +293,7 @@ groupshared U32 g_octCoordValueSet[128]; // TODO
 		actualVolumeTexCoord.xy += borders[i];
 		actualVolumeTexCoord.z = volumeTexCoord.z;
 
-		UAV_TEXTURE(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
+		TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
 	}
 }
 #endif
@@ -380,6 +381,161 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 #endif
 
 // ===========================================================================
+// ComputeIrradiance                                                         =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_ComputeIrradiance)
+
+struct Consts
+{
+	U32 m_clipmapIdx;
+	U32 m_radianceProbeSize; // Size without border
+	U32 m_irradianceProbeSize;
+	F32 m_padding2;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+constexpr U32 kThreadCount = 64;
+
+Texture3D<Vec4> g_radianceVolume : register(t0);
+
+RWTexture3D<Vec4> g_irradianceVolume : register(u0);
+
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
+
+groupshared Vec3 g_irradianceResults[kThreadCount];
+groupshared U32 g_resultCount;
+groupshared U32 g_sampleCount;
+
+[NumThreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
+{
+	if(svGroupIndex == 0)
+	{
+		g_resultCount = 0;
+		g_sampleCount = 0;
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
+	const U32 probeIdx = svGroupId.x;
+	const UVec2 irradianceTexel = svGroupId.yz;
+
+	// Compute the texel coord to write the output
+	UVec3 irradianceTexelCoord;
+	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, irradianceTexelCoord.z,
+						  irradianceTexelCoord.y, irradianceTexelCoord.x);
+	irradianceTexelCoord = irradianceTexelCoord.xzy;
+	irradianceTexelCoord.xy *= g_consts.m_irradianceProbeSize + 2;
+	irradianceTexelCoord.xy += 1;
+	irradianceTexelCoord.x += irradianceTexel.x;
+	irradianceTexelCoord.y += irradianceTexel.y;
+
+	// Compute input radiance coordinates
+	UVec3 radianceTexelCoordStart;
+	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, radianceTexelCoordStart.z,
+						  radianceTexelCoordStart.y, radianceTexelCoordStart.x);
+	radianceTexelCoordStart = radianceTexelCoordStart.xzy;
+	radianceTexelCoordStart.xy *= g_consts.m_radianceProbeSize + 2;
+	radianceTexelCoordStart.xy += 1;
+
+	// Compute irradiance
+	Vec2 octUv = Vec2(irradianceTexel);
+	octUv += 0.5;
+	octUv /= g_consts.m_irradianceProbeSize;
+	const Vec3 dir = octahedronDecode(octUv);
+
+	const U32 radianceTexelCount = g_consts.m_radianceProbeSize * g_consts.m_radianceProbeSize;
+	const U32 radiancePixelsPerThread = (radianceTexelCount + kThreadCount - 1) / kThreadCount;
+
+	Vec3 irradiance = 0.0;
+	U32 sampleCount = 0;
+	for(U32 pixel = svGroupIndex * radiancePixelsPerThread; pixel < min(radianceTexelCount, (svGroupIndex + 1) * radiancePixelsPerThread); ++pixel)
+	{
+		Vec2 octUv = Vec2(pixel % g_consts.m_radianceProbeSize, pixel / g_consts.m_radianceProbeSize);
+		octUv += 0.5;
+		octUv /= g_consts.m_radianceProbeSize;
+
+		const Vec3 sampleDir = octahedronDecode(octUv);
+
+		const F32 lambert = dot(dir, sampleDir);
+		if(lambert <= 0.0)
+		{
+			continue;
+		}
+
+		UVec3 coord = radianceTexelCoordStart;
+		coord.x += pixel % g_consts.m_radianceProbeSize + 1;
+		coord.y += pixel / g_consts.m_radianceProbeSize + 1;
+
+		const Vec3 radiance = TEX(g_radianceVolume, coord).xyz;
+
+		irradiance += radiance * lambert;
+		++sampleCount;
+	}
+
+	if(sampleCount)
+	{
+		InterlockedAdd(g_sampleCount, sampleCount);
+
+		U32 offset;
+		InterlockedAdd(g_resultCount, 1, offset);
+		g_irradianceResults[offset] = irradiance;
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	[loop] for(U32 s = kThreadCount / 2u; s > 0u; s >>= 1u)
+	{
+		if(svGroupIndex < s && svGroupIndex + s < g_resultCount)
+		{
+			g_irradianceResults[svGroupIndex] += g_irradianceResults[svGroupIndex + s];
+		}
+
+#	if ANKI_PLATFORM_MOBILE
+		if(s > WaveGetLaneCount())
+		{
+			GroupMemoryBarrierWithGroupSync();
+		}
+#	endif
+	}
+
+	if(svGroupIndex == 0)
+	{
+		Vec3 irradiance;
+		if(g_sampleCount)
+		{
+			irradiance = g_irradianceResults[0] / g_sampleCount * k2Pi;
+		}
+		else
+		{
+			irradiance = 0.0;
+		}
+
+		TEX(g_irradianceVolume, irradianceTexelCoord).xyz = irradiance;
+
+		// Write the borders
+		UVec3 volumeTexCoord;
+		unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, volumeTexCoord.z, volumeTexCoord.y,
+							  volumeTexCoord.x);
+		volumeTexCoord = volumeTexCoord.xzy;
+
+		IVec2 borders[3];
+		const IVec2 octCoord = IVec2(irradianceTexel);
+		const U32 borderCount = octahedronBorder(g_consts.m_irradianceProbeSize, octCoord, borders);
+		for(U32 i = 0; i < borderCount; ++i)
+		{
+			IVec3 actualVolumeTexCoord;
+			actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_irradianceProbeSize + 2) + 1;
+			actualVolumeTexCoord.xy += borders[i];
+			actualVolumeTexCoord.z = volumeTexCoord.z;
+
+			TEX(g_irradianceVolume, actualVolumeTexCoord).xyz = irradiance;
+		}
+	}
+}
+#endif
+
+// ===========================================================================
 // VisualizeProbes                                                           =
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_VisualizeProbes)
@@ -406,7 +562,7 @@ struct FragOut
 struct Consts
 {
 	U32 m_clipmapIdx;
-	U32 m_radianceProbeSize; // Size without border
+	U32 m_octProbeSize; // Size without border
 	U32 m_padding2;
 	U32 m_padding3;
 };
@@ -414,7 +570,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
-Texture3D<Vec4> g_radianceVolume : register(t0);
+Texture3D<Vec4> g_volume : register(t0);
 
 SamplerState g_linearAnyRepeatSampler : register(s0);
 
@@ -492,13 +648,13 @@ FragOut main(VertOut input)
 	Vec3 uvw = frac(input.m_probeCenter.xzy / clipmap.m_size.xzy);
 	const UVec3 texelCoord = uvw * clipmap.m_probeCounts.xzy;
 
-	uvw.xy = texelCoord.xy * (g_consts.m_radianceProbeSize + 2);
-	uvw.xy += octahedronEncode(normal) * g_consts.m_radianceProbeSize + 1.0;
-	uvw.xy /= clipmap.m_probeCounts.xz * (g_consts.m_radianceProbeSize + 2);
+	uvw.xy = texelCoord.xy * (g_consts.m_octProbeSize + 2);
+	uvw.xy += octahedronEncode(normal) * g_consts.m_octProbeSize + 1.0;
+	uvw.xy /= clipmap.m_probeCounts.xz * (g_consts.m_octProbeSize + 2);
 
 	uvw.z = (texelCoord.z + 0.5) / clipmap.m_probeCounts.y;
 
-	Vec3 radiance = g_radianceVolume.SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0).xyz;
+	Vec3 radiance = g_volume.SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0).xyz;
 
 	output.m_color = Vec4(radiance, 0.0);
 	return output;

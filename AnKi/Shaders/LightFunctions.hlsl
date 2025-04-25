@@ -643,13 +643,13 @@ Vec3 sampleGgxVndf(Vec3 v, F32 alphaX, F32 alphaY, F32 u1, F32 u2)
 F32 pdfGgxVndf(Vec3 nE, Vec3 v, F32 alphaX, F32 alphaY)
 {
 	// Equation (2) in the paper
-	F32 lambdaV = (pow2(alphaX * v.x) + pow2(alphaY * v.y)) / pow2(v.z);
+	F32 lambdaV = (square(alphaX * v.x) + square(alphaY * v.y)) / square(v.z);
 	lambdaV = (-1.0 + sqrt(1.0 + lambdaV)) / 2.0;
 	F32 G1 = 1.0 / (1.0 + lambdaV);
 
 	// Equation (1) in the paper
-	F32 DnE = pow2(nE.x / alphaX) + pow2(nE.y / alphaY) + pow2(nE.z);
-	DnE = kPi * alphaX * alphaY * pow2(DnE);
+	F32 DnE = square(nE.x / alphaX) + square(nE.y / alphaY) + square(nE.z);
+	DnE = kPi * alphaX * alphaY * square(DnE);
 	DnE = 1.0 / DnE;
 
 	const F32 pdf = G1 * max(0.0, dot(v, nE)) * DnE / v.z;

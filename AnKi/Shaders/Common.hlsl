@@ -158,7 +158,7 @@ U32 checkStructuredBuffer(T buff, U32 idx)
 // Safely access a structured buffer. Throw an assertion if it's out of bounds
 #define SBUFF(buff, idx) buff[checkStructuredBuffer(buff, idx)]
 
-UVec3 checkUavTexture(RWTexture3D<Vec4> tex, UVec3 coords)
+UVec3 checkTexture(RWTexture3D<Vec4> tex, UVec3 coords)
 {
 	UVec3 size;
 	tex.GetDimensions(size.x, size.y, size.z);
@@ -166,7 +166,7 @@ UVec3 checkUavTexture(RWTexture3D<Vec4> tex, UVec3 coords)
 	return coords;
 }
 
-UVec2 checkUavTexture(RWTexture2D<Vec4> tex, UVec2 coords)
+UVec2 checkTexture(RWTexture2D<Vec4> tex, UVec2 coords)
 {
 	UVec2 size;
 	tex.GetDimensions(size.x, size.y);
@@ -174,10 +174,7 @@ UVec2 checkUavTexture(RWTexture2D<Vec4> tex, UVec2 coords)
 	return coords;
 }
 
-/// Safely access a UAV texture. Throw an assertion if it's out of bounds
-#define UAV_TEXTURE(tex, coords) tex[checkUavTexture(tex, coords)]
-
-UVec3 checkSrvTexture(Texture3D<Vec4> tex, UVec3 coords)
+UVec3 checkTexture(Texture3D<Vec4> tex, UVec3 coords)
 {
 	UVec3 size;
 	tex.GetDimensions(size.x, size.y, size.z);
@@ -185,7 +182,7 @@ UVec3 checkSrvTexture(Texture3D<Vec4> tex, UVec3 coords)
 	return coords;
 }
 
-UVec2 checkSrvTexture(Texture2D<Vec4> tex, UVec2 coords)
+UVec2 checkTexture(Texture2D<Vec4> tex, UVec2 coords)
 {
 	UVec2 size;
 	tex.GetDimensions(size.x, size.y);
@@ -193,8 +190,8 @@ UVec2 checkSrvTexture(Texture2D<Vec4> tex, UVec2 coords)
 	return coords;
 }
 
-/// Safely access a SRV texture. Throw an assertion if it's out of bounds
-#define SRV_TEXTURE(tex, coords) tex[checkSrvTexture(tex, coords)]
+/// Safely access a UAV or SRV texture. Throw an assertion if it's out of bounds
+#define TEX(tex, coords) tex[checkTexture(tex, coords)]
 
 // Need extra decoration for per-primitive stuff in Vulkan. Remove when https://github.com/microsoft/DirectXShaderCompiler/issues/6862 is fixed
 #if ANKI_GR_BACKEND_VULKAN
@@ -286,7 +283,16 @@ DEFINE_COMPARISON2(max)
 #endif
 
 template<typename T>
-T pow2(T x)
+T square(T x)
 {
 	return x * x;
 }
+
+#define COMPUTE_ARGS \
+	U32 svGroupIndex : \
+		SV_GroupIndex, \
+		UVec3 svGroupId : \
+		SV_GroupID, \
+		UVec3 svDispatchThreadId : \
+		SV_DispatchThreadID, \
+		UVec3 svGroupThreadId : SV_GroupThreadID
