@@ -13,7 +13,7 @@
 #pragma anki technique Test comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
-// #define ANKI_ASSERTIONS_ENABLED 0
+// #define ANKI_ASSERTIONS_ENABLED 1
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Functions.hlsl>
@@ -307,6 +307,8 @@ Texture2D<Vec4> g_gbufferRt2 : register(t1);
 
 Texture2D<Vec4> g_blueNoiseTex : register(t2);
 
+Texture3D<Vec4> g_clipmapVolumes[kIndirectDiffuseClipmapCount] : register(t3);
+
 RWTexture2D<Vec4> g_outTex : register(u0);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
@@ -331,19 +333,36 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	const Vec4 worldPos4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
+	if(1)
+	{
+		const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[0];
+		const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+		worldPos += normal * min3(probeSize) * 0.5;
+	}
+
 	// Rand
 	UVec2 noiseTexSize;
 	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
 	Vec3 noise3 = g_blueNoiseTex[svDispatchThreadId % noiseTexSize];
 	noise3 = animateBlueNoise(noise3, g_globalRendererConstants.m_frame);
-
-	F32 noise = noise3.x;
+	const F32 noise = noise3.x;
 
 	const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
 	const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
-
+#	if 0
 	const U16 clipmapIdx = findClipmapOnPosition(g_globalRendererConstants.m_indirectDiffuseClipmaps, g_globalRendererConstants.m_cameraPosition,
 												 lookDir, worldPos, noise);
+#	else
+	U16 clipmapIdx = 0;
+	const F32 fade = computeClipmapFade2(g_globalRendererConstants.m_indirectDiffuseClipmaps[clipmapIdx], g_globalRendererConstants.m_cameraPosition,
+										 lookDir, worldPos);
+	if(fade < 1.0)
+	{
+		clipmapIdx = 10;
+	}
+#	endif
+
+#	if 0
 	if(clipmapIdx == 0)
 	{
 		g_outTex[svDispatchThreadId] = Vec4(1, 0, 0, 0);
@@ -362,21 +381,79 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	}
 
 	return;
+#	endif
 
-#	if 0
 	if(clipmapIdx >= kIndirectDiffuseClipmapCount)
 	{
 		g_outTex[svDispatchThreadId] = 0.0;
 		return;
 	}
 
-	const Vec3 uvw = worldPosToVolumeUvw(g_globalRendererConstants.m_indirectDiffuseClipmaps[clipmapIdx], worldPos);
+	// Some calculations are in the real volume size and some in some fake one that doesn't include the octahedron and the y and z are swapped
 
-	const IrradianceDice<F16> dice = loadIrradianceDice<F16>(g_clipmapVolumes, g_linearAnyRepeatSampler, uvw, clipmapIdx * 6);
-	const HVec3 irradiance = evaluateIrradianceDice<F16>(dice, normal);
+	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[clipmapIdx];
+	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+	const Vec3 fakeVolumeSize = clipmap.m_probeCounts; // Volume size without the octahedron
+
+	F32 octahedronSize = 0.0;
+	Vec3 realVolumeSize;
+	{
+		g_clipmapVolumes[0].GetDimensions(realVolumeSize.x, realVolumeSize.y, realVolumeSize.z);
+
+		octahedronSize = realVolumeSize.x / clipmap.m_probeCounts.x;
+		octahedronSize -= 2.0; // The border
+	};
+
+	const Vec3 samplePointUvw = frac(worldPos / clipmap.m_size);
+	const Vec3 icoord = floor(samplePointUvw * fakeVolumeSize - 0.5);
+	const Vec3 fcoord = frac(samplePointUvw * fakeVolumeSize - 0.5);
+
+	const Vec3 firstProbePosition = floor((worldPos - probeSize / 2.0) / probeSize) * probeSize + probeSize / 2.0;
+
+	F32 weightSum = 0.0;
+	Vec3 irradiance = 0.0;
+	for(U32 i = 0u; i < 8u; ++i)
+	{
+		const Vec3 xyz = Vec3(UVec3(i, i >> 1u, i >> 2u) & 1u);
+		Vec3 coords = icoord + xyz;
+
+		// Repeat
+		coords = select(coords >= 0.0, coords, fakeVolumeSize + coords);
+		coords = select(coords < fakeVolumeSize, coords, coords - fakeVolumeSize);
+
+		// Filtering weight
+		const Vec3 w3 = select(xyz == 0.0, 1.0 - fcoord, fcoord);
+		F32 w = w3.x * w3.y * w3.z;
+
+		// Probe dir weight
+		const Vec3 probePosition = firstProbePosition + xyz * probeSize;
+		const Vec3 dir = normalize(probePosition - worldPos);
+		const F32 wNormal = (dot(dir, normal) + 1.0) * 0.5;
+		w *= (wNormal * wNormal) + 0.2;
+
+		// Compute the actual coords
+		Vec3 uvw = coords.xzy;
+		uvw.xy *= octahedronSize + 2.0;
+		uvw.xy += 1.0;
+		uvw.xy += octahedronEncode(normal) * octahedronSize;
+		uvw.z += 0.5;
+		uvw /= realVolumeSize;
+
+		const Vec3 ir = g_clipmapVolumes[clipmapIdx].SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0);
+		irradiance += ir * w;
+		weightSum += w;
+	}
+
+	if(weightSum > kEpsilonF32)
+	{
+		irradiance /= weightSum;
+	}
+	else
+	{
+		irradiance = 0.0;
+	}
 
 	g_outTex[svDispatchThreadId] = Vec4(irradiance, 0.0);
-#	endif
 }
 #endif
 

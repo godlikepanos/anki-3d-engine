@@ -326,12 +326,15 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps test");
 
-		// TODO
 		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+		{
+			pass.newTextureDependency(irradianceVolumes[i], TextureUsageBit::kSrvCompute);
+		}
 		pass.newTextureDependency(m_runCtx.m_tmpRt, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, &ctx, irradianceVolumes](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_tmpVisGrProg.get());
@@ -339,6 +342,11 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
 			cmdb.bindSrv(2, 0, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::firstSurface()));
+
+			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+			{
+				rgraphCtx.bindSrv(3 + i, 0, irradianceVolumes[i]);
+			}
 
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_tmpRt);
 

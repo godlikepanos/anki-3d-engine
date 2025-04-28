@@ -873,26 +873,21 @@ vector<T, kComp> linearTextureSampling(Texture3D<Vec4> sam, Vec3 uv)
 
 	vector<T, kComp> o = T(0);
 
-	[unroll] for(F32 x = 0.0; x < 2.0; x += 1.0)
+	for(U32 i = 0u; i < 8u; ++i)
 	{
-		[unroll] for(F32 y = 0.0; y < 2.0; y += 1.0)
-		{
-			[unroll] for(F32 z = 0.0; z < 2.0; z += 1.0)
-			{
-				Vec3 coords = iuv + Vec3(x, y, z);
+		const Vec3 xyz = Vec3(UVec3(i, i >> 1u, i >> 2u) & 1u);
+		Vec3 coords = iuv + xyz;
 
-				// Repeat
-				coords = select(coords >= 0.0, coords, texSize + coords);
-				coords = select(coords < texSize, coords, coords - texSize);
+		// Repeat
+		coords = select(coords >= 0.0, coords, texSize + coords);
+		coords = select(coords < texSize, coords, coords - texSize);
 
-				const vector<T, kComp> s = sam[coords];
+		const vector<T, kComp> s = sam[coords];
 
-				const vector<T, 3> w3 = select(Vec3(x, y, z) == T(0), T(1) - fuv, fuv);
-				const T w = w3.x * w3.y * w3.z;
+		const vector<T, 3> w3 = select(xyz == 0.0, T(1) - fuv, fuv);
+		const T w = w3.x * w3.y * w3.z;
 
-				o += s * w;
-			}
-		}
+		o += s * w;
 	}
 
 	return o;
