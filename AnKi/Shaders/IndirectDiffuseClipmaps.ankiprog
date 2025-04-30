@@ -184,6 +184,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 Texture2D<Vec4> g_lightResultTex : register(t0);
 
 RWTexture3D<Vec4> g_radianceVolume : register(u0);
+RWTexture3D<Vec4> g_probeValidiryVolume : register(u1);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -197,8 +198,9 @@ struct Consts
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 groupshared U32 g_octCoordValueSet[128]; // TODO
+groupshared U32 g_invalideRayCount;
 
-[NumThreads(RAYS_PER_PROBE_PER_FRAME, 1, 1)] void main(U32 svGroupIndex : SV_GroupIndex, UVec3 svGroupId : SV_GroupID)
+[NumThreads(RAYS_PER_PROBE_PER_FRAME, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
 
@@ -214,6 +216,11 @@ groupshared U32 g_octCoordValueSet[128]; // TODO
 		{
 			g_octCoordValueSet[octCoordIdx] = 0;
 		}
+	}
+
+	if(svGroupIndex == 0)
+	{
+		g_invalideRayCount = 0;
 	}
 
 	GroupMemoryBarrierWithGroupSync();
@@ -240,7 +247,12 @@ groupshared U32 g_octCoordValueSet[128]; // TODO
 	UVec3 volumeTexCoord = frac(probeWorldPos.xzy / clipmap.m_size.xzy) * clipmap.m_probeCounts.xzy;
 	volumeTexCoord = min(volumeTexCoord, clipmap.m_probeCounts.xzy - 1u);
 
-	const HVec3 radiance = TEX(g_lightResultTex, UVec2(probeIdx, sampleIdx));
+	HVec3 radiance = TEX(g_lightResultTex, UVec2(probeIdx, sampleIdx));
+	if(all(radiance == HVec3(1.0, 0.0, 1.0)))
+	{
+		InterlockedAdd(g_invalideRayCount, 1);
+		radiance = 0.0;
+	}
 
 	const Vec2 octUv = generateRandomUv(sampleIdx, U32(RAYS_PER_PROBE_PER_FRAME), g_globalRendererConstants.m_frame);
 	const UVec2 octCoord = min(octUv * g_consts.m_radianceProbeSize, g_consts.m_radianceProbeSize - 1);
@@ -295,6 +307,16 @@ groupshared U32 g_octCoordValueSet[128]; // TODO
 
 		TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
 	}
+
+	// Update probe validity
+	GroupMemoryBarrierWithGroupSync();
+	F16 valid = 1.0 - min(1.0, g_invalideRayCount / F32(RAYS_PER_PROBE_PER_FRAME / 4));
+	if(blendWithHistory)
+	{
+		const F16 prev = TEX(g_probeValidiryVolume, volumeTexCoord).x;
+		valid = lerp(prev, valid, 0.05);
+	}
+	TEX(g_probeValidiryVolume, volumeTexCoord).x = valid;
 }
 #endif
 
@@ -308,6 +330,7 @@ Texture2D<Vec4> g_gbufferRt2 : register(t1);
 Texture2D<Vec4> g_blueNoiseTex : register(t2);
 
 Texture3D<Vec4> g_clipmapVolumes[kIndirectDiffuseClipmapCount] : register(t3);
+Texture3D<Vec4> g_probeValidityVolumes[kIndirectDiffuseClipmapCount] : register(t6); // WARNING: Adjust if kIndirectDiffuseClipmapCount changed
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
@@ -391,7 +414,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 
 	// Some calculations are in the real volume size and some in some fake one that doesn't include the octahedron and the y and z are swapped
 
-	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[clipmapIdx];
+	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[clipmapIdx]; // TODO: Dynamically indexing cbuffer
 	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
 	const Vec3 fakeVolumeSize = clipmap.m_probeCounts; // Volume size without the octahedron
 
@@ -421,6 +444,12 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 		coords = select(coords >= 0.0, coords, fakeVolumeSize + coords);
 		coords = select(coords < fakeVolumeSize, coords, coords - fakeVolumeSize);
 
+		const Bool valid = g_probeValidityVolumes[NonUniformResourceIndex(clipmapIdx)][coords.xzy].x > 0.8;
+		if(!valid)
+		{
+			continue;
+		}
+
 		// Filtering weight
 		const Vec3 w3 = select(xyz == 0.0, 1.0 - fcoord, fcoord);
 		F32 w = w3.x * w3.y * w3.z;
@@ -439,7 +468,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 		uvw.z += 0.5;
 		uvw /= realVolumeSize;
 
-		const Vec3 ir = g_clipmapVolumes[clipmapIdx].SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0);
+		const Vec3 ir = g_clipmapVolumes[NonUniformResourceIndex(clipmapIdx)].SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0);
 		irradiance += ir * w;
 		weightSum += w;
 	}
@@ -648,6 +677,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
 Texture3D<Vec4> g_volume : register(t0);
+Texture3D<Vec4> g_probeValidityVolume : register(t1);
 
 SamplerState g_linearAnyRepeatSampler : register(s0);
 
@@ -731,7 +761,16 @@ FragOut main(VertOut input)
 
 	uvw.z = (texelCoord.z + 0.5) / clipmap.m_probeCounts.y;
 
-	Vec3 radiance = g_volume.SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0).xyz;
+	const Bool valid = g_probeValidityVolume[texelCoord].x > 0.9;
+	Vec3 radiance;
+	if(valid)
+	{
+		radiance = g_volume.SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0).xyz;
+	}
+	else
+	{
+		radiance = Vec3(1.0, 0.0, 1.0);
+	}
 
 	output.m_color = Vec4(radiance, 0.0);
 	return output;

@@ -212,7 +212,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Debug stuff
 	if(g_visualizeGiProbesCVar && getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
-		getRenderer().getIndirectDiffuseClipmaps().drawDebugProbes(ctx, cmdb);
+		getRenderer().getIndirectDiffuseClipmaps().drawDebugProbes(ctx, rgraphCtx);
 	}
 
 	// Forward shading last

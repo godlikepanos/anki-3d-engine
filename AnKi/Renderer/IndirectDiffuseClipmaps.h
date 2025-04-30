@@ -61,7 +61,7 @@ public:
 		return m_clipmapInfo;
 	}
 
-	void drawDebugProbes(const RenderingContext& ctx, CommandBuffer& cmdb) const;
+	void drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
 
 private:
 	static constexpr U32 kRaysPerProbePerFrame = 32;
@@ -82,6 +82,8 @@ private:
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_visProbesGrProg;
 
+	Array<RenderTargetDesc, kIndirectDiffuseClipmapCount> m_probeValidityRtDescs;
+
 	RenderTargetDesc m_tmpRtDesc; // TODO rm
 
 	ImageResourcePtr m_blueNoiseImg;
@@ -96,6 +98,7 @@ private:
 	{
 	public:
 		RenderTargetHandle m_tmpRt;
+		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_probeValidityRts;
 	} m_runCtx;
 };
 /// @}
