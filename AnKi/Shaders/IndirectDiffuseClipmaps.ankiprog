@@ -173,7 +173,8 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	}
 
 	// Store result
-	g_lightResultTex[UVec2(probeIdx, sampleIdx)] = HVec4(radiance, 0.0);
+	const F16 kMaxDist = sqrt(kMaxF16 - kEpsilonF16); // Make sure the square root doesn't overflow F16
+	g_lightResultTex[UVec2(probeIdx, sampleIdx)] = HVec4(radiance, min(rayT, kMaxDist));
 }
 #endif // ANKI_RAY_GEN_SHADER
 
@@ -181,10 +182,11 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 // PopulateCaches                                                            =
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_PopulateCaches)
-Texture2D<Vec4> g_lightResultTex : register(t0);
+Texture2D<Vec4> g_rtResultTex : register(t0);
 
 RWTexture3D<Vec4> g_radianceVolume : register(u0);
-RWTexture3D<Vec4> g_probeValidiryVolume : register(u1);
+RWTexture3D<Vec4> g_distanceMomentsVolume : register(u1);
+RWTexture3D<Vec4> g_probeValidiryVolume : register(u2);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -192,29 +194,43 @@ struct Consts
 {
 	U32 m_clipmapIdx;
 	U32 m_radianceProbeSize; // Size without border
-	F32 m_padding1;
+	U32 m_distanceMomentsProbeSize;
 	F32 m_padding2;
 };
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
-groupshared U32 g_octCoordValueSet[128]; // TODO
+constexpr U32 kMaxValues = 128;
+groupshared U32 g_octCoordValueSet[kMaxValues]; // TODO
+groupshared U32 g_octCoordValueSet2[kMaxValues];
 groupshared U32 g_invalideRayCount;
 
 [NumThreads(RAYS_PER_PROBE_PER_FRAME, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
 
-	const U32 octPixelCount = g_consts.m_radianceProbeSize * g_consts.m_radianceProbeSize;
-	ANKI_ASSERT(octPixelCount <= 128);
+	const U32 radianceOctPixelCount = g_consts.m_radianceProbeSize * g_consts.m_radianceProbeSize;
+	ANKI_ASSERT(radianceOctPixelCount <= kMaxValues);
+	const U32 distanceMomentsOctPixelCount = g_consts.m_distanceMomentsProbeSize * g_consts.m_distanceMomentsProbeSize;
+	ANKI_ASSERT(distanceMomentsOctPixelCount <= kMaxValues);
 
 	// Zero groupshared
-	const U32 octPixelsPerThread = (octPixelCount + RAYS_PER_PROBE_PER_FRAME - 1) / RAYS_PER_PROBE_PER_FRAME;
-	for(U32 i = 0; i < octPixelsPerThread; ++i)
+	const U32 radianceOctPixelsPerThread = (radianceOctPixelCount + RAYS_PER_PROBE_PER_FRAME - 1) / RAYS_PER_PROBE_PER_FRAME;
+	for(U32 i = 0; i < radianceOctPixelsPerThread; ++i)
 	{
-		const U32 octCoordIdx = svGroupIndex * octPixelsPerThread + i;
-		if(octCoordIdx < octPixelCount)
+		const U32 octCoordIdx = svGroupIndex * radianceOctPixelsPerThread + i;
+		if(octCoordIdx < radianceOctPixelCount)
 		{
 			g_octCoordValueSet[octCoordIdx] = 0;
+		}
+	}
+
+	const U32 distanceMomentsOctPixelsPerThread = (distanceMomentsOctPixelCount + RAYS_PER_PROBE_PER_FRAME - 1) / RAYS_PER_PROBE_PER_FRAME;
+	for(U32 i = 0; i < distanceMomentsOctPixelsPerThread; ++i)
+	{
+		const U32 octCoordIdx = svGroupIndex * distanceMomentsOctPixelsPerThread + i;
+		if(octCoordIdx < distanceMomentsOctPixelCount)
+		{
+			g_octCoordValueSet2[octCoordIdx] = 0;
 		}
 	}
 
@@ -243,69 +259,134 @@ groupshared U32 g_invalideRayCount;
 
 	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
 	const Vec3 probeWorldPos = svGroupId * probeSize + probeSize * 0.5 + clipmapAabbMin;
+	const Bool blendWithHistory = all(probeWorldPos > prevClipmapAabbMin) && all(probeWorldPos < prevClipmapAabbMax);
 
-	UVec3 volumeTexCoord = frac(probeWorldPos.xzy / clipmap.m_size.xzy) * clipmap.m_probeCounts.xzy;
-	volumeTexCoord = min(volumeTexCoord, clipmap.m_probeCounts.xzy - 1u);
+	UVec3 volumeTexCoord = frac(probeWorldPos / clipmap.m_size) * clipmap.m_probeCounts;
+	volumeTexCoord = min(volumeTexCoord, clipmap.m_probeCounts - 1u);
+	volumeTexCoord = volumeTexCoord.xzy;
 
-	HVec3 radiance = TEX(g_lightResultTex, UVec2(probeIdx, sampleIdx));
+	// Read the result from RT
+	const HVec4 comp = TEX(g_rtResultTex, UVec2(probeIdx, sampleIdx));
+	HVec3 radiance = comp.xyz;
+	const HVec2 moments = HVec2(comp.w, square(comp.w));
 	if(all(radiance == HVec3(1.0, 0.0, 1.0)))
 	{
 		InterlockedAdd(g_invalideRayCount, 1);
 		radiance = 0.0;
 	}
 
-	const Vec2 octUv = generateRandomUv(sampleIdx, U32(RAYS_PER_PROBE_PER_FRAME), g_globalRendererConstants.m_frame);
-	const UVec2 octCoord = min(octUv * g_consts.m_radianceProbeSize, g_consts.m_radianceProbeSize - 1);
-	const U32 octCoordIdx = octCoord.y * g_consts.m_radianceProbeSize + octCoord.x;
-	ANKI_ASSERT(octCoordIdx < octPixelCount);
-
-	const Bool blendWithHistory = all(probeWorldPos > prevClipmapAabbMin) && all(probeWorldPos < prevClipmapAabbMax);
-	HVec3 avgRadiance = 0.0;
-	U32 iterationCount = 0;
-	do
+	// Update the radiance volume
 	{
-		U32 origValue;
-		InterlockedCompareExchange(g_octCoordValueSet[octCoordIdx], iterationCount, iterationCount + 1u, origValue);
+		const Vec2 octUv = generateRandomUv(sampleIdx, U32(RAYS_PER_PROBE_PER_FRAME), g_globalRendererConstants.m_frame);
+		const UVec2 octCoord = min(octUv * g_consts.m_radianceProbeSize, g_consts.m_radianceProbeSize - 1);
+		const U32 octCoordIdx = octCoord.y * g_consts.m_radianceProbeSize + octCoord.x;
+		ANKI_ASSERT(octCoordIdx < radianceOctPixelCount);
 
-		if(origValue == iterationCount)
+		HVec3 avgRadiance = 0.0;
+		U32 iterationCount = 0;
+		do
 		{
-			UVec3 actualVolumeTexCoord;
-			actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_radianceProbeSize + 2) + 1;
-			actualVolumeTexCoord.z = volumeTexCoord.z;
+			// A trick to only have one thread write to the same octahedron texel
+			U32 origValue;
+			InterlockedCompareExchange(g_octCoordValueSet[octCoordIdx], iterationCount, iterationCount + 1u, origValue);
 
-			if(blendWithHistory)
+			if(origValue == iterationCount)
 			{
-				const HVec3 prevValue = TEX(g_radianceVolume, actualVolumeTexCoord).xyz;
-				avgRadiance = lerp(prevValue, radiance, 0.1);
+				UVec3 actualVolumeTexCoord;
+				actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_radianceProbeSize + 2) + 1;
+				actualVolumeTexCoord.z = volumeTexCoord.z;
+
+				if(blendWithHistory)
+				{
+					const HVec3 prevValue = TEX(g_radianceVolume, actualVolumeTexCoord).xyz;
+					avgRadiance = lerp(prevValue, radiance, 0.1);
+				}
+				else
+				{
+					avgRadiance = radiance;
+				}
+
+				TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
+
+				iterationCount = kMaxU32;
 			}
 			else
 			{
-				avgRadiance = radiance;
+				++iterationCount;
 			}
 
-			TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
+			AllMemoryBarrierWithGroupSync();
+		} while(iterationCount < kMaxU32);
 
-			iterationCount = kMaxU32;
-		}
-		else
+		// Set oct borders
+		IVec2 borders[3];
+		const U32 borderCount = octahedronBorder(g_consts.m_radianceProbeSize, octCoord, borders);
+		for(U32 i = 0; i < borderCount; ++i)
 		{
-			++iterationCount;
+			IVec3 actualVolumeTexCoord;
+			actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_radianceProbeSize + 2) + 1;
+			actualVolumeTexCoord.xy += borders[i];
+			actualVolumeTexCoord.z = volumeTexCoord.z;
+
+			TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
 		}
+	}
 
-		AllMemoryBarrierWithGroupSync();
-	} while(iterationCount < kMaxU32);
-
-	// Set oct borders
-	IVec2 borders[3];
-	const U32 borderCount = octahedronBorder(g_consts.m_radianceProbeSize, octCoord, borders);
-	for(U32 i = 0; i < borderCount; ++i)
+	// Do the same for the distance
 	{
-		IVec3 actualVolumeTexCoord;
-		actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_radianceProbeSize + 2) + 1;
-		actualVolumeTexCoord.xy += borders[i];
-		actualVolumeTexCoord.z = volumeTexCoord.z;
+		const Vec2 octUv = generateRandomUv(sampleIdx, U32(RAYS_PER_PROBE_PER_FRAME), g_globalRendererConstants.m_frame);
+		const UVec2 octCoord = min(octUv * g_consts.m_distanceMomentsProbeSize, g_consts.m_distanceMomentsProbeSize - 1);
+		const U32 octCoordIdx = octCoord.y * g_consts.m_distanceMomentsProbeSize + octCoord.x;
+		ANKI_ASSERT(octCoordIdx < distanceMomentsOctPixelCount);
 
-		TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
+		HVec2 avgMoments = 0.0;
+		U32 iterationCount = 0;
+		do
+		{
+			// A trick to only have one thread write to the same octahedron texel
+			U32 origValue;
+			InterlockedCompareExchange(g_octCoordValueSet2[octCoordIdx], iterationCount, iterationCount + 1u, origValue);
+
+			if(origValue == iterationCount)
+			{
+				UVec3 actualVolumeTexCoord;
+				actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_distanceMomentsProbeSize + 2) + 1;
+				actualVolumeTexCoord.z = volumeTexCoord.z;
+
+				if(blendWithHistory)
+				{
+					const HVec2 prevValue = TEX(g_distanceMomentsVolume, actualVolumeTexCoord).xy;
+					avgMoments = lerp(prevValue, moments, 0.1);
+				}
+				else
+				{
+					avgMoments = moments;
+				}
+
+				TEX(g_distanceMomentsVolume, actualVolumeTexCoord) = HVec4(avgMoments, 0.0, 0.0);
+
+				iterationCount = kMaxU32;
+			}
+			else
+			{
+				++iterationCount;
+			}
+
+			AllMemoryBarrierWithGroupSync();
+		} while(iterationCount < kMaxU32);
+
+		// Set oct borders
+		IVec2 borders[3];
+		const U32 borderCount = octahedronBorder(g_consts.m_distanceMomentsProbeSize, octCoord, borders);
+		for(U32 i = 0; i < borderCount; ++i)
+		{
+			IVec3 actualVolumeTexCoord;
+			actualVolumeTexCoord.xy = octCoord + volumeTexCoord * (g_consts.m_distanceMomentsProbeSize + 2) + 1;
+			actualVolumeTexCoord.xy += borders[i];
+			actualVolumeTexCoord.z = volumeTexCoord.z;
+
+			TEX(g_distanceMomentsVolume, actualVolumeTexCoord).xy = avgMoments;
+		}
 	}
 
 	// Update probe validity
@@ -331,6 +412,7 @@ Texture2D<Vec4> g_blueNoiseTex : register(t2);
 
 Texture3D<Vec4> g_clipmapVolumes[kIndirectDiffuseClipmapCount] : register(t3);
 Texture3D<Vec4> g_probeValidityVolumes[kIndirectDiffuseClipmapCount] : register(t6); // WARNING: Adjust if kIndirectDiffuseClipmapCount changed
+Texture3D<Vec4> g_distanceMomentsVolumes[kIndirectDiffuseClipmapCount] : register(t9);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
@@ -360,7 +442,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	{
 		const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[0];
 		const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
-		worldPos += normal * min3(probeSize) * 0.5;
+		worldPos += normal * min3(probeSize) * 0.1;
 	}
 
 	// Rand
@@ -427,6 +509,15 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 		octahedronSize -= 2.0; // The border
 	};
 
+	F32 distMomentsOctSize = 0.0;
+	Vec3 distMomentsRealVolumeSize;
+	{
+		g_distanceMomentsVolumes[0].GetDimensions(distMomentsRealVolumeSize.x, distMomentsRealVolumeSize.y, distMomentsRealVolumeSize.z);
+
+		distMomentsOctSize = distMomentsRealVolumeSize.x / clipmap.m_probeCounts.x;
+		distMomentsOctSize -= 2.0; // The border
+	}
+
 	const Vec3 samplePointUvw = frac(worldPos / clipmap.m_size);
 	const Vec3 icoord = floor(samplePointUvw * fakeVolumeSize - 0.5);
 	const Vec3 fcoord = frac(samplePointUvw * fakeVolumeSize - 0.5);
@@ -454,11 +545,39 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 		const Vec3 w3 = select(xyz == 0.0, 1.0 - fcoord, fcoord);
 		F32 w = w3.x * w3.y * w3.z;
 
-		// Probe dir weight
+		// Normal weight
 		const Vec3 probePosition = firstProbePosition + xyz * probeSize;
 		const Vec3 dir = normalize(probePosition - worldPos);
 		const F32 wNormal = (dot(dir, normal) + 1.0) * 0.5;
 		w *= (wNormal * wNormal) + 0.2;
+
+		// Chebyshev occlusion test
+		if(1)
+		{
+			Vec3 uvw = coords.xzy;
+			uvw.xy *= distMomentsOctSize + 2.0;
+			uvw.xy += 1.0;
+			uvw.xy += octahedronEncode(normal) * distMomentsOctSize;
+			uvw.z += 0.5;
+			uvw /= distMomentsRealVolumeSize;
+			const HVec2 distMoments = g_distanceMomentsVolumes[NonUniformResourceIndex(clipmapIdx)].SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0);
+
+			const F32 variance = abs(distMoments.x * distMoments.x - distMoments.y);
+
+			const F32 posToProbeDist = length(worldPos - probePosition);
+			F32 chebyshevWeight = 1.0;
+			if(posToProbeDist > distMoments.x) // occluded
+			{
+				// v must be greater than 0, which is guaranteed by the if condition above.
+				const F32 v = posToProbeDist - distMoments.x;
+				chebyshevWeight = variance / (variance + (v * v));
+
+				// Increase the contrast in the weight
+				chebyshevWeight = max((chebyshevWeight * chebyshevWeight * chebyshevWeight), 0.0);
+			}
+
+			w *= chebyshevWeight;
+		}
 
 		// Compute the actual coords
 		Vec3 uvw = coords.xzy;
@@ -668,7 +787,7 @@ struct FragOut
 struct Consts
 {
 	U32 m_clipmapIdx;
-	U32 m_octProbeSize; // Size without border
+	U32 m_padding1;
 	U32 m_padding2;
 	U32 m_padding3;
 };
@@ -752,12 +871,16 @@ FragOut main(VertOut input)
 
 	const Vec3 normal = normalize(collisionPoint - input.m_probeCenter);
 
+	UVec3 texSize;
+	g_volume.GetDimensions(texSize.x, texSize.y, texSize.z);
+	const U32 octProbeSize = texSize.x / clipmap.m_probeCounts.x - 2;
+
 	Vec3 uvw = frac(input.m_probeCenter.xzy / clipmap.m_size.xzy);
 	const UVec3 texelCoord = uvw * clipmap.m_probeCounts.xzy;
 
-	uvw.xy = texelCoord.xy * (g_consts.m_octProbeSize + 2);
-	uvw.xy += octahedronEncode(normal) * g_consts.m_octProbeSize + 1.0;
-	uvw.xy /= clipmap.m_probeCounts.xz * (g_consts.m_octProbeSize + 2);
+	uvw.xy = texelCoord.xy * (octProbeSize + 2);
+	uvw.xy += octahedronEncode(normal) * octProbeSize + 1.0;
+	uvw.xy /= clipmap.m_probeCounts.xz * (octProbeSize + 2);
 
 	uvw.z = (texelCoord.z + 0.5) / clipmap.m_probeCounts.y;
 

@@ -66,9 +66,13 @@ public:
 private:
 	static constexpr U32 kRaysPerProbePerFrame = 32;
 
-	RenderTargetDesc m_radianceDesc;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
+	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
+
+	RenderTargetDesc m_rtResultRtDesc;
+	Array<RenderTargetDesc, kIndirectDiffuseClipmapCount> m_probeValidityRtDescs;
+	RenderTargetDesc m_tmpRtDesc; // TODO rm
 
 	Array<Clipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
 
@@ -81,10 +85,6 @@ private:
 	ShaderProgramPtr m_tmpVisGrProg;
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_visProbesGrProg;
-
-	Array<RenderTargetDesc, kIndirectDiffuseClipmapCount> m_probeValidityRtDescs;
-
-	RenderTargetDesc m_tmpRtDesc; // TODO rm
 
 	ImageResourcePtr m_blueNoiseImg;
 

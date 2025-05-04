@@ -47,24 +47,25 @@ Error IndirectDiffuseClipmaps::init()
 
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
-		m_probeValidityRtDescs[i] = getRenderer().create2DRenderTargetDescription(
-			m_clipmapInfo[i].m_probeCounts.x(), m_clipmapInfo[i].m_probeCounts.z(), Format::kR8_Unorm, generateTempPassName("Probe validity #%u", i));
+		m_probeValidityRtDescs[i] =
+			getRenderer().create2DRenderTargetDescription(m_clipmapInfo[i].m_probeCounts.x(), m_clipmapInfo[i].m_probeCounts.z(), Format::kR8_Unorm,
+														  generateTempPassName("IndirectDiffuseClipmap: Probe validity #%u", i));
 		m_probeValidityRtDescs[i].m_depth = m_clipmapInfo[i].m_probeCounts.y();
 		m_probeValidityRtDescs[i].m_type = TextureType::k3D;
 		m_probeValidityRtDescs[i].bake();
 	}
 
 	// Create the lighting result texture
-	m_radianceDesc = getRenderer().create2DRenderTargetDescription(probesPerClipmap, kRaysPerProbePerFrame, Format::kB10G11R11_Ufloat_Pack32,
-																   "IndirectDiffuse light result");
-	m_radianceDesc.bake();
+	m_rtResultRtDesc = getRenderer().create2DRenderTargetDescription(probesPerClipmap, kRaysPerProbePerFrame, Format::kR16G16B16A16_Sfloat,
+																	 "IndirectDiffuseClipmap: RT result");
+	m_rtResultRtDesc.bake();
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
 			m_clipmapInfo[clipmap].m_probeCounts.x() * (g_indirectDiffuseClipmapRadianceCacheProbeSize + 2),
 			m_clipmapInfo[clipmap].m_probeCounts.z() * (g_indirectDiffuseClipmapRadianceCacheProbeSize + 2), Format::kB10G11R11_Ufloat_Pack32,
-			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmapRadiance #%u", clipmap));
+			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Radiance #%u", clipmap));
 		volumeInit.m_depth = m_clipmapInfo[clipmap].m_probeCounts.y();
 		volumeInit.m_type = TextureType::k3D;
 
@@ -76,11 +77,23 @@ Error IndirectDiffuseClipmaps::init()
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
 			m_clipmapInfo[clipmap].m_probeCounts.x() * (g_indirectDiffuseClipmapIrradianceProbeSize + 2),
 			m_clipmapInfo[clipmap].m_probeCounts.z() * (g_indirectDiffuseClipmapIrradianceProbeSize + 2), Format::kB10G11R11_Ufloat_Pack32,
-			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmapIrradiance #%u", clipmap));
+			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Irradiance #%u", clipmap));
 		volumeInit.m_depth = m_clipmapInfo[clipmap].m_probeCounts.y();
 		volumeInit.m_type = TextureType::k3D;
 
 		m_irradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
+	}
+
+	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+	{
+		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
+			m_clipmapInfo[clipmap].m_probeCounts.x() * (g_indirectDiffuseClipmapDistancesProbeSize + 2),
+			m_clipmapInfo[clipmap].m_probeCounts.z() * (g_indirectDiffuseClipmapDistancesProbeSize + 2), Format::kR16G16_Sfloat,
+			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Dist moments #%u", clipmap));
+		volumeInit.m_depth = m_clipmapInfo[clipmap].m_probeCounts.y();
+		volumeInit.m_type = TextureType::k3D;
+
+		m_distanceMomentsVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 	}
 
 	Array<SubMutation, 1> mutation = {"RAYS_PER_PROBE_PER_FRAME", kRaysPerProbePerFrame};
@@ -130,22 +143,25 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	const RenderTargetHandle radianceRt = rgraph.newRenderTarget(m_radianceDesc);
+	const RenderTargetHandle rtResultHandle = rgraph.newRenderTarget(m_rtResultRtDesc);
 	m_runCtx.m_tmpRt = rgraph.newRenderTarget(m_tmpRtDesc);
 
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> radianceVolumes;
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> irradianceVolumes;
+	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> distanceMomentsVolumes;
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
 		if(m_texturesImportedOnce)
 		{
 			radianceVolumes[i] = rgraph.importRenderTarget(m_radianceVolumes[i].get());
 			irradianceVolumes[i] = rgraph.importRenderTarget(m_irradianceVolumes[i].get());
+			distanceMomentsVolumes[i] = rgraph.importRenderTarget(m_distanceMomentsVolumes[i].get());
 		}
 		else
 		{
 			radianceVolumes[i] = rgraph.importRenderTarget(m_radianceVolumes[i].get(), TextureUsageBit::kSrvCompute);
 			irradianceVolumes[i] = rgraph.importRenderTarget(m_irradianceVolumes[i].get(), TextureUsageBit::kSrvCompute);
+			distanceMomentsVolumes[i] = rgraph.importRenderTarget(m_distanceMomentsVolumes[i].get(), TextureUsageBit::kSrvCompute);
 		}
 	}
 
@@ -214,7 +230,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps");
 
-		pass.newTextureDependency(radianceRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(rtResultHandle, TextureUsageBit::kUavCompute);
 		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
@@ -224,7 +240,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												AccelerationStructureUsageBit::kTraceRaysSrv);
 
-		pass.setWork([this, radianceRt, &ctx, sbtBuffer](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, rtResultHandle, &ctx, sbtBuffer](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());
@@ -274,7 +290,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-			rgraphCtx.bindUav(0, 2, radianceRt);
+			rgraphCtx.bindUav(0, 2, rtResultHandle);
 			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
 			const UVec4 consts(0, kRaysPerProbePerFrame, 0, 0); // TODO
@@ -292,22 +308,25 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps populate caches");
 
-		pass.newTextureDependency(radianceRt, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(rtResultHandle, TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(radianceVolumes[clipmap], TextureUsageBit::kUavCompute);
 		pass.newTextureDependency(probeValidityRts[clipmap], TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx, clipmap, radianceRt, radianceVolume = radianceVolumes[clipmap],
-					  validityVolume = probeValidityRts[clipmap]](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, &ctx, clipmap, rtResultHandle, radianceVolume = radianceVolumes[clipmap], validityVolume = probeValidityRts[clipmap],
+					  distanceMomentsVolume = distanceMomentsVolumes[clipmap]](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_populateCachesGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, radianceRt);
+			rgraphCtx.bindSrv(0, 0, rtResultHandle);
+
 			rgraphCtx.bindUav(0, 0, radianceVolume);
-			rgraphCtx.bindUav(1, 0, validityVolume);
+			rgraphCtx.bindUav(1, 0, distanceMomentsVolume);
+			rgraphCtx.bindUav(2, 0, validityVolume);
+
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			const UVec4 consts(clipmap, g_indirectDiffuseClipmapRadianceCacheProbeSize, 0, 0);
+			const UVec4 consts(clipmap, g_indirectDiffuseClipmapRadianceCacheProbeSize, g_indirectDiffuseClipmapDistancesProbeSize, 0);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.dispatchCompute(m_clipmapInfo[clipmap].m_probeCounts.x(), m_clipmapInfo[clipmap].m_probeCounts.y(),
@@ -352,10 +371,11 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		{
 			pass.newTextureDependency(irradianceVolumes[i], TextureUsageBit::kSrvCompute);
 			pass.newTextureDependency(probeValidityRts[i], TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(distanceMomentsVolumes[i], TextureUsageBit::kSrvCompute);
 		}
 		pass.newTextureDependency(m_runCtx.m_tmpRt, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx, irradianceVolumes, probeValidityRts](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, &ctx, irradianceVolumes, probeValidityRts, distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_tmpVisGrProg.get());
@@ -364,14 +384,20 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
 			cmdb.bindSrv(2, 0, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::firstSurface()));
 
+			U32 srvReg = 3;
 			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 			{
-				rgraphCtx.bindSrv(3 + i, 0, irradianceVolumes[i]);
+				rgraphCtx.bindSrv(srvReg++, 0, irradianceVolumes[i]);
 			}
 
 			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 			{
-				rgraphCtx.bindSrv(3 + kIndirectDiffuseClipmapCount + i, 0, probeValidityRts[i]);
+				rgraphCtx.bindSrv(srvReg++, 0, probeValidityRts[i]);
+			}
+
+			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+			{
+				rgraphCtx.bindSrv(srvReg++, 0, distanceMomentsVolumes[i]);
 			}
 
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_tmpRt);
@@ -393,16 +419,13 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 
 	cmdb.bindShaderProgram(m_visProbesGrProg.get());
 
-	const Bool visualizeIrradiance = true;
-
-	const UVec4 consts(0u, (visualizeIrradiance) ? g_indirectDiffuseClipmapIrradianceProbeSize : g_indirectDiffuseClipmapRadianceCacheProbeSize, 0,
-					   0);
+	const UVec4 consts(clipmap);
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
 	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
-	cmdb.bindSrv(
-		0, 0,
-		TextureView((visualizeIrradiance) ? m_irradianceVolumes[clipmap].get() : m_radianceVolumes[clipmap].get(), TextureSubresourceDesc::all()));
+
+	Texture* visVolume = m_irradianceVolumes[clipmap].get();
+	cmdb.bindSrv(0, 0, TextureView(visVolume, TextureSubresourceDesc::all()));
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_probeValidityRts[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
