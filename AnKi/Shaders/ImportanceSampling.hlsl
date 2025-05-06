@@ -145,5 +145,5 @@ vector<T, 3> generateUniformPointOnSphere(TInt sampleIndex, TInt sampleCount, U3
 	const T y = fastSin(theta) * fastSin(phi);
 	const T z = fastCos(theta);
 
-	return vector<T, 3>(x, y, z);
+	return normalize(vector<T, 3>(x, y, z));
 }

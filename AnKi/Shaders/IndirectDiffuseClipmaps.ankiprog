@@ -108,7 +108,7 @@ U16 findClipmapOnPosition(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Vec3 c
 
 Vec2 generateRandomUv(U32 sampleIdx, U32 sampleCount, U32 frame)
 {
-	const UVec3 r = rand3DPCG16(UVec3(frame % 16u, frame % 4u, frame % 32u));
+	const UVec3 r = rand3DPCG16(UVec3(frame % 8u, frame % 4u, frame % 16u));
 	return hammersleyRandom16(sampleIdx, sampleCount, r);
 }
 
@@ -557,7 +557,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 			Vec3 uvw = coords.xzy;
 			uvw.xy *= distMomentsOctSize + 2.0;
 			uvw.xy += 1.0;
-			uvw.xy += octahedronEncode(normal) * distMomentsOctSize;
+			uvw.xy += octahedronEncode(normalize(worldPos - probePosition)) * distMomentsOctSize;
 			uvw.z += 0.5;
 			uvw /= distMomentsRealVolumeSize;
 			const HVec2 distMoments = g_distanceMomentsVolumes[NonUniformResourceIndex(clipmapIdx)].SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0);
@@ -576,7 +576,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 				chebyshevWeight = max((chebyshevWeight * chebyshevWeight * chebyshevWeight), 0.0);
 			}
 
-			w *= chebyshevWeight;
+			w *= max(0.05, chebyshevWeight);
 		}
 
 		// Compute the actual coords
