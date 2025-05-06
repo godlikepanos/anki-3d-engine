@@ -34,7 +34,7 @@ inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceCacheProbeSize("R", "Ind
 																	   "Size of the octahedral for the light cache");
 inline NumericCVar<U32> g_indirectDiffuseClipmapDistancesProbeSize("R", "IndirectDiffuseClipmapDistanceSize", 10, 5, 22,
 																   "Size of the octahedral for the probe distances");
-inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceProbeSize("R", "IndirectDiffuseClipmapIrradianceSize", 6, 4, 22,
+inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceProbeSize("R", "IndirectDiffuseClipmapIrradianceSize", 5, 4, 20,
 																	"Size of the octahedral for the irradiance");
 
 /// Indirect diffuse based on clipmaps of probes.

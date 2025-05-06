@@ -68,6 +68,8 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 		{
 			GroupMemoryBarrierWithGroupSync();
 		}
+#else
+		GroupMemoryBarrierWithGroupSync();
 #endif
 	}
 

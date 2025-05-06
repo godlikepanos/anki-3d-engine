@@ -6,10 +6,11 @@
 #pragma anki 16bit
 
 #pragma anki mutator RAYS_PER_PROBE_PER_FRAME 32 64
+#pragma anki mutator GPU_WAVE_SIZE 16 32 64
 
 #pragma anki technique RtMaterialFetch rgen mutators
 #pragma anki technique PopulateCaches comp mutators RAYS_PER_PROBE_PER_FRAME
-#pragma anki technique ComputeIrradiance comp mutators
+#pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE
 #pragma anki technique Test comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
@@ -619,7 +620,7 @@ struct Consts
 };
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
-constexpr U32 kThreadCount = 64;
+constexpr U32 kThreadCount = GPU_WAVE_SIZE;
 
 Texture3D<Vec4> g_radianceVolume : register(t0);
 
@@ -628,32 +629,12 @@ RWTexture3D<Vec4> g_irradianceVolume : register(u0);
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
 groupshared Vec3 g_irradianceResults[kThreadCount];
-groupshared U32 g_resultCount;
-groupshared U32 g_sampleCount;
 
 [NumThreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
 {
-	if(svGroupIndex == 0)
-	{
-		g_resultCount = 0;
-		g_sampleCount = 0;
-	}
-
-	GroupMemoryBarrierWithGroupSync();
-
 	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
 	const U32 probeIdx = svGroupId.x;
 	const UVec2 irradianceTexel = svGroupId.yz;
-
-	// Compute the texel coord to write the output
-	UVec3 irradianceTexelCoord;
-	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, irradianceTexelCoord.z,
-						  irradianceTexelCoord.y, irradianceTexelCoord.x);
-	irradianceTexelCoord = irradianceTexelCoord.xzy;
-	irradianceTexelCoord.xy *= g_consts.m_irradianceProbeSize + 2;
-	irradianceTexelCoord.xy += 1;
-	irradianceTexelCoord.x += irradianceTexel.x;
-	irradianceTexelCoord.y += irradianceTexel.y;
 
 	// Compute input radiance coordinates
 	UVec3 radianceTexelCoordStart;
@@ -673,7 +654,6 @@ groupshared U32 g_sampleCount;
 	const U32 radiancePixelsPerThread = (radianceTexelCount + kThreadCount - 1) / kThreadCount;
 
 	Vec3 irradiance = 0.0;
-	U32 sampleCount = 0;
 	for(U32 pixel = svGroupIndex * radiancePixelsPerThread; pixel < min(radianceTexelCount, (svGroupIndex + 1) * radiancePixelsPerThread); ++pixel)
 	{
 		Vec2 octUv = Vec2(pixel % g_consts.m_radianceProbeSize, pixel / g_consts.m_radianceProbeSize);
@@ -683,7 +663,7 @@ groupshared U32 g_sampleCount;
 		const Vec3 sampleDir = octahedronDecode(octUv);
 
 		const F32 lambert = dot(dir, sampleDir);
-		if(lambert <= 0.0)
+		if(lambert <= kEpsilonF32)
 		{
 			continue;
 		}
@@ -694,24 +674,17 @@ groupshared U32 g_sampleCount;
 
 		const Vec3 radiance = TEX(g_radianceVolume, coord).xyz;
 
-		irradiance += radiance * lambert;
-		++sampleCount;
+		const F32 sampleCount = square(F32(g_consts.m_radianceProbeSize)) / 2.0;
+		irradiance += radiance * lambert / sampleCount;
 	}
 
-	if(sampleCount)
-	{
-		InterlockedAdd(g_sampleCount, sampleCount);
-
-		U32 offset;
-		InterlockedAdd(g_resultCount, 1, offset);
-		g_irradianceResults[offset] = irradiance;
-	}
+	g_irradianceResults[svGroupIndex] = irradiance;
 
 	GroupMemoryBarrierWithGroupSync();
 
 	[loop] for(U32 s = kThreadCount / 2u; s > 0u; s >>= 1u)
 	{
-		if(svGroupIndex < s && svGroupIndex + s < g_resultCount)
+		if(svGroupIndex < s)
 		{
 			g_irradianceResults[svGroupIndex] += g_irradianceResults[svGroupIndex + s];
 		}
@@ -721,20 +694,24 @@ groupshared U32 g_sampleCount;
 		{
 			GroupMemoryBarrierWithGroupSync();
 		}
+#	else
+		GroupMemoryBarrierWithGroupSync();
 #	endif
 	}
 
 	if(svGroupIndex == 0)
 	{
-		Vec3 irradiance;
-		if(g_sampleCount)
-		{
-			irradiance = g_irradianceResults[0] / g_sampleCount * k2Pi;
-		}
-		else
-		{
-			irradiance = 0.0;
-		}
+		irradiance = g_irradianceResults[0] * k2Pi;
+
+		// Compute the texel coord to write the output
+		UVec3 irradianceTexelCoord;
+		unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, irradianceTexelCoord.z,
+							  irradianceTexelCoord.y, irradianceTexelCoord.x);
+		irradianceTexelCoord = irradianceTexelCoord.xzy;
+		irradianceTexelCoord.xy *= g_consts.m_irradianceProbeSize + 2;
+		irradianceTexelCoord.xy += 1;
+		irradianceTexelCoord.x += irradianceTexel.x;
+		irradianceTexelCoord.y += irradianceTexel.y;
 
 		TEX(g_irradianceVolume, irradianceTexelCoord).xyz = irradiance;
 

@@ -96,7 +96,8 @@ Error IndirectDiffuseClipmaps::init()
 		m_distanceMomentsVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 	}
 
-	Array<SubMutation, 1> mutation = {"RAYS_PER_PROBE_PER_FRAME", kRaysPerProbePerFrame};
+	const Array<SubMutation, 2> mutation = {
+		{{"RAYS_PER_PROBE_PER_FRAME", kRaysPerProbePerFrame}, {"GPU_WAVE_SIZE", GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize}}};
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_tmpVisGrProg, "Test"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_visProbesGrProg, "VisualizeProbes"));
@@ -112,7 +113,10 @@ Error IndirectDiffuseClipmaps::init()
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
-		variantInitInfo.addMutation("RAYS_PER_PROBE_PER_FRAME", kRaysPerProbePerFrame);
+		for(const SubMutation& s : mutation)
+		{
+			variantInitInfo.addMutation(s.m_mutatorName, s.m_value);
+		}
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_libraryGrProg.reset(&variant->getProgram());
