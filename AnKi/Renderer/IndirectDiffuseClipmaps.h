@@ -30,12 +30,10 @@ inline NumericCVar<F32> g_indirectDiffuseClipmap1YSizeCVar("R", "IndirectDiffuse
 inline NumericCVar<F32> g_indirectDiffuseClipmap2XZSizeCVar("R", "IndirectDiffuseClipmap2XZSize", 192.0, 10.0, 1000.0, "The clipmap size in meters");
 inline NumericCVar<F32> g_indirectDiffuseClipmap2YSizeCVar("R", "IndirectDiffuseClipmap2YSize", 48.0, 10.0, 1000.0, "The clipmap size in meters");
 
-inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceCacheProbeSize("R", "IndirectDiffuseClipmapLightCacheSize", 10, 5, 30,
-																	   "Size of the octahedral for the light cache");
-inline NumericCVar<U32> g_indirectDiffuseClipmapDistancesProbeSize("R", "IndirectDiffuseClipmapDistanceSize", 10, 5, 22,
-																   "Size of the octahedral for the probe distances");
-inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceProbeSize("R", "IndirectDiffuseClipmapIrradianceSize", 5, 4, 20,
-																	"Size of the octahedral for the irradiance");
+inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceOctMapSize("R", "IndirectDiffuseClipmapRadianceOctMapSize", 10, 5, 30,
+																   "Size of the octahedral for the light cache");
+inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceOctMapSize("R", "IndirectDiffuseClipmapIrradianceOctMapSize", 5, 4, 20,
+																	 "Size of the octahedral for the irradiance");
 
 /// Indirect diffuse based on clipmaps of probes.
 class IndirectDiffuseClipmaps : public RendererObject
