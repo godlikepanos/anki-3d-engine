@@ -91,7 +91,7 @@ private:
 	static constexpr U32 log2(PtrSize v)
 	{
 		ANKI_ASSERT(isPowerOfTwo(v));
-		return U32(__builtin_ctzll(v));
+		return U32(std::countr_zero(v));
 	}
 
 	using FreeList = DynamicArray<Address, TMemoryPool, PtrSize>;

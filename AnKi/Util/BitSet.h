@@ -242,7 +242,7 @@ public:
 		U32 count = 0;
 		for(U i = 0; i < kChunkCount; ++i)
 		{
-			count += __builtin_popcountl(m_chunks[i]);
+			count += std::popcount(m_chunks[i]);
 		}
 		return count;
 	}
@@ -256,7 +256,7 @@ public:
 			const U64 bits = m_chunks[i];
 			if(bits != 0)
 			{
-				const U32 msb = U32(__builtin_clzll(bits));
+				const U32 msb = U32(std::countl_zero(bits));
 				return (63 - msb) + (i * kChunkBitCount);
 			}
 		}
@@ -272,7 +272,7 @@ public:
 			const U64 bits = m_chunks[i];
 			if(bits != 0)
 			{
-				const U32 lsb = U32(__builtin_ctzll(bits));
+				const U32 lsb = U32(std::countr_zero(bits));
 				return lsb + (i * kChunkBitCount);
 			}
 		}

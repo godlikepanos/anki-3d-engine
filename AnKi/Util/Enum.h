@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/Assert.h>
+#include <bit>
 
 namespace anki {
 
@@ -217,7 +218,7 @@ public:
 	TEnum operator*() const
 	{
 		ANKI_ASSERT(m_val);
-		const TEnum out = TEnum(__builtin_ctzll(m_val));
+		const TEnum out = TEnum(std::countr_zero(m_val));
 		ANKI_ASSERT(out >= TEnum::kFirst && out < TEnum::kCount);
 		return out;
 	}
@@ -225,7 +226,7 @@ public:
 	void operator++()
 	{
 		ANKI_ASSERT(m_val);
-		m_val ^= Type(1_U64 << __builtin_ctzll(m_val));
+		m_val ^= Type(1_U64 << std::countr_zero<U64>(m_val));
 	}
 
 	bool operator!=(EnumBitsIterableIterator b) const

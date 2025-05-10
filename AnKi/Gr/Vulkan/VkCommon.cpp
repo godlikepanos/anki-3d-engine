@@ -548,7 +548,7 @@ VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit)
 	}
 
 	ANKI_ASSERT(out != 0);
-	ANKI_ASSERT(__builtin_popcount(U32(bit)) == __builtin_popcount(out));
+	ANKI_ASSERT(std::popcount(U32(bit)) == std::popcount(out));
 	return out;
 }
 

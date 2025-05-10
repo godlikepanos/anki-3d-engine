@@ -893,8 +893,23 @@ vector<T, kComp> linearTextureSampling(Texture3D<Vec4> sam, Vec3 uv)
 	return o;
 }
 
+/// Generate a 4x MSAA pattern. Returns the numbers in
+/// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
+/// Divide the result by 8.0 to normalize.
+IVec2 generateMsaa4x(U32 sample)
+{
+	sample <<= 2u;
+	IVec2 pattern = IVec2(41702, 60002);
+	pattern >>= sample;
+	pattern &= 0xF;
+	pattern -= 8;
+
+	return pattern;
+}
+
 /// Generate a 16x MSAA pattern. Returns the numbers in
 /// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
+/// Divide the result by 8.0 to normalize.
 IVec2 generateMsaa16x(U32 sample)
 {
 	const IVec2 packed[2] = {IVec2(0xBDA3C579, 0x3BD67A59), IVec2(0x1EF02486, 0xF48C21E)};

@@ -17,6 +17,7 @@
 #include <cstring>
 #include <algorithm>
 #include <functional>
+#include <bit>
 
 namespace anki {
 
@@ -142,7 +143,7 @@ inline constexpr Int nextPowerOfTwo(Int x) requires(std::is_integral<Int>::value
 template<typename Int>
 inline constexpr Int previousPowerOfTwo(Int x) requires(std::is_integral<Int>::value)
 {
-	const U64 out = (x != 0) ? (1_U64 << ((sizeof(U64) * 8 - 1) - __builtin_clzll(x))) : 0;
+	const U64 out = (x != 0) ? (1_U64 << ((sizeof(U64) * 8 - 1) - std::countl_zero<U64>(x))) : 0;
 	return Int(out);
 }
 
