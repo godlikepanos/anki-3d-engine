@@ -922,3 +922,16 @@ IVec2 generateMsaa16x(U32 sample)
 
 	return pattern;
 }
+
+/// Given some UVs (can be 2D or 3D) and the texture size, return some improved UVs that are used for linear filtering.
+/// Code taken from https://www.shadertoy.com/view/XsfGDn
+template<typename TUv>
+TUv improvedLinearTextureFiltering(TUv uv, TUv texSize)
+{
+	uv = uv * texSize + 0.5;
+	const TUv iuv = floor(uv);
+	const TUv fuv = frac(uv);
+	uv = iuv + fuv * fuv * (3.0 - 2.0 * fuv);
+	uv = (uv - 0.5) / texSize;
+	return uv;
+}

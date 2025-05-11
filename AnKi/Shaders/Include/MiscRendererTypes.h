@@ -76,7 +76,7 @@ struct Clipmap
 	U32 m_probeCountsTotal;
 
 	Vec3 m_size;
-	F32 m_padding2;
+	U32 m_index;
 };
 
 /// Common constants for all passes.
