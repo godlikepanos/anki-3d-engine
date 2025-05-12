@@ -319,6 +319,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			pass.newTextureDependency(rtResultHandle, TextureUsageBit::kSrvCompute);
 			pass.newTextureDependency(radianceVolumes[clipmap], TextureUsageBit::kUavCompute);
 			pass.newTextureDependency(probeValidityRts[clipmap], TextureUsageBit::kUavCompute);
+			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kUavCompute);
 
 			pass.setWork([this, &ctx, clipmap, rtResultHandle, radianceVolume = radianceVolumes[clipmap], validityVolume = probeValidityRts[clipmap],
 						  distanceMomentsVolume = distanceMomentsVolumes[clipmap]](RenderPassWorkContext& rgraphCtx) {
@@ -431,7 +432,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 
 	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-	Texture* visVolume = m_distanceMomentsVolumes[clipmap].get();
+	Texture* visVolume = m_irradianceVolumes[clipmap].get();
 	cmdb.bindSrv(0, 0, TextureView(visVolume, TextureSubresourceDesc::all()));
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_probeValidityRts[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());

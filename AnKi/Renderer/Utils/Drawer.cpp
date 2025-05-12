@@ -82,6 +82,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 
 void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
 {
+	ANKI_TRACE_SCOPED_EVENT(DrawMdi);
 	ANKI_ASSERT(args.m_viewport != UVec4(0u));
 
 	if(RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe) == 0) [[unlikely]]

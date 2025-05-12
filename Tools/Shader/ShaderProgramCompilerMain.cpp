@@ -17,6 +17,7 @@ Options:
 -spirv               : Compile SPIR-V
 -dxil                : Compile DXIL
 -g                   : Include debug info
+-sm                  : Shader mode. "6_7" or "6_8". Default "6_8"
 )";
 
 class CmdLineArgs
@@ -31,6 +32,7 @@ public:
 	Bool m_spirv = false;
 	Bool m_dxil = false;
 	Bool m_debugInfo = false;
+	ShaderModel m_sm = ShaderModel::k6_8;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -136,6 +138,30 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		{
 			info.m_debugInfo = true;
 		}
+		else if(strcmp(argv[i], "-sm") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				if(argv[i] == CString("6_7"))
+				{
+					info.m_sm = ShaderModel::k6_7;
+				}
+				else if(argv[i] == CString("6_8"))
+				{
+					info.m_sm = ShaderModel::k6_8;
+				}
+				else
+				{
+					return Error::kUserData;
+				}
+			}
+			else
+			{
+				return Error::kUserData;
+			}
+		}
 		else
 		{
 			return Error::kUserData;
@@ -216,7 +242,7 @@ static Error work(const CmdLineArgs& info)
 
 	// Compile
 	ShaderBinary* binary = nullptr;
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname, info.m_spirv, info.m_debugInfo, fsystem, nullptr,
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, info.m_spirv, info.m_debugInfo, info.m_sm, fsystem, nullptr,
 									(info.m_threadCount) ? &taskManager : nullptr, info.m_defines, binary));
 
 	class Dummy

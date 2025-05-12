@@ -179,6 +179,7 @@ else()
 endif()
 
 set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API to use (VULKAN or DIRECTX)")
+option(ANKI_D3D_EXPERIMENTAL "Enable some experimental DX features" ON)
 
 if(${ANKI_GR_BACKEND} STREQUAL "DIRECTX")
 	set(DIRECTX TRUE)

@@ -42,6 +42,14 @@ else()
 	set(extra_compiler_args ${extra_compiler_args} "-dxil")
 endif()
 
+if(DIRECTX)
+	if(ANKI_D3D_EXPERIMENTAL)
+		set(extra_compiler_args ${extra_compiler_args} "-sm" "6_8")
+	else()
+		set(extra_compiler_args ${extra_compiler_args} "-sm" "6_7")
+	endif()
+endif()
+
 include(FindPythonInterp)
 
 foreach(prog_fname ${prog_fnames})

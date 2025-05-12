@@ -20,9 +20,9 @@ inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<CStri
 	ShaderCompilerString errorLog;
 
 #if ANKI_GR_BACKEND_VULKAN
-	Error err = compileHlslToSpirv(header, type, false, true, extraCompilerArgs, bin, errorLog);
+	Error err = compileHlslToSpirv(header, type, false, true, ShaderModel::k6_8, extraCompilerArgs, bin, errorLog);
 #else
-	Error err = compileHlslToDxil(header, type, false, true, extraCompilerArgs, bin, errorLog);
+	Error err = compileHlslToDxil(header, type, false, true, ShaderModel::k6_8, extraCompilerArgs, bin, errorLog);
 #endif
 	if(err)
 	{

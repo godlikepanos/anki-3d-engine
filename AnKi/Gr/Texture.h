@@ -82,6 +82,7 @@ public:
 		case TextureType::k3D:
 			ANKI_CHECK_VAL_VALIDITY(m_depth > 0);
 			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
+			ANKI_CHECK_VAL_VALIDITY(!(m_usage & TextureUsageBit::kAllRtvDsv));
 			break;
 		case TextureType::k2DArray:
 		case TextureType::kCubeArray:

@@ -175,6 +175,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
+		texinit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllUav;
 		m_dummyResources.m_texture3DSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
 
 		texinit.m_type = TextureType::k2D;

@@ -40,7 +40,7 @@ inline Error deserializeShaderBinaryFromFile(CString fname, ShaderBinary*& binar
 }
 
 /// Takes an AnKi special shader program and spits a binary.
-Error compileShaderProgram(CString fname, Bool spirv, Bool debugInfo, ShaderCompilerFilesystemInterface& fsystem,
+Error compileShaderProgram(CString fname, Bool spirv, Bool debugInfo, ShaderModel sm, ShaderCompilerFilesystemInterface& fsystem,
 						   ShaderCompilerPostParseInterface* postParseCallback, ShaderCompilerAsyncTaskInterface* taskManager,
 						   ConstWeakArray<ShaderCompilerDefine> defines, ShaderBinary*& binary);
 

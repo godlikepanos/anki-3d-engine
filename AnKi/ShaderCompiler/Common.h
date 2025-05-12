@@ -70,6 +70,12 @@ public:
 	CString m_name;
 	I32 m_value;
 };
+
+enum class ShaderModel : U8
+{
+	k6_7,
+	k6_8
+};
 /// @}
 
 } // end namespace anki

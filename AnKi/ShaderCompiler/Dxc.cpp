@@ -88,33 +88,37 @@ static Error lazyDxcInit(ShaderCompilerString& errorMessage)
 	return Error::kNone;
 }
 
-static const WChar* profile(ShaderType shaderType)
+static const WChar* profile(ShaderType shaderType, ShaderModel sm)
 {
+#define ANKI_SM(stage) out = (sm == ShaderModel::k6_7) ? L"" #stage "_6_7" : L"" #stage "_6_8"
+
+	const WChar* out = L"";
+
 	switch(shaderType)
 	{
 	case ShaderType::kVertex:
-		return L"vs_6_8";
+		ANKI_SM(vs);
 		break;
 	case ShaderType::kPixel:
-		return L"ps_6_8";
+		ANKI_SM(ps);
 		break;
 	case ShaderType::kDomain:
-		return L"ds_6_8";
+		ANKI_SM(ds);
 		break;
 	case ShaderType::kHull:
-		return L"ds_6_8";
+		ANKI_SM(hs);
 		break;
 	case ShaderType::kGeometry:
-		return L"gs_6_8";
+		ANKI_SM(gs);
 		break;
 	case ShaderType::kAmplification:
-		return L"as_6_8";
+		ANKI_SM(as);
 		break;
 	case ShaderType::kMesh:
-		return L"ms_6_8";
+		ANKI_SM(ms);
 		break;
 	case ShaderType::kCompute:
-		return L"cs_6_8";
+		ANKI_SM(cs);
 		break;
 	case ShaderType::kRayGen:
 	case ShaderType::kAnyHit:
@@ -123,17 +127,19 @@ static const WChar* profile(ShaderType shaderType)
 	case ShaderType::kIntersection:
 	case ShaderType::kCallable:
 	case ShaderType::kWorkGraph:
-		return L"lib_6_8";
+		ANKI_SM(lib);
 		break;
 	default:
 		ANKI_ASSERT(0);
 	};
 
-	return L"";
+	return out;
+
+#undef ANKI_SM
 }
 
-static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ConstWeakArray<CString> compilerArgs,
-						 Bool spirv, ShaderCompilerDynamicArray<U8>& bin, ShaderCompilerString& errorMessage)
+static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderModel sm,
+						 ConstWeakArray<CString> compilerArgs, Bool spirv, ShaderCompilerDynamicArray<U8>& bin, ShaderCompilerString& errorMessage)
 {
 	ANKI_CHECK(lazyDxcInit(errorMessage));
 
@@ -155,7 +161,7 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.push_back(L"-E");
 	dxcArgs.push_back(L"main");
 	dxcArgs.push_back(L"-T");
-	dxcArgs.push_back(profile(shaderType));
+	dxcArgs.push_back(profile(shaderType, sm));
 
 	if(ANKI_COMPILER_MSVC)
 	{
@@ -251,16 +257,16 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	return Error::kNone;
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ConstWeakArray<CString> compilerArgs,
-						 ShaderCompilerDynamicArray<U8>& spirv, ShaderCompilerString& errorMessage)
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderModel sm,
+						 ConstWeakArray<CString> compilerArgs, ShaderCompilerDynamicArray<U8>& spirv, ShaderCompilerString& errorMessage)
 {
-	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, compilerArgs, true, spirv, errorMessage);
+	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, sm, compilerArgs, true, spirv, errorMessage);
 }
 
-Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ConstWeakArray<CString> compilerArgs,
-						ShaderCompilerDynamicArray<U8>& dxil, ShaderCompilerString& errorMessage)
+Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderModel sm,
+						ConstWeakArray<CString> compilerArgs, ShaderCompilerDynamicArray<U8>& dxil, ShaderCompilerString& errorMessage)
 {
-	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, compilerArgs, false, dxil, errorMessage);
+	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, sm, compilerArgs, false, dxil, errorMessage);
 }
 
 #if ANKI_OS_WINDOWS

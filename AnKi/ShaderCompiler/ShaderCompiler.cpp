@@ -94,7 +94,7 @@ static Bool spinDials(ShaderCompilerDynamicArray<U32>& dials, ConstWeakArray<Sha
 	return done;
 }
 
-static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool debugInfo, ShaderBinaryMutation& mutation,
+static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool debugInfo, ShaderModel sm, ShaderBinaryMutation& mutation,
 								ShaderCompilerDynamicArray<ShaderBinaryVariant>& variants,
 								ShaderCompilerDynamicArray<ShaderBinaryCodeBlock>& codeBlocks, ShaderCompilerDynamicArray<U64>& sourceCodeHashes,
 								ShaderCompilerAsyncTaskInterface& taskManager, Mutex& mtx, Atomic<I32>& error)
@@ -111,6 +111,7 @@ static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool deb
 		Atomic<I32>* m_err;
 		Bool m_spirv;
 		Bool m_debugInfo;
+		ShaderModel m_sm;
 	};
 
 	Ctx* ctx = newInstance<Ctx>(ShaderCompilerMemoryPool::getSingleton());
@@ -123,6 +124,7 @@ static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool deb
 	ctx->m_err = &error;
 	ctx->m_spirv = spirv;
 	ctx->m_debugInfo = debugInfo;
+	ctx->m_sm = sm;
 
 	auto callback = [](void* userData) {
 		Ctx& ctx = *static_cast<Ctx*>(userData);
@@ -193,12 +195,12 @@ static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool deb
 				ShaderCompilerDynamicArray<U8> il;
 				if(ctx.m_spirv)
 				{
-					err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo,
+					err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo, ctx.m_sm,
 											 ctx.m_parser->getExtraCompilerArgs(), il, compilerErrorLog);
 				}
 				else
 				{
-					err = compileHlslToDxil(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo,
+					err = compileHlslToDxil(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo, ctx.m_sm,
 											ctx.m_parser->getExtraCompilerArgs(), il, compilerErrorLog);
 				}
 
@@ -323,7 +325,7 @@ static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool deb
 	taskManager.enqueueTask(callback, ctx);
 }
 
-static Error compileShaderProgramInternal(CString fname, Bool spirv, Bool debugInfo, ShaderCompilerFilesystemInterface& fsystem,
+static Error compileShaderProgramInternal(CString fname, Bool spirv, Bool debugInfo, ShaderModel sm, ShaderCompilerFilesystemInterface& fsystem,
 										  ShaderCompilerPostParseInterface* postParseCallback, ShaderCompilerAsyncTaskInterface* taskManager_,
 										  ConstWeakArray<ShaderCompilerDefine> defines_, ShaderBinary*& binary)
 {
@@ -439,7 +441,7 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, Bool debugI
 			{
 				// New and unique mutation and thus variant, add it
 
-				compileVariantAsync(parser, spirv, debugInfo, mutation, variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
+				compileVariantAsync(parser, spirv, debugInfo, sm, mutation, variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
 
 				ANKI_ASSERT(mutationHashToIdx.find(mutation.m_hash) == mutationHashToIdx.getEnd());
 				mutationHashToIdx.emplace(mutation.m_hash, mutationCount - 1);
@@ -466,7 +468,8 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, Bool debugI
 		ShaderCompilerDynamicArray<ShaderBinaryCodeBlock> codeBlocks;
 		ShaderCompilerDynamicArray<U64> sourceCodeHashes;
 
-		compileVariantAsync(parser, spirv, debugInfo, binary->m_mutations[0], variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
+		compileVariantAsync(parser, spirv, debugInfo, sm, binary->m_mutations[0], variants, codeBlocks, sourceCodeHashes, taskManager, mtx,
+							errorAtomic);
 
 		ANKI_CHECK(taskManager.joinTasks());
 		ANKI_CHECK(Error(errorAtomic.getNonAtomically()));
@@ -531,11 +534,11 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, Bool debugI
 	return Error::kNone;
 }
 
-Error compileShaderProgram(CString fname, Bool spirv, Bool debugInfo, ShaderCompilerFilesystemInterface& fsystem,
+Error compileShaderProgram(CString fname, Bool spirv, Bool debugInfo, ShaderModel sm, ShaderCompilerFilesystemInterface& fsystem,
 						   ShaderCompilerPostParseInterface* postParseCallback, ShaderCompilerAsyncTaskInterface* taskManager,
 						   ConstWeakArray<ShaderCompilerDefine> defines, ShaderBinary*& binary)
 {
-	const Error err = compileShaderProgramInternal(fname, spirv, debugInfo, fsystem, postParseCallback, taskManager, defines, binary);
+	const Error err = compileShaderProgramInternal(fname, spirv, debugInfo, sm, fsystem, postParseCallback, taskManager, defines, binary);
 	if(err)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());
