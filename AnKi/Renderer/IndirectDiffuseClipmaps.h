@@ -30,8 +30,12 @@ inline NumericCVar<F32> g_indirectDiffuseClipmap1YSizeCVar("R", "IndirectDiffuse
 inline NumericCVar<F32> g_indirectDiffuseClipmap2XZSizeCVar("R", "IndirectDiffuseClipmap2XZSize", 192.0, 10.0, 1000.0, "The clipmap size in meters");
 inline NumericCVar<F32> g_indirectDiffuseClipmap2YSizeCVar("R", "IndirectDiffuseClipmap2YSize", 48.0, 10.0, 1000.0, "The clipmap size in meters");
 
-inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceOctMapSize("R", "IndirectDiffuseClipmapRadianceOctMapSize", 10, 5, 30,
-																   "Size of the octahedral for the light cache");
+inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceOctMapSize(
+	"R", "IndirectDiffuseClipmapRadianceOctMapSize", 10,
+	[](U32 val) {
+		return val >= 4 && val <= 30 && val % 2 == 0;
+	},
+	"Size of the octahedral for the light cache");
 inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceOctMapSize("R", "IndirectDiffuseClipmapIrradianceOctMapSize", 5, 4, 20,
 																	 "Size of the octahedral for the irradiance");
 
@@ -62,8 +66,6 @@ public:
 	void drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
 
 private:
-	static constexpr U32 kRaysPerProbePerFrame = 32;
-
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;

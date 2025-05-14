@@ -118,6 +118,10 @@ struct Vec4
 	F32 w;
 };
 
+using HVec2 = Vec2;
+using HVec3 = Vec3;
+using HVec4 = Vec4;
+
 struct Mat4
 {
 	F32 arr[16];

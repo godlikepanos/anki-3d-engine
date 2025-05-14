@@ -907,6 +907,20 @@ IVec2 generateMsaa4x(U32 sample)
 	return pattern;
 }
 
+/// Generate a 8x MSAA pattern. Returns the numbers in
+/// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
+/// Divide the result by 8.0 to normalize.
+IVec2 generateMsaa8x(U32 sample)
+{
+	sample <<= 2u;
+	IVec2 pattern = IVec2(4212350329, 528300469);
+	pattern >>= sample;
+	pattern &= 0xF;
+	pattern -= 8;
+
+	return pattern;
+}
+
 /// Generate a 16x MSAA pattern. Returns the numbers in
 /// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
 /// Divide the result by 8.0 to normalize.

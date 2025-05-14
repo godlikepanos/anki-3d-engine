@@ -66,6 +66,19 @@ template<typename TNumber>
 class NumericCVar : public CVar
 {
 public:
+	using CheckValueCallback = Bool (*)(TNumber);
+
+	/// Initialize using a custom callback the checks the correctness of the value.
+	NumericCVar(CString subsystem, CString name, TNumber defaultVal, CheckValueCallback checkValueCallback, CString descr = CString())
+		: CVar(getCVarType(), subsystem, name, descr)
+		, m_value(defaultVal)
+		, m_checkValueCallback(checkValueCallback)
+	{
+		ANKI_ASSERT(checkValueCallback);
+		ANKI_ASSERT(checkValueCallback(defaultVal));
+	}
+
+	/// Initialize using a min max range.
 	NumericCVar(CString subsystem, CString name, TNumber defaultVal, TNumber min = getMinNumericLimit<TNumber>(),
 				TNumber max = getMaxNumericLimit<TNumber>(), CString descr = CString())
 		: CVar(getCVarType(), subsystem, name, descr)
@@ -79,12 +92,23 @@ public:
 
 	NumericCVar& operator=(TNumber val)
 	{
-		const TNumber newVal = clamp(val, m_min, m_max);
-		if(newVal != val)
+		Bool ok = true;
+		if(!m_checkValueCallback)
 		{
-			ANKI_UTIL_LOGW("Out of range value set for config var: %s", m_name.cstr());
+			const TNumber newVal = clamp(val, m_min, m_max);
+			ok = (newVal == val);
+			m_value = newVal;
 		}
-		m_value = newVal;
+		else
+		{
+			ok = m_checkValueCallback(val);
+		}
+
+		if(!ok)
+		{
+			ANKI_UTIL_LOGW("Wrong value set for config var: %s", m_name.cstr());
+		}
+
 		return *this;
 	}
 
@@ -95,8 +119,9 @@ public:
 
 private:
 	TNumber m_value;
-	TNumber m_min;
-	TNumber m_max;
+	TNumber m_min = getMinNumericLimit<TNumber>();
+	TNumber m_max = getMaxNumericLimit<TNumber>();
+	CheckValueCallback m_checkValueCallback = nullptr;
 
 	static Type getCVarType();
 };

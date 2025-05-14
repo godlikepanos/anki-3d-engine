@@ -79,6 +79,12 @@ inline T sqrt(const T x) requires(std::is_integral<T>::value)
 }
 
 template<typename T>
+inline T square(const T x)
+{
+	return x * x;
+}
+
+template<typename T>
 inline T fract(const T x)
 {
 	return x - std::floor(x);
