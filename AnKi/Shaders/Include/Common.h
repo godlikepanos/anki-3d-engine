@@ -421,7 +421,10 @@ ANKI_BEGIN_NAMESPACE
 
 constexpr U32 kMaxLodCount = 3u;
 constexpr U32 kMaxShadowCascades = 4u;
+
 constexpr U32 kIndirectDiffuseClipmapCount = 3u;
+/// Bias applied to the camera to push the clipmaps further into the looking direction.
+constexpr Vec3 kIndirectDiffuseClipmapForwardBias = Vec3(20.0f, 2.0f, 20.0f);
 
 constexpr F32 kShadowsPolygonOffsetFactor = 1.25f;
 constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;

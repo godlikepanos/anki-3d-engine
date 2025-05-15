@@ -16,6 +16,19 @@
 
 namespace anki {
 
+static void computeClipmapBounds(Vec3 cameraPos, Vec3 lookDir, Clipmap& clipmap)
+{
+	const Vec3 offset = lookDir * kIndirectDiffuseClipmapForwardBias * F32(clipmap.m_index + 1);
+	cameraPos += offset;
+
+	const Vec3 halfSize = clipmap.m_size * 0.5;
+	const Vec3 probeSize = clipmap.m_size / Vec3(clipmap.m_probeCounts);
+	const Vec3 roundedPos = (cameraPos / probeSize).round() * probeSize;
+	clipmap.m_aabbMin = roundedPos - halfSize;
+	[[maybe_unused]] const Vec3 aabbMax = roundedPos + halfSize;
+	ANKI_ASSERT(aabbMax - clipmap.m_aabbMin == clipmap.m_size);
+}
+
 Error IndirectDiffuseClipmaps::init()
 {
 	m_tmpRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
@@ -34,7 +47,7 @@ Error IndirectDiffuseClipmaps::init()
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
 		const U32 count = m_clipmapInfo[i].m_probeCounts.x() * m_clipmapInfo[i].m_probeCounts.y() * m_clipmapInfo[i].m_probeCounts.z();
-		m_clipmapInfo[i].m_probeCountsTotal = count;
+		m_clipmapInfo[i].m_probeCountTotal = count;
 		m_clipmapInfo[i].m_index = i;
 		if(i == 0)
 		{
@@ -147,6 +160,14 @@ Error IndirectDiffuseClipmaps::init()
 void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
+
+	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+	{
+		m_clipmapInfo[i].m_prevFrameAabbMin = m_clipmapInfo[i].m_aabbMin;
+
+		computeClipmapBounds(ctx.m_matrices.m_cameraTransform.getTranslationPart(),
+							 -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis().normalize(), m_clipmapInfo[i]);
+	}
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
@@ -308,7 +329,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				const UVec4 consts(clipmap, g_indirectDiffuseClipmapRadianceOctMapSize, 0, 0);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
-				const U32 probeCount = U32(m_clipmapInfo[0].m_probeCountsTotal);
+				const U32 probeCount = U32(m_clipmapInfo[0].m_probeCountTotal);
 				cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 							   probeCount * raysPerProbePerFrame, 1, 1);
 			});
@@ -343,7 +364,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 				const U32 raysPerProbePerFrame = square(g_indirectDiffuseClipmapRadianceOctMapSize / 2);
 				const U32 threadCount = 64;
-				cmdb.dispatchCompute((raysPerProbePerFrame * m_clipmapInfo[clipmap].m_probeCountsTotal + threadCount - 1) / threadCount, 1, 1);
+				cmdb.dispatchCompute((raysPerProbePerFrame * m_clipmapInfo[clipmap].m_probeCountTotal + threadCount - 1) / threadCount, 1, 1);
 			});
 		}
 
@@ -367,7 +388,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				const UVec4 consts(clipmap);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
-				cmdb.dispatchCompute(m_clipmapInfo[clipmap].m_probeCountsTotal, g_indirectDiffuseClipmapIrradianceOctMapSize,
+				cmdb.dispatchCompute(m_clipmapInfo[clipmap].m_probeCountTotal, g_indirectDiffuseClipmapIrradianceOctMapSize,
 									 g_indirectDiffuseClipmapIrradianceOctMapSize);
 			});
 		}
@@ -441,7 +462,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_probeValidityRts[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-	cmdb.draw(PrimitiveTopology::kTriangles, 36, m_clipmapInfo[clipmap].m_probeCountsTotal);
+	cmdb.draw(PrimitiveTopology::kTriangles, 36, m_clipmapInfo[clipmap].m_probeCountTotal);
 }
 
 } // end namespace anki

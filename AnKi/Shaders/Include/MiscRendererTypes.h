@@ -73,10 +73,16 @@ struct Sky
 struct Clipmap
 {
 	UVec3 m_probeCounts;
-	U32 m_probeCountsTotal;
+	U32 m_probeCountTotal;
 
 	Vec3 m_size;
 	U32 m_index;
+
+	Vec3 m_aabbMin;
+	F32 m_padding1;
+
+	Vec3 m_prevFrameAabbMin;
+	F32 m_padding3;
 };
 
 /// Common constants for all passes.

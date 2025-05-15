@@ -28,9 +28,7 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0,
 // SRVs
 RaytracingAccelerationStructure g_tlas : register(t0, SPACE);
 #	if defined(CLIPMAP_VOLUME)
-Texture2D<Vec4> g_dummyTex1 : register(t1, SPACE);
-Texture2D<Vec4> g_dummyTex2 : register(t2, SPACE);
-Texture2D<Vec4> g_dummyTex3 : register(t3, SPACE);
+Texture3D<Vec4> g_irradianceVolumes[kIndirectDiffuseClipmapCount] : register(t1, SPACE);
 #	else
 Texture2D<Vec4> g_depthTex : register(t1, SPACE);
 Texture2D<Vec4> g_gbufferRt1 : register(t2, SPACE);
