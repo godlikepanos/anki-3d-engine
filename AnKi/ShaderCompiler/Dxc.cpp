@@ -14,17 +14,17 @@
 #if ANKI_OS_WINDOWS
 #	include <windows.h>
 #	include <wrl/client.h>
-#	include <ThirdParty/Dxc/d3d12shader.h>
+#	include <ThirdParty/Dxc/Include/d3d12shader.h>
 #	define CComPtr Microsoft::WRL::ComPtr
 #else
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wimplicit-int-conversion"
 #	pragma GCC diagnostic ignored "-Wambiguous-reversed-operator"
 #	define __EMULATE_UUID
-#	include <ThirdParty/Dxc/WinAdapter.h>
+#	include <ThirdParty/Dxc/Include/WinAdapter.h>
 #	pragma GCC diagnostic pop
 #endif
-#include <ThirdParty/Dxc/dxcapi.h>
+#include <ThirdParty/Dxc/Include/dxcapi.h>
 
 namespace anki {
 
@@ -56,16 +56,24 @@ static Error lazyDxcInit(ShaderCompilerString& errorMessage)
 	{
 		// Init DXC
 #if ANKI_OS_WINDOWS
-		g_dxilLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/dxil.dll");
+#	if ANKI_CPU_ARCH_X86
+		g_dxilLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/Lib/WinX64/dxil.dll");
+#	else
+		g_dxilLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/Lib/WinArm64/dxil.dll");
+#	endif
 		if(g_dxilLib == 0)
 		{
 			errorMessage = "dxil.dll missing or wrong architecture";
 			return Error::kFunctionFailed;
 		}
 
-		g_dxcLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/dxcompiler.dll");
+#	if ANKI_CPU_ARCH_X86
+		g_dxcLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/Lib/WinX64/dxcompiler.dll");
+#	else
+		g_dxcLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/Lib/WinArm64/dxcompiler.dll");
+#	endif
 #else
-		g_dxcLib = dlopen(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/libdxcompiler.so", RTLD_LAZY);
+		g_dxcLib = dlopen(ANKI_SOURCE_DIRECTORY "/ThirdParty/Dxc/Lib/LinuxX64/libdxcompiler.so", RTLD_LAZY);
 #endif
 		if(g_dxcLib == 0)
 		{
@@ -482,7 +490,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			ANKI_DXC_CHECK(dxRefl->GetInputParameterDesc(i, &in));
 
 			VertexAttributeSemantic a = VertexAttributeSemantic::kCount;
-#	define ANKI_ATTRIB_NAME(x, idx) CString(in.SemanticName) == #    x&& in.SemanticIndex == idx
+#	define ANKI_ATTRIB_NAME(x, idx) CString(in.SemanticName) == #x&& in.SemanticIndex == idx
 			if(ANKI_ATTRIB_NAME(POSITION, 0))
 			{
 				a = VertexAttributeSemantic::kPosition;

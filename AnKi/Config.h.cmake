@@ -109,7 +109,7 @@
 #		define ANKI_CPU_ARCH_ARM 0
 #	endif
 #elif ANKI_COMPILER_MSVC
-#	if defined(_M_ARM)
+#	if defined(_M_ARM) || defined(_M_ARM64)
 #		define ANKI_CPU_ARCH_X86 0
 #		define ANKI_CPU_ARCH_ARM 1
 #	elif defined(_M_X64) || defined(_M_IX86)
