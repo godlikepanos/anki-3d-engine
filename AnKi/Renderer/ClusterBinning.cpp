@@ -179,7 +179,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				} consts;
 
 				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
+				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
 				consts.m_renderingSize = Vec2(getRenderer().getInternalResolution());
 				consts.m_tileCountX = getRenderer().getTileCounts().x();
 				consts.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();

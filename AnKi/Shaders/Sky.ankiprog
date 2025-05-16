@@ -431,14 +431,28 @@ Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numS
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 Texture2D<Vec4> g_tLutTex : register(t0);
-globallycoherent RWStructuredBuffer<GlobalRendererConstants> g_globalConstants : register(u0);
+
+// Make it a BAB and not a RWStructuredBuffer because the underlying struct is too big and DXC validation complains
+RWByteAddressBuffer g_globalConstants : register(u0);
+
+struct Consts
+{
+	U32 m_offsetofDirectionalLight;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts);
 
 [numthreads(1, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	const Vec3 sunTransmittance = getValFromTLut(g_tLutTex, kViewPos, -g_globalConstants[0].m_directionalLight.m_direction);
-	const F32 sunPower = g_globalConstants[0].m_directionalLight.m_power;
+	DirectionalLight dirl = g_globalConstants.Load<DirectionalLight>(g_consts.m_offsetofDirectionalLight);
 
-	g_globalConstants[0].m_directionalLight.m_diffuseColor = Vec4(sunPower * sunTransmittance, 0.0f);
+	const Vec3 sunTransmittance = getValFromTLut(g_tLutTex, kViewPos, -dirl.m_direction);
+	const F32 sunPower = dirl.m_power;
+
+	dirl.m_diffuseColor = Vec4(sunPower * sunTransmittance, 0.0f);
+	g_globalConstants.Store<DirectionalLight>(g_consts.m_offsetofDirectionalLight, dirl);
 }
 #endif // ANKI_TECHNIQUE_ComputeSunColor
 

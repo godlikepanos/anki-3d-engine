@@ -120,8 +120,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 	{
 		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
 
-		const RF32 positiveZViewSpace =
-			testPlanePoint(g_globalConstants.m_nearPlaneWSpace.xyz, g_globalConstants.m_nearPlaneWSpace.w, worldPos) + g_globalConstants.m_near;
+		const RF32 positiveZViewSpace = testPlanePoint(g_globalConstants.m_nearPlaneWSpace.xyz, g_globalConstants.m_nearPlaneWSpace.w, worldPos)
+										+ g_globalConstants.m_matrices.m_near;
 
 		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[shadowCascadeCount - 1u];
 		RF32 shadowFactor;

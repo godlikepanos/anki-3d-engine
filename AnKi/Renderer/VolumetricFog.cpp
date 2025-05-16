@@ -67,8 +67,8 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 		consts.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
 		consts.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
 		consts.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;
-		consts.m_near = ctx.m_cameraNear;
-		consts.m_far = ctx.m_cameraFar;
+		consts.m_near = ctx.m_matrices.m_near;
+		consts.m_far = ctx.m_matrices.m_far;
 		consts.m_zSplitCountf = F32(getRenderer().getZSplitCount());
 		consts.m_volumeSize = UVec3(m_volumeSize);
 		consts.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);

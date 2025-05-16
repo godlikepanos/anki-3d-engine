@@ -182,7 +182,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
 			SsaoSpatialDenoiseConstants consts;
-			computeLinearizeDepthOptimal(ctx.m_cameraNear, ctx.m_cameraFar, consts.m_linearizeDepthParams.x(), consts.m_linearizeDepthParams.y());
+			computeLinearizeDepthOptimal(ctx.m_matrices.m_near, ctx.m_matrices.m_far, consts.m_linearizeDepthParams.x(),
+										 consts.m_linearizeDepthParams.y());
 			consts.m_viewToWorldMat = ctx.m_matrices.m_cameraTransform;
 			cmdb.setFastConstants(&consts, sizeof(consts));
 

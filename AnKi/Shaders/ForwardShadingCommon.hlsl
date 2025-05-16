@@ -99,7 +99,7 @@ Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	ANKI_MAYBE_UNUSED(worldPos);
 
 	const Vec2 uv = svPosition.xy / g_globalRendererConstants.m_renderingSize;
-	const F32 linearDepth = linearizeDepth(svPosition.z, g_globalRendererConstants.m_near, g_globalRendererConstants.m_far);
+	const F32 linearDepth = linearizeDepth(svPosition.z, g_globalRendererConstants.m_matrices.m_near, g_globalRendererConstants.m_matrices.m_far);
 	const F32 w = linearDepth * (F32(g_globalRendererConstants.m_zSplitCount) / F32(g_globalRendererConstants.m_lightVolumeLastZSplit + 1u));
 	const Vec3 uvw = Vec3(uv, w);
 

@@ -201,6 +201,9 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, transmittanceLutRt);
 			cmdb.bindUav(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
+			const UVec4 consts(offsetof(GlobalRendererConstants, m_directionalLight));
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
 			cmdb.dispatchCompute(1, 1, 1);
 		});
 	}

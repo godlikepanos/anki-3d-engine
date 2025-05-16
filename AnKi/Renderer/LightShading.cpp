@@ -195,8 +195,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		} consts;
 		consts.m_zSplitCount = F32(getRenderer().getZSplitCount());
 		consts.m_finalZSplit = F32(getRenderer().getVolumetricFog().getFinalClusterInZ());
-		consts.m_near = ctx.m_cameraNear;
-		consts.m_far = ctx.m_cameraFar;
+		consts.m_near = ctx.m_matrices.m_near;
+		consts.m_far = ctx.m_matrices.m_far;
 
 		cmdb.setFastConstants(&consts, sizeof(consts));
 

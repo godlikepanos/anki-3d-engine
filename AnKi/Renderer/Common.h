@@ -79,9 +79,6 @@ public:
 	CommonMatrices m_matrices;
 	CommonMatrices m_prevMatrices;
 
-	F32 m_cameraNear = 0.0f;
-	F32 m_cameraFar = 0.0f;
-
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_swapchainRenderTarget;
 

@@ -149,10 +149,10 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 				U32 m_frame;
 				F32 m_far;
 			} consts;
-			consts.m_depthLinearizationParams.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / ctx.m_cameraNear;
-			consts.m_depthLinearizationParams.y() = ctx.m_cameraFar / ctx.m_cameraNear;
+			consts.m_depthLinearizationParams.x() = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / ctx.m_matrices.m_near;
+			consts.m_depthLinearizationParams.y() = ctx.m_matrices.m_far / ctx.m_matrices.m_near;
 			consts.m_frame = getRenderer().getFrameCount() % 32;
-			consts.m_far = ctx.m_cameraFar;
+			consts.m_far = ctx.m_matrices.m_far;
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			if(g_preferComputeCVar)

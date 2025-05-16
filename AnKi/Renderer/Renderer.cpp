@@ -368,15 +368,13 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	Plane nearPlane;
 	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
 	consts.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
-	consts.m_near = ctx.m_cameraNear;
-	consts.m_far = ctx.m_cameraFar;
 	consts.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 
 	consts.m_tileCounts = m_tileCounts;
 	consts.m_zSplitCount = m_zSplitCount;
-	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_cameraFar - ctx.m_cameraNear);
-	consts.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(m_zSplitCount));
-	consts.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(m_zSplitCount));
+	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
+	consts.m_zSplitMagic.x() = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / (ctx.m_matrices.m_near * F32(m_zSplitCount));
+	consts.m_zSplitMagic.y() = ctx.m_matrices.m_far / (ctx.m_matrices.m_near * F32(m_zSplitCount));
 	consts.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar - 1, m_zSplitCount);
 
 	consts.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
@@ -801,8 +799,8 @@ Error Renderer::render(Texture* presentTex)
 	ctx.m_matrices.m_projMat00_11_22_23 = Vec4(ctx.m_matrices.m_projection(0, 0), ctx.m_matrices.m_projection(1, 1),
 											   ctx.m_matrices.m_projection(2, 2), ctx.m_matrices.m_projection(2, 3));
 
-	ctx.m_cameraNear = cam.getNear();
-	ctx.m_cameraFar = cam.getFar();
+	ctx.m_matrices.m_near = cam.getNear();
+	ctx.m_matrices.m_far = cam.getFar();
 
 	// Allocate global constants
 	GlobalRendererConstants* globalConsts;

@@ -61,7 +61,8 @@ struct CommonMatrices
 	Vec4 m_projMat00_11_22_23;
 
 	Vec2 m_jitterOffsetNdc;
-	Vec2 m_padding;
+	F32 m_near;
+	F32 m_far;
 };
 
 struct Sky
@@ -104,10 +105,6 @@ struct GlobalRendererConstants
 	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
 	U32 m_lightVolumeLastZSplit;
 	U32 m_padding1;
-
-	UVec2 m_padding0;
-	F32 m_near;
-	F32 m_far;
 
 	DirectionalLight m_directionalLight;
 
