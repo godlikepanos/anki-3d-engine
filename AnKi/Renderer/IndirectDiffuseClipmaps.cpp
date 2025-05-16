@@ -70,9 +70,9 @@ Error IndirectDiffuseClipmaps::init()
 	}
 
 	// Create the lighting result texture
-	const U32 raysPerProbePerFrame = (g_indirectDiffuseClipmapRadianceOctMapSize / 2) * (g_indirectDiffuseClipmapRadianceOctMapSize / 2);
-	m_rtResultRtDesc = getRenderer().create2DRenderTargetDescription(probesPerClipmap, raysPerProbePerFrame, Format::kR16G16B16A16_Sfloat,
-																	 "IndirectDiffuseClipmap: RT result");
+	const U32 raysPerProbePerFrame = square(g_indirectDiffuseClipmapRadianceOctMapSize / 2);
+	m_rtResultRtDesc = getRenderer().create2DRenderTargetDescription(probesPerClipmap, raysPerProbePerFrame * kIndirectDiffuseClipmapCount,
+																	 Format::kR16G16B16A16_Sfloat, "IndirectDiffuseClipmap: RT result");
 	m_rtResultRtDesc.bake();
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
@@ -193,12 +193,12 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		}
 	}
 
-	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> probeValidityRts;
+	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> probeValidityVolumes;
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
-		probeValidityRts[i] = rgraph.newRenderTarget(m_probeValidityRtDescs[i]);
+		probeValidityVolumes[i] = rgraph.newRenderTarget(m_probeValidityRtDescs[i]);
 	}
-	m_runCtx.m_probeValidityRts = probeValidityRts;
+	m_runCtx.m_probeValidityRts = probeValidityVolumes;
 
 	// SBT build
 	BufferHandle sbtHandle;
@@ -254,32 +254,35 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		});
 	}
 
-	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+	// Do ray tracing around the probes
 	{
-		// Do ray tracing around the probes
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: RT");
+
+		pass.newTextureDependency(rtResultHandle, TextureUsageBit::kUavCompute);
+		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
+		if(getRenderer().getGeneratedSky().isEnabled())
 		{
-			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("IndirectDiffuseClipmaps: RT #%u", clipmap));
+			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+		}
+		pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
+												AccelerationStructureUsageBit::kTraceRaysSrv);
 
-			pass.newTextureDependency(rtResultHandle, TextureUsageBit::kUavCompute);
-			pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-			if(getRenderer().getGeneratedSky().isEnabled())
-			{
-				pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
-			}
-			pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
-			pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-													AccelerationStructureUsageBit::kTraceRaysSrv);
+		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+		{
+			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvCompute);
+		}
 
-			pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, clipmap](RenderPassWorkContext& rgraphCtx) {
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, irradianceVolumes](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				cmdb.bindShaderProgram(m_libraryGrProg.get());
+			cmdb.bindShaderProgram(m_libraryGrProg.get());
 
-				// More globals
-				cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
-				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+			// More globals
+			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
@@ -289,75 +292,84 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-				cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
 
-				rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-				cmdb.bindSrv(1, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-				cmdb.bindSrv(2, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-				cmdb.bindSrv(3, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
-				const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-				const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-				const Bool bSkySolidColor =
-					(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-				if(bSkySolidColor)
-				{
-					cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-				}
-				else if(sky->getSkyboxType() == SkyboxType::kImage2D)
-				{
-					cmdb.bindSrv(4, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
-				}
-				else
-				{
-					rgraphCtx.bindSrv(4, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
-				}
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(1 + clipmap, 2, irradianceVolumes[clipmap]);
+			}
 
-				cmdb.bindSrv(5, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
-				cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
-				rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
+			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+			const Bool bSkySolidColor =
+				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
+			if(bSkySolidColor)
+			{
+				cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			}
+			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+			{
+				cmdb.bindSrv(4, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+			}
+			else
+			{
+				rgraphCtx.bindSrv(4, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
+			}
 
-				cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-				cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
+			cmdb.bindSrv(5, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
+			cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
+			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
 
-				rgraphCtx.bindUav(0, 2, rtResultHandle);
-				cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
+			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-				ANKI_ASSERT(g_indirectDiffuseClipmapRadianceOctMapSize % 2 == 0);
-				const U32 raysPerProbePerFrame = square(g_indirectDiffuseClipmapRadianceOctMapSize / 2);
+			rgraphCtx.bindUav(0, 2, rtResultHandle);
+			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
+			ANKI_ASSERT(g_indirectDiffuseClipmapRadianceOctMapSize % 2 == 0);
+			const U32 raysPerProbePerFrame = square(g_indirectDiffuseClipmapRadianceOctMapSize / 2);
+
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
 				const UVec4 consts(clipmap, g_indirectDiffuseClipmapRadianceOctMapSize, 0, 0);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
 				const U32 probeCount = U32(m_clipmapInfo[0].m_probeCountTotal);
 				cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 							   probeCount * raysPerProbePerFrame, 1, 1);
-			});
+			}
+		});
+	}
+
+	// Populate caches
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Populate caches");
+
+		pass.newTextureDependency(rtResultHandle, TextureUsageBit::kSrvCompute);
+		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+		{
+			pass.newTextureDependency(radianceVolumes[clipmap], TextureUsageBit::kUavCompute);
+			pass.newTextureDependency(probeValidityVolumes[clipmap], TextureUsageBit::kUavCompute);
+			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kUavCompute);
 		}
 
-		// Populate caches
-		{
-			NonGraphicsRenderPass& pass =
-				rgraph.newNonGraphicsRenderPass(generateTempPassName("IndirectDiffuseClipmaps: Populate caches #%u", clipmap));
+		pass.setWork([this, &ctx, rtResultHandle, radianceVolumes, probeValidityVolumes, distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			pass.newTextureDependency(rtResultHandle, TextureUsageBit::kSrvCompute);
-			pass.newTextureDependency(radianceVolumes[clipmap], TextureUsageBit::kUavCompute);
-			pass.newTextureDependency(probeValidityRts[clipmap], TextureUsageBit::kUavCompute);
-			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kUavCompute);
+			cmdb.bindShaderProgram(m_populateCachesGrProg.get());
 
-			pass.setWork([this, &ctx, clipmap, rtResultHandle, radianceVolume = radianceVolumes[clipmap], validityVolume = probeValidityRts[clipmap],
-						  distanceMomentsVolume = distanceMomentsVolumes[clipmap]](RenderPassWorkContext& rgraphCtx) {
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			rgraphCtx.bindSrv(0, 0, rtResultHandle);
 
-				cmdb.bindShaderProgram(m_populateCachesGrProg.get());
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-				rgraphCtx.bindSrv(0, 0, rtResultHandle);
-
-				rgraphCtx.bindUav(0, 0, radianceVolume);
-				rgraphCtx.bindUav(1, 0, distanceMomentsVolume);
-				rgraphCtx.bindUav(2, 0, validityVolume);
-
-				cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindUav(0, 0, radianceVolumes[clipmap]);
+				rgraphCtx.bindUav(1, 0, distanceMomentsVolumes[clipmap]);
+				rgraphCtx.bindUav(2, 0, probeValidityVolumes[clipmap]);
 
 				const UVec4 consts(clipmap);
 				cmdb.setFastConstants(&consts, sizeof(consts));
@@ -365,33 +377,39 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				const U32 raysPerProbePerFrame = square(g_indirectDiffuseClipmapRadianceOctMapSize / 2);
 				const U32 threadCount = 64;
 				cmdb.dispatchCompute((raysPerProbePerFrame * m_clipmapInfo[clipmap].m_probeCountTotal + threadCount - 1) / threadCount, 1, 1);
-			});
-		}
+			}
+		});
+	}
 
-		// Compute irradiance
+	// Compute irradiance
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Irradiance");
+
+		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
-			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("IndirectDiffuseClipmaps: Irradiance #%u", clipmap));
-
 			pass.newTextureDependency(radianceVolumes[clipmap], TextureUsageBit::kSrvCompute);
 			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kUavCompute);
+		}
 
-			pass.setWork([this, &ctx, clipmap, radianceVolume = radianceVolumes[clipmap],
-						  irradianceVolume = irradianceVolumes[clipmap]](RenderPassWorkContext& rgraphCtx) {
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		pass.setWork([this, &ctx, radianceVolumes, irradianceVolumes](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				cmdb.bindShaderProgram(m_computeIrradianceGrProg.get());
+			cmdb.bindShaderProgram(m_computeIrradianceGrProg.get());
 
-				rgraphCtx.bindSrv(0, 0, radianceVolume);
-				rgraphCtx.bindUav(0, 0, irradianceVolume);
-				cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(0, 0, radianceVolumes[clipmap]);
+				rgraphCtx.bindUav(0, 0, irradianceVolumes[clipmap]);
 
 				const UVec4 consts(clipmap);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
 				cmdb.dispatchCompute(m_clipmapInfo[clipmap].m_probeCountTotal, g_indirectDiffuseClipmapIrradianceOctMapSize,
 									 g_indirectDiffuseClipmapIrradianceOctMapSize);
-			});
-		}
+			}
+		});
 	}
 
 	// Test
@@ -403,12 +421,12 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 		{
 			pass.newTextureDependency(irradianceVolumes[i], TextureUsageBit::kSrvCompute);
-			pass.newTextureDependency(probeValidityRts[i], TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(probeValidityVolumes[i], TextureUsageBit::kSrvCompute);
 			pass.newTextureDependency(distanceMomentsVolumes[i], TextureUsageBit::kSrvCompute);
 		}
 		pass.newTextureDependency(m_runCtx.m_tmpRt, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx, irradianceVolumes, probeValidityRts, distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, &ctx, irradianceVolumes, probeValidityVolumes, distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_tmpVisGrProg.get());
@@ -425,7 +443,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 			{
-				rgraphCtx.bindSrv(srvReg++, 0, probeValidityRts[i]);
+				rgraphCtx.bindSrv(srvReg++, 0, probeValidityVolumes[i]);
 			}
 
 			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
@@ -448,7 +466,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 {
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	const U32 clipmap = 1;
+	const U32 clipmap = 0;
 
 	cmdb.bindShaderProgram(m_visProbesGrProg.get());
 
@@ -457,7 +475,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 
 	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-	Texture* visVolume = m_radianceVolumes[clipmap].get();
+	Texture* visVolume = m_irradianceVolumes[clipmap].get();
 	cmdb.bindSrv(0, 0, TextureView(visVolume, TextureSubresourceDesc::all()));
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_probeValidityRts[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());

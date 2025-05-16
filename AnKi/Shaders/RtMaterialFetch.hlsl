@@ -30,9 +30,10 @@ RaytracingAccelerationStructure g_tlas : register(t0, SPACE);
 #	if defined(CLIPMAP_VOLUME)
 Texture3D<Vec4> g_irradianceVolumes[kIndirectDiffuseClipmapCount] : register(t1, SPACE);
 #	else
-Texture2D<Vec4> g_depthTex : register(t1, SPACE);
-Texture2D<Vec4> g_gbufferRt1 : register(t2, SPACE);
-Texture2D<Vec4> g_gbufferRt2 : register(t3, SPACE);
+Texture2D<Vec4> g_gbufferTextures[kIndirectDiffuseClipmapCount] : register(t1, SPACE);
+#		define g_depthTex g_gbufferTextures[0]
+#		define g_gbufferRt1 g_gbufferTextures[1]
+#		define g_gbufferRt2 g_gbufferTextures[2]
 #	endif
 Texture2D<Vec4> g_envMap : register(t4, SPACE);
 
@@ -58,6 +59,7 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1, SPACE);
 // Samplers
 SamplerState g_linearClampAnySampler : register(s0, SPACE);
 SamplerComparisonState g_shadowSampler : register(s1, SPACE);
+SamplerState g_linearRepeatAnySampler : register(s2, SPACE);
 
 template<typename T>
 struct GBufferLight

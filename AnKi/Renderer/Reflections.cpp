@@ -386,6 +386,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
+			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 			struct Consts
 			{

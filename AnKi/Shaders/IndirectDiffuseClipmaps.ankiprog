@@ -324,11 +324,31 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	{
 		const Vec3 hitPos = probeWorldPos + dir * (rayT - 0.01);
 		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, tMax, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
+
+		// Apply indirect
+#	if 0
+		const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
+		const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
+		const Vec3 irradiance = sampleClipmapIrradianceAccurate(hitPos, gbuffer.m_worldNormal, g_globalRendererConstants.m_cameraPosition, lookDir,
+																g_globalRendererConstants.m_indirectDiffuseClipmaps, g_irradianceVolumes,
+																g_distanceMomentsVolumes, g_probeValidityVolumes, g_linearAnyRepeatSampler, noise);
+#	else
+		Clipmap clipmaps[kIndirectDiffuseClipmapCount];
+		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+		{
+			clipmaps[i] = g_globalRendererConstants.m_indirectDiffuseClipmaps[i];
+			clipmaps[i].m_aabbMin = clipmaps[i].m_prevFrameAabbMin;
+		}
+		const Vec3 irradiance = sampleClipmapIrradianceCheap(hitPos, gbuffer.m_worldNormal, clipmaps, g_irradianceVolumes, g_linearRepeatAnySampler);
+#	endif
+
+		radiance += irradiance * gbuffer.m_diffuse / kPi;
 	}
 
 	// Store result
+	const U32 raysPerProbePerFrame = square(g_consts.m_radianceOctMapSize / 2);
 	const F32 kMaxDist = 1000.0; // Chose something small and make sure its square doesn't overflow F16
-	TEX(g_lightResultTex, UVec2(probeIdx, outPixelIdx)) = HVec4(radiance, min(rayT, kMaxDist));
+	TEX(g_lightResultTex, UVec2(probeIdx, outPixelIdx + raysPerProbePerFrame * g_consts.m_clipmapIdx)) = HVec4(radiance, min(rayT, kMaxDist));
 }
 #endif // ANKI_RAY_GEN_SHADER
 
@@ -379,7 +399,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	noOctTexCoord = noOctTexCoord.xzy;
 
 	// Read the result from RT
-	const HVec4 comp = TEX(g_rtResultTex, UVec2(probeIdx, rtPixelIdx));
+	const HVec4 comp = TEX(g_rtResultTex, UVec2(probeIdx, rtPixelIdx + g_consts.m_clipmapIdx * raysPerProbePerFrame));
 	HVec3 radiance = comp.xyz;
 	const Vec2 moments = Vec2(comp.w, square(comp.w));
 	if(all(radiance == HVec3(1.0, 0.0, 1.0)))
@@ -482,7 +502,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		F32 invalidRayCount = 0.0;
 		for(U32 i = 0; i < raysPerProbePerFrame; ++i)
 		{
-			const HVec3 radiance = TEX(g_rtResultTex, UVec2(probeIdx, i));
+			const HVec3 radiance = TEX(g_rtResultTex, UVec2(probeIdx, i + g_consts.m_clipmapIdx * raysPerProbePerFrame));
 			if(all(radiance == HVec3(1.0, 0.0, 1.0)))
 			{
 				invalidRayCount += 1.0;
