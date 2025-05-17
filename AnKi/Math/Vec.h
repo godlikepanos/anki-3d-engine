@@ -144,7 +144,8 @@ public:
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_set_ps(w_, z_, y_, x_);
 #	else
-		m_simd = {x_, y_, z_, w_};
+		alignas(16) const T data[4] = {x_, y_, z_, w_};
+		m_simd = vld1q_f32(data);
 #	endif
 	}
 #endif
@@ -1971,7 +1972,7 @@ public:
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_add_ps(m_simd, b.m_simd));
 #	else
-		return TVec(m_simd + b.m_simd);
+		return TVec(vaddq_f32(m_simd, b.m_simd));
 #	endif
 	}
 #endif
@@ -2013,7 +2014,7 @@ public:
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_sub_ps(m_simd, b.m_simd));
 #	else
-		return TVec(m_simd - b.m_simd);
+		return TVec(vsubq_f32(m_simd, b.m_simd));
 #	endif
 	}
 #endif
@@ -2055,7 +2056,7 @@ public:
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_mul_ps(m_simd, b.m_simd));
 #	else
-		return TVec(m_simd * b.m_simd);
+		return TVec(vmulq_f32(m_simd, b.m_simd));
 #	endif
 	}
 #endif
@@ -2098,7 +2099,7 @@ public:
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_div_ps(m_simd, b.m_simd));
 #	else
-		return TVec(m_simd / b.m_simd);
+		return TVec(vdivq_f32(m_simd, b.m_simd));
 #	endif
 	}
 #endif
@@ -2141,7 +2142,7 @@ public:
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
 #	else
-		return TVec(-m_simd);
+		return TVec(veorq_s32(m_simd, vdupq_n_f32(-0.0)));
 #	endif
 	}
 #endif
@@ -2503,10 +2504,7 @@ public:
 #	if ANKI_SIMD_SSE
 		_mm_store_ss(&o, _mm_dp_ps(m_simd, b.m_simd, 0xF1));
 #	else
-		const float32x4_t tmp = m_simd * b.m_simd;
-		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
-		sum = vpadd_f32(sum, sum);
-		o = sum[0];
+		o = vaddvq_f32(vmulq_f32(m_simd, b.m_simd));
 #	endif
 		return o;
 	}
@@ -2519,41 +2517,37 @@ public:
 	}
 
 	/// It's like calculating the cross of a 3 component TVec.
-	[[nodiscard]] TVec cross(const TVec& b) const requires(kTComponentCount == 4 && !kVec4Simd)
+	[[nodiscard]] TVec cross(const TVec& b_) const requires(kTComponentCount == 4)
 	{
 		ANKI_ASSERT(w() == T(0));
-		ANKI_ASSERT(b.w() == T(0));
-		return TVec(xyz().cross(b.xyz()), T(0));
-	}
+		ANKI_ASSERT(b_.w() == T(0));
 
-#if ANKI_ENABLE_SIMD
-	[[nodiscard]] TVec cross(const TVec& b) const requires(kTComponentCount == 4 && kVec4Simd)
-	{
-		ANKI_ASSERT(w() == T(0));
-		ANKI_ASSERT(b.w() == T(0));
-#	if ANKI_SIMD_SSE
-		const auto& a = *this;
-		constexpr unsigned int mask0 = _MM_SHUFFLE(3, 0, 2, 1);
-		constexpr unsigned int mask1 = _MM_SHUFFLE(3, 1, 0, 2);
+#if ANKI_SIMD_SSE
+		const auto& a = m_simd;
+		const auto& b = b_.m_simd;
 
-		const __m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask0)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask1)));
-		const __m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask1)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask0)));
+		__m128 t1 = _mm_shuffle_ps(b, b, _MM_SHUFFLE(0, 0, 2, 1));
+		t1 = _mm_mul_ps(t1, a);
+		__m128 t2 = _mm_shuffle_ps(a, a, _MM_SHUFFLE(0, 0, 2, 1));
+		t2 = _mm_mul_ps(t2, b);
+		__m128 t3 = _mm_sub_ps(t1, t2);
 
-		return TVec(_mm_sub_ps(tmp0, tmp1));
-#	else
-		TVec out;
-		float32x4_t& c = out.m_simd;
-		const float32x4_t& v0 = m_simd;
-		const float32x4_t& v1 = b.m_simd;
+		return TVec(_mm_shuffle_ps(t3, t3, _MM_SHUFFLE(0, 0, 2, 1))).xyz0();
+#elif ANKI_SIMD_NEON
+		const auto& a = m_simd;
+		const auto& b = b_.m_simd;
 
-		c = v0 * __builtin_shufflevector(v1, v1, 1, 2, 0, 3);
-		c = vfmsq_f32(c, __builtin_shufflevector(v0, v0, 1, 2, 0, 3), v1);
-		c = __builtin_shufflevector(c, c, 1, 2, 0, 3);
+		float32x4_t t1 = ANKI_NEON_SHUFFLE_F32x4(b, b, 0, 0, 2, 1);
+		t1 = vmulq_f32(t1, a);
+		float32x4_t t2 = ANKI_NEON_SHUFFLE_F32x4(a, a, 0, 0, 2, 1);
+		t2 = vmulq_f32(t2, b);
+		float32x4_t t3 = vsubq_f32(t1, t2);
 
-		return out;
-#	endif
-	}
+		return TVec(ANKI_NEON_SHUFFLE_F32x4(t3, t3, 0, 0, 2, 1)).xyz0();
+#else
+		return TVec(xyz().cross(b_.xyz()), T(0));
 #endif
+	}
 
 	[[nodiscard]] TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 3)
 	{
@@ -2619,20 +2613,16 @@ public:
 	[[nodiscard]] TVec normalize() const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
-		const __m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
-		return TVec(_mm_mul_ps(m_simd, inverse_norm));
+		__m128 v = _mm_dp_ps(m_simd, m_simd, 0xFF);
+		v = _mm_sqrt_ps(v);
+		v = _mm_div_ps(m_simd, v);
+		return TVec(v);
 #	else
-		// Dot (len squared)
-		float32x4_t tmp = m_simd * m_simd;
-		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
-		sum = vpadd_f32(sum, sum);
-		float32x4_t lensq = vdupq_lane_f32(sum, 0);
-
-		// 1/sqrt(lensq)
-		float32x4_t mul = vrsqrteq_f32(lensq);
-
-		// Multiply
-		return TVec(m_simd * mul);
+		float32x4_t v = vmulq_f32(m_simd, m_simd);
+		v = vdupq_n_f32(vaddvq_f32(v));
+		v = vsqrtq_f32(v);
+		v = vdivq_f32(m_simd, v);
+		return TVec(v);
 #	endif
 	}
 #endif

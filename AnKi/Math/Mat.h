@@ -418,13 +418,13 @@ public:
 			float32x4_t t1, t2;
 
 			t1 = vmovq_n_f32(m(i, 0));
-			t2 = b.m_simd[0] * t1;
+			t2 = vmulq_f32(b.m_simd[0], t1);
 			t1 = vmovq_n_f32(m(i, 1));
-			t2 = b.m_simd[1] * t1 + t2;
+			t2 = vaddq_f32(vmulq_f32(b.m_simd[1], t1), t2);
 			t1 = vmovq_n_f32(m(i, 2));
-			t2 = b.m_simd[2] * t1 + t2;
+			t2 = vaddq_f32(vmulq_f32(b.m_simd[2], t1), t2);
 			t1 = vmovq_n_f32(m(i, 3));
-			t2 = b.m_simd[3] * t1 + t2;
+			t2 = vaddq_f32(vmulq_f32(b.m_simd[3], t1), t2);
 
 			out.m_simd[i] = t2;
 #	endif
@@ -1177,14 +1177,14 @@ public:
 			float32x4_t t1, t2;
 
 			t1 = vdupq_n_f32(a(i, 0));
-			t2 = b.m_simd[0] * t1;
+			t2 = vmulq_f32(b.m_simd[0], t1);
 			t1 = vdupq_n_f32(a(i, 1));
-			t2 = b.m_simd[1] * t1 + t2;
+			t2 = vaddq_f32(vmulq_f32(b.m_simd[1], t1), t2);
 			t1 = vdupq_n_f32(a(i, 2));
-			t2 = b.m_simd[2] * t1 + t2;
+			t2 = vaddq_f32(vmulq_f32(b.m_simd[2], t1), t2);
 
 			TVec<T, 4> v4(T(0), T(0), T(0), a(i, 3));
-			t2 += v4.getSimd();
+			t2 = vaddq_f32(v4.getSimd(), t2);
 
 			c.m_simd[i] = t2;
 		}

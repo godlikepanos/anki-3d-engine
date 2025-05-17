@@ -490,7 +490,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			ANKI_DXC_CHECK(dxRefl->GetInputParameterDesc(i, &in));
 
 			VertexAttributeSemantic a = VertexAttributeSemantic::kCount;
-#	define ANKI_ATTRIB_NAME(x, idx) CString(in.SemanticName) == #x&& in.SemanticIndex == idx
+#	define ANKI_ATTRIB_NAME(x, idx) CString(in.SemanticName) == #    x&& in.SemanticIndex == idx
 			if(ANKI_ATTRIB_NAME(POSITION, 0))
 			{
 				a = VertexAttributeSemantic::kPosition;
