@@ -109,44 +109,44 @@ inline float32x4_t neonSuffleFloat32x4(float32x4_t inV1, float32x4_t inV2)
 
 // Specializations
 template<>
-inline float32x4_t neonSuffleFloat32x4<0, 1, 2, 2>(float32x4_t inV1, float32x4_t inV2)
+inline float32x4_t neonSuffleFloat32x4<0, 1, 2, 2>(float32x4_t inV1, [[maybe_unused]] float32x4_t inV2)
 {
 	return vcombine_f32(vget_low_f32(inV1), vdup_lane_f32(vget_high_f32(inV1), 0));
 }
 
 template<>
-inline float32x4_t neonSuffleFloat32x4<0, 1, 3, 3>(float32x4_t inV1, float32x4_t inV2)
+inline float32x4_t neonSuffleFloat32x4<0, 1, 3, 3>(float32x4_t inV1, [[maybe_unused]] float32x4_t inV2)
 {
 	return vcombine_f32(vget_low_f32(inV1), vdup_lane_f32(vget_high_f32(inV1), 1));
 }
 
 template<>
-inline float32x4_t neonSuffleFloat32x4<0, 1, 2, 3>(float32x4_t inV1, float32x4_t inV2)
+inline float32x4_t neonSuffleFloat32x4<0, 1, 2, 3>(float32x4_t inV1, [[maybe_unused]] float32x4_t inV2)
 {
 	return inV1;
 }
 
 template<>
-inline float32x4_t neonSuffleFloat32x4<1, 0, 3, 2>(float32x4_t inV1, float32x4_t inV2)
+inline float32x4_t neonSuffleFloat32x4<1, 0, 3, 2>(float32x4_t inV1, [[maybe_unused]] float32x4_t inV2)
 {
 	return vcombine_f32(vrev64_f32(vget_low_f32(inV1)), vrev64_f32(vget_high_f32(inV1)));
 }
 
 template<>
-inline float32x4_t neonSuffleFloat32x4<2, 2, 1, 0>(float32x4_t inV1, float32x4_t inV2)
+inline float32x4_t neonSuffleFloat32x4<2, 2, 1, 0>(float32x4_t inV1, [[maybe_unused]] float32x4_t inV2)
 {
 	return vcombine_f32(vdup_lane_f32(vget_high_f32(inV1), 0), vrev64_f32(vget_low_f32(inV1)));
 }
 
 template<>
-inline float32x4_t neonSuffleFloat32x4<2, 3, 0, 1>(float32x4_t inV1, float32x4_t inV2)
+inline float32x4_t neonSuffleFloat32x4<2, 3, 0, 1>(float32x4_t inV1, [[maybe_unused]] float32x4_t inV2)
 {
 	return vcombine_f32(vget_high_f32(inV1), vget_low_f32(inV1));
 }
 
 // Used extensively by cross product
 template<>
-inline float32x4_t neonSuffleFloat32x4<1, 2, 0, 0>(float32x4_t inV1, float32x4_t inV2)
+inline float32x4_t neonSuffleFloat32x4<1, 2, 0, 0>(float32x4_t inV1, [[maybe_unused]] float32x4_t inV2)
 {
 	static uint8x16_t table = ANKI_NEON_UINT8x16(0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03);
 	return vreinterpretq_f32_u8(vqtbl1q_u8(vreinterpretq_u8_f32(inV1), table));

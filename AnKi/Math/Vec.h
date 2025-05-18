@@ -1992,7 +1992,7 @@ public:
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_add_ps(m_simd, b.m_simd);
 #	else
-		m_simd += b.m_simd;
+		m_simd = vaddq_f32(m_simd, b.m_simd);
 #	endif
 		return *this;
 	}
@@ -2076,7 +2076,7 @@ public:
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_mul_ps(m_simd, b.m_simd);
 #	else
-		m_simd *= b.m_simd;
+		m_simd = vmulq_f32(m_simd, b.m_simd);
 #	endif
 		return *this;
 	}
@@ -2120,7 +2120,7 @@ public:
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_div_ps(m_simd, b.m_simd);
 #	else
-		m_simd /= b.m_simd;
+		m_simd = vdivq_f32(m_simd, b.m_simd);
 #	endif
 		return *this;
 	}

@@ -7,8 +7,8 @@ on:
     branches: [ master ]
 
 jobs:
-  Debug_VK:
-    name: "Debug_VK"
+  Debug_x64_VK:
+    name: "Debug_x64_VK"
     runs-on: windows-latest
 
     steps:
@@ -21,8 +21,8 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Debug
 
-  Debug_D3D:
-    name: "Debug_D3D"
+  Debug_x64_D3D:
+    name: "Debug_x64_D3D"
     runs-on: windows-latest
 
     steps:
@@ -35,8 +35,22 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Debug
 
-  Release_VK:
-    name: "Release_VK"
+  Debug_arm64_VK:
+    name: "Debug_arm64_VK"
+    runs-on: windows-11-arm
+
+    steps:
+    - name: Clone
+      uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Debug
+
+  Release_x64_VK:
+    name: "Release_x64_VK"
     runs-on: windows-latest
 
     steps:
@@ -49,8 +63,8 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
 
-  Release_D3D:
-    name: "Release_D3D"
+  Release_x64_D3D:
+    name: "Release_x64_D3D"
     runs-on: windows-latest
 
     steps:
@@ -63,8 +77,8 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
 
-  DLSS:
-    name: "DLSS"
+  DLSS_x64:
+    name: "DLSS_x64"
     runs-on: windows-latest
 
     steps:
