@@ -2034,7 +2034,7 @@ public:
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_sub_ps(m_simd, b.m_simd);
 #	else
-		m_simd -= b.m_simd;
+		m_simd = vsubq_f32(m_simd, b.m_simd);
 #	endif
 		return *this;
 	}

@@ -16,12 +16,20 @@ non proprietary products as long as you follow the conditions of the license.
 
 See the [LICENSE](LICENSE) file for more info.
 
-2 Building AnKi
+2 Supported platforms and APIs
+==============================
+
+| OS      | CPU Arch    | GFX API       |
+|---------|-------------|---------------|
+| Linux   | x64         | Vulkan        |
+| Windows | x64 & arm64 | Vulkan & DX12 |
+| Android | arm64       | Vulkan        |
+
+3 Building AnKi
 ===============
 
 ![Build Status Linux](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Linux.yml/badge.svg)
 ![Build Status Windows](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Windows.yml/badge.svg)
-![Build Status Android](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Android.yml/badge.svg)
 
 To checkout the source type:
 
@@ -30,7 +38,7 @@ To checkout the source type:
 AnKi's build system is using `CMake`. A great effort was made to ease the building process that's why the number of
 external dependencies are almost none.
 
-2.1 On Linux
+3.1 On Linux
 ------------
 
 Prerequisites:
@@ -57,7 +65,7 @@ To view and configure the build options you can use `ccmake` tool or other simil
 
 This will open an interface with all the available options.
 
-2.2 On Windows
+3.2 On Windows
 --------------
 
 Prerequisites:
@@ -65,7 +73,7 @@ Prerequisites:
 - Cmake 3.10 and up
 - Python 3.0 and up
 	- Make sure that the python executable's location is in `PATH` environment variable
-- Microsoft Visual Studio 2017 and up
+- Microsoft Visual Studio 2022 and up
 	- Make sure that `Windows 10 SDK (xxx) for Desktop C++ [x86 and x64]` component is installed
 
 To build the release version open `PowerShell` and type:
@@ -73,7 +81,7 @@ To build the release version open `PowerShell` and type:
 	$cd path/to/anki
 	$mkdir build
 	$cd build
-	$cmake .. -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release
+	$cmake .. -G "Visual Studio 17 2022 Win64" -DCMAKE_BUILD_TYPE=Release
 	$cmake --build . --config Release
 
 Alternatively, recent Visual Studio versions support building CMake projects from inside the IDE:
@@ -83,7 +91,7 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 - Visual Studio will automatically understand that AnKi is a CMake project and it will populate the CMake cache
 - Press "build all"
 
-2.3 For Android
+3.3 For Android
 ---------------
 
 Prerequisites:
@@ -111,7 +119,7 @@ the script will create a directory named `AndroidProject_Sponza`.
 
 Then you can open the `AndroidProject_Sponza` project from `Android Studio` and build it, debug it, run it etc.
 
-3 Next steps
+4 Next steps
 ============
 
 This code repository contains **4 sample projects** that are built by default (`ANKI_BUILD_SAMPLES` CMake option):
@@ -131,8 +139,8 @@ On Linux:
 On Windows just find the `Sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
 prints some information, including possible errors.
 
-4 Contributing
+5 Contributing
 ==============
 
-There are no special rules if you want to contribute. Just create a PR. But before you do that, carefully read the
+There are no special rules if you want to contribute. If it's something small just create a PR. If it's something big contact the lead mentainer first and before you start writing any code because we can't accept any change upstream. Also, carefully read the
 [code style guide](Docs/CodeStyle.md).
