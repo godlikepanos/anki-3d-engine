@@ -16,19 +16,37 @@ namespace anki {
 
 inline BoolCVar g_rtIndirectDiffuseClipmapsCVar("R", "RtIndirectDiffuseClipmaps", false);
 
-inline NumericCVar<U32> g_indirectDiffuseClipmapProbesXZCVar("R", "IndirectDiffuseClipmapProbesXZ", 32, 10, 100,
+constexpr U32 kDefaultClipmapProbeCountXZ = 32;
+constexpr U32 kDefaultClipmapProbeCountY = 12;
+constexpr F32 kDefaultClipmap0ProbeSize = 1.5f;
+constexpr F32 kDefaultClipmap1ProbeSize = 3.0f;
+constexpr F32 kDefaultClipmap2ProbeSize = 6.0f;
+
+inline NumericCVar<U32> g_indirectDiffuseClipmapProbesXZCVar("R", "IndirectDiffuseClipmapProbesXZ", kDefaultClipmapProbeCountXZ, 10, 100,
 															 "The cell count of each dimension of 1st clipmap");
-inline NumericCVar<U32> g_indirectDiffuseClipmapProbesYCVar("R", "IndirectDiffuseClipmapProbesY", 8, 4, 100,
+inline NumericCVar<U32> g_indirectDiffuseClipmapProbesYCVar("R", "IndirectDiffuseClipmapProbesY", kDefaultClipmapProbeCountY, 4, 100,
 															"The cell count of each dimension of 1st clipmap");
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap0XZSizeCVar("R", "IndirectDiffuseClipmap0XZSize", 48.0, 10.0, 1000.0, "The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap0YSizeCVar("R", "IndirectDiffuseClipmap0YSize", 12.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap0XZSizeCVar("R", "IndirectDiffuseClipmap0XZSize",
+															F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap0ProbeSize, 10.0, 1000.0,
+															"The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap0YSizeCVar("R", "IndirectDiffuseClipmap0YSize",
+														   F32(kDefaultClipmapProbeCountY) * kDefaultClipmap0ProbeSize, 10.0, 1000.0,
+														   "The clipmap size in meters");
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap1XZSizeCVar("R", "IndirectDiffuseClipmap1XZSize", 96.0, 10.0, 1000.0, "The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap1YSizeCVar("R", "IndirectDiffuseClipmap1YSize", 24.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap1XZSizeCVar("R", "IndirectDiffuseClipmap1XZSize",
+															F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap1ProbeSize, 10.0, 1000.0,
+															"The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap1YSizeCVar("R", "IndirectDiffuseClipmap1YSize",
+														   F32(kDefaultClipmapProbeCountY) * kDefaultClipmap1ProbeSize, 10.0, 1000.0,
+														   "The clipmap size in meters");
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap2XZSizeCVar("R", "IndirectDiffuseClipmap2XZSize", 192.0, 10.0, 1000.0, "The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap2YSizeCVar("R", "IndirectDiffuseClipmap2YSize", 48.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap2XZSizeCVar("R", "IndirectDiffuseClipmap2XZSize",
+															F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap2ProbeSize, 10.0, 1000.0,
+															"The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap2YSizeCVar("R", "IndirectDiffuseClipmap2YSize",
+														   F32(kDefaultClipmapProbeCountY) * kDefaultClipmap2ProbeSize, 10.0, 1000.0,
+														   "The clipmap size in meters");
 
 inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceOctMapSize(
 	"R", "IndirectDiffuseClipmapRadianceOctMapSize", 10,
@@ -55,7 +73,7 @@ public:
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
-		handles[0] = m_runCtx.m_tmpRt;
+		handles[0] = m_runCtx.m_appliedGiRt;
 	}
 
 	const Array<Clipmap, kIndirectDiffuseClipmapCount>& getClipmapsInfo() const
@@ -65,6 +83,11 @@ public:
 
 	void drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
 
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_appliedGiRt;
+	}
+
 private:
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
@@ -72,7 +95,7 @@ private:
 
 	RenderTargetDesc m_rtResultRtDesc;
 	Array<RenderTargetDesc, kIndirectDiffuseClipmapCount> m_probeValidityRtDescs;
-	RenderTargetDesc m_tmpRtDesc; // TODO rm
+	RenderTargetDesc m_appliedGiRtDesc;
 
 	Array<Clipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
 
@@ -82,7 +105,7 @@ private:
 	ShaderProgramPtr m_libraryGrProg;
 	ShaderProgramPtr m_populateCachesGrProg;
 	ShaderProgramPtr m_computeIrradianceGrProg;
-	ShaderProgramPtr m_tmpVisGrProg;
+	ShaderProgramPtr m_applyGiGrProg;
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_visProbesGrProg;
 
@@ -97,7 +120,7 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_tmpRt;
+		RenderTargetHandle m_appliedGiRt;
 		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_probeValidityRts;
 	} m_runCtx;
 };

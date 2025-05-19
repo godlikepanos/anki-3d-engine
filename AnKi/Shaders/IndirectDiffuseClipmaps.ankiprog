@@ -12,7 +12,7 @@
 #pragma anki technique RtMaterialFetch rgen mutators
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE
-#pragma anki technique Test comp mutators
+#pragma anki technique Apply comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
 // #define ANKI_ASSERTIONS_ENABLED 1
@@ -138,7 +138,8 @@ Vec3 sampleClipmapIrradianceCommon(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos
 	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
 	const Vec3 fakeVolumeSize = clipmap.m_probeCounts; // Volume size without the octahedron
 
-	const Vec3 biasedWorldPos = samplePoint + normal * min3(probeSize) * 0.1;
+	const Vec3 biasDir = normalize(cameraPos - samplePoint);
+	const Vec3 biasedWorldPos = samplePoint + biasDir * probeSize * 0.2;
 
 	F32 octahedronSize = 0.0;
 	Vec3 realVolumeSize;
@@ -218,7 +219,8 @@ Vec3 sampleClipmapIrradianceCommon(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos
 				chebyshevWeight = variance / (variance + (v * v));
 
 				// Increase the contrast in the weight
-				chebyshevWeight = max((chebyshevWeight * chebyshevWeight * chebyshevWeight), 0.05);
+				chebyshevWeight = chebyshevWeight * chebyshevWeight * chebyshevWeight;
+				chebyshevWeight = max(chebyshevWeight, 0.05);
 			}
 
 			w *= chebyshevWeight;
@@ -652,9 +654,9 @@ groupshared Vec3 g_irradianceResults[kThreadCount];
 #endif
 
 // ===========================================================================
-// Test                                                                      =
+// Apply                                                                     =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Test)
+#if NOT_ZERO(ANKI_TECHNIQUE_Apply)
 Texture2D<Vec4> g_depthTex : register(t0);
 Texture2D<Vec4> g_gbufferRt2 : register(t1);
 

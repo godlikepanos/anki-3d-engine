@@ -31,10 +31,9 @@ Error LightShading::init()
 {
 	{
 		// Load shaders and programs
-		ANKI_CHECK(loadShaderProgram(
-			"ShaderBinaries/LightShading.ankiprogbin",
-			{{"INDIRECT_DIFFUSE_TEX", GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar}},
-			m_lightShading.m_prog, m_lightShading.m_grProg));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShading.ankiprogbin",
+									 {{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseClipmapsEnabled()}}, m_lightShading.m_prog,
+									 m_lightShading.m_grProg));
 
 		// Create RT descr
 		const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -87,9 +86,9 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar)
+		if(getRenderer().isIndirectDiffuseClipmapsEnabled())
 		{
-			rgraphCtx.bindSrv(2, 0, getRenderer().getIndirectDiffuse().getRt());
+			rgraphCtx.bindSrv(2, 0, getRenderer().getIndirectDiffuseClipmaps().getRt());
 		}
 		else
 		{
@@ -282,9 +281,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getReflections().getRt(), readUsage);
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar)
+	if(getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
-		pass.newTextureDependency(getRenderer().getIndirectDiffuse().getRt(), TextureUsageBit::kSrvPixel);
+		pass.newTextureDependency(getRenderer().getIndirectDiffuseClipmaps().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
 	// Fog

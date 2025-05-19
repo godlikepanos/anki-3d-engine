@@ -8,7 +8,6 @@
 ANKI_RENDERER_OBJECT_DEF(GBuffer, gbuffer, 1)
 ANKI_RENDERER_OBJECT_DEF(GBufferPost, gbufferPost, 1)
 ANKI_RENDERER_OBJECT_DEF(ShadowMapping, shadowMapping, 1)
-ANKI_RENDERER_OBJECT_DEF(LightShading, lightShading, 1)
 ANKI_RENDERER_OBJECT_DEF(ForwardShading, forwardShading, 1)
 ANKI_RENDERER_OBJECT_DEF(LensFlare, lensFlare, 1)
 ANKI_RENDERER_OBJECT_DEF(Bloom, bloom2, 1)
@@ -30,6 +29,7 @@ ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuil
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
 							 && (g_rayTracedShadowsCVar || g_rtMaterialFetchDbgCVar || g_rtReflectionsCVar || g_rtIndirectDiffuseCVar
 								 || g_rtIndirectDiffuseClipmapsCVar))
+ANKI_RENDERER_OBJECT_DEF(LightShading, lightShading, 1)
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalUpscaler, temporalUpscaler, 1)
 ANKI_RENDERER_OBJECT_DEF(VrsSriGeneration, vrsSriGeneration, 1)
