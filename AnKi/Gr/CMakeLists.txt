@@ -35,6 +35,14 @@ set(backend_headers
 	BackendCommon/Format.def.h
 	Utils/SegregatedListsGpuMemoryPool.h)
 
+if(ARM)
+	set(cpu_arch "ARM64")
+elseif(X86)
+	set(cpu_arch "x64")
+else()
+	message(FATAL_ERROR "Unhandled case")
+endif()
+
 if(VULKAN)
 	file(GLOB_RECURSE vksources Vulkan/*.cpp)
 	file(GLOB_RECURSE vkseaders Vulkan/*.h)
@@ -48,7 +56,7 @@ elseif(DIRECTX)
 	set(backend_sources  ${backend_sources} ${dxsources})
 	set(backend_headers ${backend_headers} ${dxheaders})
 
-	find_library(PIX_LIB WinPixEventRuntime HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/x64")
+	find_library(PIX_LIB WinPixEventRuntime HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/${cpu_arch}")
 
 	set(extra_libs ${extra_libs} d3d12 dxgi dxguid ${PIX_LIB}) # dxguid for some debug layer stuff
 
@@ -102,11 +110,11 @@ endif()
 
 # Copy DX DLLs next to the binaries
 if(DIRECTX)
-	file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.dll")
-	file(GLOB FILES_TO_COPY2 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.pdb")
-	file(GLOB FILES_TO_COPY3 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/x64/*.dll")
-	file(GLOB FILES_TO_COPY4 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Warp/bin/x64/*.dll")
-	file(GLOB FILES_TO_COPY5 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Warp/bin/x64/*.pdb")
+	file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/${cpu_arch}/*.dll")
+	file(GLOB FILES_TO_COPY2 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/${cpu_arch}/*.pdb")
+	file(GLOB FILES_TO_COPY3 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/${cpu_arch}/*.dll")
+	file(GLOB FILES_TO_COPY4 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Warp/bin/${cpu_arch}/*.dll")
+	file(GLOB FILES_TO_COPY5 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Warp/bin/${cpu_arch}/*.pdb")
 
 	list(APPEND FILES_TO_COPY ${FILES_TO_COPY2} ${FILES_TO_COPY3} ${FILES_TO_COPY4} ${FILES_TO_COPY5})
 

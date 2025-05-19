@@ -49,6 +49,20 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Debug
 
+  Debug_arm64_D3D:
+    name: "Debug_arm64_D3D"
+    runs-on: windows-11-arm
+
+    steps:
+    - name: Clone
+      uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON -DANKI_GR_BACKEND=DIRECTX
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Debug
+
   Release_x64_VK:
     name: "Release_x64_VK"
     runs-on: windows-latest

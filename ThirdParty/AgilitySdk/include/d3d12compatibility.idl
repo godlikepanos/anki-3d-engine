@@ -82,6 +82,9 @@ interface DirectMLTensorFlowCreatorID : IUnknown { };
 [uuid(af029192-fba1-4b05-9116-235e06560354), object, local, pointer_default(unique)]
 interface DirectMLPyTorchCreatorID : IUnknown { };
 
+[uuid(fdf01a76-1e11-450f-902b-74f04ea08094), object, local, pointer_default(unique)]
+interface DirectMLWebNNCreatorID : IUnknown { };
+
 
 cpp_quote("#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_GAMES) */")
 #pragma endregion
@@ -94,3 +97,4 @@ cpp_quote( "DEFINE_GUID(IID_OpenCLOn12CreatorID,0x3f76bb74,0x91b5,0x4a88,0xb1,0x
 cpp_quote( "DEFINE_GUID(IID_VulkanOn12CreatorID,0xbc806e01,0x3052,0x406c,0xa3,0xe8,0x9f,0xc0,0x7f,0x04,0x8f,0x98);" )
 cpp_quote( "DEFINE_GUID(IID_DirectMLTensorFlowCreatorID,0xcb7490ac,0x8a0f,0x44ec,0x9b,0x7b,0x6f,0x4c,0xaf,0xe8,0xe9,0xab);" )
 cpp_quote( "DEFINE_GUID(IID_DirectMLPyTorchCreatorID,0xaf029192,0xfba1,0x4b05,0x91,0x16,0x23,0x5e,0x06,0x56,0x03,0x54);" )
+cpp_quote( "DEFINE_GUID(IID_DirectMLWebNNCreatorID,0xfdf01a76,0x1e11,0x450f,0x90,0x2b,0x74,0xf0,0x4e,0xa0,0x80,0x94);" )

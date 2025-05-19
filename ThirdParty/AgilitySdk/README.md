@@ -12,9 +12,58 @@ The included licenses apply to the following files:
 - **LICENSE-CODE.txt** : applies to all files under `build/native/include/`
 
 ## Changelog
+### Version 1.615.1
+- Fix placed resource initialization validation bug related to plane validation
+- Fix a bug where GBV patching will crash when initializing if the caller didn't request a debug info parser
+
+### Version 1.615.0
+- D3D12 officially supports applications opting to bypass shader hash validation.
+
+### Version 1.715.0
+- Preview of mesh nodes in work graphs
+
+### Version 1.714.0
+- Preview release of DirectSR
+  - Supports both native and built-in Super Resolution techniques ("variants")
 
 ### Version 1.614.0
 - Enabled R9G9B9E5_SHAREDEXP format for Render Target and Unordered Access Views
+
+### Version 1.613.3
+
+- Same as 1.613.2, with minor updates shown at the end of this list:
+- Work Graphs
+- Generic Programs in State objects
+- Shader Model 6.8
+  - Work Graphs support
+  - Start Vertex/Instance Location
+  - Wave Size Range
+  - Expanded Comparison Sampling
+- GPU Upload Heaps (requires preview or future OS, or current OS in developer mode)
+- Incrementing Constants in ExecuteIndirect
+- Minor updates for .3:
+   - Honor root signature associations added to export in collections when the export is imported into generic program in an executable state object.
+   - Propagate root signatures to exports that have bindings and no root signatures within the scope of a generic program, like what happens with PSOs.
+   - Other generic programs related bug fixes, additional validation and optimizations.
+   - For state objects, minor fixes to subobject association logic in edge cases involving collections to more precisely match spec wording.
+   - GPU Upload Heaps can now be used with a current OS in developer mode, in addition to preview and future OS that don't require developer mode.
+
+### Version 1.613.2
+
+- Same as 1.613.1, with minor updates shown at the end of this list:
+- Work Graphs
+- Generic Programs in State objects
+- Shader Model 6.8
+  - Work Graphs support
+  - Start Vertex/Instance Location
+  - Wave Size Range
+  - Expanded Comparison Sampling
+- GPU Upload Heaps (requires preview or future OS)
+- Incrementing Constants in ExecuteIndirect
+- Minor updates for .2:
+   - Close validation hole: Prevent use of features in incompatible state object types, such as defining generic program components (like rast state) in a raytracing pipeline.
+   - Debug layer fixes around lifetime management of program identifiers (e.g. the handles for the new generic programs)
+   - ExecuteIndirect validation was too strict: buffer size only needs to be big enough for the number of commands * stride, _minus the unused space at end of last command_
 
 ### Version 1.613.1
 

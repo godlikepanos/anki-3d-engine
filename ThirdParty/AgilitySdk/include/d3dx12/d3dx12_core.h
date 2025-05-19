@@ -1464,7 +1464,7 @@ inline const CD3DX12_RESOURCE_DESC1* D3DX12ConditionallyExpandAPIDesc(
                 }
                 return uiRet;
             };
-            auto Max = [](UINT64 const & a, UINT64 const & b)
+            auto Max = [](UINT64 const& a, UINT64 const& b)
             {
                 return (a < b) ? b : a;
             };

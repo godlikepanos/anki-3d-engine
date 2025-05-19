@@ -29,7 +29,7 @@
 
 // Use the Agility SDK
 extern "C" {
-__declspec(dllexport) extern const UINT D3D12SDKVersion = 614; // Number taken from the download page
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 615; // Number taken from the download page
 __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; // The D3D12Core.dll should be in the same dir as the .exe
 }
 
