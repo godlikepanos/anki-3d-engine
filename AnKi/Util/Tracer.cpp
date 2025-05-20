@@ -10,7 +10,7 @@
 #if ANKI_OS_ANDROID
 #	include <ThirdParty/StreamlineAnnotate/streamline_annotate.h>
 #endif
-#if ANKI_GR_BACKEND_DIRECT3D
+#if ANKI_GR_BACKEND_DIRECT3D && ANKI_TRACING_ENABLED
 #	if !defined(WIN32_LEAN_AND_MEAN)
 #		define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers.
 #	endif
