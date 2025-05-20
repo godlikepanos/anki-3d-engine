@@ -114,6 +114,19 @@ public:
 	}
 #	endif
 
+#	if ANKI_GR_BACKEND_DIRECT3D
+	Bool getPixEnabled() const
+	{
+		return m_pixEnabled;
+	}
+
+	void setPixEnabled(Bool enabled)
+	{
+		ANKI_UTIL_LOGI("PIX CPU annotations %s", (enabled) ? "enabled" : "disabled");
+		m_pixEnabled = enabled;
+	}
+#	endif
+
 private:
 	static constexpr U32 kEventsPerChunk = 256;
 	static constexpr U32 kCountersPerChunk = 512;
@@ -129,7 +142,12 @@ private:
 	Mutex m_allThreadLocalMtx;
 
 	Bool m_enabled = false;
+#	if ANKI_OS_ANDROID
 	Bool m_streamlineEnabled = false;
+#	endif
+#	if ANKI_GR_BACKEND_DIRECT3D
+	Bool m_pixEnabled = true;
+#	endif
 
 	Tracer();
 

@@ -10,6 +10,14 @@
 #if ANKI_OS_ANDROID
 #	include <ThirdParty/StreamlineAnnotate/streamline_annotate.h>
 #endif
+#if ANKI_GR_BACKEND_DIRECT3D
+#	if !defined(WIN32_LEAN_AND_MEAN)
+#		define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers.
+#	endif
+#	include <windows.h>
+#	define USE_PIX ANKI_TRACING_ENABLED
+#	include <pix3.h>
+#endif
 
 namespace anki {
 
@@ -106,6 +114,14 @@ TracerEventHandle Tracer::beginEvent([[maybe_unused]] const char* eventName)
 			ANNOTATE_COLOR(ANNOTATE_RED, eventName);
 		}
 #	endif
+
+#	if ANKI_GR_BACKEND_DIRECT3D
+		if(m_pixEnabled)
+		{
+			const U32 green = PIX_COLOR(0, 255, 0);
+			PIXBeginEvent(green, "%s", eventName);
+		}
+#	endif
 	}
 	else
 	{
@@ -126,6 +142,13 @@ void Tracer::endEvent(const char* eventName, TracerEventHandle event)
 	if(m_streamlineEnabled)
 	{
 		ANNOTATE_END();
+	}
+#	endif
+
+#	if ANKI_GR_BACKEND_DIRECT3D
+	if(m_pixEnabled)
+	{
+		PIXEndEvent();
 	}
 #	endif
 

@@ -60,7 +60,7 @@ All **macros and defines** should be SCREAMING_SNAKE_CASE and they should have a
 
 All **template typedefs** should start with `T`. The rule doesn't apply in constant template arguments.
 
-	template<typename TSomething, typename TOther, U32 kSomeConst>
+	template<typename TSomeType, typename TSomeOtherType, U32 kSomeConst>
 
 All **function and method names** should form a sentence with at least one verb.
 
@@ -74,9 +74,7 @@ All **function and method names** should form a sentence with at least one verb.
 - All member variables have the `m_` prefix. That applies to classes and structs.
 - All global variables have the `g_` prefix.
 
-In HLSL there are more exceptions:
-
-- All groupshared variables use the `s_` prefix.
+Same rules apply to HLSL.
 
 **Variables that act as a measure for quantity** should have the `count` suffix. Not `num` or `numberOf` or similar.
 
@@ -117,13 +115,15 @@ C++ rules
 	using U32 = uint32_t;
 	using Func = void(*)(int, int);
 
-**Never use C-style casting**. Use static_cast, reinterpret_cast or const_cast for most cases and constructor-like cast for fudmental types.
+**Never use C-style casting**. Use static_cast, reinterpret_cast or const_cast. For for type conversions of fudmental types use constructor-like cast.
 
-	Derived* d = static_cast<Derived*>(base);
 
-	uint i = uint(1.1f); // uint is fudmental type
+	Derived* d = (Derived*)base;              // NO
+	Derived* d = static_cast<Derived*>(base); // YES!!
 
-**Always use `constexpr`** when applicable. Never use defines for constants.
+	uint i = uint(1.1f); // uint is fudmental type and the expression does a type conversion, in that case use constructor-like cast
+
+**Always use `constexpr`** as much as possible. Also, avoid using defines for constants.
 
 	constexpr uint kSomeConst = ...; // YES!!
 	#define SOME_CONST ...           // NO
