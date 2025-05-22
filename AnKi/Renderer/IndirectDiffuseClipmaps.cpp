@@ -399,17 +399,16 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+
 			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 			{
-				rgraphCtx.bindSrv(0, 0, radianceVolumes[clipmap]);
-				rgraphCtx.bindUav(0, 0, irradianceVolumes[clipmap]);
-
-				const UVec4 consts(clipmap);
-				cmdb.setFastConstants(&consts, sizeof(consts));
-
-				cmdb.dispatchCompute(m_clipmapInfo[clipmap].m_probeCountTotal, g_indirectDiffuseClipmapIrradianceOctMapSize,
-									 g_indirectDiffuseClipmapIrradianceOctMapSize);
+				rgraphCtx.bindSrv(clipmap, 0, radianceVolumes[clipmap]);
+				rgraphCtx.bindUav(clipmap, 0, irradianceVolumes[clipmap]);
 			}
+
+			cmdb.dispatchCompute(m_clipmapInfo[0].m_probeCounts[0] * kIndirectDiffuseClipmapCount, m_clipmapInfo[0].m_probeCounts[1],
+								 m_clipmapInfo[0].m_probeCounts[2]);
 		});
 	}
 

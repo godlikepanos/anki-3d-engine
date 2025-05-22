@@ -577,7 +577,6 @@ F32 computeMipLevel(Vec2 normalizedUvs)
 }
 #endif
 
-#if ANKI_SUPPORTS_64BIT_TYPES
 /// The regular firstbitlow in DXC has some issues since it invokes a builtin that is only supposed to be used with
 /// 32bit input. This is an alternative implementation but it expects that the input is not zero.
 I32 firstbitlow2(U64 v)
@@ -586,7 +585,6 @@ I32 firstbitlow2(U64 v)
 	const I32 lsb2 = firstbitlow((U32)(v >> 32ul));
 	return (lsb1 >= 0) ? lsb1 : lsb2 + 32;
 }
-#endif
 
 /// Define an alternative firstbitlow to go in pair with the 64bit version.
 I32 firstbitlow2(U32 v)
@@ -594,14 +592,12 @@ I32 firstbitlow2(U32 v)
 	return firstbitlow(v);
 }
 
-#if ANKI_SUPPORTS_64BIT_TYPES
 /// The regular firstbitlow in DXC has some issues since it invokes a builtin that is only supposed to be used with
 /// 32bit input. This is an alternative implementation but it expects that the input is not zero.
 U32 countbits2(U64 v)
 {
 	return countbits(U32(v)) + countbits(U32(v >> 32ul));
 }
-#endif
 
 /// Encode the shading rate to be stored in an SRI. The rates should be power of two, can't be zero and can't exceed 4.
 /// So the possible values are 1,2,4

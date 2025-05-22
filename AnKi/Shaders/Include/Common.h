@@ -5,8 +5,6 @@
 
 #pragma once
 
-#define ANKI_SUPPORTS_64BIT_TYPES !ANKI_PLATFORM_MOBILE
-
 //! == C++ =============================================================================================================
 #if defined(__cplusplus)
 
@@ -180,7 +178,6 @@ constexpr uint kSizeof_IVec3 = 12u;
 typedef int32_t4 IVec4;
 constexpr uint kSizeof_IVec4 = 16u;
 
-#	if ANKI_SUPPORTS_64BIT_TYPES
 typedef uint64_t U64;
 constexpr uint kSizeof_U64 = 8u;
 typedef uint64_t2 U64Vec2;
@@ -198,7 +195,6 @@ typedef int64_t3 I64Vec3;
 constexpr uint kSizeof_I64Vec3 = 24u;
 typedef int64_t4 I64Vec4;
 constexpr uint kSizeof_I64Vec4 = 32u;
-#	endif
 
 typedef bool Bool;
 
