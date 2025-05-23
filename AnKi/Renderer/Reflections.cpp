@@ -351,10 +351,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
 
-			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-			rgraphCtx.bindSrv(1, 2, getRenderer().getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(2, 2, getRenderer().getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(3, 2, getRenderer().getGBuffer().getColorRt(2));
+			U32 srv = 0;
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
 			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
@@ -362,24 +360,32 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
 			if(bSkySolidColor)
 			{
-				cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			}
 			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 			{
-				cmdb.bindSrv(4, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(srv++, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
 			}
 			else
 			{
-				rgraphCtx.bindSrv(4, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
+				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
 			}
 
-			cmdb.bindSrv(
-				5, 2,
-				(GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
-					? GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView()
-					: BufferView(getDummyGpuResources().m_buffer.get(), 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize()));
-			cmdb.bindSrv(6, 2, pixelsFailedSsrBuff);
-			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getShadowMapping().getShadowmapRt());
+
+			const auto& arr = GpuSceneArrays::GlobalIlluminationProbe::getSingleton();
+			cmdb.bindSrv(srv++, 2,
+						 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
+			cmdb.bindSrv(srv++, 2, pixelsFailedSsrBuff);
+
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount * 3; ++clipmap)
+			{
+				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture3DSrv.get(), TextureSubresourceDesc::all()));
+			}
+
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getColorRt(2));
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);

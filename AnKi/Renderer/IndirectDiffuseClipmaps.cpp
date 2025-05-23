@@ -274,7 +274,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvCompute);
 		}
 
-		pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, irradianceVolumes](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, irradianceVolumes, probeValidityVolumes,
+					  distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());
@@ -295,12 +296,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
 
-			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				rgraphCtx.bindSrv(1 + clipmap, 2, irradianceVolumes[clipmap]);
-			}
+			U32 srv = 0;
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
 			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
@@ -308,20 +305,39 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
 			if(bSkySolidColor)
 			{
-				cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			}
 			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 			{
-				cmdb.bindSrv(4, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(srv++, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
 			}
 			else
 			{
-				rgraphCtx.bindSrv(4, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
+				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
 			}
 
-			cmdb.bindSrv(5, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
-			cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
-			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getShadowMapping().getShadowmapRt());
+
+			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
+			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
+
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(srv++, 2, irradianceVolumes[clipmap]);
+			}
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(srv++, 2, probeValidityVolumes[clipmap]);
+			}
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(srv++, 2, distanceMomentsVolumes[clipmap]);
+			}
+
+			for(U32 i = 0; i < 3; ++i)
+			{
+				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			}
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
@@ -338,7 +354,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				const UVec4 consts(clipmap, g_indirectDiffuseClipmapRadianceOctMapSize, 0, 0);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
-				const U32 probeCount = U32(m_clipmapInfo[0].m_probeCountTotal);
+				const U32 probeCount = m_clipmapInfo[0].m_probeCountTotal;
 				cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 							   probeCount * raysPerProbePerFrame, 1, 1);
 			}

@@ -647,6 +647,7 @@ Vec3 decodeAtomicColor(U32 x, U32 y)
 		irradianceTexelCoord.y += y;
 
 		const Vec3 irradiance = decodeAtomicColor(x, y) * k2Pi;
+
 		TEX(g_irradianceVolumes[clipmapIdx], irradianceTexelCoord).xyz = irradiance;
 
 		// Write the borders
@@ -720,7 +721,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 														 g_linearAnyRepeatSampler);
 #	endif
 
-	g_outTex[svDispatchThreadId.xy].xyz = irradiance;
+	TEX(g_outTex, svDispatchThreadId.xy).xyz = irradiance;
 }
 #endif
 

@@ -27,25 +27,31 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0,
 
 // SRVs
 RaytracingAccelerationStructure g_tlas : register(t0, SPACE);
-#	if defined(CLIPMAP_VOLUME)
-Texture3D<Vec4> g_irradianceVolumes[kIndirectDiffuseClipmapCount] : register(t1, SPACE);
-#	else
-Texture2D<Vec4> g_gbufferTextures[kIndirectDiffuseClipmapCount] : register(t1, SPACE);
-#		define g_depthTex g_gbufferTextures[0]
-#		define g_gbufferRt1 g_gbufferTextures[1]
-#		define g_gbufferRt2 g_gbufferTextures[2]
-#	endif
-Texture2D<Vec4> g_envMap : register(t4, SPACE);
+
+Texture2D<Vec4> g_envMap : register(t1, SPACE);
+Texture2D<Vec4> g_shadowAtlasTex : register(t2, SPACE);
 
 #	if defined(CLIPMAP_VOLUME)
-StructuredBuffer<U32> g_dummyBuff1 : register(t5, SPACE);
-StructuredBuffer<U32> g_dummyBuff2 : register(t6, SPACE);
+StructuredBuffer<U32> g_dummyBuff1 : register(t3, SPACE);
+StructuredBuffer<U32> g_dummyBuff2 : register(t4, SPACE);
 #	else
-StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t5, SPACE);
-StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t6, SPACE);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t3, SPACE);
+StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t4, SPACE);
 #	endif
 
-Texture2D<Vec4> g_shadowAtlasTex : register(t7, SPACE);
+#	if defined(CLIPMAP_VOLUME)
+Texture3D<Vec4> g_irradianceVolumes[kIndirectDiffuseClipmapCount] : register(t5, SPACE);
+Texture3D<Vec4> g_probeValidityVolumes[kIndirectDiffuseClipmapCount] : register(t8, SPACE); // WARNING: Adjust if kIndirectDiffuseClipmapCount changed
+Texture3D<Vec4> g_distanceMomentsVolumes[kIndirectDiffuseClipmapCount] : register(t11, SPACE);
+#	endif
+
+#	if defined(CLIPMAP_VOLUME)
+Texture2D<Vec4> g_dummyTex[3] : register(t14, SPACE);
+#	else
+Texture2D<Vec4> g_depthTex : register(t14, SPACE);
+Texture2D<Vec4> g_gbufferRt1 : register(t15, SPACE);
+Texture2D<Vec4> g_gbufferRt2 : register(t16, SPACE);
+#	endif
 
 // UAVs
 #	if defined(CLIPMAP_VOLUME)
