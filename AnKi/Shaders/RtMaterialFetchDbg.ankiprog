@@ -21,35 +21,27 @@
 
 	const Vec3 rayOrigin = g_globalRendererConstants.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 	const Vec3 rayDir = normalize(worldPos - rayOrigin);
-
-	// Trace
-	RtMaterialFetchRayPayload payload;
-	payload = (RtMaterialFetchRayPayload)0;
-	payload.m_textureLod = 0.0;
-	const U32 flags = RAY_FLAG_FORCE_OPAQUE;
-	const U32 sbtRecordOffset = 0u;
-	const U32 sbtRecordStride = 0u;
-	const U32 missIndex = 0u;
-	const U32 cullMask = 0xFFu;
-	RayDesc ray;
-	ray.Origin = rayOrigin;
-	ray.TMin = 0.1;
-	ray.Direction = rayDir;
-	ray.TMax = 100.0; // TODO
-	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
+	const F32 tMax = 1000.0;
+	const F32 tMin = 0.1;
+	const F32 texLod = 1000.0;
+	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
+	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
+	F32 rayT = 0.0;
+	Bool backfacing = false;
+	const Bool hit = materialRayTrace<F16>(rayOrigin, rayDir, tMin, tMax, texLod, gbuffer, rayT, backfacing, traceFlags);
 
 	Vec3 col;
-	if(payload.m_rayT < 0.0)
+	if(!hit)
 	{
 		col = Vec3(1.0, 0.0, 1.0);
 	}
-	else if(payload.m_rayT == kMaxF32)
+	else if(backfacing)
 	{
-		col = Vec3(0.0, 0.0, 1.0);
+		col = Vec3(1.0, 0.0, 1.0);
 	}
 	else
 	{
-		col = payload.m_diffuseColor * 1.0 + (payload.m_worldNormal.xyz / 2.0 + 0.5) * 0.0 + payload.m_rayT * 0.0 + payload.m_emission * 0.0;
+		col = gbuffer.m_diffuse * 1.0 + (gbuffer.m_worldNormal / 2.0 + 0.5) * 0.0 + rayT * 0.0 + gbuffer.m_emission * 0.0;
 	}
 
 	g_colorAndPdfTex[DispatchRaysIndex().xy] = Vec4(col, 0.0);

@@ -685,7 +685,7 @@ GBufferPixelOut main(
 // ===========================================================================
 #if ANKI_TECHNIQUE_RtMaterialFetch
 
-#	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN&& ANKI_PLATFORM_MOBILE
+#	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN
 
 #	if ANKI_CLOSEST_HIT_SHADER
 [[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D
@@ -694,20 +694,48 @@ GBufferPixelOut main(
 {
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
 
-	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
+	const Bool skipVerts = USE_POSITION_FETCH_NORMALS && payload.m_textureLod > 100.0;
 
-	const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
+	Vec3 vertNormal;
+	Vec2 uv;
+	if(!skipVerts)
+	{
+		const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
 
-	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
-	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];
-	const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 2];
+		const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
 
-	const UnpackedMeshVertex vert0 = loadVertex(mesh, idx0, false);
-	const UnpackedMeshVertex vert1 = loadVertex(mesh, idx1, false);
-	const UnpackedMeshVertex vert2 = loadVertex(mesh, idx2, false);
+		const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
+		const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];
+		const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 2];
 
-	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
-	ANKI_MAYBE_UNUSED(uv);
+		const UnpackedMeshVertex vert0 = loadVertex(mesh, idx0, false);
+		const UnpackedMeshVertex vert1 = loadVertex(mesh, idx1, false);
+		const UnpackedMeshVertex vert2 = loadVertex(mesh, idx2, false);
+
+		uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
+
+#		if USE_POSITION_FETCH_NORMALS
+		const Vec3 pos0 = gl_HitTriangleVertexPositions[0];
+		const Vec3 pos1 = gl_HitTriangleVertexPositions[1];
+		const Vec3 pos2 = gl_HitTriangleVertexPositions[2];
+		vertNormal = cross(pos1 - pos0, pos2 - pos1);
+#		else
+		vertNormal = vert0.m_normal * bary.x + vert1.m_normal * bary.y + vert2.m_normal * bary.z;
+#		endif
+	}
+	else
+	{
+#		if USE_POSITION_FETCH_NORMALS
+		const Vec3 pos0 = gl_HitTriangleVertexPositions[0];
+		const Vec3 pos1 = gl_HitTriangleVertexPositions[1];
+		const Vec3 pos2 = gl_HitTriangleVertexPositions[2];
+		vertNormal = cross(pos1 - pos0, pos2 - pos1);
+#		else
+		vertNormal = 0.0;
+#		endif
+
+		uv = 0.5; // Center
+	}
 
 	// Metallness
 #		if ROUGHNESS_METALNESS_TEX
@@ -737,26 +765,12 @@ GBufferPixelOut main(
 	payload.m_emission = emission;
 
 	// Normal
-#		if USE_POSITION_FETCH_NORMALS
-	const Vec3 pos0 = gl_HitTriangleVertexPositions[0];
-	const Vec3 pos1 = gl_HitTriangleVertexPositions[1];
-	const Vec3 pos2 = gl_HitTriangleVertexPositions[2];
-
-	Vec3 normal = cross(pos1 - pos0, pos2 - pos1);
-#		else
-	Vec3 normal = vert0.m_normal * bary.x + vert1.m_normal * bary.y + vert2.m_normal * bary.z;
-#		endif
-
 	const Mat3x4 worldTransform = g_transforms[g_gpuSceneRenderable.m_worldTransformsIndex];
-
-	normal = mul(worldTransform, Vec4(normal, 0.0));
-	normal = normalize(normal);
-
+	const Vec3 normal = normalize(mul(worldTransform, Vec4(vertNormal, 0.0)));
 	payload.m_worldNormal = normal;
 
 	// Ray T
 	const Bool backfacing = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
-
 	payload.m_rayT = RayTCurrent() * (backfacing ? -1.0 : 1.0);
 }
 #	endif

@@ -387,7 +387,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Apply GI
-	if(0)
+	if(1)
 	{
 		patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[0],
 									m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
@@ -414,8 +414,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(m_runCtx.m_appliedGiRt, TextureUsageBit::kUavTraceRays);
 
-		pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, irradianceVolumes, probeValidityVolumes,
-					  distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, &ctx, sbtBuffer, irradianceVolumes, probeValidityVolumes, distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
