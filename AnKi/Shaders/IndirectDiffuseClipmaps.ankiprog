@@ -8,8 +8,9 @@
 #pragma anki mutator GPU_WAVE_SIZE 16 32 64
 #pragma anki mutator RADIANCE_OCTAHEDRON_MAP_SIZE 8 10 12 14
 #pragma anki mutator IRRADIANCE_OCTAHEDRON_MAP_SIZE 4 5 6
+#pragma anki mutator RT_MATERIAL_FETCH_CLIPMAP 0 1
 
-#pragma anki technique RtMaterialFetch rgen mutators
+#pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_CLIPMAP
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique Apply comp mutators
@@ -24,7 +25,9 @@
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/FastMathFunctions.hlsl>
 
-#define CLIPMAP_VOLUME 1
+#if defined(RT_MATERIAL_FETCH_CLIPMAP) && RT_MATERIAL_FETCH_CLIPMAP
+#	define CLIPMAP_VOLUME
+#endif
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 F32 computeClipmapFade(Clipmap clipmap, Vec3 cameraPos, Vec3 lookDir, Vec3 worldPos)
@@ -97,7 +100,7 @@ Vec3 sampleClipmapIrradianceCommon(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos
 								   Texture3D<Vec4> volumes[kIndirectDiffuseClipmapCount],
 								   Texture3D<Vec4> distanceMomentsVolumes[kIndirectDiffuseClipmapCount],
 								   Texture3D<Vec4> probeValidityVolumes[kIndirectDiffuseClipmapCount], SamplerState linearAnyRepeatSampler,
-								   F32 slowVersionRandFactor, Bool fastVersion)
+								   F32 slowVersionRandFactor, Bool fastVersion, Bool biasSamplePoint)
 {
 #if 1
 	const U16 clipmapIdx = (fastVersion) ? findClipmapOnPositionCheap(clipmaps, samplePoint)
@@ -113,11 +116,11 @@ Vec3 sampleClipmapIrradianceCommon(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos
 #if 0
 	if(clipmapIdx == 0)
 	{
-		return = Vec3(1, 0, 0);
+		return Vec3(1, 0, 0);
 	}
 	else if(clipmapIdx == 1)
 	{
-		return = Vec3(0, 1, 0);
+		return Vec3(0, 1, 0);
 	}
 	else if(clipmapIdx == 2)
 	{
@@ -125,7 +128,7 @@ Vec3 sampleClipmapIrradianceCommon(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos
 	}
 	else
 	{
-		return = Vec3(1, 0, 1);
+		return Vec3(1, 0, 1);
 	}
 #endif
 
@@ -139,7 +142,7 @@ Vec3 sampleClipmapIrradianceCommon(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos
 	const Vec3 fakeVolumeSize = clipmap.m_probeCounts; // Volume size without the octahedron
 
 	const Vec3 biasDir = normalize(cameraPos - samplePoint);
-	const Vec3 biasedWorldPos = samplePoint + biasDir * probeSize * 0.2;
+	const Vec3 biasedWorldPos = (biasSamplePoint) ? samplePoint + biasDir * probeSize * 0.2 : samplePoint;
 
 	F32 octahedronSize = 0.0;
 	Vec3 realVolumeSize;
@@ -255,24 +258,26 @@ Vec3 sampleClipmapIrradianceAccurate(Vec3 samplePoint, Vec3 normal, Vec3 cameraP
 									 Texture3D<Vec4> volumes[kIndirectDiffuseClipmapCount],
 									 Texture3D<Vec4> distanceMomentsVolumes[kIndirectDiffuseClipmapCount],
 									 Texture3D<Vec4> probeValidityVolumes[kIndirectDiffuseClipmapCount], SamplerState linearAnyRepeatSampler,
-									 F32 randFactor)
+									 F32 randFactor, Bool biasSamplePoint = true)
 {
 	return sampleClipmapIrradianceCommon(samplePoint, normal, cameraPos, lookDir, clipmaps, volumes, distanceMomentsVolumes, probeValidityVolumes,
-										 linearAnyRepeatSampler, randFactor, false);
+										 linearAnyRepeatSampler, randFactor, false, biasSamplePoint);
 }
 
 Vec3 sampleClipmapIrradianceCheap(Vec3 samplePoint, Vec3 normal, Clipmap clipmaps[kIndirectDiffuseClipmapCount],
-								  Texture3D<Vec4> volumes[kIndirectDiffuseClipmapCount], SamplerState linearAnyRepeatSampler)
+								  Texture3D<Vec4> volumes[kIndirectDiffuseClipmapCount], SamplerState linearAnyRepeatSampler,
+								  Bool biasSamplePoint = true)
 {
 	return sampleClipmapIrradianceCommon(samplePoint, normal, samplePoint, samplePoint, clipmaps, volumes, volumes, volumes, linearAnyRepeatSampler,
-										 0.0, true);
+										 0.0, true, biasSamplePoint);
 }
 
 // ===========================================================================
-// RayGen                                                                    =
+// RtMaterialFetch                                                           =
 // ===========================================================================
-#if ANKI_RAY_GEN_SHADER
+#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch)
 
+#	if RT_MATERIAL_FETCH_CLIPMAP
 struct Consts
 {
 	U32 m_clipmapIdx;
@@ -328,13 +333,13 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, tMax, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 
 		// Apply indirect
-#	if 0
+#		if 0
 		const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
 		const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
 		const Vec3 irradiance = sampleClipmapIrradianceAccurate(hitPos, gbuffer.m_worldNormal, g_globalRendererConstants.m_cameraPosition, lookDir,
 																g_globalRendererConstants.m_indirectDiffuseClipmaps, g_irradianceVolumes,
 																g_distanceMomentsVolumes, g_probeValidityVolumes, g_linearAnyRepeatSampler, noise);
-#	else
+#		else
 		Clipmap clipmaps[kIndirectDiffuseClipmapCount];
 		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 		{
@@ -342,7 +347,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 			clipmaps[i].m_aabbMin = clipmaps[i].m_prevFrameAabbMin;
 		}
 		const Vec3 irradiance = sampleClipmapIrradianceCheap(hitPos, gbuffer.m_worldNormal, clipmaps, g_irradianceVolumes, g_linearRepeatAnySampler);
-#	endif
+#		endif
 
 		radiance += irradiance * gbuffer.m_diffuse / kPi;
 	}
@@ -352,7 +357,79 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const F32 kMaxDist = 1000.0; // Chose something small and make sure its square doesn't overflow F16
 	TEX(g_lightResultTex, UVec2(probeIdx, outPixelIdx + raysPerProbePerFrame * g_consts.m_clipmapIdx)) = HVec4(radiance, min(rayT, kMaxDist));
 }
-#endif // ANKI_RAY_GEN_SHADER
+#	else
+
+struct Consts
+{
+	F32 m_rayMax;
+	F32 m_padding1;
+	F32 m_padding2;
+	F32 m_padding3;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+[Shader("raygeneration")] void main()
+{
+	const UVec2 coord = DispatchRaysIndex().xy;
+	const Vec2 uv = Vec2(coord) / DispatchRaysDimensions().xy;
+
+	const F32 depth = g_depthTex[coord].x;
+	const Vec4 rt2 = g_gbufferRt2[coord];
+	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+
+	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
+	const Vec3 worldPos = v4.xyz / v4.w;
+
+	const Vec3 biasDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
+	const Vec3 biasedWorldPos = worldPos + biasDir * 0.1;
+
+	// Rand
+	const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
+	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
+
+	const Mat3 tbn = rotationFromDirection(worldNormal);
+	const Vec3 rayDir = normalize(mul(tbn, hemisphereSampleCos(randFactors)));
+
+	// Trace
+	const F32 tMax = g_consts.m_rayMax;
+	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
+	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
+	F32 rayT = 0.0;
+	Bool backfacing = false;
+	const Bool hit = materialRayTrace<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
+
+	HVec3 radiance = 0.0;
+	Vec3 hitPos = 0.0;
+	if(hit)
+	{
+		hitPos = biasedWorldPos + rayDir * (rayT - 0.01);
+		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
+	}
+
+	const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
+	const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
+
+	const Vec3 rayOrigin = (hit) ? hitPos : biasedWorldPos;
+	const Vec3 rayDir2 = (hit) ? gbuffer.m_worldNormal : worldNormal;
+	const Bool biasSamplePoint = !hit; // Bias the sample point if it's not for the 2nd bounce
+	const Vec3 irradiance = sampleClipmapIrradianceAccurate(
+		rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, lookDir, g_globalRendererConstants.m_indirectDiffuseClipmaps,
+		g_irradianceVolumes, g_distanceMomentsVolumes, g_probeValidityVolumes, g_linearRepeatAnySampler, randFactors.x, biasSamplePoint);
+
+	Vec3 final;
+	if(hit)
+	{
+		final = radiance + irradiance * gbuffer.m_diffuse;
+	}
+	else
+	{
+		final = irradiance;
+	}
+
+	g_colorAndPdfTex[coord].xyz = lerp(g_colorAndPdfTex[coord].xyz, final, 0.2);
+}
+#	endif // RT_MATERIAL_FETCH_CLIPMAP
+#endif
 
 // ===========================================================================
 // PopulateCaches                                                            =

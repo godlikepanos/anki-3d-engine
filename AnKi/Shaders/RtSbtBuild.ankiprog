@@ -5,16 +5,17 @@
 
 #pragma anki mutator TECHNIQUE 0 1 // Shdows or MaterialFetch
 
-#pragma anki technique SbtBuild comp
+#pragma anki technique Build comp mutators TECHNIQUE
+#pragma anki technique PatchRaygenAndMiss comp mutators
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
 
 // ===========================================================================
-// SbtBuild                                                                  =
+// Build                                                                     =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_SbtBuild)
+#if NOT_ZERO(ANKI_TECHNIQUE_Build)
 
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
 
@@ -28,21 +29,36 @@ ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 
 #	define NUMTHREADS 64
 
-[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(NUMTHREADS, 1, 1)] void main(COMPUTE_ARGS)
 {
+	if(all(svGroupId == 0))
+	{
+		// First group copies the raygen and miss handles
+
+		const U32 dword = svGroupIndex;
+		if(dword < g_consts.m_shaderHandleDwordSize)
+		{
+			const U32 raygenHandleDwordOffset = g_consts.m_raygenHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
+			SBUFF(g_sbtBuffer, dword) = SBUFF(g_shaderHandles, raygenHandleDwordOffset);
+
+			const U32 missHandleDwordOffset = g_consts.m_missHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
+			SBUFF(g_sbtBuffer, dword + g_consts.m_sbtRecordDwordSize) = SBUFF(g_shaderHandles, missHandleDwordOffset);
+		}
+	}
+
 	const U32 renderableCount = SBUFF(g_visibleRenderables, 0).m_lod_2bit_renderableIndex_30bit;
-	if(svDispatchThreadId >= renderableCount)
+	if(svDispatchThreadId.x >= renderableCount)
 	{
 		return;
 	}
 
-	const U32 lodAndRenderableIdx = SBUFF(g_visibleRenderables, svDispatchThreadId + 1).m_lod_2bit_renderableIndex_30bit;
+	const U32 lodAndRenderableIdx = SBUFF(g_visibleRenderables, svDispatchThreadId.x + 1).m_lod_2bit_renderableIndex_30bit;
 	const U32 renderableIdx = lodAndRenderableIdx & ((1u << 30) - 1u);
 	const U32 lod = lodAndRenderableIdx >> 30u;
 	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
 
 	U32 sbtDwordOffset = g_consts.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
-	sbtDwordOffset += g_consts.m_sbtRecordDwordSize * svDispatchThreadId;
+	sbtDwordOffset += g_consts.m_sbtRecordDwordSize * svDispatchThreadId.x;
 
 	// Copy the handle
 	for(U32 i = 0; i < g_consts.m_shaderHandleDwordSize; ++i)
@@ -59,4 +75,30 @@ ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 	SBUFF(g_sbtBuffer, sbtDwordOffset++) = renderable.m_meshLodsIndex + lod;
 	SBUFF(g_sbtBuffer, sbtDwordOffset) = 0;
 }
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuild
+#endif
+
+// ===========================================================================
+// PatchRaygenAndMiss                                                        =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_PatchRaygenAndMiss)
+
+StructuredBuffer<U32> g_shaderHandles : register(t0);
+
+RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
+
+ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
+
+// Patches only raygen and miss handles to the SBT
+[NumThreads(32, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const U32 dword = svGroupIndex;
+	if(dword < g_consts.m_shaderHandleDwordSize)
+	{
+		const U32 raygenHandleDwordOffset = g_consts.m_raygenHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
+		SBUFF(g_sbtBuffer, dword) = SBUFF(g_shaderHandles, raygenHandleDwordOffset);
+
+		const U32 missHandleDwordOffset = g_consts.m_missHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
+		SBUFF(g_sbtBuffer, dword + g_consts.m_sbtRecordDwordSize) = SBUFF(g_shaderHandles, missHandleDwordOffset);
+	}
+}
+#endif

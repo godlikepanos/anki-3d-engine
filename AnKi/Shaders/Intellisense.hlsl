@@ -314,6 +314,7 @@ void DispatchMesh(U32 groupSizeX, U32 groupSizeY, U32 groupSizeZ, T payload);
 void SetMeshOutputCounts(U32 vertexCount, U32 primitiveCount);
 
 UVec2 DispatchRaysIndex();
+UVec2 DispatchRaysDimensions();
 
 // Workgraphs
 

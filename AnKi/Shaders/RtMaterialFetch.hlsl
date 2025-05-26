@@ -39,11 +39,9 @@ StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t3, SPAC
 StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t4, SPACE);
 #	endif
 
-#	if defined(CLIPMAP_VOLUME)
 Texture3D<Vec4> g_irradianceVolumes[kIndirectDiffuseClipmapCount] : register(t5, SPACE);
 Texture3D<Vec4> g_probeValidityVolumes[kIndirectDiffuseClipmapCount] : register(t8, SPACE); // WARNING: Adjust if kIndirectDiffuseClipmapCount changed
 Texture3D<Vec4> g_distanceMomentsVolumes[kIndirectDiffuseClipmapCount] : register(t11, SPACE);
-#	endif
 
 #	if defined(CLIPMAP_VOLUME)
 Texture2D<Vec4> g_dummyTex[3] : register(t14, SPACE);

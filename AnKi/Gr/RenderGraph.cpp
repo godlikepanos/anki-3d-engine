@@ -491,6 +491,8 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 
 RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& descr, StackMemoryPool& pool)
 {
+	ANKI_TRACE_FUNCTION();
+
 	// Allocate
 	BakeContext* ctx = anki::newInstance<BakeContext>(pool, &pool);
 
@@ -583,6 +585,8 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& desc
 
 void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 {
+	ANKI_TRACE_FUNCTION();
+
 	BakeContext& ctx = *m_ctx;
 	const U32 passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
@@ -625,6 +629,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 
 void RenderGraph::initBatches()
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(m_ctx);
 
 	U passesAssignedToBatchCount = 0;
@@ -657,6 +662,8 @@ void RenderGraph::initBatches()
 
 void RenderGraph::initGraphicsPasses(const RenderGraphBuilder& descr)
 {
+	ANKI_TRACE_FUNCTION();
+
 	BakeContext& ctx = *m_ctx;
 	const U32 passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
@@ -812,6 +819,8 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 
 void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 {
+	ANKI_TRACE_FUNCTION();
+
 	BakeContext& ctx = *m_ctx;
 
 	// For all batches

@@ -15,7 +15,7 @@ namespace anki {
 inline BoolCVar g_rtMaterialFetchDbgCVar("R", "RtMaterialFetchDbg", false, "Enable material debugging pass");
 
 /// Similar to ShadowmapsResolve but it's using ray tracing.
-class RtMaterialFetchDbg : public RendererObject
+class RtMaterialFetchDbg : public RtMaterialFetchRendererObject
 {
 public:
 	RtMaterialFetchDbg()
@@ -34,10 +34,8 @@ public:
 	}
 
 public:
-	ShaderProgramResourcePtr m_sbtProg;
 	ShaderProgramResourcePtr m_rtProg;
 	ShaderProgramResourcePtr m_missProg;
-	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_libraryGrProg;
 
 	RenderTargetDesc m_rtDesc;

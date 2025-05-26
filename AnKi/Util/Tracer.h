@@ -184,10 +184,12 @@ private:
 #	define ANKI_TRACE_SCOPED_EVENT(name_) TracerScopedEvent _tse##name_(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)))
 #	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) \
 		Tracer::getSingleton().addCustomEvent(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)), start_, duration_)
+#	define ANKI_TRACE_FUNCTION() TracerScopedEvent ANKI_CONCATENATE(_tse, __LINE__)(ANKI_FUNC)
 #	define ANKI_TRACE_INC_COUNTER(name_, val_) Tracer::getSingleton().incrementCounter(ANKI_STRINGIZE(ANKI_CONCATENATE(c, name_)), val_)
 #else
 #	define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
 #	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) ((void)0)
+#	define ANKI_TRACE_FUNCTION() ((void)0)
 #	define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
 #endif
 /// @}

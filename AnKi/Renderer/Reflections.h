@@ -23,7 +23,7 @@ inline NumericCVar<F32> g_roughnessCutoffToGiEdge0("R", "RoughnessCutoffToGiEdge
 inline NumericCVar<F32> g_roughnessCutoffToGiEdge1("R", "RoughnessCutoffToGiEdge1", 0.9f, 0.0f, 1.0f,
 												   "After this roughness the reflections will sample the GI probes");
 
-class Reflections : public RendererObject
+class Reflections : public RtMaterialFetchRendererObject
 {
 public:
 	Reflections()
@@ -47,11 +47,9 @@ public:
 	}
 
 public:
-	ShaderProgramResourcePtr m_sbtProg;
 	ShaderProgramResourcePtr m_mainProg;
 	ShaderProgramResourcePtr m_missProg;
 	ShaderProgramPtr m_ssrGrProg;
-	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_libraryGrProg;
 	ShaderProgramPtr m_spatialDenoisingGrProg;
 	ShaderProgramPtr m_temporalDenoisingGrProg;

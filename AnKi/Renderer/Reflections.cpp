@@ -25,15 +25,12 @@ namespace anki {
 
 Error Reflections::init()
 {
+	ANKI_CHECK(RtMaterialFetchRendererObject::init());
+
 	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
 	const Bool bSsrSamplesGBuffer = bRtReflections;
 
 	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer}};
-
-	if(bRtReflections)
-	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
-	}
 
 	// Ray gen and miss
 	if(bRtReflections)
@@ -259,54 +256,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	BufferView sbtBuffer;
 	if(bRtReflections)
 	{
-		BufferHandle visibilityDep;
-		BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
-		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
-
-		// Allocate SBT
-		U32 sbtAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
-							   ? sizeof(U32)
-							   : GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
-		sbtAlignment = computeCompoundAlignment(sbtAlignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
-		U8* sbtMem;
-		sbtBuffer = RebarTransientMemoryPool::getSingleton().allocate(
-			(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize, sbtAlignment, sbtMem);
-		sbtHandle = rgraph.importBuffer(sbtBuffer, BufferUsageBit::kNone);
-
-		// Write the first 2 entries of the SBT
-		ConstWeakArray<U8> shaderGroupHandles = m_libraryGrProg->getShaderGroupHandles();
-		const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-		memcpy(sbtMem, &shaderGroupHandles[m_rayGenShaderGroupIdx * shaderHandleSize], shaderHandleSize);
-		memcpy(sbtMem + m_sbtRecordSize, &shaderGroupHandles[m_missShaderGroupIdx * shaderHandleSize], shaderHandleSize);
-
-		// Create the pass
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections build SBT");
-
-		rpass.newBufferDependency(visibilityDep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
-		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
-
-		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ReflectionsSbtBuild);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
-
-			cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-			cmdb.bindSrv(1, 0, visibleRenderableIndicesBuff);
-			cmdb.bindSrv(2, 0, BufferView(&m_libraryGrProg->getShaderGroupHandlesGpuBuffer()));
-
-			cmdb.bindUav(0, 0, sbtBuffer);
-
-			RtShadowsSbtBuildConstants consts = {};
-			ANKI_ASSERT(m_sbtRecordSize % 4 == 0);
-			consts.m_sbtRecordDwordSize = m_sbtRecordSize / 4;
-			const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-			ANKI_ASSERT(shaderHandleSize % 4 == 0);
-			consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
-			cmdb.setFastConstants(&consts, sizeof(consts));
-
-			cmdb.dispatchComputeIndirect(buildSbtIndirectArgsBuff);
-		});
+		buildShaderBindingTablePass("RtReflections: Build SBT", m_libraryGrProg.get(), m_rayGenShaderGroupIdx, m_missShaderGroupIdx, m_sbtRecordSize,
+									rgraph, sbtHandle, sbtBuffer);
 	}
 
 	// Ray gen

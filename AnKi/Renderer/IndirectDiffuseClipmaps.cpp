@@ -31,6 +31,8 @@ static void computeClipmapBounds(Vec3 cameraPos, Vec3 lookDir, Clipmap& clipmap)
 
 Error IndirectDiffuseClipmaps::init()
 {
+	ANKI_CHECK(RtMaterialFetchRendererObject::init());
+
 	m_appliedGiRtDesc =
 		getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 													  getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Final");
@@ -112,17 +114,18 @@ Error IndirectDiffuseClipmaps::init()
 		m_distanceMomentsVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 	}
 
-	const Array<SubMutation, 3> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
+	const Array<SubMutation, 4> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
 											 {"RADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_indirectDiffuseClipmapRadianceOctMapSize)},
-											 {"IRRADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_indirectDiffuseClipmapIrradianceOctMapSize)}}};
+											 {"IRRADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_indirectDiffuseClipmapIrradianceOctMapSize)},
+											 {"RT_MATERIAL_FETCH_CLIPMAP", 0}}};
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_applyGiGrProg, "Apply"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_visProbesGrProg, "VisualizeProbes"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_populateCachesGrProg, "PopulateCaches"));
 	ANKI_CHECK(
 		loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_computeIrradianceGrProg, "ComputeIrradiance"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
 
+	for(MutatorValue rtMaterialFetchClipmap = 0; rtMaterialFetchClipmap < 2; ++rtMaterialFetchClipmap)
 	{
 		ShaderProgramResourcePtr tmpProg;
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", tmpProg));
@@ -134,10 +137,13 @@ Error IndirectDiffuseClipmaps::init()
 		{
 			variantInitInfo.addMutation(s.m_mutatorName, s.m_value);
 		}
+
+		variantInitInfo.addMutation("RT_MATERIAL_FETCH_CLIPMAP", rtMaterialFetchClipmap);
+
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_libraryGrProg.reset(&variant->getProgram());
-		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
+		m_rtLibraryGrProg.reset(&variant->getProgram());
+		m_rayGenShaderGroupIndices[rtMaterialFetchClipmap] = variant->getShaderGroupHandleIndex();
 	}
 
 	{
@@ -204,56 +210,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
-	{
-		BufferHandle visibilityDep;
-		BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
-		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
-
-		// Allocate SBT
-		U32 sbtAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
-							   ? sizeof(U32)
-							   : GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
-		sbtAlignment = computeCompoundAlignment(sbtAlignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
-		U8* sbtMem;
-		sbtBuffer = RebarTransientMemoryPool::getSingleton().allocate(
-			(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize, sbtAlignment, sbtMem);
-		sbtHandle = rgraph.importBuffer(sbtBuffer, BufferUsageBit::kNone);
-
-		// Write the first 2 entries of the SBT
-		ConstWeakArray<U8> shaderGroupHandles = m_libraryGrProg->getShaderGroupHandles();
-		const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-		memcpy(sbtMem, &shaderGroupHandles[m_rayGenShaderGroupIdx * shaderHandleSize], shaderHandleSize);
-		memcpy(sbtMem + m_sbtRecordSize, &shaderGroupHandles[m_missShaderGroupIdx * shaderHandleSize], shaderHandleSize);
-
-		// Create the pass
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections build SBT");
-
-		rpass.newBufferDependency(visibilityDep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
-		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
-
-		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ReflectionsSbtBuild);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
-
-			cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-			cmdb.bindSrv(1, 0, visibleRenderableIndicesBuff);
-			cmdb.bindSrv(2, 0, BufferView(&m_libraryGrProg->getShaderGroupHandlesGpuBuffer()));
-
-			cmdb.bindUav(0, 0, sbtBuffer);
-
-			RtShadowsSbtBuildConstants consts = {};
-			ANKI_ASSERT(m_sbtRecordSize % 4 == 0);
-			consts.m_sbtRecordDwordSize = m_sbtRecordSize / 4;
-			const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-			ANKI_ASSERT(shaderHandleSize % 4 == 0);
-			consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
-			cmdb.setFastConstants(&consts, sizeof(consts));
-
-			cmdb.dispatchComputeIndirect(buildSbtIndirectArgsBuff);
-		});
-	}
+	buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[1], m_missShaderGroupIdx,
+								m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 
 	// Do ray tracing around the probes
 	{
@@ -278,7 +236,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 					  distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_libraryGrProg.get());
+			cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
 
 			// More globals
 			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
@@ -429,6 +387,114 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Apply GI
+	if(0)
+	{
+		patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[0],
+									m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: RTApply");
+
+		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
+		if(getRenderer().getGeneratedSky().isEnabled())
+		{
+			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+		}
+		pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
+												AccelerationStructureUsageBit::kTraceRaysSrv);
+		pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
+
+		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+		{
+			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvTraceRays);
+			pass.newTextureDependency(probeValidityVolumes[clipmap], TextureUsageBit::kSrvTraceRays);
+			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kSrvTraceRays);
+		}
+
+		pass.newTextureDependency(m_runCtx.m_appliedGiRt, TextureUsageBit::kUavTraceRays);
+
+		pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, irradianceVolumes, probeValidityVolumes,
+					  distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
+
+			// More globals
+			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
+	cmdb.bindSrv( \
+		reg, 0, \
+		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
+				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
+		Format::k##fmt);
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
+
+			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
+
+			U32 srv = 0;
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
+
+			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+			const Bool bSkySolidColor =
+				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
+			if(bSkySolidColor)
+			{
+				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			}
+			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+			{
+				cmdb.bindSrv(srv++, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+			}
+			else
+			{
+				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
+			}
+
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getShadowMapping().getShadowmapRt());
+
+			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
+			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
+
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(srv++, 2, irradianceVolumes[clipmap]);
+			}
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(srv++, 2, probeValidityVolumes[clipmap]);
+			}
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				rgraphCtx.bindSrv(srv++, 2, distanceMomentsVolumes[clipmap]);
+			}
+
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getDepthRt());
+			cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getColorRt(2));
+
+			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
+			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
+
+			rgraphCtx.bindUav(0, 2, m_runCtx.m_appliedGiRt);
+			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+
+			const Vec3 probeSizes = m_clipmapInfo[0].m_size / Vec3(m_clipmapInfo[0].m_probeCounts);
+			const F32 rayTMax = max(probeSizes.x(), max(probeSizes.y(), probeSizes.z())) * 10.0f;
+			const Vec4 consts(rayTMax);
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+		});
+	}
+	else
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps composite");
 

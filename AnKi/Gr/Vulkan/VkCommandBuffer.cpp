@@ -44,6 +44,7 @@ void CommandBuffer::endRecording()
 
 void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, U32 stride, VertexStepRate stepRate)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -56,6 +57,7 @@ void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, U32 st
 
 void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, U32 relativeOffset)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setVertexAttribute(attribute, buffBinding, fmt, relativeOffset);
@@ -63,6 +65,7 @@ void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 bu
 
 void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -74,6 +77,7 @@ void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 
 void CommandBuffer::setPrimitiveRestart(Bool enable)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setPrimitiveRestart(enable);
@@ -81,6 +85,7 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 
 void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(width > 0 && height > 0);
 	self.commandCommon();
@@ -89,6 +94,7 @@ void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 
 void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(width > 0 && height > 0);
 	self.commandCommon();
@@ -97,6 +103,7 @@ void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 
 void CommandBuffer::setFillMode(FillMode mode)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setFillMode(mode);
@@ -104,6 +111,7 @@ void CommandBuffer::setFillMode(FillMode mode)
 
 void CommandBuffer::setCullMode(FaceSelectionBit mode)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setCullMode(mode);
@@ -111,6 +119,7 @@ void CommandBuffer::setCullMode(FaceSelectionBit mode)
 
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setPolygonOffset(factor, units);
@@ -120,6 +129,7 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
 										 StencilOperation stencilPassDepthPass)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
@@ -127,6 +137,7 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation
 
 void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setStencilCompareOperation(face, comp);
@@ -134,6 +145,7 @@ void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOpe
 
 void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setStencilCompareMask(face, mask);
@@ -141,6 +153,7 @@ void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 
 void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setStencilWriteMask(face, mask);
@@ -148,6 +161,7 @@ void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 
 void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setStencilReference(face, ref);
@@ -155,6 +169,7 @@ void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 
 void CommandBuffer::setDepthWrite(Bool enable)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setDepthWrite(enable);
@@ -162,6 +177,7 @@ void CommandBuffer::setDepthWrite(Bool enable)
 
 void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setDepthCompareOperation(op);
@@ -169,6 +185,7 @@ void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 
 void CommandBuffer::setAlphaToCoverage(Bool enable)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setAlphaToCoverage(enable);
@@ -176,6 +193,7 @@ void CommandBuffer::setAlphaToCoverage(Bool enable)
 
 void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setColorChannelWriteMask(attachment, mask);
@@ -183,6 +201,7 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 
 void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
@@ -190,6 +209,7 @@ void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFac
 
 void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setBlendOperation(attachment, funcRgb, funcA);
@@ -197,6 +217,7 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 
 void CommandBuffer::bindSrv(U32 reg, U32 space, const TextureView& texView)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -209,6 +230,7 @@ void CommandBuffer::bindSrv(U32 reg, U32 space, const TextureView& texView)
 
 void CommandBuffer::bindUav(U32 reg, U32 space, const TextureView& texView)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -226,6 +248,7 @@ void CommandBuffer::bindUav(U32 reg, U32 space, const TextureView& texView)
 
 void CommandBuffer::bindSampler(U32 reg, U32 space, Sampler* sampler)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -236,6 +259,7 @@ void CommandBuffer::bindSampler(U32 reg, U32 space, Sampler* sampler)
 
 void CommandBuffer::bindConstantBuffer(U32 reg, U32 space, const BufferView& buff)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -247,6 +271,7 @@ void CommandBuffer::bindConstantBuffer(U32 reg, U32 space, const BufferView& buf
 
 void CommandBuffer::bindSrv(U32 reg, U32 space, const BufferView& buff, Format fmt)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -267,6 +292,7 @@ void CommandBuffer::bindSrv(U32 reg, U32 space, const BufferView& buff, Format f
 
 void CommandBuffer::bindUav(U32 reg, U32 space, const BufferView& buff, Format fmt)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -287,6 +313,7 @@ void CommandBuffer::bindUav(U32 reg, U32 space, const BufferView& buff, Format f
 
 void CommandBuffer::bindSrv(U32 reg, U32 space, AccelerationStructure* as)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -297,6 +324,7 @@ void CommandBuffer::bindSrv(U32 reg, U32 space, AccelerationStructure* as)
 
 void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -344,6 +372,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, const TextureView& vrsRt, U8 vrsRtTexelSizeX,
 									U8 vrsRtTexelSizeY)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 
 	ANKI_ASSERT(!self.m_insideRenderpass);
@@ -484,6 +513,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 
 void CommandBuffer::endRenderPass()
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 
 	ANKI_ASSERT(self.m_insideRenderpass);
@@ -497,6 +527,7 @@ void CommandBuffer::endRenderPass()
 
 void CommandBuffer::setVrsRate([[maybe_unused]] VrsRate rate)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs);
 	ANKI_ASSERT(rate < VrsRate::kCount);
@@ -507,6 +538,7 @@ void CommandBuffer::setVrsRate([[maybe_unused]] VrsRate rate)
 
 void CommandBuffer::drawIndexed(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
@@ -515,6 +547,7 @@ void CommandBuffer::drawIndexed(PrimitiveTopology topology, U32 count, U32 insta
 
 void CommandBuffer::draw(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
@@ -523,6 +556,7 @@ void CommandBuffer::draw(PrimitiveTopology topology, U32 count, U32 instanceCoun
 
 void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 	ANKI_ASSERT(drawCount > 0);
 
@@ -541,6 +575,7 @@ void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& b
 
 void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 	ANKI_ASSERT(drawCount > 0);
 
@@ -559,6 +594,7 @@ void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, const Buffer
 void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride,
 											 const BufferView& countBuffer, U32 maxDrawCount)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(argBuffer.isValid());
 	ANKI_ASSERT(countBuffer.isValid());
 
@@ -588,6 +624,7 @@ void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const B
 void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride, const BufferView& countBuffer,
 									  U32 maxDrawCount)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(argBuffer.isValid());
 	ANKI_ASSERT(countBuffer.isValid());
 
@@ -615,6 +652,7 @@ void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferVi
 
 void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_mesh_shader));
 	self.drawcallCommon();
@@ -623,6 +661,7 @@ void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCou
 
 void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawCount)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(argBuffer.isValid());
 	ANKI_ASSERT(drawCount > 0);
 	ANKI_ASSERT(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_mesh_shader));
@@ -641,6 +680,7 @@ void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawC
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(groupCountX > 0 && groupCountY > 0 && groupCountZ > 0);
 	self.dispatchCommon();
@@ -649,6 +689,7 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 
 void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(argBuffer.isValid());
 
 	ANKI_ASSERT(sizeof(DispatchIndirectArgs) == argBuffer.getRange());
@@ -668,6 +709,7 @@ void CommandBuffer::dispatchGraph([[maybe_unused]] const BufferView& scratchBuff
 void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
 							  U32 depth)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.traceRaysInternal(sbtBuffer, sbtRecordSize32, hitGroupSbtRecordCount, rayTypeCount, width, height, depth, {});
 }
@@ -675,6 +717,7 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 void CommandBuffer::traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
 									  BufferView argsBuffer)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.traceRaysInternal(sbtBuffer, sbtRecordSize32, hitGroupSbtRecordCount, rayTypeCount, 0, 0, 0, argsBuffer);
 }
@@ -708,6 +751,7 @@ void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& c
 
 void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -753,6 +797,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 
 void CommandBuffer::zeroBuffer(const BufferView& buff)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -769,6 +814,7 @@ void CommandBuffer::zeroBuffer(const BufferView& buff)
 
 void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -797,6 +843,7 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<Occlusion
 
 void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*src).usageValid(BufferUsageBit::kCopySource));
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*dst).usageValid(BufferUsageBit::kCopyDestination));
@@ -813,6 +860,7 @@ void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<
 
 void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(scratchBuffer.isValid());
 	ANKI_ASSERT(as);
 	ANKI_ASSERT(as->getBuildScratchBufferSize() <= scratchBuffer.getRange());
@@ -855,6 +903,7 @@ void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, co
 							const TextureView& depth, const TextureView& exposure, Bool resetAccumulation, const Vec2& jitterOffset,
 							const Vec2& motionVectorsScale)
 {
+	ANKI_TRACE_FUNCTION();
 #if ANKI_DLSS
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_dlss);
@@ -917,6 +966,7 @@ void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, co
 void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 									   ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -967,6 +1017,7 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 
 void CommandBuffer::beginOcclusionQuery(OcclusionQuery* query)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -981,6 +1032,7 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQuery* query)
 
 void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -995,6 +1047,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
 
 void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	const VkQueryPool handle = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryPool();
@@ -1006,6 +1059,7 @@ void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
 
 void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	const VkQueryPool handle = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryPool();
@@ -1017,6 +1071,7 @@ void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 
 void CommandBuffer::writeTimestamp(TimestampQuery* query)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -1036,6 +1091,7 @@ Bool CommandBuffer::isEmpty() const
 
 void CommandBuffer::setFastConstants(const void* data, U32 dataSize)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
 	// ANKI_ASSERT(static_cast<const ShaderProgramImpl&>(self.getBoundProgram()).getReflection().m_descriptor.m_fastConstantsSize == dataSize
@@ -1047,6 +1103,7 @@ void CommandBuffer::setFastConstants(const void* data, U32 dataSize)
 
 void CommandBuffer::setLineWidth(F32 width)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_graphicsState.setLineWidth(width);
@@ -1054,6 +1111,7 @@ void CommandBuffer::setLineWidth(F32 width)
 
 void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	if(self.m_debugMarkers) [[unlikely]]
 	{
@@ -1076,6 +1134,7 @@ void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
 
 void CommandBuffer::popDebugMarker()
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	if(self.m_debugMarkers) [[unlikely]]
 	{
@@ -1132,6 +1191,7 @@ void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage, VkAccessF
 										VkPipelineStageFlags dstStage, VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img,
 										const VkImageSubresourceRange& range)
 {
+	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(img);
 	commandCommon();
 
@@ -1152,6 +1212,7 @@ void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage, VkAccessF
 
 void CommandBufferImpl::beginRecording()
 {
+	ANKI_TRACE_FUNCTION();
 	// Do the begin
 	VkCommandBufferInheritanceInfo inheritance = {};
 	inheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
@@ -1172,6 +1233,7 @@ void CommandBufferImpl::beginRecording()
 
 void CommandBufferImpl::endRecording()
 {
+	ANKI_TRACE_FUNCTION();
 	commandCommon();
 
 	ANKI_ASSERT(!m_finalized);
@@ -1217,6 +1279,8 @@ void CommandBufferImpl::endRecording()
 
 void CommandBufferImpl::drawcallCommon()
 {
+	ANKI_TRACE_FUNCTION();
+
 	// Preconditions
 	commandCommon();
 	ANKI_ASSERT(m_graphicsProg);

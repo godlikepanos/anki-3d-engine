@@ -343,7 +343,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			if((inLib.m_presentStages & requiredShaders) != requiredShaders
 			   || !(inLib.m_presentStages & (ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit)))
 			{
-				ANKI_RESOURCE_LOGE("The libray is missing shader shader types: %s", inLib.m_name.cstr());
+				ANKI_RESOURCE_LOGE("The libray is missing shader types: %s", inLib.m_name.cstr());
 				return Error::kUserData;
 			}
 

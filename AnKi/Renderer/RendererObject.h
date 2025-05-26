@@ -133,6 +133,24 @@ protected:
 		return Renderer::getSingleton().m_dummyResources;
 	}
 };
+
+class RtMaterialFetchRendererObject : protected RendererObject
+{
+protected:
+	Error init();
+
+	/// Build a pass that populates the shader binding table.
+	void buildShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
+									 RenderGraphBuilder& rgraph, BufferHandle& sbtHandle, BufferView& sbtBuffer);
+
+	void patchShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
+									 RenderGraphBuilder& rgraph, BufferHandle sbtHandle, BufferView sbtBuffer);
+
+private:
+	ShaderProgramResourcePtr m_sbtBuildProg;
+	ShaderProgramPtr m_sbtBuildGrProg;
+	ShaderProgramPtr m_sbtPatchGrProg;
+};
 /// @}
 
 } // end namespace anki

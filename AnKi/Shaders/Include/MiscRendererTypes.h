@@ -131,8 +131,8 @@ struct RtShadowsSbtBuildConstants
 {
 	U32 m_shaderHandleDwordSize;
 	U32 m_sbtRecordDwordSize;
-	U32 m_padding0;
-	U32 m_padding1;
+	U32 m_raygenHandleIndex; ///< Index to the handles buffer
+	U32 m_missHandleIndex;
 };
 
 // Lens flare

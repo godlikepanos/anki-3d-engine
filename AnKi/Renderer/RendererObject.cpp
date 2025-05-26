@@ -5,7 +5,10 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Util/Enum.h>
+#include <AnKi/Util/Tracer.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 
 namespace anki {
 
@@ -154,6 +157,98 @@ void RendererObject::fillBuffers(CommandBuffer& cmdb, ConstWeakArray<BufferView>
 	}
 
 	cmdb.popDebugMarker();
+}
+
+Error RtMaterialFetchRendererObject::init()
+{
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtBuildProg, m_sbtBuildGrProg, "Build"));
+	ANKI_CHECK(
+		loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtBuildProg, m_sbtPatchGrProg, "PatchRaygenAndMiss"));
+	return Error::kNone;
+}
+
+void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenHandleIdx, U32 missHandleIdx,
+																U32 sbtRecordSize, RenderGraphBuilder& rgraph, BufferHandle& sbtHandle,
+																BufferView& sbtBuffer)
+{
+	BufferHandle visibilityDep;
+	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
+	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
+
+	// Allocate SBT
+	U32 sbtAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+						   ? sizeof(U32)
+						   : GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+	sbtAlignment = computeCompoundAlignment(sbtAlignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
+
+	sbtBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(
+		(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * sbtRecordSize, sbtAlignment);
+	sbtHandle = rgraph.importBuffer(sbtBuffer, BufferUsageBit::kNone);
+
+	// Create the pass
+	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass(passName);
+
+	rpass.newBufferDependency(visibilityDep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
+	rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
+
+	rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff, lib = ShaderProgramPtr(library), sbtRecordSize,
+				   raygenHandleIdx, missHandleIdx](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(btBuild);
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+		cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
+
+		cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+		cmdb.bindSrv(1, 0, visibleRenderableIndicesBuff);
+		cmdb.bindSrv(2, 0, BufferView(&lib->getShaderGroupHandlesGpuBuffer()));
+
+		cmdb.bindUav(0, 0, sbtBuffer);
+
+		RtShadowsSbtBuildConstants consts = {};
+		ANKI_ASSERT(sbtRecordSize % 4 == 0);
+		consts.m_sbtRecordDwordSize = sbtRecordSize / 4;
+		const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
+		ANKI_ASSERT(shaderHandleSize % 4 == 0);
+		consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
+		consts.m_raygenHandleIndex = raygenHandleIdx;
+		consts.m_missHandleIndex = missHandleIdx;
+		cmdb.setFastConstants(&consts, sizeof(consts));
+
+		cmdb.dispatchComputeIndirect(buildSbtIndirectArgsBuff);
+	});
+}
+
+void RtMaterialFetchRendererObject::patchShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenHandleIdx, U32 missHandleIdx,
+																U32 sbtRecordSize, RenderGraphBuilder& rgraph, BufferHandle sbtHandle,
+																BufferView sbtBuffer)
+{
+	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass(passName);
+
+	rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
+
+	rpass.setWork(
+		[this, sbtBuffer, lib = ShaderProgramPtr(library), sbtRecordSize, raygenHandleIdx, missHandleIdx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(btBuild);
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_sbtPatchGrProg.get());
+
+			cmdb.bindSrv(0, 0, BufferView(&lib->getShaderGroupHandlesGpuBuffer()));
+
+			cmdb.bindUav(0, 0, sbtBuffer);
+
+			RtShadowsSbtBuildConstants consts = {};
+			ANKI_ASSERT(sbtRecordSize % 4 == 0);
+			consts.m_sbtRecordDwordSize = sbtRecordSize / 4;
+			const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
+			ANKI_ASSERT(shaderHandleSize % 4 == 0);
+			consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
+			consts.m_raygenHandleIndex = raygenHandleIdx;
+			consts.m_missHandleIndex = missHandleIdx;
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			cmdb.dispatchCompute(1, 1, 1);
+		});
 }
 
 } // end namespace anki

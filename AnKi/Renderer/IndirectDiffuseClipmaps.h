@@ -58,7 +58,7 @@ inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceOctMapSize("R", "Indir
 																	 "Size of the octahedral for the irradiance");
 
 /// Indirect diffuse based on clipmaps of probes.
-class IndirectDiffuseClipmaps : public RendererObject
+class IndirectDiffuseClipmaps : public RtMaterialFetchRendererObject
 {
 public:
 	IndirectDiffuseClipmaps()
@@ -101,18 +101,16 @@ private:
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramResourcePtr m_missProg;
-	ShaderProgramResourcePtr m_sbtProg;
-	ShaderProgramPtr m_libraryGrProg;
+	ShaderProgramPtr m_rtLibraryGrProg;
 	ShaderProgramPtr m_populateCachesGrProg;
 	ShaderProgramPtr m_computeIrradianceGrProg;
 	ShaderProgramPtr m_applyGiGrProg;
-	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_visProbesGrProg;
 
 	ImageResourcePtr m_blueNoiseImg;
 
 	U32 m_sbtRecordSize = 0;
-	U32 m_rayGenShaderGroupIdx = kMaxU32;
+	Array<U32, 2> m_rayGenShaderGroupIndices = {kMaxU32, kMaxU32};
 	U32 m_missShaderGroupIdx = kMaxU32;
 
 	Bool m_texturesImportedOnce = false;
