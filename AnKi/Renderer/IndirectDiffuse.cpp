@@ -124,14 +124,14 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
 			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
 		}
-		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
 
@@ -158,9 +158,9 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
 
 			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-			rgraphCtx.bindSrv(1, 2, getRenderer().getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(2, 2, getRenderer().getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(3, 2, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(1, 2, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(2, 2, getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(3, 2, getGBuffer().getColorRt(2));
 
 			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
@@ -181,7 +181,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSrv(5, 2, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 			cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get()));
-			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
+			rgraphCtx.bindSrv(7, 2, getShadowMapping().getShadowmapRt());
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::all()));

@@ -100,9 +100,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			ppass = &pass;
 		}
 
-		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-		ppass->newTextureDependency((g_ssaoQuarterRezCVar) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-									readUsage);
+		ppass->newTextureDependency(getGBuffer().getColorRt(2), readUsage);
+		ppass->newTextureDependency((g_ssaoQuarterRezCVar) ? getDepthDownscale().getRt() : getGBuffer().getDepthRt(), readUsage);
 		ppass->newTextureDependency(finalRt, writeUsage);
 
 		ppass->setWork([this, &ctx, finalRt](RenderPassWorkContext& rgraphCtx) {
@@ -111,8 +110,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_grProg.get());
 
-			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(2));
-			rgraphCtx.bindSrv(1, 0, (g_ssaoQuarterRezCVar) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(1, 0, (g_ssaoQuarterRezCVar) ? getDepthDownscale().getRt() : getGBuffer().getDepthRt());
 
 			cmdb.bindSrv(2, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
@@ -166,7 +165,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		ppass->newTextureDependency(finalRt, readUsage);
-		ppass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
+		ppass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
 		ppass->newTextureDependency(bentNormalsAndSsaoTempRt, writeUsage);
 
 		ppass->setWork([this, finalRt, bentNormalsAndSsaoTempRt, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -177,7 +176,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, finalRt);
-			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 
 			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 

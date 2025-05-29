@@ -171,8 +171,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflTileClassification");
 
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kUavCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
@@ -183,8 +183,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_tileClassificationGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindUav(0, 0, classTileMapRt);
 			cmdb.bindUav(1, 0, BufferView(m_indirectArgsBuffer.get()));
 
@@ -204,14 +204,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SSR");
 
-		rpass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(0), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getBloom().getPyramidRt(), TextureUsageBit::kSrvCompute);
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
+		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
@@ -227,15 +227,15 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(0));
-			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getColorRt(2));
-			rgraphCtx.bindSrv(3, 0, getRenderer().getDepthDownscale().getRt());
-			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(0));
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(3, 0, getDepthDownscale().getRt());
+			rgraphCtx.bindSrv(4, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(5, 0, getRenderer().getBloom().getPyramidRt());
-			cmdb.bindSrv(6, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-			cmdb.bindSrv(7, 0, getRenderer().getClusterBinning().getClustersBuffer());
-			rgraphCtx.bindSrv(8, 0, getRenderer().getShadowMapping().getShadowmapRt());
+			cmdb.bindSrv(6, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+			cmdb.bindSrv(7, 0, getClusterBinning().getClustersBuffer());
+			rgraphCtx.bindSrv(8, 0, getShadowMapping().getShadowmapRt());
 			rgraphCtx.bindSrv(9, 0, classTileMapRt);
 
 			rgraphCtx.bindUav(0, 0, transientRt1);
@@ -268,14 +268,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavTraceRays);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
 			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
 		}
-		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
@@ -322,7 +322,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
 			}
 
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getShadowMapping().getShadowmapRt());
+			rgraphCtx.bindSrv(srv++, 2, getShadowMapping().getShadowmapRt());
 
 			const auto& arr = GpuSceneArrays::GlobalIlluminationProbe::getSingleton();
 			cmdb.bindSrv(srv++, 2,
@@ -334,9 +334,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture3DSrv.get(), TextureSubresourceDesc::all()));
 			}
 
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(2));
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
@@ -363,8 +363,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionProbeFallback");
 
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
@@ -384,10 +384,10 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_probeFallbackGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 			cmdb.bindSrv(1, 0, pixelsFailedSsrBuff);
-			cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
-			cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getClustersBuffer());
+			cmdb.bindSrv(2, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
+			cmdb.bindSrv(3, 0, getClusterBinning().getClustersBuffer());
 			cmdb.bindSrv(4, 0, BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(U32)));
 
 			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
@@ -424,9 +424,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
@@ -441,9 +441,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindSrv(0, 0, transientRt1);
 			rgraphCtx.bindSrv(1, 0, hitPosAndDepthRt);
-			rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(3, 0, getRenderer().getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(2, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(3, 0, getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(4, 0, getGBuffer().getColorRt(2));
 			rgraphCtx.bindSrv(5, 0, classTileMapRt);
 
 			rgraphCtx.bindUav(0, 0, transientRt2);
@@ -503,7 +503,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
@@ -517,7 +517,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindSrv(0, 0, transientRt1);
 			rgraphCtx.bindSrv(1, 0, writeMomentsRt);
-			rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(3, 0, classTileMapRt);
 
 			rgraphCtx.bindUav(0, 0, transientRt2);

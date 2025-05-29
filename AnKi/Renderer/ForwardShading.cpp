@@ -37,7 +37,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	visIn.m_lodDistances = lodDistances;
 	visIn.m_rgraph = &rgraph;
 	visIn.m_gatherAabbIndices = g_dbgSceneCVar;
-	RenderTargetHandle hzb = getRenderer().getGBuffer().getHzbRt();
+	RenderTargetHandle hzb = getGBuffer().getHzbRt();
 	visIn.m_hzbRt = &hzb;
 	visIn.m_viewportSize = getRenderer().getInternalResolution();
 
@@ -60,20 +60,19 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb.bindSampler(ANKI_MATERIAL_REGISTER_LINEAR_CLAMP_SAMPLER, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		cmdb.bindSampler(ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_SCENE_DEPTH, 0, getRenderer().getDepthDownscale().getRt(),
-						  DepthDownscale::kQuarterInternalResolution);
+		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_SCENE_DEPTH, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_LIGHT_VOLUME, 0, getRenderer().getVolumetricLightingAccumulation().getRt());
 
 		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS, 0, ctx.m_globalRenderingConstantsBuffer);
 
 		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS, 0,
-					 getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+					 getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_SPOT_LIGHTS, 0,
-					 getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+					 getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
-		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_SHADOW_ATLAS, 0, getRenderer().getShadowMapping().getShadowmapRt());
+		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_SHADOW_ATLAS, 0, getShadowMapping().getShadowmapRt());
 
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTERS, 0, getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTERS, 0, getClusterBinning().getClustersBuffer());
 
 		// Draw
 		RenderableDrawerArguments args;
@@ -99,7 +98,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 void ForwardShading::setDependencies(GraphicsRenderPass& pass)
 {
-	pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSrvPixel, DepthDownscale::kQuarterInternalResolution);
+	pass.newTextureDependency(getDepthDownscale().getRt(), TextureUsageBit::kSrvPixel, DepthDownscale::kQuarterInternalResolution);
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSrvPixel);
 
 	if(getRenderer().getLensFlare().getIndirectDrawBuffer().isValid())

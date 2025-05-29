@@ -132,6 +132,17 @@ protected:
 	{
 		return Renderer::getSingleton().m_dummyResources;
 	}
+
+#define ANKI_RENDERER_OBJECT_DEF(type, name, initCondition) \
+	ANKI_FORCE_INLINE type& get##type() \
+	{ \
+		return getRenderer().get##type(); \
+	} \
+	ANKI_FORCE_INLINE Bool is##type##Enabled() const \
+	{ \
+		return getRenderer().is##type##Enabled(); \
+	}
+#include <AnKi/Renderer/RendererObject.def.h>
 };
 
 class RtMaterialFetchRendererObject : protected RendererObject

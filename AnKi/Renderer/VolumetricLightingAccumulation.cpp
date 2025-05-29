@@ -6,6 +6,7 @@
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Resource/ImageResource.h>
@@ -36,7 +37,8 @@ Error VolumetricLightingAccumulation::init()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Shaders
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", {{"ENABLE_SHADOWS", 1}}, m_prog, m_grProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin",
+								 {{"ENABLE_SHADOWS", 1}, {"CLIPMAP_DIFFUSE_INDIRECT", isIndirectDiffuseClipmapsEnabled()}}, m_prog, m_grProg));
 
 	// Create RTs
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
@@ -64,13 +66,23 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(m_runCtx.m_rts[0], TextureUsageBit::kSrvCompute);
 	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kUavCompute);
-	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
+	pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 
-	pass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
+	pass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 
-	if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
+	if(isIndirectDiffuseProbesEnabled() && getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
 	{
-		pass.newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), TextureUsageBit::kSrvCompute);
+	}
+
+	if(isIndirectDiffuseClipmapsEnabled())
+	{
+		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+		{
+			pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_avgIrradianceVolumes[i], TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_distanceMomentsVolumes[i], TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_probeValidityVolumes[i], TextureUsageBit::kSrvCompute);
+		}
 	}
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -86,17 +98,39 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_rts[1]);
 
-		cmdb.bindSrv(0, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
-
-		rgraphCtx.bindSrv(1, 0, m_runCtx.m_rts[0]);
-
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
-		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		rgraphCtx.bindSrv(4, 0, getRenderer().getShadowMapping().getShadowmapRt());
-		cmdb.bindSrv(5, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-		cmdb.bindSrv(6, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
-		cmdb.bindSrv(7, 0, getRenderer().getClusterBinning().getClustersBuffer());
+
+		U32 srv = 0;
+		cmdb.bindSrv(srv++, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
+		rgraphCtx.bindSrv(srv++, 0, m_runCtx.m_rts[0]);
+
+		cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		rgraphCtx.bindSrv(srv++, 0, getShadowMapping().getShadowmapRt());
+		cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
+		cmdb.bindSrv(srv++, 0, getClusterBinning().getClustersBuffer());
+
+		if(isIndirectDiffuseProbesEnabled())
+		{
+			cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		}
+		else
+		{
+			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+			{
+				rgraphCtx.bindSrv(srv++, 0, getIndirectDiffuseClipmaps().getRts().m_avgIrradianceVolumes[i]);
+			}
+
+			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+			{
+				rgraphCtx.bindSrv(srv++, 0, getIndirectDiffuseClipmaps().getRts().m_distanceMomentsVolumes[i]);
+			}
+
+			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+			{
+				rgraphCtx.bindSrv(srv++, 0, getIndirectDiffuseClipmaps().getRts().m_probeValidityVolumes[i]);
+			}
+		}
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 

@@ -201,17 +201,21 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	}
 
 	// Init the stages
-#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
+#define ANKI_RENDERER_OBJECT_DEF(type, name, initCondition) \
 	if(initCondition) \
 	{ \
-		m_##name2 = newInstance<name>(RendererMemoryPool::getSingleton()); \
-		ANKI_R_LOGV("Initializing " ANKI_STRINGIZE(name)); \
-		const Error err = m_##name2->init(); \
+		m_##name = newInstance<type>(RendererMemoryPool::getSingleton()); \
+		ANKI_R_LOGV("Initializing " ANKI_STRINGIZE(type)); \
+		const Error err = m_##name->init(); \
 		if(err) \
 		{ \
-			ANKI_R_LOGE("Initialization failed: " ANKI_STRINGIZE(name)); \
+			ANKI_R_LOGE("Initialization failed: " ANKI_STRINGIZE(type)); \
 			return err; \
 		} \
+	} \
+	else \
+	{ \
+		m_##name = nullptr; \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
 
@@ -305,10 +309,14 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_gbuffer->populateRenderGraph(ctx);
+	m_depthDownscale->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_clusterBinning2->populateRenderGraph(ctx);
 	m_generatedSky->populateRenderGraph(ctx);
-	m_indirectDiffuseProbes->populateRenderGraph(ctx);
+	if(m_indirectDiffuseProbes)
+	{
+		m_indirectDiffuseProbes->populateRenderGraph(ctx);
+	}
 	if(m_indirectDiffuseClipmaps)
 	{
 		m_indirectDiffuseClipmaps->populateRenderGraph(ctx);
@@ -317,7 +325,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
-	m_depthDownscale->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{
 		m_rtShadows->populateRenderGraph(ctx);

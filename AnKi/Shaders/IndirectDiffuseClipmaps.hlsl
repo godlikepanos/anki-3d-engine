@@ -171,7 +171,7 @@ Vec3 sampleClipmapIrradianceCommon(SampleClipmapsConfig cfg, SampleClipmapsArgs 
 
 		if(cfg.m_doInvalidProbeRejection)
 		{
-			const Bool valid = probeValidityVolumes[NonUniformResourceIndex(clipmapIdx)][coords.xzy].x > 0.8;
+			const Bool valid = TEX(probeValidityVolumes[NonUniformResourceIndex(clipmapIdx)], coords.xzy).x > 0.8;
 			if(!valid)
 			{
 				continue;
@@ -244,7 +244,7 @@ Vec3 sampleClipmapIrradianceCommon(SampleClipmapsConfig cfg, SampleClipmapsArgs 
 		}
 		else
 		{
-			v = primaryVolumes[NonUniformResourceIndex(clipmapIdx)][coords.xzy];
+			v = TEX(primaryVolumes[NonUniformResourceIndex(clipmapIdx)], coords.xzy);
 		}
 
 		value += v * w;
@@ -295,9 +295,9 @@ Vec3 sampleClipmapIrradianceCheap(Vec3 samplePoint, Vec3 normal, Clipmap clipmap
 	cfg.m_biasSamplePoint = biasSamplePoint;
 	cfg.m_doChebyshevOcclusion = false;
 	cfg.m_doInvalidProbeRejection = false;
-	cfg.m_fastClipmapSelection = false;
+	cfg.m_fastClipmapSelection = true;
 	cfg.m_primaryVolumesHaveOctMap = true;
-	cfg.m_normalRejection = false;
+	cfg.m_normalRejection = true;
 
 	SampleClipmapsArgs args;
 	args.m_cameraPos = 0.0;

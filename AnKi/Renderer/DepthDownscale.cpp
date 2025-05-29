@@ -89,7 +89,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Depth downscale");
 
-		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
 
@@ -131,7 +131,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindUav(0, 0, BufferView(m_counterBuffer.get(), 0, sizeof(U32)));
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
@@ -151,7 +151,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			if(mip == 0)
 			{
-				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
+				pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 			}
 			else
 			{
@@ -170,7 +170,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 				if(mip == 0)
 				{
-					rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+					rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 				}
 				else
 				{

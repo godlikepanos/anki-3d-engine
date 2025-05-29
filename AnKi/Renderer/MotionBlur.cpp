@@ -124,7 +124,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		ppass->newTextureDependency(getRenderer().getTonemapping().getRt(), readUsage);
-		ppass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
+		ppass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
 		ppass->newTextureDependency(maxNeighbourVelRt, readUsage);
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 		ppass->newTextureDependency(m_runCtx.m_rt, writeUsage);
@@ -136,7 +136,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_reconstructGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, getRenderer().getTonemapping().getRt());
-			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(2, 0, maxNeighbourVelRt);
 			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 

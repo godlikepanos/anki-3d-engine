@@ -84,28 +84,28 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Bind all
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
-		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		if(getRenderer().isIndirectDiffuseClipmapsEnabled())
 		{
-			rgraphCtx.bindSrv(2, 0, getRenderer().getIndirectDiffuseClipmaps().getRt());
+			rgraphCtx.bindSrv(2, 0, getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance);
 		}
 		else
 		{
-			cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+			cmdb.bindSrv(2, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
 		}
-		cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
-		cmdb.bindSrv(4, 0, getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindSrv(3, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
+		cmdb.bindSrv(4, 0, getClusterBinning().getClustersBuffer());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindSrv(5, 0, getRenderer().getGBuffer().getColorRt(0));
-		rgraphCtx.bindSrv(6, 0, getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindSrv(7, 0, getRenderer().getGBuffer().getColorRt(2));
-		rgraphCtx.bindSrv(8, 0, getRenderer().getGBuffer().getDepthRt());
-		rgraphCtx.bindSrv(9, 0, getRenderer().getShadowmapsResolve().getRt());
-		rgraphCtx.bindSrv(10, 0, getRenderer().getSsao().getRt());
-		rgraphCtx.bindSrv(11, 0, getRenderer().getReflections().getRt());
+		rgraphCtx.bindSrv(5, 0, getGBuffer().getColorRt(0));
+		rgraphCtx.bindSrv(6, 0, getGBuffer().getColorRt(1));
+		rgraphCtx.bindSrv(7, 0, getGBuffer().getColorRt(2));
+		rgraphCtx.bindSrv(8, 0, getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(9, 0, getShadowmapsResolve().getRt());
+		rgraphCtx.bindSrv(10, 0, getSsao().getRt());
+		rgraphCtx.bindSrv(11, 0, getReflections().getRt());
 		cmdb.bindSrv(12, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 
 		// Draw
@@ -181,7 +181,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 		rgraphCtx.bindSrv(1, 0, getRenderer().getVolumetricFog().getRt());
 
 		class Consts
@@ -211,7 +211,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Debug stuff
 	if(g_visualizeGiProbesCVar && getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
-		getRenderer().getIndirectDiffuseClipmaps().drawDebugProbes(ctx, rgraphCtx);
+		getIndirectDiffuseClipmaps().drawDebugProbes(ctx, rgraphCtx);
 	}
 
 	// Forward shading last
@@ -255,7 +255,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	});
 
 	GraphicsRenderPassTargetDesc colorRt(m_runCtx.m_rt);
-	GraphicsRenderPassTargetDesc depthRt(getRenderer().getGBuffer().getDepthRt());
+	GraphicsRenderPassTargetDesc depthRt(getGBuffer().getDepthRt());
 	depthRt.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	depthRt.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({colorRt}, &depthRt, (enableVrs) ? &sriRt : nullptr,
@@ -272,18 +272,18 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// Light shading
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
-	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), readUsage);
-	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
-	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
-	pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
-	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
-	pass.newTextureDependency(getRenderer().getReflections().getRt(), readUsage);
+	pass.newTextureDependency(getGBuffer().getColorRt(0), readUsage);
+	pass.newTextureDependency(getGBuffer().getColorRt(1), readUsage);
+	pass.newTextureDependency(getGBuffer().getColorRt(2), readUsage);
+	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
+	pass.newTextureDependency(getShadowmapsResolve().getRt(), readUsage);
+	pass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
+	pass.newTextureDependency(getSsao().getRt(), readUsage);
+	pass.newTextureDependency(getReflections().getRt(), readUsage);
 
 	if(getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
-		pass.newTextureDependency(getRenderer().getIndirectDiffuseClipmaps().getRt(), TextureUsageBit::kSrvPixel);
+		pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance, TextureUsageBit::kSrvPixel);
 	}
 
 	// Fog

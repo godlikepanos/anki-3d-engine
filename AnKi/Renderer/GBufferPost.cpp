@@ -30,23 +30,23 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("GBuffPost");
 
-	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kUavCompute);
-	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kUavCompute);
-	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kUavCompute);
-	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+	rpass.newTextureDependency(getGBuffer().getColorRt(0), TextureUsageBit::kUavCompute);
+	rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kUavCompute);
+	rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kUavCompute);
+	rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
+	rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 
 	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		rgraphCtx.bindUav(0, 0, getRenderer().getGBuffer().getColorRt(0));
-		rgraphCtx.bindUav(1, 0, getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindUav(2, 0, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindUav(0, 0, getGBuffer().getColorRt(0));
+		rgraphCtx.bindUav(1, 0, getGBuffer().getColorRt(1));
+		rgraphCtx.bindUav(2, 0, getGBuffer().getColorRt(2));
 
-		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
-		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
-		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getClustersBuffer());
+		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+		cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
+		cmdb.bindSrv(2, 0, getClusterBinning().getClustersBuffer());
 
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 

@@ -95,22 +95,18 @@ public:
 
 	Error render(Texture* presentTex);
 
-#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
-	name& get##name() \
+#define ANKI_RENDERER_OBJECT_DEF(type, name, initCondition) \
+	type& get##type() \
 	{ \
-		ANKI_ASSERT(m_##name2); \
-		return *m_##name2; \
+		ANKI_ASSERT(m_##name != nullptr && m_##name != numberToPtr<type*>(kMaxPtrSize)); \
+		return *m_##name; \
 	} \
-	Bool is##name##Enabled() const \
+	Bool is##type##Enabled() const \
 	{ \
-		return m_##name2 != nullptr; \
+		ANKI_ASSERT(m_##name != numberToPtr<type*>(kMaxPtrSize) && "Calling this before the renderer had a chance to decide if to initialize it"); \
+		return m_##name != nullptr; \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
-
-	Bool getRtShadowsEnabled() const
-	{
-		return m_rtShadows != nullptr;
-	}
 
 	const UVec2& getInternalResolution() const
 	{
@@ -224,7 +220,7 @@ private:
 
 	/// @name Rendering stages
 	/// @{
-#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) name* m_##name2 = nullptr;
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) name* m_##name2 = numberToPtr<name*>(kMaxPtrSize);
 #include <AnKi/Renderer/RendererObject.def.h>
 	/// @}
 

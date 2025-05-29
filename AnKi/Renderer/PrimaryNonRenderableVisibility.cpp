@@ -96,7 +96,7 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 			in.m_passesName = passName;
 			in.m_objectType = type;
 			in.m_viewProjectionMat = ctx.m_matrices.m_viewProjection;
-			in.m_hzbRt = &getRenderer().getGBuffer().getHzbRt();
+			in.m_hzbRt = &getGBuffer().getHzbRt();
 			in.m_rgraph = &rgraph;
 
 			const GpuSceneNonRenderableObjectTypeWithFeedback feedbackType = toGpuSceneNonRenderableObjectTypeWithFeedback(type);

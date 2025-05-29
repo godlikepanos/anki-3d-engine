@@ -19,12 +19,13 @@ ANKI_RENDERER_OBJECT_DEF(VolumetricFog, volumetricFog, 1)
 ANKI_RENDERER_OBJECT_DEF(DepthDownscale, depthDownscale, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalAA, temporalAA, 1)
 ANKI_RENDERER_OBJECT_DEF(UiStage, uiStage, 1)
-ANKI_RENDERER_OBJECT_DEF(VolumetricLightingAccumulation, volumetricLightingAccumulation, 1)
-ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseProbes, indirectDiffuseProbes, 1)
+ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseProbes, indirectDiffuseProbes,
+						 !(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseClipmapsCVar))
 ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseClipmaps, indirectDiffuseClipmaps,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rtIndirectDiffuseClipmapsCVar)
-ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
+ANKI_RENDERER_OBJECT_DEF(VolumetricLightingAccumulation, volumetricLightingAccumulation, 1)
 ANKI_RENDERER_OBJECT_DEF(RtShadows, rtShadows, GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rayTracedShadowsCVar)
+ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
 							 && (g_rayTracedShadowsCVar || g_rtMaterialFetchDbgCVar || g_rtReflectionsCVar || g_rtIndirectDiffuseCVar

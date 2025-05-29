@@ -58,8 +58,8 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindShaderProgram(m_grProg.get());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
-		rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(3));
+		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(3));
 
 		class Constants
 		{
@@ -92,9 +92,9 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	});
 
 	ppass->newTextureDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage);
-	ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(3), readUsage);
-	ppass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
-	ppass->newTextureDependency(getRenderer().getGBuffer().getPreviousFrameDepthRt(), readUsage);
+	ppass->newTextureDependency(getGBuffer().getColorRt(3), readUsage);
+	ppass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
+	ppass->newTextureDependency(getGBuffer().getPreviousFrameDepthRt(), readUsage);
 }
 
 } // end namespace anki

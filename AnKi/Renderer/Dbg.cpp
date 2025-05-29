@@ -130,7 +130,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	consts.m_camTrf = ctx.m_matrices.m_cameraTransform;
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
-	cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
+	cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(type));
 	cmdb.bindSrv(2, 0, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
 
 	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
@@ -156,7 +156,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb.setLineWidth(2.0f);
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+	rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 
 	// GBuffer renderables
 	if(g_dbgSceneCVar)
@@ -189,7 +189,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 		BufferView indicesBuff;
 		BufferHandle dep;
-		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
+		getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
 		cmdb.bindSrv(2, 0, indicesBuff);
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
@@ -313,19 +313,19 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 
 	GraphicsRenderPassTargetDesc colorRti(m_runCtx.m_rt);
 	colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-	GraphicsRenderPassTargetDesc depthRti(getRenderer().getGBuffer().getDepthRt());
+	GraphicsRenderPassTargetDesc depthRti(getGBuffer().getDepthRt());
 	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({colorRti}, &depthRti);
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
+	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
 
 	if(g_dbgSceneCVar)
 	{
 		BufferView indicesBuff;
 		BufferHandle dep;
-		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
+		getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
 		pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
 
 		if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())

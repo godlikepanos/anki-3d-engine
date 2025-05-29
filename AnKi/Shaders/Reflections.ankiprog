@@ -54,36 +54,6 @@ enum
 };
 
 // Functions
-template<typename T>
-vector<T, 3> getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
-								SamplerState linearAnyClampSampler)
-{
-	const U32 probeCount = getStructuredBufferElementCount(giProbes);
-	U32 i;
-	for(i = 0; i < probeCount; ++i)
-	{
-		if(any(worldPos >= giProbes[i].m_aabbMax) || any(worldPos <= giProbes[i].m_aabbMin))
-		{
-			continue;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	const Bool probeFound = (i != probeCount);
-	if(probeFound)
-	{
-		const GpuSceneGlobalIlluminationProbe probe = giProbes[i];
-		return sampleGlobalIllumination<T>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), linearAnyClampSampler);
-	}
-	else
-	{
-		return T(0);
-	}
-}
-
 HVec4 encodeColorDepthAndSampleCount(HVec3 color, F16 depth, U32 sampleCount)
 {
 	HVec4 signs;
@@ -650,6 +620,35 @@ struct Consts
 };
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
+template<typename T>
+vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
+{
+	const U32 probeCount = getStructuredBufferElementCount(g_giProbes);
+	U32 i;
+	for(i = 0; i < probeCount; ++i)
+	{
+		if(any(worldPos >= g_giProbes[i].m_aabbMax) || any(worldPos <= g_giProbes[i].m_aabbMin))
+		{
+			continue;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	const Bool probeFound = (i != probeCount);
+	if(probeFound)
+	{
+		const GpuSceneGlobalIlluminationProbe probe = g_giProbes[i];
+		return sampleGlobalIllumination<T>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), g_linearClampAnySampler);
+	}
+	else
+	{
+		return T(0);
+	}
+}
+
 [shader("raygeneration")] void main()
 {
 	UVec2 halfViewportSize;
@@ -691,7 +690,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 	if(!hasHitSky && g_consts.m_giProbeCount > 0)
 	{
-		const HVec3 indirectDiffuse = getDiffuseIndirect<F16>(g_giProbes, hitPos, gbuffer.m_worldNormal, g_linearClampAnySampler);
+		const HVec3 indirectDiffuse = getDiffuseIndirect<F16>(hitPos, gbuffer.m_worldNormal);
 		radiance += gbuffer.m_diffuse * indirectDiffuse;
 	}
 

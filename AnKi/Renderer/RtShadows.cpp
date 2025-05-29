@@ -137,8 +137,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(RtShadows);
 
 #define ANKI_DEPTH_DEP \
-	getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSrvTraceRays | TextureUsageBit::kSrvCompute, \
-		DepthDownscale::kQuarterInternalResolution
+	getDepthDownscale().getRt(), TextureUsageBit::kSrvTraceRays | TextureUsageBit::kSrvCompute, DepthDownscale::kQuarterInternalResolution
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
@@ -270,12 +269,12 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
 		rpass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
 
 		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kUavTraceRays);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvTraceRays);
+		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvTraceRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
@@ -312,10 +311,10 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_intermediateShadowsRts[0]);
 			rgraphCtx.bindSrv(0, 2, m_runCtx.m_historyRt);
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindSrv(1, 2, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+			rgraphCtx.bindSrv(1, 2, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 			rgraphCtx.bindSrv(2, 2, getRenderer().getMotionVectors().getMotionVectorsRt());
 			cmdb.bindSrv(3, 2, TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDesc::all()));
-			rgraphCtx.bindSrv(4, 2, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(4, 2, getGBuffer().getColorRt(2));
 			rgraphCtx.bindSrv(5, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
 			rgraphCtx.bindSrv(6, 2, m_runCtx.m_prevMomentsRt);
 			rgraphCtx.bindUav(1, 2, m_runCtx.m_currentMomentsRt);
@@ -337,7 +336,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kUavCompute);
@@ -353,7 +352,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kUavCompute);
@@ -367,7 +366,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(m_runCtx.m_varianceRts[1], TextureUsageBit::kUavCompute);
@@ -383,7 +382,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, m_runCtx.m_intermediateShadowsRts[0]);
 			rgraphCtx.bindSrv(1, 0, m_runCtx.m_currentMomentsRt);
 			cmdb.bindSrv(2, 0, TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDesc::all()));
-			rgraphCtx.bindSrv(3, 0, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+			rgraphCtx.bindSrv(3, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_intermediateShadowsRts[1]);
 			rgraphCtx.bindUav(1, 0, m_runCtx.m_varianceRts[1]);
@@ -406,7 +405,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows SVGF Atrous");
 
 			rpass.newTextureDependency(ANKI_DEPTH_DEP);
-			rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+			rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 			rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[readRtIdx], TextureUsageBit::kSrvCompute);
 			rpass.newTextureDependency(m_runCtx.m_varianceRts[readRtIdx], TextureUsageBit::kSrvCompute);
 
@@ -439,7 +438,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-				rgraphCtx.bindSrv(0, 0, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+				rgraphCtx.bindSrv(0, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 				rgraphCtx.bindSrv(1, 0, m_runCtx.m_intermediateShadowsRts[readRtIdx]);
 				rgraphCtx.bindSrv(2, 0, m_runCtx.m_varianceRts[readRtIdx]);
 
@@ -466,7 +465,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows Upscale");
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
 
 		rpass.newTextureDependency(m_runCtx.m_upscaledRt, TextureUsageBit::kUavCompute);
@@ -481,8 +480,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindSrv(0, 0, m_runCtx.m_historyRt);
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_upscaledRt);
-			rgraphCtx.bindSrv(1, 0, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
-			rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+			rgraphCtx.bindSrv(2, 0, getGBuffer().getDepthRt());
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});
@@ -498,8 +497,8 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 	rgraphCtx.bindSrv(0, 0, m_runCtx.m_intermediateShadowsRts[(horizontal) ? 0 : 1]);
-	rgraphCtx.bindSrv(1, 0, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
-	rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getColorRt(2));
+	rgraphCtx.bindSrv(1, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+	rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(2));
 	rgraphCtx.bindSrv(3, 0, m_runCtx.m_currentMomentsRt);
 	cmdb.bindSrv(4, 0, TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDesc::all()));
 

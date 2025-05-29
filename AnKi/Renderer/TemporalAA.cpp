@@ -80,7 +80,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		prpass = &pass;
 	}
 
-	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
+	prpass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
 	prpass->newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 	prpass->newTextureDependency(m_runCtx.m_historyRt, readUsage);
 	prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);

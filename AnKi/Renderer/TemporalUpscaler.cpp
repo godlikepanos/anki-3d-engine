@@ -66,8 +66,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
-		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
-								  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(getGBuffer().getDepthRt(), readUsage, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 		pass.newTextureDependency(m_runCtx.m_rt, writeUsage);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -84,8 +83,8 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 			const TextureView srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt(), TextureSubresourceDesc::firstSurface());
 			const TextureView motionVectorsView =
 				rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureSubresourceDesc::firstSurface());
-			const TextureView depthView = rgraphCtx.createTextureView(getRenderer().getGBuffer().getDepthRt(),
-																	  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
+			const TextureView depthView =
+				rgraphCtx.createTextureView(getGBuffer().getDepthRt(), TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 			const TextureView exposureView =
 				rgraphCtx.createTextureView(getRenderer().getTonemapping().getExposureAndAvgLuminanceRt(), TextureSubresourceDesc::firstSurface());
 			const TextureView dstView = rgraphCtx.createTextureView(m_runCtx.m_rt, TextureSubresourceDesc::firstSurface());

@@ -57,6 +57,18 @@ inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceOctMapSize(
 inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceOctMapSize("R", "IndirectDiffuseClipmapIrradianceOctMapSize", 5, 4, 20,
 																	 "Size of the octahedral for the irradiance");
 
+/// @memberof IndirectDiffuseClipmaps
+class IndirectDiffuseClipmapsRenderTargetHandles
+{
+public:
+	RenderTargetHandle m_appliedIrradiance;
+	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_radianceVolumes;
+	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
+	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
+	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
+	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
+};
+
 /// Indirect diffuse based on clipmaps of probes.
 class IndirectDiffuseClipmaps : public RtMaterialFetchRendererObject
 {
@@ -73,7 +85,7 @@ public:
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
-		handles[0] = m_runCtx.m_appliedGiRt;
+		handles[0] = m_runCtx.m_handles.m_appliedIrradiance;
 	}
 
 	const Array<Clipmap, kIndirectDiffuseClipmapCount>& getClipmapsInfo() const
@@ -83,19 +95,20 @@ public:
 
 	void drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
 
-	RenderTargetHandle getRt() const
+	const IndirectDiffuseClipmapsRenderTargetHandles& getRts() const
 	{
-		return m_runCtx.m_appliedGiRt;
+		return m_runCtx.m_handles;
 	}
 
 private:
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
+	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
 
 	RenderTargetDesc m_rtResultRtDesc;
-	Array<RenderTargetDesc, kIndirectDiffuseClipmapCount> m_probeValidityRtDescs;
 	RenderTargetDesc m_appliedGiRtDesc;
+	Array<RenderTargetDesc, kIndirectDiffuseClipmapCount> m_avgLightColorRtDescs;
 
 	Array<Clipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
 
@@ -118,8 +131,7 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_appliedGiRt;
-		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_probeValidityRts;
+		IndirectDiffuseClipmapsRenderTargetHandles m_handles;
 	} m_runCtx;
 };
 /// @}

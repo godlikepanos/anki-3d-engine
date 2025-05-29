@@ -469,7 +469,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		// HZB generation
 		HzbDirectionalLightInput hzbGenIn;
 		hzbGenIn.m_cascadeCount = cascadeCount;
-		hzbGenIn.m_depthBufferRt = getRenderer().getGBuffer().getDepthRt();
+		hzbGenIn.m_depthBufferRt = getGBuffer().getDepthRt();
 		hzbGenIn.m_depthBufferRtSize = getRenderer().getInternalResolution();
 		hzbGenIn.m_cameraProjectionMatrix = ctx.m_matrices.m_projection;
 		hzbGenIn.m_cameraInverseViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;

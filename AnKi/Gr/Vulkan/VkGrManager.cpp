@@ -1622,6 +1622,13 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 	}
 #endif
 
+	if(pCallbackData->messageIdNumber == 20145586 || pCallbackData->messageIdNumber == 979140054)
+	{
+		// Mismatch of the format of the storage image (or the storage texel buffer) in SPIR-V and the actual VkImage. Ignore it because DXC puts
+		// almost random shit as formats
+		return false;
+	}
+
 	if(pCallbackData->messageIdNumber == 1944932341 || pCallbackData->messageIdNumber == 1303270965)
 	{
 		// Not sure why I'm getting that
