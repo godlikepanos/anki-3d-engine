@@ -22,7 +22,7 @@ StructuredBuffer<Cluster> g_clusters : register(t2);
 
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 
-SamplerState g_linearClampAnySampler : register(s0);
+SamplerState g_linearAnyClampSampler : register(s0);
 
 [NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
 {
@@ -86,7 +86,7 @@ SamplerState g_linearClampAnySampler : register(s0);
 		// Do diffuse
 		if(decal.m_diffuseTexture != kMaxU32)
 		{
-			const HVec4 col = getBindlessTexture2DVec4(decal.m_diffuseTexture).SampleLevel(g_linearClampAnySampler, uv, 0.0);
+			const HVec4 col = getBindlessTexture2DVec4(decal.m_diffuseTexture).SampleLevel(g_linearAnyClampSampler, uv, 0.0);
 
 			factor *= col.a;
 			diffuse = lerp(diffuse, col.rgb, factor * decal.m_diffuseBlendFactor);
@@ -95,7 +95,7 @@ SamplerState g_linearClampAnySampler : register(s0);
 		// Do metal roughness
 		if(decal.m_roughnessMetalnessTexture != kMaxU32)
 		{
-			const HVec3 col = getBindlessTexture2DVec4(decal.m_roughnessMetalnessTexture).SampleLevel(g_linearClampAnySampler, uv, 0.0).gba;
+			const HVec3 col = getBindlessTexture2DVec4(decal.m_roughnessMetalnessTexture).SampleLevel(g_linearAnyClampSampler, uv, 0.0).gba;
 
 			if(decal.m_diffuseTexture == kMaxU32)
 			{

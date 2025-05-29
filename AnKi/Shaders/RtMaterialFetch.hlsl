@@ -61,9 +61,9 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1, SPACE);
 #	endif
 
 // Samplers
-SamplerState g_linearClampAnySampler : register(s0, SPACE);
+SamplerState g_linearAnyClampSampler : register(s0, SPACE);
 SamplerComparisonState g_shadowSampler : register(s1, SPACE);
-SamplerState g_linearRepeatAnySampler : register(s2, SPACE);
+SamplerState g_linearAnyRepeatSampler : register(s2, SPACE);
 
 template<typename T>
 struct GBufferLight
@@ -105,7 +105,7 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 		else
 		{
 			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
-			gbuffer.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
+			gbuffer.m_emission = g_envMap.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
 		}
 	}
 	else

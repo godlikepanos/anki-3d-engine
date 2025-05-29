@@ -641,7 +641,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	if(probeFound)
 	{
 		const GpuSceneGlobalIlluminationProbe probe = g_giProbes[i];
-		return sampleGlobalIllumination<T>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), g_linearClampAnySampler);
+		return sampleGlobalIllumination<T>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), g_linearAnyClampSampler);
 	}
 	else
 	{

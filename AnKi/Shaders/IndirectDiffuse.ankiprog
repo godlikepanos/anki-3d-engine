@@ -61,7 +61,7 @@ Vec3 lightShading(Vec3 rayOrigin, Vec3 rayDir, Vec3 hitPos, Vec3 hitNormal, Vec3
 		else
 		{
 			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
-			color = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
+			color = g_envMap.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
 		}
 	}
 	else
@@ -102,7 +102,7 @@ Vec3 lightShading(Vec3 rayOrigin, Vec3 rayDir, Vec3 hitPos, Vec3 hitNormal, Vec3
 		// Do simple light shading
 		color = emission;
 
-		const Vec3 indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, hitNormal, g_linearClampAnySampler);
+		const Vec3 indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, hitNormal, g_linearAnyClampSampler);
 		// color += diffuse * indirectDiffuse;
 
 		const Vec3 l = -dirLight.m_direction;
