@@ -438,10 +438,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 
 	if(m_indirectDiffuseClipmaps)
 	{
-		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-		{
-			consts.m_indirectDiffuseClipmaps[i] = m_indirectDiffuseClipmaps->getClipmapsInfo()[i];
-		}
+		memcpy(&consts.m_indirectDiffuseClipmaps, &m_indirectDiffuseClipmaps->getClipmapConsts(), sizeof(consts.m_indirectDiffuseClipmaps));
 	}
 
 	outConsts = consts;

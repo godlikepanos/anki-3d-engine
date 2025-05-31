@@ -329,11 +329,6 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 						 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
 			cmdb.bindSrv(srv++, 2, pixelsFailedSsrBuff);
 
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount * 3; ++clipmap)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture3DSrv.get(), TextureSubresourceDesc::all()));
-			}
-
 			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(2));

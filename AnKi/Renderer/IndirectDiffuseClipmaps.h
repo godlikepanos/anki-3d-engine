@@ -88,9 +88,9 @@ public:
 		handles[0] = m_runCtx.m_handles.m_appliedIrradiance;
 	}
 
-	const Array<Clipmap, kIndirectDiffuseClipmapCount>& getClipmapsInfo() const
+	const IndirectDiffuseClipmapConstants& getClipmapConsts() const
 	{
-		return m_clipmapInfo;
+		return m_consts;
 	}
 
 	void drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
@@ -105,12 +105,12 @@ private:
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
+	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 
 	RenderTargetDesc m_rtResultRtDesc;
 	RenderTargetDesc m_appliedGiRtDesc;
-	Array<RenderTargetDesc, kIndirectDiffuseClipmapCount> m_avgLightColorRtDescs;
 
-	Array<Clipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
+	IndirectDiffuseClipmapConstants m_consts;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramResourcePtr m_missProg;

@@ -31,17 +31,6 @@
 #endif
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
-Vec2 generateRandomUv(U32 sampleIdx, U32 sampleCount, U32 frame)
-{
-	const UVec3 r = rand3DPCG16(UVec3(frame % 8u, frame % 4u, frame % 16u));
-	return hammersleyRandom16(sampleIdx, sampleCount, r);
-}
-
-HVec3 generateRandomPointInSphere(U32 sampleIdx, U32 sampleCount, U32 frame)
-{
-	return octahedronDecode(generateRandomUv(sampleIdx, sampleCount, frame));
-}
-
 // ===========================================================================
 // RtMaterialFetch                                                           =
 // ===========================================================================
@@ -59,18 +48,21 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 [Shader("raygeneration")] void main()
 {
-	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
+	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
+	const UVec3 probeCounts = idConsts.m_probeCounts;
+	const U32 probeCountTotal = idConsts.m_totalProbeCount;
+	const Vec3 clipmapSize = idConsts.m_sizes[g_consts.m_clipmapIdx];
+	const Vec3 clipmapAabbMin = idConsts.m_aabbMins[g_consts.m_clipmapIdx];
 
 	// Compute probe info. Make sure you shoot coherent rays as much as possible by using the same direction on a specific wave
-	const U32 outPixelIdx = DispatchRaysIndex().x / clipmap.m_probeCountTotal;
-	const U32 probeIdx = DispatchRaysIndex().x % clipmap.m_probeCountTotal;
+	const U32 outPixelIdx = DispatchRaysIndex().x / probeCountTotal;
+	const U32 probeIdx = DispatchRaysIndex().x % probeCountTotal;
 
 	UVec3 probe3dIdx;
-	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, probe3dIdx.z, probe3dIdx.y,
-						  probe3dIdx.x);
+	unflatten3dArrayIndex(probeCounts.z, probeCounts.y, probeCounts.x, probeIdx, probe3dIdx.z, probe3dIdx.y, probe3dIdx.x);
 
-	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
-	const Vec3 probeWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmap.m_aabbMin;
+	const Vec3 probeSize = clipmapSize / probeCounts;
+	const Vec3 probeWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmapAabbMin;
 
 	// Generate direction
 	const U32 checkerboardIdx = g_globalRendererConstants.m_frame % 4;
@@ -103,21 +95,10 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, tMax, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 
 		// Apply indirect
-#		if 0
-		const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
-		const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
-		const Vec3 irradiance = sampleClipmapIrradianceAccurate(hitPos, gbuffer.m_worldNormal, g_globalRendererConstants.m_cameraPosition, lookDir,
-																g_globalRendererConstants.m_indirectDiffuseClipmaps, g_irradianceVolumes,
-																g_distanceMomentsVolumes, g_probeValidityVolumes, g_linearAnyRepeatSampler, noise);
-#		else
-		Clipmap clipmaps[kIndirectDiffuseClipmapCount];
-		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-		{
-			clipmaps[i] = g_globalRendererConstants.m_indirectDiffuseClipmaps[i];
-			clipmaps[i].m_aabbMin = clipmaps[i].m_prevFrameAabbMin;
-		}
-		const Vec3 irradiance = sampleClipmapIrradianceCheap(hitPos, gbuffer.m_worldNormal, clipmaps, g_irradianceVolumes, g_linearAnyRepeatSampler);
-#		endif
+		constexpr SampleClipmapFlag flags =
+			kSampleClipmapFlagBackfacingProbeRejection | kSampleClipmapFlagBiasSamplePointSurfaceNormal | kSampleClipmapFlagUsePreviousFrame;
+		const Vec3 irradiance = sampleClipmapIrradiance(hitPos, gbuffer.m_worldNormal, g_globalRendererConstants.m_cameraPosition, idConsts,
+														g_linearAnyRepeatSampler, flags);
 
 		radiance += irradiance * gbuffer.m_diffuse / kPi;
 	}
@@ -127,7 +108,9 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const F32 kMaxDist = 1000.0; // Chose something small and make sure its square doesn't overflow F16
 	TEX(g_lightResultTex, UVec2(probeIdx, outPixelIdx + raysPerProbePerFrame * g_consts.m_clipmapIdx)) = HVec4(radiance, min(rayT, kMaxDist));
 }
-#	else
+#	else // RT_MATERIAL_FETCH_CLIPMAP
+
+// RT based apply of indirect
 
 struct Consts
 {
@@ -176,15 +159,23 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 	}
 
-	const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
-	const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
-
-	const Vec3 rayOrigin = (hit) ? hitPos : biasedWorldPos;
-	const Vec3 rayDir2 = (hit) ? gbuffer.m_worldNormal : worldNormal;
-	const Bool biasSamplePoint = !hit; // Bias the sample point if it's not for the 2nd bounce
-	const Vec3 irradiance = sampleClipmapIrradianceAccurate(
-		rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, lookDir, g_globalRendererConstants.m_indirectDiffuseClipmaps,
-		g_irradianceVolumes, g_distanceMomentsVolumes, g_probeValidityVolumes, g_linearAnyRepeatSampler, randFactors.x, biasSamplePoint);
+	Vec3 rayOrigin;
+	Vec3 rayDir2;
+	if(hit)
+	{
+		// 2nd bounce
+		rayOrigin = hitPos;
+		rayDir2 = gbuffer.m_worldNormal;
+	}
+	else
+	{
+		rayOrigin = biasedWorldPos;
+		rayDir2 = worldNormal;
+	}
+	const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagBiasSamplePointTowardsCamera);
+	const Vec3 irradiance =
+		sampleClipmapIrradiance(rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, g_globalRendererConstants.m_indirectDiffuseClipmaps,
+								g_linearAnyRepeatSampler, flags, randFactors.x);
 
 	Vec3 final;
 	if(hit)
@@ -224,27 +215,31 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 [NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
+	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
+	const U32 clipmapIdx = g_consts.m_clipmapIdx;
+	const Vec3 clipmapSize = idConsts.m_sizes[clipmapIdx].xyz;
+	const UVec3 probeCounts = idConsts.m_probeCounts;
+	const Vec3 clipmapAabbMin = idConsts.m_aabbMins[clipmapIdx].xyz;
+	const Vec3 prevClipmapAabbMin = idConsts.m_previousFrameAabbMins[clipmapIdx].xyz;
 
 	const U32 halfRadianceOctMapSize = RADIANCE_OCTAHEDRON_MAP_SIZE / 2;
 	const U32 raysPerProbePerFrame = square(halfRadianceOctMapSize);
 
 	const U32 rtPixelIdx = svDispatchThreadId.x % raysPerProbePerFrame;
 	const U32 probeIdx = svDispatchThreadId.x / raysPerProbePerFrame;
-	if(probeIdx >= clipmap.m_probeCountTotal)
+	if(probeIdx >= idConsts.m_totalProbeCount)
 	{
 		return;
 	}
 
-	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+	const Vec3 probeSize = clipmapSize / probeCounts;
 	UVec3 probe3dIdx;
-	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, probeIdx, probe3dIdx.z, probe3dIdx.y,
-						  probe3dIdx.x);
-	const Vec3 probeWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmap.m_aabbMin;
-	const Bool blendWithHistory = all(probeWorldPos > clipmap.m_prevFrameAabbMin) && all(probeWorldPos < clipmap.m_prevFrameAabbMin + clipmap.m_size);
+	unflatten3dArrayIndex(probeCounts.z, probeCounts.y, probeCounts.x, probeIdx, probe3dIdx.z, probe3dIdx.y, probe3dIdx.x);
+	const Vec3 probeWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmapAabbMin;
+	const Bool blendWithHistory = all(probeWorldPos > prevClipmapAabbMin) && all(probeWorldPos < prevClipmapAabbMin + clipmapSize);
 
-	UVec3 noOctTexCoord = frac(probeWorldPos / clipmap.m_size) * clipmap.m_probeCounts;
-	noOctTexCoord = min(noOctTexCoord, clipmap.m_probeCounts - 1u);
+	UVec3 noOctTexCoord = frac(probeWorldPos / clipmapSize) * probeCounts;
+	noOctTexCoord = min(noOctTexCoord, probeCounts - 1u);
 	noOctTexCoord = noOctTexCoord.xzy;
 
 	// Read the result from RT
@@ -418,9 +413,9 @@ Vec3 decodeAtomicColor(U32 x, U32 y)
 // The group services a single probe. Every thread reads a radiance value and bins it to the appropreate irradiance pixel
 [NumThreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
 {
-	const U32 clipmapIdx = svGroupId.x / g_globalRendererConstants.m_indirectDiffuseClipmaps[0].m_probeCounts[0];
-	const UVec3 probeId = UVec3(svGroupId.x % g_globalRendererConstants.m_indirectDiffuseClipmaps[0].m_probeCounts[0], svGroupId.y, svGroupId.z);
-	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[clipmapIdx];
+	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
+	const U32 clipmapIdx = svGroupId.x / idConsts.m_probeCounts.x;
+	const UVec3 probeId = UVec3(svGroupId.x % idConsts.m_probeCounts.x, svGroupId.y, svGroupId.z);
 
 	// Zero shared memory
 	const U32 irradianceTexelCount = IRRADIANCE_OCTAHEDRON_MAP_SIZE * IRRADIANCE_OCTAHEDRON_MAP_SIZE;
@@ -440,7 +435,7 @@ Vec3 decodeAtomicColor(U32 x, U32 y)
 	UVec3 radianceTexelCoordStart = probeId.xzy;
 	radianceTexelCoordStart.xy *= RADIANCE_OCTAHEDRON_MAP_SIZE + 2;
 	radianceTexelCoordStart.xy += 1;
-	const Vec3 radianceVolumeSize = clipmap.m_probeCounts.xzy * Vec3(RADIANCE_OCTAHEDRON_MAP_SIZE + 2, RADIANCE_OCTAHEDRON_MAP_SIZE + 2, 1.0);
+	const Vec3 radianceVolumeSize = idConsts.m_probeCounts.xzy * Vec3(RADIANCE_OCTAHEDRON_MAP_SIZE + 2, RADIANCE_OCTAHEDRON_MAP_SIZE + 2, 1.0);
 	const Vec3 radianceTexelStartUv = (Vec3(radianceTexelCoordStart) + Vec3(0.0, 0.0, 0.5)) / radianceVolumeSize;
 
 	const U32 halfRadianceOctMapSize = RADIANCE_OCTAHEDRON_MAP_SIZE / 2;
@@ -551,11 +546,6 @@ Texture2D<Vec4> g_gbufferRt2 : register(t1);
 
 Texture2D<Vec4> g_blueNoiseTex : register(t2);
 
-Texture3D<Vec4> g_clipmapVolumes[kIndirectDiffuseClipmapCount] : register(t3);
-Texture3D<Vec4> g_probeValidityVolumes[kIndirectDiffuseClipmapCount] : register(t6); // WARNING: Adjust if kIndirectDiffuseClipmapCount changed
-Texture3D<Vec4> g_distanceMomentsVolumes[kIndirectDiffuseClipmapCount] : register(t9);
-Texture3D<Vec4> g_avgIrradianceVolumes[kIndirectDiffuseClipmapCount] : register(t12);
-
 RWTexture2D<Vec4> g_outTex : register(u0);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
@@ -587,33 +577,19 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	noise3 = animateBlueNoise(noise3, g_globalRendererConstants.m_frame);
 	const F32 noise = noise3.x;
 
-	const Mat3x4 cameraTrf = g_globalRendererConstants.m_matrices.m_cameraTransform;
-	const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
-
 	const U32 method = 0;
 	Vec3 irradiance;
 	if(method == 0)
 	{
-		irradiance = sampleClipmapIrradianceAccurate(worldPos, normal, g_globalRendererConstants.m_cameraPosition, lookDir,
-													 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_clipmapVolumes, g_distanceMomentsVolumes,
-													 g_probeValidityVolumes, g_linearAnyRepeatSampler, noise);
-	}
-	else if(method == 1)
-	{
-		irradiance = sampleClipmapIrradianceCheap(worldPos, normal, g_globalRendererConstants.m_indirectDiffuseClipmaps, g_clipmapVolumes,
-												  g_linearAnyRepeatSampler);
-	}
-	else if(method == 2)
-	{
-		irradiance = sampleClipmapAvgIrradianceAccurate(worldPos, normal, g_globalRendererConstants.m_cameraPosition, lookDir,
-														g_globalRendererConstants.m_indirectDiffuseClipmaps, g_avgIrradianceVolumes,
-														g_distanceMomentsVolumes, g_probeValidityVolumes, g_linearAnyRepeatSampler, noise);
+		const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality;
+		irradiance = sampleClipmapIrradiance(worldPos, normal, g_globalRendererConstants.m_cameraPosition,
+											 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, noise);
 	}
 	else
 	{
-		irradiance = sampleClipmapAvgIrradianceCheap(worldPos, g_globalRendererConstants.m_cameraPosition, lookDir,
-													 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_avgIrradianceVolumes, noise,
-													 g_linearAnyRepeatSampler, true);
+		const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality;
+		irradiance = sampleClipmapAvgIrradiance(worldPos, normal, g_globalRendererConstants.m_cameraPosition,
+												g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, noise);
 	}
 
 	TEX(g_outTex, svDispatchThreadId.xy).xyz = irradiance;
@@ -672,15 +648,16 @@ constexpr U32 cubeIndices[36] = {0, 1, 2, 2, 3, 0, 1, 5, 6, 6, 2, 1, 5, 4, 7, 7,
 
 VertOut main(VertIn input)
 {
-	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
 	const Vec3 camPos = g_globalRendererConstants.m_cameraPosition;
+	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
+	const UVec3 probeCounts = idConsts.m_probeCounts;
+	const U32 clipmapIdx = g_consts.m_clipmapIdx;
 
 	UVec3 probeCoord;
-	unflatten3dArrayIndex(clipmap.m_probeCounts.z, clipmap.m_probeCounts.y, clipmap.m_probeCounts.x, input.m_svInstanceId, probeCoord.z, probeCoord.y,
-						  probeCoord.x);
+	unflatten3dArrayIndex(probeCounts.z, probeCounts.y, probeCounts.x, input.m_svInstanceId, probeCoord.z, probeCoord.y, probeCoord.x);
 
-	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
-	const Vec3 probeWorldPos = probeCoord * probeSize + probeSize * 0.5 + clipmap.m_aabbMin;
+	const Vec3 probeSize = idConsts.m_sizes[clipmapIdx] / probeCounts;
+	const Vec3 probeWorldPos = probeCoord * probeSize + probeSize * 0.5 + idConsts.m_aabbMins[clipmapIdx];
 
 	// Vert pos
 	const U32 index = cubeIndices[input.m_svVertexId];
@@ -699,7 +676,9 @@ VertOut main(VertIn input)
 #	if ANKI_PIXEL_SHADER
 FragOut main(VertOut input)
 {
-	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
+	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
+	const UVec3 probeCounts = idConsts.m_probeCounts;
+	const U32 clipmapIdx = g_consts.m_clipmapIdx;
 
 	FragOut output;
 
@@ -727,22 +706,22 @@ FragOut main(VertOut input)
 	UVec3 texSize;
 	g_volume.GetDimensions(texSize.x, texSize.y, texSize.z);
 
-	const Bool hasOctMap = texSize.x != clipmap.m_probeCounts.x;
+	const Bool hasOctMap = texSize.x != probeCounts.x;
 
-	Vec3 uvw = frac(input.m_probeCenter.xzy / clipmap.m_size.xzy);
-	const UVec3 texelCoord = uvw * clipmap.m_probeCounts.xzy;
+	Vec3 uvw = frac(input.m_probeCenter.xzy / idConsts.m_sizes[clipmapIdx].xzy);
+	const UVec3 texelCoord = uvw * probeCounts.xzy;
 
 	if(hasOctMap)
 	{
-		const U32 octProbeSize = texSize.x / clipmap.m_probeCounts.x - 2;
+		const U32 octProbeSize = texSize.x / probeCounts.x - 2;
 
 		const Vec3 normal = normalize(collisionPoint - input.m_probeCenter);
 
 		uvw.xy = texelCoord.xy * (octProbeSize + 2);
 		uvw.xy += octahedronEncode(normal) * octProbeSize + 1.0;
-		uvw.xy /= clipmap.m_probeCounts.xz * (octProbeSize + 2);
+		uvw.xy /= probeCounts.xz * (octProbeSize + 2);
 
-		uvw.z = (texelCoord.z + 0.5) / clipmap.m_probeCounts.y;
+		uvw.z = (texelCoord.z + 0.5) / probeCounts.y;
 	}
 	else
 	{

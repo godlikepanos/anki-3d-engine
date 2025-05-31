@@ -32,11 +32,7 @@ StructuredBuffer<SpotLight> g_spotLights : register(t3);
 Texture2D<Vec4> g_shadowAtlasTex : register(t4);
 StructuredBuffer<FogDensityVolume> g_fogDensityVolumes : register(t5);
 StructuredBuffer<Cluster> g_clusters : register(t6);
-#if CLIPMAP_DIFFUSE_INDIRECT
-Texture3D<Vec4> g_avgIrradianceVolumes[kIndirectDiffuseClipmapCount] : register(t7);
-Texture3D<Vec4> g_probeValidityVolumes[kIndirectDiffuseClipmapCount] : register(t10);
-Texture3D<Vec4> g_distanceMomentsVolumes[kIndirectDiffuseClipmapCount] : register(t13);
-#else
+#if !CLIPMAP_DIFFUSE_INDIRECT
 StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t7);
 #endif
 
@@ -164,22 +160,9 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	// Indirect diffuse GI
 #if CLIPMAP_DIFFUSE_INDIRECT
 	{
-		const Mat3x4 cameraTrf = g_globalConstants.m_matrices.m_cameraTransform;
-		const Vec3 lookDir = -Vec3(cameraTrf.m_row0[2], cameraTrf.m_row1[2], cameraTrf.m_row2[2]);
-
-		Vec3 irradiance;
-		if(1)
-		{
-			irradiance =
-				sampleClipmapAvgIrradianceCheap(worldPos, g_globalConstants.m_cameraPosition, lookDir, g_globalConstants.m_indirectDiffuseClipmaps,
-												g_avgIrradianceVolumes, noise, g_linearAnyRepeatSampler, false);
-		}
-		else
-		{
-			irradiance = sampleClipmapAvgIrradianceAccurate(
-				worldPos, 0.0, g_globalConstants.m_cameraPosition, lookDir, g_globalConstants.m_indirectDiffuseClipmaps, g_avgIrradianceVolumes,
-				g_distanceMomentsVolumes, g_probeValidityVolumes, g_linearAnyRepeatSampler, noise, false, false);
-		}
+		const SampleClipmapFlag flags = kSampleClipmapFlagNone;
+		const Vec3 irradiance = sampleClipmapAvgIrradiance(worldPos, 0.0, g_globalConstants.m_cameraPosition,
+														   g_globalConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, noise);
 
 		color += irradiance * kPi; // Not sure why the multiplication with Pi but it looks more correct
 	}

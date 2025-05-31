@@ -114,23 +114,6 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		{
 			cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
 		}
-		else
-		{
-			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-			{
-				rgraphCtx.bindSrv(srv++, 0, getIndirectDiffuseClipmaps().getRts().m_avgIrradianceVolumes[i]);
-			}
-
-			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-			{
-				rgraphCtx.bindSrv(srv++, 0, getIndirectDiffuseClipmaps().getRts().m_distanceMomentsVolumes[i]);
-			}
-
-			for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-			{
-				rgraphCtx.bindSrv(srv++, 0, getIndirectDiffuseClipmaps().getRts().m_probeValidityVolumes[i]);
-			}
-		}
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 

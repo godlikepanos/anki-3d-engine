@@ -71,19 +71,33 @@ struct Sky
 	U32 m_type;
 };
 
-struct Clipmap
+struct IndirectDiffuseClipmapTextures
+{
+	U32 m_irradianceTexture : 16;
+	U32 m_irradianceOctMapSize : 16;
+
+	U32 m_radianceTexture : 16;
+	U32 m_radianceOctMapSize : 16;
+
+	U32 m_distanceMomentsTexture : 16;
+	U32 m_distanceMomentsOctMapSize : 16;
+
+	U32 m_averageIrradianceTexture : 16;
+	U32 m_probeValidityTexture : 16;
+};
+
+struct IndirectDiffuseClipmapConstants
 {
 	UVec3 m_probeCounts;
-	U32 m_probeCountTotal;
+	U32 m_totalProbeCount;
 
-	Vec3 m_size;
-	U32 m_index;
+	Vec4 m_sizes[kIndirectDiffuseClipmapCount];
 
-	Vec3 m_aabbMin;
-	F32 m_padding1;
+	Vec4 m_aabbMins[kIndirectDiffuseClipmapCount];
 
-	Vec3 m_prevFrameAabbMin;
-	F32 m_padding3;
+	Vec4 m_previousFrameAabbMins[kIndirectDiffuseClipmapCount];
+
+	IndirectDiffuseClipmapTextures m_textures[kIndirectDiffuseClipmapCount];
 };
 
 /// Common constants for all passes.
@@ -113,7 +127,7 @@ struct GlobalRendererConstants
 
 	Sky m_sky;
 
-	Clipmap m_indirectDiffuseClipmaps[kIndirectDiffuseClipmapCount];
+	IndirectDiffuseClipmapConstants m_indirectDiffuseClipmaps;
 };
 
 // RT shadows

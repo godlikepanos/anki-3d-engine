@@ -16,17 +16,17 @@
 
 namespace anki {
 
-static void computeClipmapBounds(Vec3 cameraPos, Vec3 lookDir, Clipmap& clipmap)
+static void computeClipmapBounds(Vec3 cameraPos, Vec3 lookDir, U32 clipmapIdx, IndirectDiffuseClipmapConstants& consts)
 {
-	const Vec3 offset = lookDir * kIndirectDiffuseClipmapForwardBias * F32(clipmap.m_index + 1);
+	const Vec3 offset = lookDir * kIndirectDiffuseClipmapForwardBias * F32(clipmapIdx + 1);
 	cameraPos += offset;
 
-	const Vec3 halfSize = clipmap.m_size * 0.5;
-	const Vec3 probeSize = clipmap.m_size / Vec3(clipmap.m_probeCounts);
+	const Vec3 halfSize = consts.m_sizes[clipmapIdx].xyz() * 0.5;
+	const Vec3 probeSize = consts.m_sizes[clipmapIdx].xyz() / Vec3(consts.m_probeCounts);
 	const Vec3 roundedPos = (cameraPos / probeSize).round() * probeSize;
-	clipmap.m_aabbMin = roundedPos - halfSize;
+	consts.m_aabbMins[clipmapIdx] = (roundedPos - halfSize).xyz0();
 	[[maybe_unused]] const Vec3 aabbMax = roundedPos + halfSize;
-	ANKI_ASSERT(aabbMax - clipmap.m_aabbMin == clipmap.m_size);
+	ANKI_ASSERT(aabbMax - consts.m_aabbMins[clipmapIdx].xyz() == consts.m_sizes[clipmapIdx].xyz());
 }
 
 Error IndirectDiffuseClipmaps::init()
@@ -38,55 +38,38 @@ Error IndirectDiffuseClipmaps::init()
 													  getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Final");
 	m_appliedGiRtDesc.bake();
 
-	m_clipmapInfo[0].m_probeCounts =
-		UVec3(g_indirectDiffuseClipmapProbesXZCVar, g_indirectDiffuseClipmapProbesYCVar, g_indirectDiffuseClipmapProbesXZCVar);
-	m_clipmapInfo[1].m_probeCounts = m_clipmapInfo[0].m_probeCounts;
-	m_clipmapInfo[2].m_probeCounts = m_clipmapInfo[0].m_probeCounts;
-	m_clipmapInfo[0].m_size = Vec3(g_indirectDiffuseClipmap0XZSizeCVar, g_indirectDiffuseClipmap0YSizeCVar, g_indirectDiffuseClipmap0XZSizeCVar);
-	m_clipmapInfo[1].m_size = Vec3(g_indirectDiffuseClipmap1XZSizeCVar, g_indirectDiffuseClipmap1YSizeCVar, g_indirectDiffuseClipmap1XZSizeCVar);
-	m_clipmapInfo[2].m_size = Vec3(g_indirectDiffuseClipmap2XZSizeCVar, g_indirectDiffuseClipmap2YSizeCVar, g_indirectDiffuseClipmap2XZSizeCVar);
+	m_consts.m_probeCounts = UVec3(g_indirectDiffuseClipmapProbesXZCVar, g_indirectDiffuseClipmapProbesYCVar, g_indirectDiffuseClipmapProbesXZCVar);
+	m_consts.m_totalProbeCount = m_consts.m_probeCounts.x() * m_consts.m_probeCounts.y() * m_consts.m_probeCounts.z();
 
-	U32 probesPerClipmap = 0;
-	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-	{
-		const U32 count = m_clipmapInfo[i].m_probeCounts.x() * m_clipmapInfo[i].m_probeCounts.y() * m_clipmapInfo[i].m_probeCounts.z();
-		m_clipmapInfo[i].m_probeCountTotal = count;
-		m_clipmapInfo[i].m_index = i;
-		if(i == 0)
-		{
-			probesPerClipmap = count;
-		}
-		else
-		{
-			ANKI_ASSERT(probesPerClipmap == count);
-		}
-	}
+	m_consts.m_sizes[0] = Vec3(g_indirectDiffuseClipmap0XZSizeCVar, g_indirectDiffuseClipmap0YSizeCVar, g_indirectDiffuseClipmap0XZSizeCVar).xyz0();
+	m_consts.m_sizes[1] = Vec3(g_indirectDiffuseClipmap1XZSizeCVar, g_indirectDiffuseClipmap1YSizeCVar, g_indirectDiffuseClipmap1XZSizeCVar).xyz0();
+	m_consts.m_sizes[2] = Vec3(g_indirectDiffuseClipmap2XZSizeCVar, g_indirectDiffuseClipmap2YSizeCVar, g_indirectDiffuseClipmap2XZSizeCVar).xyz0();
 
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
-		TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(m_clipmapInfo[i].m_probeCounts.x(), m_clipmapInfo[i].m_probeCounts.z(),
-																		  Format::kR8_Unorm, TextureUsageBit::kUavCompute | TextureUsageBit::kAllSrv,
+		TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(m_consts.m_probeCounts.x(), m_consts.m_probeCounts.z(), Format::kR8_Unorm,
+																		  TextureUsageBit::kUavCompute | TextureUsageBit::kAllSrv,
 																		  generateTempPassName("IndirectDiffuseClipmap: Probe validity #%u", i));
 
-		init.m_depth = m_clipmapInfo[i].m_probeCounts.y();
+		init.m_depth = m_consts.m_probeCounts.y();
 		init.m_type = TextureType::k3D;
 
 		m_probeValidityVolumes[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
 	}
 
-	// Create the lighting result texture
+	// Create the RT result texture
 	const U32 raysPerProbePerFrame = square(g_indirectDiffuseClipmapRadianceOctMapSize / 2);
-	m_rtResultRtDesc = getRenderer().create2DRenderTargetDescription(probesPerClipmap, raysPerProbePerFrame * kIndirectDiffuseClipmapCount,
+	m_rtResultRtDesc = getRenderer().create2DRenderTargetDescription(m_consts.m_totalProbeCount, raysPerProbePerFrame * kIndirectDiffuseClipmapCount,
 																	 Format::kR16G16B16A16_Sfloat, "IndirectDiffuseClipmap: RT result");
 	m_rtResultRtDesc.bake();
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-			m_clipmapInfo[clipmap].m_probeCounts.x() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2),
-			m_clipmapInfo[clipmap].m_probeCounts.z() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2), Format::kB10G11R11_Ufloat_Pack32,
+			m_consts.m_probeCounts.x() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2),
+			m_consts.m_probeCounts.z() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2), Format::kB10G11R11_Ufloat_Pack32,
 			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Radiance #%u", clipmap));
-		volumeInit.m_depth = m_clipmapInfo[clipmap].m_probeCounts.y();
+		volumeInit.m_depth = m_consts.m_probeCounts.y();
 		volumeInit.m_type = TextureType::k3D;
 
 		m_radianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
@@ -95,10 +78,10 @@ Error IndirectDiffuseClipmaps::init()
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-			m_clipmapInfo[clipmap].m_probeCounts.x() * (g_indirectDiffuseClipmapIrradianceOctMapSize + 2),
-			m_clipmapInfo[clipmap].m_probeCounts.z() * (g_indirectDiffuseClipmapIrradianceOctMapSize + 2), Format::kB10G11R11_Ufloat_Pack32,
+			m_consts.m_probeCounts.x() * (g_indirectDiffuseClipmapIrradianceOctMapSize + 2),
+			m_consts.m_probeCounts.z() * (g_indirectDiffuseClipmapIrradianceOctMapSize + 2), Format::kB10G11R11_Ufloat_Pack32,
 			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Irradiance #%u", clipmap));
-		volumeInit.m_depth = m_clipmapInfo[clipmap].m_probeCounts.y();
+		volumeInit.m_depth = m_consts.m_probeCounts.y();
 		volumeInit.m_type = TextureType::k3D;
 
 		m_irradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
@@ -107,10 +90,10 @@ Error IndirectDiffuseClipmaps::init()
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-			m_clipmapInfo[clipmap].m_probeCounts.x() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2),
-			m_clipmapInfo[clipmap].m_probeCounts.z() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2), Format::kR16G16_Sfloat,
+			m_consts.m_probeCounts.x() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2),
+			m_consts.m_probeCounts.z() * (g_indirectDiffuseClipmapRadianceOctMapSize + 2), Format::kR16G16_Sfloat,
 			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Dist moments #%u", clipmap));
-		volumeInit.m_depth = m_clipmapInfo[clipmap].m_probeCounts.y();
+		volumeInit.m_depth = m_consts.m_probeCounts.y();
 		volumeInit.m_type = TextureType::k3D;
 
 		m_distanceMomentsVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
@@ -118,12 +101,13 @@ Error IndirectDiffuseClipmaps::init()
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
-		m_avgLightColorRtDescs[clipmap] = getRenderer().create2DRenderTargetDescription(
-			m_clipmapInfo[0].m_probeCounts.x(), m_clipmapInfo[0].m_probeCounts.z(), Format::kB10G11R11_Ufloat_Pack32,
+		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
+			m_consts.m_probeCounts.x(), m_consts.m_probeCounts.z(), Format::kB10G11R11_Ufloat_Pack32, TextureUsageBit::kAllShaderResource,
 			generateTempPassName("IndirectDiffuseClipmap: Avg light #%u", clipmap));
-		m_avgLightColorRtDescs[clipmap].m_depth = m_clipmapInfo[0].m_probeCounts.y();
-		m_avgLightColorRtDescs[clipmap].m_type = TextureType::k3D;
-		m_avgLightColorRtDescs[clipmap].bake();
+		volumeInit.m_depth = m_consts.m_probeCounts.y();
+		volumeInit.m_type = TextureType::k3D;
+
+		m_avgIrradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 	}
 
 	const Array<SubMutation, 4> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
@@ -173,6 +157,19 @@ Error IndirectDiffuseClipmaps::init()
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImg));
 
+	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+	{
+		m_consts.m_textures[i].m_radianceTexture = m_radianceVolumes[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+		m_consts.m_textures[i].m_irradianceTexture = m_irradianceVolumes[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+		m_consts.m_textures[i].m_distanceMomentsTexture = m_distanceMomentsVolumes[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+		m_consts.m_textures[i].m_probeValidityTexture = m_probeValidityVolumes[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+		m_consts.m_textures[i].m_averageIrradianceTexture = m_avgIrradianceVolumes[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+
+		m_consts.m_textures[i].m_distanceMomentsOctMapSize = (m_distanceMomentsVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
+		m_consts.m_textures[i].m_irradianceOctMapSize = (m_irradianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
+		m_consts.m_textures[i].m_radianceOctMapSize = (m_radianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
+	}
+
 	return Error::kNone;
 }
 
@@ -182,10 +179,10 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
-		m_clipmapInfo[i].m_prevFrameAabbMin = m_clipmapInfo[i].m_aabbMin;
+		m_consts.m_previousFrameAabbMins[i] = m_consts.m_aabbMins[i];
 
 		computeClipmapBounds(ctx.m_matrices.m_cameraTransform.getTranslationPart(),
-							 -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis().normalize(), m_clipmapInfo[i]);
+							 -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis().normalize(), i, m_consts);
 	}
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
@@ -207,6 +204,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			irradianceVolumes[i] = rgraph.importRenderTarget(m_irradianceVolumes[i].get());
 			distanceMomentsVolumes[i] = rgraph.importRenderTarget(m_distanceMomentsVolumes[i].get());
 			probeValidityVolumes[i] = rgraph.importRenderTarget(m_probeValidityVolumes[i].get());
+			avgIrradianceVolumes[i] = rgraph.importRenderTarget(m_avgIrradianceVolumes[i].get());
 		}
 		else
 		{
@@ -214,10 +212,11 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			irradianceVolumes[i] = rgraph.importRenderTarget(m_irradianceVolumes[i].get(), TextureUsageBit::kSrvCompute);
 			distanceMomentsVolumes[i] = rgraph.importRenderTarget(m_distanceMomentsVolumes[i].get(), TextureUsageBit::kSrvCompute);
 			probeValidityVolumes[i] = rgraph.importRenderTarget(m_probeValidityVolumes[i].get(), TextureUsageBit::kSrvCompute);
+			avgIrradianceVolumes[i] = rgraph.importRenderTarget(m_avgIrradianceVolumes[i].get(), TextureUsageBit::kSrvCompute);
 		}
-
-		avgIrradianceVolumes[i] = rgraph.newRenderTarget(m_avgLightColorRtDescs[i]);
 	}
+
+	m_texturesImportedOnce = true;
 
 	// SBT build
 	BufferHandle sbtHandle;
@@ -291,19 +290,6 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
 			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
 
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				rgraphCtx.bindSrv(srv++, 2, irradianceVolumes[clipmap]);
-			}
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				rgraphCtx.bindSrv(srv++, 2, probeValidityVolumes[clipmap]);
-			}
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				rgraphCtx.bindSrv(srv++, 2, distanceMomentsVolumes[clipmap]);
-			}
-
 			for(U32 i = 0; i < 3; ++i)
 			{
 				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
@@ -324,9 +310,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				const UVec4 consts(clipmap, g_indirectDiffuseClipmapRadianceOctMapSize, 0, 0);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
-				const U32 probeCount = m_clipmapInfo[0].m_probeCountTotal;
 				cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-							   probeCount * raysPerProbePerFrame, 1, 1);
+							   m_consts.m_totalProbeCount * raysPerProbePerFrame, 1, 1);
 			}
 		});
 	}
@@ -363,7 +348,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 				const U32 raysPerProbePerFrame = square(g_indirectDiffuseClipmapRadianceOctMapSize / 2);
 				const U32 threadCount = 64;
-				cmdb.dispatchCompute((raysPerProbePerFrame * m_clipmapInfo[clipmap].m_probeCountTotal + threadCount - 1) / threadCount, 1, 1);
+				cmdb.dispatchCompute((raysPerProbePerFrame * m_consts.m_totalProbeCount + threadCount - 1) / threadCount, 1, 1);
 			}
 		});
 	}
@@ -400,8 +385,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindUav(uav++, 0, avgIrradianceVolumes[clipmap]);
 			}
 
-			cmdb.dispatchCompute(m_clipmapInfo[0].m_probeCounts[0] * kIndirectDiffuseClipmapCount, m_clipmapInfo[0].m_probeCounts[1],
-								 m_clipmapInfo[0].m_probeCounts[2]);
+			cmdb.dispatchCompute(m_consts.m_probeCounts[0] * kIndirectDiffuseClipmapCount, m_consts.m_probeCounts[1], m_consts.m_probeCounts[2]);
 		});
 	}
 
@@ -479,19 +463,6 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
 			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
 
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				rgraphCtx.bindSrv(srv++, 2, irradianceVolumes[clipmap]);
-			}
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				rgraphCtx.bindSrv(srv++, 2, probeValidityVolumes[clipmap]);
-			}
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				rgraphCtx.bindSrv(srv++, 2, distanceMomentsVolumes[clipmap]);
-			}
-
 			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getDepthRt());
 			cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(2));
@@ -503,8 +474,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_handles.m_appliedIrradiance);
 			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
-			const Vec3 probeSizes = m_clipmapInfo[0].m_size / Vec3(m_clipmapInfo[0].m_probeCounts);
-			const F32 rayTMax = max(probeSizes.x(), max(probeSizes.y(), probeSizes.z())) * 10.0f;
+			const F32 rayTMax = 10.0f; // TODO
 			const Vec4 consts(rayTMax);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
@@ -537,27 +507,6 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(2));
 				cmdb.bindSrv(2, 0, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::firstSurface()));
 
-				U32 srvReg = 3;
-				for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-				{
-					rgraphCtx.bindSrv(srvReg++, 0, irradianceVolumes[i]);
-				}
-
-				for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-				{
-					rgraphCtx.bindSrv(srvReg++, 0, probeValidityVolumes[i]);
-				}
-
-				for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-				{
-					rgraphCtx.bindSrv(srvReg++, 0, distanceMomentsVolumes[i]);
-				}
-
-				for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-				{
-					rgraphCtx.bindSrv(srvReg++, 0, avgIrradianceVolumes[i]);
-				}
-
 				rgraphCtx.bindUav(0, 0, m_runCtx.m_handles.m_appliedIrradiance);
 
 				cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
@@ -587,7 +536,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_handles.m_probeValidityVolumes[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-	cmdb.draw(PrimitiveTopology::kTriangles, 36, m_clipmapInfo[clipmap].m_probeCountTotal);
+	cmdb.draw(PrimitiveTopology::kTriangles, 36, m_consts.m_totalProbeCount);
 }
 
 } // end namespace anki
