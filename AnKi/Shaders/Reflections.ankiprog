@@ -6,11 +6,12 @@
 #pragma anki 16bit
 
 #pragma anki mutator SSR_SAMPLE_GBUFFER 0 1
+#pragma anki mutator INDIRECT_DIFFUSE_CLIPMAPS 0 1
 
 #pragma anki technique Classification comp mutators
 #pragma anki technique Ssr comp
 #pragma anki technique ReflectionProbeFallback comp mutators
-#pragma anki technique RtMaterialFetch rgen mutators
+#pragma anki technique RtMaterialFetch rgen mutators INDIRECT_DIFFUSE_CLIPMAPS
 #pragma anki technique SpatialDenoise comp mutators
 #pragma anki technique TemporalDenoise comp mutators
 #pragma anki technique BilateralDenoiseVertical comp mutators
@@ -24,6 +25,7 @@
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/SsRaymarching.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
 
 // Config & debug
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
@@ -179,6 +181,7 @@ groupshared U32 g_allSky;
 #if NOT_ZERO(ANKI_TECHNIQUE_Ssr)
 SamplerState g_trilinearClampSampler : register(s0);
 SamplerComparisonState g_shadowSampler : register(s1);
+SamplerState g_linearAnyRepeatSampler : register(s2);
 
 Texture2D<Vec4> g_gbufferRt0 : register(t0);
 Texture2D<Vec4> g_gbufferRt1 : register(t1);
@@ -212,10 +215,18 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	unpackGBufferNoVelocity<F32>(g_gbufferRt0[coord], g_gbufferRt1[coord], g_gbufferRt2[coord], gbuffer);
 
 	Vec3 outColor = gbuffer.m_emission;
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
 
+#	if INDIRECT_DIFFUSE_CLIPMAPS
+	const SampleClipmapFlag flags =
+		kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
+	const Vec3 irradiance = sampleClipmapIrradiance(worldPos, gbuffer.m_normal, g_globalRendererConstants.m_cameraPosition,
+													g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
+	outColor += irradiance * gbuffer.m_diffuse;
+#	else
 	// GI
+	const Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
 	outColor += sampleGiProbes<F32>(cluster, g_giProbes, gbuffer.m_normal, worldPos.xyz, g_trilinearClampSampler) * gbuffer.m_diffuse;
+#	endif
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
@@ -370,9 +381,15 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 		const Vec3 reflDir = reflect(normalize(worldPos.xyz - g_globalRendererConstants.m_cameraPosition), worldNormal);
 
+#	if INDIRECT_DIFFUSE_CLIPMAPS
+		const SampleClipmapFlag flags =
+			kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
+		const Vec3 col = sampleClipmapRadiance(worldPos, reflDir, g_globalRendererConstants.m_cameraPosition,
+											   g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
+#	else
 		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
-
 		const Vec3 col = sampleGiProbes<F32>(cluster, g_giProbes, reflDir, worldPos.xyz, g_trilinearClampSampler);
+#	endif
 
 		Vec3 worldHitPos = worldPos + reflDir * 1.0;
 		worldHitPos -= g_globalRendererConstants.m_cameraPosition;
@@ -418,7 +435,14 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		Vec4 worldPos = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjection, Vec4(uvToNdc(uv), depth, 1.0));
 		worldPos.xyz /= worldPos.w;
 
+#	if INDIRECT_DIFFUSE_CLIPMAPS
+		const SampleClipmapFlag flags =
+			kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
+		outColor = sampleClipmapRadiance(worldPos, woldReflDir, g_globalRendererConstants.m_cameraPosition,
+										 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
+#	else
 		outColor = sampleGiProbes<F32>(cluster, g_giProbes, woldReflDir, worldPos.xyz, g_trilinearClampSampler);
+#	endif
 
 		viewHitPoint = viewPos + viewReflDir * 1.0;
 		pdf = kPdfForVeryRough;
@@ -688,10 +712,21 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	// Do simple light shading
 	HVec3 radiance = directLighting(gbuffer, hitPos, hasHitSky, kTryShadowmapFirst, g_consts.m_maxRayT);
 
-	if(!hasHitSky && g_consts.m_giProbeCount > 0)
+	if(!hasHitSky)
 	{
-		const HVec3 indirectDiffuse = getDiffuseIndirect<F16>(hitPos, gbuffer.m_worldNormal);
-		radiance += gbuffer.m_diffuse * indirectDiffuse;
+#	if INDIRECT_DIFFUSE_CLIPMAPS
+		const SampleClipmapFlag flags =
+			kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
+		const HVec3 irradiance = sampleClipmapIrradiance(hitPos, gbuffer.m_worldNormal, g_globalRendererConstants.m_cameraPosition,
+														 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
+		radiance += gbuffer.m_diffuse * irradiance;
+#	else
+		if(g_consts.m_giProbeCount > 0)
+		{
+			const HVec3 indirectDiffuse = getDiffuseIndirect<F16>(hitPos, gbuffer.m_worldNormal);
+			radiance += gbuffer.m_diffuse * indirectDiffuse;
+		}
+#	endif
 	}
 
 	g_colorAndPdfTex[realCoord] = Vec4(radiance, max(0.0, pdf));

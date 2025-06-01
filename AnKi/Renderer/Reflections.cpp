@@ -30,7 +30,8 @@ Error Reflections::init()
 	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
 	const Bool bSsrSamplesGBuffer = bRtReflections;
 
-	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer}};
+	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer},
+												   {"INDIRECT_DIFFUSE_CLIPMAPS", isIndirectDiffuseClipmapsEnabled()}};
 
 	// Ray gen and miss
 	if(bRtReflections)
@@ -40,6 +41,7 @@ Error Reflections::init()
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_mainProg);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
 		variantInitInfo.addMutation("SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer);
+		variantInitInfo.addMutation("INDIRECT_DIFFUSE_CLIPMAPS", isIndirectDiffuseClipmapsEnabled());
 		const ShaderProgramResourceVariant* variant;
 		m_mainProg->getOrCreateVariant(variantInitInfo, variant);
 		m_libraryGrProg.reset(&variant->getProgram());
@@ -226,6 +228,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
+			cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(0));
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(1));

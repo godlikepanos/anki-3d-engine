@@ -19,7 +19,8 @@ enum SampleClipmapFlag : U32
 	kSampleClipmapFlagBackfacingProbeRejection = 1 << 5,
 	kSampleClipmapFlagUsePreviousFrame = 1 << 6,
 
-	kSampleClipmapFlagFullQuality = (1 << 5) - 1,
+	kSampleClipmapFlagFullQuality = kSampleClipmapFlagAccurateClipmapSelection | kSampleClipmapFlagInvalidProbeRejection
+									| kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagBackfacingProbeRejection,
 	kSampleClipmapFlagNone = 0
 };
 
@@ -318,10 +319,24 @@ Vec3 sampleClipmapCommon(SampleClipmapsArgs args, SamplerState linearAnyRepeatSa
 }
 
 Vec3 sampleClipmapIrradiance(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos, IndirectDiffuseClipmapConstants consts,
-							 SamplerState linearAnyRepeatSampler, SampleClipmapFlag flags = kSampleClipmapFlagFullQuality, F32 randFactor = 0.5)
+							 SamplerState linearAnyRepeatSampler, SampleClipmapFlag flags, F32 randFactor = 0.5)
 {
 	SampleClipmapsArgs args;
 	args.m_primaryVolume = 0;
+	args.m_flags = flags;
+	args.m_cameraPos = cameraPos;
+	args.m_clipmapSelectionRandFactor = randFactor;
+	args.m_normal = normal;
+	args.m_samplePoint = samplePoint;
+
+	return sampleClipmapCommon(args, linearAnyRepeatSampler, consts);
+}
+
+Vec3 sampleClipmapRadiance(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos, IndirectDiffuseClipmapConstants consts, SamplerState linearAnyRepeatSampler,
+						   SampleClipmapFlag flags, F32 randFactor = 0.5)
+{
+	SampleClipmapsArgs args;
+	args.m_primaryVolume = 1;
 	args.m_flags = flags;
 	args.m_cameraPos = cameraPos;
 	args.m_clipmapSelectionRandFactor = randFactor;
@@ -357,7 +372,7 @@ Vec3 sampleClipmapAvgIrradianceCheap(Vec3 samplePoint, Vec3 cameraPos, IndirectD
 }
 
 Vec3 sampleClipmapAvgIrradiance(Vec3 samplePoint, Vec3 normal, Vec3 cameraPos, IndirectDiffuseClipmapConstants consts,
-								SamplerState linearAnyRepeatSampler, SampleClipmapFlag flags = kSampleClipmapFlagFullQuality, F32 randFactor = 0.5)
+								SamplerState linearAnyRepeatSampler, SampleClipmapFlag flags, F32 randFactor = 0.5)
 {
 	const SampleClipmapFlag requireManualTrilinearFiltering =
 		kSampleClipmapFlagInvalidProbeRejection | kSampleClipmapFlagBackfacingProbeRejection | kSampleClipmapFlagChebyshevOcclusion;
