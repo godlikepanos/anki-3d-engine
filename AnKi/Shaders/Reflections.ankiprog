@@ -208,6 +208,9 @@ ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 groupshared Vec4 g_viewHitPointAndSsrSuccess[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 groupshared Vec4 g_colorAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 
+constexpr SampleClipmapFlag kSampleClipmapFlags =
+	kSampleClipmapFlagBiasSamplePointTowardsCamera | kSampleClipmapFlagInvalidProbeRejection | kSampleClipmapFlagBackfacingProbeRejection;
+
 Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 {
 	// Read
@@ -217,10 +220,9 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	Vec3 outColor = gbuffer.m_emission;
 
 #	if INDIRECT_DIFFUSE_CLIPMAPS
-	const SampleClipmapFlag flags =
-		kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
-	const Vec3 irradiance = sampleClipmapIrradiance(worldPos, gbuffer.m_normal, g_globalRendererConstants.m_cameraPosition,
-													g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
+	const Vec3 irradiance =
+		sampleClipmapIrradiance(worldPos, gbuffer.m_normal, g_globalRendererConstants.m_cameraPosition,
+								g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
 	outColor += irradiance * gbuffer.m_diffuse;
 #	else
 	// GI
@@ -382,10 +384,8 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		const Vec3 reflDir = reflect(normalize(worldPos.xyz - g_globalRendererConstants.m_cameraPosition), worldNormal);
 
 #	if INDIRECT_DIFFUSE_CLIPMAPS
-		const SampleClipmapFlag flags =
-			kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
 		const Vec3 col = sampleClipmapRadiance(worldPos, reflDir, g_globalRendererConstants.m_cameraPosition,
-											   g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
+											   g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
 #	else
 		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
 		const Vec3 col = sampleGiProbes<F32>(cluster, g_giProbes, reflDir, worldPos.xyz, g_trilinearClampSampler);
@@ -436,10 +436,8 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		worldPos.xyz /= worldPos.w;
 
 #	if INDIRECT_DIFFUSE_CLIPMAPS
-		const SampleClipmapFlag flags =
-			kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
 		outColor = sampleClipmapRadiance(worldPos, woldReflDir, g_globalRendererConstants.m_cameraPosition,
-										 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
+										 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
 #	else
 		outColor = sampleGiProbes<F32>(cluster, g_giProbes, woldReflDir, worldPos.xyz, g_trilinearClampSampler);
 #	endif

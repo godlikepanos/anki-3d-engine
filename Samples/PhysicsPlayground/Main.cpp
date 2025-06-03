@@ -189,16 +189,33 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 {
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
 	Renderer& renderer = Renderer::getSingleton();
+	Input& in = Input::getSingleton();
 
 	if(Input::getSingleton().getKey(KeyCode::kEscape))
 	{
 		quit = true;
 	}
 
-	if(Input::getSingleton().getKey(KeyCode::kH) == 1)
+	if(in.getKey(KeyCode::kY) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
 			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmapsTest") ? "" : "IndirectDiffuseClipmapsTest");
+		// g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
+	}
+
+	if(in.getKey(KeyCode::kU) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Reflections") ? "" : "Reflections");
+	}
+
+	if(in.getKey(KeyCode::kI) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+	}
+
+	if(in.getKey(KeyCode::kO) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtMaterialFetchDbg") ? "" : "RtMaterialFetchDbg");
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kP) == 1)

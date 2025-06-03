@@ -65,15 +65,10 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec3 probeWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmapAabbMin;
 
 	// Generate direction
-	const U32 checkerboardIdx = g_globalRendererConstants.m_frame % 4;
-	const U32 sampleIdx = (g_globalRendererConstants.m_frame / 4) % 8;
-	const U32 halfRadianceOctMapSize = g_consts.m_radianceOctMapSize / 2;
-	UVec2 radianceOctCoord = UVec2(outPixelIdx % halfRadianceOctMapSize, outPixelIdx / halfRadianceOctMapSize);
-	radianceOctCoord *= 2u; // Because there is one output pixel every 4 radiance oct map pixels
-	radianceOctCoord.x += checkerboardIdx & 1u;
-	radianceOctCoord.y += checkerboardIdx >> 1u;
+	const UVec2 radianceOctCoord = UVec2(outPixelIdx % g_consts.m_radianceOctMapSize, outPixelIdx / g_consts.m_radianceOctMapSize);
 	ANKI_ASSERT(all(radianceOctCoord < g_consts.m_radianceOctMapSize));
-	const Vec2 sampleCoord = radianceOctCoord + 0.5 + generateMsaa8x(sampleIdx) / (8.0 * 2.0);
+	const U32 sampleIdx = (g_globalRendererConstants.m_frame + probeIdx) % 16;
+	const Vec2 sampleCoord = radianceOctCoord + 0.5 + generateMsaa16x(sampleIdx) / (16.0 * 2.0);
 	const HVec3 dir = octahedronDecode(sampleCoord / g_consts.m_radianceOctMapSize);
 
 	// Trace
@@ -104,7 +99,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	}
 
 	// Store result
-	const U32 raysPerProbePerFrame = square(g_consts.m_radianceOctMapSize / 2);
+	const U32 raysPerProbePerFrame = square(g_consts.m_radianceOctMapSize);
 	const F32 kMaxDist = 1000.0; // Chose something small and make sure its square doesn't overflow F16
 	TEX(g_lightResultTex, UVec2(probeIdx, outPixelIdx + raysPerProbePerFrame * g_consts.m_clipmapIdx)) = HVec4(radiance, min(rayT, kMaxDist));
 }
@@ -222,8 +217,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec3 clipmapAabbMin = idConsts.m_aabbMins[clipmapIdx].xyz;
 	const Vec3 prevClipmapAabbMin = idConsts.m_previousFrameAabbMins[clipmapIdx].xyz;
 
-	const U32 halfRadianceOctMapSize = RADIANCE_OCTAHEDRON_MAP_SIZE / 2;
-	const U32 raysPerProbePerFrame = square(halfRadianceOctMapSize);
+	const U32 raysPerProbePerFrame = square(RADIANCE_OCTAHEDRON_MAP_SIZE);
 
 	const U32 rtPixelIdx = svDispatchThreadId.x % raysPerProbePerFrame;
 	const U32 probeIdx = svDispatchThreadId.x / raysPerProbePerFrame;
@@ -254,12 +248,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	// Update the radiance and distance moments volumes
 	{
 		// Compute oct coord
-		const U32 checkerboardIdx = g_globalRendererConstants.m_frame % 4;
-
-		UVec2 radianceOctCoord = UVec2(rtPixelIdx % halfRadianceOctMapSize, rtPixelIdx / halfRadianceOctMapSize);
-		radianceOctCoord *= 2u; // Because there is one output pixel every 4 radiance oct map pixels
-		radianceOctCoord.x += checkerboardIdx & 1u;
-		radianceOctCoord.y += checkerboardIdx >> 1u;
+		const UVec2 radianceOctCoord = UVec2(rtPixelIdx % RADIANCE_OCTAHEDRON_MAP_SIZE, rtPixelIdx / RADIANCE_OCTAHEDRON_MAP_SIZE);
 		ANKI_ASSERT(all(radianceOctCoord < RADIANCE_OCTAHEDRON_MAP_SIZE));
 
 		UVec3 actualVolumeTexCoord;
@@ -270,7 +259,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		Vec2 avgMoments = 0.0;
 		if(blendWithHistory)
 		{
-			const F16 blendFactor = 0.1;
+			const F16 blendFactor = 0.1 / 4.0;
 
 			const HVec3 prevValue = TEX(g_radianceVolume, actualVolumeTexCoord).xyz;
 			avgRadiance = lerp(prevValue, radiance, blendFactor);
@@ -299,44 +288,6 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 			TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
 			TEX(g_distanceMomentsVolume, actualVolumeTexCoord).xy = avgMoments;
-		}
-
-		// Set the texels of the oct that don't have a valid value
-		if(!blendWithHistory)
-		{
-			for(U32 otherCheckerboardIdx = 0; otherCheckerboardIdx < 4; ++otherCheckerboardIdx)
-			{
-				if(otherCheckerboardIdx == checkerboardIdx)
-				{
-					continue;
-				}
-
-				UVec2 otherOctCoord = UVec2(rtPixelIdx % halfRadianceOctMapSize, rtPixelIdx / halfRadianceOctMapSize);
-				otherOctCoord *= 2u;
-				otherOctCoord.x += otherCheckerboardIdx & 1u;
-				otherOctCoord.y += otherCheckerboardIdx >> 1u;
-
-				UVec3 actualVolumeTexCoord;
-				actualVolumeTexCoord.xy = otherOctCoord + noOctTexCoord * (RADIANCE_OCTAHEDRON_MAP_SIZE + 2) + 1;
-				actualVolumeTexCoord.z = noOctTexCoord.z;
-
-				TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
-				TEX(g_distanceMomentsVolume, actualVolumeTexCoord).xy = avgMoments;
-
-				// Set oct borders
-				IVec2 borders[3];
-				const U32 borderCount = octahedronBorder(RADIANCE_OCTAHEDRON_MAP_SIZE, otherOctCoord, borders);
-				for(U32 i = 0; i < borderCount; ++i)
-				{
-					IVec3 actualVolumeTexCoord;
-					actualVolumeTexCoord.xy = otherOctCoord + noOctTexCoord * (RADIANCE_OCTAHEDRON_MAP_SIZE + 2) + 1;
-					actualVolumeTexCoord.xy += borders[i];
-					actualVolumeTexCoord.z = noOctTexCoord.z;
-
-					TEX(g_radianceVolume, actualVolumeTexCoord).xyz = avgRadiance;
-					TEX(g_distanceMomentsVolume, actualVolumeTexCoord).xy = avgMoments;
-				}
-			}
 		}
 	}
 
