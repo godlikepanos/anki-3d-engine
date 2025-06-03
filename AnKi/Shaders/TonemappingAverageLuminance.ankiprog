@@ -6,6 +6,7 @@
 #pragma anki technique comp
 
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 #define THREAD_COUNT_X 32u
 #define THREAD_COUNT_Y 16u

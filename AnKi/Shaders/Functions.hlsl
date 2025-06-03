@@ -945,3 +945,26 @@ TUv improvedLinearTextureFiltering(TUv uv, TUv texSize)
 	uv = (uv - 0.5) / texSize;
 	return uv;
 }
+
+template<typename T>
+T computeLuminance(vector<T, 3> color)
+{
+	return max(dot(vector<T, 3>(0.30, 0.59, 0.11), color), getEpsilon<T>());
+}
+
+template<typename T>
+vector<T, 3> rgb2ycbcr(vector<T, 3> rgb)
+{
+	const T y = computeLuminance(rgb);
+	const T cb = (rgb.b - y) * 0.565;
+	const T cr = (rgb.r - y) * 0.713;
+
+	return vector<T, 3>(y, cb, cr);
+}
+
+// YCbCr to RGB
+template<typename T>
+vector<T, 3> ycbcr2rgb(vector<T, 3> yuv)
+{
+	return vector<T, 3>(yuv.x + 1.403 * yuv.z, yuv.x - 0.344 * yuv.y - 0.714 * yuv.z, yuv.x + 1.770 * yuv.y);
+}

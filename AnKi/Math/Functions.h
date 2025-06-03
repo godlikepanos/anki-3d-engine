@@ -291,3 +291,21 @@ inline F32 computeTriangleArea(const TVec& a, const TVec& b, const TVec& c)
 /// @}
 
 } // end namespace anki
+
+// Now lay out functions that include other math headers
+
+#include <AnKi/Math/Vec.h>
+
+namespace anki {
+
+template<typename T>
+TVec<T, 3> sphericalToCartesian(T polar, T azimuth)
+{
+	TVec<T, 3> out;
+	out.x() = cos(polar) * sin(azimuth);
+	out.y() = cos(polar) * cos(azimuth);
+	out.z() = sin(polar);
+	return out;
+}
+
+} // end namespace anki

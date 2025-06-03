@@ -15,6 +15,56 @@
 
 namespace anki {
 
+// Calculate day of the year
+static U32 dayOfYear(U32 year, U32 month, U32 day)
+{
+	struct tm date = {};
+	date.tm_year = year - 1900;
+	date.tm_mon = month - 1;
+	date.tm_mday = day;
+	mktime(&date);
+	return date.tm_yday + 1;
+}
+
+static void solarPosition(U32 year, U32 month, U32 day, F32 hourUtc, F32 latitude, F32 longitude, F32& elevation, F32& azimuth)
+{
+	const F32 N = F32(dayOfYear(year, month, day));
+
+	// Fractional year (in radians)
+	const F32 gamma = 2.0f * kPi / 365.0f * (N - 1.0f + (hourUtc - 12.0f) / 24.0f);
+
+	// Equation of time (minutes)
+	const F32 eqTime =
+		229.18f * (0.000075f + 0.001868f * cos(gamma) - 0.032077f * sin(gamma) - 0.014615f * cos(2.0f * gamma) - 0.040849f * sin(2.0f * gamma));
+
+	// Solar declination (radians)
+	const F32 decl = 0.006918f - 0.399912f * cos(gamma) + 0.070257f * sin(gamma) - 0.006758f * cos(2.0f * gamma) + 0.000907f * sin(2 * gamma)
+					 - 0.002697f * cos(3.0f * gamma) + 0.00148f * sin(3.0f * gamma);
+
+	// Time offset (minutes)
+	const F32 timeOffset = eqTime + 4.0f * longitude;
+
+	// True solar time (degrees)
+	const F32 tst = hourUtc * 60.0f + timeOffset;
+	const F32 ha = toRad((tst / 4.0f) - 180.0f); // Hour angle in radians
+
+	const F32 latRad = toRad(latitude);
+
+	// Solar zenith angle
+	const F32 cosZenith = sin(latRad) * sin(decl) + cos(latRad) * cos(decl) * cos(ha);
+	const F32 zenith = acos(cosZenith);
+	elevation = kPi / 2.0f - zenith;
+
+	// Solar azimuth
+	const F32 v = (sin(decl) - sin(latRad) * cos(zenith)) / (cos(latRad) * sin(zenith));
+	const F32 azRad = acos(clamp(v, -1.0f, 1.0f));
+	azimuth = azRad;
+	if(ha > 0.0)
+	{
+		azimuth = 2.0f * kPi - azimuth;
+	}
+}
+
 LightComponent::LightComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 	, m_type(LightComponentType::kPoint)
@@ -196,6 +246,52 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	else if(m_type == LightComponentType::kDirectional)
 	{
 		m_gpuSceneLight.free();
+
+		if(updated && (m_dir.m_month >= 0 && m_dir.m_day >= 0 && m_dir.m_hour >= 0.0f))
+		{
+			F32 hour;
+			F32 lat, lon;
+			if(1)
+			{
+				// Location: Greece
+				lat = 37.983326540467026f;
+				lon = 23.722718055667336f;
+
+				// Fix hour to UTC
+				hour = m_dir.m_hour - 2.0f;
+			}
+			else
+			{
+				// Location: Norway
+				lat = 63.42239805509379f;
+				lon = 10.400744175764066f;
+
+				// Fix hour to UTC
+				hour = m_dir.m_hour - 1.0f;
+			}
+
+			F32 elevation, azimuth;
+			solarPosition(2025, m_dir.m_month, m_dir.m_day, hour, lat, lon, elevation, azimuth);
+
+			elevation = max(elevation, toRad(10.0f)); // Don't have it negative cause the renderer can't handle it
+
+			const F32 polarAng = kPi / 2.0f - elevation;
+			const Vec3 newDir = -sphericalToCartesian(polarAng, azimuth);
+
+			const Vec3 zAxis = newDir;
+			Vec3 yAxis = Vec3(0.0f, 1.0f, 0.0f);
+			Vec3 xAxis = yAxis.cross(zAxis);
+			yAxis = zAxis.cross(xAxis);
+
+			// printf("%f : %f %f\n", m_dir.m_hour, toDegrees(elevation), toDegrees(azimuth));
+
+			Mat3 rot;
+			rot.setXAxis(xAxis);
+			rot.setYAxis(yAxis);
+			rot.setZAxis(zAxis);
+
+			m_worldTransform.setRotation(rot);
+		}
 	}
 
 	m_shapeDirty = false;

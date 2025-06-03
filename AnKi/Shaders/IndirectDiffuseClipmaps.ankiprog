@@ -172,7 +172,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		rayOrigin = biasedWorldPos;
 		rayDir2 = worldNormal;
 	}
-	const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality & kSampleClipmapFlagBiasSamplePointSurfaceNormal;
+	const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality | kSampleClipmapFlagBiasSamplePointSurfaceNormal;
 	const Vec3 irradiance =
 		sampleClipmapIrradiance(rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, g_globalRendererConstants.m_indirectDiffuseClipmaps,
 								g_linearAnyRepeatSampler, flags, randFactors.x);
@@ -270,7 +270,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		Vec2 avgMoments = 0.0;
 		if(blendWithHistory)
 		{
-			const F32 blendFactor = 0.1;
+			const F16 blendFactor = 0.1;
 
 			const HVec3 prevValue = TEX(g_radianceVolume, actualVolumeTexCoord).xyz;
 			avgRadiance = lerp(prevValue, radiance, blendFactor);

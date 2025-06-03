@@ -83,26 +83,16 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtMaterialFetchDbg") ? "" : "RtMaterialFetchDbg");
 	}
 
-	if(in.getKey(KeyCode::kP) == 1)
+	static Bool timeOfDay = false;
+	if(in.getKey(KeyCode::kP) == 1 || timeOfDay)
 	{
-		static U32 idx = 3;
-		++idx;
-		idx %= 4;
-		if(idx == 0)
+		timeOfDay = true;
+		static F32 time = 8.0f;
+		scene.getDirectionalLight()->setDirectionFromTimeOfDay(6, 25, time);
+		time += 0.2f * F32(elapsedTime);
+		if(time > 19.0)
 		{
-			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
-		}
-		else if(idx == 1)
-		{
-			renderer.setCurrentDebugRenderTarget("VrsSriDownscaled");
-		}
-		else if(idx == 2)
-		{
-			renderer.setCurrentDebugRenderTarget("VrsSri");
-		}
-		else
-		{
-			renderer.setCurrentDebugRenderTarget("");
+			time = 8.0f;
 		}
 	}
 

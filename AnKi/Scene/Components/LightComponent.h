@@ -141,6 +141,15 @@ public:
 		return m_spot.m_viewMat;
 	}
 
+	/// Set the direction of the directional light by setting the date and hour.
+	void setDirectionFromTimeOfDay(I32 month, I32 day, F32 hour)
+	{
+		m_dir.m_month = month;
+		m_dir.m_day = day;
+		m_dir.m_hour = hour;
+		m_shapeDirty = true;
+	}
+
 	/// Calculate some matrices for each cascade. For dir lights.
 	/// @param cameraFrustum Who is looking at the light.
 	/// @param cascadeDistances The distances of the cascades.
@@ -183,8 +192,17 @@ private:
 		F32 m_innerAngle = toRad(15.0f);
 	};
 
+	class Dir
+	{
+	public:
+		I32 m_month = -1;
+		I32 m_day = -1;
+		F32 m_hour = -1.0;
+	};
+
 	Point m_point;
 	Spot m_spot;
+	Dir m_dir;
 
 	GpuSceneArrays::Light::Allocation m_gpuSceneLight;
 	GpuSceneArrays::LightVisibleRenderablesHash::Allocation m_hash;
