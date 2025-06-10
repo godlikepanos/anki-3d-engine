@@ -1,0 +1,139 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Calculates the disocclusion length. The longer the length the better the pixel is for temporal accumulation
+
+#pragma anki 16bit
+
+#pragma anki technique comp vert pixel
+
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/QuadVert.hlsl>
+
+constexpr F32 kZDistanceLimit = 0.05; // In meters
+constexpr F32 kMaxHistoryLength = 16.0;
+
+Texture2D<F32> g_depthTex : register(t0);
+Texture2D<F32> g_historyDepthTex : register(t1);
+Texture2D<Vec2> g_motionVectorsTex : register(t2);
+Texture2D<F32> g_prevHistoryLengthTex : register(t3);
+
+RWTexture2D<F32> g_historyLengthTex : register(u0);
+
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
+
+SamplerState g_linearAnyClampSampler : register(s0);
+
+Vec3 unproject(Vec2 ndc, F32 d)
+{
+	return cheapPerspectiveUnprojection(g_globalRendererConsts.m_matrices.m_unprojectionParameters, ndc, d);
+}
+
+F32 computeLength(Vec2 coord)
+{
+	Vec2 viewport;
+	g_depthTex.GetDimensions(viewport.x, viewport.y);
+
+	const Vec2 uv = (coord + 0.5) / viewport;
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec2 historyUv = uv + TEX(g_motionVectorsTex, coord);
+
+	// Compute length
+	F32 good = 0.0; // Zero means "new" pixel this frame
+	if(any(historyUv < 0.0) || any(historyUv > 1.0))
+	{
+		good = 0.0;
+	}
+	else
+	{
+		// Read neighbours to find min and max depth
+		// +-+-+-+
+		// |6|7|8|
+		// +-+-+-+
+		// |3|4|5|
+		// +-+-+-+
+		// |0|1|2|
+		// +-+-+-+
+		// "uv" points to the middle of 4
+		const Vec2 halfTexelSize = (1.0 / viewport) / 2.0;
+		Vec4 depth4 = g_depthTex.GatherRed(g_linearAnyClampSampler, uv + halfTexelSize); // Read 4, 5, 1, 2
+		F32 minDepth = min4(depth4);
+		F32 maxDepth = max4(depth4);
+		depth4 = g_depthTex.GatherRed(g_linearAnyClampSampler, uv - halfTexelSize); // Read 6, 7, 3, 4
+		minDepth = min(minDepth, min4(depth4));
+		maxDepth = max(maxDepth, max4(depth4));
+		F32 d = g_depthTex[clamp(coord + Vec2(1.0, -1.0), 0.0, viewport - 1.0)]; // Read 8
+		minDepth = min(minDepth, d);
+		maxDepth = max(maxDepth, d);
+		d = g_depthTex[clamp(coord + Vec2(-1.0, 1.0), 0.0, viewport - 1.0)]; // Read 0
+		minDepth = min(minDepth, d);
+		maxDepth = max(maxDepth, d);
+
+		// Compute the AABB from the min and max depth
+		const Vec3 boundA = unproject(ndc, minDepth);
+		const Vec3 boundB = unproject(ndc, maxDepth);
+		const Vec3 aabbMinVspace = min(boundA, boundB);
+		const Vec3 aabbMaxVspace = max(boundA, boundB);
+
+		// Read history
+		const Vec2 historyNdc = uvToNdc(historyUv);
+		const F32 historyDepth = g_historyDepthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
+		Vec4 v = mul(g_globalRendererConsts.m_previousMatrices.m_invertedViewProjection, Vec4(historyNdc, historyDepth, 1.0));
+		const Vec3 historyWspace = v.xyz / v.w;
+		const Vec3 historyVspace = mul(g_globalRendererConsts.m_matrices.m_view, Vec4(historyWspace, 1.0));
+
+		F32 maxDist = 0.0;
+		[unroll] for(U32 i = 0; i < 3; ++i)
+		{
+			if(historyVspace[i] < aabbMinVspace[i])
+			{
+				maxDist = max(maxDist, aabbMinVspace[i] - historyVspace[i]);
+			}
+			else if(historyVspace[i] > aabbMaxVspace[i])
+			{
+				maxDist = max(maxDist, historyVspace[i] - aabbMaxVspace[i]);
+			}
+		}
+
+		const F32 factor = maxDist / kZDistanceLimit;
+		good = 1.0 - min(factor, 1.0);
+	}
+
+	F32 len = good;
+	if(good > 0.1)
+	{
+		const F32 prevLen = g_prevHistoryLengthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f) * kMaxHistoryLength;
+		len += prevLen;
+		len = min(len, kMaxHistoryLength);
+	}
+
+	return len / kMaxHistoryLength;
+}
+
+#if ANKI_COMPUTE_SHADER
+[NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+
+	Vec2 viewport;
+	g_historyLengthTex.GetDimensions(viewport.x, viewport.y);
+	if(any(coord >= viewport))
+	{
+		return;
+	}
+
+	const F32 len = computeLength(coord);
+	TEX(g_historyLengthTex, coord) = len;
+}
+#endif
+
+#if ANKI_PIXEL_SHADER
+F32 main(VertOut input) : SV_TARGET0
+{
+	const Vec2 coord = floor(input.m_svPosition.xy);
+	return computeLength(coord);
+}
+#endif

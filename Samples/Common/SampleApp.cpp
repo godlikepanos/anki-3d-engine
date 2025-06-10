@@ -80,7 +80,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kO) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtMaterialFetchDbg") ? "" : "RtMaterialFetchDbg");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "HistoryLen") ? "" : "HistoryLen");
 	}
 
 	static Bool timeOfDay = false;

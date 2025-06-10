@@ -466,7 +466,6 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 	return o;
 }
 
-#if ANKI_COMPUTE_SHADER && ANKI_GLSL
 // See getOptimalGlobalInvocationId8x8Amd
 U32 _ABfiM(U32 src, U32 ins, U32 bits)
 {
@@ -488,17 +487,18 @@ UVec2 _ARmpRed8x8(U32 a)
 }
 
 // https://github.com/GPUOpen-Effects/FidelityFX-CAS/blob/master/ffx-cas/ffx_a.h
-UVec2 getOptimalGlobalInvocationId8x8Amd()
+UVec2 getOptimalDispatchThreadId8x8Amd(U32 svGroupIndex, UVec2 svGroupId)
 {
-	const UVec2 localInvocationId = _ARmpRed8x8(gl_LocalInvocationIndex);
-	return gl_WorkGroupID.xy * UVec2(8u) + localInvocationId;
+	const UVec2 localInvocationId = _ARmpRed8x8(svGroupIndex);
+	return svGroupId * 8u + localInvocationId;
 }
 
+#if ANKI_COMPUTE_SHADER && ANKI_GLSL
 // https://github.com/LouisBavoil/ThreadGroupIDSwizzling/blob/master/ThreadGroupTilingX.hlsl
 UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 {
 	const U32 maxTileWidth = 8u;
-	const UVec2 workgroupSize = UVec2(8u);
+	const UVec2 workgroupSize = 8u;
 
 	const U32 workgroupsInAPerfectTile = maxTileWidth * gl_NumWorkGroups.y;
 

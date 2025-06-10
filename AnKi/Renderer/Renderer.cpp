@@ -50,6 +50,7 @@
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -324,6 +325,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);
+	m_historyLength->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{

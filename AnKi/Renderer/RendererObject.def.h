@@ -19,6 +19,7 @@ ANKI_RENDERER_OBJECT_DEF(VolumetricFog, volumetricFog, 1)
 ANKI_RENDERER_OBJECT_DEF(DepthDownscale, depthDownscale, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalAA, temporalAA, 1)
 ANKI_RENDERER_OBJECT_DEF(UiStage, uiStage, 1)
+ANKI_RENDERER_OBJECT_DEF(HistoryLength, historyLength, 1)
 ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseProbes, indirectDiffuseProbes,
 						 !(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseClipmapsCVar))
 ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseClipmaps, indirectDiffuseClipmaps,

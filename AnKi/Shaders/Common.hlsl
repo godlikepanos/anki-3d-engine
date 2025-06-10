@@ -48,6 +48,7 @@ RF32 getEpsilon()
 
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
 constexpr F32 kMaxF32 = 3.402823e+38;
+constexpr F32 kMinF32 = -3.402823e+38;
 #if !ANKI_SUPPORTS_16BIT_TYPES
 constexpr RF32 kMaxRF32 = 65504.0f; // Max half float value according to wikipedia
 #endif
@@ -158,37 +159,50 @@ U32 checkStructuredBuffer(T buff, U32 idx)
 // Safely access a structured buffer. Throw an assertion if it's out of bounds
 #define SBUFF(buff, idx) buff[checkStructuredBuffer(buff, idx)]
 
-UVec3 checkTexture(RWTexture3D<Vec4> tex, UVec3 coords)
-{
-	UVec3 size;
-	tex.GetDimensions(size.x, size.y, size.z);
-	ANKI_ASSERT(coords.x < size.x && coords.y < size.y && coords.z < size.z);
-	return coords;
-}
+#define CHECK_TEXTURE_3D(textureType) \
+	UVec3 checkTexture(textureType tex, UVec3 coords) \
+	{ \
+		UVec3 size; \
+		tex.GetDimensions(size.x, size.y, size.z); \
+		ANKI_ASSERT(coords.x < size.x && coords.y < size.y && coords.z < size.z); \
+		return coords; \
+	}
 
-UVec2 checkTexture(RWTexture2D<Vec4> tex, UVec2 coords)
-{
-	UVec2 size;
-	tex.GetDimensions(size.x, size.y);
-	ANKI_ASSERT(coords.x < size.x && coords.y < size.y);
-	return coords;
-}
+#define CHECK_TEXTURE_2D(textureType) \
+	UVec2 checkTexture(textureType tex, UVec2 coords) \
+	{ \
+		UVec2 size; \
+		tex.GetDimensions(size.x, size.y); \
+		ANKI_ASSERT(coords.x < size.x && coords.y < size.y); \
+		return coords; \
+	}
 
-UVec3 checkTexture(Texture3D<Vec4> tex, UVec3 coords)
-{
-	UVec3 size;
-	tex.GetDimensions(size.x, size.y, size.z);
-	ANKI_ASSERT(coords.x < size.x && coords.y < size.y && coords.z < size.z);
-	return coords;
-}
+#define CHECK_TEXTURE_1(vectorType) \
+	CHECK_TEXTURE_3D(RWTexture3D<vectorType>) \
+	CHECK_TEXTURE_3D(Texture3D<vectorType>) \
+	CHECK_TEXTURE_2D(RWTexture2D<vectorType>) \
+	CHECK_TEXTURE_2D(Texture2D<vectorType>)
 
-UVec2 checkTexture(Texture2D<Vec4> tex, UVec2 coords)
-{
-	UVec2 size;
-	tex.GetDimensions(size.x, size.y);
-	ANKI_ASSERT(coords.x < size.x && coords.y < size.y);
-	return coords;
-}
+#define CHECK_TEXTURE_2(componentCount) \
+	CHECK_TEXTURE_1(Vec##componentCount) \
+	CHECK_TEXTURE_1(UVec##componentCount) \
+	CHECK_TEXTURE_1(IVec##componentCount)
+
+#define CHECK_TEXTURE_3() \
+	CHECK_TEXTURE_2(2) \
+	CHECK_TEXTURE_2(3) \
+	CHECK_TEXTURE_2(4) \
+	CHECK_TEXTURE_1(F32) \
+	CHECK_TEXTURE_1(U32) \
+	CHECK_TEXTURE_1(I32)
+
+CHECK_TEXTURE_3()
+
+#undef CHECK_TEXTURE_3
+#undef CHECK_TEXTURE_2
+#undef CHECK_TEXTURE_1
+#undef CHECK_TEXTURE_2D
+#undef CHECK_TEXTURE_3D
 
 /// Safely access a UAV or SRV texture. Throw an assertion if it's out of bounds
 #define TEX(tex, coords) tex[checkTexture(tex, coords)]
