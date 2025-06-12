@@ -855,6 +855,46 @@ U32 octahedronBorder(IVec2 texSize, IVec2 texCoord, out IVec2 borderTexOffsets[3
 	return borderCount;
 }
 
+/// See octahedronBorder.
+template<typename TStoreFunc>
+void storeOctahedronBorder(IVec2 octSize, IVec2 octCoord, TStoreFunc func)
+{
+	if(all(octCoord == 0))
+	{
+		func(octCoord + octSize);
+	}
+	else if(octCoord.x == 0 && octCoord.y == octSize.y - 1)
+	{
+		func(octCoord + IVec2(octSize.x, -octSize.y));
+	}
+	else if(all(octCoord == octSize - 1))
+	{
+		func(octCoord - octSize);
+	}
+	else if(octCoord.x == octSize.x - 1 && octCoord.y == 0)
+	{
+		func(octCoord + IVec2(-octSize.x, octSize.y));
+	}
+
+	if(octCoord.y == 0)
+	{
+		func(octCoord + IVec2((octSize.x - 1) - 2 * octCoord.x, -1));
+	}
+	else if(octCoord.y == octSize.y - 1)
+	{
+		func(octCoord + IVec2((octSize.x - 1) - 2 * octCoord.x, 1));
+	}
+
+	if(octCoord.x == 0)
+	{
+		func(octCoord + IVec2(-1, (octSize.y - 1) - 2 * octCoord.y));
+	}
+	else if(octCoord.x == octSize.x - 1)
+	{
+		func(octCoord + IVec2(1, (octSize.y - 1) - 2 * octCoord.y));
+	}
+}
+
 /// Manual texture sampling of a 3D texture.
 template<typename T, U32 kComp>
 vector<T, kComp> linearTextureSampling(Texture3D<Vec4> sam, Vec3 uv)

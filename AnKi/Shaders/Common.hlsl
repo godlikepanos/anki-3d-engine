@@ -92,6 +92,8 @@ constexpr F32 k2Pi = 2.0 * kPi;
 constexpr F32 kHalfPi = kPi / 2.0;
 constexpr F32 kNaN = 0.0 / 0.0;
 
+constexpr F32 kMaxHistoryLength = 16.0;
+
 struct Barycentrics
 {
 	Vec2 m_value;

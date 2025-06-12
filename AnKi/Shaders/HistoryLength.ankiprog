@@ -14,7 +14,6 @@
 #include <AnKi/Shaders/QuadVert.hlsl>
 
 constexpr F32 kZDistanceLimit = 0.05; // In meters
-constexpr F32 kMaxHistoryLength = 16.0;
 
 Texture2D<F32> g_depthTex : register(t0);
 Texture2D<F32> g_historyDepthTex : register(t1);

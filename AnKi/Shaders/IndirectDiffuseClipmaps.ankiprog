@@ -14,6 +14,8 @@
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique Apply comp mutators
+#pragma anki technique SpatialReconstruct comp mutators
+#pragma anki technique TemporalDenoise comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
 #define ANKI_ASSERTIONS_ENABLED 1
@@ -103,10 +105,11 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const F32 kMaxDist = 1000.0; // Chose something small and make sure its square doesn't overflow F16
 	TEX(g_lightResultTex, UVec2(probeIdx, outPixelIdx + raysPerProbePerFrame * g_consts.m_clipmapIdx)) = HVec4(radiance, min(rayT, kMaxDist));
 }
+
+// ===========================================================================
+// RtMaterialFetch (Apply)                                                   =
+// ===========================================================================
 #	else // RT_MATERIAL_FETCH_CLIPMAP
-
-// RT based apply of indirect
-
 struct Consts
 {
 	F32 m_rayMax;
@@ -118,11 +121,11 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 [Shader("raygeneration")] void main()
 {
-	const UVec2 coord = DispatchRaysIndex().xy;
-	const Vec2 uv = Vec2(coord) / DispatchRaysDimensions().xy;
+	const UVec2 fullCoord = UVec2(DispatchRaysIndex().x * 2u + (DispatchRaysIndex().y & 1u), DispatchRaysIndex().y);
+	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * UVec2(2, 1));
 
-	const F32 depth = g_depthTex[coord].x;
-	const Vec4 rt2 = g_gbufferRt2[coord];
+	const F32 depth = TEX(g_depthTex, fullCoord).x;
+	const Vec4 rt2 = TEX(g_gbufferRt2, fullCoord);
 	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
 
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
@@ -132,7 +135,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec3 biasedWorldPos = worldPos + biasDir * 0.1;
 
 	// Rand
-	const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
+	const UVec3 seed = rand3DPCG16(UVec3(fullCoord, g_globalRendererConstants.m_frame % 8u));
 	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
 
 	const Mat3 tbn = rotationFromDirection(worldNormal);
@@ -182,7 +185,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		final = irradiance;
 	}
 
-	TEX(g_colorAndPdfTex, coord).xyz = final;
+	TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = Vec4(final, 0.0);
 }
 #	endif // RT_MATERIAL_FETCH_CLIPMAP
 #endif
@@ -337,15 +340,15 @@ groupshared Vec3 g_avgIrradiance[kThreadCount];
 
 void InterlockedAddColor(U32 x, U32 y, Vec3 color)
 {
-	[unroll] for(U32 i = 0; i < 3; ++i)
-	{
-		const F32 fracPart = frac(color[i]);
-		const F32 intPart = color[i] - fracPart;
+	const Vec3 fracPart = frac(color);
+	const Vec3 intPart = color - fracPart;
 
-		U64 val = U64(intPart) << U64(32);
-		val |= U64(fracPart * 10000.0);
-		InterlockedAdd(g_irradianceResults[y][x][i], val);
-	}
+	U64Vec3 val = U64Vec3(intPart) << U64(32);
+	val |= U64Vec3(fracPart * 10000.0);
+
+	InterlockedAdd(g_irradianceResults[y][x][0], val[0]);
+	InterlockedAdd(g_irradianceResults[y][x][1], val[1]);
+	InterlockedAdd(g_irradianceResults[y][x][2], val[2]);
 }
 
 Vec3 decodeAtomicColor(U32 x, U32 y)
@@ -360,6 +363,19 @@ Vec3 decodeAtomicColor(U32 x, U32 y)
 	}
 	return output;
 }
+
+struct StoreBorderFunc
+{
+	IVec3 m_startOfOctCoord;
+	Vec3 m_value;
+	U32 m_clipmapIdx;
+
+	void operator()(IVec2 offset)
+	{
+		const IVec3 coord = m_startOfOctCoord + IVec3(offset, 0);
+		TEX(g_irradianceVolumes[m_clipmapIdx], coord) = Vec4(m_value, 0.0);
+	}
+};
 
 // The group services a single probe. Every thread reads a radiance value and bins it to the appropreate irradiance pixel
 [NumThreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
@@ -447,19 +463,15 @@ Vec3 decodeAtomicColor(U32 x, U32 y)
 
 		threadAvgIrradiance += irradiance / irradianceTexelCount;
 
-		TEX(g_irradianceVolumes[clipmapIdx], irradianceTexelCoord).xyz = irradiance;
+		TEX(g_irradianceVolumes[clipmapIdx], irradianceTexelCoord) = Vec4(irradiance, 0.0);
 
 		// Write the borders
-		IVec2 borders[3];
+		StoreBorderFunc func;
+		func.m_clipmapIdx = clipmapIdx;
+		func.m_startOfOctCoord = irradianceTexelCoordStart;
+		func.m_value = irradiance;
 		const IVec2 octCoord = IVec2(x, y);
-		const U32 borderCount = octahedronBorder(IRRADIANCE_OCTAHEDRON_MAP_SIZE, octCoord, borders);
-		for(U32 i = 0; i < borderCount; ++i)
-		{
-			IVec3 actualVolumeTexCoord = irradianceTexelCoordStart;
-			actualVolumeTexCoord.xy += octCoord + borders[i];
-
-			TEX(g_irradianceVolumes[clipmapIdx], actualVolumeTexCoord).xyz = irradiance;
-		}
+		storeOctahedronBorder(IRRADIANCE_OCTAHEDRON_MAP_SIZE, octCoord, func);
 	}
 
 	g_avgIrradiance[svGroupIndex] = threadAvgIrradiance;
@@ -503,28 +515,32 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 
 SamplerState g_linearAnyRepeatSampler : register(s0);
 
-[NumThreads(8, 8, 1)] void main(COMPUTE_ARGS)
+[NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	UVec2 viewportSize;
-	g_outTex.GetDimensions(viewportSize.x, viewportSize.y);
+	Vec2 halfViewportSize;
+	g_outTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
+	const Vec2 fullViewportSize = halfViewportSize * Vec2(2.0, 1.0);
 
-	if(any(svDispatchThreadId >= viewportSize))
+	const UVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const Vec2 coord = Vec2(realSvDispatchThreadId.x * 2u + (realSvDispatchThreadId.y & 1u), realSvDispatchThreadId.y);
+
+	if(any(coord >= fullViewportSize))
 	{
 		return;
 	}
 
-	const F32 depth = g_depthTex[svDispatchThreadId.xy].r;
-	const Vec2 uv = Vec2(svDispatchThreadId.xy) / Vec2(viewportSize);
+	const F32 depth = TEX(g_depthTex, coord).r;
+	const Vec2 uv = (coord + 0.5) / fullViewportSize;
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 normal = unpackNormalFromGBuffer(g_gbufferRt2[svDispatchThreadId.xy]);
+	const Vec3 normal = unpackNormalFromGBuffer(TEX(g_gbufferRt2, coord));
 
 	// Rand
 	UVec2 noiseTexSize;
 	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
-	Vec3 noise3 = g_blueNoiseTex[svDispatchThreadId % noiseTexSize];
+	Vec3 noise3 = TEX(g_blueNoiseTex, realSvDispatchThreadId % noiseTexSize);
 	noise3 = animateBlueNoise(noise3, g_globalRendererConstants.m_frame);
 	const F32 noise = noise3.x;
 
@@ -543,7 +559,110 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 												g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, noise);
 	}
 
-	TEX(g_outTex, svDispatchThreadId.xy).xyz = irradiance;
+	TEX(g_outTex, realSvDispatchThreadId) = Vec4(irradiance, 0.0);
+}
+#endif
+
+// ===========================================================================
+// SpatialReconstruct                                                        =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_SpatialReconstruct)
+#	include <AnKi/Shaders/BilateralFilter.hlsl>
+
+Texture2D<Vec3> g_inTex : register(t0);
+Texture2D<F32> g_depthTex : register(t1);
+
+RWTexture2D<Vec4> g_outTex : register(u0);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	IVec2 viewportSize;
+	g_outTex.GetDimensions(viewportSize.x, viewportSize.y);
+
+	const IVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+
+	const IVec2 filledCoord = IVec2(realSvDispatchThreadId.x * 2 + (realSvDispatchThreadId.y & 1), realSvDispatchThreadId.y);
+	const IVec2 toBeFilledCoord = IVec2(realSvDispatchThreadId.x * 2 + ((realSvDispatchThreadId.y + 1) & 1), realSvDispatchThreadId.y);
+
+	const F32 refDepth = TEX(g_depthTex, toBeFilledCoord);
+
+	Vec3 toBeFilledColor = 0.0;
+	F32 weightSum = 0.0;
+	const IVec2 offsets[4] = {IVec2(-1, 0), IVec2(1, 0), IVec2(0, -1), IVec2(0, 1)};
+	[unroll] for(U32 i = 0; i < 4; ++i)
+	{
+		const IVec2 sampleCoord = toBeFilledCoord + offsets[i];
+		if(all(sampleCoord >= 0) && all(sampleCoord < viewportSize))
+		{
+			const F32 sampleDepth = TEX(g_depthTex, sampleCoord);
+
+			const Vec3 sample = TEX(g_inTex, IVec2(sampleCoord.x / 2, sampleCoord.y));
+
+			const F32 weight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
+			weightSum += weight;
+
+			toBeFilledColor += weight * sample;
+
+			if(all(sampleCoord == filledCoord))
+			{
+				TEX(g_outTex, filledCoord) = Vec4(sample, 0.0);
+			}
+		}
+	}
+
+	if(weightSum > kEpsilonF32 * 10.0)
+	{
+		toBeFilledColor /= weightSum;
+	}
+	else
+	{
+		toBeFilledColor = 0.0;
+	}
+
+	TEX(g_outTex, toBeFilledCoord) = Vec4(toBeFilledColor, 0.0);
+}
+#endif
+
+// ===========================================================================
+// TemporalDenoise                                                           =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_TemporalDenoise)
+Texture2D<F32> g_historyLengthTex : register(t0);
+Texture2D<Vec2> g_motionVectorsTex : register(t1);
+Texture2D<Vec3> g_historyTex : register(t2);
+Texture2D<Vec3> g_currentTex : register(t3);
+
+RWTexture2D<Vec3> g_outTex : register(u0);
+
+SamplerState g_linearAnyClampSampler : register(s0);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	Vec2 viewport;
+	g_historyLengthTex.GetDimensions(viewport.x, viewport.y);
+
+	const F32 historyLen = TEX(g_historyLengthTex, coord) / kMaxHistoryLength;
+
+	F32 blendFactor = historyLen / 1.0;
+	blendFactor = lerp(1.0, 0.05, blendFactor);
+
+	Vec3 outColor = TEX(g_currentTex, coord);
+	if(blendFactor > 0.9)
+	{
+		// Don't accumulate
+	}
+	else
+	{
+		const Vec2 uv = (coord + 0.5) / viewport;
+		const Vec2 historyUv = uv + TEX(g_motionVectorsTex, coord);
+
+		const Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
+
+		outColor = lerp(history, outColor, blendFactor);
+	}
+
+	TEX(g_outTex, coord) = outColor;
 }
 #endif
 

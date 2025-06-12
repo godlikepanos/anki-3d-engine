@@ -57,6 +57,9 @@ inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceOctMapSize(
 inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceOctMapSize("R", "IndirectDiffuseClipmapIrradianceOctMapSize", 5, 4, 20,
 																	 "Size of the octahedral for the irradiance");
 
+inline NumericCVar<F32> g_indirectDiffuseClipmapFirstBounceRayDistance("R", "IndirectDiffuseClipmapFirstBounceRayDistance", 0.0f, 0.0f, 10000.0f,
+																	   "For the 1st bounce shoot rays instead of sampling the clipmaps");
+
 /// @memberof IndirectDiffuseClipmaps
 class IndirectDiffuseClipmapsRenderTargetHandles
 {
@@ -108,7 +111,8 @@ private:
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 
 	RenderTargetDesc m_rtResultRtDesc;
-	RenderTargetDesc m_appliedGiRtDesc;
+	RenderTargetDesc m_halfRtDesc;
+	RenderTargetDesc m_fullRtDesc;
 
 	IndirectDiffuseClipmapConstants m_consts;
 
@@ -119,6 +123,8 @@ private:
 	ShaderProgramPtr m_computeIrradianceGrProg;
 	ShaderProgramPtr m_applyGiGrProg;
 	ShaderProgramPtr m_visProbesGrProg;
+	ShaderProgramPtr m_temporalDenoiseGrProg;
+	ShaderProgramPtr m_spatialReconstructGrProg;
 
 	ImageResourcePtr m_blueNoiseImg;
 

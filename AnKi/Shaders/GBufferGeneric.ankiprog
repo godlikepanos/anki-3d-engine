@@ -38,7 +38,7 @@
 #pragma anki technique RtShadows ahit mutators ALPHA_TEST DIFFUSE_TEX
 #pragma anki technique RtShadows chit mutators
 
-#pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX EMISSIVE_TEX ROUGHNESS_METALNESS_TEX
+#pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX EMISSIVE_TEX ROUGHNESS_METALNESS_TEX ALPHA_TEST
 
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
@@ -64,7 +64,6 @@
 #endif
 
 #if ANKI_TECHNIQUE_RtMaterialFetch
-#	define ALPHA_TEST 0
 #	define ANKI_VELOCITY 0
 #	define ANKI_BONES 0
 #	define PARALLAX 0
@@ -770,7 +769,7 @@ GBufferPixelOut main(
 	payload.m_worldNormal = normal;
 
 	// Ray T
-	const Bool backfacing = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
+	const Bool backfacing = !ALPHA_TEST && HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
 	payload.m_rayT = RayTCurrent() * (backfacing ? -1.0 : 1.0);
 }
 #	endif
