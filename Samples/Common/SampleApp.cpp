@@ -51,7 +51,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		return Error::kNone;
 	}
 
-	if(in.getKey(KeyCode::kBackquote) == 1)
+	if(in.getKey(KeyCode::kGrave) == 1)
 	{
 		toggleDeveloperConsole();
 	}

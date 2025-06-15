@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Window/Input.h>
-#include <SDL_keycode.h>
+#include <SDL3/SDL_keycode.h>
 #include <unordered_map>
 
 namespace anki {

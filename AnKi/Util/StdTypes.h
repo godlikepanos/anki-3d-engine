@@ -234,27 +234,27 @@ private:
 
 /// @name AnKi type user literals.
 /// @{
-inline constexpr U8 operator"" _U8(unsigned long long arg) noexcept
+inline constexpr U8 operator""_U8(unsigned long long arg) noexcept
 {
 	return U8(arg);
 }
 
-inline constexpr U16 operator"" _U16(unsigned long long arg) noexcept
+inline constexpr U16 operator""_U16(unsigned long long arg) noexcept
 {
 	return U16(arg);
 }
 
-inline constexpr U32 operator"" _U32(unsigned long long arg) noexcept
+inline constexpr U32 operator""_U32(unsigned long long arg) noexcept
 {
 	return U32(arg);
 }
 
-inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
+inline constexpr U64 operator""_U64(unsigned long long arg) noexcept
 {
 	return U64(arg);
 }
 
-inline constexpr PtrSize operator"" _PtrSize(unsigned long long arg) noexcept
+inline constexpr PtrSize operator""_PtrSize(unsigned long long arg) noexcept
 {
 	return PtrSize(arg);
 }

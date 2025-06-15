@@ -193,7 +193,6 @@ if(${ANKI_GR_BACKEND} STREQUAL "DIRECTX")
 elseif(${ANKI_GR_BACKEND} STREQUAL "VULKAN")
 	set(DIRECTX FALSE)
 	set(VULKAN TRUE)
-	set(VIDEO_VULKAN TRUE) # Set for the SDL2 to pick up
 else()
 	message(FATAL_ERROR "Wrong ANKI_GR_BACKEND")
 endif()
@@ -326,14 +325,14 @@ endif()
 
 # SDL
 if(SDL)
-	message("++ Configuring SDL2")
-	option(SDL_X11 OFF)
-	add_subdirectory(ThirdParty/Sdl2)
-	message("++ End configuring SDL2")
+	message("++ Configuring SDL3")
+	option(SDL_STATIC "Build a static version of the library" ON)
+	option(SDL_DYNAMIC "Build a static version of the library" OFF)
+	add_subdirectory(ThirdParty/Sdl3)
+	message("++ End configuring SDL3")
 
 	# Include first the build directory.
-	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/Sdl2/include"
-		"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Sdl2/include")
+	set(SDL3_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Sdl3/include")
 endif()
 
 # glslang
@@ -469,8 +468,8 @@ include_directories(
 	"ThirdParty/Jolt"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
-if(SDL2_INCLUDE_DIRS)
-	include_directories("${SDL2_INCLUDE_DIRS}")
+if(SDL3_INCLUDE_DIRS)
+	include_directories("${SDL3_INCLUDE_DIRS}")
 endif()
 
 if(LINUX OR MACOS OR WINDOWS)
@@ -485,10 +484,6 @@ endif()
 
 if(LINUX)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
-
-	if(SDL)
-		#set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
-	endif()
 endif()
 
 if(ANKI_DLSS)
@@ -500,6 +495,7 @@ if(NOT MSVC)
 	add_compile_options(
 		-pedantic
 		-Wno-unknown-warning-option
+		-Wno-nontrivial-memcall
 		-Wall
 		-W
 		-Wextra

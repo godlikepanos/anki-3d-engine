@@ -12,6 +12,8 @@
 // Do nothing
 #elif ANKI_OS_LINUX
 #	define VK_USE_PLATFORM_WAYLAND_KHR 1
+#	define VK_USE_PLATFORM_XCB_KHR 1
+#	define VK_USE_PLATFORM_XLIB_KHR 1
 #elif ANKI_OS_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR 1
 #elif ANKI_OS_ANDROID
@@ -69,6 +71,8 @@ enum class VulkanExtensions : U32
 	kEXT_mesh_shader = 1u << 16u,
 	kKHR_fragment_shader_barycentric = 1u << 17u,
 	kKHR_ray_tracing_position_fetch = 1u << 18u,
+	kKHR_xcb_surface = 1u << 19u,
+	kKHR_xlib_surface = 1u << 20u,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 

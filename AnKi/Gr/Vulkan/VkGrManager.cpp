@@ -26,8 +26,7 @@
 #include <AnKi/Window/NativeWindow.h>
 #if ANKI_WINDOWING_SYSTEM_SDL
 #	include <AnKi/Window/NativeWindowSdl.h>
-#	include <SDL_syswm.h>
-#	include <SDL_vulkan.h>
+#	include <SDL3/SDL_vulkan.h>
 #elif ANKI_WINDOWING_SYSTEM_ANDROID
 #	include <AnKi/Window/NativeWindowAndroid.h>
 #elif ANKI_WINDOWING_SYSTEM_HEADLESS
@@ -574,6 +573,16 @@ Error GrManagerImpl::initInstance()
 				m_extensions |= VulkanExtensions::kKHR_wayland_surface;
 				instExtensions[instExtensionCount++] = VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
 			}
+			else if(extensionName == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_xcb_surface;
+				instExtensions[instExtensionCount++] = VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+			}
+			else if(extensionName == VK_KHR_XLIB_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_xlib_surface;
+				instExtensions[instExtensionCount++] = VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
+			}
 #elif ANKI_OS_WINDOWS
 			if(extensionName == VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
 			{
@@ -602,8 +611,8 @@ Error GrManagerImpl::initInstance()
 		}
 
 		if(!(m_extensions
-			 & (VulkanExtensions::kEXT_headless_surface | VulkanExtensions::kKHR_wayland_surface | VulkanExtensions::kKHR_win32_surface
-				| VulkanExtensions::kKHR_android_surface)))
+			 & (VulkanExtensions::kEXT_headless_surface | VulkanExtensions::kKHR_wayland_surface | VulkanExtensions::kKHR_xcb_surface
+				| VulkanExtensions::kKHR_xlib_surface | VulkanExtensions::kKHR_win32_surface | VulkanExtensions::kKHR_android_surface)))
 		{
 			ANKI_VK_LOGE("Couldn't find suitable surface extension");
 			return Error::kFunctionFailed;
@@ -1582,7 +1591,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 Error GrManagerImpl::initSurface()
 {
 #if ANKI_WINDOWING_SYSTEM_SDL
-	if(!SDL_Vulkan_CreateSurface(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, m_instance, &m_surface))
+	if(!SDL_Vulkan_CreateSurface(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, m_instance, nullptr, &m_surface))
 	{
 		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed: %s", SDL_GetError());
 		return Error::kFunctionFailed;

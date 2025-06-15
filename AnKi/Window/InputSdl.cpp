@@ -7,7 +7,7 @@
 #include <AnKi/Window/InputSdl.h>
 #include <AnKi/Window/NativeWindowSdl.h>
 #include <AnKi/Util/Logger.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 namespace anki {
 
@@ -90,14 +90,14 @@ void Input::moveCursor(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
 	{
-		const I32 x = I32(F32(NativeWindow::getSingleton().getWidth()) * (pos.x() * 0.5f + 0.5f));
-		const I32 y = I32(F32(NativeWindow::getSingleton().getHeight()) * (-pos.y() * 0.5f + 0.5f));
+		const F32 x = F32(NativeWindow::getSingleton().getWidth()) * (pos.x() * 0.5f + 0.5f);
+		const F32 y = F32(NativeWindow::getSingleton().getHeight()) * (-pos.y() * 0.5f + 0.5f);
 
 		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, x, y);
 
 		// SDL doesn't generate a SDL_MOUSEMOTION event if the cursor is outside the window. Push that event
 		SDL_Event event;
-		event.type = SDL_MOUSEMOTION;
+		event.type = SDL_EVENT_MOUSE_MOTION;
 		event.button.x = x;
 		event.button.y = y;
 
@@ -107,7 +107,20 @@ void Input::moveCursor(const Vec2& pos)
 
 void Input::hideCursor(Bool hide)
 {
-	SDL_ShowCursor(!hide);
+	if(hide)
+	{
+		if(!SDL_HideCursor())
+		{
+			ANKI_WIND_LOGE("SDL_HideCursor() failed: %s", SDL_GetError());
+		}
+	}
+	else
+	{
+		if(!SDL_ShowCursor())
+		{
+			ANKI_WIND_LOGE("SDL_ShowCursor() failed: %s", SDL_GetError());
+		}
+	}
 }
 
 Bool Input::hasTouchDevice() const
@@ -143,20 +156,24 @@ Error InputSdl::handleEventsInternal()
 
 	SDL_Event event;
 	KeyCode akkey;
-	SDL_StartTextInput();
+	if(!SDL_StartTextInput(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow))
+	{
+		ANKI_WIND_LOGE("SDL_StartTextInput() failed: %s", SDL_GetError());
+	}
+
 	while(SDL_PollEvent(&event))
 	{
 		switch(event.type)
 		{
-		case SDL_KEYDOWN:
-			akkey = sdlKeytoAnKi(event.key.keysym.sym);
+		case SDL_EVENT_KEY_DOWN:
+			akkey = sdlKeytoAnKi(event.key.key);
 			m_keys[akkey] = 1;
 			break;
-		case SDL_KEYUP:
-			akkey = sdlKeytoAnKi(event.key.keysym.sym);
+		case SDL_EVENT_KEY_UP:
+			akkey = sdlKeytoAnKi(event.key.key);
 			m_keys[akkey] = 0;
 			break;
-		case SDL_MOUSEBUTTONDOWN:
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		{
 			MouseButton mb = sdlMouseButtonToAnKi(event.button.button);
 			if(mb != MouseButton::kCount)
@@ -165,7 +182,7 @@ Error InputSdl::handleEventsInternal()
 			}
 			break;
 		}
-		case SDL_MOUSEBUTTONUP:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 		{
 			MouseButton mb = sdlMouseButtonToAnKi(event.button.button);
 			if(mb != MouseButton::kCount)
@@ -174,20 +191,20 @@ Error InputSdl::handleEventsInternal()
 			}
 			break;
 		}
-		case SDL_MOUSEWHEEL:
-			m_mouseBtns[MouseButton::kScrollUp] = event.wheel.y > 0;
-			m_mouseBtns[MouseButton::kScrollDown] = event.wheel.y < 0;
+		case SDL_EVENT_MOUSE_WHEEL:
+			m_mouseBtns[MouseButton::kScrollUp] = event.wheel.y > 0.0f;
+			m_mouseBtns[MouseButton::kScrollDown] = event.wheel.y < 0.0f;
 			break;
-		case SDL_MOUSEMOTION:
-			m_mousePosWin.x() = event.button.x;
-			m_mousePosWin.y() = event.button.y;
+		case SDL_EVENT_MOUSE_MOTION:
+			m_mousePosWin.x() = U32(event.button.x);
+			m_mousePosWin.y() = U32(event.button.y);
 			m_mousePosNdc.x() = F32(event.button.x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
 			m_mousePosNdc.y() = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 			break;
-		case SDL_QUIT:
+		case SDL_EVENT_QUIT:
 			addEvent(InputEvent::kWindowClosed);
 			break;
-		case SDL_TEXTINPUT:
+		case SDL_EVENT_TEXT_INPUT:
 			std::strncpy(&m_textInput[0], event.text.text, m_textInput.getSize() - 1);
 			break;
 		}

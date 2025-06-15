@@ -6,7 +6,7 @@
 #include <AnKi/Window/NativeWindowSdl.h>
 #include <AnKi/Util/Logger.h>
 #if ANKI_GR_BACKEND_VULKAN
-#	include <SDL_vulkan.h>
+#	include <SDL3/SDL_vulkan.h>
 #endif
 
 namespace anki {
@@ -68,14 +68,14 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 	}
 #endif
 
-	if(SDL_Init(kInitSubsystems) != 0)
+	if(!SDL_Init(kInitSubsystems))
 	{
 		ANKI_WIND_LOGE("SDL_Init() failed: %s", SDL_GetError());
 		return Error::kFunctionFailed;
 	}
 
 #if ANKI_GR_BACKEND_VULKAN
-	if(SDL_Vulkan_LoadLibrary(nullptr))
+	if(!SDL_Vulkan_LoadLibrary(nullptr))
 	{
 		ANKI_WIND_LOGE("SDL_Vulkan_LoadLibrary() failed: %s", SDL_GetError());
 		return Error::kFunctionFailed;
@@ -90,36 +90,33 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 	//
 	// Create window
 	//
-	U32 flags = 0;
+	U32 flags = SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
 #if ANKI_GR_BACKEND_VULKAN
 	flags |= SDL_WINDOW_VULKAN;
 #endif
 
-	SDL_SetHint(SDL_HINT_ALLOW_TOPMOST, "0");
 	if(init.m_fullscreenDesktopRez)
 	{
-#if ANKI_OS_WINDOWS
-		if(init.m_exclusiveFullscreen)
-		{
-			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-		}
-#elif ANKI_OS_LINUX
-		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-#else
-#	error See file
-#endif
+		flags |= SDL_WINDOW_FULLSCREEN;
 
-		// Alter the window size
-		SDL_DisplayMode mode;
-		if(SDL_GetDesktopDisplayMode(0, &mode))
+		SDL_DisplayID display = SDL_GetPrimaryDisplay();
+		if(!display)
 		{
-			ANKI_WIND_LOGE("SDL_GetDesktopDisplayMode() failed: %s", SDL_GetError());
+			ANKI_WIND_LOGE("SDL_GetPrimaryDisplay() failed: %s", SDL_GetError());
 			return Error::kFunctionFailed;
 		}
 
-		m_width = mode.w;
-		m_height = mode.h;
+		// Alter the window size
+		const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+		if(!mode)
+		{
+			ANKI_WIND_LOGE("SDL_GetCurrentDisplayMode() failed: %s", SDL_GetError());
+			return Error::kFunctionFailed;
+		}
+
+		m_width = mode->w;
+		m_height = mode->h;
 	}
 	else
 	{
@@ -127,7 +124,7 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 		m_height = init.m_height;
 	}
 
-	m_sdlWindow = SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
+	m_sdlWindow = SDL_CreateWindow(&init.m_title[0], m_width, m_height, flags);
 
 	if(m_sdlWindow == nullptr)
 	{

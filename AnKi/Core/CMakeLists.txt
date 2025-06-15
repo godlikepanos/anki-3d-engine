@@ -19,7 +19,7 @@ if(SDL)
 		set(extra_libs pthread dl)
 	endif()
 
-	set(extra_libs ${extra_libs} SDL2-static)
+	set(extra_libs ${extra_libs} SDL3-static)
 elseif(ANDROID)
 	set(extra_libs log android nativewindow AnKiAndroidNativeGlue AnKiHwcPipe)
 elseif(WINDOWS)
