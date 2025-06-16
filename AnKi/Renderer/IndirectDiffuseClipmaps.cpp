@@ -530,7 +530,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(halfHandle, TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(fullHandle, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx, halfHandle, fullHandle](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, halfHandle, fullHandle](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_spatialReconstructGrProg.get());

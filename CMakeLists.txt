@@ -287,22 +287,21 @@ else()
 	add_compile_options(/FC)
 endif()
 
-# Use LLD or gold linker
+# Use LLD or mold linker
 if(UNIX AND NOT APPLE)
 	execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=lld -Wl,--version ERROR_QUIET OUTPUT_VARIABLE ld_version)
-	if("${ld_version}" MATCHES "compatible with GNU linkers" AND "${ld_version}" MATCHES "LLD")
+	execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=mold -Wl,--version ERROR_QUIET OUTPUT_VARIABLE mold_version)
+
+	if("${mold_version}" MATCHES "compatible with GNU")
+		message("++ Will use mold linker")
+		set(CMAKE_LINKER_TYPE "MOLD")
+	elseif("${ld_version}" MATCHES "compatible with GNU linkers")
 		message("++ Will use LLD linker")
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld -Wl,--disable-new-dtags")
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld -Wl,--disable-new-dtags")
-	else()
-		execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=gold -Wl,--version ERROR_QUIET OUTPUT_VARIABLE ld_version)
-		if("${ld_version}" MATCHES "GNU gold")
-			message("++ Will use gold linker")
-			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
-			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
-		endif()
+		set(CMAKE_LINKER_TYPE "LLD")
 	endif()
 endif()
+
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 
 ################################################################################
 # Thirdparty                                                                   #

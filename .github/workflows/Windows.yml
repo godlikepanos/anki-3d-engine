@@ -9,7 +9,7 @@ on:
 jobs:
   Debug_x64_VK:
     name: "Debug_x64_VK"
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
     - name: Clone
@@ -23,7 +23,7 @@ jobs:
 
   Debug_x64_D3D:
     name: "Debug_x64_D3D"
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
     - name: Clone
@@ -65,7 +65,7 @@ jobs:
 
   Release_x64_VK:
     name: "Release_x64_VK"
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
     - name: Clone
@@ -79,7 +79,7 @@ jobs:
 
   Release_x64_D3D:
     name: "Release_x64_D3D"
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
     - name: Clone
@@ -93,7 +93,7 @@ jobs:
 
   DLSS_x64:
     name: "DLSS_x64"
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
     - name: Clone

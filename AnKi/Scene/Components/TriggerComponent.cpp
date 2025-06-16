@@ -61,7 +61,6 @@ TriggerComponent::MyPhysicsTriggerCallbacks TriggerComponent::m_callbacks;
 
 TriggerComponent::TriggerComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
-	, m_node(node)
 {
 }
 

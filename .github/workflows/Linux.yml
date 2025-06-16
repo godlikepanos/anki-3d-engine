@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      run: sudo apt install libsdl2-dev
 
     - name: Clone
       uses: actions/checkout@v3
@@ -30,7 +30,7 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      run: sudo apt install libsdl2-dev
 
     - name: Clone
       uses: actions/checkout@v3
@@ -47,7 +47,7 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      run: sudo apt install libsdl2-dev
 
     - name: Clone
       uses: actions/checkout@v3
@@ -64,7 +64,7 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      run: sudo apt install libsdl2-dev
 
     - name: Clone
       uses: actions/checkout@v3
@@ -81,7 +81,7 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      run: sudo apt install libsdl2-dev
 
     - name: Clone
       uses: actions/checkout@v3
@@ -98,7 +98,7 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      run: sudo apt install libsdl2-dev
 
     - name: Clone
       uses: actions/checkout@v3

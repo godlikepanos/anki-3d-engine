@@ -11,8 +11,7 @@
 1 License
 =========
 
-AnKi's license is `BSD`. This practically means that you can use the source or parts of the source on proprietary and
-non proprietary products as long as you follow the conditions of the license.
+AnKi's license is `BSD`. This practically means that you can use the source or parts of the source on proprietary and non proprietary products as long as you follow the conditions of the license.
 
 See the [LICENSE](LICENSE) file for more info.
 
@@ -35,20 +34,16 @@ To checkout the source type:
 
 	git clone https://github.com/godlikepanos/anki-3d-engine.git anki
 
-AnKi's build system is using `CMake`. A great effort was made to ease the building process that's why the number of
-external dependencies are almost none.
+AnKi's build system is using `CMake`. A great effort was made to ease the building process that's why the number of external dependencies are almost none.
 
 3.1 On Linux
 ------------
 
 Prerequisites:
 
-- Cmake 3.10 and up
-- GCC 5.0 and up or Clang 6.0 and up
-- libx11-dev installed
-- libxrandr-dev installed
-- libx11-xcb-dev installed
-- [Optional] libxinerama-dev if you want proper multi-monitor support
+- Cmake 3.15 and up
+- GCC 12.0 and up or Clang 18.0 and up
+- Various dev libaries. To install them all in one go just install `libsdl2-dev` or `libsdl3-dev` (AnKi has the same dependencies as SDL).
 
 To build the release version:
 
@@ -100,9 +95,7 @@ Prerequisites:
 - From Android Studio's package manager you need to install `NDK` and `CMake`
 - Having built AnKi for your host operating system (Linux or Windows)
 
-Android builds work a bit differently from Linux and Windows. First you need to have built AnKi for your host operating
-system. That's because Android builds requires the `ShaderCompiler/ShaderCompiler.exe` to compile the shaders for
-Android. Then you have to generate a gradle project per build target.
+Android builds work a bit differently from Linux and Windows. First you need to have built AnKi for your host operating system. That's because Android builds requires the `ShaderCompiler/ShaderCompiler.exe` to compile the shaders for Android. Then you have to generate a gradle project per build target.
 
 For example, if you want to generate a project for the `Sponza` sample just type from a Linux terminal:
 
@@ -114,8 +107,7 @@ or from a PowerShell terminal on Windows:
 	$cd path/to/anki
 	$./Samples/Sponza/GenerateAndroidProject.bat path/to/Binaries/ShaderCompiler.exe
 
-The `GenerateAndroidProject` scripts will generate a project in the root directory of AnKi. So for the `Sponza` sample
-the script will create a directory named `AndroidProject_Sponza`.
+The `GenerateAndroidProject` scripts will generate a project in the root directory of AnKi. So for the `Sponza` sample the script will create a directory named `AndroidProject_Sponza`.
 
 Then you can open the `AndroidProject_Sponza` project from `Android Studio` and build it, debug it, run it etc.
 
@@ -129,15 +121,13 @@ This code repository contains **4 sample projects** that are built by default (`
 - `PhysicsPlayground`: A scene with programmer's art and some physics interactions
 - `SkeletalAnimation`: A simple scene with an animated skin
 
-You can try running them and interacting with them. To run sponza, for example, execute the binary from any working
-directory.
+You can try running them and interacting with them. To run sponza, for example, execute the binary from any working directory.
 
 On Linux:
 
 	$./path/to/build/Binaries/Sponza
 
-On Windows just find the `Sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
-prints some information, including possible errors.
+On Windows just find the `Sponza.exe` and execute it. It's preferable to run the samples from a terminal because that prints some information, including possible errors.
 
 5 Contributing
 ==============

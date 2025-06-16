@@ -97,7 +97,7 @@ enum class GpuVisibilityIndirectDispatches : U32
 };
 
 /// Counters used in non-renderables visibility
-class GpuVisibilityNonRenderablesCounters
+struct GpuVisibilityNonRenderablesCounters
 {
 	U32 m_threadgroupCount; ///< Counts the no of threadgroups
 	U32 m_visibleObjectCount; ///< Counts the visible objects

@@ -46,8 +46,6 @@ public:
 private:
 	class MyPhysicsTriggerCallbacks;
 
-	SceneNode* m_node;
-
 	PhysicsCollisionShapePtr m_shape;
 	PhysicsBodyPtr m_trigger;
 
