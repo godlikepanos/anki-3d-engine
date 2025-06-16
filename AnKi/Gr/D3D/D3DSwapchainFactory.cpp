@@ -11,7 +11,7 @@
 
 #if ANKI_WINDOWING_SYSTEM_SDL
 #	include <AnKi/Window/NativeWindowSdl.h>
-#	include <SDL_syswm.h>
+#	include <SDL3/SDL.h>
 #endif
 
 namespace anki {
@@ -41,10 +41,8 @@ Error MicroSwapchain::initInternal()
 {
 	const NativeWindowSdl& window = static_cast<NativeWindowSdl&>(NativeWindow::getSingleton());
 
-	SDL_SysWMinfo wmInfo;
-	SDL_VERSION(&wmInfo.version);
-	SDL_GetWindowWMInfo(window.m_sdlWindow, &wmInfo);
-	const HWND hwnd = wmInfo.info.win.window;
+	const HWND hwnd =
+		static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window.m_sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL));
 
 	ComPtr<IDXGIFactory2> factory2;
 	ANKI_D3D_CHECK(CreateDXGIFactory2((g_validationCVar) ? DXGI_CREATE_FACTORY_DEBUG : 0, IID_PPV_ARGS(&factory2)));

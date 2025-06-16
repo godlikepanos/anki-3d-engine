@@ -24,7 +24,6 @@
 
 #if ANKI_WINDOWING_SYSTEM_SDL
 #	include <AnKi/Window/NativeWindowSdl.h>
-#	include <SDL_syswm.h>
 #endif
 
 // Use the Agility SDK
