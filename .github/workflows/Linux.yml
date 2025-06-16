@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+    - name: Update packages
+      run: sudo apt update; sudo apt upgrade
+
     - name: Install dependencies
       run: sudo apt install libsdl2-dev
 
