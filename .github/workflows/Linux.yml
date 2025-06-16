@@ -32,6 +32,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Update packages
+      run: sudo apt update; sudo apt upgrade
+
     - name: Install dependencies
       run: sudo apt install libsdl2-dev
 
@@ -49,6 +52,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Update packages
+      run: sudo apt update; sudo apt upgrade
+
     - name: Install dependencies
       run: sudo apt install libsdl2-dev
 
@@ -66,6 +72,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Update packages
+      run: sudo apt update; sudo apt upgrade
+
     - name: Install dependencies
       run: sudo apt install libsdl2-dev
 
@@ -83,6 +92,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Update packages
+      run: sudo apt update; sudo apt upgrade
+
     - name: Install dependencies
       run: sudo apt install libsdl2-dev
 
@@ -100,6 +112,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Update packages
+      run: sudo apt update; sudo apt upgrade
+
     - name: Install dependencies
       run: sudo apt install libsdl2-dev
 
