@@ -236,11 +236,6 @@ if(NOT MSVC)
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
-	if(ANKI_LTO)
-		add_compile_options(-flto)
-		set(LINKER_FLAGS "${LINKER_FLAGS} -flto ")
-	endif()
-
 	if(ANKI_STRIP)
 		set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
 		add_compile_options(-s)
@@ -248,6 +243,7 @@ if(NOT MSVC)
 
 	if(ANKI_ADDRESS_SANITIZER)
 		add_compile_options(-fsanitize=address)
+		add_link_options(-fsanitize=address)
 	endif()
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
@@ -301,7 +297,9 @@ if(UNIX AND NOT APPLE)
 	endif()
 endif()
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+if(ANKI_LTO)
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+endif()
 
 ################################################################################
 # Thirdparty                                                                   #

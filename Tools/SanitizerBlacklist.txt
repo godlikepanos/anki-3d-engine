@@ -1,0 +1,2 @@
+# Disable ASAN for DXC
+interceptor_via_lib:libdxcompiler.so

@@ -67,7 +67,7 @@ foreach(prog_fname ${prog_fnames})
 
 	add_custom_command(
 		OUTPUT ${bin_fname}
-		COMMAND ${shader_compiler_bin} -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${extra_compiler_args} ${prog_fname}
+		COMMAND ${CMAKE_COMMAND} -E env "ASAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/../../Tools/SanitizerBlacklist.txt" "${CMAKE_BINARY_DIR}/Binaries/${shader_compiler_bin}" -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${extra_compiler_args} ${prog_fname}
 		DEPENDS ${shader_compiler_dep} ${prog_fname} ${deps}
 		COMMENT "Build ${prog_fname}")
 

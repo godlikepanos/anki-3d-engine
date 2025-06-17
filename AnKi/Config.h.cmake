@@ -190,6 +190,7 @@
 #	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__((format(printf, fmtArgIdx + 1, firstArgIdx + 1))) // On methods you need to include "this"
 #	define ANKI_PURE __attribute__((pure))
+#	define ANKI_NO_SANITIZE __attribute__((no_sanitize("address")))
 #elif ANKI_COMPILER_MSVC
 #	define ANKI_RESTRICT
 #	define ANKI_FORCE_INLINE __forceinline
@@ -201,6 +202,7 @@
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE
+#	define ANKI_NO_SANITIZE
 #else
 #	define ANKI_RESTRICT
 #	define ANKI_FORCE_INLINE
@@ -212,6 +214,7 @@
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE
+#	define ANKI_NO_SANITIZE
 #endif
 
 namespace anki {
@@ -274,7 +277,7 @@ inline constexpr const char* kAnKiBuildConfigString =
 #endif
 
 // Constants
-#define ANKI_SAFE_ALIGNMENT 16
+#define ANKI_SAFE_ALIGNMENT 32
 #define ANKI_CACHE_LINE_SIZE 64
 
 // Misc

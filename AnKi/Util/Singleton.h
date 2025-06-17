@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "AnKi/Config.h"
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Assert.h>
 #include <utility>
@@ -60,7 +61,7 @@ public:
 	}
 
 private:
-	static U8 m_global[];
+	alignas(ANKI_SAFE_ALIGNMENT) static U8 m_global[];
 	static inline Bool m_initialized = false;
 };
 
