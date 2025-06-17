@@ -59,6 +59,8 @@ inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceOctMapSize("R", "Indir
 
 inline NumericCVar<F32> g_indirectDiffuseClipmapFirstBounceRayDistance("R", "IndirectDiffuseClipmapFirstBounceRayDistance", 0.0f, 0.0f, 10000.0f,
 																	   "For the 1st bounce shoot rays instead of sampling the clipmaps");
+inline BoolCVar g_indirectDiffuseClipmapApplyHighQuality("R", "IndirectDiffuseClipmapApplyHighQuality", false,
+														 "If true use 1/2 resolution else use 1/4");
 
 /// @memberof IndirectDiffuseClipmaps
 class IndirectDiffuseClipmapsRenderTargetHandles
@@ -111,7 +113,7 @@ private:
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 
 	RenderTargetDesc m_rtResultRtDesc;
-	RenderTargetDesc m_halfRtDesc;
+	RenderTargetDesc m_lowRezRtDesc;
 	RenderTargetDesc m_fullRtDesc;
 
 	IndirectDiffuseClipmapConstants m_consts;

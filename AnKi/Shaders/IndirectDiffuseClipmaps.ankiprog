@@ -9,12 +9,13 @@
 #pragma anki mutator RADIANCE_OCTAHEDRON_MAP_SIZE 8 10 12 14 16 18 20
 #pragma anki mutator IRRADIANCE_OCTAHEDRON_MAP_SIZE 4 5 6
 #pragma anki mutator RT_MATERIAL_FETCH_CLIPMAP 0 1
+#pragma anki mutator SPATIAL_RECONSTRUCT_TYPE 0 1
 
-#pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_CLIPMAP
+#pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_CLIPMAP SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE
-#pragma anki technique Apply comp mutators
-#pragma anki technique SpatialReconstruct comp mutators
+#pragma anki technique Apply comp mutators SPATIAL_RECONSTRUCT_TYPE
+#pragma anki technique SpatialReconstruct comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique TemporalDenoise comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
@@ -121,8 +122,13 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 [Shader("raygeneration")] void main()
 {
+#		if SPATIAL_RECONSTRUCT_TYPE == 0
 	const UVec2 fullCoord = UVec2(DispatchRaysIndex().x * 2u + (DispatchRaysIndex().y & 1u), DispatchRaysIndex().y);
 	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * UVec2(2, 1));
+#		else
+	const UVec2 fullCoord = DispatchRaysIndex().xy * 2u;
+	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * 2);
+#		endif
 
 	const F32 depth = TEX(g_depthTex, fullCoord).x;
 	const Vec4 rt2 = TEX(g_gbufferRt2, fullCoord);
@@ -522,7 +528,11 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	const Vec2 fullViewportSize = halfViewportSize * Vec2(2.0, 1.0);
 
 	const UVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+#	if SPATIAL_RECONSTRUCT_TYPE == 0
 	const Vec2 coord = Vec2(realSvDispatchThreadId.x * 2u + (realSvDispatchThreadId.y & 1u), realSvDispatchThreadId.y);
+#	else
+	const Vec2 coord = Vec2(realSvDispatchThreadId * 2u);
+#	endif
 
 	if(any(coord >= fullViewportSize))
 	{
@@ -574,15 +584,133 @@ Texture2D<F32> g_depthTex : register(t1);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
-[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+void appendSample(F32 refDepth, F32 sampleDepth, Vec3 sample, inout Vec3 sampleSum, inout F32 weightSum, F32 extraWeight = 1.0)
+{
+	const F32 weight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0) * extraWeight;
+	sampleSum += sample * weight;
+	weightSum += weight;
+}
+
+void normalizeSum(F32 weightSum, inout Vec3 sampleSum)
+{
+	if(weightSum > kEpsilonF32 * 10.0)
+	{
+		sampleSum /= weightSum;
+	}
+	else
+	{
+		sampleSum = 0.0;
+	}
+}
+
+void oneIn4Reconstruct(IVec2 svDispatchThreadId)
+{
+	IVec2 viewportSize;
+	g_outTex.GetDimensions(viewportSize.x, viewportSize.y);
+	const IVec2 quarterViewportSize = viewportSize / 2;
+	const IVec2 quarterCoord = svDispatchThreadId; // Coord in quarter rez
+
+	// This is the pattern we are trying to fill
+	// +---+---+
+	// | 0 | 1 |
+	// +---+---+
+	// | 3 | 2 |
+	// +---+---+
+
+	// Gather the color of the neighbours and their depth
+	Vec3 samples[2][2];
+	F32 sampleDepths[2][2];
+	F32 maxLuma = 0.0;
+	IVec2 maxLumaPixel = 0;
+	[unroll] for(U32 x = 0; x < 2; ++x)
+	{
+		[unroll] for(U32 y = 0; y < 2; ++y)
+		{
+			IVec2 coord = quarterCoord + IVec2(x, y);
+			coord = min(coord, quarterViewportSize - 1);
+			samples[x][y] = TEX(g_inTex, coord);
+
+			const F32 luma = computeLuminance(samples[x][y]);
+			if(luma > maxLuma)
+			{
+				maxLuma = luma;
+				maxLumaPixel = IVec2(x, y);
+			}
+
+			coord = quarterCoord + IVec2(x, y);
+			coord *= 2;
+			sampleDepths[x][y] = TEX(g_depthTex, coord);
+		}
+	}
+
+	// Remove fireflies
+	F32 avgLumaOf3 = 0.0;
+	[unroll] for(U32 x = 0; x < 2; ++x)
+	{
+		[unroll] for(U32 y = 0; y < 2; ++y)
+		{
+			if(any(maxLumaPixel != IVec2(x, y)))
+			{
+				const F32 luma = computeLuminance(samples[x][y]);
+				avgLumaOf3 += luma / 3.0;
+			}
+		}
+	}
+
+	if(maxLuma > avgLumaOf3 * 5.0)
+	{
+		// Firefly, tone it down
+		samples[maxLumaPixel.x][maxLumaPixel.y] *= avgLumaOf3 / maxLuma;
+	}
+
+	// 0 is already filled, just write it
+	IVec2 coord = quarterCoord * 2;
+	TEX(g_outTex, coord) = Vec4(samples[0][0], 0.0);
+
+	// For 2 use 4 samples
+	coord = quarterCoord * 2 + 1;
+	F32 refDepth = TEX(g_depthTex, coord);
+	Vec3 sampleSum = 0.0;
+	F32 weightSum = 0.0;
+	appendSample(refDepth, sampleDepths[0][0], samples[0][0], sampleSum, weightSum);
+	appendSample(refDepth, sampleDepths[1][0], samples[1][0], sampleSum, weightSum);
+	appendSample(refDepth, sampleDepths[1][1], samples[1][1], sampleSum, weightSum);
+	appendSample(refDepth, sampleDepths[0][1], samples[0][1], sampleSum, weightSum);
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_outTex, coord) = Vec4(sampleSum, 0.0);
+	const Vec3 sample2 = sampleSum;
+	const F32 depth2 = refDepth;
+
+	// For 1 use 3 samples
+	coord = quarterCoord * 2 + IVec2(1, 0);
+	refDepth = TEX(g_depthTex, coord);
+	sampleSum = 0.0;
+	weightSum = 0.0;
+	appendSample(refDepth, sampleDepths[0][0], samples[0][0], sampleSum, weightSum, 1.0);
+	appendSample(refDepth, sampleDepths[1][0], samples[1][0], sampleSum, weightSum, 1.0);
+	appendSample(refDepth, depth2, sample2, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_outTex, coord) = Vec4(sampleSum, 0.0);
+
+	// For 4 use 3 samples
+	coord = quarterCoord * 2 + IVec2(0, 1);
+	refDepth = TEX(g_depthTex, coord);
+	sampleSum = 0.0;
+	weightSum = 0.0;
+	appendSample(refDepth, sampleDepths[0][0], samples[0][0], sampleSum, weightSum, 1.0);
+	appendSample(refDepth, sampleDepths[0][1], samples[0][1], sampleSum, weightSum, 1.0);
+	appendSample(refDepth, depth2, sample2, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_outTex, coord) = Vec4(sampleSum, 0.0);
+}
+
+void checkerboardReconstruct(IVec2 svDispatchThreadId)
 {
 	IVec2 viewportSize;
 	g_outTex.GetDimensions(viewportSize.x, viewportSize.y);
 
-	const IVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-
-	const IVec2 filledCoord = IVec2(realSvDispatchThreadId.x * 2 + (realSvDispatchThreadId.y & 1), realSvDispatchThreadId.y);
-	const IVec2 toBeFilledCoord = IVec2(realSvDispatchThreadId.x * 2 + ((realSvDispatchThreadId.y + 1) & 1), realSvDispatchThreadId.y);
+	const IVec2 filledCoord = IVec2(svDispatchThreadId.x * 2 + (svDispatchThreadId.y & 1), svDispatchThreadId.y);
+	const IVec2 toBeFilledCoord = IVec2(svDispatchThreadId.x * 2 + ((svDispatchThreadId.y + 1) & 1), svDispatchThreadId.y);
 
 	const F32 refDepth = TEX(g_depthTex, toBeFilledCoord);
 
@@ -595,13 +723,9 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 		if(all(sampleCoord >= 0) && all(sampleCoord < viewportSize))
 		{
 			const F32 sampleDepth = TEX(g_depthTex, sampleCoord);
-
 			const Vec3 sample = TEX(g_inTex, IVec2(sampleCoord.x / 2, sampleCoord.y));
 
-			const F32 weight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
-			weightSum += weight;
-
-			toBeFilledColor += weight * sample;
+			appendSample(refDepth, sampleDepth, sample, toBeFilledColor, weightSum);
 
 			if(all(sampleCoord == filledCoord))
 			{
@@ -610,16 +734,18 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 		}
 	}
 
-	if(weightSum > kEpsilonF32 * 10.0)
-	{
-		toBeFilledColor /= weightSum;
-	}
-	else
-	{
-		toBeFilledColor = 0.0;
-	}
-
+	normalizeSum(weightSum, toBeFilledColor);
 	TEX(g_outTex, toBeFilledCoord) = Vec4(toBeFilledColor, 0.0);
+}
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const IVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+#	if SPATIAL_RECONSTRUCT_TYPE == 0
+	checkerboardReconstruct(realSvDispatchThreadId);
+#	else
+	oneIn4Reconstruct(realSvDispatchThreadId);
+#	endif
 }
 #endif
 

@@ -33,10 +33,10 @@ Error IndirectDiffuseClipmaps::init()
 {
 	ANKI_CHECK(RtMaterialFetchRendererObject::init());
 
-	m_halfRtDesc =
-		getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y(),
-													  getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Half");
-	m_halfRtDesc.bake();
+	m_lowRezRtDesc = getRenderer().create2DRenderTargetDescription(
+		getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1),
+		getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Half");
+	m_lowRezRtDesc.bake();
 
 	m_fullRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 																 getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Full");
@@ -114,10 +114,11 @@ Error IndirectDiffuseClipmaps::init()
 		m_avgIrradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 	}
 
-	const Array<SubMutation, 4> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
+	const Array<SubMutation, 5> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
 											 {"RADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_indirectDiffuseClipmapRadianceOctMapSize)},
 											 {"IRRADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_indirectDiffuseClipmapIrradianceOctMapSize)},
-											 {"RT_MATERIAL_FETCH_CLIPMAP", 0}}};
+											 {"RT_MATERIAL_FETCH_CLIPMAP", 0},
+											 {"SPATIAL_RECONSTRUCT_TYPE", !g_indirectDiffuseClipmapApplyHighQuality}}};
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_applyGiGrProg, "Apply"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_visProbesGrProg, "VisualizeProbes"));
@@ -197,7 +198,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	const RenderTargetHandle rtResultHandle = rgraph.newRenderTarget(m_rtResultRtDesc);
-	const RenderTargetHandle halfHandle = rgraph.newRenderTarget(m_halfRtDesc);
+	const RenderTargetHandle lowRezRt = rgraph.newRenderTarget(m_lowRezRtDesc);
 	const RenderTargetHandle fullHandle = rgraph.newRenderTarget(m_fullRtDesc);
 
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount>& radianceVolumes = m_runCtx.m_handles.m_radianceVolumes;
@@ -422,9 +423,9 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kSrvTraceRays);
 		}
 
-		pass.newTextureDependency(halfHandle, TextureUsageBit::kUavTraceRays);
+		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavTraceRays);
 
-		pass.setWork([this, &ctx, sbtBuffer, halfHandle](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, &ctx, sbtBuffer, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
@@ -478,14 +479,15 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-			rgraphCtx.bindUav(0, 2, halfHandle);
+			rgraphCtx.bindUav(0, 2, lowRezRt);
 			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
 			const Vec4 consts(g_indirectDiffuseClipmapFirstBounceRayDistance);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-						   getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y(), 1);
+						   getRenderer().getInternalResolution().x() / 2,
+						   getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1), 1);
 		});
 	}
 	else
@@ -501,9 +503,9 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			pass.newTextureDependency(distanceMomentsVolumes[i], TextureUsageBit::kSrvCompute);
 			pass.newTextureDependency(avgIrradianceVolumes[i], TextureUsageBit::kSrvCompute);
 		}
-		pass.newTextureDependency(halfHandle, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx, halfHandle](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, &ctx, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_applyGiGrProg.get());
@@ -512,13 +514,14 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(2));
 			cmdb.bindSrv(2, 0, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::firstSurface()));
 
-			rgraphCtx.bindUav(0, 0, halfHandle);
+			rgraphCtx.bindUav(0, 0, lowRezRt);
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
+							  getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1));
 		});
 	}
 
@@ -527,19 +530,20 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Spatial reconstruct");
 
 		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(halfHandle, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(lowRezRt, TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(fullHandle, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, halfHandle, fullHandle](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, lowRezRt, fullHandle](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_spatialReconstructGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, halfHandle);
+			rgraphCtx.bindSrv(0, 0, lowRezRt);
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindUav(0, 0, fullHandle);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
+							  getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1));
 		});
 	}
 
