@@ -310,6 +310,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_gbuffer->populateRenderGraph(ctx);
+	m_motionVectors->populateRenderGraph(ctx);
+	m_historyLength->populateRenderGraph(ctx);
 	m_depthDownscale->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_clusterBinning2->populateRenderGraph(ctx);
@@ -324,8 +326,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	}
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
-	m_motionVectors->populateRenderGraph(ctx);
-	m_historyLength->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{

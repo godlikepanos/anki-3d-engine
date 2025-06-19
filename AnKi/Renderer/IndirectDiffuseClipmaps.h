@@ -116,6 +116,8 @@ private:
 	RenderTargetDesc m_lowRezRtDesc;
 	RenderTargetDesc m_fullRtDesc;
 
+	Array<TexturePtr, 2> m_irradianceRts;
+
 	IndirectDiffuseClipmapConstants m_consts;
 
 	ShaderProgramResourcePtr m_prog;
@@ -127,6 +129,7 @@ private:
 	ShaderProgramPtr m_visProbesGrProg;
 	ShaderProgramPtr m_temporalDenoiseGrProg;
 	ShaderProgramPtr m_spatialReconstructGrProg;
+	ShaderProgramPtr m_bilateralDenoiseGrProg;
 
 	ImageResourcePtr m_blueNoiseImg;
 

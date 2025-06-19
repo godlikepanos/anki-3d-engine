@@ -3,12 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include "AnKi/Gr/RenderGraph.h"
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/ShadowMapping.h>
+#include <AnKi/Renderer/HistoryLength.h>
+#include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Util/Tracer.h>
@@ -33,14 +36,28 @@ Error IndirectDiffuseClipmaps::init()
 {
 	ANKI_CHECK(RtMaterialFetchRendererObject::init());
 
+	const Bool firstBounceUsesRt = g_indirectDiffuseClipmapFirstBounceRayDistance > 0.0f;
+
 	m_lowRezRtDesc = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1),
-		getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Half");
+		getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Apply rez");
 	m_lowRezRtDesc.bake();
 
 	m_fullRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 																 getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Full");
 	m_fullRtDesc.bake();
+
+	if(firstBounceUsesRt)
+	{
+		for(U32 i = 0; i < 2; ++i)
+		{
+			const TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(
+				getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat,
+				TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Final #%u", i));
+
+			m_irradianceRts[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
+		}
+	}
 
 	m_consts.m_probeCounts = UVec3(g_indirectDiffuseClipmapProbesXZCVar, g_indirectDiffuseClipmapProbesYCVar, g_indirectDiffuseClipmapProbesXZCVar);
 	m_consts.m_totalProbeCount = m_consts.m_probeCounts.x() * m_consts.m_probeCounts.y() * m_consts.m_probeCounts.z();
@@ -128,6 +145,8 @@ Error IndirectDiffuseClipmaps::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_temporalDenoiseGrProg, "TemporalDenoise"));
 	ANKI_CHECK(
 		loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_spatialReconstructGrProg, "SpatialReconstruct"));
+	ANKI_CHECK(
+		loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_bilateralDenoiseGrProg, "BilateralDenoise"));
 
 	for(MutatorValue rtMaterialFetchClipmap = 0; rtMaterialFetchClipmap < 2; ++rtMaterialFetchClipmap)
 	{
@@ -185,7 +204,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
 
-	const Bool firstBounceRt = g_indirectDiffuseClipmapFirstBounceRayDistance > 0.0f;
+	const Bool firstBounceUsesRt = g_indirectDiffuseClipmapFirstBounceRayDistance > 0.0f;
 
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
@@ -199,7 +218,23 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 	const RenderTargetHandle rtResultHandle = rgraph.newRenderTarget(m_rtResultRtDesc);
 	const RenderTargetHandle lowRezRt = rgraph.newRenderTarget(m_lowRezRtDesc);
-	const RenderTargetHandle fullHandle = rgraph.newRenderTarget(m_fullRtDesc);
+	const RenderTargetHandle fullRtTmp = rgraph.newRenderTarget(m_fullRtDesc);
+
+	Array<RenderTargetHandle, 2> fullRts;
+	if(firstBounceUsesRt)
+	{
+		for(U32 i = 0; i < 2; ++i)
+		{
+			if(m_texturesImportedOnce) [[likely]]
+			{
+				fullRts[i] = rgraph.importRenderTarget(m_irradianceRts[i].get());
+			}
+			else
+			{
+				fullRts[i] = rgraph.importRenderTarget(m_irradianceRts[i].get(), TextureUsageBit::kSrvCompute);
+			}
+		}
+	}
 
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount>& radianceVolumes = m_runCtx.m_handles.m_radianceVolumes;
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount>& irradianceVolumes = m_runCtx.m_handles.m_irradianceVolumes;
@@ -398,7 +433,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Apply GI
-	if(firstBounceRt)
+	if(firstBounceUsesRt)
 	{
 		patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[0],
 									m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
@@ -531,23 +566,81 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(lowRezRt, TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(fullHandle, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(fullRtTmp, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, lowRezRt, fullHandle](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, lowRezRt, fullRtTmp](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_spatialReconstructGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, lowRezRt);
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
-			rgraphCtx.bindUav(0, 0, fullHandle);
+			rgraphCtx.bindUav(0, 0, fullRtTmp);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
 							  getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1));
 		});
 	}
 
-	m_runCtx.m_handles.m_appliedIrradiance = fullHandle;
+	if(!firstBounceUsesRt)
+	{
+		m_runCtx.m_handles.m_appliedIrradiance = fullRtTmp;
+		return;
+	}
+
+	const RenderTargetHandle historyRt = fullRts[0];
+	const RenderTargetHandle outRt = fullRts[1];
+
+	// Temporal denoise
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Temporal denoise");
+
+		pass.newTextureDependency(fullRtTmp, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(historyRt, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getHistoryLength().getRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
+
+		pass.setWork([this, fullRtTmp, historyRt, outRt](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_temporalDenoiseGrProg.get());
+
+			rgraphCtx.bindSrv(0, 0, getHistoryLength().getRt());
+			rgraphCtx.bindSrv(1, 0, getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindSrv(2, 0, historyRt);
+			rgraphCtx.bindSrv(3, 0, fullRtTmp);
+
+			rgraphCtx.bindUav(0, 0, outRt);
+
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		});
+	}
+
+	// Bilateral denoise
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Bilateral denoise");
+
+		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(outRt, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(historyRt, TextureUsageBit::kUavCompute);
+
+		pass.setWork([this, outRt, historyRt](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_bilateralDenoiseGrProg.get());
+
+			rgraphCtx.bindSrv(0, 0, outRt);
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindUav(0, 0, historyRt);
+
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		});
+	}
+
+	m_runCtx.m_handles.m_appliedIrradiance = historyRt;
 }
 
 void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const

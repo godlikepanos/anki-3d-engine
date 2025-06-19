@@ -26,6 +26,7 @@
 #include <AnKi/Shaders/SsRaymarching.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
+#include <AnKi/Shaders/TemporalAA.hlsl>
 
 // Config & debug
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
@@ -977,87 +978,6 @@ Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
 	return historyUv;
 }
 
-void accumulateSourceColor(Vec2 newUv, Vec4 texelWeights, inout Vec3 m1, inout Vec3 m2, inout Vec3 sourceSample, inout Vec3 neighboorMin,
-						   inout Vec3 neighboorMax)
-{
-	const Vec4 red = g_colorAndDepth.GatherRed(g_linearAnyClampSampler, newUv);
-	const Vec4 green = g_colorAndDepth.GatherGreen(g_linearAnyClampSampler, newUv);
-	const Vec4 blue = g_colorAndDepth.GatherBlue(g_linearAnyClampSampler, newUv);
-
-	[unroll] for(U32 c = 0; c < 4; ++c)
-	{
-		if(texelWeights[c] > 0.0)
-		{
-			const Vec3 neighbor = Vec3(red[c], green[c], blue[c]);
-
-			sourceSample += neighbor * texelWeights[c];
-
-			neighboorMin = min(neighboorMin, neighbor);
-			neighboorMax = max(neighboorMax, neighbor);
-
-			m1 += neighbor;
-			m2 += neighbor * neighbor;
-		}
-	}
-}
-
-void accumulateSourceColor(IVec2 coord, IVec2 textureSize, F32 weight, inout Vec3 m1, inout Vec3 m2, inout Vec3 sourceSample, inout Vec3 neighboorMin,
-						   inout Vec3 neighboorMax)
-{
-	coord = clamp(coord, 0, textureSize - 1);
-
-	const Vec3 neighbor = g_colorAndDepth[coord].xyz;
-
-	sourceSample += neighbor * weight;
-
-	neighboorMin = min(neighboorMin, neighbor);
-	neighboorMax = max(neighboorMax, neighbor);
-
-	m1 += neighbor;
-	m2 += neighbor * neighbor;
-}
-
-void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, out Vec3 m2, out Vec3 sourceSample, out Vec3 neighboorMin,
-						out Vec3 neighboorMax)
-{
-	sourceSample = 0.0;
-	neighboorMin = 1000.0;
-	neighboorMax = -1000.0;
-	m1 = 0.0;
-	m2 = 0.0;
-
-	const Vec2 texelSize = 1.0 / textureSize;
-	const Vec2 halfTexelSize = texelSize / 2.0;
-
-	// Positioning mentioned bellow is in screen space (bottom left is in the bottom left of the screen)
-	// Alogithm wants to sample 9 taps of this:
-	// +-+-+-+
-	// |6|7|8|
-	// +-+-+-+
-	// |3|4|5|
-	// +-+-+-+
-	// |0|1|2|
-	// +-+-+-+
-	// "uv" points to the middle of 4
-
-	// Bottom left (0, 1, 4, 3)
-	Vec2 newUv = uv + Vec2(-halfTexelSize.x, +halfTexelSize.y);
-	accumulateSourceColor(newUv, Vec4(0.5, 0.5, 1.0, 0.5), m1, m2, sourceSample, neighboorMin, neighboorMax);
-
-	// Top right (4, 5, 8, 7)
-	newUv = uv + Vec2(+halfTexelSize.x, -halfTexelSize.y);
-	accumulateSourceColor(newUv, Vec4(0.0, 0.5, 0.5, 0.5), m1, m2, sourceSample, neighboorMin, neighboorMax);
-
-	// Top left
-	accumulateSourceColor(coord + IVec2(-1, -1), textureSize, 0.5, m1, m2, sourceSample, neighboorMin, neighboorMax);
-
-	// Bottom right
-	accumulateSourceColor(coord + IVec2(+1, +1), textureSize, 0.5, m1, m2, sourceSample, neighboorMin, neighboorMax);
-
-	// Misc
-	sourceSample /= 1.0 + 0.5 * 8.0;
-}
-
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 textureSize;
@@ -1075,49 +995,22 @@ void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, ou
 		return;
 	}
 
-	// Read crnt
-	const F32 depth = g_colorAndDepth[coord].w;
-	Vec3 sourceSample = 0.0;
-	Vec3 neighboorMin = 0.0;
-	Vec3 neighboorMax = 0.0;
-	Vec3 m1 = 0.0;
-	Vec3 m2 = 0.0;
-	computeSourceColor(uv, coord, textureSize, m1, m2, sourceSample, neighboorMin, neighboorMax);
-
 	// Read history
 	const Vec2 historyUv = computeHistoryUv(coord, uv);
 	Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
 
-	// Fix history
-	constexpr F32 sampleCount = 9.0;
-	const Vec3 mu = m1 / sampleCount;
-	const Vec3 sigma = sqrt(abs((m2 / sampleCount) - (mu * mu)));
-	const Vec3 minc = mu - kTemporalGamma * sigma;
-	const Vec3 maxc = mu + kTemporalGamma * sigma;
-
-	history = clamp(history, minc, maxc);
-
-	// Blend history and current
-	const Vec3 compressedSource = sourceSample * rcp(max3(sourceSample) + 1.0);
-	const Vec3 compressedHistory = history * rcp(max3(history) + 1.0);
-	const F32 luminanceSource = computeLuminance(compressedSource);
-	const F32 luminanceHistory = computeLuminance(compressedHistory);
-
-	F32 sourceWeight = kTemporalSourceWeight;
-	F32 historyWeight = 1.0 - sourceWeight;
-	sourceWeight *= 1.0 / (1.0 + luminanceSource);
-	historyWeight *= 1.0 / (1.0 + luminanceHistory);
-
-	const Vec3 finalVal = (sourceSample * sourceWeight + history * historyWeight) / max(sourceWeight + historyWeight, 0.00001);
+	// TAA
+	const Vec3 finalVal = computeTemporalAA<F32>(g_colorAndDepth, g_linearAnyClampSampler, history, coord);
 
 	// Temporal variance
 	const Vec2 momentsHistory = g_momentsHistoryTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f).xy;
 	Vec2 crntMoments;
-	crntMoments.x = luminanceSource;
+	crntMoments.x = computeLuminance(finalVal);
 	crntMoments.y = crntMoments.x * crntMoments.x;
 	const Vec2 moments = lerp(crntMoments, momentsHistory, 0.25);
 
 	// Write value
+	const F32 depth = g_colorAndDepth[coord].w;
 	g_outTex[coord] = Vec4(finalVal, depth);
 	g_momentsTex[coord] = Vec4(moments, 0.0, 0.0);
 }

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "AnKi/Gr/RenderGraph.h"
 #include <AnKi/Renderer/RendererObject.h>
 
 namespace anki {
@@ -29,6 +30,11 @@ public:
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		handles[0] = m_runCtx.m_rt;
+	}
+
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
 	}
 
 private:

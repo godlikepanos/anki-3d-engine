@@ -17,6 +17,7 @@
 #pragma anki technique Apply comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique SpatialReconstruct comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique TemporalDenoise comp mutators
+#pragma anki technique BilateralDenoise comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
 #define ANKI_ASSERTIONS_ENABLED 1
@@ -28,11 +29,16 @@
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/FastMathFunctions.hlsl>
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
+#include <AnKi/Shaders/BilateralFilter.hlsl>
+#include <AnKi/Shaders/TemporalAA.hlsl>
 
 #if defined(RT_MATERIAL_FETCH_CLIPMAP) && RT_MATERIAL_FETCH_CLIPMAP
 #	define CLIPMAP_VOLUME
 #endif
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
+
+constexpr F32 kGaussianSigma = 0.55;
+constexpr F32 kMaxBilateralSamplesPerDirection = 5.0;
 
 // ===========================================================================
 // RtMaterialFetch                                                           =
@@ -192,6 +198,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	}
 
 	TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = Vec4(final, 0.0);
+	// TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = lerp(TEX(g_colorAndPdfTex, DispatchRaysIndex().xy), Vec4(final, 0.0), 0.05);
 }
 #	endif // RT_MATERIAL_FETCH_CLIPMAP
 #endif
@@ -523,14 +530,15 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 
 [NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	Vec2 halfViewportSize;
-	g_outTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
-	const Vec2 fullViewportSize = halfViewportSize * Vec2(2.0, 1.0);
+	Vec2 lowTextureSize;
+	g_outTex.GetDimensions(lowTextureSize.x, lowTextureSize.y);
 
 	const UVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 #	if SPATIAL_RECONSTRUCT_TYPE == 0
+	const Vec2 fullViewportSize = lowTextureSize * Vec2(2.0, 1.0);
 	const Vec2 coord = Vec2(realSvDispatchThreadId.x * 2u + (realSvDispatchThreadId.y & 1u), realSvDispatchThreadId.y);
 #	else
+	const Vec2 fullViewportSize = lowTextureSize * 2.0;
 	const Vec2 coord = Vec2(realSvDispatchThreadId * 2u);
 #	endif
 
@@ -577,8 +585,6 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 // SpatialReconstruct                                                        =
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_SpatialReconstruct)
-#	include <AnKi/Shaders/BilateralFilter.hlsl>
-
 Texture2D<Vec3> g_inTex : register(t0);
 Texture2D<F32> g_depthTex : register(t1);
 
@@ -756,30 +762,34 @@ void checkerboardReconstruct(IVec2 svDispatchThreadId)
 Texture2D<F32> g_historyLengthTex : register(t0);
 Texture2D<Vec2> g_motionVectorsTex : register(t1);
 Texture2D<Vec3> g_historyTex : register(t2);
-Texture2D<Vec3> g_currentTex : register(t3);
+Texture2D<Vec4> g_currentTex : register(t3);
 
-RWTexture2D<Vec3> g_outTex : register(u0);
+RWTexture2D<Vec4> g_outTex : register(u0);
 
 SamplerState g_linearAnyClampSampler : register(s0);
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	Vec2 viewport;
-	g_historyLengthTex.GetDimensions(viewport.x, viewport.y);
 
-	const F32 historyLen = TEX(g_historyLengthTex, coord) / kMaxHistoryLength;
+	const F32 minBlendFactor = 0.025;
+	const F32 maxBlendFactor = 0.9;
 
-	F32 blendFactor = historyLen / 1.0;
-	blendFactor = lerp(1.0, 0.05, blendFactor);
+	const F32 historyLen = TEX(g_historyLengthTex, coord) * kMaxHistoryLength;
+
+	F32 blendFactor = min(1.0, historyLen / 1.0);
+	blendFactor = lerp(maxBlendFactor, minBlendFactor, blendFactor);
 
 	Vec3 outColor = TEX(g_currentTex, coord);
-	if(blendFactor > 0.9)
+	if(blendFactor > maxBlendFactor * 0.9)
 	{
 		// Don't accumulate
 	}
 	else
 	{
+		Vec2 viewport;
+		g_historyLengthTex.GetDimensions(viewport.x, viewport.y);
+
 		const Vec2 uv = (coord + 0.5) / viewport;
 		const Vec2 historyUv = uv + TEX(g_motionVectorsTex, coord);
 
@@ -788,7 +798,68 @@ SamplerState g_linearAnyClampSampler : register(s0);
 		outColor = lerp(history, outColor, blendFactor);
 	}
 
-	TEX(g_outTex, coord) = outColor;
+	TEX(g_outTex, coord) = Vec4(outColor, historyLen);
+}
+#endif
+
+// ===========================================================================
+// BilateralDenoise                                                          =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_BilateralDenoise)
+Texture2D<Vec4> g_inTex : register(t0);
+Texture2D<F32> g_depthTex : register(t1);
+
+RWTexture2D<Vec4> g_outTex : register(u0);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const IVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	IVec2 viewport;
+	g_outTex.GetDimensions(viewport.x, viewport.y);
+
+	if(any(coord >= viewport))
+	{
+		return;
+	}
+
+	const F32 refDepth = TEX(g_depthTex, coord);
+
+	F32 weightSum = kEpsilonF32;
+
+	const Vec4 rgba = TEX(g_inTex, coord);
+
+	const F32 historyLen = rgba.w;
+
+	Vec3 colorSum = rgba.xyz * weightSum;
+
+	const F32 blurFactor = 1.0 - min(1.0, historyLen / 12.0);
+	const I32 sampleCount = max(1.0, kMaxBilateralSamplesPerDirection * blurFactor);
+
+	for(I32 x = -sampleCount; x <= sampleCount; ++x)
+	{
+		for(I32 y = -sampleCount; y <= sampleCount; ++y)
+		{
+			if(x == 0.0 && y == 0.0)
+			{
+				continue;
+			}
+
+			IVec2 newCoord = coord + IVec2(x, y);
+			newCoord.x = clamp(newCoord.x, 0, viewport.x - 1);
+
+			const Vec3 sampleColor = TEX(g_inTex, newCoord);
+			const F32 sampleDepth = TEX(g_depthTex, newCoord);
+
+			const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
+			const F32 weight = depthWeight;
+
+			colorSum += sampleColor * weight;
+			weightSum += weight;
+		}
+	}
+
+	colorSum /= weightSum;
+	TEX(g_outTex, coord) = Vec4(colorSum, 0.0);
 }
 #endif
 
