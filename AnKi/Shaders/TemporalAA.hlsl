@@ -116,7 +116,7 @@ void computeSourceColor(Texture2D<Vec4> tex, SamplerState linearAnyClampSampler,
 
 template<typename T, typename TPostProcessTextureFunc = DefaultPostProcessTextureFunc<T> >
 vector<T, 3> computeTemporalAA(Texture2D<Vec4> currentTex, SamplerState linearAnyClampSampler, Vec3 history, Vec2 coord,
-							   F32 temporalSourceWeight = 0.01, F32 temporalGamma = 1.0,
+							   T temporalSourceWeight = 0.01, T temporalGamma = 1.0,
 							   TPostProcessTextureFunc func = (DefaultPostProcessTextureFunc<T>)0)
 {
 	vector<T, 3> m1;
@@ -124,7 +124,7 @@ vector<T, 3> computeTemporalAA(Texture2D<Vec4> currentTex, SamplerState linearAn
 	vector<T, 3> sourceSample;
 	vector<T, 3> neighboorMin;
 	vector<T, 3> neighboorMax;
-	computeSourceColor(currentTex, linearAnyClampSampler, coord, m1, m2, sourceSample, neighboorMin, neighboorMax);
+	computeSourceColor(currentTex, linearAnyClampSampler, coord, m1, m2, sourceSample, neighboorMin, neighboorMax, func);
 
 	const T sampleCount = 9.0;
 	const vector<T, 3> mu = m1 / sampleCount;
