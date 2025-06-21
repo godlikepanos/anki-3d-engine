@@ -399,7 +399,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 					BufferBarrierInfo barr;
 					barr.m_bufferView = scratchBuff;
 					barr.m_previousUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
-					barr.m_previousUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
+					barr.m_nextUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
 					cmdb->setPipelineBarrier({}, {&barr, 1}, {});
 				}
 

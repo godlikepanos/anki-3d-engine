@@ -38,7 +38,9 @@ F32 computeLength(Vec2 coord)
 
 	const Vec2 uv = (coord + 0.5) / viewport;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec2 historyUv = uv + TEX(g_motionVectorsTex, coord);
+	const Vec2 historyUv =
+		uv + TEX(g_motionVectorsTex, coord)
+		+ (g_globalRendererConsts.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConsts.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
 
 	// Compute length
 	F32 good = 0.0; // Zero means "new" pixel this frame
@@ -48,56 +50,22 @@ F32 computeLength(Vec2 coord)
 	}
 	else
 	{
-		// Read neighbours to find min and max depth
-		// +-+-+-+
-		// |6|7|8|
-		// +-+-+-+
-		// |3|4|5|
-		// +-+-+-+
-		// |0|1|2|
-		// +-+-+-+
-		// "uv" points to the middle of 4
-		const Vec2 halfTexelSize = (1.0 / viewport) / 2.0;
-		Vec4 depth4 = g_depthTex.GatherRed(g_linearAnyClampSampler, uv + halfTexelSize); // Read 4, 5, 1, 2
-		F32 minDepth = min4(depth4);
-		F32 maxDepth = max4(depth4);
-		depth4 = g_depthTex.GatherRed(g_linearAnyClampSampler, uv - halfTexelSize); // Read 6, 7, 3, 4
-		minDepth = min(minDepth, min4(depth4));
-		maxDepth = max(maxDepth, max4(depth4));
-		F32 d = g_depthTex[clamp(coord + Vec2(1.0, -1.0), 0.0, viewport - 1.0)]; // Read 8
-		minDepth = min(minDepth, d);
-		maxDepth = max(maxDepth, d);
-		d = g_depthTex[clamp(coord + Vec2(-1.0, 1.0), 0.0, viewport - 1.0)]; // Read 0
-		minDepth = min(minDepth, d);
-		maxDepth = max(maxDepth, d);
-
-		// Compute the AABB from the min and max depth
-		const Vec3 boundA = unproject(ndc, minDepth);
-		const Vec3 boundB = unproject(ndc, maxDepth);
-		const Vec3 aabbMinVspace = min(boundA, boundB);
-		const Vec3 aabbMaxVspace = max(boundA, boundB);
-
-		// Read history
-		const Vec2 historyNdc = uvToNdc(historyUv);
-		const F32 historyDepth = g_historyDepthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
-		Vec4 v = mul(g_globalRendererConsts.m_previousMatrices.m_invertedViewProjection, Vec4(historyNdc, historyDepth, 1.0));
-		const Vec3 historyWspace = v.xyz / v.w;
-		const Vec3 historyVspace = mul(g_globalRendererConsts.m_matrices.m_view, Vec4(historyWspace, 1.0));
-
-		F32 maxDist = 0.0;
-		[unroll] for(U32 i = 0; i < 3; ++i)
+		const F32 crntDepth = g_depthTex[coord];
+		if(crntDepth == 1.0)
 		{
-			if(historyVspace[i] < aabbMinVspace[i])
-			{
-				maxDist = max(maxDist, aabbMinVspace[i] - historyVspace[i]);
-			}
-			else if(historyVspace[i] > aabbMaxVspace[i])
-			{
-				maxDist = max(maxDist, historyVspace[i] - aabbMaxVspace[i]);
-			}
+			return 0.0;
 		}
 
-		const F32 factor = maxDist / kZDistanceLimit;
+		const F32 crntViewZ = cheapPerspectiveUnprojection(g_globalRendererConsts.m_matrices.m_unprojectionParameters, ndc, crntDepth).z;
+
+		// Read history
+		const F32 historyDepth = g_historyDepthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
+
+		const Vec4 v = mul(g_globalRendererConsts.m_previousMatrices.m_invertedViewProjection, Vec4(uvToNdc(historyUv), historyDepth, 1.0));
+		const F32 historyViewZ = mul(g_globalRendererConsts.m_matrices.m_view, Vec4(v.xyz / v.w, 1.0)).z;
+
+		const F32 dist = abs(crntViewZ - historyViewZ);
+		const F32 factor = dist / kZDistanceLimit;
 		good = 1.0 - min(factor, 1.0);
 	}
 

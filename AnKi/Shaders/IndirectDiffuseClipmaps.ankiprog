@@ -768,6 +768,8 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 
 SamplerState g_linearAnyClampSampler : register(s0);
 
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
+
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
@@ -791,7 +793,9 @@ SamplerState g_linearAnyClampSampler : register(s0);
 		g_historyLengthTex.GetDimensions(viewport.x, viewport.y);
 
 		const Vec2 uv = (coord + 0.5) / viewport;
-		const Vec2 historyUv = uv + TEX(g_motionVectorsTex, coord);
+		const Vec2 historyUv =
+			uv + TEX(g_motionVectorsTex, coord)
+			+ (g_globalRendererConsts.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConsts.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
 
 		const Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
 

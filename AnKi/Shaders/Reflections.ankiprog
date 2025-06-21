@@ -965,7 +965,9 @@ Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
 	const Vec2 hitHistoryUv = uv + diff;
 
 	// Read the motion vectors as well
-	const Vec2 motionHistoryUv = uv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).xy;
+	const Vec2 motionHistoryUv =
+		uv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).xy
+		+ (g_globalRendererConstants.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConstants.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
 
 	// Blend the 2 histories. The more the projected hit point is in the view the more we use it
 	F32 factor = max(abs(clipPos.x), abs(clipPos.y));

@@ -88,7 +88,6 @@ void HistoryLength::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		if(g_preferComputeCVar)
 		{
