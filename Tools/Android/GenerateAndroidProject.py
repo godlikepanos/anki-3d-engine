@@ -92,7 +92,7 @@ def main():
     dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w", newline="\n")
     for root, dirs, files in os.walk(assets_dir, followlinks=True):
         for f in files:
-            if f.find("DirStructure.txt") >= 0:
+            if f.find("DirStructure.txt") >= 0 or f.find(".ankiprogbin") >= 0:
                 continue
 
             filename = os.path.join(root, f)
@@ -101,6 +101,18 @@ def main():
             if filename[0] == '/':
                 filename = filename[1:]
             dir_structure_file.write("%s\n" % filename)
+
+    # Write the shaders
+    shaders_dir = os.path.join(this_script_dir, "../../AnKi/Shaders")
+    for root, dirs, files in os.walk(shaders_dir, followlinks=False):
+        for f in files:
+            if f.find(".ankiprog") == -1:
+                continue
+
+            filename = os.path.join(root, f)
+            filename = filename.replace(shaders_dir, "")
+            dir_structure_file.write("ShaderBinaries%sbin\n" % filename)
+
     dir_structure_file.close()
 
     # strings.xml

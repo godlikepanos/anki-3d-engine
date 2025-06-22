@@ -4,7 +4,7 @@ ProcessorCount(proc_count)
 MATH(EXPR proc_count "${proc_count}-1")
 
 if(ANKI_OVERRIDE_SHADER_COMPILER STREQUAL "")
-	set(shader_compiler_bin "ShaderCompiler")
+	set(shader_compiler_bin "${CMAKE_BINARY_DIR}/Binaries/ShaderCompiler")
 	set(shader_compiler_dep "ShaderCompiler")
 else()
 	set(shader_compiler_bin ${ANKI_OVERRIDE_SHADER_COMPILER})
@@ -67,7 +67,7 @@ foreach(prog_fname ${prog_fnames})
 
 	add_custom_command(
 		OUTPUT ${bin_fname}
-		COMMAND ${CMAKE_COMMAND} -E env "ASAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/../../Tools/SanitizerBlacklist.txt" "${CMAKE_BINARY_DIR}/Binaries/${shader_compiler_bin}" -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${extra_compiler_args} ${prog_fname}
+		COMMAND ${CMAKE_COMMAND} -E env "ASAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/../../Tools/SanitizerBlacklist.txt" ${shader_compiler_bin} -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${extra_compiler_args} ${prog_fname}
 		DEPENDS ${shader_compiler_dep} ${prog_fname} ${deps}
 		COMMENT "Build ${prog_fname}")
 
