@@ -82,7 +82,18 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
 	const Bool bRendersToSwapchain = getRenderer().getSwapchainResolution() == getRenderer().getPostProcessResolution();
-	const RenderTargetHandle outRt = (!bRendersToSwapchain) ? rgraph.newRenderTarget(m_rtDesc) : ctx.m_swapchainRenderTarget;
+	RenderTargetHandle outRt;
+	if(bRendersToSwapchain)
+	{
+		TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
+		outRt = ctx.m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
+		ANKI_ASSERT(!ctx.m_swapchainRenderTarget.isValid());
+		ctx.m_swapchainRenderTarget = outRt;
+	}
+	else
+	{
+		outRt = rgraph.newRenderTarget(m_rtDesc);
+	}
 
 	if(!bRendersToSwapchain)
 	{

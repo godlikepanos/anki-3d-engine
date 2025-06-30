@@ -397,17 +397,13 @@ Error App::mainLoop()
 			prevUpdateTime = crntTime;
 			crntTime = (!benchmarkMode) ? HighRezTimer::getCurrentTime() : (prevUpdateTime + 1.0_sec / 60.0_sec);
 
-			// Update
 			ANKI_CHECK(Input::getSingleton().handleEvents());
+			GrManager::getSingleton().beginFrame();
 
-			// User update
 			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));
-
 			SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
 
-			// Render
-			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-			ANKI_CHECK(Renderer::getSingleton().render(presentableTex.get()));
+			ANKI_CHECK(Renderer::getSingleton().render());
 
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
 			Second grTime = 0.0;
@@ -416,7 +412,7 @@ Error App::mainLoop()
 				grTime = HighRezTimer::getCurrentTime();
 			}
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 
 			if(benchmarkMode || g_displayStatsCVar > 0) [[unlikely]]
 			{

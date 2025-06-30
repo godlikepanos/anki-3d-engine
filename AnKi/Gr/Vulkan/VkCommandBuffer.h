@@ -44,7 +44,7 @@ public:
 
 	Error init(const CommandBufferInitInfo& init);
 
-	void setFence(MicroFence* fence)
+	void setFence(VulkanMicroFence* fence)
 	{
 		m_microCmdb->setFence(fence);
 	}

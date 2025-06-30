@@ -6,6 +6,7 @@
 #include <AnKi/Gr/Vulkan/VkTexture.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Gr/Vulkan/VkDescriptor.h>
+#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 
 namespace anki {
 
@@ -108,7 +109,7 @@ TextureImpl::~TextureImpl()
 
 	garbage->m_memoryHandle = m_memHandle;
 
-	getGrManagerImpl().getFrameGarbageCollector().newTextureGarbage(garbage);
+	VulkanFrameGarbageCollector::getSingleton().newTextureGarbage(garbage);
 }
 
 Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& init_)

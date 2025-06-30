@@ -89,6 +89,8 @@ ANKI_TEST(Gr, ClearScreen)
 		HighRezTimer timer;
 		timer.start();
 
+		GrManager::getSingleton().beginFrame();
+
 		TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 		CommandBufferInitInfo cinit;
@@ -113,7 +115,7 @@ ANKI_TEST(Gr, ClearScreen)
 		cmdb->endRecording();
 		GrManager::getSingleton().submit(cmdb.get());
 
-		GrManager::getSingleton().swapBuffers();
+		GrManager::getSingleton().endFrame();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -446,6 +448,8 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			HighRezTimer timer;
 			timer.start();
 
+			GrManager::getSingleton().beginFrame();
+
 			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cinit;
@@ -476,7 +480,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 
 			timer.stop();
 			const Second kTick = 1.0f / 30.0f;
@@ -803,6 +807,8 @@ float4 main(VertOut i) : SV_TARGET0
 			HighRezTimer timer;
 			timer.start();
 
+			GrManager::getSingleton().beginFrame();
+
 			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cinit;
@@ -852,7 +858,7 @@ float4 main(VertOut i) : SV_TARGET0
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 
 			timer.stop();
 			const Second kTick = 1.0f / 30.0f;

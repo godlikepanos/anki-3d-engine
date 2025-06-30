@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
+#include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -70,7 +71,7 @@ void MicroSemaphorePtrDeleter::operator()(MicroSemaphore* s)
 	}
 }
 
-MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool isTimeline)
+MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool isTimeline, CString name)
 {
 	ANKI_ASSERT(fence);
 
@@ -90,6 +91,8 @@ MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool isTime
 			ANKI_ASSERT(out->m_timelineValue.getNonAtomically() > 0 && "Recycled without being signaled?");
 		}
 	}
+
+	getGrManagerImpl().trySetVulkanHandleName(name, VK_OBJECT_TYPE_SEMAPHORE, out->m_handle);
 
 	ANKI_ASSERT(out->m_refcount.getNonAtomically() == 0);
 	return MicroSemaphorePtr(out);

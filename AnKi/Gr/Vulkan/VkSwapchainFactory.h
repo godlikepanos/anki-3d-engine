@@ -44,12 +44,12 @@ public:
 		return m_refcount.load();
 	}
 
-	void setFence(MicroFence* fence)
+	void setFence(VulkanMicroFence* fence)
 	{
 		m_fence.reset(fence);
 	}
 
-	MicroFence* getFence() const
+	VulkanMicroFence* getFence() const
 	{
 		return m_fence.tryGet();
 	}

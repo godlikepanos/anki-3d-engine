@@ -22,6 +22,7 @@
 #include <AnKi/Gr/Vulkan/VkFence.h>
 #include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 #include <AnKi/Gr/Vulkan/VkDescriptor.h>
+#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 
 #include <AnKi/Window/NativeWindow.h>
 #if ANKI_WINDOWING_SYSTEM_SDL
@@ -81,16 +82,22 @@ Error GrManager::init(GrManagerInitInfo& inf)
 	return self.init(inf);
 }
 
+void GrManager::beginFrame()
+{
+	ANKI_VK_SELF(GrManagerImpl);
+	self.beginFrameInternal();
+}
+
 TexturePtr GrManager::acquireNextPresentableTexture()
 {
 	ANKI_VK_SELF(GrManagerImpl);
 	return self.acquireNextPresentableTexture();
 }
 
-void GrManager::swapBuffers()
+void GrManager::endFrame()
 {
 	ANKI_VK_SELF(GrManagerImpl);
-	self.endFrame();
+	self.endFrameInternal();
 }
 
 void GrManager::finish()
@@ -140,154 +147,25 @@ ANKI_NEW_GR_OBJECT(GrUpscaler)
 void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
 {
 	ANKI_VK_SELF(GrManagerImpl);
-
-	// First thing, create a fence
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-
-	// Gather command buffers
-	GrDynamicArray<VkCommandBuffer> vkCmdbs;
-	vkCmdbs.resizeStorage(cmdbs.getSize());
-	Bool renderedToDefaultFb = false;
-	GpuQueueType queueType = GpuQueueType::kCount;
-	for(U32 i = 0; i < cmdbs.getSize(); ++i)
-	{
-		CommandBufferImpl& cmdb = *static_cast<CommandBufferImpl*>(cmdbs[i]);
-		ANKI_ASSERT(cmdb.isFinalized());
-		renderedToDefaultFb = renderedToDefaultFb || cmdb.renderedToDefaultFramebuffer();
-#if ANKI_ASSERTIONS_ENABLED
-		cmdb.setSubmitted();
-#endif
-
-		MicroCommandBuffer& mcmdb = *cmdb.getMicroCommandBuffer();
-		mcmdb.setFence(fence.get());
-
-		if(i == 0)
-		{
-			queueType = mcmdb.getVulkanQueueType();
-		}
-		else
-		{
-			ANKI_ASSERT(queueType == mcmdb.getVulkanQueueType() && "All cmdbs should be for the same queue");
-		}
-
-		vkCmdbs.emplaceBack(cmdb.getHandle());
-	}
-
-	// Gather wait semaphores
-	GrDynamicArray<VkSemaphore> waitSemaphores;
-	GrDynamicArray<VkPipelineStageFlags> waitStages;
-	GrDynamicArray<U64> waitTimelineValues;
-	waitSemaphores.resizeStorage(waitFences.getSize());
-	waitStages.resizeStorage(waitFences.getSize());
-	waitTimelineValues.resizeStorage(waitFences.getSize());
-	for(U32 i = 0; i < waitFences.getSize(); ++i)
-	{
-		FenceImpl& impl = static_cast<FenceImpl&>(*waitFences[i]);
-		MicroSemaphore& msem = *impl.m_semaphore;
-		ANKI_ASSERT(msem.isTimeline());
-
-		waitSemaphores.emplaceBack(msem.getHandle());
-		waitStages.emplaceBack(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-		waitTimelineValues.emplaceBack(msem.getSemaphoreValue());
-
-		// Refresh the fence because the semaphore can't be recycled until the current submission is done
-		msem.setFence(fence.get());
-	}
-
-	// Signal semaphore
-	GrDynamicArray<VkSemaphore> signalSemaphores;
-	GrDynamicArray<U64> signalTimelineValues;
-	if(signalFence)
-	{
-		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
-		fenceImpl->m_semaphore = SemaphoreFactory::getSingleton().newInstance(fence, true);
-
-		signalFence->reset(fenceImpl);
-
-		signalSemaphores.emplaceBack(fenceImpl->m_semaphore->getHandle());
-		signalTimelineValues.emplaceBack(fenceImpl->m_semaphore->getNextSemaphoreValue());
-	}
-
-	// Submit
-	{
-		// Protect the class, the queue and other stuff
-		LockGuard<Mutex> lock(self.m_globalMtx);
-
-		// Do some special stuff for the last command buffer
-		GrManagerImpl::PerFrame& frame = self.m_perFrame[self.m_frame % kMaxFramesInFlight];
-		if(renderedToDefaultFb)
-		{
-			// Wait semaphore
-			waitSemaphores.emplaceBack(frame.m_acquireSemaphore->getHandle());
-
-			// That depends on how we use the swapchain img. Be a bit conservative
-			waitStages.emplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-
-			// Set something
-			waitTimelineValues.emplaceBack(0);
-
-			// Refresh the fence because the semaphore can't be recycled until the current submission is done
-			frame.m_acquireSemaphore->setFence(fence.get());
-
-			// Create the semaphore to signal and then wait on present
-			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
-			frame.m_renderSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false);
-
-			signalSemaphores.emplaceBack(frame.m_renderSemaphore->getHandle());
-
-			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
-			signalTimelineValues.emplaceBack(0);
-
-			// Update the frame fence
-			frame.m_presentFence = fence;
-
-			// Update the swapchain's fence
-			self.m_crntSwapchain->setFence(fence.get());
-
-			frame.m_queueWroteToSwapchainImage = queueType;
-		}
-
-		// Submit
-		VkSubmitInfo submit = {};
-		submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit.waitSemaphoreCount = waitSemaphores.getSize();
-		submit.pWaitSemaphores = (waitSemaphores.getSize()) ? waitSemaphores.getBegin() : nullptr;
-		submit.signalSemaphoreCount = signalSemaphores.getSize();
-		submit.pSignalSemaphores = (signalSemaphores.getSize()) ? signalSemaphores.getBegin() : nullptr;
-		submit.pWaitDstStageMask = (waitStages.getSize()) ? waitStages.getBegin() : nullptr;
-		submit.commandBufferCount = vkCmdbs.getSize();
-		submit.pCommandBuffers = (vkCmdbs.getSize()) ? vkCmdbs.getBegin() : nullptr;
-
-		VkTimelineSemaphoreSubmitInfo timelineInfo = {};
-		timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
-		timelineInfo.waitSemaphoreValueCount = waitSemaphores.getSize();
-		timelineInfo.pWaitSemaphoreValues = (waitSemaphores.getSize()) ? waitTimelineValues.getBegin() : nullptr;
-		timelineInfo.signalSemaphoreValueCount = signalTimelineValues.getSize();
-		timelineInfo.pSignalSemaphoreValues = (signalTimelineValues.getSize()) ? signalTimelineValues.getBegin() : nullptr;
-		appendPNextList(submit, &timelineInfo);
-
-		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
-		ANKI_VK_CHECKF(vkQueueSubmit(self.m_queues[queueType], 1, &submit, fence->getHandle()));
-	}
-
-	// Garbage work
-	if(renderedToDefaultFb)
-	{
-		self.m_frameGarbageCollector.setNewFrame(fence);
-	}
+	self.submitInternal(cmdbs, waitFences, signalFence);
 }
 
 GrManagerImpl::~GrManagerImpl()
 {
 	ANKI_VK_LOGI("Destroying Vulkan backend");
 
-	// 1st THING: wait for the present fences because I don't know if waiting on queue will cover this
+	// 1st THING: wait for all fences
 	for(PerFrame& frame : m_perFrame)
 	{
-		if(frame.m_presentFence.isCreated())
+		for(MicroFencePtr& fence : frame.m_fences)
 		{
-			frame.m_presentFence->wait();
+			if(fence)
+			{
+				fence->clientWait(kMaxSecond);
+			}
 		}
+
+		frame.m_fences.destroy();
 	}
 
 	// 2nd THING: wait for the GPU
@@ -306,7 +184,6 @@ GrManagerImpl::~GrManagerImpl()
 
 	for(PerFrame& frame : m_perFrame)
 	{
-		frame.m_presentFence.reset(nullptr);
 		frame.m_acquireSemaphore.reset(nullptr);
 		frame.m_renderSemaphore.reset(nullptr);
 	}
@@ -321,7 +198,7 @@ GrManagerImpl::~GrManagerImpl()
 	SemaphoreFactory::freeSingleton(); // Destroy before fences
 	SamplerFactory::freeSingleton();
 	SwapchainFactory::freeSingleton(); // Destroy before fences
-	m_frameGarbageCollector.destroy();
+	VulkanFrameGarbageCollector::freeSingleton();
 
 	GpuMemoryManager::freeSingleton();
 	PipelineLayoutFactory2::freeSingleton();
@@ -399,11 +276,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	TimestampQueryFactory::allocateSingleton();
 	PrimitivesPassedClippingFactory::allocateSingleton();
 	SamplerFactory::allocateSingleton();
-
-	for(PerFrame& f : m_perFrame)
-	{
-		resetFrame(f);
-	}
+	VulkanFrameGarbageCollector::allocateSingleton();
 
 	// See if unaligned formats are supported
 	{
@@ -434,8 +307,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(BindlessDescriptorSet::getSingleton().init());
 
 	PipelineLayoutFactory2::allocateSingleton();
-
-	m_frameGarbageCollector.init();
 
 	return Error::kNone;
 }
@@ -1361,23 +1232,64 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 }
 #endif
 
-TexturePtr GrManagerImpl::acquireNextPresentableTexture()
+void GrManagerImpl::beginFrameInternal()
 {
-	ANKI_TRACE_SCOPED_EVENT(VkAcquireImage);
+	ANKI_TRACE_FUNCTION();
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	PerFrame& frame = m_perFrame[m_frame % kMaxFramesInFlight];
+	// Do that at begining frame, ALWAYS
+	++m_frame;
+
+	// Wait for the oldest frame because we don't want to start the new one too early
+	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+
+	for(MicroFencePtr& fence : frame.m_fences)
+	{
+		if(fence)
+		{
+			const Bool signaled = fence->clientWait(kMaxSecond);
+			if(!signaled)
+			{
+				ANKI_VK_LOGF("Timeout detected");
+			}
+		}
+	}
+
+	frame.m_fences.destroy();
+
+	// Reset the rest of the frame (after the fences)
+	frame.m_acquireSemaphore.reset(nullptr);
+	frame.m_renderSemaphore.reset(nullptr);
+	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+
+	// Clear garbage
+	VulkanFrameGarbageCollector::getSingleton().beginFrameAndCollectGarbage();
+}
+
+TexturePtr GrManagerImpl::acquireNextPresentableTexture()
+{
+	ANKI_TRACE_FUNCTION();
+
+	// Create some objets outside the lock
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Acquire");
+	MicroSemaphorePtr acquireSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false, "Acquire");
+
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+
+	ANKI_ASSERT(!frame.m_acquireSemaphore.isCreated() && "Forgot to begin the frame");
 
 	// Create sync objects
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-	frame.m_acquireSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false);
+	frame.m_fences.emplaceBack(fence);
+	frame.m_acquireSemaphore = acquireSemaphore;
 
 	// Get new image
 	uint32_t imageIdx;
 
 	VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
-										 fence->getHandle(), &imageIdx);
+										 fence->getImplementation().m_handle, &imageIdx);
 
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -1394,7 +1306,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 
 		// Can't fail a second time
 		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
-											 fence->getHandle(), &imageIdx));
+											 fence->getImplementation().m_handle, &imageIdx));
 	}
 	else
 	{
@@ -1405,27 +1317,17 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	return m_crntSwapchain->m_textures[imageIdx];
 }
 
-void GrManagerImpl::endFrame()
+void GrManagerImpl::endFrameInternal()
 {
-	ANKI_TRACE_SCOPED_EVENT(VkPresent);
+	ANKI_TRACE_FUNCTION();
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	PerFrame& frame = m_perFrame[m_frame % kMaxFramesInFlight];
-
-	// Wait for the fence of N-2 frame
-	const U waitFrameIdx = (m_frame + 1) % kMaxFramesInFlight;
-	PerFrame& waitFrame = m_perFrame[waitFrameIdx];
-	if(waitFrame.m_presentFence)
-	{
-		waitFrame.m_presentFence->wait();
-	}
-
-	resetFrame(waitFrame);
+	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
 
 	if(!frame.m_renderSemaphore)
 	{
-		ANKI_VK_LOGW("Nobody draw to the default framebuffer");
+		ANKI_VK_LOGW("Nobody draw to the swapchain");
 	}
 
 	// Present
@@ -1462,16 +1364,138 @@ void GrManagerImpl::endFrame()
 	}
 
 	GpuMemoryManager::getSingleton().updateStats();
-
-	// Finalize
-	++m_frame;
 }
 
-void GrManagerImpl::resetFrame(PerFrame& frame)
+void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
 {
-	frame.m_presentFence.reset(nullptr);
-	frame.m_acquireSemaphore.reset(nullptr);
-	frame.m_renderSemaphore.reset(nullptr);
+	// First thing, create a fence
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Submit");
+
+	// Gather command buffers
+	GrDynamicArray<VkCommandBuffer> vkCmdbs;
+	vkCmdbs.resizeStorage(cmdbs.getSize());
+	Bool renderedToDefaultFb = false;
+	GpuQueueType queueType = GpuQueueType::kCount;
+	for(U32 i = 0; i < cmdbs.getSize(); ++i)
+	{
+		CommandBufferImpl& cmdb = *static_cast<CommandBufferImpl*>(cmdbs[i]);
+		ANKI_ASSERT(cmdb.isFinalized());
+		renderedToDefaultFb = renderedToDefaultFb || cmdb.renderedToDefaultFramebuffer();
+#if ANKI_ASSERTIONS_ENABLED
+		cmdb.setSubmitted();
+#endif
+
+		MicroCommandBuffer& mcmdb = *cmdb.getMicroCommandBuffer();
+		mcmdb.setFence(fence.get());
+
+		if(i == 0)
+		{
+			queueType = mcmdb.getVulkanQueueType();
+		}
+		else
+		{
+			ANKI_ASSERT(queueType == mcmdb.getVulkanQueueType() && "All cmdbs should be for the same queue");
+		}
+
+		vkCmdbs.emplaceBack(cmdb.getHandle());
+	}
+
+	// Gather wait semaphores
+	GrDynamicArray<VkSemaphore> waitSemaphores;
+	GrDynamicArray<VkPipelineStageFlags> waitStages;
+	GrDynamicArray<U64> waitTimelineValues;
+	waitSemaphores.resizeStorage(waitFences.getSize());
+	waitStages.resizeStorage(waitFences.getSize());
+	waitTimelineValues.resizeStorage(waitFences.getSize());
+	for(U32 i = 0; i < waitFences.getSize(); ++i)
+	{
+		FenceImpl& impl = static_cast<FenceImpl&>(*waitFences[i]);
+		MicroSemaphore& msem = *impl.m_semaphore;
+		ANKI_ASSERT(msem.isTimeline());
+
+		waitSemaphores.emplaceBack(msem.getHandle());
+		waitStages.emplaceBack(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		waitTimelineValues.emplaceBack(msem.getSemaphoreValue());
+
+		// Refresh the fence because the semaphore can't be recycled until the current submission is done
+		msem.setFence(fence.get());
+	}
+
+	// Signal semaphore
+	GrDynamicArray<VkSemaphore> signalSemaphores;
+	GrDynamicArray<U64> signalTimelineValues;
+	if(signalFence)
+	{
+		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
+		fenceImpl->m_semaphore = SemaphoreFactory::getSingleton().newInstance(fence, true, "SubmitSignal");
+
+		signalFence->reset(fenceImpl);
+
+		signalSemaphores.emplaceBack(fenceImpl->m_semaphore->getHandle());
+		signalTimelineValues.emplaceBack(fenceImpl->m_semaphore->getNextSemaphoreValue());
+	}
+
+	// Submit
+	{
+		// Protect the class, the queue and other stuff
+		LockGuard<Mutex> lock(m_globalMtx);
+
+		// Do some special stuff for the last command buffer
+		GrManagerImpl::PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+		if(renderedToDefaultFb)
+		{
+			// Wait semaphore
+			waitSemaphores.emplaceBack(frame.m_acquireSemaphore->getHandle());
+
+			// That depends on how we use the swapchain img. Be a bit conservative
+			waitStages.emplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
+			// Set something
+			waitTimelineValues.emplaceBack(0);
+
+			// Refresh the fence because the semaphore can't be recycled until the current submission is done
+			frame.m_acquireSemaphore->setFence(fence.get());
+
+			// Create the semaphore to signal and then wait on present
+			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
+			frame.m_renderSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false, "RenderToSwapchain");
+			frame.m_renderSemaphore->setFence(fence.get());
+
+			signalSemaphores.emplaceBack(frame.m_renderSemaphore->getHandle());
+
+			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
+			signalTimelineValues.emplaceBack(0);
+
+			// Update the swapchain's fence
+			m_crntSwapchain->setFence(fence.get());
+
+			frame.m_queueWroteToSwapchainImage = queueType;
+		}
+
+		frame.m_fences.emplaceBack(fence);
+
+		// Submit
+		VkSubmitInfo submit = {};
+		submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit.waitSemaphoreCount = waitSemaphores.getSize();
+		submit.pWaitSemaphores = (waitSemaphores.getSize()) ? waitSemaphores.getBegin() : nullptr;
+		submit.signalSemaphoreCount = signalSemaphores.getSize();
+		submit.pSignalSemaphores = (signalSemaphores.getSize()) ? signalSemaphores.getBegin() : nullptr;
+		submit.pWaitDstStageMask = (waitStages.getSize()) ? waitStages.getBegin() : nullptr;
+		submit.commandBufferCount = vkCmdbs.getSize();
+		submit.pCommandBuffers = (vkCmdbs.getSize()) ? vkCmdbs.getBegin() : nullptr;
+
+		VkTimelineSemaphoreSubmitInfo timelineInfo = {};
+		timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+		timelineInfo.waitSemaphoreValueCount = waitSemaphores.getSize();
+		timelineInfo.pWaitSemaphoreValues = (waitSemaphores.getSize()) ? waitTimelineValues.getBegin() : nullptr;
+		timelineInfo.signalSemaphoreValueCount = signalTimelineValues.getSize();
+		timelineInfo.pSignalSemaphoreValues = (signalTimelineValues.getSize()) ? signalTimelineValues.getBegin() : nullptr;
+		appendPNextList(submit, &timelineInfo);
+
+		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
+		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[queueType], 1, &submit, fence->getImplementation().m_handle));
+	}
 }
 
 void GrManagerImpl::finish()

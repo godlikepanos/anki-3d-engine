@@ -46,7 +46,7 @@ public:
 		return m_refcount.load();
 	}
 
-	MicroFence* getFence() const
+	VulkanMicroFence* getFence() const
 	{
 		return m_fence.tryGet();
 	}
@@ -57,7 +57,7 @@ public:
 		// Do nothing
 	}
 
-	void setFence(MicroFence* fence)
+	void setFence(VulkanMicroFence* fence)
 	{
 		m_fence.reset(fence);
 	}
@@ -123,7 +123,7 @@ public:
 		m_timelineRecycler.destroy();
 	}
 
-	MicroSemaphorePtr newInstance(MicroFencePtr fence, Bool isTimeline);
+	MicroSemaphorePtr newInstance(MicroFencePtr fence, Bool isTimeline, CString name);
 
 private:
 	MicroObjectRecycler<MicroSemaphore> m_binaryRecycler;

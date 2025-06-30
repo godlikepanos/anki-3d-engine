@@ -48,12 +48,12 @@ public:
 		return m_refcount.load();
 	}
 
-	void setFence(MicroFence* fence)
+	void setFence(D3DMicroFence* fence)
 	{
 		m_fence.reset(fence);
 	}
 
-	MicroFence* getFence() const
+	D3DMicroFence* getFence() const
 	{
 		return m_fence.tryGet();
 	}

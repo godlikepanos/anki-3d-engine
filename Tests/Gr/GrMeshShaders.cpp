@@ -222,6 +222,8 @@ float3 main(VertOut input) : SV_TARGET0
 
 		for(U32 i = 0; i < 100; ++i)
 		{
+			GrManager::getSingleton().beginFrame();
+
 			TexturePtr swapchainTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cmdbinit;
@@ -258,7 +260,7 @@ float3 main(VertOut input) : SV_TARGET0
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 
 			HighRezTimer::sleep(1.0_sec / 60.0);
 		}

@@ -6,8 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/D3D/D3DDescriptor.h>
-#include <AnKi/Gr/D3D/D3DFence.h>
-#include <AnKi/Util/List.h>
+#include <AnKi/Gr/BackendCommon/FrameGarbageCollector.h>
 
 namespace anki {
 
@@ -20,6 +19,8 @@ class TextureGarbage : public IntrusiveListEnabled<TextureGarbage>
 public:
 	GrDynamicArray<DescriptorHeapHandle> m_descriptorHeapHandles;
 	ID3D12Resource* m_resource = nullptr;
+
+	~TextureGarbage();
 };
 
 /// @memberof FrameGarbageCollector
@@ -27,46 +28,19 @@ class BufferGarbage : public IntrusiveListEnabled<BufferGarbage>
 {
 public:
 	ID3D12Resource* m_resource = nullptr;
+
+	~BufferGarbage();
 };
 
-/// This class gathers various garbages and disposes them when in some later frame where it is safe to do so. This is used on bindless textures and
-/// buffers where we have to wait until the frame where they were deleted is done.
-class FrameGarbageCollector : public MakeSingleton<FrameGarbageCollector>
+/// @memberof FrameGarbageCollector
+class ASGarbage : public IntrusiveListEnabled<ASGarbage>
 {
-public:
-	FrameGarbageCollector() = default;
+};
 
-	FrameGarbageCollector(const FrameGarbageCollector&) = delete;
-
-	~FrameGarbageCollector();
-
-	FrameGarbageCollector& operator=(const FrameGarbageCollector&) = delete;
-
-	/// @note It's thread-safe.
-	void newTextureGarbage(TextureGarbage* textureGarbage);
-
-	/// @note It's thread-safe.
-	void newBufferGarbage(BufferGarbage* garbage);
-
-	/// Finalizes a frame.
-	/// @note It's thread-safe.
-	void endFrame(MicroFence* frameFence);
-
-private:
-	class FrameGarbage : public IntrusiveListEnabled<FrameGarbage>
-	{
-	public:
-		IntrusiveList<TextureGarbage> m_textureGarbage;
-		IntrusiveList<BufferGarbage> m_bufferGarbage;
-		MicroFencePtr m_fence;
-	};
-
-	Mutex m_mtx;
-	IntrusiveList<FrameGarbage> m_frames;
-
-	void collectGarbage();
-
-	FrameGarbage& getFrame();
+class D3DFrameGarbageCollector :
+	public FrameGarbageCollector<TextureGarbage, BufferGarbage, ASGarbage>,
+	public MakeSingleton<D3DFrameGarbageCollector>
+{
 };
 /// @}
 

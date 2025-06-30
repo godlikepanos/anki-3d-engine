@@ -86,7 +86,7 @@ public:
 	}
 
 	/// Call this on submit if the query was written.
-	void postSubmitWork(QueryHandle handle, MicroFence* fence);
+	void postSubmitWork(QueryHandle handle, D3DMicroFence* fence);
 
 private:
 	class Chunk

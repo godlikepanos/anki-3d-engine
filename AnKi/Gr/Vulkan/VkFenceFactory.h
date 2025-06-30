@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Vulkan/VkCommon.h>
+#include <AnKi/Gr/BackendCommon/MicroFenceFactory.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -14,133 +15,102 @@ namespace anki {
 /// @{
 
 /// Fence wrapper over VkFence.
-class MicroFence
+class MicroFenceImpl
 {
-	friend class FenceFactory;
-	friend class MicroFencePtrDeleter;
-
 public:
-	MicroFence()
-	{
-		VkFenceCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	VkFence m_handle = VK_NULL_HANDLE;
 
-		ANKI_TRACE_INC_COUNTER(VkFenceCreate, 1);
-		ANKI_VK_CHECKF(vkCreateFence(getVkDevice(), &ci, nullptr, &m_handle));
+	~MicroFenceImpl()
+	{
+		ANKI_ASSERT(!m_handle);
 	}
 
-	MicroFence(const MicroFence&) = delete; // Non-copyable
-
-	~MicroFence()
+	operator Bool() const
 	{
-		if(m_handle)
-		{
-			ANKI_ASSERT(done());
-			vkDestroyFence(getVkDevice(), m_handle, nullptr);
-		}
-	}
-
-	MicroFence& operator=(const MicroFence&) = delete; // Non-copyable
-
-	const VkFence& getHandle() const
-	{
-		ANKI_ASSERT(m_handle);
-		return m_handle;
-	}
-
-	void retain() const
-	{
-		m_refcount.fetchAdd(1);
-	}
-
-	I32 release() const
-	{
-		return m_refcount.fetchSub(1);
-	}
-
-	void wait()
-	{
-		const Bool timeout = !clientWait(kMaxSecond);
-		if(timeout) [[unlikely]]
-		{
-			ANKI_VK_LOGF("Waiting for a fence timed out");
-		}
+		return m_handle != 0;
 	}
 
 	Bool clientWait(Second seconds)
 	{
 		ANKI_ASSERT(m_handle);
+		const F64 nsf = 1e+9 * seconds;
+		const U64 ns = U64(nsf);
+		VkResult res;
+		ANKI_VK_CHECKF(res = vkWaitForFences(getVkDevice(), 1, &m_handle, true, ns));
 
-		if(seconds == 0.0)
-		{
-			return done();
-		}
-		else
-		{
-			seconds = min<Second>(seconds, g_gpuTimeoutCVar);
-			const F64 nsf = 1e+9 * seconds;
-			const U64 ns = U64(nsf);
-			VkResult res;
-			ANKI_VK_CHECKF(res = vkWaitForFences(getVkDevice(), 1, &m_handle, true, ns));
-
-			return res != VK_TIMEOUT;
-		}
+		return res != VK_TIMEOUT;
 	}
 
-	Bool done() const
+	Bool signaled()
 	{
 		ANKI_ASSERT(m_handle);
-
 		VkResult status;
 		ANKI_VK_CHECKF(status = vkGetFenceStatus(getVkDevice(), m_handle));
 		return status == VK_SUCCESS;
 	}
 
-private:
-	VkFence m_handle = VK_NULL_HANDLE;
-	mutable Atomic<I32> m_refcount = {0};
+	void create()
+	{
+		ANKI_ASSERT(!m_handle);
+		VkFenceCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		ANKI_VK_CHECKF(vkCreateFence(getVkDevice(), &ci, nullptr, &m_handle));
+	}
+
+	void destroy()
+	{
+		ANKI_ASSERT(m_handle);
+		vkDestroyFence(getVkDevice(), m_handle, nullptr);
+		m_handle = 0;
+	}
+
+	void reset()
+	{
+		ANKI_ASSERT(m_handle);
+		ANKI_VK_CHECKF(vkResetFences(getVkDevice(), 1, &m_handle));
+	}
+
+	void setName(CString name) const;
 };
+
+using VulkanMicroFence = MicroFence<MicroFenceImpl>;
 
 /// Deleter for FencePtr.
 class MicroFencePtrDeleter
 {
 public:
-	void operator()(MicroFence* f);
+	void operator()(VulkanMicroFence* fence);
 };
 
 /// Fence smart pointer.
-using MicroFencePtr = IntrusivePtr<MicroFence, MicroFencePtrDeleter>;
+using MicroFencePtr = IntrusivePtr<VulkanMicroFence, MicroFencePtrDeleter>;
 
 /// A factory of fences.
 class FenceFactory : public MakeSingleton<FenceFactory>
 {
-	friend class MicroFence;
 	friend class MicroFencePtrDeleter;
 
 public:
-	/// Limit the alive fences to avoid having too many file descriptors used in Linux.
-	static constexpr U32 kMaxAliveFences = 32;
-
-	FenceFactory() = default;
-
-	~FenceFactory();
-
 	/// Create a new fence pointer.
-	MicroFencePtr newInstance()
+	MicroFencePtr newInstance(CString name = "unnamed")
 	{
-		return MicroFencePtr(newFence());
+		return MicroFencePtr(m_factory.newFence(name));
 	}
 
-	void trimSignaledFences(Bool wait);
-
 private:
-	GrDynamicArray<MicroFence*> m_fences;
-	U32 m_aliveFenceCount = 0;
-	Mutex m_mtx;
+	MicroFenceFactory<MicroFenceImpl> m_factory;
 
-	MicroFence* newFence();
-	void deleteFence(MicroFence* fence);
+	void deleteFence(VulkanMicroFence* fence)
+	{
+		m_factory.releaseFence(fence);
+	}
 };
+
+inline void MicroFencePtrDeleter::operator()(VulkanMicroFence* fence)
+{
+	ANKI_ASSERT(fence);
+	FenceFactory::getSingleton().deleteFence(fence);
+}
 /// @}
 
 } // end namespace anki

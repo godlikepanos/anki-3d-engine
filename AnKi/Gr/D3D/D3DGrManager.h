@@ -77,6 +77,7 @@ private:
 	class PerFrame
 	{
 	public:
+		GrDynamicArray<MicroFencePtr> m_fences;
 		MicroFencePtr m_presentFence;
 
 		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
@@ -95,7 +96,15 @@ private:
 
 	void destroy();
 
-	void waitAllQueues();
+	TexturePtr acquireNextPresentableTextureInternal();
+
+	void beginFrameInternal();
+
+	void endFrameInternal();
+
+	void submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence);
+
+	void finishInternal();
 };
 /// @}
 

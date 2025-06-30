@@ -10,7 +10,6 @@
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
 #include <AnKi/Gr/Vulkan/VkFenceFactory.h>
 #include <AnKi/Gr/Vulkan/VkSwapchainFactory.h>
-#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 #include <AnKi/Util/File.h>
 
 namespace anki {
@@ -80,7 +79,11 @@ public:
 
 	TexturePtr acquireNextPresentableTexture();
 
-	void endFrame();
+	void beginFrameInternal();
+
+	void endFrameInternal();
+
+	void submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence);
 
 	void finish();
 
@@ -143,11 +146,6 @@ public:
 	/// @note It's thread-safe.
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash = 0) const;
 
-	FrameGarbageCollector& getFrameGarbageCollector()
-	{
-		return m_frameGarbageCollector;
-	}
-
 private:
 	U64 m_frame = 0;
 
@@ -183,7 +181,7 @@ private:
 	class PerFrame
 	{
 	public:
-		MicroFencePtr m_presentFence;
+		GrDynamicArray<MicroFencePtr> m_fences;
 		MicroSemaphorePtr m_acquireSemaphore;
 
 		/// Signaled by the submit that renders to the default FB. Present waits for it.
@@ -203,8 +201,6 @@ private:
 
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
-	FrameGarbageCollector m_frameGarbageCollector;
-
 	Error initInternal(const GrManagerInitInfo& init);
 	Error initInstance();
 	Error initSurface();
@@ -218,8 +214,6 @@ private:
 
 	static void freeCallback(void* userData, void* ptr);
 #endif
-
-	void resetFrame(PerFrame& frame);
 
 	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);

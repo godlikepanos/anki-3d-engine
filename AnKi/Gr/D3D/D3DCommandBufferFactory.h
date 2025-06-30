@@ -57,13 +57,13 @@ public:
 		reset();
 	}
 
-	void setFence(MicroFence* fence)
+	void setFence(D3DMicroFence* fence)
 	{
 		m_fence.reset(fence);
 	}
 
 	/// Interface method.
-	MicroFence* getFence() const
+	D3DMicroFence* getFence() const
 	{
 		return m_fence.tryGet();
 	}

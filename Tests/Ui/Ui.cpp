@@ -89,6 +89,8 @@ ANKI_TEST(Ui, Ui)
 			HighRezTimer timer;
 			timer.start();
 
+			GrManager::getSingleton().beginFrame();
+
 			canvas->handleInput();
 			if(Input::getSingleton().getKey(KeyCode::kEscape))
 			{
@@ -125,7 +127,7 @@ ANKI_TEST(Ui, Ui)
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 			RebarTransientMemoryPool::getSingleton().endFrame();
 
 			timer.stop();

@@ -9,7 +9,7 @@
 
 namespace anki {
 
-static StatCounter g_commandBufferCountStatVar(StatCategory::kMisc, "CommandBufferCount", StatFlag::kNone);
+static StatCounter g_commandBufferCountStatVar(StatCategory::kGr, "CommandBufferCount", StatFlag::kNone);
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {

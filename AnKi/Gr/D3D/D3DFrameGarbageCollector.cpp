@@ -7,104 +7,19 @@
 
 namespace anki {
 
-FrameGarbageCollector::~FrameGarbageCollector()
+TextureGarbage::~TextureGarbage()
 {
-	collectGarbage();
-	ANKI_ASSERT(m_frames.isEmpty());
-}
-
-void FrameGarbageCollector::endFrame(MicroFence* frameFence)
-{
-	LockGuard lock(m_mtx);
-
-	if(!m_frames.isEmpty() && !m_frames.getBack().m_fence.isCreated())
+	for(U32 i = 0; i < m_descriptorHeapHandles.getSize(); ++i)
 	{
-		// Last frame is without a fence, asign the fence to not have it garbage collected
-		m_frames.getBack().m_fence.reset(frameFence);
+		DescriptorFactory::getSingleton().freePersistent(m_descriptorHeapHandles[i]);
 	}
 
-	collectGarbage();
+	safeRelease(m_resource);
 }
 
-FrameGarbageCollector::FrameGarbage& FrameGarbageCollector::getFrame()
+BufferGarbage::~BufferGarbage()
 {
-	if(!m_frames.isEmpty() && !m_frames.getBack().m_fence.isCreated())
-	{
-		// Do nothing
-	}
-	else
-	{
-		FrameGarbage* newGarbage = newInstance<FrameGarbage>(GrMemoryPool::getSingleton());
-		m_frames.pushBack(newGarbage);
-	}
-
-	return m_frames.getBack();
-}
-
-void FrameGarbageCollector::newTextureGarbage(TextureGarbage* textureGarbage)
-{
-	LockGuard<Mutex> lock(m_mtx);
-	FrameGarbage& frame = getFrame();
-	frame.m_textureGarbage.pushBack(textureGarbage);
-}
-
-void FrameGarbageCollector::newBufferGarbage(BufferGarbage* garbage)
-{
-	LockGuard<Mutex> lock(m_mtx);
-	FrameGarbage& frame = getFrame();
-	frame.m_bufferGarbage.pushBack(garbage);
-}
-
-void FrameGarbageCollector::collectGarbage()
-{
-	if(m_frames.isEmpty()) [[likely]]
-	{
-		return;
-	}
-
-	IntrusiveList<FrameGarbage> newFrames;
-	while(!m_frames.isEmpty())
-	{
-		FrameGarbage& frame = *m_frames.popFront();
-
-		if(frame.m_fence.isCreated() && !frame.m_fence->done())
-		{
-			ANKI_ASSERT(!frame.m_textureGarbage.isEmpty() || !frame.m_bufferGarbage.isEmpty());
-			newFrames.pushBack(&frame);
-			continue;
-		}
-
-		// Frame is done, dispose garbage and destroy it
-
-		// Dispose texture garbage
-		while(!frame.m_textureGarbage.isEmpty())
-		{
-			TextureGarbage* textureGarbage = frame.m_textureGarbage.popBack();
-
-			for(U32 i = 0; i < textureGarbage->m_descriptorHeapHandles.getSize(); ++i)
-			{
-				DescriptorFactory::getSingleton().freePersistent(textureGarbage->m_descriptorHeapHandles[i]);
-			}
-
-			safeRelease(textureGarbage->m_resource);
-
-			deleteInstance(GrMemoryPool::getSingleton(), textureGarbage);
-		}
-
-		// Dispose buffer garbage
-		while(!frame.m_bufferGarbage.isEmpty())
-		{
-			BufferGarbage* garbage = frame.m_bufferGarbage.popBack();
-
-			safeRelease(garbage->m_resource);
-
-			deleteInstance(GrMemoryPool::getSingleton(), garbage);
-		}
-
-		deleteInstance(GrMemoryPool::getSingleton(), &frame);
-	}
-
-	m_frames = std::move(newFrames);
+	safeRelease(m_resource);
 }
 
 } // end namespace anki

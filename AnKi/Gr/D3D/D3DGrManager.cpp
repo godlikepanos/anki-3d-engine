@@ -108,55 +108,34 @@ Error GrManager::init(GrManagerInitInfo& inf)
 	return self.initInternal(inf);
 }
 
+void GrManager::beginFrame()
+{
+	ANKI_D3D_SELF(GrManagerImpl);
+	self.beginFrameInternal();
+}
+
 TexturePtr GrManager::acquireNextPresentableTexture()
 {
 	ANKI_D3D_SELF(GrManagerImpl);
-
-	self.m_crntSwapchain->m_backbufferIdx = self.m_crntSwapchain->m_swapchain->GetCurrentBackBufferIndex();
-	return self.m_crntSwapchain->m_textures[self.m_crntSwapchain->m_backbufferIdx];
+	return self.acquireNextPresentableTextureInternal();
 }
 
-void GrManager::swapBuffers()
+void GrManager::endFrame()
 {
-	ANKI_TRACE_SCOPED_EVENT(D3DSwapBuffers);
 	ANKI_D3D_SELF(GrManagerImpl);
-
-	self.m_crntSwapchain->m_swapchain->Present((g_vsyncCVar) ? 1 : 0, (g_vsyncCVar) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
-
-	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance();
-	presentFence->gpuSignal(GpuQueueType::kGeneral);
-
-	auto& crntFrame = self.m_frames[self.m_crntFrame];
-
-	if(crntFrame.m_presentFence) [[likely]]
-	{
-		// Wait prev fence
-		const Bool signaled = crntFrame.m_presentFence->clientWait(kMaxSecond);
-		if(!signaled)
-		{
-			ANKI_D3D_LOGF("Frame fence didn't signal");
-		}
-	}
-
-	crntFrame.m_presentFence = presentFence;
-
-	self.m_crntFrame = (self.m_crntFrame + 1) % self.m_frames.getSize();
-
-	FrameGarbageCollector::getSingleton().endFrame(presentFence.get());
-	DescriptorFactory::getSingleton().endFrame();
+	self.endFrameInternal();
 }
 
 void GrManager::finish()
 {
-	if(FenceFactory::isAllocated())
-	{
-		for(GpuQueueType qType : EnumIterable<GpuQueueType>())
-		{
-			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-			fence->gpuSignal(qType);
-			fence->clientWait(kMaxSecond);
-		}
-	}
+	ANKI_D3D_SELF(GrManagerImpl);
+	self.finishInternal();
+}
+
+void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+{
+	ANKI_D3D_SELF(GrManagerImpl);
+	self.submitInternal(cmdbs, waitFences, signalFence);
 }
 
 #define ANKI_NEW_GR_OBJECT(type) \
@@ -201,12 +180,74 @@ GrManagerImpl::~GrManagerImpl()
 	destroy();
 }
 
-void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+void GrManagerImpl::beginFrameInternal()
 {
-	ANKI_D3D_SELF(GrManagerImpl);
+	ANKI_TRACE_FUNCTION();
+
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	m_crntFrame = (m_crntFrame + 1) % m_frames.getSize();
+
+	// Wait for the oldest frame because we don't want to start the new one too early
+	PerFrame& frame = m_frames[m_crntFrame];
+
+	for(MicroFencePtr& fence : frame.m_fences)
+	{
+		if(fence)
+		{
+			const Bool signaled = fence->clientWait(kMaxSecond);
+			if(!signaled)
+			{
+				ANKI_D3D_LOGF("Timeout detected");
+			}
+		}
+	}
+
+	frame.m_fences.destroy();
+
+	// Reset the rest of the frame (after the fences)
+	frame.m_presentFence.reset(nullptr);
+	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+
+	// Clear garbage
+	D3DFrameGarbageCollector::getSingleton().beginFrameAndCollectGarbage();
+}
+
+TexturePtr GrManagerImpl::acquireNextPresentableTextureInternal()
+{
+	ANKI_TRACE_FUNCTION();
+
+	m_crntSwapchain->m_backbufferIdx = m_crntSwapchain->m_swapchain->GetCurrentBackBufferIndex();
+	return m_crntSwapchain->m_textures[m_crntSwapchain->m_backbufferIdx];
+}
+
+void GrManagerImpl::endFrameInternal()
+{
+	ANKI_TRACE_FUNCTION();
+
+	m_crntSwapchain->m_swapchain->Present((g_vsyncCVar) ? 1 : 0, (g_vsyncCVar) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+
+	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance("Present");
+	presentFence->getImplementation().gpuSignal(GpuQueueType::kGeneral); // Only general can present
+
+	m_crntSwapchain->setFence(presentFence.get());
+
+	LockGuard lock(m_globalMtx);
+
+	auto& crntFrame = m_frames[m_crntFrame];
+
+	crntFrame.m_presentFence = presentFence;
+	crntFrame.m_fences.emplaceBack(presentFence);
+
+	DescriptorFactory::getSingleton().endFrame();
+}
+
+void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+{
+	ANKI_TRACE_FUNCTION();
 
 	// First thing, create a fence
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Submit");
 
 	// Gather command lists
 	GrDynamicArray<ID3D12CommandList*> d3dCmdLists;
@@ -235,20 +276,36 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 	for(Fence* fence : waitFences)
 	{
 		FenceImpl& impl = static_cast<FenceImpl&>(*fence);
-		impl.m_fence->gpuWait(queueType);
+		impl.m_fence->getImplementation().gpuWait(queueType);
 	}
 
 	// Submit command lists
-	self.m_queues[queueType]->ExecuteCommandLists(d3dCmdLists.getSize(), d3dCmdLists.getBegin());
+	m_queues[queueType]->ExecuteCommandLists(d3dCmdLists.getSize(), d3dCmdLists.getBegin());
 
 	// Signal fence
-	fence->gpuSignal(queueType);
+	fence->getImplementation().gpuSignal(queueType);
 
 	if(signalFence)
 	{
 		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
 		fenceImpl->m_fence = fence;
 		signalFence->reset(fenceImpl);
+	}
+
+	LockGuard lock(m_globalMtx);
+	m_frames[m_crntFrame].m_fences.emplaceBack(fence.get());
+}
+
+void GrManagerImpl::finishInternal()
+{
+	if(FenceFactory::isAllocated())
+	{
+		for(GpuQueueType qType : EnumIterable<GpuQueueType>())
+		{
+			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+			fence->getImplementation().gpuSignal(qType);
+			fence->clientWait(kMaxSecond);
+		}
 	}
 }
 
@@ -463,7 +520,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	RootSignatureFactory::allocateSingleton();
 	FenceFactory::allocateSingleton();
 	CommandBufferFactory::allocateSingleton();
-	FrameGarbageCollector::allocateSingleton();
+	D3DFrameGarbageCollector::allocateSingleton();
 
 	IndirectCommandSignatureFactory::allocateSingleton();
 	ANKI_CHECK(IndirectCommandSignatureFactory::getSingleton().init());
@@ -492,7 +549,7 @@ void GrManagerImpl::destroy()
 
 	m_zeroBuffer.reset(nullptr);
 
-	waitAllQueues();
+	finishInternal();
 
 	// Cleanup self
 	m_crntSwapchain.reset(nullptr);
@@ -503,7 +560,7 @@ void GrManagerImpl::destroy()
 	PrimitivesPassedClippingFactory::freeSingleton();
 	TimestampQueryFactory::freeSingleton();
 	SwapchainFactory::freeSingleton();
-	FrameGarbageCollector::freeSingleton();
+	D3DFrameGarbageCollector::freeSingleton();
 	RootSignatureFactory::freeSingleton();
 	DescriptorFactory::freeSingleton();
 	IndirectCommandSignatureFactory::freeSingleton();
@@ -523,19 +580,6 @@ void GrManagerImpl::destroy()
 	}
 
 	GrMemoryPool::freeSingleton();
-}
-
-void GrManagerImpl::waitAllQueues()
-{
-	if(FenceFactory::isAllocated())
-	{
-		for(GpuQueueType queueType : EnumIterable<GpuQueueType>())
-		{
-			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-			fence->gpuSignal(queueType);
-			fence->clientWait(kMaxSecond);
-		}
-	}
 }
 
 void GrManagerImpl::invokeDred() const

@@ -34,7 +34,7 @@ AccelerationStructureImpl::~AccelerationStructureImpl()
 	{
 		ASGarbage* garbage = anki::newInstance<ASGarbage>(GrMemoryPool::getSingleton());
 		garbage->m_asHandle = m_handle;
-		getGrManagerImpl().getFrameGarbageCollector().newASGarbage(garbage);
+		VulkanFrameGarbageCollector::getSingleton().newASGarbage(garbage);
 	}
 }
 

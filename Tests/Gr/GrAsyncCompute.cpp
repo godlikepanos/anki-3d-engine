@@ -219,6 +219,9 @@ float4 main(VertOut input) : SV_Target0
 		for(U32 i = 0; i < iterationCount; ++i)
 		{
 			ANKI_TEST_EXPECT_NO_ERR(Input::getSingleton().handleEvents());
+
+			GrManager::getSingleton().beginFrame();
+
 			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			// Init command buffers
@@ -382,7 +385,7 @@ float4 main(VertOut input) : SV_Target0
 				GrManager::getSingleton().submit(blitCmdb.get(), {}, &finalFence);
 			}
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 		}
 
 		finalFence->clientWait(kMaxSecond);

@@ -76,6 +76,11 @@ void MicroObjectRecycler<T>::recycle(T* mobj)
 
 	LockGuard<Mutex> lock(m_mtx);
 
+	if(!mobj->getFence())
+	{
+		ANKI_GR_LOGW("Object is recycled and doesn't have a fence");
+	}
+
 	Object obj;
 	obj.m_fenceDone = !mobj->getFence();
 	obj.m_microObject = mobj;
@@ -102,7 +107,7 @@ void MicroObjectRecycler<T>::checkDoneFences()
 			ANKI_ASSERT(!mobj.getFence());
 		}
 
-		if(!obj.m_fenceDone && mobj.getFence() && mobj.getFence()->done())
+		if(!obj.m_fenceDone && mobj.getFence() && mobj.getFence()->signaled())
 		{
 			mobj.setFence(nullptr);
 			mobj.onFenceDone();

@@ -10,8 +10,8 @@
 
 namespace anki {
 
-static StatCounter g_descriptorSetsAllocatedStatVar(StatCategory::kMisc, "DescriptorSets allocated this frame", StatFlag::kZeroEveryFrame);
-static StatCounter g_descriptorSetsWrittenStatVar(StatCategory::kMisc, "DescriptorSets written this frame", StatFlag::kZeroEveryFrame);
+static StatCounter g_descriptorSetsAllocatedStatVar(StatCategory::kGr, "DescriptorSets allocated this frame", StatFlag::kZeroEveryFrame);
+static StatCounter g_descriptorSetsWrittenStatVar(StatCategory::kGr, "DescriptorSets written this frame", StatFlag::kZeroEveryFrame);
 
 /// Contains some constants. It's a class to avoid bugs initializing arrays (m_descriptorCount).
 class DSAllocatorConstants

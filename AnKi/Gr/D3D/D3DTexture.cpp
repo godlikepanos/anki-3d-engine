@@ -73,7 +73,7 @@ TextureImpl::~TextureImpl()
 		garbage->m_resource = m_resource;
 	}
 
-	FrameGarbageCollector::getSingleton().newTextureGarbage(garbage);
+	D3DFrameGarbageCollector::getSingleton().newTextureGarbage(garbage);
 }
 
 Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo& init)

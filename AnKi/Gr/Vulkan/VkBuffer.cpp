@@ -108,7 +108,7 @@ BufferImpl::~BufferImpl()
 		}
 	}
 
-	getGrManagerImpl().getFrameGarbageCollector().newBufferGarbage(garbage);
+	VulkanFrameGarbageCollector::getSingleton().newBufferGarbage(garbage);
 
 #if ANKI_ASSERTIONS_ENABLED
 	if(m_needsFlush && m_flushCount.load() == 0)

@@ -77,7 +77,7 @@ BufferImpl::~BufferImpl()
 
 	BufferGarbage* garbage = anki::newInstance<BufferGarbage>(GrMemoryPool::getSingleton());
 	garbage->m_resource = m_resource;
-	FrameGarbageCollector::getSingleton().newBufferGarbage(garbage);
+	D3DFrameGarbageCollector::getSingleton().newBufferGarbage(garbage);
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)

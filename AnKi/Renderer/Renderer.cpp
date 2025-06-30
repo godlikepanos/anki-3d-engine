@@ -758,7 +758,7 @@ void Renderer::updatePipelineStats()
 }
 #endif
 
-Error Renderer::render(Texture* presentTex)
+Error Renderer::render()
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
@@ -769,7 +769,6 @@ Error Renderer::render(Texture* presentTex)
 
 	RenderingContext ctx(&m_framePool);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
-	ctx.m_swapchainRenderTarget = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::kNone);
 
 #if ANKI_STATS_ENABLED
 	updatePipelineStats();
@@ -821,6 +820,12 @@ Error Renderer::render(Texture* presentTex)
 	ANKI_CHECK(populateRenderGraph(ctx));
 
 	// Blit renderer's result to swapchain
+	if(!ctx.m_swapchainRenderTarget.isValid())
+	{
+		TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
+		ctx.m_swapchainRenderTarget = ctx.m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
+	}
+
 	const Bool bNeedsBlit = m_postProcessResolution != m_swapchainResolution;
 	if(bNeedsBlit)
 	{
