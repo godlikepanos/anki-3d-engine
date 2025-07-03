@@ -453,6 +453,108 @@ private:
 		b.m_ptr = nullptr;
 	}
 };
+
+/// An intrusive pointer. Same as IntrusivePtr but without deleter. The T::release is supposed to delete.
+template<typename T>
+class IntrusiveNoDelPtr : public PtrBase<T>
+{
+	template<typename Y>
+	friend class IntrusiveNoDelPtr;
+
+public:
+	using Base = PtrBase<T>;
+	using Base::m_ptr;
+
+	IntrusiveNoDelPtr()
+		: Base()
+	{
+	}
+
+	explicit IntrusiveNoDelPtr(T* ptr)
+		: Base()
+	{
+		reset(ptr);
+	}
+
+	/// Copy.
+	IntrusiveNoDelPtr(const IntrusiveNoDelPtr& other)
+		: Base()
+	{
+		reset(other.m_ptr);
+	}
+
+	/// Move.
+	IntrusiveNoDelPtr(IntrusiveNoDelPtr&& other)
+		: Base()
+	{
+		move(other);
+	}
+
+	/// Copy, compatible pointer.
+	template<typename Y>
+	IntrusiveNoDelPtr(const IntrusiveNoDelPtr<Y>& other)
+		: Base()
+	{
+		reset(other.m_ptr);
+	}
+
+	/// Decrease refcount and delete the pointer if refcount is zero.
+	~IntrusiveNoDelPtr()
+	{
+		destroy();
+	}
+
+	/// Copy.
+	IntrusiveNoDelPtr& operator=(const IntrusiveNoDelPtr& other)
+	{
+		reset(other.m_ptr);
+		return *this;
+	}
+
+	/// Move.
+	IntrusiveNoDelPtr& operator=(IntrusiveNoDelPtr&& other)
+	{
+		destroy();
+		move(other);
+		return *this;
+	}
+
+	/// Copy, compatible.
+	template<typename Y>
+	IntrusiveNoDelPtr& operator=(const IntrusiveNoDelPtr<Y>& other)
+	{
+		reset(other.m_ptr);
+		return *this;
+	}
+
+	/// Set a new pointer. Will destroy the previous.
+	void reset(T* ptr)
+	{
+		destroy();
+		if(ptr)
+		{
+			ptr->retain();
+			m_ptr = ptr;
+		}
+	}
+
+private:
+	void destroy()
+	{
+		if(m_ptr)
+		{
+			m_ptr->release();
+			m_ptr = nullptr;
+		}
+	}
+
+	void move(IntrusiveNoDelPtr& b)
+	{
+		ANKI_ASSERT(m_ptr == nullptr);
+		m_ptr = b.m_ptr;
+		b.m_ptr = nullptr;
+	}
+};
 /// @}
 
 } // end namespace anki
