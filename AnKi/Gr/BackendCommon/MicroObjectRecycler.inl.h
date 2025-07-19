@@ -12,22 +12,15 @@ inline void MicroObjectRecycler<T>::destroy()
 {
 	LockGuard<Mutex> lock(m_mtx);
 
-	checkDoneFences();
-
-	for(U32 i = 0; i < m_objects.getSize(); ++i)
+	for(U32 i = 0; i < m_objectCache.getSize(); ++i)
 	{
-		T* mobj = m_objects[i].m_microObject;
+		T* mobj = m_objectCache[i];
 		ANKI_ASSERT(mobj);
-		ANKI_ASSERT(!mobj->getFence());
-
 		deleteInstance(GrMemoryPool::getSingleton(), mobj);
-#if ANKI_EXTRA_CHECKS
-		--m_createdAndNotRecycled;
-#endif
 	}
 
-	m_objects.destroy();
-	ANKI_ASSERT(m_createdAndNotRecycled == 0 && "Destroying the recycler while objects have not recycled yet");
+	m_objectCache.destroy();
+	ANKI_ASSERT(m_inUseObjects == 0 && "Destroying the recycler while objects have not recycled yet");
 }
 
 template<typename T>
@@ -36,33 +29,23 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 	T* out = nullptr;
 	LockGuard<Mutex> lock(m_mtx);
 
-	checkDoneFences();
 	adjustAliveObjectCount();
 
 	// Trim the cache but leave at least one object to be recycled
-	trimCacheInternal(max(m_readyObjectsAfterTrim, 1u));
+	trimCacheInternal(max(m_availableObjectsAfterTrim, 1u));
 
-	for(U32 i = 0; i < m_objects.getSize(); ++i)
+	if(m_objectCache.getSize())
 	{
-		if(m_objects[i].m_fenceDone)
-		{
-			out = m_objects[i].m_microObject;
-			m_objects[i] = m_objects[m_objects.getSize() - 1];
-			m_objects.popBack();
-
-			break;
-		}
+		out = m_objectCache[m_objectCache.getSize() - 1];
+		m_objectCache.popBack();
 	}
 
 	ANKI_ASSERT(out == nullptr || out->getRefcount() == 0);
 
 	m_cacheMisses += (out == nullptr);
 
-#if ANKI_EXTRA_CHECKS
-	if(out == nullptr)
-	{
-		++m_createdAndNotRecycled;
-	}
+#if ANKI_ASSERTIONS_ENABLED
+	++m_inUseObjects;
 #endif
 
 	return out;
@@ -76,102 +59,40 @@ void MicroObjectRecycler<T>::recycle(T* mobj)
 
 	LockGuard<Mutex> lock(m_mtx);
 
-	if(!mobj->getFence())
-	{
-		ANKI_GR_LOGW("Object is recycled and doesn't have a fence");
-	}
+	m_objectCache.emplaceBack(mobj);
+	trimCacheInternal(m_availableObjectsAfterTrim);
 
-	Object obj;
-	obj.m_fenceDone = !mobj->getFence();
-	obj.m_microObject = mobj;
-
-	if(obj.m_fenceDone)
-	{
-		mobj->onFenceDone();
-	}
-
-	m_objects.emplaceBack(obj);
-	checkDoneFences();
-	trimCacheInternal(m_readyObjectsAfterTrim);
-}
-
-template<typename T>
-void MicroObjectRecycler<T>::checkDoneFences()
-{
-	for(Object& obj : m_objects)
-	{
-		T& mobj = *obj.m_microObject;
-
-		if(obj.m_fenceDone)
-		{
-			ANKI_ASSERT(!mobj.getFence());
-		}
-
-		if(!obj.m_fenceDone && mobj.getFence() && mobj.getFence()->signaled())
-		{
-			mobj.setFence(nullptr);
-			mobj.onFenceDone();
-			obj.m_fenceDone = true;
-		}
-	}
+#if ANKI_ASSERTIONS_ENABLED
+	ANKI_ASSERT(m_inUseObjects > 0);
+	--m_inUseObjects;
+#endif
 }
 
 template<typename T>
 void MicroObjectRecycler<T>::trimCacheInternal(U32 aliveObjectCountAfterTrim)
 {
-	GrDynamicArray<Object> aliveObjects;
-
-	for(Object& obj : m_objects)
+	aliveObjectCountAfterTrim = min(aliveObjectCountAfterTrim, m_objectCache.getSize());
+	const U32 toBeKilledCount = m_objectCache.getSize() - aliveObjectCountAfterTrim;
+	if(toBeKilledCount == 0)
 	{
-		T& mobj = *obj.m_microObject;
-		const Bool inUseByTheGpu = !obj.m_fenceDone;
-
-		if(inUseByTheGpu)
-		{
-			// Can't delete it for sure
-			aliveObjects.emplaceBack(obj);
-		}
-		else if(aliveObjectCountAfterTrim > 0)
-		{
-			// Need to keep a few alive for recycling
-			aliveObjects.emplaceBack(obj);
-			--aliveObjectCountAfterTrim;
-		}
-		else
-		{
-			deleteInstance(GrMemoryPool::getSingleton(), &mobj);
-#if ANKI_EXTRA_CHECKS
-			--m_createdAndNotRecycled;
-#endif
-		}
+		return;
 	}
 
-	if(aliveObjects.getSize() > 0)
+	for(U32 i = 0; i < toBeKilledCount; ++i)
 	{
-		// Some alive, store the alive
-		m_objects.destroy();
-		m_objects = std::move(aliveObjects);
+		deleteInstance(GrMemoryPool::getSingleton(), m_objectCache[i]);
+		m_objectCache[i] = nullptr;
 	}
-	else if(aliveObjects.getSize() == 0 && m_objects.getSize() > 0)
-	{
-		// All dead, destroy the array
-		m_objects.destroy();
-	}
+
+	m_objectCache.erase(m_objectCache.getBegin(), m_objectCache.getBegin() + toBeKilledCount);
 }
 
 template<typename T>
 void MicroObjectRecycler<T>::adjustAliveObjectCount()
 {
-	U32 readyObjects = 0;
-	for(Object& obj : m_objects)
+	if(m_requests < kMaxRequestsPerAdjustment) [[likely]]
 	{
-		readyObjects += obj.m_fenceDone;
-	}
-
-	if(m_requests < m_maxRequestsPerAdjustment) [[likely]]
-	{
-		// Not enough requests for a recycle
-		m_minCacheSizePerRequest = min(m_minCacheSizePerRequest, readyObjects);
+		// Not enough requests, keep getting stats
 		++m_requests;
 	}
 	else
@@ -179,18 +100,17 @@ void MicroObjectRecycler<T>::adjustAliveObjectCount()
 		if(m_cacheMisses)
 		{
 			// Need more alive objects
-			m_readyObjectsAfterTrim += 4;
+			m_availableObjectsAfterTrim += 4;
 		}
-		else if(m_minCacheSizePerRequest > 2 && m_readyObjectsAfterTrim > 0)
+		else if(m_availableObjectsAfterTrim > 0)
 		{
 			// Have more than enough alive objects per request, decrease alive objects
-			--m_readyObjectsAfterTrim;
+			--m_availableObjectsAfterTrim;
 		}
 
 		// Start new cycle
 		m_cacheMisses = 0;
 		m_requests = 0;
-		m_minCacheSizePerRequest = readyObjects;
 	}
 }
 

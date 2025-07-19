@@ -11,6 +11,16 @@
 
 namespace anki {
 
+void GrObjectDeleter::operator()(GrObject* ptr)
+{
+	getGrManagerImpl().releaseObject(ptr);
+}
+
+void GrObjectDeleterInternal::operator()(GrObject* ptr)
+{
+	getGrManagerImpl().releaseObjectDeleteLoop(ptr);
+}
+
 GrManagerImpl& getGrManagerImpl()
 {
 	return static_cast<GrManagerImpl&>(GrManager::getSingleton());

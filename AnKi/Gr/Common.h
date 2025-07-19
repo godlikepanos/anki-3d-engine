@@ -108,32 +108,14 @@ public:
 	void operator()(GrObject* ptr);
 };
 
-/// Smart pointer for resources.
-template<typename T>
-using GrObjectPtrT = IntrusivePtr<T, GrObjectDeleter>;
+// Smart pointer for objects
+using GrObjectPtr = IntrusivePtr<GrObject, GrObjectDeleter>;
 
-using GrObjectPtr = GrObjectPtrT<GrObject>;
-
-#define ANKI_GR_CLASS(x_) \
+#define ANKI_INSTANTIATE_GR_OBJECT(x_) \
 	class x_##Impl; \
 	class x_; \
-	using x_##Ptr = GrObjectPtrT<x_>;
-
-ANKI_GR_CLASS(Buffer)
-ANKI_GR_CLASS(Texture)
-ANKI_GR_CLASS(Sampler)
-ANKI_GR_CLASS(CommandBuffer)
-ANKI_GR_CLASS(Shader)
-ANKI_GR_CLASS(OcclusionQuery)
-ANKI_GR_CLASS(TimestampQuery)
-ANKI_GR_CLASS(PipelineQuery)
-ANKI_GR_CLASS(ShaderProgram)
-ANKI_GR_CLASS(Fence)
-ANKI_GR_CLASS(RenderGraph)
-ANKI_GR_CLASS(AccelerationStructure)
-ANKI_GR_CLASS(GrUpscaler)
-
-#undef ANKI_GR_CLASS
+	using x_##Ptr = IntrusivePtr<x_, GrObjectDeleter>;
+#include <AnKi/Gr/BackendCommon/InstantiationMacros.def.h>
 
 #define ANKI_GR_OBJECT \
 	friend class GrManager; \

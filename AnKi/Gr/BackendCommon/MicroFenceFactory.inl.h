@@ -22,7 +22,7 @@ MicroFenceFactory<TImplementation>::~MicroFenceFactory()
 
 	for(U32 idx : fenceIdxToDelete)
 	{
-		MicroFence& fence = m_fences[idx];
+		MyMicroFence& fence = m_fences[idx];
 
 		if(fence.m_impl)
 		{
@@ -41,9 +41,9 @@ MicroFenceFactory<TImplementation>::~MicroFenceFactory()
 }
 
 template<typename TImplementation>
-MicroFenceFactory<TImplementation>::MicroFence* MicroFenceFactory<TImplementation>::newFence(CString name)
+MicroFenceFactory<TImplementation>::MyMicroFence* MicroFenceFactory<TImplementation>::newFence(CString name)
 {
-	MicroFence* out = nullptr;
+	MyMicroFence* out = nullptr;
 
 	LockGuard<Mutex> lock(m_mtx);
 
@@ -69,7 +69,7 @@ MicroFenceFactory<TImplementation>::MicroFence* MicroFenceFactory<TImplementatio
 
 			// Marked for deletion or signaled will loose their fence
 
-			Bool destroyFence = it->m_state == MicroFence::kSignaled;
+			Bool destroyFence = it->m_state == MyMicroFence::kSignaled;
 			if(!destroyFence)
 			{
 				const Bool signaled = it->m_impl.signaled();
@@ -77,7 +77,7 @@ MicroFenceFactory<TImplementation>::MicroFence* MicroFenceFactory<TImplementatio
 
 				if(signaled)
 				{
-					it->m_state = MicroFence::kSignaled;
+					it->m_state = MyMicroFence::kSignaled;
 				}
 			}
 
@@ -141,7 +141,7 @@ MicroFenceFactory<TImplementation>::MicroFence* MicroFenceFactory<TImplementatio
 		out->m_impl.reset();
 	}
 
-	out->m_state = MicroFence::kUnsignaled;
+	out->m_state = MyMicroFence::kUnsignaled;
 	out->m_impl.setName(name);
 	out->m_name = name;
 
@@ -150,7 +150,7 @@ MicroFenceFactory<TImplementation>::MicroFence* MicroFenceFactory<TImplementatio
 }
 
 template<typename TImplementation>
-void MicroFenceFactory<TImplementation>::releaseFence(MicroFence* fence)
+void MicroFenceFactory<TImplementation>::releaseFence(MyMicroFence* fence)
 {
 	LockGuard lock(m_mtx);
 

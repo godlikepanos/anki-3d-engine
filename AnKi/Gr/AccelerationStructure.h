@@ -45,7 +45,7 @@ public:
 class AccelerationStructureInstanceInfo
 {
 public:
-	AccelerationStructurePtr m_bottomLevel;
+	AccelerationStructure* m_bottomLevel = nullptr;
 	Mat3x4 m_transform = Mat3x4::getIdentity();
 	U32 m_hitgroupSbtRecordIndex = 0; ///< Points to a hitgroup SBT record.
 	U8 m_mask = 0xFF; ///< A mask that this instance belongs to. Will be tested against what's in traceRayEXT().

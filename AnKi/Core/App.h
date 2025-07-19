@@ -39,12 +39,9 @@ inline StatCounter g_cpuTotalTimeStatVar(StatCategory::kTime, "CPU total",
 class App
 {
 public:
-	App(AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
+	App(U32 argc, Char** argv, CString applicationName, AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
 
 	virtual ~App();
-
-	/// Initialize the application.
-	Error init();
 
 	CString getSettingsDirectory() const
 	{
@@ -59,7 +56,14 @@ public:
 	/// Run the main loop.
 	Error mainLoop();
 
-	/// The user code to run along with the other main loop code.
+	/// User defined init code that will execute after all subsystems have initialized.
+	virtual Error userInit()
+	{
+		// Do nothing
+		return Error::kNone;
+	}
+
+	/// User defined code to run along with the other main loop code.
 	virtual Error userMainLoop([[maybe_unused]] Bool& quit, [[maybe_unused]] Second elapsedTime)
 	{
 		// Do nothing
@@ -73,10 +77,16 @@ public:
 		return m_consoleEnabled;
 	}
 
+	CString getApplicationName() const
+	{
+		return m_appName;
+	}
+
 private:
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache
+	Char* m_appName = nullptr;
 
 	void* m_originalAllocUserData = nullptr;
 	AllocAlignedCallback m_originalAllocCallback = nullptr;
@@ -85,7 +95,7 @@ private:
 
 	void initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData);
 
-	Error initInternal();
+	Error init();
 
 	Error initDirs();
 	void cleanup();

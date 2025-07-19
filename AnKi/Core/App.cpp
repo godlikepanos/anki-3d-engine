@@ -111,10 +111,18 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 	return out;
 }
 
-App::App(AllocAlignedCallback allocCb, void* allocCbUserData)
+App::App(U32 argc, Char** argv, CString appName, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
+
+	if(!appName.isEmpty())
+	{
+		appName = "unnamed app";
+	}
+
+	m_appName = static_cast<Char*>(allocCb(allocCbUserData, nullptr, appName.getLength() + 1, alignof(Char)));
+	strcpy(m_appName, appName.cstr());
 }
 
 App::~App()
@@ -155,22 +163,12 @@ void App::cleanup()
 	CoreMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 
+	m_originalAllocCallback(m_originalAllocUserData, m_appName, 0, 0);
+
 	ANKI_CORE_LOGI("Application finished shutting down");
 }
 
 Error App::init()
-{
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_CORE_LOGE("App initialization failed. Shutting down");
-		cleanup();
-	}
-
-	return err;
-}
-
-Error App::initInternal()
 {
 	StatsSet::getSingleton().initFromMainThread();
 	Logger::getSingleton().enableVerbosity(g_verboseLogCVar);
@@ -367,6 +365,25 @@ Error App::initDirs()
 
 Error App::mainLoop()
 {
+	// Initialize the application
+	Error err = Error::kNone;
+	if((err = init()))
+	{
+		ANKI_CORE_LOGE("App initialization failed. Shutting down");
+		cleanup();
+		return err;
+	}
+
+	GrManager::getSingleton().beginFrame();
+	if((err = userInit()))
+	{
+		ANKI_CORE_LOGE("User initialization failed. Shutting down");
+		cleanup();
+		return err;
+	}
+	GrManager::getSingleton().endFrame();
+
+	// Continue with the main loop
 	ANKI_CORE_LOGI("Entering main loop");
 	Bool quit = false;
 

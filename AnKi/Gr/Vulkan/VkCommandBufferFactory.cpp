@@ -12,16 +12,15 @@ namespace anki {
 
 static StatCounter g_commandBufferCountStatVar(StatCategory::kGr, "CommandBufferCount", StatFlag::kNone);
 
-void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* ptr)
+void MicroCommandBuffer::releaseInternal()
 {
-	ANKI_ASSERT(ptr);
-	ptr->m_threadAlloc->deleteCommandBuffer(ptr);
+	ANKI_TRACE_FUNCTION();
+	m_dsAllocator.reset();
+	m_threadAlloc->recycleCommandBuffer(this);
 }
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {
-	reset();
-
 	m_dsAllocator.destroy();
 
 	if(m_handle)
@@ -34,23 +33,6 @@ MicroCommandBuffer::~MicroCommandBuffer()
 
 		g_commandBufferCountStatVar.decrement(1_U64);
 	}
-}
-
-void MicroCommandBuffer::reset()
-{
-	ANKI_TRACE_SCOPED_EVENT(VkCommandBufferReset);
-
-	ANKI_ASSERT(m_refcount.load() == 0);
-	ANKI_ASSERT(!m_fence.isCreated());
-
-	for(GrObjectType type : EnumIterable<GrObjectType>())
-	{
-		m_objectRefs[type].destroy();
-	}
-
-	m_dsAllocator.reset();
-
-	m_fastPool.reset();
 }
 
 Error CommandBufferThreadAllocator::init()
@@ -134,26 +116,11 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		MicroCommandBuffer* newCmdb = newInstance<MicroCommandBuffer>(GrMemoryPool::getSingleton(), this);
 
-		newCmdb->m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(), GrMemoryPool::getSingleton().getAllocationCallbackUserData(),
-								 256_KB, 2.0f);
-
-		for(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr : newCmdb->m_objectRefs)
-		{
-			arr = DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>(&newCmdb->m_fastPool);
-		}
-
 		newCmdb->m_handle = cmdb;
 		newCmdb->m_flags = cmdbFlags;
 		newCmdb->m_queue = queue;
 
 		out = newCmdb;
-	}
-	else
-	{
-		for([[maybe_unused]] GrObjectType type : EnumIterable<GrObjectType>())
-		{
-			ANKI_ASSERT(out->m_objectRefs[type].getSize() == 0);
-		}
 	}
 
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);
@@ -161,7 +128,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	return Error::kNone;
 }
 
-void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
+void CommandBufferThreadAllocator::recycleCommandBuffer(MicroCommandBuffer* ptr)
 {
 	ANKI_ASSERT(ptr);
 

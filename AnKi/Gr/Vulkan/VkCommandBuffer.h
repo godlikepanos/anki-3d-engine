@@ -44,11 +44,6 @@ public:
 
 	Error init(const CommandBufferInitInfo& init);
 
-	void setFence(VulkanMicroFence* fence)
-	{
-		m_microCmdb->setFence(fence);
-	}
-
 	const MicroCommandBufferPtr& getMicroCommandBuffer()
 	{
 		return m_microCmdb;
@@ -94,7 +89,7 @@ public:
 #endif
 
 private:
-	StackMemoryPool* m_pool = nullptr;
+	StackMemoryPool m_pool;
 
 	MicroCommandBufferPtr m_microCmdb;
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;

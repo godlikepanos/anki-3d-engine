@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Gr/Vulkan/VkFenceFactory.h>
+#include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
 
 namespace anki {
@@ -36,30 +36,17 @@ public:
 		m_refcount.fetchAdd(1);
 	}
 
-	I32 release() const
+	void release()
 	{
-		return m_refcount.fetchSub(1);
+		if(m_refcount.fetchSub(1) == 1)
+		{
+			releaseInternal();
+		}
 	}
 
 	I32 getRefcount() const
 	{
 		return m_refcount.load();
-	}
-
-	VulkanMicroFence* getFence() const
-	{
-		return m_fence.tryGet();
-	}
-
-	/// Interface method.
-	void onFenceDone()
-	{
-		// Do nothing
-	}
-
-	void setFence(VulkanMicroFence* fence)
-	{
-		m_fence.reset(fence);
 	}
 
 	Bool clientWait(Second seconds);
@@ -89,26 +76,18 @@ private:
 	VkSemaphore m_handle = VK_NULL_HANDLE;
 	mutable Atomic<I32> m_refcount = {0};
 
-	/// Fence to find out when it's safe to reuse this semaphore.
-	MicroFencePtr m_fence;
-
 	Atomic<U64> m_timelineValue = {0};
 	Bool m_isTimeline = false;
 
-	MicroSemaphore(MicroFencePtr fence, Bool isTimeline);
+	MicroSemaphore(Bool isTimeline);
 
 	~MicroSemaphore();
-};
 
-/// MicroSemaphorePtr deleter.
-class MicroSemaphorePtrDeleter
-{
-public:
-	void operator()(MicroSemaphore* s);
+	void releaseInternal();
 };
 
 /// MicroSemaphore smart pointer.
-using MicroSemaphorePtr = IntrusivePtr<MicroSemaphore, MicroSemaphorePtrDeleter>;
+using MicroSemaphorePtr = IntrusiveNoDelPtr<MicroSemaphore>;
 
 /// Factory of semaphores.
 class SemaphoreFactory : public MakeSingleton<SemaphoreFactory>
@@ -123,7 +102,7 @@ public:
 		m_timelineRecycler.destroy();
 	}
 
-	MicroSemaphorePtr newInstance(MicroFencePtr fence, Bool isTimeline, CString name);
+	MicroSemaphorePtr newInstance(Bool isTimeline, CString name);
 
 private:
 	MicroObjectRecycler<MicroSemaphore> m_binaryRecycler;

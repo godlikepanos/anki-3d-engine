@@ -100,6 +100,11 @@ public:
 		return bSignaled;
 	}
 
+	CString getName() const
+	{
+		return m_name;
+	}
+
 private:
 	enum State : U8
 	{
@@ -121,7 +126,7 @@ template<typename TImplementation>
 class MicroFenceFactory
 {
 public:
-	using MicroFence = MicroFence<TImplementation>;
+	using MyMicroFence = MicroFence<TImplementation>;
 
 	/// Limit the alive fences to avoid having too many file descriptors used in Linux.
 	static constexpr U32 kMaxAliveFences = 32;
@@ -131,12 +136,12 @@ public:
 	~MicroFenceFactory();
 
 	/// Create a new fence pointer.
-	MicroFence* newFence(CString name = "unnamed");
+	MyMicroFence* newFence(CString name = "unnamed");
 
-	void releaseFence(MicroFence* fence);
+	void releaseFence(MyMicroFence* fence);
 
 private:
-	GrBlockArray<MicroFence> m_fences;
+	GrBlockArray<MyMicroFence> m_fences;
 	U32 m_aliveFenceCount = 0;
 	Mutex m_mtx;
 	BitSet<1024, U64> m_markedForDeletionMask = {false}; // Always last for better caching

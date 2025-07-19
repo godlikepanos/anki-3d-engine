@@ -5,7 +5,6 @@
 
 #include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 #include <AnKi/Gr/Vulkan/VkBuffer.h>
 
 namespace anki {
@@ -32,9 +31,7 @@ AccelerationStructureImpl::~AccelerationStructureImpl()
 {
 	if(m_handle)
 	{
-		ASGarbage* garbage = anki::newInstance<ASGarbage>(GrMemoryPool::getSingleton());
-		garbage->m_asHandle = m_handle;
-		VulkanFrameGarbageCollector::getSingleton().newASGarbage(garbage);
+		vkDestroyAccelerationStructureKHR(getVkDevice(), m_handle, nullptr);
 	}
 }
 

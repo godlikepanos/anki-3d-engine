@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "AnKi/Util/Tracer.h"
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
@@ -146,7 +147,39 @@ public:
 	/// @note It's thread-safe.
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash = 0) const;
 
+	/// @note It's thread-safe.
+	void releaseObject(GrObject* object)
+	{
+		ANKI_ASSERT(object);
+		LockGuard lock(m_globalMtx);
+		m_perFrame[m_frame % m_perFrame.getSize()].m_objectsMarkedForDeletion.emplaceBack(object);
+	}
+
+	void releaseObjectDeleteLoop(GrObject* object)
+	{
+		ANKI_ASSERT(object);
+		m_perFrame[m_frame % m_perFrame.getSize()].m_objectsMarkedForDeletion.emplaceBack(object);
+	}
+
 private:
+	enum FrameState : U8
+	{
+		kFrameStarted,
+		kPresentableAcquired,
+		kPresentableDrawn,
+		kFrameEnded,
+	};
+
+	class PerFrame
+	{
+	public:
+		GrDynamicArray<MicroFencePtr> m_fences;
+
+		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+
+		GrDynamicArray<GrObject*> m_objectsMarkedForDeletion;
+	};
+
 	U64 m_frame = 0;
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
@@ -176,28 +209,14 @@ private:
 
 	mutable SpinLock m_shaderStatsMtx;
 
-	/// @name Surface_related
-	/// @{
-	class PerFrame
-	{
-	public:
-		GrDynamicArray<MicroFencePtr> m_fences;
-		MicroSemaphorePtr m_acquireSemaphore;
-
-		/// Signaled by the submit that renders to the default FB. Present waits for it.
-		MicroSemaphorePtr m_renderSemaphore;
-
-		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
-	};
-
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 	U32 m_nativeWindowWidth = 0;
 	U32 m_nativeWindowHeight = 0;
 	MicroSwapchainPtr m_crntSwapchain;
 	U8 m_acquiredImageIdx = kMaxU8;
+	FrameState m_frameState = kFrameEnded;
 
 	Array<PerFrame, kMaxFramesInFlight> m_perFrame;
-	/// @}
 
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
@@ -236,6 +255,21 @@ private:
 		features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		features2.pNext = &features;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features2);
+	}
+
+	void deleteObjectsMarkedForDeletion()
+	{
+		ANKI_TRACE_FUNCTION();
+		PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+		while(!frame.m_objectsMarkedForDeletion.isEmpty())
+		{
+			GrDynamicArray<GrObject*> objects = std::move(frame.m_objectsMarkedForDeletion);
+
+			for(GrObject* obj : objects)
+			{
+				deleteInstance(GrMemoryPool::getSingleton(), obj);
+			}
+		}
 	}
 };
 /// @}

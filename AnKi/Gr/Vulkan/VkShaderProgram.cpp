@@ -223,7 +223,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	// Link reflection
 	//
 	Bool firstLink = true;
-	for(ShaderPtr& shader : m_shaders)
+	for(ShaderInternalPtr& shader : m_shaders)
 	{
 		m_shaderTypes |= ShaderTypeBit(1 << shader->getShaderType());
 
@@ -430,7 +430,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Get shader sizes and a few other things
 	//
-	for(const ShaderPtr& s : m_shaders)
+	for(const ShaderInternalPtr& s : m_shaders)
 	{
 		if(!s.isCreated())
 		{

@@ -59,19 +59,19 @@ private:
 	class ASBottomLevelInfo
 	{
 	public:
-		BufferPtr m_positionsBuffer;
-		BufferPtr m_indexBuffer;
+		BufferInternalPtr m_positionsBuffer;
+		BufferInternalPtr m_indexBuffer;
 	};
 
 	class ASTopLevelInfo
 	{
 	public:
-		BufferPtr m_instancesBuffer;
-		GrDynamicArray<AccelerationStructurePtr> m_blases;
+		BufferInternalPtr m_instancesBuffer;
+		GrDynamicArray<AccelerationStructureInternalPtr> m_blases;
 		U32 m_maxInstanceCount = 0; ///< Only for indirect.
 	};
 
-	BufferPtr m_asBuffer;
+	BufferInternalPtr m_asBuffer;
 	VkAccelerationStructureKHR m_handle = VK_NULL_HANDLE;
 	VkDeviceAddress m_deviceAddress = 0;
 

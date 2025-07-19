@@ -14,7 +14,7 @@ class SampleApp : public App
 public:
 	using App::App;
 
-	Error init(int argc, char** argv, CString sampleName);
+	Error userInit(int argc, char** argv, CString sampleName);
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 
 	virtual Error sampleExtraInit() = 0;

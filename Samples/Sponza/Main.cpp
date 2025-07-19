@@ -13,7 +13,7 @@ class MyApp : public SampleApp
 public:
 	using SampleApp::SampleApp;
 
-	Error sampleExtraInit()
+	Error sampleExtraInit() final
 	{
 		ScriptResourcePtr script;
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));

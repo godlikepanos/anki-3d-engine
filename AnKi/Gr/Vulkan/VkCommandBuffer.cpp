@@ -254,7 +254,6 @@ void CommandBuffer::bindSampler(U32 reg, U32 space, Sampler* sampler)
 
 	const VkSampler handle = static_cast<const SamplerImpl&>(*sampler).m_sampler->getHandle();
 	self.m_descriptorState.bindSampler(space, reg, handle);
-	self.m_microCmdb->pushObjectRef(sampler);
 }
 
 void CommandBuffer::bindConstantBuffer(U32 reg, U32 space, const BufferView& buff)
@@ -319,7 +318,6 @@ void CommandBuffer::bindSrv(U32 reg, U32 space, AccelerationStructure* as)
 
 	const VkAccelerationStructureKHR& handle = static_cast<const AccelerationStructureImpl&>(*as).getHandle();
 	self.m_descriptorState.bindAccelerationStructure(space, reg, &handle);
-	self.m_microCmdb->pushObjectRef(as);
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
@@ -365,8 +363,6 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	}
 
 	self.m_descriptorState.setPipelineLayout(&impl.getPipelineLayout(), bindPoint);
-
-	self.m_microCmdb->pushObjectRef(prog);
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, const TextureView& vrsRt, U8 vrsRtTexelSizeX,
@@ -836,8 +832,6 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<Occlusion
 
 		vkCmdCopyQueryPoolResults(self.m_handle, q->m_handle.getQueryPool(), q->m_handle.getQueryIndex(), 1, impl.getHandle(),
 								  buff.getOffset() * sizeof(U32) * i, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
-
-		self.m_microCmdb->pushObjectRef(q);
 	}
 }
 
@@ -970,7 +964,7 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
-	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(self.m_pool);
+	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(&self.m_pool);
 	VkMemoryBarrier genericBarrier = {};
 	genericBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 	VkPipelineStageFlags srcStageMask = 0;
@@ -1003,8 +997,6 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 
 		genericBarrier.srcAccessMask |= memBarrier.srcAccessMask;
 		genericBarrier.dstAccessMask |= memBarrier.dstAccessMask;
-
-		self.m_microCmdb->pushObjectRef(barrier.m_as);
 	}
 
 	const Bool genericBarrierSet = genericBarrier.srcAccessMask != 0 && genericBarrier.dstAccessMask != 0;
@@ -1026,8 +1018,6 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQuery* query)
 	ANKI_ASSERT(handle);
 
 	vkCmdBeginQuery(self.m_handle, handle, idx, 0);
-
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
@@ -1041,8 +1031,6 @@ void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
 	ANKI_ASSERT(handle);
 
 	vkCmdEndQuery(self.m_handle, handle, idx);
-
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
@@ -1054,7 +1042,6 @@ void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
 	const U32 idx = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryIndex();
 	ANKI_ASSERT(handle);
 	vkCmdBeginQuery(self.m_handle, handle, idx, 0);
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::endPipelineQuery(PipelineQuery* query)
@@ -1066,7 +1053,6 @@ void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 	const U32 idx = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryIndex();
 	ANKI_ASSERT(handle);
 	vkCmdEndQuery(self.m_handle, handle, idx);
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::writeTimestamp(TimestampQuery* query)
@@ -1079,8 +1065,6 @@ void CommandBuffer::writeTimestamp(TimestampQuery* query)
 	const U32 idx = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryIndex();
 
 	vkCmdWriteTimestamp(self.m_handle, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, handle, idx);
-
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 Bool CommandBuffer::isEmpty() const
@@ -1178,9 +1162,9 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	ANKI_CHECK(CommandBufferFactory::getSingleton().newCommandBuffer(m_tid, m_flags, m_microCmdb));
 	m_handle = m_microCmdb->getHandle();
 
-	m_pool = &m_microCmdb->getFastMemoryPool();
+	m_pool.init(GrMemoryPool::getSingleton().getAllocationCallback(), GrMemoryPool::getSingleton().getAllocationCallbackUserData(), 256_KB, 2.0f);
 
-	m_descriptorState.init(m_pool);
+	m_descriptorState.init(&m_pool);
 
 	m_debugMarkers = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_debug_utils);
 

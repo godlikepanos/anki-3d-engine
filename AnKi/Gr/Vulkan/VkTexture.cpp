@@ -6,7 +6,6 @@
 #include <AnKi/Gr/Vulkan/VkTexture.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Gr/Vulkan/VkDescriptor.h>
-#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 
 namespace anki {
 
@@ -78,17 +77,15 @@ TextureImpl::~TextureImpl()
 	}
 #endif
 
-	TextureGarbage* garbage = anki::newInstance<TextureGarbage>(GrMemoryPool::getSingleton());
-
 	auto destroyTextureView = [&](TextureViewEntry& entry) {
-		if(entry.m_handle)
-		{
-			garbage->m_viewHandles.emplaceBack(entry.m_handle);
-		}
-
 		if(entry.m_bindlessIndex != kMaxU32)
 		{
-			garbage->m_bindlessIndices.emplaceBack(entry.m_bindlessIndex);
+			BindlessDescriptorSet::getSingleton().unbindTexture(entry.m_bindlessIndex);
+		}
+
+		if(entry.m_handle)
+		{
+			vkDestroyImageView(getVkDevice(), entry.m_handle, nullptr);
 		}
 	};
 
@@ -104,12 +101,13 @@ TextureImpl::~TextureImpl()
 
 	if(m_imageHandle && !(m_usage & TextureUsageBit::kPresent))
 	{
-		garbage->m_imageHandle = m_imageHandle;
+		vkDestroyImage(getVkDevice(), m_imageHandle, nullptr);
 	}
 
-	garbage->m_memoryHandle = m_memHandle;
-
-	VulkanFrameGarbageCollector::getSingleton().newTextureGarbage(garbage);
+	if(m_memHandle)
+	{
+		GpuMemoryManager::getSingleton().freeMemory(m_memHandle);
+	}
 }
 
 Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& init_)

@@ -90,7 +90,7 @@ public:
 	}
 
 private:
-	GrDynamicArray<ShaderPtr> m_shaders;
+	GrDynamicArray<ShaderInternalPtr> m_shaders;
 
 	PipelineLayout2* m_pplineLayout = nullptr;
 
@@ -114,7 +114,7 @@ private:
 		VkPipeline m_ppline = VK_NULL_HANDLE;
 		GrDynamicArray<U8> m_allHandles;
 		U32 m_missShaderCount = 0;
-		BufferPtr m_allHandlesBuff;
+		BufferInternalPtr m_allHandlesBuff;
 	} m_rt;
 
 	void rewriteSpirv(ShaderReflectionDescriptorRelated& refl, GrDynamicArray<GrDynamicArray<U32>>& rewrittenSpirvs);

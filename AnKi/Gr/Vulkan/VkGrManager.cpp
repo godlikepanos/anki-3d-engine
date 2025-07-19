@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include "AnKi/Util/Tracer.h"
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Core/App.h>
@@ -22,7 +23,6 @@
 #include <AnKi/Gr/Vulkan/VkFence.h>
 #include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 #include <AnKi/Gr/Vulkan/VkDescriptor.h>
-#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 
 #include <AnKi/Window/NativeWindow.h>
 #if ANKI_WINDOWING_SYSTEM_SDL
@@ -180,25 +180,22 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	// 3rd THING: The destroy everything that has a reference to GrObjects.
-	CommandBufferFactory::freeSingleton();
+	m_crntSwapchain.reset(nullptr);
+	SwapchainFactory::freeSingleton();
 
-	for(PerFrame& frame : m_perFrame)
+	for(U32 frame = 0; frame < m_perFrame.getSize(); ++frame)
 	{
-		frame.m_acquireSemaphore.reset(nullptr);
-		frame.m_renderSemaphore.reset(nullptr);
+		m_frame = frame;
+		deleteObjectsMarkedForDeletion();
 	}
 
-	m_crntSwapchain.reset(nullptr);
-
 	// 4th THING: Continue with the rest
-
+	CommandBufferFactory::freeSingleton();
 	OcclusionQueryFactory::freeSingleton();
 	TimestampQueryFactory::freeSingleton();
 	PrimitivesPassedClippingFactory::freeSingleton();
 	SemaphoreFactory::freeSingleton(); // Destroy before fences
 	SamplerFactory::freeSingleton();
-	SwapchainFactory::freeSingleton(); // Destroy before fences
-	VulkanFrameGarbageCollector::freeSingleton();
 
 	GpuMemoryManager::freeSingleton();
 	PipelineLayoutFactory2::freeSingleton();
@@ -261,9 +258,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initSurface());
 	ANKI_CHECK(initDevice());
 
-	SwapchainFactory::allocateSingleton(U32(g_vsyncCVar));
-	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
-
 	PipelineCache::allocateSingleton();
 	ANKI_CHECK(PipelineCache::getSingleton().init(init.m_cacheDirectory));
 
@@ -276,7 +270,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	TimestampQueryFactory::allocateSingleton();
 	PrimitivesPassedClippingFactory::allocateSingleton();
 	SamplerFactory::allocateSingleton();
-	VulkanFrameGarbageCollector::allocateSingleton();
+
+	SwapchainFactory::allocateSingleton(U32(g_vsyncCVar));
+	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
 	// See if unaligned formats are supported
 	{
@@ -1238,33 +1234,34 @@ void GrManagerImpl::beginFrameInternal()
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	// Do that at begining frame, ALWAYS
+	// Do that at begin frame, ALWAYS
 	++m_frame;
+	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+	ANKI_ASSERT(m_frameState == kFrameEnded);
+	m_frameState = kFrameStarted;
 
 	// Wait for the oldest frame because we don't want to start the new one too early
-	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
-
-	for(MicroFencePtr& fence : frame.m_fences)
 	{
-		if(fence)
+		ANKI_TRACE_SCOPED_EVENT(WaitFences);
+		for(MicroFencePtr& fence : frame.m_fences)
 		{
-			const Bool signaled = fence->clientWait(kMaxSecond);
-			if(!signaled)
+			if(fence)
 			{
-				ANKI_VK_LOGF("Timeout detected");
+				const Bool signaled = fence->clientWait(kMaxSecond);
+				ANKI_LOGI("Waited for %s", fence->getName().cstr());
+				if(!signaled)
+				{
+					ANKI_VK_LOGF("Timeout detected");
+				}
 			}
 		}
 	}
 
 	frame.m_fences.destroy();
-
-	// Reset the rest of the frame (after the fences)
-	frame.m_acquireSemaphore.reset(nullptr);
-	frame.m_renderSemaphore.reset(nullptr);
 	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
 
 	// Clear garbage
-	VulkanFrameGarbageCollector::getSingleton().beginFrameAndCollectGarbage();
+	deleteObjectsMarkedForDeletion();
 }
 
 TexturePtr GrManagerImpl::acquireNextPresentableTexture()
@@ -1272,24 +1269,23 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	ANKI_TRACE_FUNCTION();
 
 	// Create some objets outside the lock
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Acquire");
-	MicroSemaphorePtr acquireSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false, "Acquire");
+	Array<Char, 16> name;
+	snprintf(name.getBegin(), name.getSize(), "Acquire %lu", m_frame);
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance(name.getBegin());
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
+	ANKI_ASSERT(m_frameState == kFrameStarted);
+	m_frameState = kPresentableAcquired;
+
 	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
-
-	ANKI_ASSERT(!frame.m_acquireSemaphore.isCreated() && "Forgot to begin the frame");
-
-	// Create sync objects
 	frame.m_fences.emplaceBack(fence);
-	frame.m_acquireSemaphore = acquireSemaphore;
 
 	// Get new image
+	const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 	uint32_t imageIdx;
-
-	VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
-										 fence->getImplementation().m_handle, &imageIdx);
+	const VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore.getHandle(),
+											   fence->getImplementation().m_handle, &imageIdx);
 
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -1303,9 +1299,10 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		}
 		m_crntSwapchain.reset(nullptr);
 		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
+		const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 
 		// Can't fail a second time
-		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
+		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore.getHandle(),
 											 fence->getImplementation().m_handle, &imageIdx));
 	}
 	else
@@ -1314,7 +1311,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	}
 
 	m_acquiredImageIdx = U8(imageIdx);
-	return m_crntSwapchain->m_textures[imageIdx];
+	return TexturePtr(m_crntSwapchain->m_textures[imageIdx].get());
 }
 
 void GrManagerImpl::endFrameInternal()
@@ -1325,17 +1322,17 @@ void GrManagerImpl::endFrameInternal()
 
 	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
 
-	if(!frame.m_renderSemaphore)
-	{
-		ANKI_VK_LOGW("Nobody draw to the swapchain");
-	}
+	ANKI_ASSERT(m_frameState == kPresentableDrawn || m_frameState == kFrameStarted);
+	const Bool drawToPresentable = m_frameState == kPresentableDrawn;
+	m_frameState = kFrameEnded;
 
 	// Present
 	VkResult res;
 	VkPresentInfoKHR present = {};
 	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	present.waitSemaphoreCount = (frame.m_renderSemaphore) ? 1 : 0;
-	present.pWaitSemaphores = (frame.m_renderSemaphore) ? &frame.m_renderSemaphore->getHandle() : nullptr;
+	present.waitSemaphoreCount = (drawToPresentable) ? 1 : 0;
+	present.pWaitSemaphores =
+		(drawToPresentable) ? &m_crntSwapchain->m_renderSemaphores[m_frame % m_crntSwapchain->m_renderSemaphores.getSize()]->getHandle() : nullptr;
 	present.swapchainCount = 1;
 	present.pSwapchains = &m_crntSwapchain->m_swapchain;
 	const U32 idx = m_acquiredImageIdx;
@@ -1385,8 +1382,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		cmdb.setSubmitted();
 #endif
 
-		MicroCommandBuffer& mcmdb = *cmdb.getMicroCommandBuffer();
-		mcmdb.setFence(fence.get());
+		const MicroCommandBuffer& mcmdb = *cmdb.getMicroCommandBuffer();
 
 		if(i == 0)
 		{
@@ -1416,9 +1412,6 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		waitSemaphores.emplaceBack(msem.getHandle());
 		waitStages.emplaceBack(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 		waitTimelineValues.emplaceBack(msem.getSemaphoreValue());
-
-		// Refresh the fence because the semaphore can't be recycled until the current submission is done
-		msem.setFence(fence.get());
 	}
 
 	// Signal semaphore
@@ -1427,7 +1420,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 	if(signalFence)
 	{
 		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
-		fenceImpl->m_semaphore = SemaphoreFactory::getSingleton().newInstance(fence, true, "SubmitSignal");
+		fenceImpl->m_semaphore = SemaphoreFactory::getSingleton().newInstance(true, "SubmitSignal");
 
 		signalFence->reset(fenceImpl);
 
@@ -1442,10 +1435,14 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 		// Do some special stuff for the last command buffer
 		GrManagerImpl::PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+		const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 		if(renderedToDefaultFb)
 		{
+			ANKI_ASSERT(m_frameState == kPresentableAcquired);
+			m_frameState = kPresentableDrawn;
+
 			// Wait semaphore
-			waitSemaphores.emplaceBack(frame.m_acquireSemaphore->getHandle());
+			waitSemaphores.emplaceBack(acquireSemaphore.getHandle());
 
 			// That depends on how we use the swapchain img. Be a bit conservative
 			waitStages.emplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
@@ -1453,23 +1450,18 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 			// Set something
 			waitTimelineValues.emplaceBack(0);
 
-			// Refresh the fence because the semaphore can't be recycled until the current submission is done
-			frame.m_acquireSemaphore->setFence(fence.get());
-
-			// Create the semaphore to signal and then wait on present
-			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
-			frame.m_renderSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false, "RenderToSwapchain");
-			frame.m_renderSemaphore->setFence(fence.get());
-
-			signalSemaphores.emplaceBack(frame.m_renderSemaphore->getHandle());
+			// Get the semaphore to signal and then wait on present
+			const MicroSemaphore& renderSemaphore = *m_crntSwapchain->m_renderSemaphores[m_frame & m_crntSwapchain->m_renderSemaphores.getSize()];
+			signalSemaphores.emplaceBack(renderSemaphore.getHandle());
 
 			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
 			signalTimelineValues.emplaceBack(0);
 
-			// Update the swapchain's fence
-			m_crntSwapchain->setFence(fence.get());
-
 			frame.m_queueWroteToSwapchainImage = queueType;
+		}
+		else
+		{
+			ANKI_ASSERT(m_frameState == kFrameStarted);
 		}
 
 		frame.m_fences.emplaceBack(fence);
@@ -1689,7 +1681,7 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 
 	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		ANKI_VK_LOGE("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+		ANKI_VK_LOGI("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr()); // TODO
 	}
 	else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{

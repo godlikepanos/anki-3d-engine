@@ -40,43 +40,32 @@ public:
 	void trimCache()
 	{
 		LockGuard<Mutex> lock(m_mtx);
-		checkDoneFences();
 		trimCacheInternal(0);
 	}
 
 	U32 getCacheSize() const
 	{
-		return m_objects.getSize();
+		return m_objectCache.getSize();
 	}
 
 private:
-	class Object
-	{
-	public:
-		T* m_microObject;
-		Bool m_fenceDone;
-	};
-
-	GrDynamicArray<Object> m_objects;
+	GrDynamicArray<T*> m_objectCache;
 	Mutex m_mtx;
 
 	// Begin trim cache adjustment vars
-	U32 m_readyObjectsAfterTrim = 1;
-	static constexpr U32 m_maxRequestsPerAdjustment = 128;
+	U32 m_availableObjectsAfterTrim = 1;
+	static constexpr U32 kMaxRequestsPerAdjustment = 128;
 	U32 m_cacheMisses = 0;
 	U32 m_requests = 0;
-	U32 m_minCacheSizePerRequest = kMaxU32;
 	// End trim cache adjustment vars
 
-#if ANKI_EXTRA_CHECKS
-	U32 m_createdAndNotRecycled = 0;
+#if ANKI_ASSERTIONS_ENABLED
+	U32 m_inUseObjects = 0;
 #endif
 
 	void trimCacheInternal(U32 aliveObjectCountAfterTrim);
 
 	void adjustAliveObjectCount();
-
-	void checkDoneFences();
 };
 /// @}
 

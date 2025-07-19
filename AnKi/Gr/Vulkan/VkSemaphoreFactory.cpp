@@ -9,12 +9,9 @@
 
 namespace anki {
 
-MicroSemaphore::MicroSemaphore(MicroFencePtr fence, Bool isTimeline)
-	: m_fence(fence)
-	, m_isTimeline(isTimeline)
+MicroSemaphore::MicroSemaphore(Bool isTimeline)
+	: m_isTimeline(isTimeline)
 {
-	ANKI_ASSERT(fence.isCreated());
-
 	VkSemaphoreTypeCreateInfo typeCreateInfo = {};
 	typeCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
 	typeCreateInfo.semaphoreType = (m_isTimeline) ? VK_SEMAPHORE_TYPE_TIMELINE : VK_SEMAPHORE_TYPE_BINARY;
@@ -33,6 +30,18 @@ MicroSemaphore::~MicroSemaphore()
 	if(m_handle)
 	{
 		vkDestroySemaphore(getVkDevice(), m_handle, nullptr);
+	}
+}
+
+void MicroSemaphore::releaseInternal()
+{
+	if(m_isTimeline)
+	{
+		SemaphoreFactory::getSingleton().m_timelineRecycler.recycle(this);
+	}
+	else
+	{
+		SemaphoreFactory::getSingleton().m_binaryRecycler.recycle(this);
 	}
 }
 
@@ -58,33 +67,17 @@ Bool MicroSemaphore::clientWait(Second seconds)
 	return res != VK_TIMEOUT;
 }
 
-void MicroSemaphorePtrDeleter::operator()(MicroSemaphore* s)
+MicroSemaphorePtr SemaphoreFactory::newInstance(Bool isTimeline, CString name)
 {
-	ANKI_ASSERT(s);
-	if(s->m_isTimeline)
-	{
-		SemaphoreFactory::getSingleton().m_timelineRecycler.recycle(s);
-	}
-	else
-	{
-		SemaphoreFactory::getSingleton().m_binaryRecycler.recycle(s);
-	}
-}
-
-MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool isTimeline, CString name)
-{
-	ANKI_ASSERT(fence);
-
 	MicroSemaphore* out = (isTimeline) ? m_timelineRecycler.findToReuse() : m_binaryRecycler.findToReuse();
 
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = anki::newInstance<MicroSemaphore>(GrMemoryPool::getSingleton(), fence, isTimeline);
+		out = anki::newInstance<MicroSemaphore>(GrMemoryPool::getSingleton(), isTimeline);
 	}
 	else
 	{
-		out->m_fence = fence;
 		ANKI_ASSERT(out->m_isTimeline == isTimeline);
 		if(out->m_isTimeline)
 		{

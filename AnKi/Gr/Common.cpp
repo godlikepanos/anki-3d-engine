@@ -18,11 +18,6 @@ inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
 #undef ANKI_SVDT_MACRO_OPAQUE
 };
 
-void GrObjectDeleter::operator()(GrObject* ptr)
-{
-	deleteInstance(GrMemoryPool::getSingleton(), ptr);
-}
-
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {
 	ANKI_ASSERT(type > ShaderVariableDataType::kNone && type < ShaderVariableDataType::kCount);

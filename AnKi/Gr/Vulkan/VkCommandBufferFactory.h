@@ -19,20 +19,15 @@ class CommandBufferThreadAllocator;
 /// @addtogroup vulkan
 /// @{
 
-class MicroCommandBuffer : public IntrusiveListEnabled<MicroCommandBuffer>
+class MicroCommandBuffer
 {
 	friend class CommandBufferThreadAllocator;
-	friend class MicroCommandBufferPtrDeleter;
 
 public:
 	MicroCommandBuffer(CommandBufferThreadAllocator* allocator)
 		: m_threadAlloc(allocator)
 	{
 		ANKI_ASSERT(allocator);
-		for(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr : m_objectRefs)
-		{
-			arr = DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>(&m_fastPool);
-		}
 	}
 
 	~MicroCommandBuffer();
@@ -42,9 +37,12 @@ public:
 		m_refcount.fetchAdd(1);
 	}
 
-	I32 release() const
+	void release()
 	{
-		return m_refcount.fetchSub(1);
+		if(m_refcount.fetchSub(1) == 1)
+		{
+			releaseInternal();
+		}
 	}
 
 	I32 getRefcount() const
@@ -52,39 +50,10 @@ public:
 		return m_refcount.load();
 	}
 
-	void setFence(VulkanMicroFence* fence)
-	{
-		m_fence.reset(fence);
-	}
-
-	VulkanMicroFence* getFence() const
-	{
-		return m_fence.tryGet();
-	}
-
-	/// Interface method.
-	void onFenceDone()
-	{
-		reset();
-	}
-
-	StackMemoryPool& getFastMemoryPool()
-	{
-		return m_fastPool;
-	}
-
 	VkCommandBuffer getHandle() const
 	{
 		ANKI_ASSERT(m_handle);
 		return m_handle;
-	}
-
-	template<typename T>
-	void pushObjectRef(T* x)
-	{
-		ANKI_ASSERT(T::kClassType != GrObjectType::kTexture && T::kClassType != GrObjectType::kBuffer
-					&& "No need to push references of buffers and textures");
-		pushToArray(m_objectRefs[T::kClassType], x);
 	}
 
 	CommandBufferFlag getFlags() const
@@ -104,13 +73,7 @@ public:
 	}
 
 private:
-	static constexpr U32 kMaxRefObjectSearch = 16;
-
-	StackMemoryPool m_fastPool;
 	VkCommandBuffer m_handle = {};
-
-	MicroFencePtr m_fence;
-	Array<DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>, U(GrObjectType::kCount)> m_objectRefs;
 
 	DescriptorAllocator m_dsAllocator;
 
@@ -119,38 +82,11 @@ private:
 	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
 	GpuQueueType m_queue = GpuQueueType::kCount;
 
-	void reset();
-
-	void pushToArray(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr, GrObject* grobj)
-	{
-		ANKI_ASSERT(grobj);
-
-		// Search the temp cache to avoid setting the ref again
-		if(arr.getSize() >= kMaxRefObjectSearch)
-		{
-			for(U32 i = arr.getSize() - kMaxRefObjectSearch; i < arr.getSize(); ++i)
-			{
-				if(arr[i].get() == grobj)
-				{
-					return;
-				}
-			}
-		}
-
-		// Not found in the temp cache, add it
-		arr.emplaceBack(grobj);
-	}
-};
-
-/// Deleter.
-class MicroCommandBufferPtrDeleter
-{
-public:
-	void operator()(MicroCommandBuffer* buff);
+	void releaseInternal();
 };
 
 /// Micro command buffer pointer.
-using MicroCommandBufferPtr = IntrusivePtr<MicroCommandBuffer, MicroCommandBufferPtrDeleter>;
+using MicroCommandBufferPtr = IntrusiveNoDelPtr<MicroCommandBuffer>;
 
 /// Per-thread command buffer allocator.
 class alignas(ANKI_CACHE_LINE_SIZE) CommandBufferThreadAllocator
@@ -176,7 +112,7 @@ public:
 	Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
 	/// It will recycle it.
-	void deleteCommandBuffer(MicroCommandBuffer* ptr);
+	void recycleCommandBuffer(MicroCommandBuffer* ptr);
 
 private:
 	ThreadId m_tid;
