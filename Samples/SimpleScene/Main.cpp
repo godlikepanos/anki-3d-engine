@@ -26,16 +26,10 @@ public:
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	Error err = Error::kNone;
-
-	MyApp* app = new MyApp(allocAligned, nullptr);
-	err = app->init(argc, argv, "SimpleScene");
-	if(!err)
-	{
-		err = app->mainLoop();
-	}
-
+	MyApp* app = new MyApp(argc, argv, "SimpleScene");
+	const Error err = app->mainLoop();
 	delete app;
+
 	if(err)
 	{
 		ANKI_LOGE("Error reported. Bye!");

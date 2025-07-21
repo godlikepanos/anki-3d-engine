@@ -831,6 +831,7 @@ Error Renderer::render()
 	{
 		GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(ctx.m_swapchainRenderTarget)});
+		pass.setWritesToSwapchain();
 
 		pass.newTextureDependency(ctx.m_swapchainRenderTarget, TextureUsageBit::kRtvDsvWrite);
 		pass.newTextureDependency(m_finalComposite->getRenderTarget(), TextureUsageBit::kSrvPixel);

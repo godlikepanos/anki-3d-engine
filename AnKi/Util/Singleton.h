@@ -5,10 +5,8 @@
 
 #pragma once
 
-#include "AnKi/Config.h"
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Assert.h>
-#include <utility>
 
 namespace anki {
 

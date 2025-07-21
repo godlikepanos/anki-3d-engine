@@ -89,6 +89,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		outRt = ctx.m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
 		ANKI_ASSERT(!ctx.m_swapchainRenderTarget.isValid());
 		ctx.m_swapchainRenderTarget = outRt;
+
+		pass.setWritesToSwapchain();
 	}
 	else
 	{

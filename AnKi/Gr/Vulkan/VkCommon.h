@@ -47,17 +47,6 @@ class GrManagerImpl;
 #define ANKI_VK_SELF(class_) class_& self = *static_cast<class_*>(this)
 #define ANKI_VK_SELF_CONST(class_) const class_& self = *static_cast<const class_*>(this)
 
-class GrObjectDeleterInternal
-{
-public:
-	void operator()(GrObject* ptr);
-};
-
-using GrObjectInternalPtr = IntrusivePtr<GrObject, GrObjectDeleterInternal>;
-
-#define ANKI_INSTANTIATE_GR_OBJECT(x) using x##InternalPtr = IntrusivePtr<x, GrObjectDeleterInternal>;
-#include <AnKi/Gr/BackendCommon/InstantiationMacros.def.h>
-
 ANKI_PURE GrManagerImpl& getGrManagerImpl();
 ANKI_PURE VkDevice getVkDevice();
 

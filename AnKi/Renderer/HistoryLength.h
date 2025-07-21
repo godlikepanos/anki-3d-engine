@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "AnKi/Gr/RenderGraph.h"
 #include <AnKi/Renderer/RendererObject.h>
 
 namespace anki {
@@ -13,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// XXX
+/// Compute the history length (aka disocclusion length)
 class HistoryLength : public RendererObject
 {
 public:

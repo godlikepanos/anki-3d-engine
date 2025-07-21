@@ -99,7 +99,7 @@ trf:setRotation(rot)
 trf:setScale(Vec3.new(9.000000, 9.000000, 9.000000))
 node:setLocalTransform(trf)
 
-node = scene:tryFindSceneNode("ArmL2")
+--[[node = scene:tryFindSceneNode("ArmL2")
 getEventManager():newAnimationEvent("Assets/float.001_ccb9eb33e30c8fa4.ankianim", "ArmL2", node)
 
 node = scene:tryFindSceneNode("Body")
@@ -127,4 +127,4 @@ node = scene:tryFindSceneNode("ArmR2")
 getEventManager():newAnimationEvent("Assets/wave_6cf284ed471bff3b.ankianim", "ArmR2", node)
 
 node = scene:tryFindSceneNode("ArmR1")
-getEventManager():newAnimationEvent("Assets/wave_6cf284ed471bff3b.ankianim", "ArmR1", node)
+getEventManager():newAnimationEvent("Assets/wave_6cf284ed471bff3b.ankianim", "ArmR1", node)]]

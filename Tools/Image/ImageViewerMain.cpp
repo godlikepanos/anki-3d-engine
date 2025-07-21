@@ -253,14 +253,19 @@ private:
 class MyApp : public App
 {
 public:
-	MyApp(AllocAlignedCallback allocCb, void* allocCbUserData)
-		: App(allocCb, allocCbUserData)
+	U32 m_argc = 0;
+	Char** m_argv = nullptr;
+
+	MyApp(U32 argc, Char** argv)
+		: App("ImageViewer")
+		, m_argc(argc)
+		, m_argv(argv)
 	{
 	}
 
-	Error init(int argc, char** argv, [[maybe_unused]] CString appName)
+	Error userPreInit() override
 	{
-		if(argc < 2)
+		if(m_argc < 2)
 		{
 			ANKI_LOGE("Wrong number of arguments");
 			return Error::kUserData;
@@ -268,17 +273,20 @@ public:
 
 		g_windowFullscreenCVar = 0;
 		g_dataPathsCVar = ANKI_SOURCE_DIRECTORY;
-		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
+		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 2, m_argv + 2));
 
-		ANKI_CHECK(App::init());
+		return Error::kNone;
+	}
 
+	Error userPostInit() override
+	{
 		// Load the texture
 		ImageResourcePtr image;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(argv[1], image, false));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(m_argv[1], image, false));
 
 		// Change window name
 		String title;
-		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(), image->getTexture().getMipmapCount(),
+		title.sprintf("%s %u x %u Mips %u Format %s", m_argv[1], image->getWidth(), image->getHeight(), image->getTexture().getMipmapCount(),
 					  getFormatInfo(image->getTexture().getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
 
@@ -304,16 +312,10 @@ public:
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	Error err = Error::kNone;
-
-	MyApp* app = new MyApp(allocAligned, nullptr);
-	err = app->init(argc, argv, "Texture Viewer");
-	if(!err)
-	{
-		err = app->mainLoop();
-	}
-
+	MyApp* app = new MyApp(argc, argv);
+	const Error err = app->mainLoop();
 	delete app;
+
 	if(err)
 	{
 		ANKI_LOGE("Error reported. Bye!!");

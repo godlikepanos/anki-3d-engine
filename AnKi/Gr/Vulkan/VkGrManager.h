@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "AnKi/Util/Tracer.h"
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
@@ -86,7 +85,7 @@ public:
 
 	void submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence);
 
-	void finish();
+	void finishInternal();
 
 	VkDevice getDevice() const
 	{

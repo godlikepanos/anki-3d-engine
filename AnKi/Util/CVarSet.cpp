@@ -41,7 +41,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 		++i;
 		if(i >= arr.getSize())
 		{
-			ANKI_UTIL_LOGE("Expecting a command line argument after %s", varName.cstr());
+			ANKI_UTIL_LOGE("Expecting a value after %s", varName.cstr());
 			return Error::kUserData;
 		}
 		ANKI_ASSERT(arr[i]);
@@ -59,7 +59,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 			{
 				if(foundCVar)
 				{
-					ANKI_UTIL_LOGE("Command line arg %s has ambiguous name. Skipping", varName.cstr());
+					ANKI_UTIL_LOGE("Arg %s has ambiguous name. Skipping", varName.cstr());
 				}
 				else
 				{

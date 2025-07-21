@@ -39,7 +39,7 @@ inline StatCounter g_cpuTotalTimeStatVar(StatCategory::kTime, "CPU total",
 class App
 {
 public:
-	App(U32 argc, Char** argv, CString applicationName, AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
+	App(CString applicationName, AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
 
 	virtual ~App();
 
@@ -56,8 +56,17 @@ public:
 	/// Run the main loop.
 	Error mainLoop();
 
-	/// User defined init code that will execute after all subsystems have initialized.
-	virtual Error userInit()
+	/// User defined init code that will execute before all subsystems have initialized. Will be executed just before the main loop. Useful for
+	/// setting cvars.
+	virtual Error userPreInit()
+	{
+		// Do nothing
+		return Error::kNone;
+	}
+
+	/// User defined init code that will execute after all subsystems have initialized. Will be executed just before the main loop and after
+	/// everything has been initialized.
+	virtual Error userPostInit()
 	{
 		// Do nothing
 		return Error::kNone;
@@ -86,14 +95,14 @@ private:
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache
-	Char* m_appName = nullptr;
+	CoreString m_appName;
 
 	void* m_originalAllocUserData = nullptr;
 	AllocAlignedCallback m_originalAllocCallback = nullptr;
+	void* m_allocUserData = nullptr;
+	AllocAlignedCallback m_allocCallback = nullptr;
 
 	static void* statsAllocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
-
-	void initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData);
 
 	Error init();
 

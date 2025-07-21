@@ -46,17 +46,14 @@ public:
 	/// First call in the frame. Do that before everything else.
 	void beginFrame();
 
-	/// Get next presentable image. The returned Texture is valid until the following swapBuffers. After that it might
-	/// dissapear even if you hold the reference.
+	/// Get next presentable image. The returned Texture is valid until the following swapBuffers. After that it might dissapear even if you hold the
+	/// reference.
 	TexturePtr acquireNextPresentableTexture();
 
 	/// End this frame.
 	void endFrame();
 
-	/// Wait for all work to finish.
-	void finish();
-
-	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
+	/// Submit command buffers. Can be called outside beginFrame() endFrame().
 	/// @param[in]  waitFences Optionally wait for some fences.
 	/// @param[out] signalFence Optionaly create fence that will be signaled when the submission is done.
 	void submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences = {}, FencePtr* signalFence = nullptr);
@@ -65,6 +62,9 @@ public:
 	{
 		submit(WeakArray<CommandBuffer*>(&cmdb, 1), waitFences, signalFence);
 	}
+
+	/// Wait for all GPU work to finish.
+	void finish();
 
 	/// @name Object creation methods. They are thread-safe.
 	/// @{

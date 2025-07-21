@@ -102,19 +102,27 @@ constexpr U32 kMaxFastConstantsSize = 128; ///< Push/root constants size. Thanks
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
 
+// Smart pointers
 class GrObjectDeleter
 {
 public:
 	void operator()(GrObject* ptr);
 };
 
-// Smart pointer for objects
+class GrObjectDeleterInternal
+{
+public:
+	void operator()(GrObject* ptr);
+};
+
 using GrObjectPtr = IntrusivePtr<GrObject, GrObjectDeleter>;
+using GrObjectInternalPtr = IntrusivePtr<GrObject, GrObjectDeleterInternal>;
 
 #define ANKI_INSTANTIATE_GR_OBJECT(x_) \
 	class x_##Impl; \
 	class x_; \
-	using x_##Ptr = IntrusivePtr<x_, GrObjectDeleter>;
+	using x_##Ptr = IntrusivePtr<x_, GrObjectDeleter>; \
+	using x_##InternalPtr = IntrusivePtr<x_, GrObjectDeleterInternal>;
 #include <AnKi/Gr/BackendCommon/InstantiationMacros.def.h>
 
 #define ANKI_GR_OBJECT \

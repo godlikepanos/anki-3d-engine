@@ -7,15 +7,14 @@
 
 using namespace anki;
 
-Error SampleApp::init(int argc, char** argv, CString sampleName)
+Error SampleApp::userPreInit()
 {
 	// Init the super class
 	g_windowFullscreenCVar = 1;
 
 #if !ANKI_OS_ANDROID
-	HeapMemoryPool tmpPool(allocAligned, nullptr);
-	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> assetsDataPath(&tmpPool);
-	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
+	String assetsDataPath;
+	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, getApplicationName().cstr());
 
 	if(!directoryExists(assetsDataPath))
 	{
@@ -23,14 +22,11 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		g_dataPathsCVar = BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s|.anki,lua", assetsDataPath.cstr());
+		g_dataPathsCVar = String().sprintf("%s|.anki,lua", assetsDataPath.cstr());
 	}
 #endif
 
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
-	ANKI_CHECK(App::init());
-
-	ANKI_CHECK(sampleExtraInit());
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
 
 	return Error::kNone;
 }

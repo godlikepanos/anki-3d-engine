@@ -4,8 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <cstdio>
-#include <iostream>
-#include <fstream>
 #include <AnKi/AnKi.h>
 
 using namespace anki;
@@ -17,19 +15,27 @@ class MyApp : public App
 {
 public:
 	Bool m_profile = false;
+	U32 m_argc = 0;
+	Char** m_argv = nullptr;
 
-	Error init(int argc, char* argv[]);
+	MyApp(U32 argc, Char** argv)
+		: App("Sandbox")
+		, m_argc(argc)
+		, m_argv(argv)
+	{
+	}
+
+	Error userPreInit() override;
+	Error userPostInit() override;
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 };
 
-MyApp* app = nullptr;
-
-Error MyApp::init(int argc, char* argv[])
+Error MyApp::userPreInit()
 {
 #if !ANKI_OS_ANDROID
-	if(argc < 2)
+	if(m_argc < 2)
 	{
-		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", argv[0]);
+		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", m_argv[0]);
 		return Error::kUserData;
 	}
 #endif
@@ -38,12 +44,14 @@ Error MyApp::init(int argc, char* argv[])
 #if ANKI_OS_ANDROID
 	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
 #else
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 2, m_argv + 2));
 #endif
 
-	// Init super class
-	ANKI_CHECK(App::init());
+	return Error::kNone;
+}
 
+Error MyApp::userPostInit()
+{
 	// Other init
 	ResourceManager& resources = ResourceManager::getSingleton();
 
@@ -59,7 +67,7 @@ Error MyApp::init(int argc, char* argv[])
 #if ANKI_OS_ANDROID
 	ANKI_CHECK(resources.loadResource("Assets/Scene.lua", script));
 #else
-	ANKI_CHECK(resources.loadResource(argv[1], script));
+	ANKI_CHECK(resources.loadResource(m_argv[1], script));
 #endif
 	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
@@ -410,16 +418,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	Error err = Error::kNone;
-
-	app = new MyApp;
-	err = app->init(argc, argv);
-	if(!err)
-	{
-		err = app->mainLoop();
-	}
-
+	MyApp* app = new MyApp(argc, argv);
+	const Error err = app->mainLoop();
 	delete app;
+
 	if(err)
 	{
 		ANKI_LOGE("Error reported. See previous messages");

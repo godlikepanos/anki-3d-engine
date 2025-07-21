@@ -35,8 +35,16 @@ public:
 		}
 	}
 
+	WeakArray(T* begin, T* end)
+		: m_data(begin)
+		, m_size(end - begin)
+	{
+		ANKI_ASSERT(begin && end);
+		ANKI_ASSERT(end >= begin);
+	}
+
 	WeakArray()
-		: WeakArray(nullptr, 0)
+		: WeakArray(nullptr, Size(0))
 	{
 	}
 
@@ -232,6 +240,14 @@ public:
 		}
 	}
 
+	WeakArray subrange(Size offset, Size range) const
+	{
+		ANKI_ASSERT(offset < m_size);
+		ANKI_ASSERT(offset + range <= m_size);
+		WeakArray out(m_data + offset, range);
+		return out;
+	}
+
 private:
 	Value* m_data;
 	Size m_size;
@@ -257,8 +273,16 @@ public:
 		}
 	}
 
+	ConstWeakArray(T* begin, T* end)
+		: m_data(begin)
+		, m_size(end - begin)
+	{
+		ANKI_ASSERT(begin && end);
+		ANKI_ASSERT(end >= begin);
+	}
+
 	ConstWeakArray()
-		: ConstWeakArray(nullptr, 0)
+		: ConstWeakArray(nullptr, Size(0))
 	{
 	}
 
@@ -406,6 +430,14 @@ public:
 	PtrSize getSizeInBytes() const
 	{
 		return m_size * sizeof(Value);
+	}
+
+	ConstWeakArray subrange(Size offset, Size range) const
+	{
+		ANKI_ASSERT(offset < m_size);
+		ANKI_ASSERT(offset + range <= m_size);
+		ConstWeakArray out(m_data + offset, range);
+		return out;
 	}
 
 private:

@@ -111,18 +111,30 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 	return out;
 }
 
-App::App(U32 argc, Char** argv, CString appName, AllocAlignedCallback allocCb, void* allocCbUserData)
+App::App(CString appName, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
 
-	if(!appName.isEmpty())
+	if(ANKI_STATS_ENABLED && g_displayStatsCVar > 1)
 	{
-		appName = "unnamed app";
+		m_allocCallback = statsAllocCallback;
+		m_allocUserData = this;
+	}
+	else
+	{
+		m_allocCallback = m_originalAllocCallback;
+		m_allocUserData = m_originalAllocUserData = allocCbUserData;
 	}
 
-	m_appName = static_cast<Char*>(allocCb(allocCbUserData, nullptr, appName.getLength() + 1, alignof(Char)));
-	strcpy(m_appName, appName.cstr());
+	DefaultMemoryPool::allocateSingleton(m_allocCallback, m_allocUserData);
+	CoreMemoryPool::allocateSingleton(m_allocCallback, m_allocUserData);
+
+	if(appName.isEmpty())
+	{
+		appName = "UnnamedApp";
+	}
+	m_appName = appName;
 }
 
 App::~App()
@@ -159,11 +171,10 @@ void App::cleanup()
 
 	m_settingsDir.destroy();
 	m_cacheDir.destroy();
+	m_appName.destroy();
 
 	CoreMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
-
-	m_originalAllocCallback(m_originalAllocUserData, m_appName, 0, 0);
 
 	ANKI_CORE_LOGI("Application finished shutting down");
 }
@@ -172,13 +183,6 @@ Error App::init()
 {
 	StatsSet::getSingleton().initFromMainThread();
 	Logger::getSingleton().enableVerbosity(g_verboseLogCVar);
-
-	AllocAlignedCallback allocCb = m_originalAllocCallback;
-	void* allocCbUserData = m_originalAllocUserData;
-	initMemoryCallbacks(allocCb, allocCbUserData);
-
-	DefaultMemoryPool::allocateSingleton(allocCb, allocCbUserData);
-	CoreMemoryPool::allocateSingleton(allocCb, allocCbUserData);
 
 	ANKI_CHECK(initDirs());
 
@@ -239,8 +243,8 @@ Error App::init()
 	// Graphics API
 	//
 	GrManagerInitInfo grInit;
-	grInit.m_allocCallback = allocCb;
-	grInit.m_allocCallbackUserData = allocCbUserData;
+	grInit.m_allocCallback = m_allocCallback;
+	grInit.m_allocCallbackUserData = m_allocUserData;
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
 	ANKI_CHECK(GrManager::allocateSingleton().init(grInit));
 
@@ -267,7 +271,7 @@ Error App::init()
 	// Physics
 	//
 	PhysicsWorld::allocateSingleton();
-	ANKI_CHECK(PhysicsWorld::getSingleton().init(allocCb, allocCbUserData));
+	ANKI_CHECK(PhysicsWorld::getSingleton().init(m_allocCallback, m_allocUserData));
 
 	//
 	// Resources
@@ -286,12 +290,12 @@ Error App::init()
 	g_dataPathsCVar = extraPaths;
 #endif
 
-	ANKI_CHECK(ResourceManager::allocateSingleton().init(allocCb, allocCbUserData));
+	ANKI_CHECK(ResourceManager::allocateSingleton().init(m_allocCallback, m_allocUserData));
 
 	//
 	// UI
 	//
-	ANKI_CHECK(UiManager::allocateSingleton().init(allocCb, allocCbUserData));
+	ANKI_CHECK(UiManager::allocateSingleton().init(m_allocCallback, m_allocUserData));
 
 	//
 	// GPU scene
@@ -303,20 +307,21 @@ Error App::init()
 	//
 	RendererInitInfo renderInit;
 	renderInit.m_swapchainSize = UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
-	renderInit.m_allocCallback = allocCb;
-	renderInit.m_allocCallbackUserData = allocCbUserData;
+	renderInit.m_allocCallback = m_allocCallback;
+	renderInit.m_allocCallbackUserData = m_allocUserData;
 	ANKI_CHECK(Renderer::allocateSingleton().init(renderInit));
 
 	//
 	// Script
 	//
-	ScriptManager::allocateSingleton(allocCb, allocCbUserData);
+	ScriptManager::allocateSingleton(m_allocCallback, m_allocUserData);
 
 	//
 	// Scene
 	//
-	ANKI_CHECK(SceneGraph::allocateSingleton().init(allocCb, allocCbUserData));
+	ANKI_CHECK(SceneGraph::allocateSingleton().init(m_allocCallback, m_allocUserData));
 
+	GrManager::getSingleton().finish();
 	ANKI_CORE_LOGI("Application initialized");
 
 	return Error::kNone;
@@ -367,6 +372,13 @@ Error App::mainLoop()
 {
 	// Initialize the application
 	Error err = Error::kNone;
+	if((err = userPreInit()))
+	{
+		ANKI_CORE_LOGE("User initialization failed. Shutting down");
+		cleanup();
+		return err;
+	}
+
 	if((err = init()))
 	{
 		ANKI_CORE_LOGE("App initialization failed. Shutting down");
@@ -374,14 +386,12 @@ Error App::mainLoop()
 		return err;
 	}
 
-	GrManager::getSingleton().beginFrame();
-	if((err = userInit()))
+	if((err = userPostInit()))
 	{
 		ANKI_CORE_LOGE("User initialization failed. Shutting down");
 		cleanup();
 		return err;
 	}
-	GrManager::getSingleton().endFrame();
 
 	// Continue with the main loop
 	ANKI_CORE_LOGI("Entering main loop");
@@ -510,19 +520,6 @@ Error App::mainLoop()
 	}
 
 	return Error::kNone;
-}
-
-void App::initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData)
-{
-	if(ANKI_STATS_ENABLED && g_displayStatsCVar > 1)
-	{
-		allocCb = statsAllocCallback;
-		allocCbUserData = this;
-	}
-	else
-	{
-		// Leave the default
-	}
 }
 
 Bool App::toggleDeveloperConsole()

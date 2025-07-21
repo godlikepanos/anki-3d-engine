@@ -13,16 +13,18 @@ using namespace anki;
 
 static void generateSphere(DynamicArray<Vec3>& positions, DynamicArray<UVec3>& indices, U32 sliceCount, U32 stackCount)
 {
+	const F32 stackCountf = F32(stackCount);
+	const F32 sliceCountf = F32(sliceCount);
 	positions.emplaceBack(0.0f, 1.0f, 0.0f);
 	const U32 v0 = 0;
 
 	// generate vertices per stack / slice
-	for(U32 i = 0u; i < stackCount - 1; i++)
+	for(F32 i = 0.0f; i < stackCountf - 1.0f; i += 1.0f)
 	{
-		const F32 phi = kPi * (i + 1) / stackCount;
-		for(F32 j = 0u; j < sliceCount; j++)
+		const F32 phi = kPi * (i + 1.0f) / stackCountf;
+		for(F32 j = 0.0f; j < sliceCountf; j += 1.0f)
 		{
-			const F32 theta = 2.0f * kPi * F32(j) / sliceCount;
+			const F32 theta = 2.0f * kPi * F32(j) / sliceCountf;
 			const F32 x = sin(phi) * cos(theta);
 			const F32 y = cos(phi);
 			const F32 z = sin(phi) * sin(theta);
@@ -66,7 +68,6 @@ static void generateSphere(DynamicArray<Vec3>& positions, DynamicArray<UVec3>& i
 ANKI_TEST(Gr, AsyncComputeBench)
 {
 	const Bool useAsyncQueue = true;
-	const Bool runConcurently = true;
 	const U32 spheresToDrawPerDimension = 100;
 	const U32 windowSize = 512;
 

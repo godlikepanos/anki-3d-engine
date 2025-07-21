@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "AnKi/Util/Tracer.h"
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Core/App.h>
@@ -103,7 +102,7 @@ void GrManager::endFrame()
 void GrManager::finish()
 {
 	ANKI_VK_SELF(GrManagerImpl);
-	self.finish();
+	self.finishInternal();
 }
 
 #define ANKI_NEW_GR_OBJECT(type) \
@@ -154,32 +153,10 @@ GrManagerImpl::~GrManagerImpl()
 {
 	ANKI_VK_LOGI("Destroying Vulkan backend");
 
-	// 1st THING: wait for all fences
-	for(PerFrame& frame : m_perFrame)
-	{
-		for(MicroFencePtr& fence : frame.m_fences)
-		{
-			if(fence)
-			{
-				fence->clientWait(kMaxSecond);
-			}
-		}
+	// 1st THING: wait for the GPU
+	finishInternal();
 
-		frame.m_fences.destroy();
-	}
-
-	// 2nd THING: wait for the GPU
-	for(VkQueue& queue : m_queues)
-	{
-		LockGuard<Mutex> lock(m_globalMtx);
-		if(queue)
-		{
-			vkQueueWaitIdle(queue);
-			queue = VK_NULL_HANDLE;
-		}
-	}
-
-	// 3rd THING: The destroy everything that has a reference to GrObjects.
+	// 2nd THING: The destroy everything that has a reference to GrObjects.
 	m_crntSwapchain.reset(nullptr);
 	SwapchainFactory::freeSingleton();
 
@@ -189,12 +166,12 @@ GrManagerImpl::~GrManagerImpl()
 		deleteObjectsMarkedForDeletion();
 	}
 
-	// 4th THING: Continue with the rest
+	// 3rd THING: Continue with the rest
 	CommandBufferFactory::freeSingleton();
 	OcclusionQueryFactory::freeSingleton();
 	TimestampQueryFactory::freeSingleton();
 	PrimitivesPassedClippingFactory::freeSingleton();
-	SemaphoreFactory::freeSingleton(); // Destroy before fences
+	SemaphoreFactory::freeSingleton();
 	SamplerFactory::freeSingleton();
 
 	GpuMemoryManager::freeSingleton();
@@ -1248,7 +1225,6 @@ void GrManagerImpl::beginFrameInternal()
 			if(fence)
 			{
 				const Bool signaled = fence->clientWait(kMaxSecond);
-				ANKI_LOGI("Waited for %s", fence->getName().cstr());
 				if(!signaled)
 				{
 					ANKI_VK_LOGF("Timeout detected");
@@ -1310,6 +1286,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		ANKI_VK_CHECKF(res);
 	}
 
+	ANKI_ASSERT(m_acquiredImageIdx == kMaxU8 && "Tried to acquire multiple times in a frame?");
 	m_acquiredImageIdx = U8(imageIdx);
 	return TexturePtr(m_crntSwapchain->m_textures[imageIdx].get());
 }
@@ -1321,45 +1298,54 @@ void GrManagerImpl::endFrameInternal()
 	LockGuard<Mutex> lock(m_globalMtx);
 
 	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
-
-	ANKI_ASSERT(m_frameState == kPresentableDrawn || m_frameState == kFrameStarted);
-	const Bool drawToPresentable = m_frameState == kPresentableDrawn;
-	m_frameState = kFrameEnded;
+	const Bool imageAcquired = m_acquiredImageIdx < kMaxU8;
 
 	// Present
-	VkResult res;
-	VkPresentInfoKHR present = {};
-	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	present.waitSemaphoreCount = (drawToPresentable) ? 1 : 0;
-	present.pWaitSemaphores =
-		(drawToPresentable) ? &m_crntSwapchain->m_renderSemaphores[m_frame % m_crntSwapchain->m_renderSemaphores.getSize()]->getHandle() : nullptr;
-	present.swapchainCount = 1;
-	present.pSwapchains = &m_crntSwapchain->m_swapchain;
-	const U32 idx = m_acquiredImageIdx;
-	present.pImageIndices = &idx;
-	present.pResults = &res;
-
-	const VkResult res1 = vkQueuePresentKHR(m_queues[frame.m_queueWroteToSwapchainImage], &present);
-	if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
+	if(imageAcquired)
 	{
-		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queues and create a new one");
-		for(VkQueue queue : m_queues)
+		ANKI_ASSERT(m_frameState == kPresentableDrawn && "Acquired an image but didn't draw to it?");
+		ANKI_ASSERT(m_acquiredImageIdx < kMaxU8);
+
+		VkResult res;
+		VkPresentInfoKHR present = {};
+		present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present.waitSemaphoreCount = 1;
+		present.pWaitSemaphores = &m_crntSwapchain->m_renderSemaphores[m_acquiredImageIdx]->getHandle();
+		present.swapchainCount = 1;
+		present.pSwapchains = &m_crntSwapchain->m_swapchain;
+		const U32 idx = m_acquiredImageIdx;
+		present.pImageIndices = &idx;
+		present.pResults = &res;
+
+		const VkResult res1 = vkQueuePresentKHR(m_queues[frame.m_queueWroteToSwapchainImage], &present);
+		if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
 		{
-			if(queue)
+			ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queues and create a new one");
+			for(VkQueue queue : m_queues)
 			{
-				vkQueueWaitIdle(queue);
+				if(queue)
+				{
+					vkQueueWaitIdle(queue);
+				}
 			}
+			vkDeviceWaitIdle(m_device);
+			m_crntSwapchain.reset(nullptr);
+			m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 		}
-		vkDeviceWaitIdle(m_device);
-		m_crntSwapchain.reset(nullptr);
-		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
+		else
+		{
+			ANKI_VK_CHECKF(res1);
+			ANKI_VK_CHECKF(res);
+		}
+
+		m_acquiredImageIdx = kMaxU8;
 	}
 	else
 	{
-		ANKI_VK_CHECKF(res1);
-		ANKI_VK_CHECKF(res);
+		ANKI_ASSERT(m_frameState == kFrameStarted);
 	}
 
+	m_frameState = kFrameEnded;
 	GpuMemoryManager::getSingleton().updateStats();
 }
 
@@ -1435,11 +1421,12 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 		// Do some special stuff for the last command buffer
 		GrManagerImpl::PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
-		const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 		if(renderedToDefaultFb)
 		{
 			ANKI_ASSERT(m_frameState == kPresentableAcquired);
 			m_frameState = kPresentableDrawn;
+
+			const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 
 			// Wait semaphore
 			waitSemaphores.emplaceBack(acquireSemaphore.getHandle());
@@ -1451,17 +1438,13 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 			waitTimelineValues.emplaceBack(0);
 
 			// Get the semaphore to signal and then wait on present
-			const MicroSemaphore& renderSemaphore = *m_crntSwapchain->m_renderSemaphores[m_frame & m_crntSwapchain->m_renderSemaphores.getSize()];
+			const MicroSemaphore& renderSemaphore = *m_crntSwapchain->m_renderSemaphores[m_acquiredImageIdx];
 			signalSemaphores.emplaceBack(renderSemaphore.getHandle());
 
 			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
 			signalTimelineValues.emplaceBack(0);
 
 			frame.m_queueWroteToSwapchainImage = queueType;
-		}
-		else
-		{
-			ANKI_ASSERT(m_frameState == kFrameStarted);
 		}
 
 		frame.m_fences.emplaceBack(fence);
@@ -1490,7 +1473,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 	}
 }
 
-void GrManagerImpl::finish()
+void GrManagerImpl::finishInternal()
 {
 	LockGuard<Mutex> lock(m_globalMtx);
 	for(VkQueue queue : m_queues)
@@ -1500,6 +1483,29 @@ void GrManagerImpl::finish()
 			vkQueueWaitIdle(queue);
 		}
 	}
+
+	for(PerFrame& frame : m_perFrame)
+	{
+		for(MicroFencePtr& fence : frame.m_fences)
+		{
+			const Bool signaled = fence->clientWait(kMaxSecond);
+			if(!signaled)
+			{
+				ANKI_VK_LOGF("Timeout detected");
+			}
+		}
+
+		frame.m_fences.destroy();
+	}
+
+	// Since we waited for the GPU do a cleanup as well
+	const U64 oldFrame = m_frame;
+	for(U32 frame = 0; frame < m_perFrame.getSize(); ++frame)
+	{
+		m_frame = frame;
+		deleteObjectsMarkedForDeletion();
+	}
+	m_frame = oldFrame;
 }
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const
@@ -1681,7 +1687,7 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 
 	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		ANKI_VK_LOGI("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr()); // TODO
+		ANKI_VK_LOGE("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
 	}
 	else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{

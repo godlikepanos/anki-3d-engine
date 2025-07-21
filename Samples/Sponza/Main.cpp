@@ -28,12 +28,8 @@ int myMain(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	MyApp* app = new MyApp(allocAligned, nullptr);
-	err = app->init(argc, argv, "Sponza");
-	if(!err)
-	{
-		err = app->mainLoop();
-	}
+	MyApp* app = new MyApp(argc, argv, "Sponza");
+	err = app->mainLoop();
 
 	delete app;
 	if(err)

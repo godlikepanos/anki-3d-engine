@@ -67,6 +67,8 @@ end
 class MyApp : public SampleApp
 {
 public:
+	using SampleApp::SampleApp;
+
 	Error sampleExtraInit() override;
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 };
@@ -480,14 +482,9 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	Error err = Error::kNone;
-
-	MyApp* app = new MyApp;
-	err = app->init(argc, argv, "PhysicsPlayground");
-	if(!err)
-	{
-		err = app->mainLoop();
-	}
+	MyApp* app = new MyApp(argc, argv, "PhysicsPlayground");
+	Error err = app->mainLoop();
+	delete app;
 
 	if(err)
 	{
@@ -497,8 +494,6 @@ int myMain(int argc, char* argv[])
 	{
 		ANKI_LOGI("Bye!!");
 	}
-
-	delete app;
 
 	return 0;
 }
