@@ -828,7 +828,7 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 
 	const F32 refDepth = TEX(g_depthTex, coord);
 
-	F32 weightSum = kEpsilonF32;
+	F32 weightSum = calculateBilateralWeightDepth<F32>(0.0, 0.0, 1.0); // Highest weight that this function can give
 
 	const Vec4 rgba = TEX(g_inTex, coord);
 

@@ -18,7 +18,12 @@ inline NumericCVar<U32> g_ssaoSampleCountCVar("R", "SsaoSampleCount", 4, 1, 1024
 inline NumericCVar<F32> g_ssaoRadiusCVar("R", "SsaoRadius", 2.0f, 0.1f, 100.0f, "SSAO radius in meters");
 inline BoolCVar g_ssaoQuarterRezCVar("R", "SsaoQuarterResolution", ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez");
 inline NumericCVar<F32> g_ssaoPowerCVar("R", "SsaoPower", 1.5f, 0.1f, 100.0f, "SSAO power");
-inline NumericCVar<U8> g_ssaoSpatialQualityCVar("R", "SsaoSpatialQuality", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1, "SSAO spatial denoise quality");
+inline NumericCVar<U8> g_ssaoSpatialDenoiseSampleCountCVar(
+	"R", "SsaoSpatialDenoiseSampleCount", (ANKI_PLATFORM_MOBILE) ? 3 : 9,
+	[](U8 val) {
+		return val == 3 || val == 5 || val == 7 || val == 9;
+	},
+	"SSAO spatial denoise quality");
 
 /// Screen space ambient occlusion.
 class Ssao : public RendererObject
@@ -48,7 +53,8 @@ public:
 public:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	ShaderProgramPtr m_spatialDenoiseGrProg;
+	ShaderProgramPtr m_spatialDenoiseVerticalGrProg;
+	ShaderProgramPtr m_spatialDenoiseHorizontalGrProg;
 	ShaderProgramPtr m_tempralDenoiseGrProg;
 
 	RenderTargetDesc m_bentNormalsAndSsaoRtDescr;

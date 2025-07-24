@@ -225,14 +225,8 @@ struct SsaoConstants
 	U32 m_frameCount;
 
 	Mat3x4 m_viewMat;
-};
 
-struct SsaoSpatialDenoiseConstants
-{
 	Mat3x4 m_viewToWorldMat;
-
-	Vec2 m_linearizeDepthParams;
-	Vec2 m_padding;
 };
 
 struct LodAndRenderableIndex
