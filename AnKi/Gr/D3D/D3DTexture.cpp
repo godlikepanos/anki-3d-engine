@@ -5,7 +5,6 @@
 
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
-#include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 
 namespace anki {
@@ -43,37 +42,40 @@ U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDesc& subre
 
 TextureImpl::~TextureImpl()
 {
-	TextureGarbage* garbage = anki::newInstance<TextureGarbage>(GrMemoryPool::getSingleton());
+	GrDynamicArray<DescriptorHeapHandle> descriptorHeapHandles;
 
 	for(auto& it : m_viewsMap)
 	{
-		garbage->m_descriptorHeapHandles.emplaceBack(it.m_handle);
+		descriptorHeapHandles.emplaceBack(it.m_handle);
 		if(it.m_bindlessHandle.isCreated())
 		{
-			garbage->m_descriptorHeapHandles.emplaceBack(it.m_bindlessHandle);
+			descriptorHeapHandles.emplaceBack(it.m_bindlessHandle);
 		}
 	}
 
 	if(m_wholeTextureSrv.m_handle.isCreated())
 	{
-		garbage->m_descriptorHeapHandles.emplaceBack(m_wholeTextureSrv.m_handle);
+		descriptorHeapHandles.emplaceBack(m_wholeTextureSrv.m_handle);
 		if(m_wholeTextureSrv.m_bindlessHandle.isCreated())
 		{
-			garbage->m_descriptorHeapHandles.emplaceBack(m_wholeTextureSrv.m_bindlessHandle);
+			descriptorHeapHandles.emplaceBack(m_wholeTextureSrv.m_bindlessHandle);
 		}
 	}
 
 	if(m_firstSurfaceRtvOrDsv.m_handle.isCreated())
 	{
-		garbage->m_descriptorHeapHandles.emplaceBack(m_firstSurfaceRtvOrDsv.m_handle);
+		descriptorHeapHandles.emplaceBack(m_firstSurfaceRtvOrDsv.m_handle);
+	}
+
+	for(U32 i = 0; i < descriptorHeapHandles.getSize(); ++i)
+	{
+		DescriptorFactory::getSingleton().freePersistent(descriptorHeapHandles[i]);
 	}
 
 	if(!isExternal())
 	{
-		garbage->m_resource = m_resource;
+		safeRelease(m_resource);
 	}
-
-	D3DFrameGarbageCollector::getSingleton().newTextureGarbage(garbage);
 }
 
 Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo& init)

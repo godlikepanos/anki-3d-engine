@@ -156,7 +156,7 @@ GrManagerImpl::~GrManagerImpl()
 	// 1st THING: wait for the GPU
 	finishInternal();
 
-	// 2nd THING: The destroy everything that has a reference to GrObjects.
+	// 2nd THING: Destroy everything that has a reference to GrObjects.
 	m_crntSwapchain.reset(nullptr);
 	SwapchainFactory::freeSingleton();
 

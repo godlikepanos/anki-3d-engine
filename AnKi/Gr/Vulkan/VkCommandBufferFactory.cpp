@@ -12,13 +12,6 @@ namespace anki {
 
 static StatCounter g_commandBufferCountStatVar(StatCategory::kGr, "CommandBufferCount", StatFlag::kNone);
 
-void MicroCommandBuffer::releaseInternal()
-{
-	ANKI_TRACE_FUNCTION();
-	m_dsAllocator.reset();
-	m_threadAlloc->recycleCommandBuffer(this);
-}
-
 MicroCommandBuffer::~MicroCommandBuffer()
 {
 	m_dsAllocator.destroy();
@@ -33,6 +26,13 @@ MicroCommandBuffer::~MicroCommandBuffer()
 
 		g_commandBufferCountStatVar.decrement(1_U64);
 	}
+}
+
+void MicroCommandBuffer::releaseInternal()
+{
+	ANKI_TRACE_FUNCTION();
+	m_dsAllocator.reset();
+	m_threadAlloc->recycleCommandBuffer(this);
 }
 
 Error CommandBufferThreadAllocator::init()

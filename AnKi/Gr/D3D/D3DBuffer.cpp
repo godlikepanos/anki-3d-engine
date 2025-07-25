@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DBuffer.h>
-#include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 
 namespace anki {
@@ -74,10 +73,7 @@ void Buffer::invalidate([[maybe_unused]] PtrSize offset, [[maybe_unused]] PtrSiz
 BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
-
-	BufferGarbage* garbage = anki::newInstance<BufferGarbage>(GrMemoryPool::getSingleton());
-	garbage->m_resource = m_resource;
-	D3DFrameGarbageCollector::getSingleton().newBufferGarbage(garbage);
+	safeRelease(m_resource);
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)

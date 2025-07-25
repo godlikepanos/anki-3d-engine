@@ -48,10 +48,10 @@ private:
 	DescriptorState m_descriptors;
 	GraphicsStateTracker m_graphicsState;
 
-	StackMemoryPool* m_fastPool = nullptr; // Cache it.
+	StackMemoryPool m_fastPool; // Cache it.
 
-	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_timestampQueries;
-	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_pipelineQueries;
+	DynamicArray<TimestampQueryInternalPtr, MemoryPoolPtrWrapper<StackMemoryPool>> m_timestampQueries;
+	DynamicArray<PipelineQueryInternalPtr, MemoryPoolPtrWrapper<StackMemoryPool>> m_pipelineQueries;
 
 	const ShaderProgramImpl* m_wgProg = nullptr;
 

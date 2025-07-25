@@ -5,7 +5,6 @@
 
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 #include <AnKi/Gr/D3D/D3DDescriptor.h>
-#include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 
 #include <AnKi/Gr/D3D/D3DAccelerationStructure.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
@@ -186,31 +185,31 @@ void GrManagerImpl::beginFrameInternal()
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
+	// Do that at begin frame, ALWAYS
 	m_crntFrame = (m_crntFrame + 1) % m_frames.getSize();
-
-	// Wait for the oldest frame because we don't want to start the new one too early
 	PerFrame& frame = m_frames[m_crntFrame];
 
-	for(MicroFencePtr& fence : frame.m_fences)
+	// Wait for the oldest frame because we don't want to start the new one too early
 	{
-		if(fence)
+		ANKI_TRACE_SCOPED_EVENT(WaitFences);
+		for(MicroFencePtr& fence : frame.m_fences)
 		{
-			const Bool signaled = fence->clientWait(kMaxSecond);
-			if(!signaled)
+			if(fence)
 			{
-				ANKI_D3D_LOGF("Timeout detected");
+				const Bool signaled = fence->clientWait(kMaxSecond);
+				if(!signaled)
+				{
+					ANKI_D3D_LOGF("Timeout detected");
+				}
 			}
 		}
 	}
 
 	frame.m_fences.destroy();
-
-	// Reset the rest of the frame (after the fences)
-	frame.m_presentFence.reset(nullptr);
 	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
 
 	// Clear garbage
-	D3DFrameGarbageCollector::getSingleton().beginFrameAndCollectGarbage();
+	deleteObjectsMarkedForDeletion();
 }
 
 TexturePtr GrManagerImpl::acquireNextPresentableTextureInternal()
@@ -218,7 +217,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTextureInternal()
 	ANKI_TRACE_FUNCTION();
 
 	m_crntSwapchain->m_backbufferIdx = m_crntSwapchain->m_swapchain->GetCurrentBackBufferIndex();
-	return m_crntSwapchain->m_textures[m_crntSwapchain->m_backbufferIdx];
+	Texture* tex = m_crntSwapchain->m_textures[m_crntSwapchain->m_backbufferIdx].get();
+	return TexturePtr(tex);
 }
 
 void GrManagerImpl::endFrameInternal()
@@ -230,13 +230,10 @@ void GrManagerImpl::endFrameInternal()
 	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance("Present");
 	presentFence->getImplementation().gpuSignal(GpuQueueType::kGeneral); // Only general can present
 
-	m_crntSwapchain->setFence(presentFence.get());
-
 	LockGuard lock(m_globalMtx);
 
 	auto& crntFrame = m_frames[m_crntFrame];
 
-	crntFrame.m_presentFence = presentFence;
 	crntFrame.m_fences.emplaceBack(presentFence);
 
 	DescriptorFactory::getSingleton().endFrame();
@@ -268,7 +265,6 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 			ANKI_ASSERT(queueType == mcmdb.getQueueType());
 		}
 
-		mcmdb.setFence(fence.get());
 		impl.postSubmitWork(fence.get());
 	}
 
@@ -298,6 +294,9 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 void GrManagerImpl::finishInternal()
 {
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	// Queue wait
 	if(FenceFactory::isAllocated())
 	{
 		for(GpuQueueType qType : EnumIterable<GpuQueueType>())
@@ -307,6 +306,29 @@ void GrManagerImpl::finishInternal()
 			fence->clientWait(kMaxSecond);
 		}
 	}
+
+	for(PerFrame& frame : m_frames)
+	{
+		for(MicroFencePtr& fence : frame.m_fences)
+		{
+			const Bool signaled = fence->clientWait(kMaxSecond);
+			if(!signaled)
+			{
+				ANKI_D3D_LOGF("Timeout detected");
+			}
+		}
+
+		frame.m_fences.destroy();
+	}
+
+	// Since we waited for the GPU do a cleanup as well
+	const U8 oldFrame = m_crntFrame;
+	for(U8 frame = 0; frame < m_frames.getSize(); ++frame)
+	{
+		m_crntFrame = frame;
+		deleteObjectsMarkedForDeletion();
+	}
+	m_crntFrame = oldFrame;
 }
 
 Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
@@ -520,7 +542,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	RootSignatureFactory::allocateSingleton();
 	FenceFactory::allocateSingleton();
 	CommandBufferFactory::allocateSingleton();
-	D3DFrameGarbageCollector::allocateSingleton();
 
 	IndirectCommandSignatureFactory::allocateSingleton();
 	ANKI_CHECK(IndirectCommandSignatureFactory::getSingleton().init());
@@ -547,20 +568,23 @@ void GrManagerImpl::destroy()
 {
 	ANKI_D3D_LOGI("Destroying D3D backend");
 
-	m_zeroBuffer.reset(nullptr);
-
 	finishInternal();
 
-	// Cleanup self
+	// Destroy everything that has a reference to GrObjects.
+	m_zeroBuffer.reset(nullptr);
 	m_crntSwapchain.reset(nullptr);
-	m_frames = {};
+	SwapchainFactory::freeSingleton();
+
+	for(U8 frame = 0; frame < m_frames.getSize(); ++frame)
+	{
+		m_crntFrame = frame;
+		deleteObjectsMarkedForDeletion();
+	}
 
 	// Destroy systems
-	CommandBufferFactory::freeSingleton();
 	PrimitivesPassedClippingFactory::freeSingleton();
 	TimestampQueryFactory::freeSingleton();
-	SwapchainFactory::freeSingleton();
-	D3DFrameGarbageCollector::freeSingleton();
+	CommandBufferFactory::freeSingleton();
 	RootSignatureFactory::freeSingleton();
 	DescriptorFactory::freeSingleton();
 	IndirectCommandSignatureFactory::freeSingleton();

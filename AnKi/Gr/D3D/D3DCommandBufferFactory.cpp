@@ -13,8 +13,6 @@ static StatCounter g_commandBufferCountStatVar(StatCategory::kGr, "CommandBuffer
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {
-	m_fastPool.destroy();
-
 	safeRelease(m_cmdList);
 	safeRelease(m_cmdAllocator);
 
@@ -37,32 +35,9 @@ Error MicroCommandBuffer::init(CommandBufferFlag flags)
 	return Error::kNone;
 }
 
-void MicroCommandBuffer::reset()
+void MicroCommandBuffer::releaseInternal()
 {
-	ANKI_TRACE_SCOPED_EVENT(D3DCommandBufferReset);
-
-	ANKI_ASSERT(m_refcount.load() == 0);
-	ANKI_ASSERT(!m_fence.isCreated());
-
-	for(GrObjectType type : EnumIterable<GrObjectType>())
-	{
-		m_objectRefs[type].destroy();
-	}
-
-	m_fastPool.reset();
-
-	// Command list should already be reset on submit
-
-	m_cmdAllocator->Reset();
-	m_cmdList->Reset(m_cmdAllocator, nullptr);
-}
-
-void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* cmdb)
-{
-	if(cmdb)
-	{
-		CommandBufferFactory::getSingleton().deleteCommandBuffer(cmdb);
-	}
+	CommandBufferFactory::getSingleton().recycleCommandBuffer(this);
 }
 
 CommandBufferFactory::~CommandBufferFactory()
@@ -73,7 +48,7 @@ CommandBufferFactory::~CommandBufferFactory()
 	}
 }
 
-void CommandBufferFactory::deleteCommandBuffer(MicroCommandBuffer* cmdb)
+void CommandBufferFactory::recycleCommandBuffer(MicroCommandBuffer* cmdb)
 {
 	ANKI_ASSERT(cmdb);
 
@@ -98,6 +73,10 @@ Error CommandBufferFactory::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroC
 			cmdb = nullptr;
 			return err;
 		}
+	}
+	else
+	{
+		cmdb->reset();
 	}
 
 	ptr.reset(cmdb);

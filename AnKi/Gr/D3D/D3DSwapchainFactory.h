@@ -25,7 +25,7 @@ public:
 
 	Array<ID3D12Resource*, kMaxFramesInFlight> m_rtvResources = {};
 
-	Array<TexturePtr, kMaxFramesInFlight> m_textures;
+	Array<TextureInternalPtr, kMaxFramesInFlight> m_textures;
 
 	U32 m_backbufferIdx = 0;
 
@@ -38,24 +38,17 @@ public:
 		m_refcount.fetchAdd(1);
 	}
 
-	I32 release() const
+	void release()
 	{
-		return m_refcount.fetchSub(1);
+		if(m_refcount.fetchSub(1) == 1)
+		{
+			releaseInternal();
+		}
 	}
 
 	I32 getRefcount() const
 	{
 		return m_refcount.load();
-	}
-
-	void setFence(D3DMicroFence* fence)
-	{
-		m_fence.reset(fence);
-	}
-
-	D3DMicroFence* getFence() const
-	{
-		return m_fence.tryGet();
 	}
 
 	/// Interface method.
@@ -65,26 +58,19 @@ public:
 	}
 
 private:
-	MicroFencePtr m_fence;
 	mutable Atomic<I32> m_refcount = {0};
 
 	Error initInternal();
-};
 
-/// Deleter for MicroSwapchainPtr smart pointer.
-class MicroSwapchainPtrDeleter
-{
-public:
-	void operator()(MicroSwapchain* x);
+	void releaseInternal();
 };
 
 /// MicroSwapchain smart pointer.
-using MicroSwapchainPtr = IntrusivePtr<MicroSwapchain, MicroSwapchainPtrDeleter>;
+using MicroSwapchainPtr = IntrusiveNoDelPtr<MicroSwapchain>;
 
 /// Swapchain factory.
 class SwapchainFactory : public MakeSingleton<SwapchainFactory>
 {
-	friend class MicroSwapchainPtrDeleter;
 	friend class MicroSwapchain;
 
 public:
@@ -100,13 +86,6 @@ public:
 private:
 	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };
-/// @}
-
-inline void MicroSwapchainPtrDeleter::operator()(MicroSwapchain* s)
-{
-	ANKI_ASSERT(s);
-	SwapchainFactory::getSingleton().m_recycler.recycle(s);
-}
 /// @}
 
 } // end namespace anki

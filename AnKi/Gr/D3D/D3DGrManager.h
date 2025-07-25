@@ -9,6 +9,7 @@
 #include <AnKi/Gr/D3D/D3DCommon.h>
 #include <AnKi/Gr/D3D/D3DFence.h>
 #include <AnKi/Gr/D3D/D3DSwapchainFactory.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -64,6 +65,20 @@ public:
 		return *m_zeroBuffer;
 	}
 
+	/// @note It's thread-safe.
+	void releaseObject(GrObject* object)
+	{
+		ANKI_ASSERT(object);
+		LockGuard lock(m_globalMtx);
+		m_frames[m_crntFrame].m_objectsMarkedForDeletion.emplaceBack(object);
+	}
+
+	void releaseObjectDeleteLoop(GrObject* object)
+	{
+		ANKI_ASSERT(object);
+		m_frames[m_crntFrame].m_objectsMarkedForDeletion.emplaceBack(object);
+	}
+
 private:
 	ID3D12DeviceX* m_device = nullptr;
 	Array<ID3D12CommandQueue*, U32(GpuQueueType::kCount)> m_queues = {};
@@ -78,9 +93,10 @@ private:
 	{
 	public:
 		GrDynamicArray<MicroFencePtr> m_fences;
-		MicroFencePtr m_presentFence;
 
 		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+
+		GrDynamicArray<GrObject*> m_objectsMarkedForDeletion;
 	};
 
 	Array<PerFrame, kMaxFramesInFlight> m_frames;
@@ -88,7 +104,7 @@ private:
 
 	D3DCapabilities m_d3dCapabilities;
 
-	BufferPtr m_zeroBuffer; ///< Used in CommandBuffer::zeroBuffer
+	BufferInternalPtr m_zeroBuffer; ///< Used in CommandBuffer::zeroBuffer
 
 	U64 m_timestampFrequency = 0;
 
@@ -105,6 +121,21 @@ private:
 	void submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence);
 
 	void finishInternal();
+
+	void deleteObjectsMarkedForDeletion()
+	{
+		ANKI_TRACE_FUNCTION();
+		PerFrame& frame = m_frames[m_crntFrame];
+		while(!frame.m_objectsMarkedForDeletion.isEmpty())
+		{
+			GrDynamicArray<GrObject*> objects = std::move(frame.m_objectsMarkedForDeletion);
+
+			for(GrObject* obj : objects)
+			{
+				deleteInstance(GrMemoryPool::getSingleton(), obj);
+			}
+		}
+	}
 };
 /// @}
 

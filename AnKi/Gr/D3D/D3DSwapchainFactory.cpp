@@ -91,6 +91,11 @@ Error MicroSwapchain::initInternal()
 	return Error::kNone;
 }
 
+void MicroSwapchain::releaseInternal()
+{
+	SwapchainFactory::getSingleton().m_recycler.recycle(this);
+}
+
 MicroSwapchainPtr SwapchainFactory::newInstance()
 {
 	// Delete stale swapchains (they are stale because they are probably out of data) and always create a new one

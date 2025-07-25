@@ -32,17 +32,17 @@ void CommandBuffer::endRecording()
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	// Write the queries to their result buffers
-	for(QueryHandle handle : self.m_timestampQueries)
+	for(const TimestampQueryInternalPtr& q : self.m_timestampQueries)
 	{
-		const QueryInfo qinfo = TimestampQueryFactory::getSingleton().getQueryInfo(handle);
+		const QueryInfo qinfo = TimestampQueryFactory::getSingleton().getQueryInfo(static_cast<const TimestampQueryImpl&>(*q).m_handle);
 
 		self.m_cmdList->ResolveQueryData(qinfo.m_queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, qinfo.m_indexInHeap, 1, qinfo.m_resultsBuffer,
 										 qinfo.m_resultsBufferOffset);
 	}
 
-	for(QueryHandle handle : self.m_pipelineQueries)
+	for(const PipelineQueryInternalPtr& q : self.m_pipelineQueries)
 	{
-		const QueryInfo qinfo = PrimitivesPassedClippingFactory::getSingleton().getQueryInfo(handle);
+		const QueryInfo qinfo = PrimitivesPassedClippingFactory::getSingleton().getQueryInfo(static_cast<const PipelineQueryImpl&>(*q).m_handle);
 
 		self.m_cmdList->ResolveQueryData(qinfo.m_queryHeap, D3D12_QUERY_TYPE_PIPELINE_STATISTICS, qinfo.m_indexInHeap, 1, qinfo.m_resultsBuffer,
 										 qinfo.m_resultsBufferOffset);
@@ -235,8 +235,6 @@ void CommandBuffer::bindSampler(U32 reg, U32 space, Sampler* sampler)
 
 	const SamplerImpl& impl = static_cast<const SamplerImpl&>(*sampler);
 	self.m_descriptors.bindSampler(space, reg, impl.m_handle);
-
-	self.m_mcmdb->pushObjectRef(sampler);
 }
 
 void CommandBuffer::bindConstantBuffer(U32 reg, U32 space, const BufferView& buff)
@@ -272,8 +270,6 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	self.commandCommon();
-
-	self.m_mcmdb->pushObjectRef(prog);
 
 	const ShaderProgramImpl& progImpl = static_cast<const ShaderProgramImpl&>(*prog);
 	const Bool isCompute = !!(progImpl.getShaderTypes() & ShaderTypeBit::kCompute);
@@ -646,7 +642,7 @@ void CommandBuffer::zeroBuffer(const BufferView& buff)
 	CopyBufferToBufferInfo defaultCopyRange;
 	if(copyRangeCount > 1)
 	{
-		newArray<CopyBufferToBufferInfo>(*self.m_fastPool, copyRangeCount, copyRanges);
+		newArray<CopyBufferToBufferInfo>(self.m_fastPool, copyRangeCount, copyRanges);
 	}
 	else
 	{
@@ -720,8 +716,8 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		}
 	};
 
-	DynamicArray<D3D12_TEXTURE_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> texBarriers(self.m_fastPool);
-	DynamicArray<D3D12_BUFFER_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(self.m_fastPool);
+	DynamicArray<D3D12_TEXTURE_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> texBarriers(&self.m_fastPool);
+	DynamicArray<D3D12_BUFFER_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(&self.m_fastPool);
 
 	for(const TextureBarrierInfo& barrier : textures)
 	{
@@ -797,7 +793,6 @@ void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	self.commandCommon();
-	self.m_mcmdb->pushObjectRef(query);
 
 	const PipelineQueryImpl& impl = static_cast<const PipelineQueryImpl&>(*query);
 
@@ -812,13 +807,11 @@ void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	self.commandCommon();
-	self.m_mcmdb->pushObjectRef(query);
+
+	self.m_pipelineQueries.emplaceBack(query);
 
 	const PipelineQueryImpl& impl = static_cast<const PipelineQueryImpl&>(*query);
-	self.m_pipelineQueries.emplaceBack(impl.m_handle);
-
 	const QueryInfo qinfo = PrimitivesPassedClippingFactory::getSingleton().getQueryInfo(impl.m_handle);
-
 	self.m_cmdList->EndQuery(qinfo.m_queryHeap, D3D12_QUERY_TYPE_PIPELINE_STATISTICS, qinfo.m_indexInHeap);
 }
 
@@ -828,11 +821,10 @@ void CommandBuffer::writeTimestamp(TimestampQuery* query)
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	self.commandCommon();
-	self.m_mcmdb->pushObjectRef(query);
+
+	self.m_timestampQueries.emplaceBack(query);
 
 	const TimestampQueryImpl& impl = static_cast<const TimestampQueryImpl&>(*query);
-	self.m_timestampQueries.emplaceBack(impl.m_handle);
-
 	const QueryInfo qinfo = TimestampQueryFactory::getSingleton().getQueryInfo(impl.m_handle);
 	self.m_cmdList->EndQuery(qinfo.m_queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, qinfo.m_indexInHeap);
 }
@@ -926,28 +918,28 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	getName().toWideChars(wstr.getBegin(), wstr.getSize());
 	m_cmdList->SetName(wstr.getBegin());
 
-	m_fastPool = &m_mcmdb->getFastMemoryPool();
+	m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(), GrMemoryPool::getSingleton().getAllocationCallbackUserData(), 256_KB, 2.0f);
 
-	m_descriptors.init(m_fastPool);
+	m_descriptors.init(&m_fastPool);
 
 	m_debugMarkersEnabled = g_debugMarkersCVar;
 
-	m_timestampQueries = {m_fastPool};
-	m_pipelineQueries = {m_fastPool};
+	m_timestampQueries = {&m_fastPool};
+	m_pipelineQueries = {&m_fastPool};
 
 	return Error::kNone;
 }
 
 void CommandBufferImpl::postSubmitWork(D3DMicroFence* fence)
 {
-	for(QueryHandle handle : m_timestampQueries)
+	for(const TimestampQueryInternalPtr& q : m_timestampQueries)
 	{
-		TimestampQueryFactory::getSingleton().postSubmitWork(handle, fence);
+		TimestampQueryFactory::getSingleton().postSubmitWork(static_cast<const TimestampQueryImpl&>(*q).m_handle, fence);
 	}
 
-	for(QueryHandle handle : m_pipelineQueries)
+	for(const PipelineQueryInternalPtr& q : m_pipelineQueries)
 	{
-		PrimitivesPassedClippingFactory::getSingleton().postSubmitWork(handle, fence);
+		PrimitivesPassedClippingFactory::getSingleton().postSubmitWork(static_cast<const PipelineQueryImpl&>(*q).m_handle, fence);
 	}
 }
 
