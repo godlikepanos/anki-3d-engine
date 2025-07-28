@@ -9,6 +9,7 @@
 #include <AnKi/Gr/D3D/D3DShaderProgram.h>
 #include <AnKi/Gr/D3D/D3DTimestampQuery.h>
 #include <AnKi/Gr/D3D/D3DPipelineQuery.h>
+#include <AnKi/Gr/D3D/D3DAccelerationStructure.h>
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -87,7 +88,7 @@ void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 
 	const D3D12_INDEX_BUFFER_VIEW view = {.BufferLocation = impl.getGpuAddress() + buff.getOffset(),
 										  .SizeInBytes = U32(buff.getRange()),
-										  .Format = (type == IndexType::kU16) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT};
+										  .Format = convertIndexType(type)};
 
 	self.m_cmdList->IASetIndexBuffer(&view);
 }
@@ -259,9 +260,12 @@ void CommandBuffer::bindUav(U32 reg, U32 space, const BufferView& buff, Format f
 	self.m_descriptors.bindUav(space, reg, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), fmt);
 }
 
-void CommandBuffer::bindSrv([[maybe_unused]] U32 reg, [[maybe_unused]] U32 space, [[maybe_unused]] AccelerationStructure* as)
+void CommandBuffer::bindSrv(U32 reg, U32 space, AccelerationStructure* as)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	const AccelerationStructureImpl& impl = static_cast<const AccelerationStructureImpl&>(*as);
+	const BufferImpl& asBuff = static_cast<const BufferImpl&>(impl.getAsBuffer());
+	self.m_descriptors.bindSrv(space, reg, asBuff.getGpuAddress());
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
@@ -688,9 +692,18 @@ void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<
 	}
 }
 
-void CommandBuffer::buildAccelerationStructure([[maybe_unused]] AccelerationStructure* as, [[maybe_unused]] const BufferView& scratchBuffer)
+void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(as);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+
+	const AccelerationStructureImpl& impl = static_cast<AccelerationStructureImpl&>(*as);
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc;
+	impl.fillBuildInfo(scratchBuffer, buildDesc);
+
+	self.m_cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 }
 
 void CommandBuffer::upscale([[maybe_unused]] GrUpscaler* upscaler, [[maybe_unused]] const TextureView& inColor,
@@ -718,6 +731,7 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 
 	DynamicArray<D3D12_TEXTURE_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> texBarriers(&self.m_fastPool);
 	DynamicArray<D3D12_BUFFER_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(&self.m_fastPool);
+	D3D12_GLOBAL_BARRIER globalBarrier = {};
 
 	for(const TextureBarrierInfo& barrier : textures)
 	{
@@ -754,7 +768,17 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		sanitizeAccess(bufferBarriers.getBack().AccessAfter);
 	}
 
-	ANKI_ASSERT(accelerationStructures.getSize() == 0 && "TODO");
+	for(const AccelerationStructureBarrierInfo& barrier : accelerationStructures)
+	{
+		const D3D12_GLOBAL_BARRIER barr =
+			static_cast<const AccelerationStructureImpl&>(*barrier.m_as).computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage);
+		globalBarrier.SyncBefore |= barr.SyncBefore;
+		globalBarrier.SyncAfter |= barr.SyncAfter;
+		globalBarrier.AccessBefore |= barr.AccessBefore;
+		globalBarrier.AccessAfter |= barr.AccessAfter;
+	}
+	sanitizeAccess(globalBarrier.AccessBefore);
+	sanitizeAccess(globalBarrier.AccessAfter);
 
 	Array<D3D12_BARRIER_GROUP, 3> barrierGroups;
 	U32 barrierGroupCount = 0;
@@ -771,6 +795,11 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		barrierGroups[barrierGroupCount++] = {.Type = D3D12_BARRIER_TYPE_BUFFER,
 											  .NumBarriers = bufferBarriers.getSize(),
 											  .pBufferBarriers = bufferBarriers.getBegin()};
+	}
+
+	if(accelerationStructures.getSize())
+	{
+		barrierGroups[barrierGroupCount++] = {.Type = D3D12_BARRIER_TYPE_GLOBAL, .NumBarriers = 1, .pGlobalBarriers = &globalBarrier};
 	}
 
 	ANKI_ASSERT(barrierGroupCount > 0);

@@ -396,35 +396,22 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::kArm;
-		m_capabilities.m_minWaveSize = 16;
-		m_capabilities.m_maxWaveSize = 16;
 		break;
 	case 0x10DE:
 		m_capabilities.m_gpuVendor = GpuVendor::kNvidia;
-		m_capabilities.m_minWaveSize = 32;
-		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x1002:
 	case 0x1022:
 		m_capabilities.m_gpuVendor = GpuVendor::kAMD;
-		m_capabilities.m_minWaveSize = 32;
-		m_capabilities.m_maxWaveSize = 64;
 		break;
 	case 0x8086:
 		m_capabilities.m_gpuVendor = GpuVendor::kIntel;
-		m_capabilities.m_minWaveSize = 8;
-		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x5143:
 		m_capabilities.m_gpuVendor = GpuVendor::kQualcomm;
-		m_capabilities.m_minWaveSize = 64;
-		m_capabilities.m_maxWaveSize = 128;
 		break;
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
-		// Choose something really low
-		m_capabilities.m_minWaveSize = 8;
-		m_capabilities.m_maxWaveSize = 8;
 	}
 	ANKI_D3D_LOGI("Vendor identified as %s", &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
@@ -489,6 +476,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Set device capabilities (taken from mesa's dozen driver)
 	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &options1, sizeof(options1)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5)));
 		D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16;
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16)));
 		D3D12_FEATURE_DATA_ARCHITECTURE architecture = {.NodeIndex = 0};
@@ -512,6 +503,23 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			ANKI_D3D_LOGW("ReBAR not supported");
 		}
 
+		if(g_rayTracingCVar && options5.RaytracingTier != D3D12_RAYTRACING_TIER_1_1)
+		{
+			ANKI_D3D_LOGW("Raytracing can't be enabled. Not supported");
+			m_capabilities.m_rayTracingEnabled = false;
+		}
+		else if(g_rayTracingCVar && options5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
+		{
+			ANKI_D3D_LOGV("Raytracing supported");
+			m_capabilities.m_rayTracingEnabled = true;
+		}
+		else
+		{
+			m_capabilities.m_rayTracingEnabled = false;
+		}
+
+		m_capabilities.m_minWaveSize = options1.WaveLaneCountMin;
+		m_capabilities.m_maxWaveSize = options1.WaveLaneCountMax;
 		m_capabilities.m_constantBufferBindOffsetAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 		m_capabilities.m_structuredBufferBindOffsetAlignment = 0; // Not for DX
 		m_capabilities.m_structuredBufferNaturalAlignment = true;
@@ -523,7 +531,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
 		m_capabilities.m_discreteGpu = !architecture.UMA;
 		m_capabilities.m_majorApiVersion = 12;
-		m_capabilities.m_rayTracingEnabled = g_rayTracingCVar && false; // TODO: Support RT
 		m_capabilities.m_vrs = g_vrsCVar;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;

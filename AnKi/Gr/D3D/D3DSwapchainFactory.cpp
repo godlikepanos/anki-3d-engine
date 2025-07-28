@@ -79,7 +79,13 @@ Error MicroSwapchain::initInternal()
 		init.m_width = window.getWidth();
 		init.m_height = window.getHeight();
 		init.m_format = Format::kR8G8B8A8_Unorm;
+
 		init.m_usage = TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
+		if(m_rtvResources[i]->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)
+		{
+			init.m_usage |= TextureUsageBit::kAllUav;
+		}
+
 		init.m_type = TextureType::k2D;
 
 		TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());

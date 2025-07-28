@@ -7,6 +7,8 @@
 #include <AnKi/ShaderCompiler.h>
 #include <AnKi/ShaderCompiler/ShaderParser.h>
 #include <AnKi/ShaderCompiler/Dxc.h>
+#include <AnKi/Util/Filesystem.h>
+#include <AnKi/Core/CoreTracer.h>
 #include <Tests/Framework/Framework.h>
 
 namespace anki {
@@ -90,6 +92,7 @@ inline void commonInit(Bool validation = true)
 {
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
+	CoreMemoryPool::allocateSingleton(allocAligned, nullptr);
 	g_windowWidthCVar = kWidth;
 	g_windowHeightCVar = kHeight;
 	g_vsyncCVar = false;
@@ -98,6 +101,13 @@ inline void commonInit(Bool validation = true)
 	{
 		[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 4>{"Validation", "1", "DebugMarkers", "1"});
 	}
+#if ANKI_TRACING_ENABLED
+	{
+		String tmpDir;
+		[[maybe_unused]] Error err = getTempDirectory(tmpDir);
+		[[maybe_unused]] Error err2 = CoreTracer::allocateSingleton().init(tmpDir);
+	}
+#endif
 
 	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
@@ -111,6 +121,10 @@ inline void commonDestroy()
 	Input::freeSingleton();
 	NativeWindow::freeSingleton();
 	Input::freeSingleton();
+#if ANKI_TRACING_ENABLED
+	CoreTracer::freeSingleton();
+#endif
+	CoreMemoryPool::freeSingleton();
 	ShaderCompilerMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 }

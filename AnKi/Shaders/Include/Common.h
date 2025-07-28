@@ -542,7 +542,7 @@ enum AccellerationStructureFlag : U32
 	kAccellerationStructureFlagTriangleFrontCounterlockwise = kAccellerationStructureFlagFlipFacing
 };
 
-/// Mirrors VkAccelerationStructureInstanceKHR.
+/// Mirrors VkAccelerationStructureInstanceKHR and D3D12_RAYTRACING_INSTANCE_DESC.
 struct AccelerationStructureInstance
 {
 	Mat3x4 m_transform;

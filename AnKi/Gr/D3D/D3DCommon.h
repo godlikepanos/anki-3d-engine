@@ -81,6 +81,17 @@ void invokeDred();
 using D3D12GraphicsCommandListX = ID3D12GraphicsCommandList10;
 using ID3D12DeviceX = ID3D12Device14;
 
+/// Some internal buffer usage flags.
+class PrivateBufferUsageBit
+{
+public:
+	/// Buffer that holds the memory for the actual AS.
+	static constexpr BufferUsageBit kAccelerationStructure = BufferUsageBit(1ull << 30ull);
+
+	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructure;
+};
+static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Update the bits in PrivateBufferUsageBit");
+
 enum class D3DTextureViewType : U8
 {
 	kSrv,
@@ -476,7 +487,7 @@ inline [[nodiscard]] D3D12_FILL_MODE convertFillMode(FillMode f)
 	return out;
 }
 
-inline [[nodiscard]] D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
+[[nodiscard]] inline D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
 {
 	ANKI_ASSERT(c != FaceSelectionBit::kFrontAndBack);
 	D3D12_CULL_MODE out = {};
@@ -498,6 +509,25 @@ inline [[nodiscard]] D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
 }
 
 [[nodiscard]] DXGI_FORMAT convertFormat(Format fmt);
+
+[[nodiscard]] inline DXGI_FORMAT convertIndexType(IndexType ak)
+{
+	DXGI_FORMAT out;
+	switch(ak)
+	{
+	case IndexType::kU16:
+		out = DXGI_FORMAT_R16_UINT;
+		break;
+	case IndexType::kU32:
+		out = DXGI_FORMAT_R32_UINT;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = DXGI_FORMAT_UNKNOWN;
+	}
+
+	return out;
+}
 /// @}
 
 } // end namespace anki

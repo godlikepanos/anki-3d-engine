@@ -243,16 +243,16 @@ CHECK_TEXTURE_3()
 template<typename T>
 T uvToNdc(T uv)
 {
-	T ndc = uv * 2.0f - 1.0f;
-	ndc.y *= -1.0f;
+	T ndc = uv * 2.0 - 1.0;
+	ndc.y *= -1.0;
 	return ndc;
 }
 
 template<typename T>
 T ndcToUv(T ndc)
 {
-	T uv = ndc * 0.5f + 0.5f;
-	uv.y = 1.0f - uv.y;
+	T uv = ndc * 0.5 + 0.5;
+	uv.y = 1.0 - uv.y;
 	return uv;
 }
 

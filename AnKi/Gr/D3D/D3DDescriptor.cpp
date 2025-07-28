@@ -717,6 +717,19 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
+				else if(inDescriptor.m_type == DescriptorType::kAccelerationStructure)
+				{
+					// AS
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+
+					srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+					srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+					srvDesc.RaytracingAccelerationStructure.Location = outDescriptor.m_asAddress;
+
+					getDevice().CreateShaderResourceView(nullptr, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
 				else
 				{
 					ANKI_ASSERT(!"TODO");

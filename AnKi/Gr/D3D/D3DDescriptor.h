@@ -397,6 +397,18 @@ public:
 		m_spaces[space].m_cbvSrvUavDirty = true;
 	}
 
+	void bindSrv(U32 space, U32 registerBinding, D3D12_GPU_VIRTUAL_ADDRESS asAddress)
+	{
+		Descriptor& descriptor = getDescriptor(HlslResourceType::kSrv, space, registerBinding);
+		descriptor.m_asAddress = asAddress;
+		descriptor.m_isHandle = false;
+#if ANKI_ASSERTIONS_ENABLED
+		descriptor.m_type = DescriptorType::kAccelerationStructure;
+#endif
+
+		m_spaces[space].m_cbvSrvUavDirty = true;
+	}
+
 	void bindCbv(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range)
 	{
 		Descriptor& descriptor = getDescriptor(HlslResourceType::kCbv, space, registerBinding);
@@ -451,6 +463,7 @@ private:
 		{
 			BufferView m_bufferView; ///< For buffers
 			D3D12_CPU_DESCRIPTOR_HANDLE m_heapOffset; ///< For samplers and texture SRVs/UAVs
+			D3D12_GPU_VIRTUAL_ADDRESS m_asAddress;
 		};
 
 		Bool m_isHandle;
