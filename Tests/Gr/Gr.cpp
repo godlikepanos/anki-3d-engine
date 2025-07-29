@@ -2299,10 +2299,17 @@ ANKI_TEST(Gr, RayQuery)
 		// TLAS
 		AccelerationStructurePtr tlas;
 		{
+			AccelerationStructureInstance inst = {};
+			inst.m_accelerationStructureAddress = blas->getGpuAddress();
+			inst.m_transform = Mat3x4::getIdentity();
+			inst.m_mask = 0xFF;
+			inst.m_flags = kAccellerationStructureFlagForceOpaque;
+			BufferPtr instBuff = createBuffer(BufferUsageBit::kAll, inst, 1);
+
 			AccelerationStructureInitInfo init;
 			init.m_type = AccelerationStructureType::kTopLevel;
-			Array<AccelerationStructureInstanceInfo, 1> instances = {{{blas.get(), Mat3x4::getIdentity()}}};
-			init.m_topLevel.m_directArgs.m_instances = instances;
+			init.m_topLevel.m_instancesBuffer = BufferView(instBuff.get());
+			init.m_topLevel.m_instanceCount = 1;
 
 			tlas = GrManager::getSingleton().newAccelerationStructure(init);
 		}

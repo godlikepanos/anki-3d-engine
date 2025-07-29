@@ -81,17 +81,6 @@ void invokeDred();
 using D3D12GraphicsCommandListX = ID3D12GraphicsCommandList10;
 using ID3D12DeviceX = ID3D12Device14;
 
-/// Some internal buffer usage flags.
-class PrivateBufferUsageBit
-{
-public:
-	/// Buffer that holds the memory for the actual AS.
-	static constexpr BufferUsageBit kAccelerationStructure = BufferUsageBit(1ull << 30ull);
-
-	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructure;
-};
-static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Update the bits in PrivateBufferUsageBit");
-
 enum class D3DTextureViewType : U8
 {
 	kSrv,

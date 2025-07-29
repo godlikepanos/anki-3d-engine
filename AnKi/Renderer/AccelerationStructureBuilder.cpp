@@ -40,17 +40,15 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	// Create the TLAS
 	AccelerationStructureInitInfo initInf("Main TLAS");
 	initInf.m_type = AccelerationStructureType::kTopLevel;
-	initInf.m_topLevel.m_indirectArgs.m_maxInstanceCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
-	initInf.m_topLevel.m_indirectArgs.m_instancesBuffer = visOut.m_instancesBuffer;
+	initInf.m_topLevel.m_instanceCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
+	initInf.m_topLevel.m_instancesBuffer = visOut.m_instancesBuffer;
 	m_runCtx.m_tlas = GrManager::getSingleton().newAccelerationStructure(initInf);
 
 	// Build the AS
 	{
 		RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-		const BufferView scratchBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(
-			m_runCtx.m_tlas->getBuildScratchBufferSize(),
-			GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
+		const BufferView scratchBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(m_runCtx.m_tlas->getBuildScratchBufferSize(), 1);
 
 		m_runCtx.m_tlasHandle = rgraph.importAccelerationStructure(m_runCtx.m_tlas.get(), AccelerationStructureUsageBit::kNone);
 

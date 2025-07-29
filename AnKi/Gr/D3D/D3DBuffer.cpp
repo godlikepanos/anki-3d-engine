@@ -142,18 +142,18 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	resourceDesc.SampleDesc.Quality = 0;
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	resourceDesc.Flags = {};
-	if(!!(m_usage & BufferUsageBit::kAllUav) || !!(m_usage & PrivateBufferUsageBit::kAccelerationStructure))
+	if(!!(m_usage & BufferUsageBit::kAllUav) || !!(m_usage & BufferUsageBit::kAccelerationStructure))
 	{
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	}
-	if(!(m_usage & BufferUsageBit::kAllShaderResource) && !(m_usage & PrivateBufferUsageBit::kAccelerationStructure))
+	if(!(m_usage & BufferUsageBit::kAllShaderResource) && !(m_usage & BufferUsageBit::kAccelerationStructure))
 	{
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 	}
 
 	// Create resource
 	D3D12_RESOURCE_STATES initialState;
-	if(!!(m_usage & PrivateBufferUsageBit::kAccelerationStructure))
+	if(!!(m_usage & BufferUsageBit::kAccelerationStructure))
 	{
 		initialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	}

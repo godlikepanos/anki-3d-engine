@@ -85,17 +85,6 @@ constexpr F32 kDescriptorPoolSizeScale = 2.0f;
 constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth of descriptors to buffer.
 /// @}
 
-/// Some internal buffer usage flags.
-class PrivateBufferUsageBit
-{
-public:
-	/// Buffer that holds the memory for the actual AS.
-	static constexpr BufferUsageBit kAccelerationStructure = BufferUsageBit(1ull << 30ull);
-
-	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructure;
-};
-static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Update the bits in PrivateBufferUsageBit");
-
 /// Check if a vulkan function failed. It will abort on failure.
 #define ANKI_VK_CHECKF(x) \
 	do \

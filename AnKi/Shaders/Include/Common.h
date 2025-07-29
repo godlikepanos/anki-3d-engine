@@ -546,9 +546,15 @@ enum AccellerationStructureFlag : U32
 struct AccelerationStructureInstance
 {
 	Mat3x4 m_transform;
-	U32 m_mask8_instanceCustomIndex24;
-	U32 m_flags8_instanceShaderBindingTableRecordOffset24; ///< flags is AccellerationStructureFlag.
+	U32 m_instanceCustomIndex : 24;
+	U32 m_mask : 8;
+	U32 m_instanceShaderBindingTableRecordOffset : 24;
+	U32 m_flags : 8; ///< It's AccellerationStructureFlag.
+#if defined(__cplusplus)
+	U64 m_accelerationStructureAddress;
+#else
 	UVec2 m_accelerationStructureAddress;
+#endif
 };
 
 ANKI_END_NAMESPACE

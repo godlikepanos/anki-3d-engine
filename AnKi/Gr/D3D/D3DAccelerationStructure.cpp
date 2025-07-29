@@ -23,8 +23,8 @@ AccelerationStructure* AccelerationStructure::newInstance(const AccelerationStru
 
 U64 AccelerationStructure::getGpuAddress() const
 {
-	ANKI_ASSERT(!"TODO");
-	return 0;
+	ANKI_D3D_SELF_CONST(AccelerationStructureImpl);
+	return self.m_asBuffer->getGpuAddress() + self.m_asBufferOffset;
 }
 
 AccelerationStructureImpl::~AccelerationStructureImpl()
@@ -37,12 +37,35 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 	m_type = inf.m_type;
 
+	PtrSize asBufferSize;
+	getMemoryRequirement(inf, asBufferSize, m_scratchBufferSize);
+
+	// Allocate AS buffer
+	BufferView asBuff = inf.m_accelerationStructureBuffer;
+	if(!asBuff.isValid())
+	{
+		BufferInitInfo bufferInit(inf.getName());
+		bufferInit.m_usage = BufferUsageBit::kAccelerationStructure;
+		bufferInit.m_size = asBufferSize;
+		m_asBuffer = getGrManagerImpl().newBuffer(bufferInit);
+		m_asBufferOffset = 0;
+	}
+	else
+	{
+		const PtrSize alignedOffset = getAlignedRoundUp(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, asBuff.getOffset());
+		asBuff = asBuff.incrementOffset(alignedOffset - asBuff.getOffset());
+		ANKI_ASSERT(asBuff.getRange() <= asBufferSize);
+
+		m_asBuffer.reset(&asBuff.getBuffer());
+		m_asBufferOffset = asBuff.getOffset();
+	}
+
 	if(inf.m_type == AccelerationStructureType::kBottomLevel)
 	{
 		// Setup the geom descr
 		m_blas.m_geometryDesc = {};
 		m_blas.m_geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-		m_blas.m_geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE; // TODO
+		m_blas.m_geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 		m_blas.m_geometryDesc.Triangles.Transform3x4 = 0;
 		m_blas.m_geometryDesc.Triangles.IndexFormat = convertIndexType(inf.m_bottomLevel.m_indexType);
 		m_blas.m_geometryDesc.Triangles.VertexFormat = convertFormat(inf.m_bottomLevel.m_positionsFormat);
@@ -54,85 +77,14 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			inf.m_bottomLevel.m_positionBuffer.getBuffer().getGpuAddress() + inf.m_bottomLevel.m_positionBuffer.getOffset();
 		m_blas.m_geometryDesc.Triangles.VertexBuffer.StrideInBytes = inf.m_bottomLevel.m_positionStride;
 
-		// Get sizes
-		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
-		inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-		inputs.NumDescs = 1;
-		inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-		inputs.pGeometryDescs = &m_blas.m_geometryDesc;
-
-		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
-		getDevice().GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
-		m_scratchBufferSize = prebuildInfo.ScratchDataSizeInBytes;
-
-		// Create the AS buffer
-		BufferInitInfo asBuffInit(inf.getName());
-		asBuffInit.m_size = prebuildInfo.ResultDataMaxSizeInBytes;
-		asBuffInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
-		m_asBuffer.reset(GrManager::getSingleton().newBuffer(asBuffInit).get());
+		m_blas.m_indexBuff.reset(&inf.m_bottomLevel.m_indexBuffer.getBuffer());
+		m_blas.m_positionsBuff.reset(&inf.m_bottomLevel.m_positionBuffer.getBuffer());
 	}
 	else
 	{
-		const Bool isIndirect = inf.m_topLevel.m_indirectArgs.m_maxInstanceCount > 0;
-		const U32 instanceCount = (isIndirect) ? inf.m_topLevel.m_indirectArgs.m_maxInstanceCount : inf.m_topLevel.m_directArgs.m_instances.getSize();
-
-		// Get sizes
-		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
-		inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
-		inputs.NumDescs = instanceCount;
-		inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-
-		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
-		getDevice().GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
-		m_scratchBufferSize = prebuildInfo.ScratchDataSizeInBytes;
-
-		// Create the AS buffer
-		BufferInitInfo asBuffInit(inf.getName());
-		asBuffInit.m_size = prebuildInfo.ResultDataMaxSizeInBytes;
-		asBuffInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
-		m_asBuffer.reset(GrManager::getSingleton().newBuffer(asBuffInit).get());
-
-		// Create instances buffer
-		if(!isIndirect)
-		{
-			BufferInitInfo buffInit("AS instances");
-			buffInit.m_size = inf.m_topLevel.m_directArgs.m_instances.getSize() * sizeof(AccelerationStructureInstance);
-			buffInit.m_usage = BufferUsageBit::kAllUav;
-			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			m_tlas.m_instancesBuff.reset(GrManager::getSingleton().newBuffer(buffInit).get());
-
-			WeakArray<AccelerationStructureInstance> mapped(
-				static_cast<AccelerationStructureInstance*>(m_tlas.m_instancesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite)),
-				inf.m_topLevel.m_directArgs.m_instances.getSize());
-
-			for(U32 i = 0; i < inf.m_topLevel.m_directArgs.m_instances.getSize(); ++i)
-			{
-				const AccelerationStructureInstanceInfo& in = inf.m_topLevel.m_directArgs.m_instances[i];
-				AccelerationStructureInstance& out = mapped[i];
-
-				const AccelerationStructureImpl& blas = static_cast<const AccelerationStructureImpl&>(*in.m_bottomLevel);
-				const U64 blasAddr = blas.m_asBuffer->getGpuAddress();
-
-				const U32 flags =
-					D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE | D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
-
-				out.m_transform = in.m_transform;
-				out.m_mask8_instanceCustomIndex24 = (in.m_mask << 24) | (i & 0xFFFFFF);
-				out.m_flags8_instanceShaderBindingTableRecordOffset24 = (flags << 24) | in.m_hitgroupSbtRecordIndex;
-				memcpy(&out.m_accelerationStructureAddress, &blasAddr, sizeof(blasAddr));
-			}
-
-			m_tlas.m_instancesBuff->unmap();
-		}
-		else
-		{
-			m_tlas.m_instancesBuff.reset(&inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getBuffer());
-			m_tlas.m_instancesBuffOffset = inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getOffset();
-		}
-
-		m_tlas.m_instanceCount = instanceCount;
+		m_tlas.m_instancesBuff.reset(&inf.m_topLevel.m_instancesBuffer.getBuffer());
+		m_tlas.m_instancesBuffOffset = inf.m_topLevel.m_instancesBuffer.getOffset();
+		m_tlas.m_instanceCount = inf.m_topLevel.m_instanceCount;
 	}
 
 	return Error::kNone;
@@ -141,7 +93,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 void AccelerationStructureImpl::fillBuildInfo(BufferView scratchBuff, D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& buildDesc) const
 {
 	buildDesc = {};
-	buildDesc.DestAccelerationStructureData = m_asBuffer->getGpuAddress();
+	buildDesc.DestAccelerationStructureData = m_asBuffer->getGpuAddress() + m_asBufferOffset;
 	buildDesc.ScratchAccelerationStructureData = scratchBuff.getBuffer().getGpuAddress() + scratchBuff.getOffset();
 
 	if(m_type == AccelerationStructureType::kBottomLevel)
@@ -250,6 +202,47 @@ D3D12_GLOBAL_BARRIER AccelerationStructureImpl::computeBarrierInfo(AccelerationS
 	ANKI_ASSERT(barrier.SyncBefore || barrier.SyncAfter);
 
 	return barrier;
+}
+
+void AccelerationStructureImpl::getMemoryRequirement(const AccelerationStructureInitInfo& inf, PtrSize& asBufferSize, PtrSize& buildScratchBufferSize)
+{
+	ANKI_ASSERT(inf.isValidForGettingMemoryRequirements());
+
+	D3D12_RAYTRACING_GEOMETRY_DESC geomDesc;
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+
+	if(inf.m_type == AccelerationStructureType::kBottomLevel)
+	{
+		geomDesc = {};
+		geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+		geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+		geomDesc.Triangles.Transform3x4 = 0;
+		geomDesc.Triangles.IndexFormat = convertIndexType(inf.m_bottomLevel.m_indexType);
+		geomDesc.Triangles.VertexFormat = convertFormat(inf.m_bottomLevel.m_positionsFormat);
+		geomDesc.Triangles.IndexCount = inf.m_bottomLevel.m_indexCount;
+		geomDesc.Triangles.VertexCount = inf.m_bottomLevel.m_positionCount;
+		geomDesc.Triangles.VertexBuffer.StrideInBytes = inf.m_bottomLevel.m_positionStride;
+
+		inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+		inputs.NumDescs = 1;
+		inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+		inputs.pGeometryDescs = &geomDesc;
+
+		getDevice().GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
+	}
+	else
+	{
+		inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
+		inputs.NumDescs = inf.m_topLevel.m_instanceCount;
+		inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	}
+
+	getDevice().GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
+	asBufferSize = prebuildInfo.ResultDataMaxSizeInBytes;
+	buildScratchBufferSize = prebuildInfo.ScratchDataSizeInBytes;
 }
 
 } // end namespace anki

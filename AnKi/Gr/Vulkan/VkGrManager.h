@@ -31,6 +31,17 @@ enum class AsyncComputeType
 	kDisabled
 };
 
+/// A small struct with all the caps we need.
+class VulkanCapabilities
+{
+public:
+	VkDeviceAddress m_nonCoherentAtomSize = 0;
+	U64 m_maxTexelBufferElements = 0;
+	F32 m_timestampPeriod = 0.0f;
+	U32 m_asBuildScratchAlignment = 0;
+	U32 m_asBufferAlignment = 256; // Spec says 256
+};
+
 /// Vulkan implementation of GrManager.
 class GrManagerImpl : public GrManager
 {
@@ -67,14 +78,9 @@ public:
 		}
 	}
 
-	const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const
+	const VulkanCapabilities& getVulkanCapabilities() const
 	{
-		return m_devProps.properties;
-	}
-
-	const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& getPhysicalDeviceRayTracingProperties() const
-	{
-		return m_rtPipelineProps;
+		return m_caps;
 	}
 
 	TexturePtr acquireNextPresentableTexture();
@@ -201,9 +207,6 @@ private:
 	Array<VkQueue, U32(GpuQueueType::kCount)> m_queues = {nullptr, nullptr};
 	Mutex m_globalMtx;
 
-	VkPhysicalDeviceProperties2 m_devProps = {};
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR m_rtPipelineProps = {};
-
 	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;
 
 	mutable SpinLock m_shaderStatsMtx;
@@ -214,6 +217,8 @@ private:
 	MicroSwapchainPtr m_crntSwapchain;
 	U8 m_acquiredImageIdx = kMaxU8;
 	FrameState m_frameState = kFrameEnded;
+
+	VulkanCapabilities m_caps;
 
 	Array<PerFrame, kMaxFramesInFlight> m_perFrame;
 

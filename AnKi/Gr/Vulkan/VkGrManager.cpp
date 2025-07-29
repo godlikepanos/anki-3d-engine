@@ -149,6 +149,14 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 	self.submitInternal(cmdbs, waitFences, signalFence);
 }
 
+PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const
+{
+	ANKI_VK_SELF_CONST(GrManagerImpl);
+	PtrSize scratchBufferSize, unused;
+	AccelerationStructureImpl::getMemoryRequirement(init, unused, scratchBufferSize);
+	return scratchBufferSize + self.m_caps.m_asBufferAlignment;
+}
+
 GrManagerImpl::~GrManagerImpl()
 {
 	ANKI_VK_LOGI("Destroying Vulkan backend");
@@ -576,11 +584,9 @@ Error GrManagerImpl::initInstance()
 		m_physicalDevice = devs[chosenPhysDevIdx].m_pdev;
 	}
 
-	m_rtPipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
-	getPhysicalDeviceProperties2(m_rtPipelineProps);
-
-	m_devProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	vkGetPhysicalDeviceProperties2(m_physicalDevice, &m_devProps);
+	VkPhysicalDeviceProperties2 props2 = {};
+	props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	vkGetPhysicalDeviceProperties2(m_physicalDevice, &props2);
 
 	VkPhysicalDeviceVulkan12Properties props12 = {};
 	props12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
@@ -593,7 +599,7 @@ Error GrManagerImpl::initInstance()
 	m_capabilities.m_maxWaveSize = props13.maxSubgroupSize;
 
 	// Find vendor
-	switch(m_devProps.properties.vendorID)
+	switch(props2.properties.vendorID)
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::kArm;
@@ -614,24 +620,25 @@ Error GrManagerImpl::initInstance()
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 	}
-	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s, Driver %s", m_devProps.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0],
+	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s, Driver %s", props2.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0],
 				 props12.driverInfo);
 
 	// Set limits
 	m_capabilities.m_constantBufferBindOffsetAlignment =
-		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minUniformBufferOffsetAlignment));
+		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(props2.properties.limits.minUniformBufferOffsetAlignment));
 	m_capabilities.m_structuredBufferBindOffsetAlignment =
-		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minStorageBufferOffsetAlignment));
+		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(props2.properties.limits.minStorageBufferOffsetAlignment));
 	m_capabilities.m_structuredBufferNaturalAlignment = false;
-	m_capabilities.m_texelBufferBindOffsetAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
-	m_capabilities.m_computeSharedMemorySize = m_devProps.properties.limits.maxComputeSharedMemorySize;
-	m_capabilities.m_maxDrawIndirectCount = m_devProps.properties.limits.maxDrawIndirectCount;
+	m_capabilities.m_texelBufferBindOffsetAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, U32(props2.properties.limits.minTexelBufferOffsetAlignment));
+	m_capabilities.m_computeSharedMemorySize = props2.properties.limits.maxComputeSharedMemorySize;
+	m_capabilities.m_maxDrawIndirectCount = props2.properties.limits.maxDrawIndirectCount;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
 	m_capabilities.m_minorApiVersion = vulkanMinor;
 
-	m_capabilities.m_shaderGroupHandleSize = m_rtPipelineProps.shaderGroupHandleSize;
-	m_capabilities.m_sbtRecordAlignment = m_rtPipelineProps.shaderGroupBaseAlignment;
+	m_caps.m_nonCoherentAtomSize = props2.properties.limits.nonCoherentAtomSize;
+	m_caps.m_maxTexelBufferElements = props2.properties.limits.maxTexelBufferElements;
+	m_caps.m_timestampPeriod = props2.properties.limits.timestampPeriod;
 
 	// DLSS checks
 	m_capabilities.m_dlss = ANKI_DLSS && m_capabilities.m_gpuVendor == GpuVendor::kNvidia;
@@ -988,7 +995,13 @@ Error GrManagerImpl::initDevice()
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};
 		props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
 		getPhysicalDeviceProperties2(props);
-		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = props.minAccelerationStructureScratchOffsetAlignment;
+		m_caps.m_asBuildScratchAlignment = props.minAccelerationStructureScratchOffsetAlignment;
+
+		VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtprops = {};
+		rtprops.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+		getPhysicalDeviceProperties2(rtprops);
+		m_capabilities.m_shaderGroupHandleSize = rtprops.shaderGroupHandleSize;
+		m_capabilities.m_sbtRecordAlignment = rtprops.shaderGroupBaseAlignment;
 	}
 
 	// Pipeline features
@@ -1246,7 +1259,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 
 	// Create some objets outside the lock
 	Array<Char, 16> name;
-	snprintf(name.getBegin(), name.getSize(), "Acquire %lu", m_frame);
+	snprintf(name.getBegin(), name.getSize(), "Acquire %llu", m_frame);
 	MicroFencePtr fence = FenceFactory::getSingleton().newInstance(name.getBegin());
 
 	LockGuard<Mutex> lock(m_globalMtx);

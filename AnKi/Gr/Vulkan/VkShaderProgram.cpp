@@ -410,7 +410,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		}
 
 		// Get RT handles
-		const U32 handleArraySize = getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
+		const U32 handleArraySize = getGrManagerImpl().getDeviceCapabilities().m_shaderGroupHandleSize * groupCount;
 		m_rt.m_allHandles.resize(handleArraySize, 0_U8);
 		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getVkDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize, &m_rt.m_allHandles[0]));
 

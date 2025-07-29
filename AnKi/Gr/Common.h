@@ -181,9 +181,6 @@ public:
 	/// The max combined size of shared variables (with paddings) in compute shaders.
 	PtrSize m_computeSharedMemorySize = 16_KB;
 
-	/// Alignment of the scratch buffer used in AS building.
-	U32 m_accelerationStructureBuildScratchOffsetAlignment = 0;
-
 	/// Each SBT record should be a multiple of this.
 	U32 m_sbtRecordAlignment = kMaxU32;
 
@@ -734,6 +731,7 @@ enum class BufferUsageBit : U64
 	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build.
 	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a traceRays() command.
 	kAccelerationStructureBuildScratch = 1ull << 21ull, ///< Used in buildAccelerationStructureXXX commands.
+	kAccelerationStructure = 1ull << 22ull, ///< Will be used as AS.
 
 	// Derived
 	kAllConstant = kConstantGeometry | kConstantPixel | kConstantCompute | kConstantTraceRays,
@@ -748,9 +746,10 @@ enum class BufferUsageBit : U64
 	kAllCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute,
 	kAllTraceRays = kConstantTraceRays | kSrvTraceRays | kUavTraceRays | kIndirectTraceRays | kShaderBindingTable,
 
-	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch,
-	kAllRead = kAllConstant | kAllSrv | kAllUav | kVertexOrIndex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable,
-	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch,
+	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch | kAccelerationStructure,
+	kAllRead = kAllConstant | kAllSrv | kAllUav | kVertexOrIndex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable
+			   | kAccelerationStructure,
+	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch | kAccelerationStructure,
 
 	kAllShaderResource = kAllConstant | kAllSrv | kAllUav,
 

@@ -131,7 +131,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(usage != BufferUsageBit::kNone);
 
-	m_mappedMemoryRangeAlignment = getGrManagerImpl().getPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+	m_mappedMemoryRangeAlignment = getGrManagerImpl().getVulkanCapabilities().m_nonCoherentAtomSize;
 
 	// Align the size to satisfy fill buffer
 	alignRoundUp(4, size);
@@ -446,7 +446,7 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0 && "Range doesn't align with the number of texel elements");
 
 	[[maybe_unused]] const PtrSize elementCount = range / getFormatInfo(fmt).m_texelSize;
-	ANKI_ASSERT(elementCount <= getGrManagerImpl().getPhysicalDeviceProperties().limits.maxTexelBufferElements);
+	ANKI_ASSERT(elementCount <= getGrManagerImpl().getVulkanCapabilities().m_maxTexelBufferElements);
 
 	// Hash
 	ANKI_BEGIN_PACKED_STRUCT

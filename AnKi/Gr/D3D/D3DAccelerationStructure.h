@@ -16,6 +16,8 @@ namespace anki {
 /// AccelerationStructure implementation.
 class AccelerationStructureImpl final : public AccelerationStructure
 {
+	friend class AccelerationStructure;
+
 public:
 	AccelerationStructureImpl(CString name)
 		: AccelerationStructure(name)
@@ -35,8 +37,11 @@ public:
 		return *m_asBuffer;
 	}
 
+	static void getMemoryRequirement(const AccelerationStructureInitInfo& init, PtrSize& asBufferSize, PtrSize& buildScratchBufferSize);
+
 private:
 	BufferInternalPtr m_asBuffer;
+	PtrSize m_asBufferOffset = kMaxPtrSize;
 
 	class
 	{
@@ -50,6 +55,9 @@ private:
 	{
 	public:
 		D3D12_RAYTRACING_GEOMETRY_DESC m_geometryDesc;
+
+		BufferInternalPtr m_positionsBuff;
+		BufferInternalPtr m_indexBuff;
 	} m_blas;
 };
 /// @}

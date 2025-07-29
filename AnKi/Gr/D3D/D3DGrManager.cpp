@@ -101,6 +101,13 @@ GrManager::~GrManager()
 {
 }
 
+PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const
+{
+	PtrSize asSize, unused;
+	AccelerationStructureImpl::getMemoryRequirement(init, asSize, unused);
+	return asSize + D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+}
+
 Error GrManager::init(GrManagerInitInfo& inf)
 {
 	ANKI_D3D_SELF(GrManagerImpl);
@@ -526,7 +533,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
 		m_capabilities.m_fastConstantsSize = kMaxFastConstantsSize;
 		m_capabilities.m_computeSharedMemorySize = D3D12_CS_TGSM_REGISTER_COUNT * sizeof(F32);
-		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = 32; // ?
 		m_capabilities.m_sbtRecordAlignment = 32; // ?
 		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
 		m_capabilities.m_discreteGpu = !architecture.UMA;

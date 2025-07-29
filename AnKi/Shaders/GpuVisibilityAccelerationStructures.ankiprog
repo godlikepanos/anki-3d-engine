@@ -108,9 +108,10 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 			{
 				AccelerationStructureInstance instance;
 				instance.m_transform = finalTrf;
-				instance.m_mask8_instanceCustomIndex24 = (meshLod.m_tlasInstanceMask << 24u) | (instanceIdx & 0x00FFFFFFu);
-				const U32 instanceFlags = kAccellerationStructureFlagTriangleFrontCounterlockwise;
-				instance.m_flags8_instanceShaderBindingTableRecordOffset24 = (instanceFlags << 24u) | (instanceIdx & 0x00FFFFFFu);
+				instance.m_mask = meshLod.m_tlasInstanceMask;
+				instance.m_instanceCustomIndex = instanceIdx & 0x00FFFFFFu;
+				instance.m_flags = kAccellerationStructureFlagTriangleFrontCounterlockwise;
+				instance.m_instanceShaderBindingTableRecordOffset = instanceIdx & 0x00FFFFFFu;
 				instance.m_accelerationStructureAddress = meshLod.m_blasAddress;
 
 				SBUFF(g_visibleInstances, instanceIdx) = instance;

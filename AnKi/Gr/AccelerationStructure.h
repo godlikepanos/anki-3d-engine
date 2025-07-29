@@ -27,52 +27,48 @@ public:
 	Format m_positionsFormat = Format::kNone;
 	U32 m_positionCount = 0;
 
-	Bool isValid() const
+	Bool isValid(Bool validateBuffers) const
 	{
 		Bool valid = true;
 
-		valid = valid && (m_indexBuffer.isValid() && m_indexCount * getIndexSize(m_indexType) == m_indexBuffer.getRange());
+		valid = valid && (m_indexCount >= 3 && m_indexType != IndexType::kCount);
+
+		if(validateBuffers)
+		{
+			valid = valid && (m_indexBuffer.isValid() && m_indexCount * getIndexSize(m_indexType) == m_indexBuffer.getRange());
+		}
 
 		const U32 vertSize = getFormatInfo(m_positionsFormat).m_texelSize;
-		valid = valid
-				&& (m_positionBuffer.isValid() && m_positionStride >= vertSize && m_positionStride * m_positionCount == m_positionBuffer.getRange());
+		valid = valid && (m_positionStride >= vertSize && m_positionCount >= 3);
+
+		if(validateBuffers)
+		{
+			valid = valid && (m_positionBuffer.isValid() && m_positionStride * m_positionCount == m_positionBuffer.getRange());
+		}
 
 		return valid;
 	}
 };
 
 /// @memberof AccelerationStructureInitInfo
-class AccelerationStructureInstanceInfo
-{
-public:
-	AccelerationStructure* m_bottomLevel = nullptr;
-	Mat3x4 m_transform = Mat3x4::getIdentity();
-	U32 m_hitgroupSbtRecordIndex = 0; ///< Points to a hitgroup SBT record.
-	U8 m_mask = 0xFF; ///< A mask that this instance belongs to. Will be tested against what's in traceRayEXT().
-};
-
-/// @memberof AccelerationStructureInitInfo
 class TopLevelAccelerationStructureInitInfo
 {
 public:
-	class
-	{
-	public:
-		ConstWeakArray<AccelerationStructureInstanceInfo> m_instances;
-	} m_directArgs; ///< Pass some representation of the instances.
+	U32 m_instanceCount = 0;
+	BufferView m_instancesBuffer; ///< Filled with AccelerationStructureInstance structs.
 
-	class
+	Bool isValid(Bool validateBuffers) const
 	{
-	public:
-		U32 m_maxInstanceCount = 0;
-		BufferView m_instancesBuffer; ///< Filled with AccelerationStructureInstance structs.
-	} m_indirectArgs; ///< Pass the instances GPU buffer directly.
+		Bool valid = true;
 
-	Bool isValid() const
-	{
-		return m_directArgs.m_instances.getSize() > 0
-			   || (m_indirectArgs.m_maxInstanceCount > 0 && m_indirectArgs.m_instancesBuffer.isValid()
-				   && m_indirectArgs.m_instancesBuffer.getRange() == sizeof(AccelerationStructureInstance) * m_indirectArgs.m_maxInstanceCount);
+		valid = valid && m_instanceCount > 0;
+
+		if(validateBuffers)
+		{
+			valid = valid && (m_instancesBuffer.getRange() == sizeof(AccelerationStructureInstance) * m_instanceCount);
+		}
+
+		return valid;
 	}
 };
 
@@ -84,6 +80,8 @@ public:
 	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 	BottomLevelAccelerationStructureInitInfo m_bottomLevel;
 	TopLevelAccelerationStructureInitInfo m_topLevel;
+
+	BufferView m_accelerationStructureBuffer; ///< Optionaly supply the buffer of the AS.
 
 	AccelerationStructureInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
@@ -97,7 +95,17 @@ public:
 			return false;
 		}
 
-		return (m_type == AccelerationStructureType::kBottomLevel) ? m_bottomLevel.isValid() : m_topLevel.isValid();
+		return (m_type == AccelerationStructureType::kBottomLevel) ? m_bottomLevel.isValid(true) : m_topLevel.isValid(true);
+	}
+
+	Bool isValidForGettingMemoryRequirements() const
+	{
+		if(m_type == AccelerationStructureType::kCount)
+		{
+			return false;
+		}
+
+		return (m_type == AccelerationStructureType::kBottomLevel) ? m_bottomLevel.isValid(false) : m_topLevel.isValid(false);
 	}
 };
 

@@ -57,7 +57,7 @@ public:
 		}
 
 		const BufferView view(m_buffer.get(), m_offset, size);
-		m_offset += getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment, size);
+		m_offset += size;
 
 		return view;
 	}

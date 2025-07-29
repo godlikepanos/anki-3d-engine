@@ -82,6 +82,9 @@ public:
 	[[nodiscard]] AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);
 	/// @}
 
+	/// Get the size of the acceleration structure if you are planning to supply a custom buffer.
+	PtrSize getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const;
+
 	ANKI_INTERNAL CString getCacheDirectory() const
 	{
 		return m_cacheDir.toCString();
