@@ -52,7 +52,7 @@ public:
 	Error init(const ShaderProgramInitInfo& inf);
 
 private:
-	GrDynamicArray<ShaderPtr> m_shaders;
+	GrDynamicArray<ShaderInternalPtr> m_shaders;
 };
 /// @}
 
