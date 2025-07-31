@@ -294,7 +294,7 @@ public:
 	{
 	}
 
-	explicit TextureView(const Texture* tex, const TextureSubresourceDesc& subresource)
+	explicit TextureView(const Texture* tex, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
 		: m_tex(tex)
 		, m_subresource(subresource)
 	{

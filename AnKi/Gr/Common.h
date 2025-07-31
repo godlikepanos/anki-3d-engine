@@ -987,6 +987,7 @@ public:
 	Array<U8, kMaxRegisterSpaces> m_bindingCounts = {};
 
 	U32 m_fastConstantsSize = 0;
+	U32 m_d3dShaderBindingTableRecordConstantsSize = 0;
 
 	Bool m_hasVkBindlessDescriptorSet = false; ///< Filled by the shader compiler.
 	U8 m_vkBindlessDescriptorSet = kMaxU8; ///< Filled by the VK backend.

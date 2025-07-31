@@ -162,10 +162,19 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 	if(a.m_descriptor.m_fastConstantsSize != 0 && b.m_descriptor.m_fastConstantsSize != 0
 	   && a.m_descriptor.m_fastConstantsSize != b.m_descriptor.m_fastConstantsSize)
 	{
-		ANKI_GR_LOGE("Can't link shader reflection because fast constant size doesn't match");
+		ANKI_GR_LOGE("Can't link shader reflection because fast constants size doesn't match");
 		return Error::kFunctionFailed;
 	}
 	c.m_descriptor.m_fastConstantsSize = max(a.m_descriptor.m_fastConstantsSize, b.m_descriptor.m_fastConstantsSize);
+
+	if(a.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize != 0 && b.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize != 0
+	   && a.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize != b.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize)
+	{
+		ANKI_GR_LOGE("Can't link shader reflection because SBT constants size is not correct");
+		return Error::kFunctionFailed;
+	}
+	c.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize =
+		max(a.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize, b.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize);
 
 	c.m_descriptor.m_hasVkBindlessDescriptorSet = a.m_descriptor.m_hasVkBindlessDescriptorSet || b.m_descriptor.m_hasVkBindlessDescriptorSet;
 

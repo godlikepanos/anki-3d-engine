@@ -2605,10 +2605,19 @@ struct [raypayload] Payload
 	float3 m_color : write(closesthit, miss, caller) : read(caller);
 };
 
+struct SbtConsts
+{
+	float3 m_color;
+};
+
+[[vk::shader_record_ext]] ConstantBuffer<SbtConsts> g_sbtConsts : register(b0);
+
 [shader("closesthit")] void main(inout Payload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
 {
 	const float3 bary = float3(1.0 - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
-	payload.m_color = bary * COLOR_SCALE;
+	float3 c = bary * COLOR_SCALE;
+	float factor = max(c.x, max(c.y, c.z));
+	payload.m_color = lerp(g_sbtConsts.m_color, c, saturate(factor));
 })";
 
 			constexpr const Char* kMiss = R"(
@@ -2679,8 +2688,8 @@ RWTexture2D<float4> g_uav : register(u0);
 			ShaderPtr chit1Shader = createShader(kCHit, ShaderType::kClosestHit, Array<CString, 1>{"-DCOLOR_SCALE=float4(1, 0, 0, 0)"});
 			ShaderPtr chit2Shader = createShader(kCHit, ShaderType::kClosestHit, Array<CString, 1>{"-DCOLOR_SCALE=float4(0, 0, 1, 0)"});
 			ShaderPtr missShader = createShader(kMiss, ShaderType::kMiss);
-			ShaderPtr raygen1Shader = createShader(kRaygen, ShaderType::kRayGen, Array<CString, 1>{"-DCOLOR_BIAS=float4(0.5, 0, 0, 0)"});
-			ShaderPtr raygen2Shader = createShader(kRaygen, ShaderType::kRayGen, Array<CString, 1>{"-DCOLOR_BIAS=float4(0, 0.5, 0, 0)"});
+			ShaderPtr raygen1Shader = createShader(kRaygen, ShaderType::kRayGen, Array<CString, 1>{"-DCOLOR_BIAS=float4(1, 1, 1, 0)"});
+			ShaderPtr raygen2Shader = createShader(kRaygen, ShaderType::kRayGen, Array<CString, 1>{"-DCOLOR_BIAS=float4(0, 0, 0, 0)"});
 
 			ShaderProgramInitInfo inf;
 			Array<Shader*, 2> raygenArr = {raygen1Shader.get(), raygen2Shader.get()};
@@ -2697,11 +2706,12 @@ RWTexture2D<float4> g_uav : register(u0);
 		U32 sbtRecordSize;
 		{
 			const U32 handleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-			sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment, handleSize);
+			sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment, handleSize + sizeof(Vec3));
 
 			ConstWeakArray<U8> handles = prog->getShaderGroupHandles();
 
-			const Array<U32, 4> copyHandles = {1, 2, 3, 4};
+			const Array<U32, 4> copyHandles = {0, 2, 3, 4};
+			const Array<Vec3, 4> colors = {Vec3(0.0f), Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f), Vec3(1.0f, 0.0f, 0.0f)};
 
 			DynamicArray<U8> sbtData;
 			sbtData.resize(copyHandles.getSize() * sbtRecordSize, 0);
@@ -2710,6 +2720,7 @@ RWTexture2D<float4> g_uav : register(u0);
 			for(U32 handleIdx : copyHandles)
 			{
 				memcpy(sbtData.getBegin() + sbtRecordSize * count, handles.getBegin() + handleSize * handleIdx, handleSize);
+				memcpy(sbtData.getBegin() + sbtRecordSize * count + handleSize, &colors[count], sizeof(Vec3));
 				++count;
 			}
 
@@ -2759,6 +2770,38 @@ RWTexture2D<float4> g_uav : register(u0);
 			GrManager::getSingleton().submit(cmdb.get());
 		}
 
+		// UAV
+		TexturePtr uav;
+		{
+			TextureInitInfo texInit;
+			texInit.m_width = kWidth;
+			texInit.m_height = kHeight;
+			texInit.m_format = Format::kR8G8B8A8_Unorm;
+			texInit.m_usage = TextureUsageBit::kAllUav | TextureUsageBit::kAllSrv;
+			uav = GrManager::getSingleton().newTexture(texInit);
+		}
+
+		// Prog to blit to swapchain
+		ShaderProgramPtr blitProg;
+		{
+			constexpr const Char* kVertSrc = R"(
+float4 main(uint svVertexId : SV_VERTEXID) : SV_POSITION
+{
+	const float2 coord = float2(svVertexId >> 1, svVertexId & 1);
+	return float4(coord * float2(4.0, -4.0) + float2(-1.0, 1.0), 0.0, 1.0);
+})";
+
+			CString kPixelSrc = R"(
+Texture2D g_srv : register(t0);
+
+float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
+{
+	return g_srv[svPosition.xy];
+})";
+
+			blitProg = createVertFragProg(kVertSrc, kPixelSrc);
+		}
+
 		// Draw
 		constexpr U32 kIterations = 200;
 		for(U i = 0; i < kIterations; ++i)
@@ -2776,6 +2819,12 @@ RWTexture2D<float4> g_uav : register(u0);
 			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
+			TextureBarrierInfo barr;
+			barr.m_textureView = TextureView(uav.get());
+			barr.m_previousUsage = (i == 0) ? TextureUsageBit::kNone : TextureUsageBit::kSrvPixel;
+			barr.m_nextUsage = TextureUsageBit::kUavTraceRays;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
 			cmdb->bindShaderProgram(prog.get());
 			struct Consts
 			{
@@ -2791,19 +2840,32 @@ RWTexture2D<float4> g_uav : register(u0);
 			cmdb->setFastConstants(&consts, sizeof(consts));
 
 			cmdb->bindSrv(0, 0, tlas.get());
-
-			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
-			cmdb->bindUav(0, 0, TextureView(presentTex.get(), TextureSubresourceDesc::all()));
-
-			TextureBarrierInfo barr;
-			barr.m_textureView = TextureView(presentTex.get(), TextureSubresourceDesc::all());
-			barr.m_previousUsage = TextureUsageBit::kNone;
-			barr.m_nextUsage = TextureUsageBit::kUavTraceRays;
-			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+			cmdb->bindUav(0, 0, TextureView(uav.get()));
 
 			cmdb->traceRays(BufferView(sbt.get()), sbtRecordSize, 2, 1, kWidth, kHeight, 1);
 
 			barr.m_previousUsage = TextureUsageBit::kUavTraceRays;
+			barr.m_nextUsage = TextureUsageBit::kSrvPixel;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			// Blit to swapchain
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
+			barr.m_textureView = TextureView(presentTex.get());
+			barr.m_previousUsage = TextureUsageBit::kNone;
+			barr.m_nextUsage = TextureUsageBit::kRtvDsvWrite;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			cmdb->beginRenderPass({TextureView(presentTex.get())});
+
+			cmdb->setViewport(0, 0, kWidth, kHeight);
+			cmdb->bindSrv(0, 0, TextureView(uav.get()));
+			cmdb->bindShaderProgram(blitProg.get());
+
+			cmdb->draw(PrimitiveTopology::kTriangles, 3);
+
+			cmdb->endRenderPass();
+
+			barr.m_previousUsage = TextureUsageBit::kRtvDsvWrite;
 			barr.m_nextUsage = TextureUsageBit::kPresent;
 			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
 

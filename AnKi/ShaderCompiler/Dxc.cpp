@@ -392,6 +392,23 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 
 					continue;
 				}
+				else if(bindDesc.Space == 3001 && bindDesc.BindPoint == 0)
+				{
+					// It's SBT consts
+
+					if(!isLib)
+					{
+						// Ignore
+						continue;
+					}
+
+					ID3D12ShaderReflectionConstantBuffer* cbuffer = funcReflections[ifunc]->GetConstantBufferByName(bindDesc.Name);
+					D3D12_SHADER_BUFFER_DESC desc;
+					ANKI_DXC_CHECK(cbuffer->GetDesc(&desc));
+					refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize = desc.Size;
+
+					continue;
+				}
 
 				akBinding.m_type = DescriptorType::kConstantBuffer;
 			}
