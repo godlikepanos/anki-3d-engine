@@ -8,6 +8,7 @@
 #include <AnKi/Gr/BackendCommon/Functions.h>
 #include <AnKi/Gr/D3D/D3DDescriptor.h>
 #include <AnKi/Gr/D3D/D3DGraphicsState.h>
+#include <AnKi/Gr/D3D/D3DGrManager.h>
 
 namespace anki {
 
@@ -25,21 +26,23 @@ ShaderProgram* ShaderProgram::newInstance(const ShaderProgramInitInfo& init)
 
 ConstWeakArray<U8> ShaderProgram::getShaderGroupHandles() const
 {
-	ANKI_ASSERT(!"TODO");
-	return ConstWeakArray<U8>();
+	ANKI_D3D_SELF_CONST(ShaderProgramImpl);
+	ANKI_ASSERT(self.m_rt.m_handlesCpuBuff.getSize());
+	return self.m_rt.m_handlesCpuBuff;
 }
 
 Buffer& ShaderProgram::getShaderGroupHandlesGpuBuffer() const
 {
-	ANKI_ASSERT(!"TODO");
-	void* ptr = nullptr;
-	return *reinterpret_cast<Buffer*>(ptr);
+	ANKI_D3D_SELF_CONST(ShaderProgramImpl);
+	ANKI_ASSERT(self.m_rt.m_handlesGpuBuff.isCreated());
+	return *self.m_rt.m_handlesGpuBuff;
 }
 
 ShaderProgramImpl::~ShaderProgramImpl()
 {
 	safeRelease(m_compute.m_pipelineState);
 	safeRelease(m_workGraph.m_stateObject);
+	safeRelease(m_rt.m_stateObject);
 
 	deleteInstance(GrMemoryPool::getSingleton(), m_graphics.m_pipelineFactory);
 }
@@ -49,6 +52,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	ANKI_ASSERT(inf.isValid());
 
 	// Create the shader references
+	GrHashMap<U64, U32> shaderUuidToMShadersIdx; // Shader UUID to m_shaders idx
 	if(inf.m_computeShader)
 	{
 		m_shaders.emplaceBack(inf.m_computeShader);
@@ -69,7 +73,43 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	}
 	else
 	{
-		ANKI_ASSERT(!"TODO");
+		// Ray tracing
+
+		m_shaders.resizeStorage(inf.m_rayTracingShaders.m_rayGenShaders.getSize() + inf.m_rayTracingShaders.m_missShaders.getSize()
+								+ 1); // Plus at least one hit shader
+
+		for(Shader* s : inf.m_rayTracingShaders.m_rayGenShaders)
+		{
+			m_shaders.emplaceBack(s);
+		}
+
+		for(Shader* s : inf.m_rayTracingShaders.m_missShaders)
+		{
+			m_shaders.emplaceBack(s);
+		}
+
+		for(const RayTracingHitGroup& group : inf.m_rayTracingShaders.m_hitGroups)
+		{
+			if(group.m_anyHitShader)
+			{
+				auto it = shaderUuidToMShadersIdx.find(group.m_anyHitShader->getUuid());
+				if(it == shaderUuidToMShadersIdx.getEnd())
+				{
+					shaderUuidToMShadersIdx.emplace(group.m_anyHitShader->getUuid(), m_shaders.getSize());
+					m_shaders.emplaceBack(group.m_anyHitShader);
+				}
+			}
+
+			if(group.m_closestHitShader)
+			{
+				auto it = shaderUuidToMShadersIdx.find(group.m_closestHitShader->getUuid());
+				if(it == shaderUuidToMShadersIdx.getEnd())
+				{
+					shaderUuidToMShadersIdx.emplace(group.m_closestHitShader->getUuid(), m_shaders.getSize());
+					m_shaders.emplaceBack(group.m_closestHitShader);
+				}
+			}
+		}
 	}
 
 	ANKI_ASSERT(m_shaders.getSize() > 0);
@@ -183,6 +223,143 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ANKI_ASSERT(spWGProps->GetNumEntrypoints(wgIndex) == 1);
 
 		m_workGraphScratchBufferSize = memReqs.MaxSizeInBytes;
+	}
+
+	if(isRtProg)
+	{
+		RootSignature* localRootSig = nullptr;
+		if(m_refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize)
+		{
+			ANKI_CHECK(RootSignatureFactory::getSingleton().getOrCreateLocalRootSignature(m_refl, localRootSig));
+		}
+
+		CD3DX12_STATE_OBJECT_DESC rtp(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE);
+
+		U32 groupCount = 0;
+		for(U32 i = 0; i < inf.m_rayTracingShaders.m_rayGenShaders.getSize(); ++i)
+		{
+			auto raygen = rtp.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+
+			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*inf.m_rayTracingShaders.m_rayGenShaders[i]);
+			const CD3DX12_SHADER_BYTECODE libCode(shaderImpl.m_binary.getBegin(), shaderImpl.m_binary.getSizeInBytes());
+
+			raygen->SetDXILLibrary(&libCode);
+			raygen->DefineExport((std::wstring(L"raygen") + std::to_wstring(i)).c_str(), L"main");
+
+			++groupCount;
+		}
+
+		for(U32 i = 0; i < inf.m_rayTracingShaders.m_missShaders.getSize(); ++i)
+		{
+			auto miss = rtp.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+
+			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*inf.m_rayTracingShaders.m_missShaders[i]);
+			const CD3DX12_SHADER_BYTECODE libCode(shaderImpl.m_binary.getBegin(), shaderImpl.m_binary.getSizeInBytes());
+
+			miss->SetDXILLibrary(&libCode);
+			miss->DefineExport((std::wstring(L"miss") + std::to_wstring(i)).c_str(), L"main");
+
+			++groupCount;
+		}
+
+		for(U32 i = 0; i < inf.m_rayTracingShaders.m_hitGroups.getSize(); ++i)
+		{
+			auto chit = rtp.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+
+			const RayTracingHitGroup& hg = inf.m_rayTracingShaders.m_hitGroups[i];
+			ANKI_ASSERT(hg.m_anyHitShader == nullptr && "TODO");
+			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*hg.m_closestHitShader);
+			const CD3DX12_SHADER_BYTECODE libCode(shaderImpl.m_binary.getBegin(), shaderImpl.m_binary.getSizeInBytes());
+
+			chit->SetDXILLibrary(&libCode);
+			const std::wstring exportName = std::wstring(L"chit") + std::to_wstring(i);
+			chit->DefineExport(exportName.c_str(), L"main");
+
+			auto hitGroup = rtp.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
+			hitGroup->SetClosestHitShaderImport(exportName.c_str());
+			hitGroup->SetHitGroupExport((std::wstring(L"hitgroup") + std::to_wstring(i)).c_str());
+			hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
+
+			++groupCount;
+		}
+
+		// Config
+		auto shaderConfig = rtp.CreateSubobject<CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
+		const U32 payloadSize = 64; // Supposed to be ignored because we are using payload qualifier
+		const U32 attributeSize = 2 * sizeof(F32); // barycentrics
+		shaderConfig->Config(payloadSize, attributeSize);
+
+		auto pipelineConfig = rtp.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
+		pipelineConfig->Config(inf.m_rayTracingShaders.m_maxRecursionDepth);
+
+		// Local signature
+		if(localRootSig)
+		{
+			auto localRootSignature = rtp.CreateSubobject<CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT>();
+			localRootSignature->SetRootSignature(&localRootSig->getD3DRootSignature());
+			auto rootSignatureAssociation = rtp.CreateSubobject<CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT>();
+			rootSignatureAssociation->SetSubobjectToAssociate(*localRootSignature);
+			for(U32 i = 0; i < inf.m_rayTracingShaders.m_hitGroups.getSize(); ++i)
+			{
+				const std::wstring exportName = std::wstring(L"chit") + std::to_wstring(i);
+				rootSignatureAssociation->AddExport(exportName.c_str());
+			}
+		}
+
+		// Global signature
+		auto globalRootSignature = rtp.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
+		globalRootSignature->SetRootSignature(&m_rootSignature->getD3DRootSignature());
+
+		// Create state obj
+		ANKI_D3D_CHECK(getDevice().CreateStateObject(rtp, IID_PPV_ARGS(&m_rt.m_stateObject)));
+
+		// Store CPU handles
+		{
+			const U32 handleSize = getGrManagerImpl().getDeviceCapabilities().m_shaderGroupHandleSize;
+
+			ComPtr<ID3D12StateObjectProperties> stateObjectProperties;
+			ANKI_D3D_CHECK(m_rt.m_stateObject->QueryInterface(IID_PPV_ARGS(&stateObjectProperties)));
+
+			m_rt.m_handlesCpuBuff.resize(handleSize * groupCount, 0_U8);
+			U8* out = m_rt.m_handlesCpuBuff.getBegin();
+
+			for(U32 i = 0; i < inf.m_rayTracingShaders.m_rayGenShaders.getSize(); ++i)
+			{
+				void* handle = stateObjectProperties->GetShaderIdentifier((std::wstring(L"raygen") + std::to_wstring(i)).c_str());
+				memcpy(out, handle, handleSize);
+				out += handleSize;
+			}
+
+			for(U32 i = 0; i < inf.m_rayTracingShaders.m_missShaders.getSize(); ++i)
+			{
+				void* handle = stateObjectProperties->GetShaderIdentifier((std::wstring(L"miss") + std::to_wstring(i)).c_str());
+				memcpy(out, handle, handleSize);
+				out += handleSize;
+			}
+
+			for(U32 i = 0; i < inf.m_rayTracingShaders.m_hitGroups.getSize(); ++i)
+			{
+				void* handle = stateObjectProperties->GetShaderIdentifier((std::wstring(L"hitgroup") + std::to_wstring(i)).c_str());
+				memcpy(out, handle, handleSize);
+				out += handleSize;
+			}
+
+			ANKI_ASSERT(out == m_rt.m_handlesCpuBuff.getEnd());
+		}
+
+		// GPU handles
+		{
+			// Upload RT handles
+			BufferInitInfo buffInit("RT handles");
+			buffInit.m_size = m_rt.m_handlesCpuBuff.getSizeInBytes();
+			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+			buffInit.m_usage = BufferUsageBit::kAllCompute & BufferUsageBit::kAllRead;
+			m_rt.m_handlesGpuBuff = getGrManagerImpl().newBuffer(buffInit);
+
+			void* mapped = m_rt.m_handlesGpuBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			memcpy(mapped, m_rt.m_handlesCpuBuff.getBegin(), m_rt.m_handlesCpuBuff.getSizeInBytes());
+			m_rt.m_handlesGpuBuff->unmap();
+		}
 	}
 
 	// Get shader sizes and a few other things

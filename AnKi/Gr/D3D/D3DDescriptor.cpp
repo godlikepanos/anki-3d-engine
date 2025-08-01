@@ -444,6 +444,65 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	return Error::kNone;
 }
 
+Error RootSignatureFactory::getOrCreateLocalRootSignature(const ShaderReflection& refl, RootSignature*& signature)
+{
+	ANKI_ASSERT(refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize > 0
+				&& (refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize % 4) == 0);
+
+	// Compute the hash
+	const U64 hash = computeHash(&refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize,
+								 sizeof(refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize));
+
+	// Search if exists
+	LockGuard lock(m_mtx);
+
+	for(RootSignature* s : m_signatures)
+	{
+		if(s->m_hash == hash)
+		{
+			signature = s;
+			return Error::kNone;
+		}
+	}
+
+	// Not found, create one
+
+	D3D12_ROOT_PARAMETER1 rootParam = {};
+	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam.Constants.Num32BitValues = refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize / 4;
+	rootParam.Constants.RegisterSpace = 3001;
+	rootParam.Constants.ShaderRegister = 0;
+
+	D3D12_VERSIONED_ROOT_SIGNATURE_DESC verSigDesc = {};
+	verSigDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+	D3D12_ROOT_SIGNATURE_DESC1& sigDesc = verSigDesc.Desc_1_1;
+	sigDesc.NumParameters = 1;
+	sigDesc.pParameters = &rootParam;
+	sigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
+	ComPtr<ID3DBlob> signatureBlob;
+	ComPtr<ID3DBlob> errorBlob;
+	const HRESULT ret = D3D12SerializeVersionedRootSignature(&verSigDesc, &signatureBlob, &errorBlob);
+	if(ret != S_OK)
+	{
+		const Char* errc = reinterpret_cast<const Char*>(errorBlob->GetBufferPointer());
+		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: %s", errc);
+	}
+
+	ID3D12RootSignature* dxRootSig;
+	ANKI_D3D_CHECK(getDevice().CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&dxRootSig)));
+
+	// Create the signature
+	signature = newInstance<RootSignature>(GrMemoryPool::getSingleton());
+	signature->m_hash = hash;
+	signature->m_rootSignature = dxRootSig;
+
+	m_signatures.emplaceBack(signature);
+
+	return Error::kNone;
+}
+
 void DescriptorState::init(StackMemoryPool* tempPool)
 {
 	for(auto& s : m_spaces)

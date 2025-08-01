@@ -27,7 +27,7 @@
 
 // Use the Agility SDK
 extern "C" {
-__declspec(dllexport) extern const UINT D3D12SDKVersion = 615; // Number taken from the download page
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 616; // Number taken from the download page
 __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; // The D3D12Core.dll should be in the same dir as the .exe
 }
 
@@ -543,6 +543,11 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_meshShaders = g_meshShadersCVar;
 		m_capabilities.m_pipelineQuery = true;
 		m_capabilities.m_barycentrics = true;
+		m_capabilities.m_shaderGroupHandleSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+
+		// It should be D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT but anki uses a single SBT for raygen, miss and hit groups so the non raygen
+		// groups should be aligned to the SBT buffer itself
+		m_capabilities.m_sbtRecordAlignment = D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
 	}
 
 	// Other systems

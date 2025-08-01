@@ -12,12 +12,59 @@ The included licenses apply to the following files:
 - **LICENSE-CODE.txt** : applies to all files under `build/native/include/`
 
 ## Changelog
-### Version 1.615.1
-- Fix placed resource initialization validation bug related to plane validation
-- Fix a bug where GBV patching will crash when initializing if the caller didn't request a debug info parser
 
-### Version 1.615.0
-- D3D12 officially supports applications opting to bypass shader hash validation.
+### Version 1.616.1:
+ 
+- Runtime fix: D3D12EnableExperimentalFeatures() was allowing D3D12ExperimentalShaderModels
+  - This made it look like Shader Model 6.9 could work even though it's only supported in the 1.717.x preview
+  - Now asking for D3D12ExperimentalShaderModels returns E_NOINTERFACE.
+- Debug Layer fixes:
+  - Enhanced Barrier placed resource validation fix for false errors
+  - For D3D12_BARRIER_SUBRESOURCE_RANGE, the Debug Layer was not handling the NumMipLevels=0 special case (treat IndexOrFirstMipLevel as a subresource index)
+  - Debug Layer updated to notice that RD/DS initialization can be accomplished by RenderPass Clear/Discard
+- GPU based validation (GBV):
+  - Fix for incorrect texture state/layout validation in cases where GBV needed to insert LOD calculation
+
+### Version 1.717.0
+- Everything in 1.616.0 plus:
+- Shader Model 6.9 preview, adding:
+  - Cooperative Vectors
+  - Shader Execution Reordering
+  - Support for RayQuery using Opacity Micromaps
+    - Normal TraceRay doens't require SM 6.9, so the 1.616.0 release works for it
+- D3D Video Encoding updates
+
+In this preview, mesh nodes is disabled, but could return in a future preview and/or retail release.
+
+### Version 1.616.0
+- Release Opacity Micromap support
+  - Just missing RayQuery+OMM suport that needs Shader Model 6.9 which is in the above preview
+- Tier 4 Tiled Resources
+
+### Version 1.716.1
+- Fix meta command validation
+- Add Raw UAV/SRV validation for tight aligned buffers
+- Fix a bug where AlignmentRestriction hint wasn’t being passed to drivers
+- Fix placed resource initialization validation bug related to plane validation
+- Fix a bug where GBV patching will crash when initializing if the caller didn’t request a debug info parser
+
+### Version 1.716.0
+- Application Specific Driver State
+- RecreateAt GPUVA
+- Runtime Bypass
+- Shader hash bypass 
+- Tight Alignment of Resources
+- Multiple video features
+  - Encode subregion notifications
+  - Encode output stats
+  - Encode GPU texture input map
+  - Encode GPU texture/CPU buffer dirty maps/rects
+  - Encode GPU texture/CPU buffer motion vector hints
+
+In this preview, mesh nodes is disabled, but could return in a future preview and/or retail release.
+
+### Verision 1.615.0
+- Shader hash bypass officially supports applications opting to bypass shader hash validation
 
 ### Version 1.715.0
 - Preview of mesh nodes in work graphs

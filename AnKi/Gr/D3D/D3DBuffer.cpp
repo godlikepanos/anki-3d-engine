@@ -294,10 +294,9 @@ D3D12_BARRIER_ACCESS BufferImpl::computeAccess(BufferUsageBit usage) const
 
 	if(!!(usage & BufferUsageBit::kShaderBindingTable))
 	{
-		out |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
+		out |= D3D12_BARRIER_ACCESS_COMMON;
 	}
 
-	ANKI_ASSERT(out);
 	return out;
 }
 

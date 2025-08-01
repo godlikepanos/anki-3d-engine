@@ -279,8 +279,9 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	const Bool isCompute = !!(progImpl.getShaderTypes() & ShaderTypeBit::kCompute);
 	const Bool isGraphics = !!(progImpl.getShaderTypes() & ShaderTypeBit::kAllGraphics);
 	const Bool isWg = !!(progImpl.getShaderTypes() & ShaderTypeBit::kWorkGraph);
+	const Bool isRt = !!(progImpl.getShaderTypes() & ShaderTypeBit::kAllRayTracing);
 
-	self.m_descriptors.bindRootSignature(progImpl.m_rootSignature, isCompute || isWg);
+	self.m_descriptors.bindRootSignature(progImpl.m_rootSignature, isCompute || isWg || isRt);
 
 	if(isCompute)
 	{
@@ -292,6 +293,12 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	{
 		self.m_graphicsState.unbindShaderProgram();
 		self.m_wgProg = &progImpl;
+	}
+	else if(isRt)
+	{
+		self.m_graphicsState.unbindShaderProgram();
+		self.m_wgProg = nullptr;
+		self.m_cmdList->SetPipelineState1(progImpl.m_rt.m_stateObject);
 	}
 	else
 	{
@@ -574,11 +581,24 @@ void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 	self.m_cmdList->ExecuteIndirect(signature, 1, &impl.getD3DResource(), argBuffer.getOffset(), nullptr, 0);
 }
 
-void CommandBuffer::traceRays([[maybe_unused]] const BufferView& sbtBuffer, [[maybe_unused]] U32 sbtRecordSize,
-							  [[maybe_unused]] U32 hitGroupSbtRecordCount, [[maybe_unused]] U32 rayTypeCount, [[maybe_unused]] U32 width,
-							  [[maybe_unused]] U32 height, [[maybe_unused]] U32 depth)
+void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, [[maybe_unused]] U32 rayTypeCount,
+							  U32 width, U32 height, U32 depth)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(rayTypeCount == 1 && "TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.dispatchCommon();
+
+	const U64 baseAddress = sbtBuffer.getBuffer().getGpuAddress() + sbtBuffer.getOffset();
+
+	D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
+	dispatchDesc.RayGenerationShaderRecord = {baseAddress, sbtRecordSize};
+	dispatchDesc.MissShaderTable = {baseAddress + sbtRecordSize, sbtRecordSize, sbtRecordSize};
+	dispatchDesc.HitGroupTable = {baseAddress + sbtRecordSize * 2, sbtRecordSize * hitGroupSbtRecordCount, sbtRecordSize};
+	dispatchDesc.Width = width;
+	dispatchDesc.Height = height;
+	dispatchDesc.Depth = depth;
+
+	self.m_cmdList->DispatchRays(&dispatchDesc);
 }
 
 void CommandBuffer::traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount,

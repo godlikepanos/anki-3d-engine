@@ -2514,6 +2514,7 @@ float4 main(VertOut input) : SV_TARGET0
 ANKI_TEST(Gr, RayTracingPipeline)
 {
 	g_rayTracingCVar = true;
+	// g_deviceCVar = 1;
 	commonInit();
 
 	{
@@ -2581,7 +2582,7 @@ ANKI_TEST(Gr, RayTracingPipeline)
 			inst[1].m_transform = Mat3x4(Vec3(0.0f, -2.0f, 0.0f), Mat3::getIdentity(), Vec3(1.0f));
 			inst[1].m_instanceCustomIndex = 1;
 			inst[1].m_instanceShaderBindingTableRecordOffset = 1;
-			BufferPtr instBuff = createBuffer(BufferUsageBit::kAll, inst, 1);
+			BufferPtr instBuff = createBuffer(BufferUsageBit::kAccelerationStructureBuild, inst, 1, "TLAS instances");
 
 			AccelerationStructureInitInfo init;
 			init.m_type = AccelerationStructureType::kTopLevel;
@@ -2610,7 +2611,7 @@ struct SbtConsts
 	float3 m_color;
 };
 
-[[vk::shader_record_ext]] ConstantBuffer<SbtConsts> g_sbtConsts : register(b0);
+[[vk::shader_record_ext]] ConstantBuffer<SbtConsts> g_sbtConsts : register(b0, space3001);
 
 [shader("closesthit")] void main(inout Payload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
 {
@@ -2724,7 +2725,7 @@ RWTexture2D<float4> g_uav : register(u0);
 				++count;
 			}
 
-			sbt = createBuffer(BufferUsageBit::kShaderBindingTable, ConstWeakArray(sbtData));
+			sbt = createBuffer(BufferUsageBit::kShaderBindingTable, ConstWeakArray(sbtData), "SBT");
 		}
 
 		// Build AS

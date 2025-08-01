@@ -429,6 +429,12 @@ inline bool D3DX12GetCopyableFootprints(
     // Check if its a valid format
     D3DX12_ASSERT(D3D12_PROPERTY_LAYOUT_FORMAT_TABLE::FormatExists(Format));
 
+    // D3DX12GetCopyableFootprints does not support buffers with width larger than UINT_MAX.
+    if (ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER && ResourceDesc.Width >= UINT_MAX)
+    {
+        return false;
+    }
+
     const UINT WidthAlignment = D3D12_PROPERTY_LAYOUT_FORMAT_TABLE::GetWidthAlignment( Format );
     const UINT HeightAlignment = D3D12_PROPERTY_LAYOUT_FORMAT_TABLE::GetHeightAlignment( Format );
     const UINT16 DepthAlignment = UINT16( D3D12_PROPERTY_LAYOUT_FORMAT_TABLE::GetDepthAlignment( Format ) );

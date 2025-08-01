@@ -106,6 +106,12 @@ struct Barycentrics
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_SHADER_RECORD_CONSTANTS(type, var) [[vk::shader_record_ext]] ConstantBuffer<type> var : register(b0, space3001);
+#else
+#	define ANKI_SHADER_RECORD_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3001);
+#endif
+
+#if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_BINDLESS(texType, compType) \
 		[[vk::binding(0, 1000000)]] Texture##texType<compType> g_bindlessTextures##texType##compType[]; \
 		Texture##texType<compType> getBindlessTexture##texType##compType(U32 idx) \

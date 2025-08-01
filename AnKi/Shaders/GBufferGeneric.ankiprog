@@ -687,7 +687,7 @@ GBufferPixelOut main(
 #	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN
 
 #	if ANKI_CLOSEST_HIT_SHADER
-[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D
+ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 
 [shader("closesthit")] void main(inout RtMaterialFetchRayPayload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
 {

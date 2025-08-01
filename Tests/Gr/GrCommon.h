@@ -148,7 +148,19 @@ inline BufferPtr createBuffer(BufferUsageBit usage, ConstWeakArray<T> data, CStr
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+	BufferBarrierInfo barr;
+	barr.m_bufferView = BufferView(buff.get());
+	barr.m_previousUsage = BufferUsageBit::kNone;
+	barr.m_nextUsage = BufferUsageBit::kCopyDestination;
+	cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+
 	cmdb->copyBufferToBuffer(BufferView(copyBuff.get()), BufferView(buff.get()));
+
+	barr.m_previousUsage = BufferUsageBit::kCopyDestination;
+	barr.m_nextUsage = usage;
+	cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+
 	cmdb->endRecording();
 
 	FencePtr fence;

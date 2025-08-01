@@ -316,6 +316,9 @@ public:
 
 	Error getOrCreateRootSignature(const ShaderReflection& refl, RootSignature*& signature);
 
+	/// Local root signature for hit shaders.
+	Error getOrCreateLocalRootSignature(const ShaderReflection& refl, RootSignature*& signature);
+
 private:
 	GrDynamicArray<RootSignature*> m_signatures;
 	Mutex m_mtx;
