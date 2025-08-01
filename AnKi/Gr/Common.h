@@ -487,12 +487,12 @@ enum class TextureUsageBit : U32
 	kSrvGeometry = 1 << 0,
 	kSrvPixel = 1 << 1,
 	kSrvCompute = 1 << 2,
-	kSrvTraceRays = 1 << 3,
+	kSrvDispatchRays = 1 << 3,
 
 	kUavGeometry = 1 << 4,
 	kUavPixel = 1 << 5,
 	kUavCompute = 1 << 6,
-	kUavTraceRays = 1 << 7,
+	kUavDispatchRays = 1 << 7,
 
 	kRtvDsvRead = 1 << 8,
 	kRtvDsvWrite = 1 << 9,
@@ -503,8 +503,8 @@ enum class TextureUsageBit : U32
 	kPresent = 1 << 12,
 
 	// Derived
-	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvTraceRays,
-	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavTraceRays,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
+	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavDispatchRays,
 	kAllRtvDsv = kRtvDsvRead | kRtvDsvWrite,
 
 	kAllGeometry = kSrvGeometry | kUavGeometry,
@@ -707,46 +707,46 @@ enum class BufferUsageBit : U64
 	kConstantGeometry = 1ull << 0ull,
 	kConstantPixel = 1ull << 1ull,
 	kConstantCompute = 1ull << 2ull,
-	kConstantTraceRays = 1ull << 3ull,
+	kConstantDispatchRays = 1ull << 3ull,
 
 	kSrvGeometry = 1ull << 4ull,
 	kSrvPixel = 1ull << 5ull,
 	kSrvCompute = 1ull << 6ull,
-	kSrvTraceRays = 1ull << 7ull,
+	kSrvDispatchRays = 1ull << 7ull,
 
 	kUavGeometry = 1ull << 8ull,
 	kUavPixel = 1ull << 9ull,
 	kUavCompute = 1ull << 10ull,
-	kUavTraceRays = 1ull << 11ull,
+	kUavDispatchRays = 1ull << 11ull,
 
 	kVertexOrIndex = 1ull << 12ull,
 
 	kIndirectCompute = 1ull << 14ll,
 	kIndirectDraw = 1ull << 15ull,
-	kIndirectTraceRays = 1ull << 16ull,
+	kIndirectDispatchRays = 1ull << 16ull,
 
 	kCopySource = 1ull << 17ull,
 	kCopyDestination = 1ull << 18ull,
 
 	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build.
-	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a traceRays() command.
+	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a dispatchRays() command.
 	kAccelerationStructureBuildScratch = 1ull << 21ull, ///< Used in buildAccelerationStructureXXX commands.
 	kAccelerationStructure = 1ull << 22ull, ///< Will be used as AS.
 
 	// Derived
-	kAllConstant = kConstantGeometry | kConstantPixel | kConstantCompute | kConstantTraceRays,
-	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvTraceRays,
-	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavTraceRays,
-	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
+	kAllConstant = kConstantGeometry | kConstantPixel | kConstantCompute | kConstantDispatchRays,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
+	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavDispatchRays,
+	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectDispatchRays,
 	kAllCopy = kCopySource | kCopyDestination,
 
 	kAllGeometry = kConstantGeometry | kSrvGeometry | kUavGeometry | kVertexOrIndex,
 	kAllPixel = kConstantPixel | kSrvPixel | kUavPixel,
 	kAllGraphics = kAllGeometry | kAllPixel | kIndirectDraw,
 	kAllCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute,
-	kAllTraceRays = kConstantTraceRays | kSrvTraceRays | kUavTraceRays | kIndirectTraceRays | kShaderBindingTable,
+	kAllDispatchRays = kConstantDispatchRays | kSrvDispatchRays | kUavDispatchRays | kIndirectDispatchRays | kShaderBindingTable,
 
-	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch | kAccelerationStructure,
+	kAllRayTracing = kAllDispatchRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch | kAccelerationStructure,
 	kAllRead = kAllConstant | kAllSrv | kAllUav | kVertexOrIndex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable
 			   | kAccelerationStructure,
 	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch | kAccelerationStructure,
@@ -794,14 +794,14 @@ enum class AccelerationStructureUsageBit : U8
 	kNone = 0,
 	kBuild = 1 << 0,
 	kAttach = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
-	kGeometrySrv = 1 << 2,
-	kPixelSrv = 1 << 3,
-	kComputeSrv = 1 << 4,
-	kTraceRaysSrv = 1 << 5,
+	kSrvGeometry = 1 << 2,
+	kSrvPixel = 1 << 3,
+	kSrvCompute = 1 << 4,
+	kSrvDispatchRays = 1 << 5,
 
 	// Derived
-	kAllGraphics = kGeometrySrv | kPixelSrv,
-	kAllRead = kAttach | kGeometrySrv | kPixelSrv | kComputeSrv | kTraceRaysSrv,
+	kAllGraphics = kSrvGeometry | kSrvPixel,
+	kAllRead = kAttach | kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
 	kAllWrite = kBuild
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)

@@ -138,25 +138,25 @@ D3D12_GLOBAL_BARRIER AccelerationStructureImpl::computeBarrierInfo(AccelerationS
 		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kGeometrySrv))
+	if(!!(before & AccelerationStructureUsageBit::kSrvGeometry))
 	{
 		barrier.SyncBefore |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
 		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ; // READ_BIT is the only viable solution by elimination
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kPixelSrv))
+	if(!!(before & AccelerationStructureUsageBit::kSrvPixel))
 	{
 		barrier.SyncBefore |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kComputeSrv))
+	if(!!(before & AccelerationStructureUsageBit::kSrvCompute))
 	{
 		barrier.SyncBefore |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kTraceRaysSrv))
+	if(!!(before & AccelerationStructureUsageBit::kSrvDispatchRays))
 	{
 		barrier.SyncBefore |= D3D12_BARRIER_SYNC_RAYTRACING;
 		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
@@ -175,25 +175,25 @@ D3D12_GLOBAL_BARRIER AccelerationStructureImpl::computeBarrierInfo(AccelerationS
 		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kGeometrySrv))
+	if(!!(after & AccelerationStructureUsageBit::kSrvGeometry))
 	{
 		barrier.SyncAfter |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
 		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ; // READ_BIT is the only viable solution by elimination
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kPixelSrv))
+	if(!!(after & AccelerationStructureUsageBit::kSrvPixel))
 	{
 		barrier.SyncAfter |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kComputeSrv))
+	if(!!(after & AccelerationStructureUsageBit::kSrvCompute))
 	{
 		barrier.SyncAfter |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kTraceRaysSrv))
+	if(!!(after & AccelerationStructureUsageBit::kSrvDispatchRays))
 	{
 		barrier.SyncAfter |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
 		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;

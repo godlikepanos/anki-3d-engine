@@ -601,7 +601,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 				stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			}
 
-			if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
+			if(!!(usage & TextureUsageBit::kSrvDispatchRays) && rt)
 			{
 				stages |= D3D12_BARRIER_SYNC_RAYTRACING;
 			}
@@ -627,7 +627,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 				stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			}
 
-			if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
+			if(!!(usage & TextureUsageBit::kSrvDispatchRays) && rt)
 			{
 				stages |= D3D12_BARRIER_SYNC_RAYTRACING;
 			}
@@ -680,13 +680,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 		}
 
-		if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
+		if(!!(usage & TextureUsageBit::kSrvDispatchRays) && rt)
 		{
 			stages |= D3D12_BARRIER_SYNC_RAYTRACING;
 			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
 		}
 
-		if(!!(usage & TextureUsageBit::kUavTraceRays) && rt)
+		if(!!(usage & TextureUsageBit::kUavDispatchRays) && rt)
 		{
 			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;

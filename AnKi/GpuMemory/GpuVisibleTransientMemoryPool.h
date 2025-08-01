@@ -57,7 +57,7 @@ private:
 
 		BufferUsageBit buffUsage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kIndirectDraw
 								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertexOrIndex | BufferUsageBit::kAllCopy
-								   | BufferUsageBit::kIndirectTraceRays | BufferUsageBit::kShaderBindingTable;
+								   | BufferUsageBit::kIndirectDispatchRays | BufferUsageBit::kShaderBindingTable;
 		if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 		{
 			buffUsage |= (BufferUsageBit::kAccelerationStructureBuildScratch | BufferUsageBit::kAccelerationStructureBuild);

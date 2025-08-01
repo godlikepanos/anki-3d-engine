@@ -333,7 +333,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 	}
 
-	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)) && rt)
+	if(!!(usage & (BufferUsageBit::kAllDispatchRays & ~BufferUsageBit::kIndirectDispatchRays)) && rt)
 	{
 		stageMask |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 	}

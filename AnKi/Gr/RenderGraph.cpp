@@ -1427,7 +1427,7 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 	ANKI_BUFF_USAGE(kConstantGeometry);
 	ANKI_BUFF_USAGE(kConstantPixel);
 	ANKI_BUFF_USAGE(kConstantCompute);
-	ANKI_BUFF_USAGE(kConstantTraceRays);
+	ANKI_BUFF_USAGE(kConstantDispatchRays);
 	ANKI_BUFF_USAGE(kStorageGeometryRead);
 	ANKI_BUFF_USAGE(kStorageGeometryWrite);
 	ANKI_BUFF_USAGE(kStorageFragmentRead);
@@ -1448,7 +1448,7 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 	ANKI_BUFF_USAGE(kVertex);
 	ANKI_BUFF_USAGE(kIndirectCompute);
 	ANKI_BUFF_USAGE(kIndirectDraw);
-	ANKI_BUFF_USAGE(kIndirectTraceRays);
+	ANKI_BUFF_USAGE(kIndirectDispatchRays);
 	ANKI_BUFF_USAGE(kTransferSource);
 	ANKI_BUFF_USAGE(kTransferDestination);
 	ANKI_BUFF_USAGE(kAccelerationStructureBuild);

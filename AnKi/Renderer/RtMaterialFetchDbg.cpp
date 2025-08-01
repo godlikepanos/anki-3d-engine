@@ -71,9 +71,9 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch");
 
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavTraceRays);
+		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavDispatchRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												 AccelerationStructureUsageBit::kTraceRaysSrv);
+												 AccelerationStructureUsageBit::kSrvDispatchRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetchRayGen);
@@ -126,8 +126,8 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 			Vec4 dummy;
 			cmdb.setFastConstants(&dummy, sizeof(dummy));
 
-			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+							  getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
 		});
 	}
 }

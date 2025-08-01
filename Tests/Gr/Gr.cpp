@@ -2435,7 +2435,7 @@ float4 main(VertOut input) : SV_TARGET0
 			AccelerationStructureBarrierInfo barr3;
 			barr3.m_as = tlas.get();
 			barr3.m_previousUsage = AccelerationStructureUsageBit::kBuild;
-			barr3.m_nextUsage = AccelerationStructureUsageBit::kComputeSrv;
+			barr3.m_nextUsage = AccelerationStructureUsageBit::kSrvCompute;
 
 			cmdb->setPipelineBarrier({}, {}, {&barr3, 1});
 
@@ -2763,7 +2763,7 @@ RWTexture2D<float4> g_uav : register(u0);
 			AccelerationStructureBarrierInfo barr3;
 			barr3.m_as = tlas.get();
 			barr3.m_previousUsage = AccelerationStructureUsageBit::kBuild;
-			barr3.m_nextUsage = AccelerationStructureUsageBit::kComputeSrv;
+			barr3.m_nextUsage = AccelerationStructureUsageBit::kSrvCompute;
 
 			cmdb->setPipelineBarrier({}, {}, {&barr3, 1});
 
@@ -2803,6 +2803,13 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 			blitProg = createVertFragProg(kVertSrc, kPixelSrc);
 		}
 
+		// Build indirect args
+		BufferPtr indirectArgs;
+		{
+			const DispatchIndirectArgs args = {kWidth, kHeight, 1};
+			indirectArgs = createBuffer(BufferUsageBit::kIndirectDispatchRays, args, 1, "IndirectArgs");
+		}
+
 		// Draw
 		constexpr U32 kIterations = 200;
 		for(U i = 0; i < kIterations; ++i)
@@ -2823,7 +2830,7 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 			TextureBarrierInfo barr;
 			barr.m_textureView = TextureView(uav.get());
 			barr.m_previousUsage = (i == 0) ? TextureUsageBit::kNone : TextureUsageBit::kSrvPixel;
-			barr.m_nextUsage = TextureUsageBit::kUavTraceRays;
+			barr.m_nextUsage = TextureUsageBit::kUavDispatchRays;
 			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
 
 			cmdb->bindShaderProgram(prog.get());
@@ -2843,9 +2850,9 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 			cmdb->bindSrv(0, 0, tlas.get());
 			cmdb->bindUav(0, 0, TextureView(uav.get()));
 
-			cmdb->traceRays(BufferView(sbt.get()), sbtRecordSize, 2, 1, kWidth, kHeight, 1);
+			cmdb->dispatchRaysIndirect(BufferView(sbt.get()), sbtRecordSize, 2, 1, BufferView(indirectArgs.get()));
 
-			barr.m_previousUsage = TextureUsageBit::kUavTraceRays;
+			barr.m_previousUsage = TextureUsageBit::kUavDispatchRays;
 			barr.m_nextUsage = TextureUsageBit::kSrvPixel;
 			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
 
@@ -2891,7 +2898,7 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 {
 	BufferInitInfo inf;
 	inf.m_mapAccess = BufferMapAccessBit::kWrite;
-	inf.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kSrvTraceRays;
+	inf.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kSrvDispatchRays;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
 	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::kWrite);
@@ -3705,7 +3712,7 @@ void main()
 		cmdb->setFastConstants(&pc, sizeof(pc));
 
 		const U32 sbtRecordSize = g_gr->getDeviceCapabilities().m_sbtRecordAlignment;
-		cmdb->traceRays(BufferView(sbt.get()), sbtRecordSize, U32(GeomWhat::kCount) * 2, 2, WIDTH, HEIGHT, 1);
+		cmdb->dispatchRays(BufferView(sbt.get()), sbtRecordSize, U32(GeomWhat::kCount) * 2, 2, WIDTH, HEIGHT, 1);
 
 		// Copy to present
 		setTextureBarrier(cmdb, offscreenRts[i & 1], TextureUsageBit::kUavTraceRaysWrite, TextureUsageBit::kUavComputeRead,

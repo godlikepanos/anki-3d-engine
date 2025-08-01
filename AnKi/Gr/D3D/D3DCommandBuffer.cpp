@@ -581,8 +581,8 @@ void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 	self.m_cmdList->ExecuteIndirect(signature, 1, &impl.getD3DResource(), argBuffer.getOffset(), nullptr, 0);
 }
 
-void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, [[maybe_unused]] U32 rayTypeCount,
-							  U32 width, U32 height, U32 depth)
+void CommandBuffer::dispatchRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, [[maybe_unused]] U32 rayTypeCount,
+								 U32 width, U32 height, U32 depth)
 {
 	ANKI_ASSERT(rayTypeCount == 1 && "TODO");
 	ANKI_D3D_SELF(CommandBufferImpl);
@@ -601,10 +601,97 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U3
 	self.m_cmdList->DispatchRays(&dispatchDesc);
 }
 
-void CommandBuffer::traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
-									  BufferView argsBuffer)
+void CommandBuffer::dispatchRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+										 BufferView argsBuffer)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(rayTypeCount == 1 && "TODO");
+	ANKI_ASSERT(sbtBuffer.getRange() == sbtRecordSize * (hitGroupSbtRecordCount + 2));
+	ANKI_ASSERT(argsBuffer.getRange() == sizeof(DispatchIndirectArgs));
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.dispatchCommon();
+
+	// Allocate the actual indirect buffer
+	if(!self.m_indirectDispatchRays.m_indirectBuff)
+	{
+		D3D12_HEAP_PROPERTIES heapProperties = {};
+		heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;
+		heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
+
+		if(getGrManagerImpl().getD3DCapabilities().m_rebar && getGrManagerImpl().getDeviceCapabilities().m_discreteGpu)
+		{
+			heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+		}
+		else
+		{
+			heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+		}
+
+		const D3D12_HEAP_FLAGS heapFlags = {};
+
+		D3D12_RESOURCE_DESC resourceDesc = {};
+		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		resourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+		resourceDesc.Width = sizeof(D3D12_DISPATCH_RAYS_DESC) * self.m_indirectDispatchRays.kMaxDescriptorCount;
+		resourceDesc.Height = 1;
+		resourceDesc.DepthOrArraySize = 1;
+		resourceDesc.MipLevels = 1;
+		resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+		resourceDesc.SampleDesc.Count = 1;
+		resourceDesc.SampleDesc.Quality = 0;
+		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+		const D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+
+		ANKI_D3D_CHECKF(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &resourceDesc, initialState, nullptr,
+															IID_PPV_ARGS(&self.m_indirectDispatchRays.m_indirectBuff)));
+
+		ANKI_D3D_CHECKF(self.m_indirectDispatchRays.m_indirectBuff->SetName(L"DispatchRaysIndirectBuff"));
+
+		const D3D12_RANGE d3dRange = {.Begin = 0, .End = resourceDesc.Width};
+		void* mem = nullptr;
+		ANKI_D3D_CHECKF(self.m_indirectDispatchRays.m_indirectBuff->Map(0, &d3dRange, &mem));
+		self.m_indirectDispatchRays.m_mappedMem = {static_cast<D3D12_DISPATCH_RAYS_DESC*>(mem), self.m_indirectDispatchRays.kMaxDescriptorCount};
+	}
+
+	const PtrSize indirectBuffOffset = self.m_indirectDispatchRays.m_crntDescriptor * sizeof(D3D12_DISPATCH_RAYS_DESC);
+
+	// Write a few things from the CPU
+	const U64 baseAddress = sbtBuffer.getBuffer().getGpuAddress() + sbtBuffer.getOffset();
+
+	D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
+	dispatchDesc.RayGenerationShaderRecord = {baseAddress, sbtRecordSize};
+	dispatchDesc.MissShaderTable = {baseAddress + sbtRecordSize, sbtRecordSize, sbtRecordSize};
+	dispatchDesc.HitGroupTable = {baseAddress + sbtRecordSize * 2, sbtRecordSize * hitGroupSbtRecordCount, sbtRecordSize};
+
+	self.m_indirectDispatchRays.m_mappedMem[self.m_indirectDispatchRays.m_crntDescriptor] = dispatchDesc;
+
+	// Copy the rest from the GPU
+	self.m_cmdList->CopyBufferRegion(self.m_indirectDispatchRays.m_indirectBuff, indirectBuffOffset + offsetof(D3D12_DISPATCH_RAYS_DESC, Width),
+									 &static_cast<const BufferImpl&>(argsBuffer.getBuffer()).getD3DResource(), argsBuffer.getOffset(),
+									 sizeof(DispatchIndirectArgs));
+
+	// Barrier
+	const D3D12_BUFFER_BARRIER barrier = {.SyncBefore = D3D12_BARRIER_SYNC_COPY,
+										  .SyncAfter = D3D12_BARRIER_SYNC_EXECUTE_INDIRECT,
+										  .AccessBefore = D3D12_BARRIER_ACCESS_COPY_DEST,
+										  .AccessAfter = D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT,
+										  .pResource = self.m_indirectDispatchRays.m_indirectBuff,
+										  .Offset = 0,
+										  .Size = self.m_indirectDispatchRays.m_indirectBuff->GetDesc().Width};
+
+	const D3D12_BARRIER_GROUP barrierGroup = {.Type = D3D12_BARRIER_TYPE_BUFFER, .NumBarriers = 1, .pBufferBarriers = &barrier};
+
+	self.m_cmdList->Barrier(1, &barrierGroup);
+
+	// Execute
+	ID3D12CommandSignature* signature;
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS,
+																					 sizeof(D3D12_DISPATCH_RAYS_DESC), signature));
+
+	self.m_cmdList->ExecuteIndirect(signature, 1, self.m_indirectDispatchRays.m_indirectBuff, indirectBuffOffset, nullptr, 0);
+
+	++self.m_indirectDispatchRays.m_crntDescriptor;
 }
 
 void CommandBuffer::blitTexture([[maybe_unused]] const TextureView& srcView, [[maybe_unused]] const TextureView& destView)
@@ -954,6 +1041,13 @@ void CommandBuffer::dispatchGraph(const BufferView& scratchBuffer, const void* r
 
 CommandBufferImpl::~CommandBufferImpl()
 {
+	if(m_indirectDispatchRays.m_indirectBuff)
+	{
+		const D3D12_RANGE d3dRange = {.Begin = 0, .End = m_indirectDispatchRays.m_indirectBuff->GetDesc().Width};
+		m_indirectDispatchRays.m_indirectBuff->Unmap(0, &d3dRange);
+
+		safeRelease(m_indirectDispatchRays.m_indirectBuff);
+	}
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)

@@ -264,19 +264,41 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		for(U32 i = 0; i < inf.m_rayTracingShaders.m_hitGroups.getSize(); ++i)
 		{
-			auto chit = rtp.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
-
 			const RayTracingHitGroup& hg = inf.m_rayTracingShaders.m_hitGroups[i];
-			ANKI_ASSERT(hg.m_anyHitShader == nullptr && "TODO");
-			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*hg.m_closestHitShader);
-			const CD3DX12_SHADER_BYTECODE libCode(shaderImpl.m_binary.getBegin(), shaderImpl.m_binary.getSizeInBytes());
 
-			chit->SetDXILLibrary(&libCode);
-			const std::wstring exportName = std::wstring(L"chit") + std::to_wstring(i);
-			chit->DefineExport(exportName.c_str(), L"main");
+			std::wstring chitExportName;
+			if(hg.m_closestHitShader)
+			{
+				const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*hg.m_closestHitShader);
+				const CD3DX12_SHADER_BYTECODE libCode(shaderImpl.m_binary.getBegin(), shaderImpl.m_binary.getSizeInBytes());
+
+				auto subobj = rtp.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+				subobj->SetDXILLibrary(&libCode);
+				chitExportName = std::wstring(L"chit") + std::to_wstring(i);
+				subobj->DefineExport(chitExportName.c_str(), L"main");
+			}
+
+			std::wstring ahitExportName;
+			if(hg.m_anyHitShader)
+			{
+				const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*hg.m_anyHitShader);
+				const CD3DX12_SHADER_BYTECODE libCode(shaderImpl.m_binary.getBegin(), shaderImpl.m_binary.getSizeInBytes());
+
+				auto subobj = rtp.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+				subobj->SetDXILLibrary(&libCode);
+				ahitExportName = std::wstring(L"ahit") + std::to_wstring(i);
+				subobj->DefineExport(ahitExportName.c_str(), L"main");
+			}
 
 			auto hitGroup = rtp.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
-			hitGroup->SetClosestHitShaderImport(exportName.c_str());
+			if(hg.m_closestHitShader)
+			{
+				hitGroup->SetClosestHitShaderImport(chitExportName.c_str());
+			}
+			if(hg.m_anyHitShader)
+			{
+				hitGroup->SetAnyHitShaderImport(ahitExportName.c_str());
+			}
 			hitGroup->SetHitGroupExport((std::wstring(L"hitgroup") + std::to_wstring(i)).c_str());
 			hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
 
@@ -301,8 +323,19 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			rootSignatureAssociation->SetSubobjectToAssociate(*localRootSignature);
 			for(U32 i = 0; i < inf.m_rayTracingShaders.m_hitGroups.getSize(); ++i)
 			{
-				const std::wstring exportName = std::wstring(L"chit") + std::to_wstring(i);
-				rootSignatureAssociation->AddExport(exportName.c_str());
+				const RayTracingHitGroup& hg = inf.m_rayTracingShaders.m_hitGroups[i];
+
+				if(hg.m_closestHitShader)
+				{
+					const std::wstring exportName = std::wstring(L"chit") + std::to_wstring(i);
+					rootSignatureAssociation->AddExport(exportName.c_str());
+				}
+
+				if(hg.m_anyHitShader)
+				{
+					const std::wstring exportName = std::wstring(L"ahit") + std::to_wstring(i);
+					rootSignatureAssociation->AddExport(exportName.c_str());
+				}
 			}
 		}
 

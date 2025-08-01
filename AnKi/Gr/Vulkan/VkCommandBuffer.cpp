@@ -702,16 +702,16 @@ void CommandBuffer::dispatchGraph([[maybe_unused]] const BufferView& scratchBuff
 	ANKI_ASSERT(!"Not supported");
 }
 
-void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
-							  U32 depth)
+void CommandBuffer::dispatchRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
+								 U32 height, U32 depth)
 {
 	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.traceRaysInternal(sbtBuffer, sbtRecordSize32, hitGroupSbtRecordCount, rayTypeCount, width, height, depth, {});
 }
 
-void CommandBuffer::traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
-									  BufferView argsBuffer)
+void CommandBuffer::dispatchRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+										 BufferView argsBuffer)
 {
 	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -1297,7 +1297,6 @@ void CommandBufferImpl::traceRaysInternal(const BufferView& sbtBuffer, U32 sbtRe
 	const PtrSize sbtRecordSize = sbtRecordSize32;
 	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
 	ANKI_ASSERT(m_rtProg);
-	[[maybe_unused]] const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*m_rtProg);
 
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
 	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;

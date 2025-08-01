@@ -229,7 +229,7 @@ D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
 		sync |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
 	}
 
-	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)) && rt)
+	if(!!(usage & (BufferUsageBit::kAllDispatchRays & ~BufferUsageBit::kIndirectDispatchRays)) && rt)
 	{
 		sync |= D3D12_BARRIER_SYNC_RAYTRACING;
 	}

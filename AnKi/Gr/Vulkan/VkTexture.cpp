@@ -334,13 +334,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
+	if(!!(usage & TextureUsageBit::kSrvDispatchRays) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavTraceRays) && rt)
+	if(!!(usage & TextureUsageBit::kUavDispatchRays) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;

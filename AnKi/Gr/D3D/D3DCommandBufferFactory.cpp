@@ -125,6 +125,9 @@ Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFas
 	case D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH:
 		akType = IndirectCommandSignatureType::kDispatchMesh;
 		break;
+	case D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS:
+		akType = IndirectCommandSignatureType::kDispatchRays;
+		break;
 	default:
 		ANKI_ASSERT(!"Unsupported");
 	}

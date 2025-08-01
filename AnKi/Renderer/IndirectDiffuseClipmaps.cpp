@@ -276,11 +276,11 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
-			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
 		}
-		pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
 		pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												AccelerationStructureUsageBit::kTraceRaysSrv);
+												AccelerationStructureUsageBit::kSrvDispatchRays);
 
 		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
@@ -352,8 +352,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				const UVec4 consts(clipmap, g_indirectDiffuseClipmapRadianceOctMapSize, 0, 0);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
-				cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-							   m_consts.m_totalProbeCount * raysPerProbePerFrame, 1, 1);
+				cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+								  m_consts.m_totalProbeCount * raysPerProbePerFrame, 1, 1);
 			}
 		});
 	}
@@ -442,22 +442,22 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
-			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
 		}
-		pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
 		pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												AccelerationStructureUsageBit::kTraceRaysSrv);
-		pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
-		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
+												AccelerationStructureUsageBit::kSrvDispatchRays);
+		pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
+		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
 
 		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
-			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvTraceRays);
-			pass.newTextureDependency(probeValidityVolumes[clipmap], TextureUsageBit::kSrvTraceRays);
-			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kSrvTraceRays);
+			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvDispatchRays);
+			pass.newTextureDependency(probeValidityVolumes[clipmap], TextureUsageBit::kSrvDispatchRays);
+			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kSrvDispatchRays);
 		}
 
-		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavTraceRays);
+		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavDispatchRays);
 
 		pass.setWork([this, &ctx, sbtBuffer, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -519,9 +519,9 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 consts(g_indirectDiffuseClipmapFirstBounceRayDistance);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-						   getRenderer().getInternalResolution().x() / 2,
-						   getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1), 1);
+			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+							  getRenderer().getInternalResolution().x() / 2,
+							  getRenderer().getInternalResolution().y() / (!g_indirectDiffuseClipmapApplyHighQuality + 1), 1);
 		});
 	}
 	else

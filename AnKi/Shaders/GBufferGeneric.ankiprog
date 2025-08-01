@@ -624,7 +624,7 @@ GBufferPixelOut main(
 #	if ANKI_ANY_HIT_SHADER
 
 #		if REALLY_ALPHA_TEST
-[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D
+ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 #		endif
 
 [shader("anyhit")] void main(inout RtShadowsRayPayload payload, in Barycentrics barycentrics)

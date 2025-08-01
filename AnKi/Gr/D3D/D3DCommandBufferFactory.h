@@ -122,6 +122,7 @@ private:
 		kDrawIndexed,
 		kDispatch,
 		kDispatchMesh,
+		kDispatchRays,
 
 		kCount,
 		kFirst = 0
@@ -135,11 +136,12 @@ private:
 	};
 
 	static constexpr Array<U32, U32(IndirectCommandSignatureType::kCount)> kCommonStrides = {
-		sizeof(DrawIndirectArgs), sizeof(DrawIndexedIndirectArgs), sizeof(DispatchIndirectArgs), sizeof(DispatchIndirectArgs)};
+		sizeof(DrawIndirectArgs), sizeof(DrawIndexedIndirectArgs), sizeof(DispatchIndirectArgs), sizeof(DispatchIndirectArgs),
+		sizeof(D3D12_DISPATCH_RAYS_DESC)};
 
 	static constexpr Array<D3D12_INDIRECT_ARGUMENT_TYPE, U32(IndirectCommandSignatureType::kCount)> kAnkiToD3D = {
 		D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
-		D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH};
+		D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH, D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS};
 
 	Array<GrDynamicArray<Signature>, U32(IndirectCommandSignatureType::kCount)> m_arrays;
 

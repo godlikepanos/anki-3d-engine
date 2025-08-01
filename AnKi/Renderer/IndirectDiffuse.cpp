@@ -123,17 +123,17 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtIndirectDiffuse");
 
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavTraceRays);
-		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavDispatchRays);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvDispatchRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
-			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
 		}
-		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												 AccelerationStructureUsageBit::kTraceRaysSrv);
+												 AccelerationStructureUsageBit::kSrvDispatchRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseRayGen);
@@ -192,8 +192,8 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			UVec4 dummyConsts;
 			cmdb.setFastConstants(&dummyConsts, sizeof(dummyConsts));
 
-			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+							  getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
 		});
 	}
 
