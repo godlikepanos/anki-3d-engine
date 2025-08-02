@@ -566,8 +566,7 @@ GBufferPixelOut main(
 	const Vec2 prevNdc = vertInput.m_prevClipXyw.xy / vertInput.m_prevClipXyw.z;
 	const Vec2 crntNdc = vertInput.m_crntClipXyw.xy / vertInput.m_crntClipXyw.z;
 
-	// It's ndcToUv(prevNdc) - ndcToUv(crntNdc) or:
-	const Vec2 velocity = (prevNdc - crntNdc) * 0.5;
+	const Vec2 velocity = ndcToUv(prevNdc) - ndcToUv(crntNdc);
 #		else
 	const Vec2 velocity = Vec2(1.0, 1.0);
 #		endif
