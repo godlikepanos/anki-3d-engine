@@ -111,6 +111,7 @@ def main():
 
             filename = os.path.join(root, f)
             filename = filename.replace(shaders_dir, "")
+            filename = filename.replace("\\", "/")
             dir_structure_file.write("ShaderBinaries%sbin\n" % filename)
 
     dir_structure_file.close()
