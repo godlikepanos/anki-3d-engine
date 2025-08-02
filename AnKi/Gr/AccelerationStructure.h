@@ -133,7 +133,7 @@ public:
 	U64 getGpuAddress() const;
 
 protected:
-	PtrSize m_scratchBufferSize = 0;
+	PtrSize m_scratchBufferSize = 0; ///< Contains more bytes than what the APIs report. This is done to avoid exposing the alignment.
 	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 
 	/// Construct.

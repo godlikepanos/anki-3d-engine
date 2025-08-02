@@ -38,7 +38,8 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	m_type = inf.m_type;
 
 	PtrSize asBufferSize;
-	getMemoryRequirement(inf, asBufferSize, m_scratchBufferSize);
+	getMemoryRequirement(inf, asBufferSize, m_scratchBufferSize, false);
+	m_scratchBufferSize += kScratchBufferAlignment;
 
 	// Allocate AS buffer
 	BufferView asBuff = inf.m_accelerationStructureBuffer;
@@ -92,8 +93,12 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 void AccelerationStructureImpl::fillBuildInfo(BufferView scratchBuff, D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& buildDesc) const
 {
+	ANKI_ASSERT(scratchBuff.getRange() == m_scratchBufferSize);
 	buildDesc = {};
 	buildDesc.DestAccelerationStructureData = m_asBuffer->getGpuAddress() + m_asBufferOffset;
+
+	const PtrSize offsetDiff = getAlignedRoundUp(kScratchBufferAlignment, scratchBuff.getOffset()) - scratchBuff.getOffset();
+	scratchBuff = scratchBuff.incrementOffset(offsetDiff);
 	buildDesc.ScratchAccelerationStructureData = scratchBuff.getBuffer().getGpuAddress() + scratchBuff.getOffset();
 
 	if(m_type == AccelerationStructureType::kBottomLevel)
@@ -116,95 +121,63 @@ void AccelerationStructureImpl::fillBuildInfo(BufferView scratchBuff, D3D12_BUIL
 	}
 }
 
+D3D12_BARRIER_SYNC AccelerationStructureImpl::computeBarrierSync(AccelerationStructureUsageBit usage)
+{
+	D3D12_BARRIER_SYNC out = {};
+
+	if(usage == AccelerationStructureUsageBit::kNone)
+	{
+		out |= D3D12_BARRIER_SYNC_NONE;
+	}
+
+	if(!!(usage & (AccelerationStructureUsageBit::kBuild | AccelerationStructureUsageBit::kAttach)))
+	{
+		out |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
+	}
+
+	if(!!(usage & (AccelerationStructureUsageBit::kAllSrv)))
+	{
+		out |= D3D12_BARRIER_SYNC_ALL_SHADING;
+	}
+
+	return out;
+}
+
+D3D12_BARRIER_ACCESS AccelerationStructureImpl::computeBarrierAccess(AccelerationStructureUsageBit usage)
+{
+	D3D12_BARRIER_ACCESS out = {};
+
+	if(usage == AccelerationStructureUsageBit::kNone)
+	{
+		return D3D12_BARRIER_ACCESS_NO_ACCESS;
+	}
+
+	if(!!(usage & AccelerationStructureUsageBit::kAllRead))
+	{
+		out |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
+	}
+
+	if(!!(usage & AccelerationStructureUsageBit::kAllWrite))
+	{
+		out |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE;
+	}
+
+	return out;
+}
+
 D3D12_GLOBAL_BARRIER AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after) const
 {
-	D3D12_GLOBAL_BARRIER barrier = {};
-
-	if(before == AccelerationStructureUsageBit::kNone)
-	{
-		barrier.SyncBefore |= D3D12_BARRIER_SYNC_NONE;
-		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_NO_ACCESS;
-	}
-
-	if(!!(before & AccelerationStructureUsageBit::kBuild))
-	{
-		barrier.SyncBefore |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
-		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE;
-	}
-
-	if(!!(before & AccelerationStructureUsageBit::kAttach))
-	{
-		barrier.SyncBefore |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
-		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
-
-	if(!!(before & AccelerationStructureUsageBit::kSrvGeometry))
-	{
-		barrier.SyncBefore |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
-		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ; // READ_BIT is the only viable solution by elimination
-	}
-
-	if(!!(before & AccelerationStructureUsageBit::kSrvPixel))
-	{
-		barrier.SyncBefore |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
-		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
-
-	if(!!(before & AccelerationStructureUsageBit::kSrvCompute))
-	{
-		barrier.SyncBefore |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
-		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
-
-	if(!!(before & AccelerationStructureUsageBit::kSrvDispatchRays))
-	{
-		barrier.SyncBefore |= D3D12_BARRIER_SYNC_RAYTRACING;
-		barrier.AccessBefore |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
-
-	// After
-	if(!!(after & AccelerationStructureUsageBit::kBuild))
-	{
-		barrier.SyncAfter |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
-		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE;
-	}
-
-	if(!!(after & AccelerationStructureUsageBit::kAttach))
-	{
-		barrier.SyncAfter |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
-		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
-
-	if(!!(after & AccelerationStructureUsageBit::kSrvGeometry))
-	{
-		barrier.SyncAfter |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
-		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ; // READ_BIT is the only viable solution by elimination
-	}
-
-	if(!!(after & AccelerationStructureUsageBit::kSrvPixel))
-	{
-		barrier.SyncAfter |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
-		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
-
-	if(!!(after & AccelerationStructureUsageBit::kSrvCompute))
-	{
-		barrier.SyncAfter |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
-		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
-
-	if(!!(after & AccelerationStructureUsageBit::kSrvDispatchRays))
-	{
-		barrier.SyncAfter |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
-		barrier.AccessAfter |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
-	}
+	const D3D12_GLOBAL_BARRIER barrier = {.SyncBefore = computeBarrierSync(before),
+										  .SyncAfter = computeBarrierSync(after),
+										  .AccessBefore = computeBarrierAccess(before),
+										  .AccessAfter = computeBarrierAccess(after)};
 
 	ANKI_ASSERT(barrier.SyncBefore || barrier.SyncAfter);
-
 	return barrier;
 }
 
-void AccelerationStructureImpl::getMemoryRequirement(const AccelerationStructureInitInfo& inf, PtrSize& asBufferSize, PtrSize& buildScratchBufferSize)
+void AccelerationStructureImpl::getMemoryRequirement(const AccelerationStructureInitInfo& inf, PtrSize& asBufferSize, PtrSize& buildScratchBufferSize,
+													 Bool alignSizes)
 {
 	ANKI_ASSERT(inf.isValidForGettingMemoryRequirements());
 
@@ -243,6 +216,12 @@ void AccelerationStructureImpl::getMemoryRequirement(const AccelerationStructure
 	getDevice().GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
 	asBufferSize = prebuildInfo.ResultDataMaxSizeInBytes;
 	buildScratchBufferSize = prebuildInfo.ScratchDataSizeInBytes;
+
+	if(alignSizes)
+	{
+		asBufferSize += D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+		buildScratchBufferSize += kScratchBufferAlignment;
+	}
 }
 
 } // end namespace anki

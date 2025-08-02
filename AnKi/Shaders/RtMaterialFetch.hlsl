@@ -10,13 +10,20 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 
-struct [raypayload] RtMaterialFetchRayPayload // TODO make it FP16 when you change the GBufferGeneric.ankiprog
+struct [raypayload] RtMaterialFetchRayPayload
 {
-	HVec3 m_diffuseColor : write(closesthit, miss): read(caller);
-	HVec3 m_worldNormal : write(closesthit, miss): read(caller);
-	HVec3 m_emission : write(closesthit, miss): read(caller);
-	F16 m_textureLod : write(caller): read(closesthit);
+	// Use FP32 on D3D because FP16 crashes at least on nVidia
+#if ANKI_GR_BACKEND_VULKAN
+#	define PAYLOAD_SCALAR F16
+#else
+#	define PAYLOAD_SCALAR F32
+#endif
+	vector<PAYLOAD_SCALAR, 3> m_diffuseColor : write(closesthit, miss): read(caller);
+	vector<PAYLOAD_SCALAR, 3> m_worldNormal : write(closesthit, miss): read(caller);
+	vector<PAYLOAD_SCALAR, 3> m_emission : write(closesthit, miss): read(caller);
+	PAYLOAD_SCALAR m_textureLod : write(caller): read(closesthit);
 	F32 m_rayT : write(closesthit, miss): read(caller);
+#undef PAYLOAD_SCALAR
 };
 
 // Have a common resouce interface for all shaders. It should be compatible between all ray shaders in DX and VK
@@ -32,8 +39,8 @@ Texture2D<Vec4> g_envMap : register(t1, SPACE);
 Texture2D<Vec4> g_shadowAtlasTex : register(t2, SPACE);
 
 #	if defined(CLIPMAP_VOLUME)
-StructuredBuffer<U32> g_dummyBuff1 : register(t3, SPACE);
-StructuredBuffer<U32> g_dummyBuff2 : register(t4, SPACE);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_dummyBuff1 : register(t3, SPACE);
+StructuredBuffer<PixelFailedSsr> g_dummyBuff2 : register(t4, SPACE);
 #	else
 StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t3, SPACE);
 StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t4, SPACE);

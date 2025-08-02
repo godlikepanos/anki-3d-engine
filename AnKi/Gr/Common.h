@@ -801,6 +801,7 @@ enum class AccelerationStructureUsageBit : U8
 
 	// Derived
 	kAllGraphics = kSrvGeometry | kSrvPixel,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
 	kAllRead = kAttach | kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
 	kAllWrite = kBuild
 };

@@ -138,7 +138,7 @@ ANKI_FORMAT_DEF(R64G64B64_Sfloat,                    118, 1072, 3, 24,  0,  0,  
 ANKI_FORMAT_DEF(R64G64B64A64_Uint,                   119, 1073, 4, 32,  0,  0,  0,  1,         None)
 ANKI_FORMAT_DEF(R64G64B64A64_Sint,                   120, 1074, 4, 32,  0,  0,  0,  2,         None)
 ANKI_FORMAT_DEF(R64G64B64A64_Sfloat,                 121, 1075, 4, 32,  0,  0,  0,  0,         None)
-ANKI_FORMAT_DEF(B10G11R11_Ufloat_Pack32,             122, 1076, 3,  4,  0,  0,  0,  0,         None)
+ANKI_FORMAT_DEF(B10G11R11_Ufloat_Pack32,             122,   26, 3,  4,  0,  0,  0,  0,         None)
 ANKI_FORMAT_DEF(E5B9G9R9_Ufloat_Pack32,              123, 1077, 3,  4,  0,  0,  0,  0,         None)
 ANKI_FORMAT_DEF(D16_Unorm,                           124,   55, 0,  2,  0,  0,  0,  0,        Depth)
 ANKI_FORMAT_DEF(X8D24_Unorm_Pack32,                  125, 1078, 0,  4,  0,  0,  0,  0,        Depth)

@@ -105,7 +105,7 @@ PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationS
 {
 	PtrSize asSize, unused;
 	AccelerationStructureImpl::getMemoryRequirement(init, asSize, unused);
-	return asSize + D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+	return asSize;
 }
 
 Error GrManager::init(GrManagerInitInfo& inf)

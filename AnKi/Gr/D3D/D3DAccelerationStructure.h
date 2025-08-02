@@ -37,9 +37,13 @@ public:
 		return *m_asBuffer;
 	}
 
-	static void getMemoryRequirement(const AccelerationStructureInitInfo& init, PtrSize& asBufferSize, PtrSize& buildScratchBufferSize);
+	static void getMemoryRequirement(const AccelerationStructureInitInfo& init, PtrSize& asBufferSize, PtrSize& buildScratchBufferSize,
+									 Bool alignSizes = true);
 
 private:
+	/// Spec doesn't say anything about scratch buffer alignment but validation complains.
+	static constexpr U32 kScratchBufferAlignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+
 	BufferInternalPtr m_asBuffer;
 	PtrSize m_asBufferOffset = kMaxPtrSize;
 
@@ -59,6 +63,10 @@ private:
 		BufferInternalPtr m_positionsBuff;
 		BufferInternalPtr m_indexBuff;
 	} m_blas;
+
+	static D3D12_BARRIER_SYNC computeBarrierSync(AccelerationStructureUsageBit usage);
+
+	static D3D12_BARRIER_ACCESS computeBarrierAccess(AccelerationStructureUsageBit usage);
 };
 /// @}
 

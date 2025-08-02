@@ -130,6 +130,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	for(ShaderInternalPtr& shader : m_shaders)
 	{
 		const ShaderImpl& simpl = static_cast<const ShaderImpl&>(*shader);
+
 		if(firstLink)
 		{
 			refl = simpl.m_reflection;
