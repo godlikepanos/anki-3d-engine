@@ -20,8 +20,6 @@
 #pragma anki technique BilateralDenoise comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
-#define ANKI_ASSERTIONS_ENABLED 1
-
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
@@ -643,8 +641,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 				maxLumaPixel = IVec2(x, y);
 			}
 
-			coord = quarterCoord + IVec2(x, y);
-			coord *= 2;
+			coord = quarterCoord * 2 + IVec2(x, y);
 			sampleDepths[x][y] = TEX(g_depthTex, coord);
 		}
 	}
@@ -849,7 +846,7 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 			}
 
 			IVec2 newCoord = coord + IVec2(x, y);
-			newCoord.x = clamp(newCoord.x, 0, viewport.x - 1);
+			newCoord = clamp(newCoord, 0, viewport - 1);
 
 			const Vec3 sampleColor = TEX(g_inTex, newCoord);
 			const F32 sampleDepth = TEX(g_depthTex, newCoord);

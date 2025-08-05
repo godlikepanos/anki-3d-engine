@@ -61,6 +61,21 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas.get(), scratchBuff);
 		});
 	}
+
+	// Light visibility
+	{
+		GpuVisibilityLocalLightsInput in;
+		in.m_cellCounts = UVec3(g_lightGridSizeXYCVar, g_lightGridSizeXYCVar, g_lightGridSizeZCVar);
+		in.m_cellSize = Vec3(g_lightGridCellSizeXYCVar, g_lightGridCellSizeXYCVar, g_lightGridCellSizeZCVar);
+		in.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+		in.m_lookDirection = -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis();
+		in.m_lightIndexListSize = g_lightIndexListSizeCVar;
+		in.m_rgraph = &ctx.m_renderGraphDescr;
+
+		GpuVisibilityLocalLightsOutput out;
+
+		getGpuVisibilityLocalLights().populateRenderGraph(in, out);
+	}
 }
 
 } // end namespace anki

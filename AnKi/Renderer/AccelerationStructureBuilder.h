@@ -16,6 +16,12 @@ inline NumericCVar<F32>
 	g_rayTracingExtendedFrustumDistanceCVar("R", "RayTracingExtendedFrustumDistance", 200.0f, 10.0f, 10000.0f,
 											"Every object that its distance from the camera is bellow that value will take part in ray tracing");
 
+inline NumericCVar<U32> g_lightGridSizeXYCVar("R", "LightGridSizeXY", 128, 1, 1024, "The number of cells in the X and Y axis");
+inline NumericCVar<U32> g_lightGridSizeZCVar("R", "LightGridSizeZ", 4, 1, 1024, "The number of cells in the Z axis");
+inline NumericCVar<F32> g_lightGridCellSizeXYCVar("R", "LightGridCellSizeXY", 2.0f, 0.5f, 1000.0f, "The cell size in the X and Y dimensions");
+inline NumericCVar<F32> g_lightGridCellSizeZCVar("R", "LightGridCellSizeZ", 25.0f, 0.5f, 1000.0f, "The cell size in the Z dimension");
+inline NumericCVar<U32> g_lightIndexListSizeCVar("R", "LightIndexListSize", 64 * 1024, 128, 256 * 1024, "The light index list size");
+
 /// Build acceleration structures.
 class AccelerationStructureBuilder : public RendererObject
 {

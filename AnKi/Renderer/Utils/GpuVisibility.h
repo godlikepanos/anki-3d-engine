@@ -340,8 +340,8 @@ public:
 	BufferHandle m_dependency; ///< Some handle to track dependencies. No need to track every buffer.
 
 	BufferView m_lightIndexOffsetsPerCellBuffer; ///< One offset to the m_lightIndexBuffer. One offset per cell.
-	BufferView m_lightIndexCountPerCellBuffer; ///< Number of lights per cell.
-	BufferView m_lightIndexBuffer; ///< Contains indexes to the GPU scene lights array.
+	BufferView m_lightIndexCountsPerCellBuffer; ///< Number of lights per cell.
+	BufferView m_lightIndexListBuffer; ///< Contains indexes to the GPU scene lights array.
 
 	/// @{
 	/// The volume of the grid.

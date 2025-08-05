@@ -66,7 +66,7 @@ ANKI_END_NAMESPACE
 #	if defined(ANKI_ASSERTIONS_ENABLED) && ANKI_ASSERTIONS_ENABLED == 1 && ANKI_GR_BACKEND_VULKAN
 #		define ANKI_ASSERT(x) \
 			if(!(x)) \
-			printf("Assertion failed. Line %i", __LINE__)
+			printf("Assertion failed. (" __FILE__ ":%i)", __LINE__)
 #	else
 #		define ANKI_ASSERT(x)
 #	endif

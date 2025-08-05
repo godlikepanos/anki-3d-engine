@@ -156,7 +156,7 @@ struct Func
 constexpr U32 kThreadCount = 1024; // Common for most GPUs
 constexpr U32 kMaxElementCountPerIteration = kThreadCount * 2;
 
-RWStructuredBuffer<U32> g_inputElements : register(u0); // It's the g_lightIndexCountsPerCell
+RWStructuredBuffer<U32> g_inputElements : register(u0); // It's the g_lightIndexCountsPerCell. RW because we want to zero it at the end
 
 RWStructuredBuffer<U32> g_outputElements : register(u1);
 
@@ -184,7 +184,7 @@ groupshared U32 g_valueSum;
 		const U32 firstElement = it * kMaxElementCountPerIteration;
 		const U32 endElement = min((it + 1) * kMaxElementCountPerIteration, elementCount);
 
-		// load input into shared memory
+		// Load input into shared memory
 		const U32 inIdx1 = 2 * tid + firstElement;
 		const U32 value1 = (inIdx1 < endElement) ? SBUFF(g_inputElements, inIdx1) : 0;
 		g_tmp[2 * tid] = value1;
@@ -209,9 +209,6 @@ groupshared U32 g_valueSum;
 			offset *= 2;
 		}
 
-		// Update the g_valueSum now that enough barriers have happened
-		InterlockedAdd(g_valueSum, value1 + value2);
-
 		// Clear the last element
 		if(tid == 0)
 		{
@@ -235,17 +232,26 @@ groupshared U32 g_valueSum;
 			}
 		}
 
+		// Good time to read it
+		const U32 valueSum = g_valueSum;
+
 		GroupMemoryBarrierWithGroupSync();
 
 		// Write to output buffer
 		if(inIdx1 < endElement)
 		{
-			SBUFF(g_outputElements, inIdx1) = g_tmp[2 * tid] + g_valueSum;
+			SBUFF(g_outputElements, inIdx1) = g_tmp[2 * tid] + valueSum;
 		}
 
 		if(inIdx2 < endElement)
 		{
-			SBUFF(g_outputElements, inIdx2) = g_tmp[2 * tid + 1] + g_valueSum;
+			SBUFF(g_outputElements, inIdx2) = g_tmp[2 * tid + 1] + valueSum;
+		}
+
+		// Good time to update it
+		if(value1 + value2 > 0)
+		{
+			InterlockedAdd(g_valueSum, value1 + value2);
 		}
 	}
 
@@ -281,7 +287,6 @@ groupshared U32 g_valueSum;
 #if NOT_ZERO(ANKI_TECHNIQUE_Fill)
 
 StructuredBuffer<GpuSceneLight> g_lights : register(t0);
-
 StructuredBuffer<U32> g_lightIndexListOffsets : register(t1); // Basically the prefix sum. One per cell
 
 RWStructuredBuffer<U32> g_lightIndexCount : register(u0);
@@ -295,7 +300,7 @@ struct Func
 	void operator()(U32 clusterIdx, U32 lightIdx)
 	{
 		U32 offset;
-		InterlockedAdd(SBUFF(g_lightIndexCountsPerCell, clusterIdx), offset);
+		InterlockedAdd(SBUFF(g_lightIndexCountsPerCell, clusterIdx), 1, offset);
 
 		offset += SBUFF(g_lightIndexListOffsets, clusterIdx);
 
