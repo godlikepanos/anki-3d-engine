@@ -50,7 +50,9 @@ ANKI_RENDERER_OBJECT_DEF(IndirectDiffuse, indirectDiffuse,
 ANKI_RENDERER_OBJECT_DEF(RenderableDrawer, drawer, 1)
 ANKI_RENDERER_OBJECT_DEF(GpuVisibility, gpuVisibility, 1)
 ANKI_RENDERER_OBJECT_DEF(GpuVisibilityNonRenderables, gpuVisibilityNonRenderables, 1)
-ANKI_RENDERER_OBJECT_DEF(GpuVisibilityAccelerationStructures, gpuVisibilityAccelerationStructures, 1)
+ANKI_RENDERER_OBJECT_DEF(GpuVisibilityAccelerationStructures, gpuVisibilityAccelerationStructures,
+						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+ANKI_RENDERER_OBJECT_DEF(GpuVisibilityLocalLights, gpuVisibilityLocalLights, GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 ANKI_RENDERER_OBJECT_DEF(HzbGenerator, hzbGenerator, 1)
 ANKI_RENDERER_OBJECT_DEF(ReadbackManager, readbackManager, 1)
 ANKI_RENDERER_OBJECT_DEF(MipmapGenerator, mipmapGenerator, 1)

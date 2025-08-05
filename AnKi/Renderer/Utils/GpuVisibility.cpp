@@ -1195,4 +1195,58 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	}
 }
 
+Error GpuVisibilityLocalLights::init()
+{
+	const CString fname = "ShaderBinaries/GpuVisibilityLocalLights.ankiprogbin";
+	ANKI_CHECK(loadShaderProgram(fname, {}, m_visibilityProg, m_setupGrProg, "Setup"));
+	ANKI_CHECK(loadShaderProgram(fname, {}, m_visibilityProg, m_countGrProg, "Count"));
+	ANKI_CHECK(loadShaderProgram(fname, {}, m_visibilityProg, m_prefixSumGrProg, "PrefixSum"));
+	ANKI_CHECK(loadShaderProgram(fname, {}, m_visibilityProg, m_fillGrProg, "Fill"));
+	return Error::kNone;
+}
+
+void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput& in, GpuVisibilityLocalLightsOutput& out)
+{
+	RenderGraphBuilder& rgraph = *in.m_rgraph;
+
+	// Compute the bounds
+	{
+		const Vec3 newCamPos = in.m_cameraPosition + in.m_lookDirection * kForwardBias;
+		const Vec3 gridSize = Vec3(in.m_cellCounts) * in.m_cellSize;
+
+		out.m_lightGridMin = newCamPos - gridSize / 2.0f;
+		out.m_lightGridMax = out.m_lightGridMin + gridSize;
+	}
+
+	const U32 cellCount = in.m_cellCounts.x() * in.m_cellCounts.y() * in.m_cellCounts.z();
+
+	const BufferView lightIndexCountsPerCellBuff = allocateStructuredBuffer<U32>(cellCount);
+	const BufferView lightIndexOffsetsPerCellBuff = allocateStructuredBuffer<U32>(cellCount);
+	const BufferView lightIndexCountBuff = allocateStructuredBuffer<U32>(1);
+
+	const BufferHandle dep = rgraph.importBuffer(lightIndexCountBuff, BufferUsageBit::kNone);
+
+	// Setup
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("Setup: %s", in.m_passesName.cstr()));
+
+		pass.newBufferDependency(dep, BufferUsageBit::kUavCompute);
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
+
+		pass.setWork([this, lightIndexCountsPerCellBuff, lightIndexCountBuff, cellCount](RenderPassWorkContext& rgraph) {
+			ANKI_TRACE_SCOPED_EVENT(GpuVisibilityLocalLightsSetup);
+			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
+
+			cmdb.bindUav(0, 0, lightIndexCountsPerCellBuff);
+			cmdb.bindUav(1, 0, lightIndexCountBuff);
+
+			dispatchPPCompute(cmdb, 64, 1, cellCount, 1);
+		});
+	}
+
+	// Count
+	{
+	}
+}
+
 } // end namespace anki

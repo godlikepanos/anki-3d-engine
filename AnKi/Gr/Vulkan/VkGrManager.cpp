@@ -598,6 +598,12 @@ Error GrManagerImpl::initInstance()
 	m_capabilities.m_minWaveSize = props13.minSubgroupSize;
 	m_capabilities.m_maxWaveSize = props13.maxSubgroupSize;
 
+	if(props2.properties.limits.maxComputeWorkGroupInvocations < 1024)
+	{
+		ANKI_VK_LOGE("GPU doesn't support at least 1024 workgroup invocations");
+		return Error::kFunctionFailed;
+	}
+
 	// Find vendor
 	switch(props2.properties.vendorID)
 	{

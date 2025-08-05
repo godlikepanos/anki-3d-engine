@@ -104,4 +104,19 @@ struct GpuVisibilityNonRenderablesCounters
 	U32 m_feedbackObjectCount; ///< Counts the visbile objects that need feedback
 };
 
+struct GpuVisibilityLocalLightsConsts
+{
+	Vec3 m_cellSize;
+	U32 m_maxLightIndices;
+
+	Vec3 m_gridVolumeMin;
+	F32 m_padding2;
+
+	Vec3 m_gridVolumeMax;
+	F32 m_padding3;
+
+	Vec3 m_cellCounts;
+	F32 m_padding4;
+};
+
 ANKI_END_NAMESPACE

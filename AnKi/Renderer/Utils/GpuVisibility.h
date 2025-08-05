@@ -315,6 +315,59 @@ private:
 	U64 m_lastFrameIdx = kMaxU64;
 #endif
 };
+
+/// @memberof GpuVisibilityLocalLights
+class GpuVisibilityLocalLightsInput
+{
+public:
+	UVec3 m_cellCounts;
+	Vec3 m_cellSize;
+
+	Vec3 m_cameraPosition;
+	Vec3 m_lookDirection;
+
+	U32 m_lightIndexListSize = 0; ///< The number of light indices to store.
+
+	CString m_passesName = "GpuVisibilityLocalLights";
+
+	RenderGraphBuilder* m_rgraph = nullptr;
+};
+
+/// @memberof GpuVisibilityLocalLights
+class GpuVisibilityLocalLightsOutput
+{
+public:
+	BufferHandle m_dependency; ///< Some handle to track dependencies. No need to track every buffer.
+
+	BufferView m_lightIndexOffsetsPerCellBuffer; ///< One offset to the m_lightIndexBuffer. One offset per cell.
+	BufferView m_lightIndexCountPerCellBuffer; ///< Number of lights per cell.
+	BufferView m_lightIndexBuffer; ///< Contains indexes to the GPU scene lights array.
+
+	/// @{
+	/// The volume of the grid.
+	Vec3 m_lightGridMin;
+	Vec3 m_lightGridMax;
+	/// @}
+};
+
+/// Gathers the local lights around the camera to a grid.
+class GpuVisibilityLocalLights : public RendererObject
+{
+public:
+	Error init();
+
+	void populateRenderGraph(GpuVisibilityLocalLightsInput& in, GpuVisibilityLocalLightsOutput& out);
+
+private:
+	static constexpr F32 kForwardBias = 4.0f;
+
+	ShaderProgramResourcePtr m_visibilityProg;
+
+	ShaderProgramPtr m_setupGrProg;
+	ShaderProgramPtr m_countGrProg;
+	ShaderProgramPtr m_prefixSumGrProg;
+	ShaderProgramPtr m_fillGrProg;
+};
 /// @}
 
 } // end namespace anki
