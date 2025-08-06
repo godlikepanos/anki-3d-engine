@@ -5,10 +5,15 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/AccelerationStructureBuilder.h>
+#include <AnKi/Renderer/Sky.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
+
+#include <AnKi/Renderer/AccelerationStructureBuilder.h>
+#include <AnKi/Renderer/ShadowMapping.h>
+#include <AnKi/Renderer/GBuffer.h>
 
 namespace anki {
 
@@ -249,6 +254,71 @@ void RtMaterialFetchRendererObject::patchShaderBindingTablePass(CString passName
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});
+}
+
+void RtMaterialFetchRendererObject::setRgenSpace2Dependencies(RenderPassBase& pass)
+{
+	pass.newAccelerationStructureDependency(getAccelerationStructureBuilder().getAccelerationStructureHandle(),
+											AccelerationStructureUsageBit::kSrvDispatchRays);
+
+	if(getGeneratedSky().isEnabled())
+	{
+		pass.newTextureDependency(getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
+	}
+
+	pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
+
+	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
+	pass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvDispatchRays);
+	pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
+}
+
+void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+{
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+	const U32 space = 2;
+	U32 srv = 0;
+	rgraphCtx.bindSrv(srv++, space, getAccelerationStructureBuilder().getAccelerationStructureHandle());
+
+	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+	const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+	const Bool bSkySolidColor =
+		(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
+	if(bSkySolidColor)
+	{
+		cmdb.bindSrv(srv++, space, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+	}
+	else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+	{
+		cmdb.bindSrv(srv++, space, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+	}
+	else
+	{
+		rgraphCtx.bindSrv(srv++, space, getGeneratedSky().getEnvironmentMapRt());
+	}
+
+	rgraphCtx.bindSrv(srv++, space, getShadowMapping().getShadowmapRt());
+
+	const auto& arr = GpuSceneArrays::GlobalIlluminationProbe::getSingleton();
+	cmdb.bindSrv(srv++, space,
+				 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
+
+	rgraphCtx.bindSrv(srv++, space, getGBuffer().getDepthRt());
+	rgraphCtx.bindSrv(srv++, space, getGBuffer().getColorRt(1));
+	rgraphCtx.bindSrv(srv++, space, getGBuffer().getColorRt(2));
+
+	// Someone else will have to bind comething if they use it
+	cmdb.bindSrv(srv++, space, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
+
+	cmdb.bindSampler(0, space, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(1, space, getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb.bindSampler(2, space, getRenderer().getSamplers().m_trilinearRepeat.get());
+
+	cmdb.bindUav(0, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+	cmdb.bindUav(1, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+
+	cmdb.bindConstantBuffer(0, space, ctx.m_globalRenderingConstantsBuffer);
 }
 
 } // end namespace anki

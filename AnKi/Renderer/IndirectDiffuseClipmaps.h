@@ -105,6 +105,14 @@ public:
 		return m_runCtx.m_handles;
 	}
 
+	/// Output of IndirectDiffuseClipmaps is hidden and bindless so have this function to set dependencies
+	void setDependencies(RenderPassBase& pass, TextureUsageBit usage) const
+	{
+		ANKI_ASSERT(!(usage & ~TextureUsageBit::kAllSrv) && "Only SRV allowed");
+		// Cheat and only wait for the final RT. The rest will have been waited anyway
+		pass.newTextureDependency(m_runCtx.m_handles.m_appliedIrradiance, usage);
+	}
+
 private:
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
 	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;

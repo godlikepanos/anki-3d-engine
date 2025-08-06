@@ -145,6 +145,7 @@ protected:
 #include <AnKi/Renderer/RendererObject.def.h>
 };
 
+/// Contains common functionality of all passes that use RtMaterialFetch.
 class RtMaterialFetchRendererObject : protected RendererObject
 {
 protected:
@@ -156,6 +157,12 @@ protected:
 
 	void patchShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
 									 RenderGraphBuilder& rgraph, BufferHandle sbtHandle, BufferView sbtBuffer);
+
+	/// Sets the the resources of space 2 in RtMaterialFetch.hlsl as dependencies on the given pass.
+	void setRgenSpace2Dependencies(RenderPassBase& pass);
+
+	/// Bind the the resources of space 2 in RtMaterialFetch.hlsl.
+	void bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 private:
 	ShaderProgramResourcePtr m_sbtBuildProg;

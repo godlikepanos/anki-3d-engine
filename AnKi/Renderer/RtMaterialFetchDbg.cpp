@@ -72,6 +72,9 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavDispatchRays);
+
+		setRgenSpace2Dependencies(rpass);
+
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kSrvDispatchRays);
 
@@ -95,33 +98,8 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
-
-			U32 srv = 0;
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-
-			cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(GpuSceneGlobalIlluminationProbe)));
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
-
-			for(U32 i = 0; i < kIndirectDiffuseClipmapCount * 3; ++i)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture3DSrv.get(), TextureSubresourceDesc::all()));
-			}
-
-			for(U32 i = 0; i < 3; ++i)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			}
-
+			bindRgenSpace2Resources(ctx, rgraphCtx);
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
-			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
-
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
-			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
 			Vec4 dummy;
 			cmdb.setFastConstants(&dummy, sizeof(dummy));

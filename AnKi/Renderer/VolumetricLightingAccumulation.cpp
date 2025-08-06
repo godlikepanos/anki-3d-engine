@@ -77,12 +77,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	if(isIndirectDiffuseClipmapsEnabled())
 	{
-		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
-		{
-			pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_avgIrradianceVolumes[i], TextureUsageBit::kSrvCompute);
-			pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_distanceMomentsVolumes[i], TextureUsageBit::kSrvCompute);
-			pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_probeValidityVolumes[i], TextureUsageBit::kSrvCompute);
-		}
+		getIndirectDiffuseClipmaps().setDependencies(pass, TextureUsageBit::kSrvCompute);
 	}
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {

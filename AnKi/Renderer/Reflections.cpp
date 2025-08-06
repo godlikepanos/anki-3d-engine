@@ -14,6 +14,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/ProbeReflections.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -271,17 +272,13 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavDispatchRays);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavDispatchRays);
-		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvDispatchRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
-		if(getRenderer().getGeneratedSky().isEnabled())
-		{
-			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
-		}
-		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
-		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												 AccelerationStructureUsageBit::kSrvDispatchRays);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectDispatchRays);
+		setRgenSpace2Dependencies(rpass);
+
+		if(isIndirectDiffuseClipmapsEnabled())
+		{
+			getIndirectDiffuseClipmaps().setDependencies(rpass, TextureUsageBit::kSrvDispatchRays);
+		}
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsRayGen);
@@ -303,45 +300,10 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
-
-			U32 srv = 0;
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-
-			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-			const Bool bSkySolidColor =
-				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-			if(bSkySolidColor)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			}
-			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
-			}
-			else
-			{
-				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
-			}
-
-			rgraphCtx.bindSrv(srv++, 2, getShadowMapping().getShadowmapRt());
-
-			const auto& arr = GpuSceneArrays::GlobalIlluminationProbe::getSingleton();
-			cmdb.bindSrv(srv++, 2,
-						 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
-			cmdb.bindSrv(srv++, 2, pixelsFailedSsrBuff);
-
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(2));
-
+			bindRgenSpace2Resources(ctx, rgraphCtx);
+			cmdb.bindSrv(7, 2, pixelsFailedSsrBuff);
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
-
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
-			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 			struct Consts
 			{

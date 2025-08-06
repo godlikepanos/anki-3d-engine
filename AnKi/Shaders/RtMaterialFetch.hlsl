@@ -38,20 +38,14 @@ RaytracingAccelerationStructure g_tlas : register(t0, SPACE);
 Texture2D<Vec4> g_envMap : register(t1, SPACE);
 Texture2D<Vec4> g_shadowAtlasTex : register(t2, SPACE);
 
-#	if defined(CLIPMAP_VOLUME)
-StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_dummyBuff1 : register(t3, SPACE);
-StructuredBuffer<PixelFailedSsr> g_dummyBuff2 : register(t4, SPACE);
-#	else
+#	if !defined(CLIPMAP_VOLUME)
 StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t3, SPACE);
-StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t4, SPACE);
-#	endif
 
-#	if defined(CLIPMAP_VOLUME)
-Texture2D<Vec4> g_dummyTex[3] : register(t5, SPACE);
-#	else
-Texture2D<Vec4> g_depthTex : register(t5, SPACE);
-Texture2D<Vec4> g_gbufferRt1 : register(t6, SPACE);
-Texture2D<Vec4> g_gbufferRt2 : register(t7, SPACE);
+Texture2D<Vec4> g_depthTex : register(t4, SPACE);
+Texture2D<Vec4> g_gbufferRt1 : register(t5, SPACE);
+Texture2D<Vec4> g_gbufferRt2 : register(t6, SPACE);
+
+StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t7, SPACE);
 #	endif
 
 // UAVs

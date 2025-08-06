@@ -274,13 +274,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(rtResultHandle, TextureUsageBit::kUavCompute);
 		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		if(getRenderer().getGeneratedSky().isEnabled())
-		{
-			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
-		}
-		pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
-		pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												AccelerationStructureUsageBit::kSrvDispatchRays);
+		setRgenSpace2Dependencies(pass);
 
 		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
@@ -306,44 +300,9 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
-
-			U32 srv = 0;
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-
-			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-			const Bool bSkySolidColor =
-				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-			if(bSkySolidColor)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			}
-			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
-			}
-			else
-			{
-				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
-			}
-
-			rgraphCtx.bindSrv(srv++, 2, getShadowMapping().getShadowmapRt());
-
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(GpuSceneGlobalIlluminationProbe)));
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
-
-			for(U32 i = 0; i < 3; ++i)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			}
-
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
-			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
+			bindRgenSpace2Resources(ctx, rgraphCtx);
 
 			rgraphCtx.bindUav(0, 2, rtResultHandle);
-			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
 			const U32 raysPerProbePerFrame = square<U32>(g_indirectDiffuseClipmapRadianceOctMapSize);
 
@@ -440,15 +399,6 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: RTApply");
 
 		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		if(getRenderer().getGeneratedSky().isEnabled())
-		{
-			pass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
-		}
-		pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
-		pass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												AccelerationStructureUsageBit::kSrvDispatchRays);
-		pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
-		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
 
 		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
@@ -458,6 +408,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavDispatchRays);
+		setRgenSpace2Dependencies(pass);
 
 		pass.setWork([this, &ctx, sbtBuffer, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -478,43 +429,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
-
-			U32 srv = 0;
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-
-			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-			const Bool bSkySolidColor =
-				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-			if(bSkySolidColor)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			}
-			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
-			}
-			else
-			{
-				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
-			}
-
-			rgraphCtx.bindSrv(srv++, 2, getShadowMapping().getShadowmapRt());
-
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(GpuSceneGlobalIlluminationProbe)));
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
-
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getDepthRt());
-			cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(2));
-
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
-			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
-
+			bindRgenSpace2Resources(ctx, rgraphCtx);
 			rgraphCtx.bindUav(0, 2, lowRezRt);
-			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
 			const Vec4 consts(g_indirectDiffuseClipmapFirstBounceRayDistance);
 			cmdb.setFastConstants(&consts, sizeof(consts));
