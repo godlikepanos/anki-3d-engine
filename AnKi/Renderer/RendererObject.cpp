@@ -176,9 +176,9 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 																U32 sbtRecordSize, RenderGraphBuilder& rgraph, BufferHandle& sbtHandle,
 																BufferView& sbtBuffer)
 {
-	BufferHandle visibilityDep;
-	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
-	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
+	AccelerationStructureVisibilityInfo asVis;
+	GpuVisibilityLocalLightsOutput lightVis;
+	getAccelerationStructureBuilder().getVisibilityInfo(asVis, lightVis);
 
 	// Allocate SBT
 	U32 sbtAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
@@ -193,11 +193,12 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 	// Create the pass
 	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass(passName);
 
-	rpass.newBufferDependency(visibilityDep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
+	rpass.newBufferDependency(asVis.m_depedency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
 	rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
-	rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff, lib = ShaderProgramPtr(library), sbtRecordSize,
-				   raygenHandleIdx, missHandleIdx](RenderPassWorkContext& rgraphCtx) {
+	rpass.setWork([this, buildSbtIndirectArgsBuff = asVis.m_buildSbtIndirectArgsBuffer, sbtBuffer,
+				   visibleRenderableIndicesBuff = asVis.m_visibleRenderablesBuffer, lib = ShaderProgramPtr(library), sbtRecordSize, raygenHandleIdx,
+				   missHandleIdx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(btBuild);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -271,6 +272,14 @@ void RtMaterialFetchRendererObject::setRgenSpace2Dependencies(RenderPassBase& pa
 	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
 	pass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvDispatchRays);
 	pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
+
+	{
+		AccelerationStructureVisibilityInfo asVis;
+		GpuVisibilityLocalLightsOutput lightVis;
+		getAccelerationStructureBuilder().getVisibilityInfo(asVis, lightVis);
+
+		pass.newBufferDependency(lightVis.m_dependency, BufferUsageBit::kSrvDispatchRays);
+	}
 }
 
 void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -310,6 +319,20 @@ void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderingContext& ct
 
 	// Someone else will have to bind comething if they use it
 	cmdb.bindSrv(srv++, space, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
+
+	{
+		AccelerationStructureVisibilityInfo asVis;
+		GpuVisibilityLocalLightsOutput lightVis;
+		getAccelerationStructureBuilder().getVisibilityInfo(asVis, lightVis);
+
+		const auto& arr = GpuSceneArrays::Light::getSingleton();
+		cmdb.bindSrv(srv++, space,
+					 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
+
+		cmdb.bindSrv(srv++, space, lightVis.m_lightIndexCountsPerCellBuffer);
+		cmdb.bindSrv(srv++, space, lightVis.m_lightIndexOffsetsPerCellBuffer);
+		cmdb.bindSrv(srv++, space, lightVis.m_lightIndexListBuffer);
+	}
 
 	cmdb.bindSampler(0, space, getRenderer().getSamplers().m_trilinearClamp.get());
 	cmdb.bindSampler(1, space, getRenderer().getSamplers().m_trilinearClampShadow.get());

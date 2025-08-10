@@ -271,7 +271,7 @@ else()
 		/GR-) # Disable RTTI
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		#add_definitions(/Ox)
+		add_compile_options(/GS-) # Disable "Control stack checking calls"
 	endif()
 
 	add_definitions(

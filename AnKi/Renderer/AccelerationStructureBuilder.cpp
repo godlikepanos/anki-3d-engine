@@ -65,16 +65,19 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	// Light visibility
 	{
 		GpuVisibilityLocalLightsInput in;
-		in.m_cellCounts = UVec3(g_lightGridSizeXYCVar, g_lightGridSizeXYCVar, g_lightGridSizeZCVar);
-		in.m_cellSize = Vec3(g_lightGridCellSizeXYCVar, g_lightGridCellSizeXYCVar, g_lightGridCellSizeZCVar);
+		in.m_cellCounts = UVec3(g_lightGridCellCountXZCVar, g_lightGridCellCountYCVar, g_lightGridCellCountXZCVar);
+		in.m_cellSize = Vec3(g_lightGridSizeXZCVar, g_lightGridSizeYCVar, g_lightGridSizeXZCVar) / Vec3(in.m_cellCounts);
 		in.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 		in.m_lookDirection = -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis();
 		in.m_lightIndexListSize = g_lightIndexListSizeCVar;
 		in.m_rgraph = &ctx.m_renderGraphDescr;
 
-		GpuVisibilityLocalLightsOutput out;
+		getGpuVisibilityLocalLights().populateRenderGraph(in, m_runCtx.m_lightVisInfo);
 
-		getGpuVisibilityLocalLights().populateRenderGraph(in, out);
+		m_runCtx.m_lightGridConsts.m_volumeMin = m_runCtx.m_lightVisInfo.m_lightGridMin;
+		m_runCtx.m_lightGridConsts.m_volumeMax = m_runCtx.m_lightVisInfo.m_lightGridMax;
+		m_runCtx.m_lightGridConsts.m_cellCounts = in.m_cellCounts;
+		m_runCtx.m_lightGridConsts.m_cellSize = in.m_cellSize;
 	}
 }
 

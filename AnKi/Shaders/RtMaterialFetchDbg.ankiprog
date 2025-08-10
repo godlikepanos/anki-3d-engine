@@ -7,6 +7,8 @@
 
 #pragma anki technique RtMaterialFetch rgen
 
+#define ANKI_ASSERTIONS_ENABLED 1
+
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
@@ -23,7 +25,7 @@
 	const Vec3 rayDir = normalize(worldPos - rayOrigin);
 	const F32 tMax = 1000.0;
 	const F32 tMin = 0.1;
-	const F32 texLod = 1000.0;
+	const F32 texLod = 0.0;
 	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
 	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
 	F32 rayT = 0.0;
@@ -41,7 +43,9 @@
 	}
 	else
 	{
-		col = gbuffer.m_diffuse * 1.0 + (gbuffer.m_worldNormal / 2.0 + 0.5) * 0.0 + rayT * 0.0 + gbuffer.m_emission * 0.0;
+		// col = gbuffer.m_diffuse * 1.0 + (gbuffer.m_worldNormal / 2.0 + 0.5) * 0.0 + rayT * 0.0 + gbuffer.m_emission * 0.0;
+		col = directLighting(gbuffer, rayOrigin + rayDir * rayT, false, true, 100.0);
+		col += gbuffer.m_diffuse * 0.3;
 	}
 
 	g_colorAndPdfTex[DispatchRaysIndex().xy] = Vec4(col, 0.0);

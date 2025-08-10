@@ -116,9 +116,9 @@ vector<T, 3> specularDFG(vector<T, 3> F0, T roughness, Texture2D<Vec4> integrati
 }
 
 template<typename T>
-T computeSpotFactor(vector<T, 3> frag2Light, T outerCos, T innerCos, vector<T, 3> spotDir)
+T computeSpotFactor(vector<T, 3> normalizedFrag2Light, T outerCos, T innerCos, vector<T, 3> spotDir)
 {
-	const T costheta = -dot(frag2Light, spotDir);
+	const T costheta = -dot(normalizedFrag2Light, spotDir);
 	const T spotFactor = smoothstep(outerCos, innerCos, costheta);
 	return spotFactor;
 }

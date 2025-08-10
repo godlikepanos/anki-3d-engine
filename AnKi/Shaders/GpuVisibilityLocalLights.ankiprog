@@ -18,9 +18,22 @@
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
+Bool insideFrustum(Vec4 planes[5], Vec3 aabbMin, Vec3 aabbMax)
+{
+	[unroll] for(U32 i = 0; i < 5; ++i)
+	{
+		if(testPlaneAabb(planes[i].xyz, planes[i].w, aabbMin, aabbMax) < 0.0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 template<typename TFunc>
 void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 lightIdx, GpuVisibilityLocalLightsConsts consts,
-						   RWStructuredBuffer<U32> lightIndexCount, TFunc binLightToCellFunc)
+						   RWStructuredBuffer<U32> lightIndexCount, Bool detailedTests, TFunc binLightToCellFunc)
 {
 	const U32 lightCount = getStructuredBufferElementCount(lights);
 	if(lightIdx >= lightCount)
@@ -51,15 +64,30 @@ void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 lightIdx,
 	}
 
 	Vec3 localLightAabbMin = worldLightAabbMin - consts.m_gridVolumeMin;
-	localLightAabbMin = clamp(localLightAabbMin, 0.0, consts.m_gridVolumeMax - kEpsilonF32);
+	localLightAabbMin = clamp(localLightAabbMin, 0.0, consts.m_gridVolumeSize - kEpsilonF32);
 
 	Vec3 localLightAabbMax = worldLightAabbMax - consts.m_gridVolumeMin;
-	localLightAabbMax = clamp(localLightAabbMax, 0.0, consts.m_gridVolumeMax - kEpsilonF32);
+	localLightAabbMax = clamp(localLightAabbMax, 0.0, consts.m_gridVolumeSize - kEpsilonF32);
 
 	if(any(localLightAabbMin == localLightAabbMax))
 	{
 		// Outside the volume
 		return;
+	}
+
+	Vec4 spotLightPlanes[5];
+	if((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
+	{
+		const Vec3 pe = light.m_position;
+		const Vec3 p0 = light.m_edgePoints[0];
+		const Vec3 p1 = light.m_edgePoints[1];
+		const Vec3 p2 = light.m_edgePoints[2];
+		const Vec3 p3 = light.m_edgePoints[3];
+		spotLightPlanes[0] = computePlane(pe, p0, p3);
+		spotLightPlanes[1] = computePlane(pe, p1, p0);
+		spotLightPlanes[2] = computePlane(pe, p2, p1);
+		spotLightPlanes[3] = computePlane(pe, p3, p2);
+		spotLightPlanes[4] = computePlane(p3, p0, p1);
 	}
 
 	const Vec3 localLightFirstCell = floor(localLightAabbMin / consts.m_cellSize);
@@ -71,6 +99,22 @@ void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 lightIdx,
 		{
 			for(F32 z = localLightFirstCell.z; z < localLightEndCell.z; z += 1.0)
 			{
+				const Vec3 cellMin = Vec3(x, y, z) * consts.m_cellSize + consts.m_gridVolumeMin;
+				const Vec3 cellMax = cellMin + consts.m_cellSize;
+
+				if(detailedTests)
+				{
+					if((U32)light.m_flags & (U32)GpuSceneLightFlag::kPointLight
+					   && !aabbSphereOverlap(cellMin, cellMax, light.m_position, light.m_radius))
+					{
+						continue;
+					}
+					else if((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight && !insideFrustum(spotLightPlanes, cellMin, cellMax))
+					{
+						continue;
+					}
+				}
+
 				U32 count;
 				InterlockedAdd(SBUFF(lightIndexCount, 0), 1, count);
 				++count;
@@ -140,7 +184,7 @@ struct Func
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	Func func;
-	lightVsCellVisibility(g_lights, svDispatchThreadId.x, g_consts, g_lightIndexCount, func);
+	lightVsCellVisibility(g_lights, svDispatchThreadId.x, g_consts, g_lightIndexCount, false, func);
 }
 #endif
 
@@ -311,7 +355,7 @@ struct Func
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	Func func;
-	lightVsCellVisibility(g_lights, svDispatchThreadId.x, g_consts, g_lightIndexCount, func);
+	lightVsCellVisibility(g_lights, svDispatchThreadId.x, g_consts, g_lightIndexCount, true, func);
 }
 
 #endif

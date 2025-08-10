@@ -116,9 +116,9 @@ RVec4 main(VertOut input) : SV_TARGET0
 	++shadowCasterCountPerFragment;
 #	else
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
-	if(dirLight.m_shadowCascadeCount_31bit_active_1bit != 0u)
+	if(dirLight.m_active && dirLight.m_shadowCascadeCount)
 	{
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 
 		const RF32 positiveZViewSpace = testPlanePoint(g_globalConstants.m_nearPlaneWSpace.xyz, g_globalConstants.m_nearPlaneWSpace.w, worldPos)
 										+ g_globalConstants.m_matrices.m_near;

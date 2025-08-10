@@ -400,8 +400,8 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 
 		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
 		out.m_power = dirLight->getLightPower();
-		out.m_shadowCascadeCount_31bit_active_1bit = shadowCascadeCount << 1u;
-		out.m_shadowCascadeCount_31bit_active_1bit |= 1;
+		out.m_shadowCascadeCount = shadowCascadeCount;
+		out.m_active = 1;
 		out.m_direction = dirLight->getDirection();
 		out.m_shadowCascadeDistances =
 			Vec4(g_shadowCascade0DistanceCVar, g_shadowCascade1DistanceCVar, g_shadowCascade2DistanceCVar, g_shadowCascade3DistanceCVar);
@@ -416,7 +416,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	}
 	else
 	{
-		consts.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
+		zeroMemory(consts.m_directionalLight);
 	}
 
 	// Sky
@@ -441,6 +441,11 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	if(m_indirectDiffuseClipmaps)
 	{
 		memcpy(&consts.m_indirectDiffuseClipmaps, &m_indirectDiffuseClipmaps->getClipmapConsts(), sizeof(consts.m_indirectDiffuseClipmaps));
+	}
+
+	if(m_accelerationStructureBuilder)
+	{
+		memcpy(&consts.m_localLightsGrid, &m_accelerationStructureBuilder->getLocalLightsGridConstants(), sizeof(consts.m_localLightsGrid));
 	}
 
 	outConsts = consts;

@@ -194,6 +194,8 @@ StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t6);
 StructuredBuffer<Cluster> g_clusters : register(t7);
 Texture2D<Vec4> g_shadowAtlasTex : register(t8);
 Texture2D<UVec4> g_classTileMap : register(t9);
+StructuredBuffer<PointLight> g_pointLights : register(t10);
+StructuredBuffer<SpotLight> g_spotLights : register(t11);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
@@ -220,22 +222,25 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 
 	Vec3 outColor = gbuffer.m_emission;
 
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
+
+	// GI
 #	if INDIRECT_DIFFUSE_CLIPMAPS
 	const Vec3 irradiance =
 		sampleClipmapIrradiance(worldPos, gbuffer.m_normal, g_globalRendererConstants.m_cameraPosition,
 								g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
 	outColor += irradiance * gbuffer.m_diffuse;
 #	else
-	// GI
-	const Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
 	outColor += sampleGiProbes<F32>(cluster, g_giProbes, gbuffer.m_normal, worldPos.xyz, g_trilinearClampSampler) * gbuffer.m_diffuse;
 #	endif
 
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+
 	// Dir light
 	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
-	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
+	if(dirLight.m_active)
 	{
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 		F32 shadowFactor;
 		if(shadowCascadeCount >> 1u)
 		{
@@ -252,8 +257,33 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 
 		const Vec3 l = -dirLight.m_direction;
 		const F32 lambert = max(0.0, dot(l, gbuffer.m_normal));
-		const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
 		outColor += diffC * dirLight.m_diffuseColor * lambert * shadowFactor;
+	}
+
+	// Point lights
+	U32 idx;
+	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
+	{
+		const PointLight light = g_pointLights[idx];
+
+		const Vec3 frag2Light = light.m_position - worldPos;
+		const F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
+
+		outColor += diffC * light.m_diffuseColor * (attenuation * lambert);
+	}
+
+	// Spot lights
+	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
+	{
+		const SpotLight light = g_spotLights[idx];
+
+		const Vec3 frag2Light = light.m_position - worldPos;
+		F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+		attenuation *= computeSpotFactor(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction);
+		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
+
+		outColor += diffC * light.m_diffuseColor * (attenuation * lambert);
 	}
 
 	return outColor;

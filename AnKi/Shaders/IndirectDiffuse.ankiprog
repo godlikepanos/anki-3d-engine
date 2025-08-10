@@ -77,7 +77,7 @@ Vec3 lightShading(Vec3 rayOrigin, Vec3 rayDir, Vec3 hitPos, Vec3 hitNormal, Vec3
 		if(bInsideFrustum && kTryShadowmapFirst)
 		{
 			const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
-			const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+			const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 
 			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
 

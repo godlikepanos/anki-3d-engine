@@ -54,10 +54,6 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	BufferHandle visibilityDep;
-	BufferView visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff;
-	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff);
-
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;

@@ -112,10 +112,10 @@ Vec4 main(VertOut input) : SV_Target0
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
-	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
+	if(dirLight.m_active)
 	{
 		F16 shadowFactor;
-		if(dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u)
+		if(dirLight.m_shadowCascadeCount)
 		{
 			shadowFactor = resolvedSm[0];
 			++resolvedSmIdx;

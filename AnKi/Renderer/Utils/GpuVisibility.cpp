@@ -1210,13 +1210,11 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 	RenderGraphBuilder& rgraph = *in.m_rgraph;
 
 	// Compute the bounds
-	{
-		const Vec3 newCamPos = in.m_cameraPosition + in.m_lookDirection * kForwardBias;
-		const Vec3 gridSize = Vec3(in.m_cellCounts) * in.m_cellSize;
+	const Vec3 newCamPos = in.m_cameraPosition + in.m_lookDirection * kForwardBias;
+	const Vec3 gridSize = Vec3(in.m_cellCounts) * in.m_cellSize;
 
-		out.m_lightGridMin = newCamPos - gridSize / 2.0f;
-		out.m_lightGridMax = out.m_lightGridMin + gridSize;
-	}
+	out.m_lightGridMin = newCamPos - gridSize / 2.0f;
+	out.m_lightGridMax = out.m_lightGridMin + gridSize;
 
 	const U32 cellCount = in.m_cellCounts.x() * in.m_cellCounts.y() * in.m_cellCounts.z();
 
@@ -1236,7 +1234,7 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 	consts.m_cellSize = in.m_cellSize;
 	consts.m_maxLightIndices = in.m_lightIndexListSize;
 	consts.m_gridVolumeMin = out.m_lightGridMin;
-	consts.m_gridVolumeMax = out.m_lightGridMax;
+	consts.m_gridVolumeSize = gridSize;
 	consts.m_cellCounts = Vec3(in.m_cellCounts);
 
 	// Setup

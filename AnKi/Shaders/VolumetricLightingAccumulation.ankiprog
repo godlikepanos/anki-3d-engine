@@ -94,12 +94,12 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
-	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
+	if(dirLight.m_active)
 	{
 		F32 factor = phaseFunction(viewDir, dirLight.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 
 		if(shadowCascadeCount > 0u && negativeZViewSpace < dirLight.m_shadowCascadeDistances[shadowCascadeCount - 1u])
 		{

@@ -112,7 +112,7 @@ struct GpuVisibilityLocalLightsConsts
 	Vec3 m_gridVolumeMin;
 	F32 m_padding2;
 
-	Vec3 m_gridVolumeMax;
+	Vec3 m_gridVolumeSize;
 	F32 m_padding3;
 
 	Vec3 m_cellCounts;

@@ -228,14 +228,15 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows build SBT");
 
-		BufferHandle visibilityHandle;
-		BufferView visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff;
-		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityHandle, visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff);
+		AccelerationStructureVisibilityInfo asVis;
+		GpuVisibilityLocalLightsOutput localLightsVis;
+		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(asVis, localLightsVis);
 
-		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kSrvCompute);
+		rpass.newBufferDependency(asVis.m_depedency, BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kIndirectCompute);
 
-		rpass.setWork([this, sbtBuildIndirectArgsBuffer, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, sbtBuildIndirectArgsBuffer, sbtBuffer,
+					   visibleRenderableIndicesBuff = asVis.m_visibleRenderablesBuffer](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
