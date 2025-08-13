@@ -1222,6 +1222,12 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 	const BufferView lightIndexOffsetsPerCellBuff = allocateStructuredBuffer<U32>(cellCount);
 	const BufferView lightIndexCountBuff = allocateStructuredBuffer<U32>(1);
 	const BufferView lightIndexListBuff = allocateStructuredBuffer<U32>(in.m_lightIndexListSize);
+	const BufferView threadgroupCountBuff = allocateStructuredBuffer<U32>(1);
+
+	constexpr U32 kPrefixSumThreadCount = 1024; // Common for most GPUs
+	constexpr U32 kPrefixSumElementCountPerThreadgroup = kPrefixSumThreadCount * 2;
+	const BufferView groupWidePrefixSumsBuff =
+		allocateStructuredBuffer<U32>((cellCount + kPrefixSumElementCountPerThreadgroup - 1) / kPrefixSumElementCountPerThreadgroup);
 
 	const BufferHandle dep = rgraph.importBuffer(lightIndexCountBuff, BufferUsageBit::kNone);
 
@@ -1235,7 +1241,8 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 	consts.m_maxLightIndices = in.m_lightIndexListSize;
 	consts.m_gridVolumeMin = out.m_lightGridMin;
 	consts.m_gridVolumeSize = gridSize;
-	consts.m_cellCounts = Vec3(in.m_cellCounts);
+	consts.m_cellCounts = in.m_cellCounts;
+	consts.m_cellCount = cellCount;
 
 	// Setup
 	{
@@ -1243,7 +1250,8 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 
 		pass.newBufferDependency(dep, BufferUsageBit::kUavCompute);
 
-		pass.setWork([this, lightIndexCountsPerCellBuff, lightIndexCountBuff, cellCount](RenderPassWorkContext& rgraph) {
+		pass.setWork([this, lightIndexCountsPerCellBuff, lightIndexCountBuff, cellCount, threadgroupCountBuff,
+					  groupWidePrefixSumsBuff](RenderPassWorkContext& rgraph) {
 			ANKI_TRACE_SCOPED_EVENT(GpuVisibilityLocalLightsSetup);
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
@@ -1251,6 +1259,8 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 
 			cmdb.bindUav(0, 0, lightIndexCountsPerCellBuff);
 			cmdb.bindUav(1, 0, lightIndexCountBuff);
+			cmdb.bindUav(2, 0, groupWidePrefixSumsBuff);
+			cmdb.bindUav(3, 0, threadgroupCountBuff);
 
 			dispatchPPCompute(cmdb, 64, 1, cellCount, 1);
 		});
@@ -1265,7 +1275,8 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 		pass.newBufferDependency(dep, BufferUsageBit::kUavCompute);
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
 
-		pass.setWork([this, lightIndexCountsPerCellBuff, lightIndexCountBuff, consts](RenderPassWorkContext& rgraph) {
+		pass.setWork([this, lightIndexCountsPerCellBuff, lightIndexCountBuff, consts, threadgroupCountBuff,
+					  groupWidePrefixSumsBuff](RenderPassWorkContext& rgraph) {
 			ANKI_TRACE_SCOPED_EVENT(GpuVisibilityLocalLightsCount);
 
 			const GpuSceneArrays::Light& lights = GpuSceneArrays::Light::getSingleton();
@@ -1278,10 +1289,12 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 
 			cmdb.bindUav(0, 0, lightIndexCountsPerCellBuff);
 			cmdb.bindUav(1, 0, lightIndexCountBuff);
+			cmdb.bindUav(2, 0, groupWidePrefixSumsBuff);
+			cmdb.bindUav(3, 0, threadgroupCountBuff);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 64, 1, lights.getElementCount(), 1);
+			dispatchPPCompute(cmdb, 64, 1, consts.m_cellCount, 1);
 		});
 	}
 
@@ -1292,11 +1305,14 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 
 		pass.newBufferDependency(dep, BufferUsageBit::kUavCompute);
 
-		pass.setWork([this, lightIndexCountsPerCellBuff, lightIndexOffsetsPerCellBuff, lightIndexCountBuff, consts](RenderPassWorkContext& rgraph) {
+		pass.setWork([this, lightIndexCountsPerCellBuff, lightIndexOffsetsPerCellBuff, lightIndexCountBuff, consts,
+					  groupWidePrefixSumsBuff](RenderPassWorkContext& rgraph) {
 			ANKI_TRACE_SCOPED_EVENT(GpuVisibilityLocalLightsPrefixSum);
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_prefixSumGrProg.get());
+
+			cmdb.bindSrv(0, 0, groupWidePrefixSumsBuff);
 
 			cmdb.bindUav(0, 0, lightIndexCountsPerCellBuff);
 			cmdb.bindUav(1, 0, lightIndexOffsetsPerCellBuff);
@@ -1304,7 +1320,7 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.dispatchCompute(1, 1, 1);
+			cmdb.dispatchCompute((consts.m_cellCount + kPrefixSumElementCountPerThreadgroup - 1) / kPrefixSumElementCountPerThreadgroup, 1, 1);
 		});
 	}
 
@@ -1333,7 +1349,7 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 64, 1, lights.getElementCount(), 1);
+			dispatchPPCompute(cmdb, 64, 1, consts.m_cellCount, 1);
 		});
 	}
 }

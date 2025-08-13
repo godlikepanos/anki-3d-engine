@@ -52,7 +52,7 @@ Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Boo
 }
 
 /// Return true if to AABBs overlap.
-Bool testAabbAabb(Vec3 aMin, Vec3 aMax, Vec3 bMin, Vec3 bMax)
+Bool aabbAabbOverlap(Vec3 aMin, Vec3 aMax, Vec3 bMin, Vec3 bMax)
 {
 	return all(aMin < bMax) && all(bMin < aMax);
 }

@@ -115,8 +115,8 @@ struct GpuVisibilityLocalLightsConsts
 	Vec3 m_gridVolumeSize;
 	F32 m_padding3;
 
-	Vec3 m_cellCounts;
-	F32 m_padding4;
+	UVec3 m_cellCounts;
+	U32 m_cellCount;
 };
 
 ANKI_END_NAMESPACE

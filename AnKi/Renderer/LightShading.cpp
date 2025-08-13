@@ -79,6 +79,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	// Do light shading first
 	{
+		cmdb.pushDebugMarker("LightShading", Vec3(0.0f, 1.0f, 1.0f));
+
 		cmdb.bindShaderProgram(m_lightShading.m_grProg.get());
 		cmdb.setDepthWrite(false);
 
@@ -110,10 +112,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Draw
 		drawQuad(cmdb);
+
+		cmdb.popDebugMarker();
 	}
 
 	// Skybox
 	{
+		cmdb.pushDebugMarker("Skybox", Vec3(0.0f, 1.0f, 1.0f));
+
 		cmdb.setDepthCompareOperation(CompareOperation::kEqual);
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
@@ -171,10 +177,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Restore state
 		cmdb.setDepthCompareOperation(CompareOperation::kLess);
+
+		cmdb.popDebugMarker();
 	}
 
 	// Apply the fog
 	{
+		cmdb.pushDebugMarker("LightApplyFog", Vec3(0.0f, 1.0f, 1.0f));
+
 		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
 
 		// Bind all
@@ -206,6 +216,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Reset state
 		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+
+		cmdb.popDebugMarker();
 	}
 
 	// Debug stuff
@@ -216,6 +228,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	// Forward shading last
 	{
+		cmdb.pushDebugMarker("ForwardShading", Vec3(0.0f, 1.0f, 1.0f));
+
 		if(enableVrs)
 		{
 			cmdb.setVrsRate(VrsRate::k2x2);
@@ -228,6 +242,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			// Restore
 			cmdb.setVrsRate(VrsRate::k1x1);
 		}
+
+		cmdb.popDebugMarker();
 	}
 }
 

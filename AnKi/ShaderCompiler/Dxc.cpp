@@ -256,10 +256,15 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 
 	CComPtr<IDxcBlob> pShader = nullptr;
 	ANKI_DXC_CHECK(pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr));
-	if(pShader != nullptr)
+	if(pShader != nullptr && pShader->GetBufferSize() > 0)
 	{
 		bin.resize(U32(pShader->GetBufferSize()));
 		memcpy(bin.getBegin(), pShader->GetBufferPointer(), pShader->GetBufferSize());
+	}
+	else
+	{
+		ANKI_SHADER_COMPILER_LOGE("DXC returned an empty binary blob");
+		return Error::kFunctionFailed;
 	}
 
 	return Error::kNone;
