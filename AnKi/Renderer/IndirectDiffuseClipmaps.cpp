@@ -372,8 +372,6 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-
 			U32 uav = 0;
 			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 			{
@@ -573,7 +571,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 
 	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-	const RenderTargetHandle visVolume = m_runCtx.m_handles.m_radianceVolumes[clipmap];
+	const RenderTargetHandle visVolume = m_runCtx.m_handles.m_avgIrradianceVolumes[clipmap];
 	rgraphCtx.bindSrv(0, 0, visVolume);
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_handles.m_probeValidityVolumes[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());

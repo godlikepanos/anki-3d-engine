@@ -29,6 +29,7 @@
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/TemporalAA.hlsl>
+#include <ThirdParty/SHforHLSL/SH.hlsli>
 
 #if defined(RT_MATERIAL_FETCH_CLIPMAP) && RT_MATERIAL_FETCH_CLIPMAP
 #	define CLIPMAP_VOLUME
@@ -334,7 +335,8 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_ComputeIrradiance)
 
-constexpr U32 kThreadCount = min(32, GPU_WAVE_SIZE); // Keep it bellow 32 to avoid threads doing no work
+// Each thread is touching a radiance texel
+constexpr U32 kThreadCount = (RADIANCE_OCTAHEDRON_MAP_SIZE * RADIANCE_OCTAHEDRON_MAP_SIZE + 32 - 1) / 32 * 32;
 
 Texture3D<Vec4> g_radianceVolumes[kIndirectDiffuseClipmapCount] : register(t0);
 
@@ -343,37 +345,7 @@ RWTexture3D<Vec4> g_avgIrradianceVolumes[kIndirectDiffuseClipmapCount] : registe
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
-SamplerState g_linearAnyRepeatSampler : register(s0);
-
-groupshared U64Vec3 g_irradianceResults[IRRADIANCE_OCTAHEDRON_MAP_SIZE][IRRADIANCE_OCTAHEDRON_MAP_SIZE];
-
-groupshared Vec3 g_avgIrradiance[kThreadCount];
-
-void InterlockedAddColor(U32 x, U32 y, Vec3 color)
-{
-	const Vec3 fracPart = frac(color);
-	const Vec3 intPart = color - fracPart;
-
-	U64Vec3 val = U64Vec3(intPart) << U64(32);
-	val |= U64Vec3(fracPart * 10000.0);
-
-	InterlockedAdd(g_irradianceResults[y][x][0], val[0]);
-	InterlockedAdd(g_irradianceResults[y][x][1], val[1]);
-	InterlockedAdd(g_irradianceResults[y][x][2], val[2]);
-}
-
-Vec3 decodeAtomicColor(U32 x, U32 y)
-{
-	Vec3 output;
-	[unroll] for(U32 i = 0; i < 3; ++i)
-	{
-		const U64 val = g_irradianceResults[y][x][i];
-
-		output[i] = F32(val >> U64(32));
-		output[i] += F32(val & U64(kMaxU32)) / 10000.0;
-	}
-	return output;
-}
+groupshared SH::L2_F16_RGB g_sh[kThreadCount];
 
 struct StoreBorderFunc
 {
@@ -388,113 +360,51 @@ struct StoreBorderFunc
 	}
 };
 
-// The group services a single probe. Every thread reads a radiance value and bins it to the appropreate irradiance pixel
+// The group services a single probe.
+// - Every thread reads a radiance value, converts it to SH and stores is in groupshared
+// - Then we do a reduction of all SH
+// - Then we use the SH to populate the irradiance
 [NumThreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
 	const U32 clipmapIdx = svGroupId.x / idConsts.m_probeCounts.x;
 	const UVec3 probeId = UVec3(svGroupId.x % idConsts.m_probeCounts.x, svGroupId.y, svGroupId.z);
 
-	// Zero shared memory
-	const U32 irradianceTexelCount = IRRADIANCE_OCTAHEDRON_MAP_SIZE * IRRADIANCE_OCTAHEDRON_MAP_SIZE;
-	const U32 irradiancePixelsPerThread = (irradianceTexelCount + kThreadCount - 1) / kThreadCount;
-	for(U32 pixel = svGroupIndex * irradiancePixelsPerThread; pixel < min(irradianceTexelCount, (svGroupIndex + 1) * irradiancePixelsPerThread);
-		++pixel)
+	// Read the radiance and put it in SH
+	if(svGroupIndex < square(RADIANCE_OCTAHEDRON_MAP_SIZE))
 	{
-		const U32 x = pixel % IRRADIANCE_OCTAHEDRON_MAP_SIZE;
-		const U32 y = pixel / IRRADIANCE_OCTAHEDRON_MAP_SIZE;
+		UVec2 radianceOctCoordLocal;
+		radianceOctCoordLocal.y = svGroupIndex / RADIANCE_OCTAHEDRON_MAP_SIZE;
+		radianceOctCoordLocal.x = svGroupIndex % RADIANCE_OCTAHEDRON_MAP_SIZE;
 
-		g_irradianceResults[y][x] = 0;
+		UVec3 radianceTexelCoordStart = probeId.xzy;
+		radianceTexelCoordStart.xy *= RADIANCE_OCTAHEDRON_MAP_SIZE + 2;
+		radianceTexelCoordStart.xy += 1;
+
+		const Vec2 uv = (radianceOctCoordLocal + 0.5) / RADIANCE_OCTAHEDRON_MAP_SIZE;
+		const Vec3 sampleDir = octahedronDecode(uv);
+
+		const UVec3 coord = radianceTexelCoordStart + UVec3(radianceOctCoordLocal, 0);
+		const Vec3 radiance = TEX(g_radianceVolumes[clipmapIdx], coord);
+
+		const F16 sampleCountf = square(RADIANCE_OCTAHEDRON_MAP_SIZE);
+		const F16 normalization = 1.0 / (sampleCountf * sampleDirectionSpherePdf());
+
+		g_sh[svGroupIndex] = SH::ProjectOntoL2(HVec3(sampleDir), HVec3(radiance)) * normalization;
+	}
+	else
+	{
+		g_sh[svGroupIndex] = SH::L2_F16_RGB::Zero();
 	}
 
+	// Integrate, like parallel prefix sum
 	GroupMemoryBarrierWithGroupSync();
 
-	// Iterate the radiance pixels of this thread and bin them to the irradiance texel. Use bilinear filtering to reduce the sample count
-	UVec3 radianceTexelCoordStart = probeId.xzy;
-	radianceTexelCoordStart.xy *= RADIANCE_OCTAHEDRON_MAP_SIZE + 2;
-	radianceTexelCoordStart.xy += 1;
-	const Vec3 radianceVolumeSize = idConsts.m_probeCounts.xzy * Vec3(RADIANCE_OCTAHEDRON_MAP_SIZE + 2, RADIANCE_OCTAHEDRON_MAP_SIZE + 2, 1.0);
-	const Vec3 radianceTexelStartUv = (Vec3(radianceTexelCoordStart) + Vec3(0.0, 0.0, 0.5)) / radianceVolumeSize;
-
-	const U32 halfRadianceOctMapSize = RADIANCE_OCTAHEDRON_MAP_SIZE / 2;
-	const U32 radianceTexelCount = square(halfRadianceOctMapSize);
-	const U32 radiancePixelsPerThread = (radianceTexelCount + kThreadCount - 1) / kThreadCount;
-	for(U32 pixel = svGroupIndex * radiancePixelsPerThread; pixel < min(radianceTexelCount, (svGroupIndex + 1) * radiancePixelsPerThread); ++pixel)
-	{
-		Vec2 radianceOctUv = Vec2(pixel % halfRadianceOctMapSize, pixel / halfRadianceOctMapSize);
-		radianceOctUv += 0.5;
-		radianceOctUv /= halfRadianceOctMapSize;
-
-		const Vec3 sampleDir = octahedronDecode(radianceOctUv);
-
-		Vec3 uv = radianceTexelStartUv;
-		uv.xy += radianceOctUv * RADIANCE_OCTAHEDRON_MAP_SIZE / radianceVolumeSize.xy;
-
-		const Vec3 radiance = g_radianceVolumes[clipmapIdx].SampleLevel(g_linearAnyRepeatSampler, uv, 0.0).xyz;
-
-		for(U32 irradiancePixelX = 0; irradiancePixelX < IRRADIANCE_OCTAHEDRON_MAP_SIZE; ++irradiancePixelX)
-		{
-			for(U32 irradiancePixelY = 0; irradiancePixelY < IRRADIANCE_OCTAHEDRON_MAP_SIZE; ++irradiancePixelY)
-			{
-				Vec2 irradianceOctUv = Vec2(irradiancePixelX, irradiancePixelY);
-				irradianceOctUv += 0.5;
-				irradianceOctUv /= IRRADIANCE_OCTAHEDRON_MAP_SIZE;
-				const Vec3 dir = octahedronDecode(irradianceOctUv);
-
-				const F32 lambert = dot(dir, sampleDir);
-				if(lambert <= kEpsilonF32)
-				{
-					continue;
-				}
-
-				const F32 sampleCount = radianceTexelCount / 2.0;
-				InterlockedAddColor(irradiancePixelX, irradiancePixelY, radiance * lambert / sampleCount);
-			}
-		}
-	}
-
-	GroupMemoryBarrierWithGroupSync();
-
-	// Write the irradiance
-	Vec3 threadAvgIrradiance = 0.0;
-	for(U32 pixel = svGroupIndex * irradiancePixelsPerThread; pixel < min(irradianceTexelCount, (svGroupIndex + 1) * irradiancePixelsPerThread);
-		++pixel)
-	{
-		const U32 x = pixel % IRRADIANCE_OCTAHEDRON_MAP_SIZE;
-		const U32 y = pixel / IRRADIANCE_OCTAHEDRON_MAP_SIZE;
-
-		UVec3 irradianceTexelCoord = probeId.xzy;
-		irradianceTexelCoord.xy *= IRRADIANCE_OCTAHEDRON_MAP_SIZE + 2;
-		irradianceTexelCoord.xy += 1;
-		const IVec3 irradianceTexelCoordStart = irradianceTexelCoord;
-		irradianceTexelCoord.x += x;
-		irradianceTexelCoord.y += y;
-
-		const Vec3 irradiance = decodeAtomicColor(x, y) * k2Pi;
-
-		threadAvgIrradiance += irradiance / irradianceTexelCount;
-
-		TEX(g_irradianceVolumes[clipmapIdx], irradianceTexelCoord) = Vec4(irradiance, 0.0);
-
-		// Write the borders
-		StoreBorderFunc func;
-		func.m_clipmapIdx = clipmapIdx;
-		func.m_startOfOctCoord = irradianceTexelCoordStart;
-		func.m_value = irradiance;
-		const IVec2 octCoord = IVec2(x, y);
-		storeOctahedronBorder(IRRADIANCE_OCTAHEDRON_MAP_SIZE, octCoord, func);
-	}
-
-	g_avgIrradiance[svGroupIndex] = threadAvgIrradiance;
-
-	GroupMemoryBarrierWithGroupSync();
-
-	// Compute the avg radiance
 	[loop] for(U32 s = kThreadCount / 2u; s > 0u; s >>= 1u)
 	{
 		if(svGroupIndex < s)
 		{
-			g_avgIrradiance[svGroupIndex] += g_avgIrradiance[svGroupIndex + s];
+			g_sh[svGroupIndex] = g_sh[svGroupIndex] + g_sh[svGroupIndex + s];
 		}
 
 #	if ANKI_PLATFORM_MOBILE
@@ -507,7 +417,45 @@ struct StoreBorderFunc
 #	endif
 	}
 
-	g_avgIrradianceVolumes[clipmapIdx][probeId.xzy].xyz = g_avgIrradiance[0];
+	const SH::L2_F16_RGB sh = g_sh[0];
+
+	// Store the irradiance
+	if(svGroupIndex < square(IRRADIANCE_OCTAHEDRON_MAP_SIZE))
+	{
+		UVec2 octCoordLocal;
+		octCoordLocal.y = svGroupIndex / IRRADIANCE_OCTAHEDRON_MAP_SIZE;
+		octCoordLocal.x = svGroupIndex % IRRADIANCE_OCTAHEDRON_MAP_SIZE;
+
+		UVec3 texelCoordStart = probeId.xzy;
+		texelCoordStart.xy *= IRRADIANCE_OCTAHEDRON_MAP_SIZE + 2;
+		texelCoordStart.xy += 1;
+
+		const Vec2 uv = (octCoordLocal + 0.5) / IRRADIANCE_OCTAHEDRON_MAP_SIZE;
+		const Vec3 sampleDir = octahedronDecode(uv);
+
+		const Vec3 irradiance = SH::CalculateIrradiance<F16>(sh, sampleDir);
+
+		const UVec3 coord = texelCoordStart + UVec3(octCoordLocal, 0);
+		TEX(g_irradianceVolumes[clipmapIdx], coord) = Vec4(irradiance, 0.0);
+
+		// Write the borders
+		StoreBorderFunc func;
+		func.m_clipmapIdx = clipmapIdx;
+		func.m_startOfOctCoord = texelCoordStart;
+		func.m_value = irradiance;
+		storeOctahedronBorder(IRRADIANCE_OCTAHEDRON_MAP_SIZE, octCoordLocal, func);
+	}
+
+	// Store the average irradiance
+	HVec3 dir;
+	HVec3 color;
+	SH::ApproximateDirectionalLight(SH::L2toL1(sh), dir, color);
+	if(isInfOrNan(Vec3(color)))
+	{
+		color = 0.0;
+	}
+
+	TEX(g_avgIrradianceVolumes[clipmapIdx], probeId.xzy) = Vec4(color, 0.0);
 }
 #endif
 

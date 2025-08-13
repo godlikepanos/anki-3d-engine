@@ -147,3 +147,9 @@ vector<T, 3> generateUniformPointOnSphere(TInt sampleIndex, TInt sampleCount, U3
 
 	return normalize(vector<T, 3>(x, y, z));
 }
+
+/// Taken from SHforHLSL
+F32 sampleDirectionSpherePdf()
+{
+	return 1.0 / (kPi * 4.0);
+}
