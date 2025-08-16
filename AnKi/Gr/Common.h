@@ -568,6 +568,10 @@ enum class ShaderType : U16
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType)
 
+inline Array<CString, U32(ShaderType::kCount)> g_shaderTypeNames = {{"Vertex", "Hull", "Domain", "Geometry", "Amplification", "Mesh", "Pixel",
+																	 "Compute", "RayGen", "AnyHit", "ClosestHit", "Miss", "Intersection", "Callable",
+																	 "WorkGraph"}};
+
 enum class ShaderTypeBit : U16
 {
 	kVertex = 1 << 0,
@@ -848,6 +852,9 @@ enum class VertexAttributeSemantic : U8
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemantic)
+
+inline Array<CString, U32(VertexAttributeSemantic::kCount)> g_vertexAttributeSemanticNames = {
+	{"Position", "Normal", "TexCoord", "Color", "Misc0", "Misc1", "Misc2", "Misc3"}};
 
 enum class VertexAttributeSemanticBit : U8
 {

@@ -212,7 +212,7 @@ StringList ShaderReflection::toString() const
 
 	for(VertexAttributeSemantic attrib : EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(m_vertex.m_vertexAttributeMask))
 	{
-		list.pushBackSprintf("Vert attrib: %u", U32(attrib));
+		list.pushBackSprintf("Vert attrib: %s", g_vertexAttributeSemanticNames[attrib].cstr());
 	}
 
 	list.pushBackSprintf("Color RT mask: %u", m_pixel.m_colorRenderTargetWritemask.getData()[0]);

@@ -311,7 +311,7 @@ Bool doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 
 	F32 hitDepth;
 	{
 		RayMarchingConfig config = (RayMarchingConfig)0;
-		config.m_maxIterations = g_consts.m_ssrStepIncrement;
+		config.m_maxIterations = g_consts.m_ssrMaxIterations;
 		config.m_depthTextureLod = 8.0; // Use the max LOD for ray marching
 		config.m_stepIncrement = g_consts.m_ssrStepIncrement;
 
