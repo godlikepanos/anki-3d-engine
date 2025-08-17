@@ -85,7 +85,7 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 	//
 	// Set GL attributes
 	//
-	ANKI_WIND_LOGI("Creating SDL window. SDL version %u.%u", SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
+	ANKI_WIND_LOGI("Creating SDL window. SDL version %u.%u. Display server %s", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_GetCurrentVideoDriver());
 
 	//
 	// Create window
@@ -115,8 +115,8 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 			return Error::kFunctionFailed;
 		}
 
-		m_width = mode->w;
-		m_height = mode->h;
+		m_width = U32(F32(mode->w) * mode->pixel_density);
+		m_height = U32(F32(mode->h) * mode->pixel_density);
 	}
 	else
 	{
