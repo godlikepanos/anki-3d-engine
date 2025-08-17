@@ -42,6 +42,10 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	initInf.m_type = AccelerationStructureType::kTopLevel;
 	initInf.m_topLevel.m_instanceCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 	initInf.m_topLevel.m_instancesBuffer = visOut.m_instancesBuffer;
+
+	const PtrSize memoryReq = GrManager::getSingleton().getAccelerationStructureMemoryRequirement(initInf);
+	initInf.m_accelerationStructureBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(memoryReq, 1);
+
 	m_runCtx.m_tlas = GrManager::getSingleton().newAccelerationStructure(initInf);
 
 	// Build the AS

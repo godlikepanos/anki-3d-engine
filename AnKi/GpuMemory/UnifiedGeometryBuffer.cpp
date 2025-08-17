@@ -23,7 +23,7 @@ void UnifiedGeometryBuffer::init()
 
 	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		buffUsage |= BufferUsageBit::kAccelerationStructureBuild;
+		buffUsage |= BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructure;
 	}
 
 	m_pool.init(buffUsage, classes, poolSize, "UnifiedGeometry", false);

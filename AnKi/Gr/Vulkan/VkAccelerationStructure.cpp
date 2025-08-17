@@ -61,7 +61,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	{
 		const PtrSize alignedOffset = getAlignedRoundUp(getGrManagerImpl().getVulkanCapabilities().m_asBufferAlignment, asBuff.getOffset());
 		asBuff = asBuff.incrementOffset(alignedOffset - asBuff.getOffset());
-		ANKI_ASSERT(asBuff.getRange() <= asBufferSize);
+		ANKI_ASSERT(asBuff.getRange() >= asBufferSize);
 
 		m_asBuffer.reset(&asBuff.getBuffer());
 		m_asBufferOffset = asBuff.getOffset();

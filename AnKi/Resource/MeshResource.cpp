@@ -182,6 +182,10 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 				inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
 				inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
 
+				const PtrSize requiredMemory = GrManager::getSingleton().getAccelerationStructureMemoryRequirement(inf);
+				subMesh.m_blasAllocationTokens[lodIdx] = UnifiedGeometryBuffer::getSingleton().allocate(requiredMemory, 1);
+				inf.m_accelerationStructureBuffer = subMesh.m_blasAllocationTokens[lodIdx];
+
 				subMesh.m_blas[lodIdx] = GrManager::getSingleton().newAccelerationStructure(inf);
 			}
 		}

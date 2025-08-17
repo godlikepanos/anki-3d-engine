@@ -152,9 +152,9 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const
 {
 	ANKI_VK_SELF_CONST(GrManagerImpl);
-	PtrSize scratchBufferSize, unused;
-	AccelerationStructureImpl::getMemoryRequirement(init, unused, scratchBufferSize);
-	return scratchBufferSize + self.m_caps.m_asBufferAlignment;
+	PtrSize asSize, unused;
+	AccelerationStructureImpl::getMemoryRequirement(init, asSize, unused);
+	return asSize + self.m_caps.m_asBufferAlignment;
 }
 
 GrManagerImpl::~GrManagerImpl()
@@ -1265,7 +1265,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 
 	// Create some objets outside the lock
 	Array<Char, 16> name;
-	snprintf(name.getBegin(), name.getSize(), "Acquire %llu", m_frame);
+	snprintf(name.getBegin(), name.getSize(), "Acquire %" PRIu64, m_frame);
 	MicroFencePtr fence = FenceFactory::getSingleton().newInstance(name.getBegin());
 
 	LockGuard<Mutex> lock(m_globalMtx);

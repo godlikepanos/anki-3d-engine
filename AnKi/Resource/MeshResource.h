@@ -141,6 +141,7 @@ private:
 		Array<U32, kMaxLodCount> m_firstMeshlet = {};
 		Array<U32, kMaxLodCount> m_meshletCounts = {};
 
+		Array<UnifiedGeometryBufferAllocation, kMaxLodCount> m_blasAllocationTokens;
 		Array<AccelerationStructurePtr, kMaxLodCount> m_blas;
 
 		Aabb m_aabb;
