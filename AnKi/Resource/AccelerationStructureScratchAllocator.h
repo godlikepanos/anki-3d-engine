@@ -15,7 +15,7 @@ namespace anki {
 /// @{
 
 /// Ring buffer used for AS scratch memory.
-class AccelerationStructureScratchAllocator
+class AccelerationStructureScratchAllocator : public MakeSingleton<AccelerationStructureScratchAllocator>
 {
 public:
 	static constexpr PtrSize kBufferSize = 64_MB;

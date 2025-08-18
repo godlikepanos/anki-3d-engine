@@ -26,7 +26,7 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 
 	// Load font in memory
 	ResourceFilePtr file;
-	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
+	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, file));
 	m_fontData.resize(U32(file->getSize()));
 	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 

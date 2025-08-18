@@ -99,7 +99,7 @@ private:
 };
 
 /// GPU memory allocator for GPU buffers used in transfer operations.
-class TransferGpuAllocator
+class TransferGpuAllocator : public MakeSingleton<TransferGpuAllocator>
 {
 	friend class TransferGpuAllocatorHandle;
 
@@ -150,8 +150,6 @@ private:
 	class StackAllocatorBuilderInterface
 	{
 	public:
-		TransferGpuAllocator* m_parent = nullptr; // TODO glob: maybe rm
-
 		// The rest of the functions implement the StackAllocatorBuilder TInterface.
 
 		static constexpr PtrSize getInitialChunkSize()

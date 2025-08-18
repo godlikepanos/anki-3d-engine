@@ -73,7 +73,7 @@ private:
 };
 
 /// A system that does some work on shader programs before resources start loading.
-class ShaderProgramResourceSystem
+class ShaderProgramResourceSystem : public MakeSingleton<ShaderProgramResourceSystem>
 {
 public:
 	ShaderProgramResourceSystem()

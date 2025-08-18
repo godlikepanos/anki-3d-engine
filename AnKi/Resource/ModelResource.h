@@ -17,17 +17,6 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-/// Part of the information required to create a TLAS and a SBT.
-/// @memberof ModelResource
-class ModelRayTracingInfo
-{
-public:
-	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
-	U32 m_shaderGroupHandleIndex;
-
-	PtrSize m_indexUgbOffset;
-};
-
 /// @memberof ModelResource
 /// Part of the information required render the model.
 class ModelPatchGeometryInfo
@@ -69,9 +58,6 @@ public:
 	}
 
 	void getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const;
-
-	/// Get the ray tracing info.
-	void getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const;
 
 private:
 	class Lod

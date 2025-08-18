@@ -97,7 +97,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		}
 	}
 
-	if(probeToRefresh == nullptr || ResourceManager::getSingleton().getAsyncLoader().getTasksInFlightCount() != 0
+	if(probeToRefresh == nullptr || AsyncLoader::getSingleton().getTasksInFlightCount() != 0
 	   || getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt()) [[likely]]
 	{
 		// Nothing to update or can't update right now, early exit

@@ -34,7 +34,7 @@ static Error checkBoundingVolume(const MeshBinaryBoundingVolume& vol)
 Error MeshBinaryLoader::load(const ResourceFilename& filename)
 {
 	// Load header + submeshes
-	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, m_file));
+	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, m_file));
 	ANKI_CHECK(m_file->read(&m_header, sizeof(m_header)));
 	ANKI_CHECK(checkHeader());
 	ANKI_CHECK(loadSubmeshes());

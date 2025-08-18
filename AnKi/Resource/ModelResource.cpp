@@ -45,21 +45,6 @@ void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 	}
 }
 
-void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const
-{
-	ANKI_ASSERT(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit(1 << key.getRenderingTechnique())));
-
-	// Mesh
-	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
-	info.m_bottomLevelAccelerationStructure = m_mesh->getBottomLevelAccelerationStructure(meshLod, m_submeshIdx);
-
-	info.m_indexUgbOffset = m_lodInfos[meshLod].m_indexUgbOffset;
-
-	// Material
-	const MaterialVariant& variant = m_mtl->getOrCreateVariant(key);
-	info.m_shaderGroupHandleIndex = variant.getRtShaderGroupHandleIndex();
-}
-
 Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName, const CString& mtlFName, U32 subMeshIndex, Bool async)
 {
 #if ANKI_ASSERTIONS_ENABLED

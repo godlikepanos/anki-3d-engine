@@ -55,33 +55,6 @@ public:
 	template<typename T>
 	ANKI_INTERNAL void freeResource(T* ptr);
 
-	ANKI_INTERNAL TransferGpuAllocator& getTransferGpuAllocator()
-	{
-		return *m_transferGpuAlloc;
-	}
-
-	ANKI_INTERNAL AsyncLoader& getAsyncLoader()
-	{
-		return *m_asyncLoader;
-	}
-
-	/// Return the container of program libraries.
-	ANKI_INTERNAL const ShaderProgramResourceSystem& getShaderProgramResourceSystem() const
-	{
-		return *m_shaderProgramSystem;
-	}
-
-	ANKI_INTERNAL ResourceFilesystem& getFilesystem()
-	{
-		return *m_fs;
-	}
-
-	ANKI_INTERNAL AccelerationStructureScratchAllocator& getAccelerationStructureScratchAllocator()
-	{
-		ANKI_ASSERT(m_asScratchAlloc);
-		return *m_asScratchAlloc;
-	}
-
 private:
 	template<typename Type>
 	class TypeData
@@ -115,12 +88,6 @@ public \
 #include <AnKi/Resource/Resources.def.h>
 	{
 	};
-
-	ResourceFilesystem* m_fs = nullptr;
-	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
-	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
-	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
-	AccelerationStructureScratchAllocator* m_asScratchAlloc = nullptr;
 
 	AllTypeData m_allTypes;
 

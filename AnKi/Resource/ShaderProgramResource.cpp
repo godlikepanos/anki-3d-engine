@@ -260,7 +260,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 		const CString libName = m_binary->m_techniques[techniqueIdx].m_name.getBegin();
 		ANKI_ASSERT(libName.getLength() > 0);
 
-		const ShaderProgramResourceSystem& progSystem = ResourceManager::getSingleton().getShaderProgramResourceSystem();
+		const ShaderProgramResourceSystem& progSystem = ShaderProgramResourceSystem::getSingleton();
 		const ShaderProgramRaytracingLibrary* foundLib = nullptr;
 		for(const ShaderProgramRaytracingLibrary& lib : progSystem.getRayTracingLibraries())
 		{

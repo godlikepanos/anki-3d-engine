@@ -77,7 +77,7 @@ struct GpuSceneMeshLod
 	F32 m_positionScale;
 
 	UVec2 m_blasAddress;
-	U32 m_tlasInstanceMask; ///< Mask that goes to AccelerationStructureInstance::m_instanceCustomIndex24_mask8
+	U32 m_tlasInstanceMask; ///< Mask that goes to AccelerationStructureInstance::m_mask
 	U32 m_padding3;
 };
 static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 5);

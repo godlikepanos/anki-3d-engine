@@ -46,7 +46,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	if(async)
 	{
-		task = ResourceManager::getSingleton().getAsyncLoader().newTask<TexUploadTask>();
+		task = AsyncLoader::getSingleton().newTask<TexUploadTask>();
 		ctx = &task->m_ctx;
 	}
 	else
@@ -220,7 +220,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	// Upload the data
 	if(async)
 	{
-		ResourceManager::getSingleton().getAsyncLoader().submitTask(task);
+		AsyncLoader::getSingleton().submitTask(task);
 	}
 	else
 	{
@@ -291,7 +291,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-			ANKI_CHECK(ResourceManager::getSingleton().getTransferGpuAllocator().allocate(allocationSize, handle));
+			ANKI_CHECK(TransferGpuAllocator::getSingleton().allocate(allocationSize, handle));
 			void* data = handle.getMappedMemory();
 			ANKI_ASSERT(data);
 
@@ -321,7 +321,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 		for(U i = 0; i < handleCount; ++i)
 		{
-			ResourceManager::getSingleton().getTransferGpuAllocator().release(handles[i], fence);
+			TransferGpuAllocator::getSingleton().release(handles[i], fence);
 		}
 		cmdb.reset(nullptr);
 	}

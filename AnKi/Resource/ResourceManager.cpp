@@ -34,17 +34,17 @@ ResourceManager::~ResourceManager()
 {
 	ANKI_RESOURCE_LOGI("Destroying resource manager");
 
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_asyncLoader);
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_shaderProgramSystem);
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_transferGpuAlloc);
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_fs);
+	AsyncLoader::freeSingleton();
+	ShaderProgramResourceSystem::freeSingleton();
+	TransferGpuAllocator::freeSingleton();
+	ResourceFilesystem::freeSingleton();
 
 #define ANKI_INSTANTIATE_RESOURCE(className) \
 	static_cast<TypeData<className>&>(m_allTypes).m_entries.destroy(); \
 	static_cast<TypeData<className>&>(m_allTypes).m_map.destroy();
 #include <AnKi/Resource/Resources.def.h>
 
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_asScratchAlloc);
+	AccelerationStructureScratchAllocator::freeSingleton();
 
 	ResourceMemoryPool::freeSingleton();
 }
@@ -55,22 +55,22 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 
 	ResourceMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_fs = newInstance<ResourceFilesystem>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_fs->init());
+	ResourceFilesystem::allocateSingleton();
+	ANKI_CHECK(ResourceFilesystem::getSingleton().init());
 
 	// Init the thread
-	m_asyncLoader = newInstance<AsyncLoader>(ResourceMemoryPool::getSingleton());
+	AsyncLoader::allocateSingleton();
 
-	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_transferGpuAlloc->init(g_transferScratchMemorySizeCVar));
+	TransferGpuAllocator::allocateSingleton();
+	ANKI_CHECK(TransferGpuAllocator::getSingleton().init(g_transferScratchMemorySizeCVar));
 
 	// Init the programs
-	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_shaderProgramSystem->init());
+	ShaderProgramResourceSystem::allocateSingleton();
+	ANKI_CHECK(ShaderProgramResourceSystem::getSingleton().init());
 
 	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		m_asScratchAlloc = newInstance<AccelerationStructureScratchAllocator>(ResourceMemoryPool::getSingleton());
+		AccelerationStructureScratchAllocator::allocateSingleton();
 	}
 
 	return Error::kNone;

@@ -45,11 +45,6 @@ Error TransferGpuAllocator::init(PtrSize maxSize)
 	m_maxAllocSize = getAlignedRoundUp(kChunkInitialSize * kPoolCount, maxSize);
 	ANKI_RESOURCE_LOGI("Will use %zuMB of memory for transfer scratch", m_maxAllocSize / PtrSize(1_MB));
 
-	for(Pool& pool : m_pools)
-	{
-		pool.m_stackAlloc.getInterface().m_parent = this;
-	}
-
 	return Error::kNone;
 }
 

@@ -36,7 +36,7 @@ public:
 };
 
 /// Asynchronous resource loader.
-class AsyncLoader
+class AsyncLoader : public MakeSingleton<AsyncLoader>
 {
 public:
 	AsyncLoader();

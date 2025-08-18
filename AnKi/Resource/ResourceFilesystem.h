@@ -84,7 +84,7 @@ public:
 using ResourceFilePtr = IntrusivePtr<ResourceFile, ResourceFileDeleter>;
 
 /// Resource filesystem.
-class ResourceFilesystem
+class ResourceFilesystem : public MakeSingleton<ResourceFilesystem>
 {
 public:
 	ResourceFilesystem() = default;

@@ -160,7 +160,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 
 	ResourceDynamicArray<Lib> libs;
 
-	const Error err = ResourceManager::getSingleton().getFilesystem().iterateAllFilenames([&](CString filename) -> Error {
+	const Error err = ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString filename) -> Error {
 		// Check file extension
 		String extension;
 		getFilepathExtension(filename, extension);
@@ -172,7 +172,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 
 		// Get the binary
 		ResourceFilePtr file;
-		ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
+		ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, file));
 		ShaderBinary* binary;
 		ANKI_CHECK(deserializeShaderBinaryFromAnyFile(*file, binary, ResourceMemoryPool::getSingleton()));
 

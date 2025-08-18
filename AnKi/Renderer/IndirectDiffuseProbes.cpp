@@ -151,7 +151,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	}
 
 	GlobalIlluminationProbeComponent* probeToRefresh = (bestCandidateProbe) ? bestCandidateProbe : secondBestCandidateProbe;
-	if(probeToRefresh == nullptr || ResourceManager::getSingleton().getAsyncLoader().getTasksInFlightCount() != 0) [[likely]]
+	if(probeToRefresh == nullptr || AsyncLoader::getSingleton().getTasksInFlightCount() != 0) [[likely]]
 	{
 		// Nothing to update or can't update right now, early exit
 		m_runCtx = {};

@@ -76,7 +76,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 	if(async)
 	{
-		task.reset(ResourceManager::getSingleton().getAsyncLoader().newTask<LoadTask>(this));
+		task.reset(AsyncLoader::getSingleton().newTask<LoadTask>(this));
 		ctx = &task->m_ctx;
 	}
 	else
@@ -230,7 +230,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	// Submit the loading task
 	if(async)
 	{
-		ResourceManager::getSingleton().getAsyncLoader().submitTask(task.get());
+		AsyncLoader::getSingleton().submitTask(task.get());
 		LoadTask* pTask;
 		task.moveAndReset(pTask);
 	}
@@ -245,7 +245,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 {
 	GrManager& gr = GrManager::getSingleton();
-	TransferGpuAllocator& transferAlloc = ResourceManager::getSingleton().getTransferGpuAllocator();
+	TransferGpuAllocator& transferAlloc = TransferGpuAllocator::getSingleton();
 
 	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1 + 3)> handles;
 	U32 handleCount = 0;
@@ -395,8 +395,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
 			{
 				Bool addBarrier;
-				const BufferView scratchBuff = ResourceManager::getSingleton().getAccelerationStructureScratchAllocator().allocate(
-					submesh.m_blas[lodIdx]->getBuildScratchBufferSize(), addBarrier);
+				const BufferView scratchBuff =
+					AccelerationStructureScratchAllocator::getSingleton().allocate(submesh.m_blas[lodIdx]->getBuildScratchBufferSize(), addBarrier);
 
 				if(addBarrier)
 				{
