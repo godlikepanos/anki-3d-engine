@@ -284,6 +284,31 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 
+		<class name="MeshComponent">
+			<methods>
+				<method name="setMeshFilename">
+					<args>
+						<arg>CString</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+
+		<class name="MaterialComponent">
+			<methods>
+				<method name="setMaterialFilename">
+					<args>
+						<arg>CString</arg>
+					</args>
+				</method>
+				<method name="setSubmeshIndex">
+					<args>
+						<arg>U32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+
 		<class name="SkinComponent">
 			<methods>
 				<method name="loadSkeletonResource">

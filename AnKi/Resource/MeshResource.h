@@ -74,7 +74,8 @@ public:
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
-	void getMeshletBufferInfo(U32 lod, PtrSize& meshletBoundingVolumesUgbOffset, PtrSize& meshletGeometryDescriptorsUgbOffset, U32& meshletCount)
+	void getMeshletBufferInfo(U32 lod, PtrSize& meshletBoundingVolumesUgbOffset, PtrSize& meshletGeometryDescriptorsUgbOffset,
+							  U32& meshletCount) const
 	{
 		meshletBoundingVolumesUgbOffset = m_lods[lod].m_meshletBoundingVolumes.getOffset();
 		meshletGeometryDescriptorsUgbOffset = m_lods[lod].m_meshletGeometryDescriptors.getOffset();

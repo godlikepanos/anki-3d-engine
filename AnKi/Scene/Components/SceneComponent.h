@@ -9,6 +9,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/BitMask.h>
 #include <AnKi/Util/Enum.h>
+#include <AnKi/Core/Common.h>
 
 namespace anki {
 
@@ -125,6 +126,11 @@ public:
 	static constexpr F32 getUpdateOrderWeight(SceneComponentType type)
 	{
 		return m_updateOrderWeights[type];
+	}
+
+	Bool updatedThisFrame() const
+	{
+		return m_timestamp == GlobalFrameIndex::getSingleton().m_value;
 	}
 
 protected:

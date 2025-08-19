@@ -26,6 +26,8 @@
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Scene/Components/TriggerComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Scene/Components/MeshComponent.h>
+#include <AnKi/Scene/Components/MaterialComponent.h>
 
 namespace anki {
 
