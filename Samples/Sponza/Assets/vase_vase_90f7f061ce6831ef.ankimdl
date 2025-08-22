@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/vase_45c3983f6cc9c489.ankimesh</mesh>
-			<material>Assets/vase_45c3983f6cc9c489.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

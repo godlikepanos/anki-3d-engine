@@ -406,30 +406,6 @@ Error GltfImporter::writeAll()
 		}
 	}
 
-	for(auto& req : m_modelImportRequests)
-	{
-		if(m_jobManager)
-		{
-			m_jobManager->dispatchTask([&req]([[maybe_unused]] U32 threadId) {
-				Error err = req.m_importer->m_errorInThread.load();
-
-				if(!err)
-				{
-					err = req.m_importer->writeModel(*req.m_value);
-				}
-
-				if(err)
-				{
-					req.m_importer->m_errorInThread.store(err._getCode());
-				}
-			});
-		}
-		else
-		{
-			ANKI_CHECK(writeModel(*req.m_value));
-		}
-	}
-
 	if(m_jobManager)
 	{
 		m_jobManager->waitForAllTasksToFinish();
@@ -829,7 +805,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		}
 		else
 		{
-			// Model node
+			// Mesh+Material node
 
 			ANKI_CHECK(getExtra(extras, "no_rt", extraValueBool, extraFound));
 			const Bool skipRt = (extraFound) ? extraValueBool : false;
@@ -855,12 +831,10 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					addRequest<const cgltf_skin*>(node.skin, m_skinImportRequests);
 				}
 
-				addRequest<const cgltf_mesh*>(node.mesh, m_modelImportRequests);
-
 				ImporterHashMap<CString, ImporterString>::Iterator it2;
 				const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
 
-				ANKI_CHECK(writeModelNode(node, parentExtras));
+				ANKI_CHECK(writeMeshMaterialNode(node, parentExtras));
 
 				ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 
@@ -870,7 +844,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 					const ImporterString meshFname = computeMeshResourceFilename(*node.mesh);
 
-					ANKI_CHECK(m_sceneFile.writeText("comp:setCollisionShapeType(BodyComponentCollisionShapeType.kFromModelComponent)\n"));
+					ANKI_CHECK(m_sceneFile.writeText("comp:setCollisionShapeType(BodyComponentCollisionShapeType.kFromMeshComponent)\n"));
 					ANKI_CHECK(m_sceneFile.writeText("comp:teleportTo(trf:getOrigin(), trf:getRotation())\n"));
 				}
 			}
@@ -915,59 +889,6 @@ Error GltfImporter::writeTransform(const Transform& trf)
 	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(Vec3.new(%f, %f, %f))\n", trf.getScale().x(), trf.getScale().y(), trf.getScale().z()));
 
 	ANKI_CHECK(m_sceneFile.writeText("node:setLocalTransform(trf)\n"));
-
-	return Error::kNone;
-}
-
-Error GltfImporter::writeModel(const cgltf_mesh& mesh) const
-{
-	const ImporterString modelFname = computeModelResourceFilename(mesh);
-	ANKI_IMPORTER_LOGV("Importing model %s", modelFname.cstr());
-
-	ImporterHashMap<CString, ImporterString> extras;
-	ANKI_CHECK(appendExtras(mesh.extras, extras));
-
-	File file;
-	ImporterString modelFullFname;
-	modelFullFname.sprintf("%s/%s", m_outDir.cstr(), modelFname.cstr());
-	ANKI_CHECK(file.open(modelFullFname, FileOpenFlag::kWrite));
-
-	ANKI_CHECK(file.writeText("<model>\n"));
-	ANKI_CHECK(file.writeText("\t<modelPatches>\n"));
-
-	for(U32 primIdx = 0; primIdx < mesh.primitives_count; ++primIdx)
-	{
-		ANKI_CHECK(file.writeText("\t\t<modelPatch>\n"));
-
-		const ImporterString meshFname = computeMeshResourceFilename(mesh);
-		if(mesh.primitives_count == 1)
-		{
-			ANKI_CHECK(file.writeTextf("\t\t\t<mesh>%s%s</mesh>\n", m_rpath.cstr(), meshFname.cstr()));
-		}
-		else
-		{
-			ANKI_CHECK(file.writeTextf("\t\t\t<mesh subMeshIndex=\"%u\">%s%s</mesh>\n", primIdx, m_rpath.cstr(), meshFname.cstr()));
-		}
-
-		ImporterHashMap<CString, ImporterString> materialExtras;
-		ANKI_CHECK(appendExtras(mesh.primitives[primIdx].material->extras, materialExtras));
-		auto mtlOverride = materialExtras.find("material_override");
-		if(mtlOverride != materialExtras.getEnd())
-		{
-			ANKI_CHECK(file.writeTextf("\t\t\t<material>%s</material>\n", mtlOverride->cstr()));
-		}
-		else
-		{
-			const ImporterString mtlFname = computeMaterialResourceFilename(*mesh.primitives[primIdx].material);
-			ANKI_CHECK(file.writeTextf("\t\t\t<material>%s%s</material>\n", m_rpath.cstr(), mtlFname.cstr()));
-		}
-
-		ANKI_CHECK(file.writeText("\t\t</modelPatch>\n"));
-	}
-
-	ANKI_CHECK(file.writeText("\t</modelPatches>\n"));
-
-	ANKI_CHECK(file.writeText("</model>\n"));
 
 	return Error::kNone;
 }
@@ -1196,17 +1117,29 @@ Error GltfImporter::writeCamera(const cgltf_node& node, [[maybe_unused]] const I
 	return Error::kNone;
 }
 
-Error GltfImporter::writeModelNode(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras)
+Error GltfImporter::writeMeshMaterialNode(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras)
 {
-	ANKI_IMPORTER_LOGV("Importing model node %s", getNodeName(node).cstr());
+	ANKI_IMPORTER_LOGV("Importing mesh&material node %s", getNodeName(node).cstr());
 
 	ImporterHashMap<CString, ImporterString> extras(parentExtras);
 	ANKI_CHECK(appendExtras(node.extras, extras));
 
-	const ImporterString modelFname = computeModelResourceFilename(*node.mesh);
-
 	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
-	ANKI_CHECK(m_sceneFile.writeTextf("node:newModelComponent():loadModelResource(\"%s%s\")\n", m_rpath.cstr(), modelFname.cstr()));
+
+	const cgltf_mesh& mesh = *node.mesh;
+
+	ANKI_CHECK(
+		m_sceneFile.writeTextf("node:newMeshComponent():setMeshFilename(\"%s%s\")\n", m_rpath.cstr(), computeMeshResourceFilename(mesh).cstr()));
+
+	for(U32 primIdx = 0; primIdx < mesh.primitives_count; ++primIdx)
+	{
+		ANKI_CHECK(m_sceneFile.writeText("mtlc = node:newMaterialComponent()\n"));
+
+		ANKI_CHECK(m_sceneFile.writeTextf("mtlc:setMaterialFilename(\"%s%s\")\n", m_rpath.cstr(),
+										  computeMaterialResourceFilename(*mesh.primitives[primIdx].material).cstr()));
+
+		ANKI_CHECK(m_sceneFile.writeTextf("mtlc:setSubmeshIndex(%d)\n", primIdx));
+	}
 
 	if(node.skin)
 	{
@@ -1215,29 +1148,6 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const ImporterHashMap
 	}
 
 	return Error::kNone;
-}
-
-ImporterString GltfImporter::computeModelResourceFilename(const cgltf_mesh& mesh) const
-{
-	ImporterStringList list;
-
-	list.pushBack(mesh.name);
-
-	for(U i = 0; i < mesh.primitives_count; ++i)
-	{
-		const Char* mtlName = (mesh.primitives[i].material) ? mesh.primitives[i].material->name : "UnamedMtl";
-		list.pushBackSprintf("_%s", mtlName);
-	}
-
-	ImporterString joined;
-	list.join("", joined);
-
-	const U64 hash = computeHash(joined.getBegin(), joined.getLength());
-
-	ImporterString out;
-	out.sprintf("%.64s_%" PRIx64 ".ankimdl", joined.cstr(), hash); // Limit the filename size
-
-	return out;
 }
 
 ImporterString GltfImporter::computeMeshResourceFilename(const cgltf_mesh& mesh) const

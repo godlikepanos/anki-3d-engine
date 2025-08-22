@@ -12,6 +12,9 @@
 
 namespace anki {
 
+// Forward
+class Aabb;
+
 /// @addtogroup scene
 /// @{
 
@@ -59,6 +62,8 @@ private:
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
+
+	Aabb computeAabb(U32 submeshIndex, const SceneNode& node) const;
 };
 /// @}
 

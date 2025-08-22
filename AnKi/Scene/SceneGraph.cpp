@@ -40,6 +40,8 @@ namespace anki {
 
 static StatCounter g_sceneUpdateTimeStatVar(StatCategory::kTime, "All scene update",
 											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+static StatCounter g_sceneComponentsUpdatedStatVar(StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame);
+static StatCounter g_sceneNodesUpdatedStatVar(StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame);
 
 constexpr U32 kUpdateNodeBatchSize = 10;
 
@@ -244,7 +246,7 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
 	componentUpdateInfo.m_framePool = &m_framePool;
 
-	Bool atLeastOneComponentUpdated = false;
+	U32 sceneComponentUpdatedCount = 0;
 	node.iterateComponents([&](SceneComponent& comp) {
 		componentUpdateInfo.m_node = &node;
 		Bool updated = false;
@@ -254,7 +256,7 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 		{
 			ANKI_TRACE_INC_COUNTER(SceneComponentUpdated, 1);
 			comp.setTimestamp(GlobalFrameIndex::getSingleton().m_value);
-			atLeastOneComponentUpdated = true;
+			++sceneComponentUpdatedCount;
 		}
 	});
 
@@ -266,9 +268,11 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 	// Frame update
 	{
-		if(atLeastOneComponentUpdated)
+		if(sceneComponentUpdatedCount)
 		{
 			node.setComponentMaxTimestamp(GlobalFrameIndex::getSingleton().m_value);
+			g_sceneComponentsUpdatedStatVar.increment(sceneComponentUpdatedCount);
+			g_sceneNodesUpdatedStatVar.increment(1);
 		}
 		else
 		{

@@ -52,7 +52,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 	<enums>
 		<enum name="BodyComponentCollisionShapeType">
-			<enumerant name="kFromModelComponent"/>
+			<enumerant name="kFromMeshComponent"/>
 			<enumerant name="kAabb"/>
 			<enumerant name="kSphere"/>
 			<enumerant name="kCount"/>
@@ -449,6 +449,12 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="newComponent&lt;ModelComponent&gt;" alias="newModelComponent">
 					<return>ModelComponent*</return>
 				</method>
+				<method name="newComponent&lt;MeshComponent&gt;" alias="newMeshComponent">
+					<return>MeshComponent*</return>
+				</method>
+				<method name="newComponent&lt;MaterialComponent&gt;" alias="newMaterialComponent">
+					<return>MaterialComponent*</return>
+				</method>
 				<method name="newComponent&lt;SkinComponent&gt;" alias="newSkinComponent">
 					<return>SkinComponent*</return>
 				</method>
@@ -488,6 +494,12 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="getFirstComponentOfType&lt;ModelComponent&gt;" alias="getFirstModelComponent">
 					<return>ModelComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;MeshComponent&gt;" alias="getFirstMeshComponent">
+					<return>MeshComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;MaterialComponent&gt;" alias="getFirstMaterialComponent">
+					<return>MaterialComponent&amp;</return>
 				</method>
 				<method name="getFirstComponentOfType&lt;SkinComponent&gt;" alias="getFirstSkinComponent">
 					<return>SkinComponent&amp;</return>

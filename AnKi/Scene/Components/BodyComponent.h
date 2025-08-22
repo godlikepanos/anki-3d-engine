@@ -17,7 +17,7 @@ namespace anki {
 /// @memberof BodyComponent
 enum class BodyComponentCollisionShapeType : U8
 {
-	kFromModelComponent, ///< Set the collision shape by looking at the ModelComponent's meshes.
+	kFromMeshComponent, ///< Set the collision shape by looking at the MeshComponent's mesh.
 	kAabb,
 	kSphere,
 
@@ -41,7 +41,7 @@ public:
 			m_box.m_extend = extend;
 			if(m_shapeType == BodyComponentCollisionShapeType::kAabb)
 			{
-				m_body.reset(nullptr); // Force recreate
+				cleanup(); // Force recreate
 			}
 		}
 	}
@@ -58,7 +58,7 @@ public:
 			m_sphere.m_radius = radius;
 			if(m_shapeType == BodyComponentCollisionShapeType::kSphere)
 			{
-				m_body.reset(nullptr); // Force recreate
+				cleanup(); // Force recreate
 			}
 		}
 	}
@@ -73,7 +73,7 @@ public:
 		if(ANKI_EXPECT(type <= BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
 		{
 			m_shapeType = type;
-			m_body.reset(nullptr); // Force recreate
+			cleanup(); // Force recreate
 		}
 	}
 
@@ -82,7 +82,7 @@ public:
 		if(ANKI_EXPECT(mass >= 0.0f) && m_mass != mass)
 		{
 			m_mass = mass;
-			m_body.reset(nullptr); // Force recreate
+			cleanup(); // Force recreate
 		}
 	}
 
@@ -118,8 +118,8 @@ private:
 	class
 	{
 	public:
-		ModelComponent* m_modelc = nullptr;
-		U32 m_modelcUuid = 0;
+		MeshComponent* m_meshc = nullptr;
+		U32 m_meshResourceUuid = 0;
 	} m_mesh;
 
 	class
@@ -151,6 +151,8 @@ private:
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
+
+	void cleanup();
 };
 /// @}
 

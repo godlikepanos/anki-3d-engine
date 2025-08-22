@@ -4,13 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/Components/BodyComponent.h>
-#include <AnKi/Scene/Components/ModelComponent.h>
+#include <AnKi/Scene/Components/MeshComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/CpuMeshResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsWorld.h>
-#include <AnKi/Resource/ModelResource.h>
+#include <AnKi/Resource/MeshResource.h>
 
 namespace anki {
 
@@ -38,16 +38,17 @@ void BodyComponent::teleportTo(Vec3 position, const Mat3& rotation)
 
 void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(m_shapeType == BodyComponentCollisionShapeType::kCount
-	   || (m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent && !m_mesh.m_modelc))
+	const Bool meshIsValid = m_mesh.m_meshc && m_mesh.m_meshc->isEnabled();
+	if(m_shapeType == BodyComponentCollisionShapeType::kCount || (m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent && !meshIsValid))
 	{
+		// It's invalid, return
 		ANKI_ASSERT(!m_body);
 		return;
 	}
 
-	const Bool shapeDirty =
-		!m_body.isCreated()
-		|| (m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent && m_mesh.m_modelc->getUuid() != m_mesh.m_modelcUuid);
+	const Bool shapeDirty = !m_body.isCreated()
+							|| (m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent
+								&& m_mesh.m_meshc->getMeshResource().getUuid() != m_mesh.m_meshResourceUuid);
 	if(shapeDirty)
 	{
 		updated = true;
@@ -64,7 +65,8 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			init.m_transform = m_node->getLocalTransform();
 		}
 
-		if(m_mass == 0.0f)
+		const Bool isStatic = m_mass == 0.0f;
+		if(isStatic)
 		{
 			init.m_layer = PhysicsLayer::kStatic;
 		}
@@ -73,14 +75,14 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			init.m_layer = PhysicsLayer::kMoving;
 		}
 
-		if(m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent)
+		if(m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent)
 		{
-			m_mesh.m_modelcUuid = m_mesh.m_modelc->getUuid();
+			const MeshResource& meshResource = m_mesh.m_meshc->getMeshResource();
+			m_mesh.m_meshResourceUuid = meshResource.getUuid();
 
-			if(m_mesh.m_modelc->getModelResource()->getModelPatches()[0].getMesh()->getOrCreateCollisionShape(m_mass == 0.0f, kMaxLodCount - 1,
-																											  m_collisionShape))
+			if(meshResource.getOrCreateCollisionShape(isStatic, kMaxLodCount - 1, m_collisionShape))
 			{
-				ANKI_SCENE_LOGE("BodyComponent::update failed");
+				ANKI_SCENE_LOGE("BodyComponent::update failed due to error");
 				return;
 			}
 		}
@@ -132,19 +134,33 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 void BodyComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
 {
-	if(other->getType() != SceneComponentType::kModel)
+	if(other->getType() != SceneComponentType::kMesh)
 	{
 		return;
 	}
 
-	if(added && m_mesh.m_modelc == nullptr)
+	if(added && m_mesh.m_meshc == nullptr)
 	{
-		m_mesh.m_modelc = static_cast<ModelComponent*>(other);
+		m_mesh.m_meshc = static_cast<MeshComponent*>(other);
+		if(m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent)
+		{
+			cleanup();
+		}
 	}
-	else if(!added && m_mesh.m_modelc == other)
+	else if(!added && m_mesh.m_meshc == other)
 	{
-		m_mesh.m_modelc = nullptr;
+		m_mesh.m_meshc = nullptr;
+		if(m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent)
+		{
+			cleanup();
+		}
 	}
+}
+
+void BodyComponent::cleanup()
+{
+	m_body.reset(nullptr);
+	m_collisionShape.reset(nullptr);
 }
 
 } // end namespace anki

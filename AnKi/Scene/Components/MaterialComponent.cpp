@@ -39,7 +39,8 @@ void MaterialComponent::setMaterialFilename(CString fname)
 		return;
 	}
 
-	m_resource = newRsrc;
+	m_resource = std::move(newRsrc);
+	m_castsShadow = m_resource->castsShadow();
 	m_resourceDirty = true;
 }
 
@@ -56,34 +57,50 @@ void MaterialComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bo
 {
 	ANKI_ASSERT(other);
 
-	if(other->getType() != SceneComponentType::kSkin && other->getType() != SceneComponentType::kMesh)
+	if(other->getType() == SceneComponentType::kSkin)
 	{
-		return;
+		const Bool alreadyHasSkinComponent = m_skinComponent != nullptr;
+		if(added && !alreadyHasSkinComponent)
+		{
+			m_skinComponent = static_cast<SkinComponent*>(other);
+			m_skinDirty = true;
+		}
+		else if(!added && other == m_skinComponent)
+		{
+			m_skinComponent = nullptr;
+			m_skinDirty = true;
+		}
 	}
 
-	const Bool alreadyHasSkinComponent = m_skinComponent != nullptr;
-	if(added && !alreadyHasSkinComponent)
+	if(other->getType() == SceneComponentType::kMesh)
 	{
-		m_skinComponent = static_cast<SkinComponent*>(other);
-		m_skinDirty = true;
+		const Bool alreadyHasMeshComponent = m_meshComponent != nullptr;
+		if(added && !alreadyHasMeshComponent)
+		{
+			m_meshComponent = static_cast<MeshComponent*>(other);
+			m_meshComponentDirty = true;
+		}
+		else if(!added && other == m_meshComponent)
+		{
+			m_meshComponent = nullptr;
+			m_meshComponentDirty = true;
+		}
 	}
-	else if(!added && other == m_skinComponent)
+}
+
+Aabb MaterialComponent::computeAabb(U32 submeshIndex, const SceneNode& node) const
+{
+	U32 firstIndex, indexCount, firstMeshlet, meshletCount;
+	Aabb aabbLocal;
+	m_meshComponent->getMeshResource().getSubMeshInfo(0, submeshIndex, firstIndex, indexCount, firstMeshlet, meshletCount, aabbLocal);
+
+	if(m_skinComponent)
 	{
-		m_skinComponent = nullptr;
-		m_skinDirty = true;
+		aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
 	}
 
-	const Bool alreadyHasMeshComponent = m_meshComponent != nullptr;
-	if(added && !alreadyHasMeshComponent)
-	{
-		m_meshComponent = static_cast<MeshComponent*>(other);
-		m_meshComponentDirty = true;
-	}
-	else if(!added && other == m_meshComponent)
-	{
-		m_meshComponent = nullptr;
-		m_meshComponentDirty = true;
-	}
+	const Aabb aabbWorld = aabbLocal.getTransformed(node.getWorldTransform());
+	return aabbWorld;
 }
 
 void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -156,18 +173,21 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			IndexType indexType;
 			PtrSize indexUgbOffset;
 			mesh.getIndexBufferInfo(l, indexUgbOffset, totalIndexCount, indexType);
-			indexUgbOffset += firstIndex * getIndexSize(indexType);
 
 			for(VertexStreamId stream = VertexStreamId::kMeshRelatedFirst; stream < VertexStreamId::kMeshRelatedCount; ++stream)
 			{
 				if(mesh.isVertexStreamPresent(stream))
 				{
 					U32 vertCount;
-					PtrSize offset;
-					mesh.getVertexBufferInfo(l, stream, offset, vertCount);
+					PtrSize ugbOffset;
+					mesh.getVertexBufferInfo(l, stream, ugbOffset, vertCount);
 					const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
-					ANKI_ASSERT(offset % elementSize == 0);
-					meshLod.m_vertexOffsets[U32(stream)] = U32(offset / elementSize);
+					ANKI_ASSERT(ugbOffset % elementSize == 0);
+					meshLod.m_vertexOffsets[U32(stream)] = U32(ugbOffset / elementSize);
+				}
+				else
+				{
+					meshLod.m_vertexOffsets[U32(stream)] = kMaxU32;
 				}
 			}
 
@@ -200,6 +220,12 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 		}
 
+		// Copy the last LOD to the rest just in case
+		for(U32 l = mesh.getLodCount(); l < kMaxLodCount; ++l)
+		{
+			meshLods[l] = meshLods[l - 1];
+		}
+
 		m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
 	}
 
@@ -225,7 +251,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		GpuSceneRenderable gpuRenderable = {};
 		gpuRenderable.m_worldTransformsIndex = m_gpuSceneTransforms.getIndex() * 2;
 		gpuRenderable.m_constantsOffset = m_gpuSceneConstants.getOffset();
-		gpuRenderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex();
+		gpuRenderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 		gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 		gpuRenderable.m_particleEmitterIndex = kMaxU32;
 		if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
@@ -247,19 +273,9 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	// Scene bounds update
 	const Bool aabbUpdated = moved || meshUpdated || submeshUpdated || hasSkin;
-	Aabb aabbWorld;
-	if(aabbUpdated && isValid) [[unlikely]]
+	if(aabbUpdated) [[unlikely]]
 	{
-		U32 firstIndex, indexCount, firstMeshlet, meshletCount;
-		Aabb aabbLocal;
-		mesh.getSubMeshInfo(0, submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabbLocal);
-
-		if(m_skinComponent)
-		{
-			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
-		}
-
-		aabbWorld = aabbLocal.getTransformed(info.m_node->getWorldTransform());
+		const Aabb aabbWorld = computeAabb(submeshIdx, *info.m_node);
 		SceneGraph::getSingleton().updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
 	}
 
@@ -304,37 +320,80 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	const Bool gpuSceneAabbsNeedUpdate = aabbUpdated || bucketsNeedUpdate;
 	if(gpuSceneAabbsNeedUpdate) [[unlikely]]
 	{
-		// Do raster techniques
-		for(RenderingTechnique t :
-			EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(mtl.getRenderingTechniques() & ~RenderingTechniqueBit::kAllRt))
-		{
-			const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
-				aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), m_renderStateBucketIndices[t].get());
+		const Aabb aabbWorld = computeAabb(submeshIdx, *info.m_node);
 
-			switch(t)
+		// Raster
+		for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(RenderingTechniqueBit::kAllRaster))
+		{
+			const RenderingTechniqueBit bit = RenderingTechniqueBit(1 << t);
+			if(!(mtl.getRenderingTechniques() & bit))
 			{
-			case RenderingTechnique::kGBuffer:
-				m_gpuSceneRenderableAabbGBuffer.uploadToGpuScene(gpuVolume);
-				break;
-			case RenderingTechnique::kDepth:
-				m_gpuSceneRenderableAabbDepth.uploadToGpuScene(gpuVolume);
-				break;
-			case RenderingTechnique::kForward:
-				m_gpuSceneRenderableAabbForward.uploadToGpuScene(gpuVolume);
-				break;
-			default:
-				ANKI_ASSERT(0);
+				switch(t)
+				{
+				case RenderingTechnique::kGBuffer:
+					m_gpuSceneRenderableAabbGBuffer.free();
+					break;
+				case RenderingTechnique::kDepth:
+					m_gpuSceneRenderableAabbDepth.free();
+					break;
+				case RenderingTechnique::kForward:
+					m_gpuSceneRenderableAabbForward.free();
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
+			}
+			else
+			{
+				const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
+					aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), m_renderStateBucketIndices[t].get());
+
+				switch(t)
+				{
+				case RenderingTechnique::kGBuffer:
+					if(!m_gpuSceneRenderableAabbGBuffer.isValid())
+					{
+						m_gpuSceneRenderableAabbGBuffer.allocate();
+					}
+					m_gpuSceneRenderableAabbGBuffer.uploadToGpuScene(gpuVolume);
+					break;
+				case RenderingTechnique::kDepth:
+					if(!m_gpuSceneRenderableAabbDepth.isValid())
+					{
+						m_gpuSceneRenderableAabbDepth.allocate();
+					}
+					m_gpuSceneRenderableAabbDepth.uploadToGpuScene(gpuVolume);
+					break;
+				case RenderingTechnique::kForward:
+					if(!m_gpuSceneRenderableAabbForward.isValid())
+					{
+						m_gpuSceneRenderableAabbForward.allocate();
+					}
+					m_gpuSceneRenderableAabbForward.uploadToGpuScene(gpuVolume);
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
 			}
 		}
 
-		// Do RT techniques
+		// RT
 		if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
 		{
-			const U32 bucket = 0;
+			if(!m_gpuSceneRenderableAabbRt.isValid())
+			{
+				m_gpuSceneRenderableAabbRt.allocate();
+			}
+
+			const U32 bucketIdx = 0;
 			const GpuSceneRenderableBoundingVolume gpuVolume =
-				initGpuSceneRenderableBoundingVolume(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), bucket);
+				initGpuSceneRenderableBoundingVolume(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), bucketIdx);
 
 			m_gpuSceneRenderableAabbRt.uploadToGpuScene(gpuVolume);
+		}
+		else
+		{
+			m_gpuSceneRenderableAabbRt.free();
 		}
 	}
 }
