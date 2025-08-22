@@ -274,16 +274,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 
-		<class name="ModelComponent">
-			<methods>
-				<method name="loadModelResource">
-					<args>
-						<arg>CString</arg>
-					</args>
-				</method>
-			</methods>
-		</class>
-
 		<class name="MeshComponent">
 			<methods>
 				<method name="setMeshFilename">
@@ -446,9 +436,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="newComponent&lt;ParticleEmitterComponent&gt;" alias="newParticleEmitterComponent">
 					<return>ParticleEmitterComponent*</return>
 				</method>
-				<method name="newComponent&lt;ModelComponent&gt;" alias="newModelComponent">
-					<return>ModelComponent*</return>
-				</method>
 				<method name="newComponent&lt;MeshComponent&gt;" alias="newMeshComponent">
 					<return>MeshComponent*</return>
 				</method>
@@ -491,9 +478,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="getFirstComponentOfType&lt;ParticleEmitterComponent&gt;" alias="getFirstParticleEmitterComponent">
 					<return>ParticleEmitterComponent&amp;</return>
-				</method>
-				<method name="getFirstComponentOfType&lt;ModelComponent&gt;" alias="getFirstModelComponent">
-					<return>ModelComponent&amp;</return>
 				</method>
 				<method name="getFirstComponentOfType&lt;MeshComponent&gt;" alias="getFirstMeshComponent">
 					<return>MeshComponent&amp;</return>

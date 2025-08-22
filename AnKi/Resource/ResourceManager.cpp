@@ -14,7 +14,6 @@
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/CpuMeshResource.h>
-#include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Resource/DummyResource.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>

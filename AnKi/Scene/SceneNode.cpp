@@ -16,7 +16,6 @@
 #include <AnKi/Scene/Components/JointComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
-#include <AnKi/Scene/Components/ModelComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/ParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/PlayerControllerComponent.h>

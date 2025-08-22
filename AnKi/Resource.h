@@ -17,7 +17,6 @@
 #include <AnKi/Resource/GenericResource.h>
 #include <AnKi/Resource/SkeletonResource.h>
 #include <AnKi/Resource/DummyResource.h>
-#include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 
 #include <AnKi/Resource/MeshBinaryLoader.h>
