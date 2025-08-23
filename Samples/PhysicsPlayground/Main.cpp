@@ -112,13 +112,14 @@ Error MyApp::sampleExtraInit()
 		base->addChild(joint);
 
 		SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>("monkey_p2p");
-		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
-		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
-		const Aabb aabb = modelc->getModelResource()->getBoundingVolume();
+		monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
+		monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
+
+		const Aabb aabb = monkey->getFirstComponentOfType<MeshComponent>().getMeshResource().getBoundingShape();
 		const F32 height = aabb.getMax().y() - aabb.getMin().y();
 
 		bodyc = monkey->newComponent<BodyComponent>();
-		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
+		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
 		bodyc->teleportTo(Vec3(-0.0f, 4.8f - height / 2.0f, -3.0f), Mat3::getIdentity());
 		bodyc->setMass(2.0f);
 
@@ -151,15 +152,15 @@ Error MyApp::sampleExtraInit()
 			joint->setParent(prevNode);
 
 			SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("monkey_chain%u", i).toCString());
-			ModelComponent* modelc = monkey->newComponent<ModelComponent>();
-			modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
-			const Aabb aabb = modelc->getModelResource()->getBoundingVolume();
+			const MeshComponent& meshc = monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
+			monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
+			const Aabb aabb = meshc.getMeshResource().getBoundingShape();
 			const F32 height = aabb.getMax().y() - aabb.getMin().y();
 
 			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));
 
 			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
-			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
+			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
 			bodyc->teleportTo(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
 			bodyc->setMass(1.0f);
 			joint->addChild(monkey);
@@ -380,12 +381,12 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		SceneNode* grenade = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("Grenade%u", instance++).toCString());
 		grenade->setLocalScale(Vec3(2.8f));
-		ModelComponent* modelc = grenade->newComponent<ModelComponent>();
-		modelc->loadModelResource("Assets/MESH_grenade_MTL_grenade_85852a78645563d8.ankimdl");
+		grenade->newComponent<MeshComponent>()->setMeshFilename("Assets/MESH_grenade_818651700502e14b.ankimesh");
+		grenade->newComponent<MaterialComponent>()->setMaterialFilename("Assets/MTL_grenade_4346150e31bdb957.ankimtl");
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
 		BodyComponent* bodyc = grenade->newComponent<BodyComponent>();
-		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
+		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
 		bodyc->teleportTo(camTrf.getOrigin().xyz(), camTrf.getRotation().getRotationPart());
 		bodyc->setMass(1.0f);
 

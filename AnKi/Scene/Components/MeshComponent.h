@@ -25,7 +25,7 @@ public:
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
-	void setMeshFilename(CString fname);
+	MeshComponent& setMeshFilename(CString fname);
 
 	Bool isEnabled() const
 	{

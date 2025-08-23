@@ -28,9 +28,9 @@ public:
 
 	~MaterialComponent();
 
-	void setMaterialFilename(CString fname);
+	MaterialComponent& setMaterialFilename(CString fname);
 
-	void setSubmeshIndex(U32 submeshIdx);
+	MaterialComponent& setSubmeshIndex(U32 submeshIdx);
 
 private:
 	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;

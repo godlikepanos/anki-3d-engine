@@ -26,8 +26,9 @@ public:
 
 		SceneNode* shotgun = SceneGraph::getSingleton().newSceneNode<SceneNode>("Shotgun");
 		shotgun->setLocalTransform(Transform(Vec3(0.065f, -0.13f, -0.4f), Mat3(Euler(0.0f, kPi, 0.0f)), Vec3(1.0f)));
-		ModelComponent* modelc = shotgun->newComponent<ModelComponent>();
-		modelc->loadModelResource("sleevegloveLOW.001_arms_boomstick_76e1c49d9efa9619.ankimdl");
+		shotgun->newComponent<MeshComponent>()->setMeshFilename("sleevegloveLOW.001_893660395596b206.ankimesh");
+		shotgun->newComponent<MaterialComponent>()->setMaterialFilename("arms_3a4232ebbd425e7a.ankimtl").setSubmeshIndex(0);
+		shotgun->newComponent<MaterialComponent>()->setMaterialFilename("boomstick_89a614a521ace7fd.ankimtl").setSubmeshIndex(1);
 		cam->addChild(shotgun);
 	}
 

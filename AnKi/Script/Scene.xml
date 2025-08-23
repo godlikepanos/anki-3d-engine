@@ -280,6 +280,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>MeshComponent&amp;</return>
 				</method>
 			</methods>
 		</class>
@@ -290,11 +291,13 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>MaterialComponent&amp;</return>
 				</method>
 				<method name="setSubmeshIndex">
 					<args>
 						<arg>U32</arg>
 					</args>
+					<return>MaterialComponent&amp;</return>
 				</method>
 			</methods>
 		</class>

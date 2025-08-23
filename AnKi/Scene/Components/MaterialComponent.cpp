@@ -29,28 +29,33 @@ MaterialComponent::~MaterialComponent()
 	m_gpuSceneMeshLods.free();
 }
 
-void MaterialComponent::setMaterialFilename(CString fname)
+MaterialComponent& MaterialComponent::setMaterialFilename(CString fname)
 {
 	MaterialResourcePtr newRsrc;
 	const Error err = ResourceManager::getSingleton().loadResource(fname, newRsrc);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Failed to load resource: %s", fname.cstr());
-		return;
+	}
+	else
+	{
+		m_resource = std::move(newRsrc);
+		m_castsShadow = m_resource->castsShadow();
+		m_resourceDirty = true;
 	}
 
-	m_resource = std::move(newRsrc);
-	m_castsShadow = m_resource->castsShadow();
-	m_resourceDirty = true;
+	return *this;
 }
 
-void MaterialComponent::setSubmeshIndex(U32 submeshIdx)
+MaterialComponent& MaterialComponent::setSubmeshIndex(U32 submeshIdx)
 {
 	if(m_submeshIdx != submeshIdx)
 	{
 		m_submeshIdx = submeshIdx;
 		m_submeshIdxDirty = true;
 	}
+
+	return *this;
 }
 
 void MaterialComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)

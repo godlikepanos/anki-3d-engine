@@ -18,18 +18,21 @@ MeshComponent::~MeshComponent()
 {
 }
 
-void MeshComponent::setMeshFilename(CString fname)
+MeshComponent& MeshComponent::setMeshFilename(CString fname)
 {
 	MeshResourcePtr newRsrc;
 	const Error err = ResourceManager::getSingleton().loadResource(fname, newRsrc);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Failed to load resource: %s", fname.cstr());
-		return;
+	}
+	else
+	{
+		m_resource = newRsrc;
+		m_resourceDirty = true;
 	}
 
-	m_resource = newRsrc;
-	m_resourceDirty = true;
+	return *this;
 }
 
 void MeshComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)

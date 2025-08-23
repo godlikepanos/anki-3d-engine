@@ -1133,12 +1133,8 @@ Error GltfImporter::writeMeshMaterialNode(const cgltf_node& node, const Importer
 
 	for(U32 primIdx = 0; primIdx < mesh.primitives_count; ++primIdx)
 	{
-		ANKI_CHECK(m_sceneFile.writeText("mtlc = node:newMaterialComponent()\n"));
-
-		ANKI_CHECK(m_sceneFile.writeTextf("mtlc:setMaterialFilename(\"%s%s\")\n", m_rpath.cstr(),
-										  computeMaterialResourceFilename(*mesh.primitives[primIdx].material).cstr()));
-
-		ANKI_CHECK(m_sceneFile.writeTextf("mtlc:setSubmeshIndex(%d)\n", primIdx));
+		ANKI_CHECK(m_sceneFile.writeTextf("node:newMaterialComponent():setMaterialFilename(\"%s%s\"):setSubmeshIndex(%u)\n", m_rpath.cstr(),
+										  computeMaterialResourceFilename(*mesh.primitives[primIdx].material).cstr(), primIdx));
 	}
 
 	if(node.skin)
