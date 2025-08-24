@@ -15,10 +15,10 @@
 
 	<inputs>
 		
-		<input name="m_diffuseTex" value="Assets/sponza_ceiling_a_diff_tga.ankitex"/>
+		<input name="m_diffuseTex" value="Assets/sponza_ceiling_a_diff.ankitex.ankitex"/>
 		<input name="m_diffuseScale" value="1.000000 1.000000 1.000000 1.000000"/>
 		<input name="m_specularScale" value="0.040000 0.040000 0.040000"/>
-		<input name="m_roughnessMetalnessTex" value="Assets/Sponza_Ceiling_roughness_tga.ankitex"/>
+		<input name="m_roughnessMetalnessTex" value="Assets/Sponza_Ceiling_roughness.ankitex.ankitex"/>
 		<input name="m_roughnessScale" value="1.000000"/>
 		<input name="m_metalnessScale" value="0.000000"/>
 		

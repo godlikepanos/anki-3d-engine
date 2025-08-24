@@ -19,6 +19,14 @@ public:
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
 		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
+		SceneNode& knight = SceneGraph::getSingleton().findSceneNode("MESH_kinght.001");
+		AnimationResourcePtr anim;
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Armature_mixamo.com_Layer0_2ff0b9b4a30af3d0.ankianim", anim));
+		AnimationPlayInfo inf;
+		inf.m_repeatTimes = -1;
+		inf.m_animationSpeedScale = 2.1f;
+		knight.getFirstComponentOfType<SkinComponent>().playAnimation(0, anim, inf);
+
 		return Error::kNone;
 	}
 };

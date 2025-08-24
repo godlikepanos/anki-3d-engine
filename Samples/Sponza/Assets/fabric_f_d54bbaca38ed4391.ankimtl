@@ -15,13 +15,13 @@
 
 	<inputs>
 		
-		<input name="m_diffuseTex" value="Assets/sponza_curtain_green_diff_tga.ankitex"/>
+		<input name="m_diffuseTex" value="Assets/sponza_curtain_green_diff.ankitex.ankitex"/>
 		<input name="m_diffuseScale" value="1.000000 1.000000 1.000000 1.000000"/>
 		<input name="m_specularScale" value="0.040000 0.040000 0.040000"/>
-		<input name="m_roughnessMetalnessTex" value="Assets/Sponza_Curtain_roughness_tga_001.ankitex"/>
+		<input name="m_roughnessMetalnessTex" value="Assets/Sponza_Curtain_roughness.ankitex.001.ankitex"/>
 		<input name="m_roughnessScale" value="1.000000"/>
 		<input name="m_metalnessScale" value="0.000000"/>
-		<input name="m_normalTex" value="Assets/Sponza_Curtain_Red_normal_tga_001.ankitex"/>
+		<input name="m_normalTex" value="Assets/Sponza_Curtain_Red_normal.ankitex.001.ankitex"/>
 		<input name="m_emissionScale" value="0.000000 0.000000 0.000000"/>
 		<input name="m_subsurface" value="0.250000"/>
 		

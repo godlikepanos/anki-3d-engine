@@ -308,6 +308,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>SkinComponent&amp;</return>
 				</method>
 			</methods>
 		</class>

@@ -33,6 +33,9 @@ public:
 
 	/// The time from when the animation ends until it until it has zero influence to the animations of previous tracks.
 	Second m_blendOutTime = 0.0f;
+
+	/// For example a value of 2.0 will play the animation in double speed.
+	F32 m_animationSpeedScale = 1.0f;
 };
 
 /// Skin component.
@@ -48,7 +51,7 @@ public:
 	~SkinComponent();
 
 	/// Load the skeleton resource.
-	void loadSkeletonResource(CString filename);
+	SkinComponent& loadSkeletonResource(CString filename);
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
@@ -92,6 +95,7 @@ private:
 		Second m_blendInTime = 0.0;
 		Second m_blendOutTime = 0.0f;
 		F32 m_repeatTimes = 1.0f;
+		F32 m_animationSpeedScale = 1.0f;
 	};
 
 	class Trf
@@ -111,7 +115,8 @@ private:
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
 
-	Bool m_forceFullUpdate = true;
+	Bool m_updatedLastFrame : 1 = true;
+	Bool m_resourceDirty : 1 = true;
 
 	GpuSceneBufferAllocation m_gpuSceneBoneTransforms;
 
