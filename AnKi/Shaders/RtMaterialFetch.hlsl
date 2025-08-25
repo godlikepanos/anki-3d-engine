@@ -121,8 +121,24 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	return !hasHitSky;
 }
 
+Bool rayVisibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax, U32 traceFlags)
+{
+	RayQuery<RAY_FLAG_NONE> q;
+	const U32 cullMask = 0xFFu;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = 0.01;
+	ray.Direction = rayDir;
+	ray.TMax = tMax;
+	q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
+	q.Proceed();
+	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+
+	return hit;
+}
+
 template<typename T>
-vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bool tryShadowmapFirst, F32 shadowTMax,
+vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bool tryShadowmapFirst, F32 shadowTMax, Bool doLocalLightShadow,
 							U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH)
 {
 	vector<T, 3> color = gbuffer.m_emission;
@@ -155,16 +171,7 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 			}
 			else
 			{
-				RayQuery<RAY_FLAG_NONE> q;
-				const U32 cullMask = 0xFFu;
-				RayDesc ray;
-				ray.Origin = hitPos;
-				ray.TMin = 0.01;
-				ray.Direction = -dirLight.m_direction;
-				ray.TMax = shadowTMax;
-				q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
-				q.Proceed();
-				shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
+				shadow = rayVisibility(hitPos, -dirLight.m_direction, shadowTMax, traceFlags) ? 0.0 : 1.0;
 			}
 		}
 
@@ -204,6 +211,12 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 			if((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
 			{
 				attenuation *= computeSpotFactor(nFrag2Light, light.m_outerCos, light.m_innerCos, light.m_direction);
+			}
+
+			if(attenuation > kEpsilonF32 && doLocalLightShadow)
+			{
+				const F32 shadowFactor = rayVisibility(hitPos, nFrag2Light, length(frag2Light) - 0.1, traceFlags) ? 0.0 : 1.0;
+				attenuation *= shadowFactor;
 			}
 
 			const T lambert = max(T(0), dot(nFrag2Light, gbuffer.m_worldNormal));

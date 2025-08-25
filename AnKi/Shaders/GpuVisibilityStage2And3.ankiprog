@@ -20,6 +20,9 @@
 
 #define NUMTHREADS 64u
 
+// ===========================================================================
+// Legacy                                                                    =
+// ===========================================================================
 #if ANKI_TECHNIQUE_Legacy
 struct DrawIndirectArgsWithPadding
 {
@@ -126,6 +129,9 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
 
 #endif // ANKI_TECHNIQUE_Legacy
 
+// ===========================================================================
+// Meshlets                                                                  =
+// ===========================================================================
 #if ANKI_TECHNIQUE_Meshlets
 
 #	define MESHLET_BACKFACE_CULLING 0 // Doesn't work correctly for some reason
@@ -173,16 +179,21 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 {
 	meshletCulledByHzb = false;
 
-#	if !PASSTHROUGH
+	const Bool bSkin = renderable.m_boneTransformsOffset != 0u;
+	if(PASSTHROUGH || bSkin)
+	{
+		return false;
+	}
+
 	const Mat3x4 worldTransform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
 
-#		if MESHLET_BACKFACE_CULLING
+#	if MESHLET_BACKFACE_CULLING
 	const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
 	if(cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_consts.m_cameraPos))
 	{
 		return true;
 	}
-#		endif
+#	endif
 
 	const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
 	const Mat4 mvp = mul(g_consts.m_viewProjectionMatrix, wordTransform4);
@@ -191,15 +202,15 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 	F32 aabbMinDepth;
 	projectAabb(meshletBoundingVol.m_aabbMin, meshletBoundingVol.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
 
-#		if MESHLET_OUTSIDE_OF_SCREEN_CULLING
+#	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
 	// Outside of the screen
 	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
 	{
 		return true;
 	}
-#		endif
+#	endif
 
-#		if MESHLET_NO_SAMPLING_POINT_CULLING
+#	if MESHLET_NO_SAMPLING_POINT_CULLING
 	// Sampling points test
 	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_viewportSizef;
 	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_viewportSizef;
@@ -207,14 +218,12 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 	{
 		return true;
 	}
-#		endif
+#	endif
 
-#		if MESHLET_HZB_CULLING
-	meshletCulledByHzb = (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+#	if MESHLET_HZB_CULLING
+	meshletCulledByHzb = cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler);
 	return meshletCulledByHzb;
-#		endif
-
-#	endif // !PASSTHROUGH
+#	endif
 
 	return false;
 }

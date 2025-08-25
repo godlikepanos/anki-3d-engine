@@ -38,6 +38,7 @@
 
 constexpr F32 kGaussianSigma = 0.55;
 constexpr F32 kMaxBilateralSamplesPerDirection = 5.0;
+constexpr Bool kLocalLightShadow = false;
 
 // ===========================================================================
 // RtMaterialFetch                                                           =
@@ -95,7 +96,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	else
 	{
 		const Vec3 hitPos = probeWorldPos + dir * (rayT - 0.01);
-		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, tMax, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
+		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, tMax, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 
 		// Apply indirect
 		constexpr SampleClipmapFlag flags =
@@ -165,7 +166,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	if(hit)
 	{
 		hitPos = biasedWorldPos + rayDir * (rayT - 0.01);
-		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
+		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 	}
 
 	Vec3 rayOrigin;

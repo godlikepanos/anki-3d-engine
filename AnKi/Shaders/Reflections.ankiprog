@@ -739,7 +739,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	const Vec3 hitPos = worldPos + reflDir * rayT;
 
 	// Do simple light shading
-	HVec3 radiance = directLighting(gbuffer, hitPos, hasHitSky, kTryShadowmapFirst, g_consts.m_maxRayT);
+	HVec3 radiance = directLighting(gbuffer, hitPos, hasHitSky, kTryShadowmapFirst, g_consts.m_maxRayT, false);
 
 	if(!hasHitSky)
 	{
