@@ -58,8 +58,8 @@ Error MyApp::userPostInit()
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
-		g_targetFpsCVar = 240;
-		g_tracingEnabledCVar = true;
+		g_cvarCoreTargetFps = 240;
+		g_cvarCoreTracingEnabled = true;
 	}
 
 	// Load scene
@@ -128,17 +128,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgSceneCVar = false;
+			g_cvarRenderDbgScene = false;
 		}
 		else if(mode == 1)
 		{
-			g_dbgSceneCVar = true;
+			g_cvarRenderDbgScene = true;
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			g_dbgSceneCVar = true;
+			g_cvarRenderDbgScene = true;
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -162,7 +162,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
-		g_tracingEnabledCVar = !g_tracingEnabledCVar;
+		g_cvarCoreTracingEnabled = !g_cvarCoreTracingEnabled;
 	}
 
 #if !PLAYER
@@ -191,17 +191,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				g_dbgSceneCVar = false;
+				g_cvarRenderDbgScene = false;
 			}
 			else if(mode == 1)
 			{
-				g_dbgSceneCVar = true;
+				g_cvarRenderDbgScene = true;
 				renderer.getDbg().setDepthTestEnabled(true);
 				renderer.getDbg().setDitheredDepthTestEnabled(false);
 			}
 			else
 			{
-				g_dbgSceneCVar = true;
+				g_cvarRenderDbgScene = true;
 				renderer.getDbg().setDepthTestEnabled(false);
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}
@@ -398,7 +398,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar = !g_vrsCVar;
+		g_cvarGrVrs = !g_cvarGrVrs;
 	}
 
 	if(in.getEvent(InputEvent::kWindowClosed))

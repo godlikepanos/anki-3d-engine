@@ -1065,7 +1065,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	m_descriptors.init(&m_fastPool);
 
-	m_debugMarkersEnabled = g_debugMarkersCVar;
+	m_debugMarkersEnabled = g_cvarGrDebugMarkers;
 
 	m_timestampQueries = {&m_fastPool};
 	m_pipelineQueries = {&m_fastPool};

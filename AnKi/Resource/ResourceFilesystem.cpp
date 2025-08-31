@@ -230,7 +230,7 @@ ResourceFilesystem::~ResourceFilesystem()
 Error ResourceFilesystem::init()
 {
 	ResourceStringList paths;
-	paths.splitString(g_dataPathsCVar, ':');
+	paths.splitString(g_cvarRsrcDataPaths, ':');
 
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
@@ -259,7 +259,7 @@ Error ResourceFilesystem::init()
 
 	if(paths.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("Config option \"g_dataPathsCVar\" is empty");
+		ANKI_RESOURCE_LOGE("Config option \"g_cvarRsrcDataPaths\" is empty");
 		return Error::kUserData;
 	}
 

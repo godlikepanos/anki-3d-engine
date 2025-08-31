@@ -31,7 +31,7 @@ Error TemporalUpscaler::init()
 		inf.m_sourceTextureResolution = getRenderer().getInternalResolution();
 		inf.m_targetTextureResolution = getRenderer().getPostProcessResolution();
 		inf.m_upscalerType = GrUpscalerType::kDlss2;
-		inf.m_qualityMode = GrUpscalerQualityMode(g_dlssQualityCVar - 1);
+		inf.m_qualityMode = GrUpscalerQualityMode(g_cvarRenderDlssQuality - 1);
 
 		m_grUpscaler = GrManager::getSingleton().newGrUpscaler(inf);
 	}
@@ -94,7 +94,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		const Bool preferCompute = g_preferComputeCVar;
+		const Bool preferCompute = g_cvarRenderPreferCompute;
 
 		TextureUsageBit readUsage;
 		TextureUsageBit writeUsage;
@@ -133,7 +133,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			const Bool preferCompute = g_preferComputeCVar;
+			const Bool preferCompute = g_cvarRenderPreferCompute;
 
 			if(preferCompute)
 			{

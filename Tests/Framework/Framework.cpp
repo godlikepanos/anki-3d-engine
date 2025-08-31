@@ -242,8 +242,8 @@ void deleteTesterSingleton()
 void initWindow()
 {
 	NativeWindowInitInfo inf;
-	inf.m_width = g_windowWidthCVar;
-	inf.m_height = g_windowHeightCVar;
+	inf.m_width = g_cvarWindowWidth;
+	inf.m_height = g_cvarWindowHeight;
 	inf.m_title = "AnKi unit tests";
 	NativeWindow::allocateSingleton();
 	ANKI_TEST_EXPECT_NO_ERR(NativeWindow::getSingleton().init(inf));

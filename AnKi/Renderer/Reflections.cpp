@@ -28,7 +28,7 @@ Error Reflections::init()
 {
 	ANKI_CHECK(RtMaterialFetchRendererObject::init());
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
 	const Bool bSsrSamplesGBuffer = bRtReflections;
 
 	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer},
@@ -136,7 +136,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
 
 	// Create or import render targets
 	RenderTargetHandle mainRt;
@@ -165,9 +165,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	const BufferHandle indirectArgsHandle = rgraph.importBuffer(BufferView(m_indirectArgsBuffer.get()), BufferUsageBit::kNone);
 
 	ReflectionConstants consts;
-	consts.m_ssrStepIncrement = g_ssrStepIncrementCVar;
-	consts.m_ssrMaxIterations = g_ssrMaxIterationsCVar;
-	consts.m_roughnessCutoffToGiEdges = Vec2(g_roughnessCutoffToGiEdge0, g_roughnessCutoffToGiEdge1);
+	consts.m_ssrStepIncrement = g_cvarRenderReflectionsSsrStepIncrement;
+	consts.m_ssrMaxIterations = g_cvarRenderReflectionsSsrMaxIterations;
+	consts.m_roughnessCutoffToGiEdges = Vec2(g_cvarRenderReflectionsRoughnessCutoffToGiEdge0, g_cvarRenderReflectionsRoughnessCutoffToGiEdge1);
 
 	// Classification
 	{
@@ -313,7 +313,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				U32 m_giProbeCount;
 				F32 m_padding1;
 				F32 m_padding2;
-			} consts = {g_rtReflectionsMaxRayDistanceCVar, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), 0, 0};
+			} consts = {g_cvarRenderReflectionsRtMaxRayDistance, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), 0, 0};
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 

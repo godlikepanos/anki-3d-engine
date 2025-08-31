@@ -16,6 +16,9 @@ namespace anki {
 /// @addtogroup core
 /// @{
 
+/// Define a global stat variable.
+#define ANKI_SVAR(name, category, descr, ...) inline StatCounter g_svar##name(category, descr, StatFlag::kNone | __VA_ARGS__);
+
 enum class StatFlag : U16
 {
 	kNone = 0,
@@ -57,7 +60,7 @@ class StatCounter
 public:
 	/// Construct.
 	/// @param name Name of the counter. The object will share ownership of the pointer.
-	StatCounter(StatCategory category, const Char* name, StatFlag flags);
+	StatCounter(StatCategory category, const Char* name, StatFlag flags = StatFlag::kNone);
 
 	template<std::integral T>
 	U64 increment(T value)

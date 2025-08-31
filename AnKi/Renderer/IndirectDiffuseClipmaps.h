@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtIndirectDiffuseClipmapsCVar("R", "RtIndirectDiffuseClipmaps", false);
+ANKI_CVAR(BoolCVar, Render, Idc, false, "Enable ray traced indirect diffuse clipmaps")
 
 constexpr U32 kDefaultClipmapProbeCountXZ = 32;
 constexpr U32 kDefaultClipmapProbeCountY = 12;
@@ -22,45 +22,37 @@ constexpr F32 kDefaultClipmap0ProbeSize = 1.5f;
 constexpr F32 kDefaultClipmap1ProbeSize = 3.0f;
 constexpr F32 kDefaultClipmap2ProbeSize = 6.0f;
 
-inline NumericCVar<U32> g_indirectDiffuseClipmapProbesXZCVar("R", "IndirectDiffuseClipmapProbesXZ", kDefaultClipmapProbeCountXZ, 10, 100,
-															 "The cell count of each dimension of 1st clipmap");
-inline NumericCVar<U32> g_indirectDiffuseClipmapProbesYCVar("R", "IndirectDiffuseClipmapProbesY", kDefaultClipmapProbeCountY, 4, 100,
-															"The cell count of each dimension of 1st clipmap");
+ANKI_CVAR2(NumericCVar<U32>, Render, Idc, ProbesXZ, kDefaultClipmapProbeCountXZ, 10, 100, "The cell count of each dimension of 1st clipmap")
+ANKI_CVAR2(NumericCVar<U32>, Render, Idc, ProbesY, kDefaultClipmapProbeCountY, 4, 100, "The cell count of each dimension of 1st clipmap")
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap0XZSizeCVar("R", "IndirectDiffuseClipmap0XZSize",
-															F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap0ProbeSize, 10.0, 1000.0,
-															"The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap0YSizeCVar("R", "IndirectDiffuseClipmap0YSize",
-														   F32(kDefaultClipmapProbeCountY) * kDefaultClipmap0ProbeSize, 10.0, 1000.0,
-														   "The clipmap size in meters");
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, Clipmap0XZSize, F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap0ProbeSize, 10.0, 1000.0,
+		   "The clipmap size in meters")
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, Clipmap0YSize, F32(kDefaultClipmapProbeCountY) * kDefaultClipmap0ProbeSize, 10.0, 1000.0,
+		   "The clipmap size in meters")
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap1XZSizeCVar("R", "IndirectDiffuseClipmap1XZSize",
-															F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap1ProbeSize, 10.0, 1000.0,
-															"The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap1YSizeCVar("R", "IndirectDiffuseClipmap1YSize",
-														   F32(kDefaultClipmapProbeCountY) * kDefaultClipmap1ProbeSize, 10.0, 1000.0,
-														   "The clipmap size in meters");
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, Clipmap1XZSize, F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap1ProbeSize, 10.0, 1000.0,
+		   "The clipmap size in meters")
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, Clipmap1YSize, F32(kDefaultClipmapProbeCountY) * kDefaultClipmap1ProbeSize, 10.0, 1000.0,
+		   "The clipmap size in meters")
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap2XZSizeCVar("R", "IndirectDiffuseClipmap2XZSize",
-															F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap2ProbeSize, 10.0, 1000.0,
-															"The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap2YSizeCVar("R", "IndirectDiffuseClipmap2YSize",
-														   F32(kDefaultClipmapProbeCountY) * kDefaultClipmap2ProbeSize, 10.0, 1000.0,
-														   "The clipmap size in meters");
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, Clipmap2XZSize, F32(kDefaultClipmapProbeCountXZ) * kDefaultClipmap2ProbeSize, 10.0, 1000.0,
+		   "The clipmap size in meters")
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, Clipmap2YSize, F32(kDefaultClipmapProbeCountY) * kDefaultClipmap2ProbeSize, 10.0, 1000.0,
+		   "The clipmap size in meters")
 
-inline NumericCVar<U32> g_indirectDiffuseClipmapRadianceOctMapSize(
-	"R", "IndirectDiffuseClipmapRadianceOctMapSize", 10,
+ANKI_CVAR2(
+	NumericCVar<U32>, Render, Idc, RadianceOctMapSize, 10,
 	[](U32 val) {
 		return val >= 4 && val <= 30 && val % 2 == 0;
 	},
-	"Size of the octahedral for the light cache");
-inline NumericCVar<U32> g_indirectDiffuseClipmapIrradianceOctMapSize("R", "IndirectDiffuseClipmapIrradianceOctMapSize", 5, 4, 20,
-																	 "Size of the octahedral for the irradiance");
+	"Size of the octahedral for the light cache")
+ANKI_CVAR2(NumericCVar<U32>, Render, Idc, IrradianceOctMapSize, 5, 4, 20, "Size of the octahedral for the irradiance")
 
-inline NumericCVar<F32> g_indirectDiffuseClipmapFirstBounceRayDistance("R", "IndirectDiffuseClipmapFirstBounceRayDistance", 0.0f, 0.0f, 10000.0f,
-																	   "For the 1st bounce shoot rays instead of sampling the clipmaps");
-inline BoolCVar g_indirectDiffuseClipmapApplyHighQuality("R", "IndirectDiffuseClipmapApplyHighQuality", false,
-														 "If true use 1/2 resolution else use 1/4");
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, FirstBounceRayDistance, 0.0f, 0.0f, 10000.0f,
+		   "For the 1st bounce shoot rays instead of sampling the clipmaps")
+ANKI_CVAR2(BoolCVar, Render, Idc, ApplyHighQuality, false, "If true use 1/2 resolution else use 1/4")
+ANKI_CVAR2(NumericCVar<U8>, Render, Idc, TexelRayCountNewProbe, 4, 1, 16,
+		   "The number of rays for a single texel of the oct map that will be cast for probes that are seen for the 1st time")
 
 /// @memberof IndirectDiffuseClipmaps
 class IndirectDiffuseClipmapsRenderTargetHandles

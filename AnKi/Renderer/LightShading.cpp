@@ -70,7 +70,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -221,7 +221,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 
 	// Debug stuff
-	if(g_visualizeGiProbesCVar && getRenderer().isIndirectDiffuseClipmapsEnabled())
+	if(g_cvarRenderVisualizeGiProbes && getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
 		getIndirectDiffuseClipmaps().drawDebugProbes(ctx, rgraphCtx);
 	}
@@ -252,7 +252,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(LightShading);
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 
 	// Create RT
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);

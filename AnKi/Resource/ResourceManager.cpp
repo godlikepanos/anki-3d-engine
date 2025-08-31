@@ -61,7 +61,7 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 	AsyncLoader::allocateSingleton();
 
 	TransferGpuAllocator::allocateSingleton();
-	ANKI_CHECK(TransferGpuAllocator::getSingleton().init(g_transferScratchMemorySizeCVar));
+	ANKI_CHECK(TransferGpuAllocator::getSingleton().init(g_cvarRsrcTransferScratchMemorySize));
 
 	// Init the programs
 	ShaderProgramResourceSystem::allocateSingleton();

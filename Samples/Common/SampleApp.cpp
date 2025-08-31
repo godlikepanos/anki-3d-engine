@@ -10,7 +10,7 @@ using namespace anki;
 Error SampleApp::userPreInit()
 {
 	// Init the super class
-	g_windowFullscreenCVar = 1;
+	g_cvarWindowFullscreen = 1;
 
 #if !ANKI_OS_ANDROID
 	String assetsDataPath;
@@ -22,7 +22,7 @@ Error SampleApp::userPreInit()
 	}
 	else
 	{
-		g_dataPathsCVar = String().sprintf("%s|.anki,lua", assetsDataPath.cstr());
+		g_cvarRsrcDataPaths = String().sprintf("%s|.anki,lua", assetsDataPath.cstr());
 	}
 #endif
 
@@ -122,7 +122,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar = !g_vrsCVar;
+		g_cvarGrVrs = !g_cvarGrVrs;
 	}
 
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
@@ -138,17 +138,17 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgSceneCVar = false;
+			g_cvarRenderDbgScene = false;
 		}
 		else if(mode == 1)
 		{
-			g_dbgSceneCVar = true;
+			g_cvarRenderDbgScene = true;
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			g_dbgSceneCVar = true;
+			g_cvarRenderDbgScene = true;
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -156,7 +156,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1 && ANKI_TRACING_ENABLED)
 	{
-		g_tracingEnabledCVar = !g_tracingEnabledCVar;
+		g_cvarCoreTracingEnabled = !g_cvarCoreTracingEnabled;
 	}
 
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())

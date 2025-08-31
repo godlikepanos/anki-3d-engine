@@ -25,11 +25,8 @@ constexpr U32 kMaxVisibleObjects = 30 * 1024;
 constexpr U32 kMaxVisiblePrimitives = 40'000'000;
 constexpr U32 kMaxVisibleMeshlets = kMaxVisiblePrimitives / kMaxPrimitivesPerMeshlet;
 
-static StatCounter g_gpuVisMemoryAllocatedStatVar(StatCategory::kRenderer, "GPU vis mem",
-												  StatFlag::kBytes | StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
-
-static StatCounter g_maxGpuVisMemoryAllocatedStatVar(StatCategory::kRenderer, "GPU vis mem: max ever used/frame",
-													 StatFlag::kBytes | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(GpuVisMemoryAllocated, StatCategory::kRenderer, "GPU vis mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(MaxGpuVisMemoryAllocated, StatCategory::kRenderer, "GPU vis mem: max ever used/frame", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 class GpuVisLimits
 {
@@ -47,7 +44,7 @@ static GpuVisLimits computeLimits(RenderingTechnique t)
 	const RenderStateBucketContainer& buckets = RenderStateBucketContainer::getSingleton();
 
 	const U32 meshletUserCount = buckets.getBucketsActiveUserCountWithMeshletSupport(t);
-	ANKI_ASSERT(meshletUserCount == 0 || (g_meshletRenderingCVar || GrManager::getSingleton().getDeviceCapabilities().m_meshShaders));
+	ANKI_ASSERT(meshletUserCount == 0 || (g_cvarCoreMeshletRendering || GrManager::getSingleton().getDeviceCapabilities().m_meshShaders));
 	out.m_totalLegacyRenderables = buckets.getBucketsActiveUserCountWithNoMeshletSupport(t);
 	out.m_maxVisibleLegacyRenderables = min(out.m_totalLegacyRenderables, kMaxVisibleObjects);
 
@@ -69,7 +66,7 @@ public:
 
 			m_maxMemUsedInFrame = max(m_maxMemUsedInFrame, m_memUsedThisFrame);
 			m_memUsedThisFrame = 0;
-			g_maxGpuVisMemoryAllocatedStatVar.set(m_maxMemUsedInFrame);
+			g_svarMaxGpuVisMemoryAllocated.set(m_maxMemUsedInFrame);
 		}
 
 		m_memUsedThisFrame += size;
@@ -88,7 +85,7 @@ static BufferView allocateStructuredBuffer(U32 count)
 
 	if(count > 0)
 	{
-		g_gpuVisMemoryAllocatedStatVar.increment(sizeof(T) * count);
+		g_svarGpuVisMemoryAllocated.increment(sizeof(T) * count);
 		out = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<T>(count);
 
 		GpuVisMemoryStats::getSingleton().informAboutAllocation(sizeof(T) * count);

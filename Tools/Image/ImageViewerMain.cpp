@@ -271,8 +271,8 @@ public:
 			return Error::kUserData;
 		}
 
-		g_windowFullscreenCVar = 0;
-		g_dataPathsCVar = ANKI_SOURCE_DIRECTORY;
+		g_cvarWindowFullscreen = 0;
+		g_cvarRsrcDataPaths = ANKI_SOURCE_DIRECTORY;
 		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 2, m_argv + 2));
 
 		return Error::kNone;

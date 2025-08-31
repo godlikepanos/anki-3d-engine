@@ -88,7 +88,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		const RenderTargetHandle outRt = m_runCtx.m_rt;
 
 		RenderPassBase* ppass;
-		if(g_preferComputeCVar)
+		if(g_cvarRenderPreferCompute)
 		{
 			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Tonemap");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSrvCompute);
@@ -107,7 +107,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		ppass->setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Tonemapping);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-			const Bool preferCompute = g_preferComputeCVar;
+			const Bool preferCompute = g_cvarRenderPreferCompute;
 			const RenderTargetHandle inRt = (getRenderer().getTemporalUpscaler().getEnabled()) ? getRenderer().getTemporalUpscaler().getRt()
 																							   : getRenderer().getTemporalAA().getRt();
 			const RenderTargetHandle outRt = m_runCtx.m_rt;

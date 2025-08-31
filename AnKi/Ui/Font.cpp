@@ -30,7 +30,7 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 	m_fontData.resize(U32(file->getSize()));
 	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 
-	m_fonts.resize(U32(fontHeights.getSize()));
+	m_fonts.resize(fontHeights.getSize());
 
 	// Bake font
 	ImFontConfig cfg;
@@ -38,6 +38,7 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 	U32 count = 0;
 	for(U32 height : fontHeights)
 	{
+		height = U32(F32(height) * g_cvarUiGlobalFontScale) + g_cvarUiGlobalFontBias;
 		cfg.SizePixels = F32(height);
 
 		m_fonts[count].m_imFont = m_imFontAtlas->AddFontFromMemoryTTF(&m_fontData[0], I32(m_fontData.getSize()), F32(height), &cfg);

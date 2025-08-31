@@ -14,10 +14,9 @@
 
 namespace anki {
 
-static StatCounter g_physicsBodiesCreatedStatVar(StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame);
-static StatCounter g_physicsJointsCreatedStatVar(StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame);
-static StatCounter g_physicsUpdateTimeStatVar(StatCategory::kTime, "Phys update",
-											  StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(PhysicsBodiesCreated, StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(PhysicsJointsCreated, StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(PhysicsUpdateTime, StatCategory::kTime, "Phys update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 class BroadphaseLayer
 {
@@ -480,7 +479,7 @@ void PhysicsWorld::update(Second dt)
 	}
 
 #if ANKI_STATS_ENABLED
-	g_physicsUpdateTimeStatVar.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+	g_svarPhysicsUpdateTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 #endif
 }
 
@@ -571,7 +570,7 @@ PhysicsCollisionShapePtr PhysicsWorld::newScaleCollisionObject(const Vec3& scale
 
 PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 {
-	g_physicsBodiesCreatedStatVar.increment(1);
+	g_svarPhysicsBodiesCreated.increment(1);
 
 	PhysicsBody* newBody;
 	{
@@ -593,7 +592,7 @@ PhysicsJointPtr PhysicsWorld::newJoint(PhysicsBody* body1, PhysicsBody* body2, T
 {
 	ANKI_ASSERT(body1 && body2);
 
-	g_physicsJointsCreatedStatVar.increment(1);
+	g_svarPhysicsJointsCreated.increment(1);
 
 	typename decltype(m_joints.m_array)::Iterator it;
 	{

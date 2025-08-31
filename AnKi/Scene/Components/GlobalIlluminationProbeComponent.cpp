@@ -160,13 +160,13 @@ F32 GlobalIlluminationProbeComponent::getRenderRadius() const
 {
 	F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 	effectiveDistance = max(effectiveDistance, m_halfSize.z());
-	effectiveDistance = max<F32>(effectiveDistance, g_probeEffectiveDistanceCVar);
+	effectiveDistance = max<F32>(effectiveDistance, g_cvarSceneProbeEffectiveDistance);
 	return effectiveDistance;
 }
 
 F32 GlobalIlluminationProbeComponent::getShadowsRenderRadius() const
 {
-	return min<F32>(getRenderRadius(), g_probeShadowEffectiveDistanceCVar);
+	return min<F32>(getRenderRadius(), g_cvarSceneProbeShadowEffectiveDistance);
 }
 
 } // end namespace anki

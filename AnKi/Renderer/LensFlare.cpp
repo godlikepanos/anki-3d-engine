@@ -27,7 +27,7 @@ Error LensFlare::init()
 
 Error LensFlare::initInternal()
 {
-	m_maxSpritesPerFlare = g_lensFlareMaxSpritesPerFlareCVar;
+	m_maxSpritesPerFlare = g_cvarRenderLensFlareMaxSpritesPerFlare;
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg, m_realGrProg));
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin", m_updateIndirectBuffProg, m_updateIndirectBuffGrProg));

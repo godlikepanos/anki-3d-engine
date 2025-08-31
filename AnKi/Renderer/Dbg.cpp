@@ -143,7 +143,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
-	ANKI_ASSERT(g_dbgSceneCVar || g_dbgPhysicsCVar);
+	ANKI_ASSERT(g_cvarRenderDbgScene || g_cvarRenderDbgPhysics);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -159,7 +159,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 
 	// GBuffer renderables
-	if(g_dbgSceneCVar)
+	if(g_cvarRenderDbgScene)
 	{
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
 
@@ -196,7 +196,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	}
 
 	// Forward shading renderables
-	if(g_dbgSceneCVar)
+	if(g_cvarRenderDbgScene)
 	{
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
 
@@ -214,7 +214,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	}
 
 	// Draw non-renderables
-	if(g_dbgSceneCVar)
+	if(g_cvarRenderDbgScene)
 	{
 		drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), ctx, *m_pointLightImage,
 						  cmdb);
@@ -226,7 +226,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	}
 
 	// Physics
-	if(g_dbgPhysicsCVar)
+	if(g_cvarRenderDbgPhysics)
 	{
 		class MyPhysicsDebugDrawerInterface final : public PhysicsDebugDrawerInterface
 		{
@@ -294,7 +294,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
 
-	if(!g_dbgSceneCVar && !g_dbgPhysicsCVar)
+	if(!g_cvarRenderDbgScene && !g_cvarRenderDbgPhysics)
 	{
 		return;
 	}
@@ -321,7 +321,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
 
-	if(g_dbgSceneCVar)
+	if(g_cvarRenderDbgScene)
 	{
 		BufferView indicesBuff;
 		BufferHandle dep;

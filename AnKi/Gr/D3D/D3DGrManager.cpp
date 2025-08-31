@@ -232,7 +232,7 @@ void GrManagerImpl::endFrameInternal()
 {
 	ANKI_TRACE_FUNCTION();
 
-	m_crntSwapchain->m_swapchain->Present((g_vsyncCVar) ? 1 : 0, (g_vsyncCVar) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+	m_crntSwapchain->m_swapchain->Present((g_cvarGrVsync) ? 1 : 0, (g_cvarGrVsync) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
 
 	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance("Present");
 	presentFence->getImplementation().gpuSignal(GpuQueueType::kGeneral); // Only general can present
@@ -346,7 +346,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Validation
 	UINT dxgiFactoryFlags = 0;
-	if(g_validationCVar || g_gpuValidationCVar)
+	if(g_cvarGrValidation || g_cvarGrGpuValidation)
 	{
 		ComPtr<ID3D12Debug> debugInterface;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
@@ -355,7 +355,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 
-		if(g_gpuValidationCVar)
+		if(g_cvarGrGpuValidation)
 		{
 			ComPtr<ID3D12Debug1> debugInterface1;
 			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
@@ -363,7 +363,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
 
-		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_gpuValidationCVar) ? "as well" : "no");
+		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_cvarGrGpuValidation) ? "as well" : "no");
 	}
 
 	ComPtr<IDXGIFactory2> factory2;
@@ -390,7 +390,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		++adapterIdx;
 	}
 
-	const U32 chosenPhysDevIdx = min<U32>(g_deviceCVar, adapters.getSize() - 1);
+	const U32 chosenPhysDevIdx = min<U32>(g_cvarGrDevice, adapters.getSize() - 1);
 
 	ANKI_D3D_LOGI("Physical devices:");
 	for(U32 i = 0; i < adapters.getSize(); ++i)
@@ -427,7 +427,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dev)));
 	ANKI_D3D_CHECK(dev->QueryInterface(IID_PPV_ARGS(&m_device)));
 
-	if(g_validationCVar)
+	if(g_cvarGrValidation)
 	{
 		ComPtr<ID3D12InfoQueue1> infoq;
 		const HRESULT res = m_device->QueryInterface(IID_PPV_ARGS(&infoq));
@@ -456,7 +456,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	if(g_dredCVar)
+	if(g_cvarGrDred)
 	{
 		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
@@ -494,11 +494,11 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21;
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21)));
 
-		if(g_workGraphcsCVar && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		if(g_cvarGrWorkGraphcs && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
 			ANKI_D3D_LOGW("WorkGraphs can't be enabled. They not supported");
 		}
-		else if(g_workGraphcsCVar && options21.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		else if(g_cvarGrWorkGraphcs && options21.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
 			ANKI_D3D_LOGV("WorkGraphs supported");
 			m_capabilities.m_workGraphs = true;
@@ -510,12 +510,12 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			ANKI_D3D_LOGW("ReBAR not supported");
 		}
 
-		if(g_rayTracingCVar && options5.RaytracingTier != D3D12_RAYTRACING_TIER_1_1)
+		if(g_cvarGrRayTracing && options5.RaytracingTier != D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGW("Raytracing can't be enabled. Not supported");
 			m_capabilities.m_rayTracingEnabled = false;
 		}
-		else if(g_rayTracingCVar && options5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
+		else if(g_cvarGrRayTracing && options5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGV("Raytracing supported");
 			m_capabilities.m_rayTracingEnabled = true;
@@ -537,10 +537,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
 		m_capabilities.m_discreteGpu = !architecture.UMA;
 		m_capabilities.m_majorApiVersion = 12;
-		m_capabilities.m_vrs = g_vrsCVar;
+		m_capabilities.m_vrs = g_cvarGrVrs;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;
-		m_capabilities.m_meshShaders = g_meshShadersCVar;
+		m_capabilities.m_meshShaders = g_cvarGrMeshShaders;
 		m_capabilities.m_pipelineQuery = true;
 		m_capabilities.m_barycentrics = true;
 		m_capabilities.m_shaderGroupHandleSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;

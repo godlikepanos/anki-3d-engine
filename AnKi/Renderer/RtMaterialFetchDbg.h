@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtMaterialFetchDbgCVar("R", "RtMaterialFetchDbg", false, "Enable material debugging pass");
+ANKI_CVAR2(BoolCVar, Render, Dbg, RtMaterialFetch, false, "Enable material debugging pass")
 
 /// Similar to ShadowmapsResolve but it's using ray tracing.
 class RtMaterialFetchDbg : public RtMaterialFetchRendererObject

@@ -8,7 +8,7 @@
 
 namespace anki {
 
-inline StatCounter g_fenceCountStatVar(StatCategory::kGr, "Fence count", StatFlag::kNone);
+ANKI_SVAR(FenceCount, StatCategory::kGr, "Fence count", StatFlag::kNone)
 
 template<typename TImplementation>
 MicroFenceFactory<TImplementation>::~MicroFenceFactory()
@@ -29,7 +29,7 @@ MicroFenceFactory<TImplementation>::~MicroFenceFactory()
 			fence.m_impl.destroy();
 			ANKI_ASSERT(m_aliveFenceCount > 0);
 			--m_aliveFenceCount;
-			g_fenceCountStatVar.decrement(1_U64);
+			g_svarFenceCount.decrement(1_U64);
 		}
 
 		m_fences.erase(idx);
@@ -88,7 +88,7 @@ MicroFenceFactory<TImplementation>::MyMicroFence* MicroFenceFactory<TImplementat
 					it->m_impl.destroy();
 					ANKI_ASSERT(m_aliveFenceCount > 0);
 					--m_aliveFenceCount;
-					g_fenceCountStatVar.decrement(1_U64);
+					g_svarFenceCount.decrement(1_U64);
 				}
 			}
 		}
@@ -123,7 +123,7 @@ MicroFenceFactory<TImplementation>::MyMicroFence* MicroFenceFactory<TImplementat
 
 		out->m_impl.create();
 
-		g_fenceCountStatVar.increment(1_U64);
+		g_svarFenceCount.increment(1_U64);
 		++m_aliveFenceCount;
 		if(m_aliveFenceCount > kMaxAliveFences)
 		{

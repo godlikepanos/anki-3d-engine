@@ -26,13 +26,13 @@
 
 namespace anki {
 
-static StatCounter g_probeReflectionCountStatVar(StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates);
+ANKI_SVAR(ProbeReflectionCount, StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates)
 
 Error ProbeReflections::init()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/IblDfg.png", m_integrationLut));
 
-	m_gbuffer.m_tileSize = g_reflectionProbeResolutionCVar;
+	m_gbuffer.m_tileSize = g_cvarRenderProbeReflectionsResolution;
 
 	{
 		RenderTargetDesc texinit = getRenderer().create2DRenderTargetDescription(m_gbuffer.m_tileSize, m_gbuffer.m_tileSize,
@@ -56,11 +56,11 @@ Error ProbeReflections::init()
 		m_gbuffer.m_depthRtDescr.bake();
 	}
 
-	m_lightShading.m_tileSize = g_reflectionProbeResolutionCVar;
+	m_lightShading.m_tileSize = g_cvarRenderProbeReflectionsResolution;
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	{
-		const U32 resolution = g_probeReflectionShadowMapResolutionCVar;
+		const U32 resolution = g_cvarRenderProbeReflectionsShadowMapResolution;
 		ANKI_ASSERT(resolution > 8);
 
 		// RT descr
@@ -78,7 +78,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
 	if(bRtReflections)
 	{
 		return;
@@ -105,7 +105,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		return;
 	}
 
-	g_probeReflectionCountStatVar.increment(1);
+	g_svarProbeReflectionCount.increment(1);
 	probeToRefresh->setEnvironmentTextureAsRefreshed();
 
 	RenderGraphBuilder& rgraph = rctx.m_renderGraphDescr;
@@ -136,7 +136,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				Transform(probeToRefresh->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 			frustum.update();
 
-			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
+			Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Cube refl: GBuffer face:%u", f);
@@ -212,7 +212,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			cascadeViewProjMat = cascadeProjMat * Mat4(cascadeViewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
+			Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Cube refl: Shadows face:%u", f);

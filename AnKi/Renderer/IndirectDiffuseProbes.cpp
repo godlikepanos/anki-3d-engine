@@ -20,8 +20,8 @@
 
 namespace anki {
 
-static StatCounter g_giProbeRenderCountStatVar(StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates);
-static StatCounter g_giProbeCellsRenderCountStatVar(StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates);
+ANKI_SVAR(GiProbeRenderCount, StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GiProbeCellsRenderCount, StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates)
 
 static Vec3 computeCellCenter(U32 cellIdx, const GlobalIlluminationProbeComponent& probe)
 {
@@ -50,7 +50,7 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = g_indirectDiffuseProbeTileResolutionCVar;
+	m_tileSize = g_cvarRenderIdpTileResolution;
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -90,7 +90,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = g_indirectDiffuseProbeShadowMapResolutionCVar;
+	const U32 resolution = g_cvarRenderIdpShadowMapResolution;
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -161,7 +161,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	const Bool probeTouchedFirstTime = probeToRefresh->getNextCellForRefresh() == 0;
 	if(probeTouchedFirstTime)
 	{
-		g_giProbeRenderCountStatVar.increment(1);
+		g_svarGiProbeRenderCount.increment(1);
 	}
 
 	RenderGraphBuilder& rgraph = rctx.m_renderGraphDescr;
@@ -199,7 +199,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
-				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
+				Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 				FrustumGpuVisibilityInput visIn;
 				visIn.m_passesName = generateTempPassName("GI: GBuffer cell:%u face:%u", cellIdx, f);
@@ -277,7 +277,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				cascadeViewProjMat = cascadeProjMat * Mat4(cascadeViewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
+				Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 				FrustumGpuVisibilityInput visIn;
 				visIn.m_passesName = generateTempPassName("GI: Shadows cell:%u face:%u", cellIdx, f);
@@ -477,7 +477,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		}
 
 		probeToRefresh->incrementRefreshedCells(1);
-		g_giProbeCellsRenderCountStatVar.increment(1);
+		g_svarGiProbeCellsRenderCount.increment(1);
 	}
 }
 

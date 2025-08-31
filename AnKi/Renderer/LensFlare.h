@@ -14,8 +14,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<U8> g_lensFlareMaxSpritesPerFlareCVar("R", "LensFlareMaxSpritesPerFlare", 8, 4, 255, "Max sprites per lens flare");
-inline NumericCVar<U8> g_lensFlareMaxFlaresCVar("R", "LensFlareMaxFlares", 16, 8, 255, "Max flare count");
+ANKI_CVAR2(NumericCVar<U8>, Render, LensFlare, MaxSpritesPerFlare, 8, 4, 255, "Max sprites per lens flare")
 
 /// Lens flare rendering pass. Part of forward shading.
 class LensFlare : public RendererObject

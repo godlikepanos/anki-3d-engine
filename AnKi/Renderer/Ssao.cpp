@@ -15,8 +15,8 @@ namespace anki {
 
 Error Ssao::init()
 {
-	const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
-	const Bool preferCompute = g_preferComputeCVar;
+	const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
+	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	{
 		TextureUsageBit usage = TextureUsageBit::kAllSrv;
@@ -33,8 +33,8 @@ Error Ssao::init()
 		getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8G8B8A8_Snorm, "Bent normals + SSAO temp");
 	m_bentNormalsAndSsaoRtDescr.bake();
 
-	const Array<SubMutation, 2> mutation = {
-		{{"SPATIAL_DENOISE_SAMPLE_COUNT", g_ssaoSpatialDenoiseSampleCountCVar}, {"DENOISING_QUARTER_RESOLUTION", g_ssaoQuarterRezCVar}}};
+	const Array<SubMutation, 2> mutation = {{{"SPATIAL_DENOISE_SAMPLE_COUNT", MutatorValue(g_cvarRenderSsaoSpatialDenoiseSampleCout)},
+											 {"DENOISING_QUARTER_RESOLUTION", g_cvarRenderSsaoQuarterRez}}};
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", mutation, m_prog, m_grProg, "Ssao"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", mutation, m_prog, m_spatialDenoiseVerticalGrProg, "SsaoSpatialDenoiseVertical"));
@@ -51,7 +51,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Ssao);
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = g_preferComputeCVar;
+	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	const U32 readRtIdx = getRenderer().getFrameCount() & 1;
 	const U32 writeRtIdx = !readRtIdx;
@@ -72,7 +72,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	m_runCtx.m_finalRt = finalRt;
-	const RenderTargetHandle depthRt = (g_ssaoQuarterRezCVar) ? getDepthDownscale().getRt() : getGBuffer().getDepthRt();
+	const RenderTargetHandle depthRt = (g_cvarRenderSsaoQuarterRez) ? getDepthDownscale().getRt() : getGBuffer().getDepthRt();
 
 	const RenderTargetHandle bentNormalsAndSsaoTempRt = rgraph.newRenderTarget(m_bentNormalsAndSsaoRtDescr);
 
@@ -124,8 +124,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			const UVec2 rez = getRenderer().getInternalResolution() / 2u;
 
 			SsaoConstants& consts = *allocateAndBindConstants<SsaoConstants>(cmdb, 0, 0);
-			consts.m_radius = g_ssaoRadiusCVar;
-			consts.m_sampleCount = g_ssaoSampleCountCVar;
+			consts.m_radius = g_cvarRenderSsaoRadius;
+			consts.m_sampleCount = g_cvarRenderSsaoSampleCount;
 			consts.m_viewportSizef = Vec2(rez);
 			consts.m_unprojectionParameters = ctx.m_matrices.m_unprojectionParameters;
 			consts.m_projectionMat00 = ctx.m_matrices.m_projection(0, 0);
@@ -133,11 +133,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			consts.m_projectionMat22 = ctx.m_matrices.m_projection(2, 2);
 			consts.m_projectionMat23 = ctx.m_matrices.m_projection(2, 3);
 			consts.m_frameCount = getRenderer().getFrameCount() % kMaxU32;
-			consts.m_ssaoPower = g_ssaoPowerCVar;
+			consts.m_ssaoPower = g_cvarRenderSsaoPower;
 			consts.m_viewMat = ctx.m_matrices.m_view;
 			consts.m_viewToWorldMat = ctx.m_matrices.m_cameraTransform;
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, finalRt);
 
@@ -188,9 +188,9 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, bentNormalsAndSsaoTempRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
@@ -233,9 +233,9 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, bentNormalsAndSsaoTempRt);
 			rgraphCtx.bindSrv(1, 0, depthRt);
 
-			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, historyRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
@@ -278,9 +278,9 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, historyRt);
 			rgraphCtx.bindSrv(1, 0, depthRt);
 
-			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, finalRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());

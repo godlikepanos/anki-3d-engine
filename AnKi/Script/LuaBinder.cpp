@@ -15,6 +15,7 @@ ANKI_SCRIPT_CALL_WRAP(Logger);
 ANKI_SCRIPT_CALL_WRAP(Math);
 ANKI_SCRIPT_CALL_WRAP(Renderer);
 ANKI_SCRIPT_CALL_WRAP(Scene);
+ANKI_SCRIPT_CALL_WRAP(Globals);
 #undef ANKI_SCRIPT_CALL_WRAP
 
 static void wrapModules(lua_State* l)
@@ -24,6 +25,7 @@ static void wrapModules(lua_State* l)
 	ANKI_SCRIPT_CALL_WRAP(Math);
 	ANKI_SCRIPT_CALL_WRAP(Renderer);
 	ANKI_SCRIPT_CALL_WRAP(Scene);
+	ANKI_SCRIPT_CALL_WRAP(Globals);
 #undef ANKI_SCRIPT_CALL_WRAP
 }
 

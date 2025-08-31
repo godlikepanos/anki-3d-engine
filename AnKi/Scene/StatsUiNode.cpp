@@ -156,9 +156,9 @@ void StatsUiNode::draw(CanvasPtr& canvas)
 		}
 		else
 		{
-			const Second maxTime = max(g_cpuTotalTimeStatVar.getValue<F64>(), g_rendererGpuTimeStatVar.getValue<F64>()) / 1000.0;
+			const Second maxTime = max(g_svarCpuTotalTime.getValue<F64>(), g_svarRendererGpuTime.getValue<F64>()) / 1000.0;
 			const F32 fps = F32(1.0 / maxTime);
-			const Bool cpuBound = g_cpuTotalTimeStatVar.getValue<F64>() > g_rendererGpuTimeStatVar.getValue<F64>();
+			const Bool cpuBound = g_svarCpuTotalTime.getValue<F64>() > g_svarRendererGpuTime.getValue<F64>();
 			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f", fps);
 		}
 	}

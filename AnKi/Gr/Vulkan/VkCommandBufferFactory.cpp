@@ -10,7 +10,7 @@
 
 namespace anki {
 
-static StatCounter g_commandBufferCountStatVar(StatCategory::kGr, "CommandBufferCount", StatFlag::kNone);
+ANKI_SVAR(CommandBufferCount, StatCategory::kGr, "CommandBufferCount", StatFlag::kNone)
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {
@@ -24,7 +24,7 @@ MicroCommandBuffer::~MicroCommandBuffer()
 		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[queueFamilyIdx], 1, &m_handle);
 		m_handle = {};
 
-		g_commandBufferCountStatVar.decrement(1_U64);
+		g_svarCommandBufferCount.decrement(1_U64);
 	}
 }
 
@@ -110,7 +110,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		ci.commandBufferCount = 1;
 
 		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
-		g_commandBufferCountStatVar.increment(1_U64);
+		g_svarCommandBufferCount.increment(1_U64);
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(getVkDevice(), &ci, &cmdb));
 

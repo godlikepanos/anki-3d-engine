@@ -98,7 +98,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	FrustumGpuVisibilityInput visIn;
 	{
 		const CommonMatrices& matrices = ctx.m_matrices;
-		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
+		const Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 		visIn.m_passesName = "GBuffer";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
@@ -107,7 +107,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		visIn.m_lodDistances = lodDistances;
 		visIn.m_rgraph = &rgraph;
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
-		visIn.m_gatherAabbIndices = g_dbgSceneCVar;
+		visIn.m_gatherAabbIndices = g_cvarRenderDbgScene;
 		visIn.m_viewportSize = getRenderer().getInternalResolution();
 		visIn.m_twoPhaseOcclusionCulling = getRenderer().getMeshletRenderingType() != MeshletRenderingType::kNone;
 
@@ -201,7 +201,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				};
 
 				// Visualize GI probes
-				if(g_visualizeGiProbesCVar && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
+				if(g_cvarRenderVisualizeGiProbes && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
@@ -223,7 +223,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				// Visualize refl probes
-				if(g_visualizeReflectionProbesCVar && GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
+				if(g_cvarRenderVisualizeReflectionProbes && GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());

@@ -59,9 +59,8 @@
 
 namespace anki {
 
-static StatCounter g_primitivesDrawnStatVar(StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
-static StatCounter g_rendererCpuTimeStatVar(StatCategory::kTime, "Renderer",
-											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(RendererCpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -129,11 +128,11 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_rgraph = GrManager::getSingleton().newRenderGraph();
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(m_swapchainResolution) * g_renderScalingCVar);
+	m_postProcessResolution = UVec2(Vec2(m_swapchainResolution) * g_cvarRenderRenderScaling);
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_internalRenderScalingCVar);
+	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_cvarRenderInternalRenderScaling);
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
@@ -142,9 +141,9 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 
 	m_tileCounts.x() = (m_internalResolution.x() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
 	m_tileCounts.y() = (m_internalResolution.y() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
-	m_zSplitCount = g_zSplitCountCVar;
+	m_zSplitCount = g_cvarRenderZSplitCount;
 
-	if(g_meshletRenderingCVar && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	if(g_cvarCoreMeshletRendering && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 	{
 		m_meshletRenderingType = MeshletRenderingType::kSoftware;
 	}
@@ -244,14 +243,14 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		sinit.m_addressing = SamplingAddressing::kRepeat;
 		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
-		if(g_textureAnisotropyCVar <= 1u)
+		if(g_cvarRenderTextureAnisotropy <= 1u)
 		{
 			m_samplers.m_trilinearRepeatAniso = m_samplers.m_trilinearRepeat;
 		}
 		else
 		{
 			sinit.setName("TrilinearRepeatAniso");
-			sinit.m_anisotropyLevel = g_textureAnisotropyCVar;
+			sinit.m_anisotropyLevel = g_cvarRenderTextureAnisotropy;
 			m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 		}
 
@@ -384,7 +383,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
 	consts.m_zSplitMagic.x() = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / (ctx.m_matrices.m_near * F32(m_zSplitCount));
 	consts.m_zSplitMagic.y() = ctx.m_matrices.m_far / (ctx.m_matrices.m_near * F32(m_zSplitCount));
-	consts.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar - 1, m_zSplitCount);
+	consts.m_lightVolumeLastZSplit = min(g_cvarRenderVolumetricLightingAccumulationFinalZSplit - 1, m_zSplitCount);
 
 	consts.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
 
@@ -396,15 +395,15 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	if(dirLight)
 	{
 		DirectionalLight& out = consts.m_directionalLight;
-		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_shadowCascadeCountCVar : 0;
+		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_cvarRenderShadowCascadeCount : 0;
 
 		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
 		out.m_power = dirLight->getLightPower();
 		out.m_shadowCascadeCount = shadowCascadeCount;
 		out.m_active = 1;
 		out.m_direction = dirLight->getDirection();
-		out.m_shadowCascadeDistances =
-			Vec4(g_shadowCascade0DistanceCVar, g_shadowCascade1DistanceCVar, g_shadowCascade2DistanceCVar, g_shadowCascade3DistanceCVar);
+		out.m_shadowCascadeDistances = Vec4(g_cvarRenderShadowCascade0Distance, g_cvarRenderShadowCascade1Distance,
+											g_cvarRenderShadowCascade2Distance, g_cvarRenderShadowCascade3Distance);
 
 		for(U cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
@@ -691,7 +690,7 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 Format Renderer::getHdrFormat() const
 {
 	Format out;
-	if(!g_highQualityHdrCVar)
+	if(!g_cvarRenderHighQualityHdr)
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}
@@ -759,7 +758,7 @@ void Renderer::updatePipelineStats()
 
 	arr.destroy();
 
-	g_primitivesDrawnStatVar.set(sum);
+	g_svarPrimitivesDrawn.set(sum);
 }
 #endif
 
@@ -885,11 +884,11 @@ Error Renderer::render()
 	// Stats
 	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
 	{
-		g_rendererCpuTimeStatVar.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+		g_svarRendererCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
-		g_rendererGpuTimeStatVar.set(rgraphStats.m_gpuTime * 1000.0);
+		g_svarRendererGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
 
 		if(rgraphStats.m_gpuTime > 0.0)
 		{

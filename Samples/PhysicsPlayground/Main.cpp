@@ -251,7 +251,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar = !g_vrsCVar;
+		g_cvarGrVrs = !g_cvarGrVrs;
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)
@@ -260,17 +260,17 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgSceneCVar = false;
+			g_cvarRenderDbgScene = false;
 		}
 		else if(mode == 1)
 		{
-			g_dbgSceneCVar = true;
+			g_cvarRenderDbgScene = true;
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			g_dbgSceneCVar = true;
+			g_cvarRenderDbgScene = true;
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -278,7 +278,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kF2) == 1)
 	{
-		g_dbgPhysicsCVar = !g_dbgPhysicsCVar;
+		g_cvarRenderDbgPhysics = !g_cvarRenderDbgPhysics;
 		renderer.getDbg().setDepthTestEnabled(true);
 		renderer.getDbg().setDitheredDepthTestEnabled(false);
 	}

@@ -62,7 +62,7 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 
 		if(techniqueShaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kPixel | ShaderTypeBit::kVertex))
 		{
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				shaderTypes = ShaderTypeBit::kCompute;
 			}

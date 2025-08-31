@@ -16,9 +16,9 @@ namespace anki {
 /// @addtogroup core
 /// @{
 
-inline BoolCVar g_tracingEnabledCVar("Core", "Tracing", false, "Enable or disable tracing");
+ANKI_CVAR(BoolCVar, Core, TracingEnabled, false, "Enable or disable tracing")
 #if ANKI_OS_ANDROID
-inline BoolCVar g_streamlineEnabledCVar("Core", "StreamlineAnnotations", false, "Enable or disable Streamline annotations");
+ANKI_CVAR(BoolCVar, Core, StreamlineAnnotations, false, "Enable or disable Streamline annotations")
 #endif
 
 #if ANKI_TRACING_ENABLED

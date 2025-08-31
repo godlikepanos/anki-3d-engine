@@ -12,16 +12,14 @@ namespace anki {
 
 /// @addtogroup renderer
 /// @{
-inline NumericCVar<F32>
-	g_rayTracingExtendedFrustumDistanceCVar("R", "RayTracingExtendedFrustumDistance", 200.0f, 10.0f, 10000.0f,
-											"Every object that its distance from the camera is bellow that value will take part in ray tracing");
+ANKI_CVAR2(NumericCVar<F32>, Render, Rt, ExtendedFrustumDistance, 200.0f, 10.0f, 10000.0f,
+		   "Every object that its distance from the camera is bellow that value will take part in ray tracing")
 
-inline NumericCVar<U32> g_lightGridCellCountXZCVar("R", "LightGridCellCountXZ", 64, 1, 1024, "The number of cells in the X and Z axis");
-inline NumericCVar<U32> g_lightGridCellCountYCVar("R", "LightGridCellCountY", 4, 1, 1024, "The number of cells in the Y axis");
-inline NumericCVar<F32> g_lightGridSizeXZCVar("R", "LightGridSizeXZ", 128.0f, 10.0f, 10000.0f,
-											  "The size of the grid volume in the X and Z dimensions");
-inline NumericCVar<F32> g_lightGridSizeYCVar("R", "LightGridSizeY", 64.0f, 10.0f, 10000.0f, "The size of the grid in the Y dimension");
-inline NumericCVar<U32> g_lightIndexListSizeCVar("R", "LightIndexListSize", 64 * 1024, 128, 256 * 1024, "The light index list size");
+ANKI_CVAR2(NumericCVar<U32>, Render, Rt, LightGridCellCountXZ, 64, 1, 1024, "The number of cells in the X and Z axis")
+ANKI_CVAR2(NumericCVar<U32>, Render, Rt, LightGridCellCountY, 4, 1, 1024, "The number of cells in the Y axis")
+ANKI_CVAR2(NumericCVar<F32>, Render, Rt, LightGridSizeXZ, 128.0f, 10.0f, 10000.0f, "The size of the grid volume in the X and Z dimensions")
+ANKI_CVAR2(NumericCVar<F32>, Render, Rt, LightGridSizeY, 64.0f, 10.0f, 10000.0f, "The size of the grid in the Y dimension")
+ANKI_CVAR2(NumericCVar<U32>, Render, Rt, LightIndexListSize, 64 * 1024, 128, 256 * 1024, "The light index list size")
 
 /// @memberof AccelerationStructureBuilder
 class AccelerationStructureVisibilityInfo

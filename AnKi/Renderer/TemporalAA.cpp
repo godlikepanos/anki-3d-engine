@@ -21,7 +21,7 @@ Error TemporalAA::init()
 	for(U32 i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute;
-		usage |= (g_preferComputeCVar) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
+		usage |= (g_cvarRenderPreferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
@@ -40,7 +40,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
-	const Bool preferCompute = g_preferComputeCVar;
+	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	// Import RTs
 	if(m_rtTexturesImportedOnce) [[likely]]
@@ -96,7 +96,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(1, 0, m_runCtx.m_historyRt);
 		rgraphCtx.bindSrv(2, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 
-		if(g_preferComputeCVar)
+		if(g_cvarRenderPreferCompute)
 		{
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_renderRt);
 

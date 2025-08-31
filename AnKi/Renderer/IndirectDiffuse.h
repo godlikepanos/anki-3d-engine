@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtIndirectDiffuseCVar("R", "RtIndirectDiffuse", false, "Enable RT GI");
+ANKI_CVAR2(BoolCVar, Render, Rt, IndirectDiffuse, false, "Enable RT GI")
 
 class IndirectDiffuse : public RendererObject
 {

@@ -37,10 +37,9 @@
 
 namespace anki {
 
-static StatCounter g_sceneUpdateTimeStatVar(StatCategory::kTime, "All scene update",
-											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
-static StatCounter g_sceneComponentsUpdatedStatVar(StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame);
-static StatCounter g_sceneNodesUpdatedStatVar(StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame);
+ANKI_SVAR(SceneUpdateTime, StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(SceneComponentsUpdated, StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(SceneNodesUpdated, StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame)
 
 constexpr U32 kUpdateNodeBatchSize = 10;
 
@@ -101,10 +100,10 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	RenderStateBucketContainer::allocateSingleton();
 
 	// Construct a few common nodex
-	if(g_displayStatsCVar > 0)
+	if(g_cvarCoreDisplayStats > 0)
 	{
 		StatsUiNode* statsNode = newSceneNode<StatsUiNode>("_StatsUi");
-		statsNode->setFpsOnly(g_displayStatsCVar == 1);
+		statsNode->setFpsOnly(g_cvarCoreDisplayStats == 1);
 	}
 
 	newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
@@ -234,7 +233,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::getSingleton().flush();
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
-	g_sceneUpdateTimeStatVar.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
+	g_svarSceneUpdateTime.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
 }
 
 void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
@@ -270,8 +269,8 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 		if(sceneComponentUpdatedCount)
 		{
 			node.setComponentMaxTimestamp(GlobalFrameIndex::getSingleton().m_value);
-			g_sceneComponentsUpdatedStatVar.increment(sceneComponentUpdatedCount);
-			g_sceneNodesUpdatedStatVar.increment(1);
+			g_svarSceneComponentsUpdated.increment(sceneComponentUpdatedCount);
+			g_svarSceneNodesUpdated.increment(1);
 		}
 		else
 		{

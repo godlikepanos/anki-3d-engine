@@ -19,9 +19,9 @@ namespace anki {
 Error VolumetricLightingAccumulation::init()
 {
 	// Misc
-	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar;
-	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar;
-	const U32 finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar);
+	const F32 qualityXY = g_cvarRenderVolumetricLightingAccumulationQualityXY;
+	const F32 qualityZ = g_cvarRenderVolumetricLightingAccumulationQualityZ;
+	const U32 finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_cvarRenderVolumetricLightingAccumulationFinalZSplit);
 
 	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);
@@ -136,7 +136,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		}
 		consts.m_volumeSize = UVec3(m_volumeSize);
 
-		const U32 finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar);
+		const U32 finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_cvarRenderVolumetricLightingAccumulationFinalZSplit);
 		consts.m_maxZSplitsToProcessf = F32(finalZSplit + 1);
 
 		cmdb.setFastConstants(&consts, sizeof(consts));

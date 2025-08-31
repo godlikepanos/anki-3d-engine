@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_smResolveQuarterRezCVar("R", "SmResolveQuarterRez", ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality");
+ANKI_CVAR(BoolCVar, Render, ShadowmapResolveQuarterRez, ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality")
 
 /// Resolves shadowmaps into a single texture.
 class ShadowmapsResolve : public RendererObject

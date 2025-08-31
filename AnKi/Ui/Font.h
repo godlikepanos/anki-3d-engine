@@ -15,6 +15,9 @@ namespace anki {
 /// @addtogroup ui
 /// @{
 
+ANKI_CVAR(NumericCVar<U32>, Ui, GlobalFontBias, 0, 0, 100, "Bias that will be applied to all fonts")
+ANKI_CVAR(NumericCVar<F32>, Ui, GlobalFontScale, 1.0f, 0.1f, 100.0f, "Scale that will be applied to all fonts")
+
 /// Font class.
 class Font : public UiObject
 {
@@ -36,7 +39,7 @@ public:
 	{
 		for(const FontEntry& f : m_fonts)
 		{
-			if(f.m_height == fontHeight)
+			if(f.m_height == U32(F32(fontHeight) * g_cvarUiGlobalFontScale) + g_cvarUiGlobalFontBias)
 			{
 				return *f.m_imFont;
 			}

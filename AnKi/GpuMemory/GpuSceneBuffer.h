@@ -16,7 +16,7 @@ namespace anki {
 /// @addtogroup gpu_memory
 /// @{
 
-inline NumericCVar<PtrSize> g_gpuSceneInitialSizeCVar("Core", "GpuSceneInitialSize", 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene");
+ANKI_CVAR(NumericCVar<PtrSize>, Core, GpuSceneInitialSize, 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene")
 
 /// @memberof GpuSceneBuffer
 class GpuSceneBufferAllocation

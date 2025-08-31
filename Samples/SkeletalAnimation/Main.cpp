@@ -30,7 +30,7 @@ public:
 		animInfo.m_repeatTimes = -1.0;
 		SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>().playAnimation(0, m_floatAnim, animInfo);
 
-		g_bloomThresholdCVar = 5.0f;
+		g_cvarRenderBloomThreshold = 5.0f;
 		return Error::kNone;
 	}
 

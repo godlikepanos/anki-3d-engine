@@ -16,9 +16,9 @@ Error Bloom::init()
 	// Pyramid
 	{
 		const UVec2 pyramidSize = getRenderer().getInternalResolution() / 2;
-		const U8 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x(), pyramidSize.y(), g_bloomPyramidLowLimit);
+		const U8 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x(), pyramidSize.y(), g_cvarRenderBloomPyramidLowLimit);
 
-		const Bool preferCompute = g_preferComputeCVar;
+		const Bool preferCompute = g_cvarRenderPreferCompute;
 
 		// Create the miped texture
 		TextureInitInfo texinit =
@@ -48,7 +48,7 @@ Error Bloom::init()
 
 	// Upscale
 	{
-		const UVec2 size = getRenderer().getPostProcessResolution() / g_bloomUpscaleDivisor;
+		const UVec2 size = getRenderer().getPostProcessResolution() / g_cvarRenderBloomUpscaleDivisor;
 
 		// Create RT descr
 		m_finalRtDesc = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), getRenderer().getHdrFormat(), "Bloom final");
@@ -73,7 +73,7 @@ void Bloom::importRenderTargets(RenderingContext& ctx)
 void Bloom::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = g_preferComputeCVar;
+	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	// Pyramid generation
 	{
@@ -136,7 +136,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 					rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 				}
 
-				if(g_preferComputeCVar)
+				if(g_cvarRenderPreferCompute)
 				{
 					const Vec4 fbSize(F32(vpWidth), F32(vpHeight), 0.0f, 0.0f);
 					cmdb.setFastConstants(&fbSize, sizeof(fbSize));
@@ -198,10 +198,10 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, m_runCtx.m_pyramidRt, inputTexSubresource);
 			rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getExposureAndAvgLuminanceRt());
 
-			const Vec4 consts(g_bloomThresholdCVar, g_bloomScaleCVar, 0.0f, 0.0f);
+			const Vec4 consts(g_cvarRenderBloomThreshold, g_cvarRenderBloomScale, 0.0f, 0.0f);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(1, 0, exposureRt);
 
@@ -256,7 +256,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, exposureRt);
 			cmdb.bindSrv(1, 0, TextureView(&m_lensDirtImg->getTexture(), TextureSubresourceDesc::all()));
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, upscaledRt);
 

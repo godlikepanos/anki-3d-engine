@@ -39,7 +39,7 @@ Error DepthDownscale::initInternal()
 
 	m_mipCount = 2;
 
-	const Bool preferCompute = g_preferComputeCVar;
+	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	// Create RT descr
 	{
@@ -83,7 +83,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	if(g_preferComputeCVar)
+	if(g_cvarRenderPreferCompute)
 	{
 		// Do it with compute
 

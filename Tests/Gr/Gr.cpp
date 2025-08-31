@@ -22,7 +22,7 @@ using namespace anki;
 
 ANKI_TEST(Gr, GrManager)
 {
-	g_validationCVar = true;
+	g_cvarGrValidation = true;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	initWindow();
@@ -2240,7 +2240,7 @@ void main()
 
 ANKI_TEST(Gr, RayQuery)
 {
-	g_rayTracingCVar = true;
+	g_cvarGrRayTracing = true;
 	commonInit();
 
 	{
@@ -2513,7 +2513,7 @@ float4 main(VertOut input) : SV_TARGET0
 
 ANKI_TEST(Gr, RayTracingPipeline)
 {
-	g_rayTracingCVar = true;
+	g_cvarGrRayTracing = true;
 	// g_deviceCVar = 1;
 	commonInit();
 

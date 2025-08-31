@@ -67,7 +67,7 @@ public:
 		else
 		{
 			// Not signaled and has handle
-			seconds = min<Second>(seconds, g_gpuTimeoutCVar);
+			seconds = min<Second>(seconds, g_cvarGrGpuTimeout);
 			bSignaled = m_impl.clientWait(seconds);
 		}
 

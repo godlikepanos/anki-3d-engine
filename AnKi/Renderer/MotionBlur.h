@@ -12,8 +12,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<U32> g_motionBlurTileSizeCVar("R", "MotionBlurTileSize", 32, 8, 64, "Motion blur tile size");
-inline NumericCVar<U32> g_motionBlurSampleCountCVar("R", "MotionBlurSampleCount", 16, 0, 64, "Motion blur sample count");
+ANKI_CVAR2(NumericCVar<U32>, Render, MotionBlur, TileSize, 32, 8, 64, "Motion blur tile size")
+ANKI_CVAR2(NumericCVar<U32>, Render, MotionBlur, SampleCount, 16, 0, 64, "Motion blur sample count")
 
 /// Motion blur.
 class MotionBlur : public RendererObject

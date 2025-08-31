@@ -23,8 +23,8 @@ namespace anki {
 
 Error RtShadows::init()
 {
-	m_useSvgf = g_rtShadowsSvgfCVar;
-	m_atrousPassCount = g_rtShadowsSvgfAtrousPassCountCVar;
+	m_useSvgf = g_cvarRenderRtShadowsSvgf;
+	m_atrousPassCount = g_cvarRenderRtShadowsSvgfAtrousPassCount;
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
@@ -35,7 +35,7 @@ Error RtShadows::init()
 	// Ray gen and miss
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenAndMissProg);
-		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar);
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_cvarRenderRtShadowsRaysPerPixel);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtShadows");
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo, variant);
@@ -43,7 +43,7 @@ Error RtShadows::init()
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_rayGenAndMissProg);
-		variantInitInfo2.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar);
+		variantInitInfo2.addMutation("RAYS_PER_PIXEL", g_cvarRenderRtShadowsRaysPerPixel);
 		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtShadows");
 		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo2, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();

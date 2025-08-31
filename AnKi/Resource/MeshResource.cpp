@@ -142,7 +142,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		}
 
 		// Meshlet
-		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar)
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering)
 		{
 			const PtrSize meshletIndicesSize = header.m_meshletPrimitiveCounts[l] * sizeof(U8Vec4);
 			lod.m_meshletIndices = UnifiedGeometryBuffer::getSingleton().allocate(meshletIndicesSize, sizeof(U8Vec4));

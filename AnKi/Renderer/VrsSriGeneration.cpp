@@ -51,7 +51,7 @@ Error VrsSriGeneration::init()
 		variantInit.addMutation("SHARED_MEMORY", 1);
 	}
 
-	variantInit.addMutation("LIMIT_RATE_TO_2X2", g_vrsLimitTo2x2CVar);
+	variantInit.addMutation("LIMIT_RATE_TO_2X2", g_cvarRenderVrsLimitTo2x2);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
@@ -81,7 +81,7 @@ void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHa
 
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(!enableVrs)
 	{
 		return;
@@ -102,7 +102,7 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(!enableVrs)
 	{
 		return;
@@ -128,7 +128,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
-			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar, 0.0f);
+			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_cvarRenderVrsThreshold, 0.0f);
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;

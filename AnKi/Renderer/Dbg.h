@@ -14,8 +14,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_dbgSceneCVar("R", "DbgScene", false, "Enable or not debug visualization of scene");
-inline BoolCVar g_dbgPhysicsCVar("R", "DbgPhysics", false, "Enable or not physics debug visualization");
+ANKI_CVAR2(BoolCVar, Render, Dbg, Scene, false, "Enable or not debug visualization of scene")
+ANKI_CVAR2(BoolCVar, Render, Dbg, Physics, false, "Enable or not physics debug visualization")
 
 /// Debugging stage
 class Dbg : public RendererObject

@@ -13,8 +13,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<F32> g_filmGrainCVar("R", "FilmGrain", 16.0f, 0.0f, 250.0f, "Film grain strength");
-inline NumericCVar<F32> g_sharpnessCVar("R", "Sharpness", (ANKI_PLATFORM_MOBILE) ? 0.0f : 1.0f, 0.0f, 1.0f, "Sharpen the image. It's a factor");
+ANKI_CVAR(NumericCVar<F32>, Render, FilmGrain, 16.0f, 0.0f, 250.0f, "Film grain strength")
+ANKI_CVAR(NumericCVar<F32>, Render, Sharpness, (ANKI_PLATFORM_MOBILE) ? 0.0f : 1.0f, 0.0f, 1.0f, "Sharpen the image. It's a factor")
 
 /// Post-processing stage.
 class FinalComposite : public RendererObject

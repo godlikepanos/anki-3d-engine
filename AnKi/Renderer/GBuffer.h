@@ -13,9 +13,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_gbufferVrsCVar("R", "GBufferVrs", false, "Enable VRS in GBuffer");
-inline BoolCVar g_visualizeGiProbesCVar("R", "VisualizeGiProbes", false, "Visualize GI probes");
-inline BoolCVar g_visualizeReflectionProbesCVar("R", "VisualizeReflProbes", false, "Visualize reflection probes");
+ANKI_CVAR(BoolCVar, Render, VisualizeGiProbes, false, "Visualize GI probes")
+ANKI_CVAR(BoolCVar, Render, VisualizeReflectionProbes, false, "Visualize reflection probes")
 
 /// G buffer stage. It populates the G buffer
 class GBuffer : public RendererObject

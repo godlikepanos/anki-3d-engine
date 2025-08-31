@@ -56,11 +56,11 @@ public:
 
 ANKI_TEST(Ui, Ui)
 {
-	g_vsyncCVar = true;
-	g_validationCVar = true;
-	g_windowWidthCVar = 1024;
-	g_windowHeightCVar = 760;
-	g_dataPathsCVar = "EngineAssets";
+	g_cvarGrVsync = true;
+	g_cvarGrValidation = true;
+	g_cvarWindowWidth = 1024;
+	g_cvarWindowHeight = 760;
+	g_cvarRsrcDataPaths = "EngineAssets";
 
 	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());

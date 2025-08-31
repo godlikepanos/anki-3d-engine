@@ -15,8 +15,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-inline NumericCVar<U32> g_reflectionProbeResolutionCVar("Scene", "ReflectionProbeResolution", 128, 8, 2048,
-														"The resolution of the reflection probe's reflection");
+ANKI_CVAR2(NumericCVar<U32>, Render, ProbeReflections, Resolution, 128, 8, 2048, "The resolution of the reflection probe's reflection")
 
 /// Reflection probe component.
 class ReflectionProbeComponent : public SceneComponent

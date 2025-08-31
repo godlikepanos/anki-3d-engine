@@ -10,7 +10,7 @@
 
 namespace anki {
 
-static StatCounter g_asyncTasksInFlightStatVar(StatCategory::kMisc, "Async loader tasks", StatFlag::kNone);
+ANKI_SVAR(AsyncTasksInFlight, StatCategory::kMisc, "Async loader tasks", StatFlag::kNone)
 
 AsyncLoader::AsyncLoader()
 	: m_thread("AsyncLoad")
@@ -94,7 +94,7 @@ Error AsyncLoader::threadWorker()
 			{
 				ANKI_TRACE_SCOPED_EVENT(RsrcAsyncTask);
 				err = (*task)(ctx);
-				g_asyncTasksInFlightStatVar.decrement(1u);
+				g_svarAsyncTasksInFlight.decrement(1u);
 			}
 
 			if(!err)
@@ -128,7 +128,7 @@ void AsyncLoader::submitTask(AsyncLoaderTask* task)
 	ANKI_ASSERT(task);
 
 	m_tasksInFlightCount.fetchAdd(1);
-	g_asyncTasksInFlightStatVar.increment(1);
+	g_svarAsyncTasksInFlight.increment(1);
 
 	LockGuard<Mutex> lock(m_mtx);
 	m_taskQueue.pushBack(task);

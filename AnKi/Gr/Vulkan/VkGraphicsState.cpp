@@ -402,7 +402,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 Error PipelineCache::init(CString cacheDir)
 {
 	ANKI_ASSERT(cacheDir);
-	m_dumpSize = g_diskShaderCacheMaxSizeCVar;
+	m_dumpSize = g_cvarGrDiskShaderCacheMaxSize;
 	m_dumpFilename.sprintf("%s/VkPipelineCache", cacheDir.cstr());
 
 	// Try read the pipeline cache file.

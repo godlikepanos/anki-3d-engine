@@ -71,11 +71,11 @@ ANKI_TEST(Gr, AsyncComputeBench)
 	const U32 spheresToDrawPerDimension = 100;
 	const U32 windowSize = 512;
 
-	g_validationCVar = false; // TODO
-	g_debugMarkersCVar = false;
-	g_windowWidthCVar = windowSize;
-	g_windowHeightCVar = windowSize;
-	g_asyncComputeCVar = 0;
+	g_cvarGrValidation = false; // TODO
+	g_cvarGrDebugMarkers = false;
+	g_cvarWindowWidth = windowSize;
+	g_cvarWindowHeight = windowSize;
+	g_cvarGrAsyncCompute = 0;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);

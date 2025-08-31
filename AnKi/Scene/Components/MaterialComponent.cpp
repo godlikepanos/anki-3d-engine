@@ -203,7 +203,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 			meshLod.m_renderableIndex = m_gpuSceneRenderable.getIndex();
 
-			if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar)
+			if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering)
 			{
 				U32 dummy;
 				PtrSize meshletBoundingVolumesUgbOffset, meshletGometryDescriptorsUgbOffset;
@@ -303,7 +303,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			key.setRenderingTechnique(t);
 			key.setSkinned(hasSkin);
 			key.setVelocity(moved);
-			key.setMeshletRendering(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar);
+			key.setMeshletRendering(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering);
 
 			const MaterialVariant& mvariant = mtl.getOrCreateVariant(key);
 

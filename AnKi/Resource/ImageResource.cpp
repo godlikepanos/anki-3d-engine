@@ -66,7 +66,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, g_maxImageSizeCVar));
+	ANKI_CHECK(loader.load(file, filename, g_cvarRsrcMaxImageSize));
 
 	// Various sizes
 	init.m_width = loader.getWidth();

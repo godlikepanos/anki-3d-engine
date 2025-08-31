@@ -44,14 +44,14 @@ namespace anki {
 android_app* g_androidApp = nullptr;
 #endif
 
-StatCounter g_cpuAllocatedMemStatVar(StatCategory::kCpuMem, "Total", StatFlag::kBytes);
-StatCounter g_cpuAllocationCountStatVar(StatCategory::kCpuMem, "Allocations/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame);
-StatCounter g_cpuFreesCountStatVar(StatCategory::kCpuMem, "Frees/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame);
+ANKI_SVAR(CpuAllocatedMem, StatCategory::kCpuMem, "Total", StatFlag::kBytes)
+ANKI_SVAR(CpuAllocationCount, StatCategory::kCpuMem, "Allocations/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(CpuFreesCount, StatCategory::kCpuMem, "Frees/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame)
 
 #if ANKI_PLATFORM_MOBILE
-inline StatCounter g_maliGpuActiveStatVar(StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates);
-inline StatCounter g_maliGpuReadBandwidthStatVar(StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates);
-inline StatCounter g_maliGpuWriteBandwidthStatVar(StatCategory::kGpuMisc, "Mali write bandwidth", StatFlag::kMainThreadUpdates);
+ANKI_SVAR(MaliGpuActive, StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(MaliGpuReadBandwidth, StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(MaliGpuWriteBandwidth, StatCategory::kGpuMisc, "Mali write bandwidth", StatFlag::kMainThreadUpdates)
 #endif
 
 void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_unused]] PtrSize alignment)
@@ -87,8 +87,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		out = static_cast<void*>(allocation);
 
 		// Update stats
-		g_cpuAllocatedMemStatVar.increment(size);
-		g_cpuAllocationCountStatVar.increment(1);
+		g_svarCpuAllocatedMem.increment(size);
+		g_svarCpuAllocationCount.increment(1);
 	}
 	else
 	{
@@ -101,8 +101,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		ANKI_ASSERT(allocation->m_allocatedSize > 0);
 
 		// Update stats
-		g_cpuAllocatedMemStatVar.decrement(allocation->m_allocatedSize);
-		g_cpuFreesCountStatVar.increment(1);
+		g_svarCpuAllocatedMem.decrement(allocation->m_allocatedSize);
+		g_svarCpuFreesCount.increment(1);
 
 		// Free
 		self->m_originalAllocCallback(self->m_originalAllocUserData, allocation, 0, 0);
@@ -116,7 +116,7 @@ App::App(CString appName, AllocAlignedCallback allocCb, void* allocCbUserData)
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
 
-	if(ANKI_STATS_ENABLED && g_displayStatsCVar > 1)
+	if(ANKI_STATS_ENABLED && g_cvarCoreDisplayStats > 1)
 	{
 		m_allocCallback = statsAllocCallback;
 		m_allocUserData = this;
@@ -182,7 +182,7 @@ void App::cleanup()
 Error App::init()
 {
 	StatsSet::getSingleton().initFromMainThread();
-	Logger::getSingleton().enableVerbosity(g_verboseLogCVar);
+	Logger::getSingleton().enableVerbosity(g_cvarCoreVerboseLog);
 
 	ANKI_CHECK(initDirs());
 
@@ -196,12 +196,12 @@ Error App::init()
 	}
 #endif
 
-	ANKI_CORE_LOGI("Number of job threads: %u", U32(g_jobThreadCountCVar));
+	ANKI_CORE_LOGI("Number of job threads: %u", U32(g_cvarCoreJobThreadCount));
 
-	if(g_benchmarkModeCVar && g_vsyncCVar)
+	if(g_cvarCoreBenchmarkMode && g_cvarGrVsync)
 	{
 		ANKI_CORE_LOGW("Vsync is enabled and benchmark mode as well. Will turn vsync off");
-		g_vsyncCVar = false;
+		g_cvarGrVsync = false;
 	}
 
 	GlobalFrameIndex::allocateSingleton();
@@ -217,13 +217,13 @@ Error App::init()
 	// Window
 	//
 	NativeWindowInitInfo nwinit;
-	nwinit.m_width = g_windowWidthCVar;
-	nwinit.m_height = g_windowHeightCVar;
+	nwinit.m_width = g_cvarWindowWidth;
+	nwinit.m_height = g_cvarWindowHeight;
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = g_windowFullscreenCVar > 0;
-	nwinit.m_exclusiveFullscreen = g_windowFullscreenCVar == 2;
-	nwinit.m_targetFps = g_targetFpsCVar;
+	nwinit.m_fullscreenDesktopRez = g_cvarWindowFullscreen > 0;
+	nwinit.m_exclusiveFullscreen = g_cvarWindowFullscreen == 2;
+	nwinit.m_targetFps = g_cvarCoreTargetFps;
 	NativeWindow::allocateSingleton();
 	ANKI_CHECK(NativeWindow::getSingleton().init(nwinit));
 
@@ -237,7 +237,7 @@ Error App::init()
 	// ThreadPool
 	//
 	const Bool pinThreads = !ANKI_OS_ANDROID;
-	CoreThreadJobManager::allocateSingleton(U32(g_jobThreadCountCVar), pinThreads);
+	CoreThreadJobManager::allocateSingleton(U32(g_cvarCoreJobThreadCount), pinThreads);
 
 	//
 	// Graphics API
@@ -252,7 +252,7 @@ Error App::init()
 	// Mali HW counters
 	//
 #if ANKI_PLATFORM_MOBILE
-	if(ANKI_STATS_ENABLED && GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm && g_maliHwCountersCVar)
+	if(ANKI_STATS_ENABLED && GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm && g_cvarCoreMaliHwCounters)
 	{
 		MaliHwCounters::allocateSingleton();
 	}
@@ -286,8 +286,8 @@ Error App::init()
 	extraPaths += "|ankiprogbin"; // Shaders
 	extraPaths += ":" ANKI_SOURCE_DIRECTORY "|EngineAssets,!AndroidProject"; // EngineAssets
 	extraPaths += ":";
-	extraPaths += g_dataPathsCVar;
-	g_dataPathsCVar = extraPaths;
+	extraPaths += g_cvarRsrcDataPaths;
+	g_cvarRsrcDataPaths = extraPaths;
 #endif
 
 	ANKI_CHECK(ResourceManager::allocateSingleton().init(m_allocCallback, m_allocUserData));
@@ -353,7 +353,7 @@ Error App::initDirs()
 	m_cacheDir.sprintf("%s/cache", &m_settingsDir[0]);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
-	if(g_clearCachesCVar && cacheDirExists)
+	if(g_cvarCoreClearCaches && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", m_cacheDir.cstr());
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
@@ -401,7 +401,7 @@ Error App::mainLoop()
 	Second crntTime = prevUpdateTime;
 
 	// Benchmark mode stuff:
-	const Bool benchmarkMode = g_benchmarkModeCVar;
+	const Bool benchmarkMode = g_cvarCoreBenchmarkMode;
 	Second aggregatedCpuTime = 0.0;
 	Second aggregatedGpuTime = 0.0;
 	constexpr U32 kBenchmarkFramesToGatherBeforeFlush = 60;
@@ -434,14 +434,14 @@ Error App::mainLoop()
 
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
 			Second grTime = 0.0;
-			if(benchmarkMode || g_displayStatsCVar > 0) [[unlikely]]
+			if(benchmarkMode || g_cvarCoreDisplayStats > 0) [[unlikely]]
 			{
 				grTime = HighRezTimer::getCurrentTime();
 			}
 
 			GrManager::getSingleton().endFrame();
 
-			if(benchmarkMode || g_displayStatsCVar > 0) [[unlikely]]
+			if(benchmarkMode || g_cvarCoreDisplayStats > 0) [[unlikely]]
 			{
 				grTime = HighRezTimer::getCurrentTime() - grTime;
 			}
@@ -455,10 +455,10 @@ Error App::mainLoop()
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();
 			const Second frameTime = endTime - startTime;
-			g_cpuTotalTimeStatVar.set((frameTime - grTime) * 1000.0);
+			g_svarCpuTotalTime.set((frameTime - grTime) * 1000.0);
 			if(!benchmarkMode) [[likely]]
 			{
-				const Second timerTick = 1.0_sec / Second(g_targetFpsCVar);
+				const Second timerTick = 1.0_sec / Second(g_cvarCoreTargetFps);
 				if(frameTime < timerTick)
 				{
 					ANKI_TRACE_SCOPED_EVENT(TimerTickSleep);
@@ -489,9 +489,9 @@ Error App::mainLoop()
 			{
 				MaliHwCountersOut out;
 				MaliHwCounters::getSingleton().sample(out);
-				g_maliGpuActiveStatVar.set(out.m_gpuActive);
-				g_maliGpuReadBandwidthStatVar.set(out.m_readBandwidth);
-				g_maliGpuWriteBandwidthStatVar.set(out.m_writeBandwidth);
+				g_svarMaliGpuActive.set(out.m_gpuActive);
+				g_svarMaliGpuReadBandwidth.set(out.m_readBandwidth);
+				g_svarMaliGpuWriteBandwidth.set(out.m_writeBandwidth);
 			}
 #endif
 
@@ -501,7 +501,7 @@ Error App::mainLoop()
 
 			if(benchmarkMode) [[unlikely]]
 			{
-				if(GlobalFrameIndex::getSingleton().m_value >= g_benchmarkModeFrameCountCVar)
+				if(GlobalFrameIndex::getSingleton().m_value >= g_cvarCoreBenchmarkModeFrameCount)
 				{
 					quit = true;
 				}

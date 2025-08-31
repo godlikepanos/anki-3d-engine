@@ -18,7 +18,7 @@ namespace anki {
 
 Error IndirectDiffuse::init()
 {
-	[[maybe_unused]] const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar;
+	[[maybe_unused]] const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderRtIndirectDiffuse;
 	ANKI_ASSERT(bRt);
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IndirectDiffuse.ankiprogbin", m_mainProg));
@@ -53,7 +53,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
 
-	const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar;
+	const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderRtIndirectDiffuse;
 
 	if(!bRt)
 	{

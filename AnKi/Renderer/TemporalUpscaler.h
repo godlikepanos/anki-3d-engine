@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<U8> g_dlssQualityCVar("R", "DlssQuality", 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality");
+ANKI_CVAR(NumericCVar<U8>, Render, DlssQuality, 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality")
 
 /// Upscales.
 class TemporalUpscaler : public RendererObject

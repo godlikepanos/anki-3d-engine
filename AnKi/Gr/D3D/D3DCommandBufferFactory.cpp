@@ -9,14 +9,14 @@
 
 namespace anki {
 
-static StatCounter g_commandBufferCountStatVar(StatCategory::kGr, "CommandBufferCount", StatFlag::kNone);
+ANKI_SVAR(CommandBufferCount, StatCategory::kGr, "CommandBufferCount", StatFlag::kNone)
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {
 	safeRelease(m_cmdList);
 	safeRelease(m_cmdAllocator);
 
-	g_commandBufferCountStatVar.decrement(1);
+	g_svarCommandBufferCount.decrement(1);
 }
 
 Error MicroCommandBuffer::init(CommandBufferFlag flags)
@@ -30,7 +30,7 @@ Error MicroCommandBuffer::init(CommandBufferFlag flags)
 	ANKI_D3D_CHECK(getDevice().CreateCommandList(0, cmdListType, m_cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList)));
 	ANKI_D3D_CHECK(cmdList->QueryInterface(IID_PPV_ARGS(&m_cmdList)));
 
-	g_commandBufferCountStatVar.increment(1);
+	g_svarCommandBufferCount.increment(1);
 
 	return Error::kNone;
 }

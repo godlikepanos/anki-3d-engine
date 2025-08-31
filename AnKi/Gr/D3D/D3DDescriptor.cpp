@@ -189,13 +189,13 @@ Error DescriptorFactory::init()
 		return Error::kNone;
 	};
 
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxCpuCbvSrvUavDescriptorsCVar,
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxCpuCbvSrvUavDescriptors,
 									  "CPU CBV/SRV/UAV", m_cpuPersistent.m_cbvSrvUav));
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxCpuSamplerDescriptorsCVar,
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxCpuSamplerDescriptors,
 									  "CPU samplers", m_cpuPersistent.m_sampler));
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxRtvDescriptorsCVar, "CPU RTV",
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxRtvDescriptors, "CPU RTV",
 									  m_cpuPersistent.m_rtv));
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxDsvDescriptorsCVar, "CPU DSV",
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxDsvDescriptors, "CPU DSV",
 									  m_cpuPersistent.m_dsv));
 
 	// Init GPU visible heaps
@@ -204,20 +204,20 @@ Error DescriptorFactory::init()
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart;
 	U32 descriptorSize;
 	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-									g_maxGpuCbvSrvUavDescriptorsCVar + g_maxBindlessSampledTextureCountCVar, "GPU CBV/SRV/UAV", heap, cpuHeapStart,
-									gpuHeapStart, descriptorSize));
+									g_cvarGrMaxGpuCbvSrvUavDescriptors + g_cvarGrMaxBindlessSampledTextureCount, "GPU CBV/SRV/UAV", heap,
+									cpuHeapStart, gpuHeapStart, descriptorSize));
 	m_descriptorHeaps.emplaceBack(heap);
 
-	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, U16(g_maxBindlessSampledTextureCountCVar));
+	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, U16(g_cvarGrMaxBindlessSampledTextureCount));
 
-	cpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
-	gpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
-	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuCbvSrvUavDescriptorsCVar, "CBV/SRV/UAV");
+	cpuHeapStart.ptr += descriptorSize * g_cvarGrMaxBindlessSampledTextureCount;
+	gpuHeapStart.ptr += descriptorSize * g_cvarGrMaxBindlessSampledTextureCount;
+	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_cvarGrMaxGpuCbvSrvUavDescriptors, "CBV/SRV/UAV");
 
-	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, g_maxGpuSamplerDescriptorsCVar,
+	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, g_cvarGrMaxGpuSamplerDescriptors,
 									"GPU samplers", heap, cpuHeapStart, gpuHeapStart, descriptorSize));
 	m_descriptorHeaps.emplaceBack(heap);
-	m_gpuRing.m_sampler.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuSamplerDescriptorsCVar, "Samplers");
+	m_gpuRing.m_sampler.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_cvarGrMaxGpuSamplerDescriptors, "Samplers");
 
 	// Misc
 	for(D3D12_DESCRIPTOR_HEAP_TYPE type = D3D12_DESCRIPTOR_HEAP_TYPE(0); type < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;

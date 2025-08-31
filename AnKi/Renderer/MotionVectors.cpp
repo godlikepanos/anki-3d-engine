@@ -33,7 +33,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	RenderPassBase* ppass;
 	TextureUsageBit readUsage;
 	TextureUsageBit writeUsage;
-	if(g_preferComputeCVar)
+	if(g_cvarRenderPreferCompute)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("MotionVectors");
 
@@ -74,12 +74,12 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		pc->m_currentInvViewProjMat = ctx.m_matrices.m_invertedViewProjection;
 		pc->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjection;
 
-		if(g_preferComputeCVar)
+		if(g_cvarRenderPreferCompute)
 		{
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_motionVectorsRtHandle);
 		}
 
-		if(g_preferComputeCVar)
+		if(g_cvarRenderPreferCompute)
 		{
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}

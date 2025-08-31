@@ -28,8 +28,7 @@ class AccelerationStructureScratchAllocator;
 /// @addtogroup resource
 /// @{
 
-inline NumericCVar<PtrSize> g_transferScratchMemorySizeCVar("Rsrc", "TransferScratchMemorySize", 256_MB, 1_MB, 4_GB,
-															"Memory that is used fot texture and buffer uploads");
+ANKI_CVAR(NumericCVar<PtrSize>, Rsrc, TransferScratchMemorySize, 256_MB, 1_MB, 4_GB, "Memory that is used fot texture and buffer uploads")
 
 /// Resource manager. It holds a few global variables
 class ResourceManager : public MakeSingleton<ResourceManager>

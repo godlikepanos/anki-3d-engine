@@ -36,37 +36,35 @@ class PipelineQueryInitInfo;
 /// @addtogroup graphics
 /// @{
 
-inline BoolCVar g_validationCVar("Gr", "Validation", false, "Enable or not validation");
-inline BoolCVar g_gpuValidationCVar("Gr", "GpuValidation", false, "Enable or not GPU validation");
-inline BoolCVar g_vsyncCVar("Gr", "Vsync", false, "Enable or not vsync");
-inline BoolCVar g_debugMarkersCVar("Gr", "DebugMarkers", false, "Enable or not debug markers");
-inline BoolCVar g_meshShadersCVar("Gr", "MeshShaders", false, "Enable or not mesh shaders");
-inline NumericCVar<U8> g_deviceCVar("Gr", "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
-inline BoolCVar g_rayTracingCVar("Gr", "RayTracing", false, "Try enabling ray tracing");
-inline BoolCVar g_vrsCVar("Gr", "Vrs", false, "Enable or not VRS");
-inline BoolCVar g_workGraphcsCVar("Gr", "WorkGraphs", false, "Enable or not WorkGraphs");
-inline NumericCVar<U32> g_maxBindlessSampledTextureCountCVar("Gr", "MaxBindlessSampledTextureCountCVar", 512, 16, kMaxU16);
-inline NumericCVar<Second> g_gpuTimeoutCVar("Gr", "GpuTimeout", 120.0, 0.0, 24.0 * 60.0,
-											"Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout");
-inline NumericCVar<U8> g_asyncComputeCVar("Gr", "AsyncCompute", 0, 0, 2,
-										  "Control the async compute behaviour: 0: Try use separate queue family, 1: Use lower priority queue in the "
-										  "general's queue family, 2: Use the general queue");
+ANKI_CVAR(BoolCVar, Gr, Validation, false, "Enable or not validation")
+ANKI_CVAR(BoolCVar, Gr, GpuValidation, false, "Enable or not GPU validation")
+ANKI_CVAR(BoolCVar, Gr, Vsync, false, "Enable or not vsync")
+ANKI_CVAR(BoolCVar, Gr, DebugMarkers, false, "Enable or not debug markers");
+ANKI_CVAR(BoolCVar, Gr, MeshShaders, false, "Enable or not mesh shaders");
+ANKI_CVAR(NumericCVar<U8>, Gr, Device, 0, 0, 16, "Choose an available device. Devices are sorted by performance")
+ANKI_CVAR(BoolCVar, Gr, RayTracing, false, "Try enabling ray tracing")
+ANKI_CVAR(BoolCVar, Gr, Vrs, false, "Enable or not VRS")
+ANKI_CVAR(BoolCVar, Gr, WorkGraphcs, false, "Enable or not WorkGraphs")
+ANKI_CVAR(NumericCVar<U32>, Gr, MaxBindlessSampledTextureCount, 512, 16, kMaxU16)
+ANKI_CVAR(NumericCVar<Second>, Gr, GpuTimeout, 120.0, 0.0, 24.0 * 60.0,
+		  "Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout")
+ANKI_CVAR(NumericCVar<U8>, Gr, AsyncCompute, 0, 0, 2,
+		  "Control the async compute behaviour: 0: Try use separate queue family, 1: Use lower priority queue in the general's queue family, 2: Use "
+		  "the general queue")
 #if ANKI_GR_BACKEND_DIRECT3D
-inline NumericCVar<U16> g_maxRtvDescriptorsCVar("Gr", "MaxRvtDescriptors", 1024, 8, kMaxU16, "Max number of RTVs");
-inline NumericCVar<U16> g_maxDsvDescriptorsCVar("Gr", "MaxDsvDescriptors", 512, 8, kMaxU16, "Max number of DSVs");
-inline NumericCVar<U16> g_maxCpuCbvSrvUavDescriptorsCVar("Gr", "MaxCpuCbvSrvUavDescriptors", 16 * 1024, 8, kMaxU16,
-														 "Max number of CBV/SRV/UAV descriptors");
-inline NumericCVar<U16> g_maxCpuSamplerDescriptorsCVar("Gr", "MaxCpuSamplerDescriptors", 512, 8, kMaxU16, "Max number of sampler descriptors");
-inline NumericCVar<U16> g_maxGpuCbvSrvUavDescriptorsCVar("Gr", "MaxGpuCbvSrvUavDescriptors", 16 * 1024, 8, kMaxU16,
-														 "Max number of CBV/SRV/UAV descriptors");
-inline NumericCVar<U16> g_maxGpuSamplerDescriptorsCVar("Gr", "MaxGpuSamplerDescriptors", 2 * 1024, 8, kMaxU16, "Max number of sampler descriptors");
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxRtvDescriptors, 1024, 8, kMaxU16, "Max number of RTVs")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxDsvDescriptors, 512, 8, kMaxU16, "Max number of DSVs");
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxCpuCbvSrvUavDescriptors, 16 * 1024, 8, kMaxU16, "Max number of CBV/SRV/UAV descriptors")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxCpuSamplerDescriptors, 512, 8, kMaxU16, "Max number of sampler descriptors")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxGpuCbvSrvUavDescriptors, 16 * 1024, 8, kMaxU16, "Max number of CBV/SRV/UAV descriptors")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxGpuSamplerDescriptors, 2 * 1024, 8, kMaxU16, "Max number of sampler descriptors")
 
-inline BoolCVar g_dredCVar("Gr", "Dred", false, "Enable DRED");
+ANKI_CVAR(BoolCVar, Gr, Dred, false, "Enable DRED")
 #else
-inline NumericCVar<PtrSize> g_diskShaderCacheMaxSizeCVar("Gr", "DiskShaderCacheMaxSize", 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file");
-inline BoolCVar g_debugPrintfCVar("Gr", "DebugPrintf", false, "Enable or not debug printf");
-inline BoolCVar g_samplerFilterMinMaxCVar("Gr", "SamplerFilterMinMax", true, "Enable or not min/max sample filtering");
-inline StringCVar g_vkLayersCVar("Gr", "VkLayers", "", "VK layers to enable. Seperated by :");
+ANKI_CVAR(NumericCVar<PtrSize>, Gr, DiskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file")
+ANKI_CVAR(BoolCVar, Gr, DebugPrintf, false, "Enable or not debug printf")
+ANKI_CVAR(BoolCVar, Gr, SamplerFilterMinMax, true, "Enable or not min/max sample filtering")
+ANKI_CVAR(StringCVar, Gr, VkLayers, "", "VK layers to enable. Seperated by :")
 #endif
 
 #define ANKI_GR_LOGI(...) ANKI_LOG("GR", kNormal, __VA_ARGS__)

@@ -40,10 +40,12 @@ Error FinalComposite::initInternal()
 	// Progs
 	for(MutatorValue dbg = 0; dbg < 2; ++dbg)
 	{
-		ANKI_CHECK(loadShaderProgram(
-			"ShaderBinaries/FinalComposite.ankiprogbin",
-			{{"FILM_GRAIN", (g_filmGrainCVar > 0.0) ? 1 : 0}, {"BLOOM", 1}, {"DBG", dbg}, {"SHARPEN", MutatorValue(g_sharpnessCVar > 0.0)}}, m_prog,
-			m_grProgs[dbg]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/FinalComposite.ankiprogbin",
+									 {{"FILM_GRAIN", (g_cvarRenderFilmGrain > 0.0) ? 1 : 0},
+									  {"BLOOM", 1},
+									  {"DBG", dbg},
+									  {"SHARPEN", MutatorValue(g_cvarRenderSharpness > 0.0)}},
+									 m_prog, m_grProgs[dbg]));
 	}
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg,
@@ -106,12 +108,13 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
-	if(g_dbgSceneCVar || g_dbgPhysicsCVar)
+	if(g_cvarRenderDbgScene || g_cvarRenderDbgPhysics)
 	{
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
-	pass.newTextureDependency((g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getTonemapping().getRt(),
+	pass.newTextureDependency((g_cvarRenderMotionBlurSampleCount != 0) ? getRenderer().getMotionBlur().getRt()
+																	   : getRenderer().getTonemapping().getRt(),
 							  TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getBloom().getBloomRt(), TextureUsageBit::kSrvPixel);
 
@@ -133,7 +136,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-		const Bool dbgEnabled = g_dbgSceneCVar || g_dbgPhysicsCVar;
+		const Bool dbgEnabled = g_cvarRenderDbgScene || g_cvarRenderDbgPhysics;
 
 		Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 		ShaderProgramPtr optionalDebugProgram;
@@ -158,8 +161,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		{
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			rgraphCtx.bindSrv(0, 0,
-							  (g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getTonemapping().getRt());
+			rgraphCtx.bindSrv(
+				0, 0, (g_cvarRenderMotionBlurSampleCount != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getTonemapping().getRt());
 
 			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getBloomRt());
 
@@ -178,12 +181,12 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 				U32 m_padding2;
 			} consts;
 
-			F32 sharpness = g_sharpnessCVar; // [0, 1]
+			F32 sharpness = g_cvarRenderSharpness; // [0, 1]
 			sharpness *= 3.0f; // [0, 3]
 			sharpness = 3.0f - sharpness; // [3, 0], RCAS translates 0 to max sharpness
 			FsrRcasCon(&consts.m_fsrConsts0[0], sharpness);
 
-			consts.m_filmGrainStrength = g_filmGrainCVar;
+			consts.m_filmGrainStrength = g_cvarRenderFilmGrain;
 			consts.m_frameCount = getRenderer().getFrameCount() & kMaxU32;
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
