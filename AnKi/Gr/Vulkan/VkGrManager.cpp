@@ -604,6 +604,12 @@ Error GrManagerImpl::initInstance()
 		return Error::kFunctionFailed;
 	}
 
+	if(props2.properties.limits.maxPushConstantsSize < kMaxFastConstantsSize)
+	{
+		ANKI_VK_LOGE("GPU doesn't support at least %u push constants size", kMaxFastConstantsSize);
+		return Error::kFunctionFailed;
+	}
+
 	// Find vendor
 	switch(props2.properties.vendorID)
 	{

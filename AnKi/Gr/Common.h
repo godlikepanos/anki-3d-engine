@@ -95,7 +95,7 @@ constexpr U32 kMaxRegisterSpaces = 3; ///< Groups that can be bound at the same 
 constexpr U32 kMaxBindingsPerRegisterSpace = 32;
 constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
-constexpr U32 kMaxFastConstantsSize = 128; ///< Push/root constants size. Thanks AMD!!
+constexpr U32 kMaxFastConstantsSize = 256; ///< Push/root constants size.
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
