@@ -670,6 +670,8 @@ struct Consts
 	U32 m_giProbeCount;
 	F32 m_padding1;
 	F32 m_padding2;
+
+	Vec4 m_padding[2];
 };
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 

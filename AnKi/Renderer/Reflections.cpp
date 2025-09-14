@@ -313,7 +313,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				U32 m_giProbeCount;
 				F32 m_padding1;
 				F32 m_padding2;
-			} consts = {g_cvarRenderReflectionsRtMaxRayDistance, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), 0, 0};
+
+				Vec4 m_padding[2];
+			} consts = {g_cvarRenderReflectionsRtMaxRayDistance, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), 0, 0, {}};
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 

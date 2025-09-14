@@ -79,7 +79,7 @@ inline T sqrt(const T x) requires(std::is_integral<T>::value)
 }
 
 template<typename T>
-inline T square(const T x)
+constexpr inline T square(const T x) requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
 {
 	return x * x;
 }

@@ -149,7 +149,7 @@ Vec3 sampleClipmapCommon(SampleClipmapsArgs args, SamplerState linearAnyRepeatSa
 							   : findClipmapOnPositionCheap(consts, args.m_samplePoint, flags);
 #else
 	U16 clipmapIdx = 0;
-	if(!insideClipmap(consts, clipmapIdx, args.m_samplePoint))
+	if(!insideClipmap(consts, clipmapIdx, args.m_samplePoint, flags))
 	{
 		clipmapIdx = 10;
 	}

@@ -18,6 +18,8 @@
 
 namespace anki {
 
+ANKI_SVAR(IdcRays, StatCategory::kRenderer, "IDC ray count", StatFlag::kZeroEveryFrame)
+
 class ProbeRange
 {
 public:
@@ -27,14 +29,15 @@ public:
 
 /// Given the clipmap's position of this and the previous frame it splits the clipmap into regions that contain new probes (thus they need a full
 /// update) or regions of probes that need a less frequent update.
-static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, UVec3 probeCountsi, Array<ProbeRange, 3>& fullUpdateProbeRanges,
-									  U32& fullUpdateProbeRangeCount, ProbeRange& partialUpdateProbeRange)
+static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, Vec3 probeSize, UVec3 probeCountsu,
+									  Array<ProbeRange, 3>& fullUpdateProbeRanges, U32& fullUpdateProbeRangeCount,
+									  ProbeRange& partialUpdateProbeRange)
 {
 	fullUpdateProbeRangeCount = 0;
 
-	const IVec3 probeCounts(probeCountsi);
+	const IVec3 probeCounts(probeCountsu);
 
-	const IVec3 delta = IVec3(newClipmapMin - oldClipmapMin) / probeCounts;
+	const IVec3 delta = IVec3((newClipmapMin - oldClipmapMin) / probeSize);
 	const IVec3 absDelta = delta.abs();
 
 	if(absDelta.x() >= probeCounts.x() || absDelta.y() >= probeCounts.y() || absDelta.z() >= probeCounts.z())
@@ -42,6 +45,7 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, UV
 		// No overlap between the old and new clipmap positions, full update
 
 		fullUpdateProbeRanges[fullUpdateProbeRangeCount++] = {IVec3(0), probeCounts};
+		partialUpdateProbeRange = {IVec3(0), IVec3(0)};
 	}
 	else
 	{
@@ -89,7 +93,7 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, UV
 			fullUpdateProbeRangeBegin = partialUpdateProbeRangeBegin;
 			fullUpdateProbeRangeEnd = IVec3(partialUpdateProbeRangeEnd.x(), -delta.y(), partialUpdateProbeRangeEnd.z());
 
-			partialUpdateProbeRangeEnd.y() += -delta.y();
+			partialUpdateProbeRangeBegin.y() += -delta.y();
 		}
 
 		if(delta.y() != 0)
@@ -113,7 +117,7 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, UV
 			fullUpdateProbeRangeBegin = partialUpdateProbeRangeBegin;
 			fullUpdateProbeRangeEnd = IVec3(partialUpdateProbeRangeEnd.x(), partialUpdateProbeRangeEnd.y(), -delta.z());
 
-			partialUpdateProbeRangeEnd.z() += -delta.z();
+			partialUpdateProbeRangeBegin.z() += -delta.z();
 		}
 
 		if(delta.z() != 0)
@@ -124,14 +128,14 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, UV
 		partialUpdateProbeRange = {partialUpdateProbeRangeBegin, partialUpdateProbeRangeEnd};
 
 		// Validation
-		[[maybe_unused]] IVec3 totalProbeCount(0);
+		[[maybe_unused]] I32 totalProbeCount = 0;
 		for(U32 i = 0; i < fullUpdateProbeRangeCount; ++i)
 		{
 			const IVec3 end = fullUpdateProbeRanges[i].m_end;
 			const IVec3 begin = fullUpdateProbeRanges[i].m_begin;
 			const IVec3 diff = end - begin;
 			ANKI_ASSERT(diff.x() * diff.y() * diff.z() > 0);
-			totalProbeCount += diff;
+			totalProbeCount += diff.x() * diff.y() * diff.z();
 		}
 
 		{
@@ -139,9 +143,9 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, UV
 			const IVec3 begin = partialUpdateProbeRange.m_begin;
 			const IVec3 diff = end - begin;
 			ANKI_ASSERT(diff.x() * diff.y() * diff.z() > 0);
-			totalProbeCount += diff;
+			totalProbeCount += diff.x() * diff.y() * diff.z();
 		}
-		ANKI_ASSERT(totalProbeCount == probeCounts);
+		ANKI_ASSERT(totalProbeCount == probeCounts.x() * probeCounts.y() * probeCounts.z());
 	}
 }
 
@@ -205,9 +209,10 @@ Error IndirectDiffuseClipmaps::init()
 	}
 
 	// Create the RT result texture
-	const U32 raysPerProbePerFrame = square<U32>(g_cvarRenderIdcRadianceOctMapSize);
-	m_rtResultRtDesc = getRenderer().create2DRenderTargetDescription(m_consts.m_totalProbeCount, raysPerProbePerFrame * kIndirectDiffuseClipmapCount,
-																	 Format::kR16G16B16A16_Sfloat, "IndirectDiffuseClipmap: RT result");
+	const U32 texelsPerProbe = square<U32>(g_cvarRenderIdcRadianceOctMapSize);
+	m_rtResultRtDesc =
+		getRenderer().create2DRenderTargetDescription(m_consts.m_totalProbeCount, texelsPerProbe * g_cvarRenderIdcRayCountPerTexelOfNewProbe,
+													  Format::kR16G16B16A16_Sfloat, "IndirectDiffuseClipmap: RT result");
 	m_rtResultRtDesc.bake();
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
@@ -321,6 +326,9 @@ Error IndirectDiffuseClipmaps::init()
 		m_consts.m_textures[i].m_distanceMomentsOctMapSize = (m_distanceMomentsVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
 		m_consts.m_textures[i].m_irradianceOctMapSize = (m_irradianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
 		m_consts.m_textures[i].m_radianceOctMapSize = (m_radianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
+
+		m_consts.m_previousFrameAabbMins[i] = 100000.0f * m_consts.m_sizes[i] / Vec4(Vec3(m_consts.m_probeCounts), 1.0f);
+		m_consts.m_aabbMins[i] = m_consts.m_previousFrameAabbMins[i];
 	}
 
 	return Error::kNone;
@@ -395,29 +403,78 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[1], m_missShaderGroupIdx,
 								m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 
-	// Do ray tracing around the probes
+	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: RT");
+		// Compute probe ranges and ray budgets and stuff
+		Array<ProbeRange, 3> fullUpdateRanges;
+		U32 fullUpdateRangeCount = 0;
+		ProbeRange partialUpdateRange;
+		const Vec3 probeSize = m_consts.m_sizes[clipmap].xyz() / Vec3(m_consts.m_probeCounts);
+		findClipmapInUpdateRanges(m_consts.m_aabbMins[clipmap].xyz(), m_consts.m_previousFrameAabbMins[clipmap].xyz(), probeSize,
+								  UVec3(m_consts.m_probeCounts), fullUpdateRanges, fullUpdateRangeCount, partialUpdateRange);
 
-		pass.newTextureDependency(rtResultHandle, TextureUsageBit::kUavCompute);
-		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		setRgenSpace2Dependencies(pass);
-
-		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+		U32 fullUpdateRayCount = 0;
+		for(U32 i = 0; i < fullUpdateRangeCount; ++i)
 		{
-			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvCompute);
+			const UVec3 counts = UVec3(fullUpdateRanges[i].m_end - fullUpdateRanges[i].m_begin);
+			const U32 count = counts.x() * counts.y() * counts.z();
+			fullUpdateRayCount += square<U32>(g_cvarRenderIdcRadianceOctMapSize) * g_cvarRenderIdcRayCountPerTexelOfNewProbe * count;
 		}
 
-		pass.setWork([this, rtResultHandle, &ctx, sbtBuffer](RenderPassWorkContext& rgraphCtx) {
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		const U32 remainingRayCount = (g_cvarRenderIdcProbeRayBudget / kIndirectDiffuseClipmapCount > fullUpdateRayCount)
+										  ? g_cvarRenderIdcProbeRayBudget / kIndirectDiffuseClipmapCount - fullUpdateRayCount
+										  : 0;
 
-			cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
+		const UVec3 partialUpdateProbeCounts = UVec3(partialUpdateRange.m_end - partialUpdateRange.m_begin);
+		U32 partialUpdateProbeCount = remainingRayCount / square<U32>(g_cvarRenderIdcRadianceOctMapSize);
+		partialUpdateProbeCount =
+			min(partialUpdateProbeCount, partialUpdateProbeCounts.x() * partialUpdateProbeCounts.y() * partialUpdateProbeCounts.z());
 
-			// More globals
-			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+		g_svarIdcRays.increment(fullUpdateRayCount + partialUpdateProbeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize));
+
+		struct ClipmapRegion
+		{
+			UVec3 m_probesBegin;
+			U32 m_partialUpdate;
+
+			UVec3 m_probeCounts;
+			U32 m_probeCount;
+		};
+
+		struct ProbeUpdateConsts
+		{
+			U32 m_clipmapIdx;
+			U32 m_radianceOctMapSize; // Have it here as well as well as a mutator. Can't use the mutator cause it will create may raygen variants
+			U32 m_rayCountPerTexel; // Ray count per oct map texel
+			U32 m_maxProbesToUpdate;
+
+			ClipmapRegion m_clipmapRegion;
+		};
+
+		// Do ray tracing around the probes
+		{
+			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("IndirectDiffuseClipmaps: RT (clipmap %u)", clipmap));
+
+			pass.newTextureDependency(rtResultHandle, TextureUsageBit::kUavCompute);
+			pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
+			setRgenSpace2Dependencies(pass);
+
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvCompute);
+			}
+
+			pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, fullUpdateRangeCount, clipmap, fullUpdateRanges, partialUpdateRange,
+						  partialUpdateProbeCount](RenderPassWorkContext& rgraphCtx) {
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+				cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
+
+				// More globals
+				cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
+				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
@@ -427,58 +484,135 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			bindRgenSpace2Resources(ctx, rgraphCtx);
+				bindRgenSpace2Resources(ctx, rgraphCtx);
 
-			rgraphCtx.bindUav(0, 2, rtResultHandle);
+				rgraphCtx.bindUav(0, 2, rtResultHandle);
 
-			const U32 raysPerProbePerFrame = square<U32>(g_cvarRenderIdcRadianceOctMapSize);
+				ProbeUpdateConsts consts;
+				consts.m_clipmapIdx = clipmap;
+				consts.m_radianceOctMapSize = g_cvarRenderIdcRadianceOctMapSize;
 
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
-				const UVec4 consts(clipmap, g_cvarRenderIdcRadianceOctMapSize, 0, 0);
-				cmdb.setFastConstants(&consts, sizeof(consts));
+				// Do full updates
+				for(U32 i = 0; i < fullUpdateRangeCount; ++i)
+				{
+					cmdb.pushDebugMarker("Full update", Vec3(0.0f, 1.0f, 1.0f));
 
-				cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-								  m_consts.m_totalProbeCount * raysPerProbePerFrame, 1, 1);
-			}
-		});
-	}
+					consts.m_rayCountPerTexel = g_cvarRenderIdcRayCountPerTexelOfNewProbe;
+					consts.m_clipmapRegion.m_probesBegin = UVec3(fullUpdateRanges[i].m_begin);
+					consts.m_clipmapRegion.m_probeCounts = UVec3(fullUpdateRanges[i].m_end - fullUpdateRanges[i].m_begin);
+					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
+														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_maxProbesToUpdate = consts.m_clipmapRegion.m_probeCount;
+					consts.m_clipmapRegion.m_partialUpdate = 0;
 
-	// Populate caches
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Populate caches");
+					cmdb.setFastConstants(&consts, sizeof(consts));
 
-		pass.newTextureDependency(rtResultHandle, TextureUsageBit::kSrvCompute);
-		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+					const U32 threadCount =
+						consts.m_clipmapRegion.m_probeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize) * consts.m_rayCountPerTexel;
+					cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+									  threadCount, 1, 1);
+
+					cmdb.popDebugMarker();
+				}
+
+				// Do partial updates
+				if(partialUpdateProbeCount)
+				{
+					cmdb.pushDebugMarker("Partial update", Vec3(0.0f, 1.0f, 1.0f));
+
+					consts.m_rayCountPerTexel = 1;
+					consts.m_clipmapRegion.m_probesBegin = UVec3(partialUpdateRange.m_begin);
+					consts.m_clipmapRegion.m_probeCounts = UVec3(partialUpdateRange.m_end - partialUpdateRange.m_begin);
+					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
+														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_maxProbesToUpdate = partialUpdateProbeCount;
+					consts.m_clipmapRegion.m_partialUpdate = 1;
+
+					cmdb.setFastConstants(&consts, sizeof(consts));
+
+					const U32 threadCount = partialUpdateProbeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize);
+					cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+									  threadCount, 1, 1);
+
+					cmdb.popDebugMarker();
+				}
+			});
+		}
+
+		// Populate caches
 		{
+			NonGraphicsRenderPass& pass =
+				rgraph.newNonGraphicsRenderPass(generateTempPassName("IndirectDiffuseClipmaps: Populate caches (clipmap %u)", clipmap));
+
+			pass.newTextureDependency(rtResultHandle, TextureUsageBit::kSrvCompute);
 			pass.newTextureDependency(radianceVolumes[clipmap], TextureUsageBit::kUavCompute);
 			pass.newTextureDependency(probeValidityVolumes[clipmap], TextureUsageBit::kUavCompute);
 			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kUavCompute);
-		}
 
-		pass.setWork([this, &ctx, rtResultHandle, radianceVolumes, probeValidityVolumes, distanceMomentsVolumes](RenderPassWorkContext& rgraphCtx) {
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			pass.setWork([this, &ctx, rtResultHandle, radianceVolumes, probeValidityVolumes, distanceMomentsVolumes, clipmap, fullUpdateRanges,
+						  partialUpdateRange, partialUpdateProbeCount, fullUpdateRangeCount](RenderPassWorkContext& rgraphCtx) {
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_populateCachesGrProg.get());
+				cmdb.bindShaderProgram(m_populateCachesGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, rtResultHandle);
+				rgraphCtx.bindSrv(0, 0, rtResultHandle);
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+				cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
-			{
 				rgraphCtx.bindUav(0, 0, radianceVolumes[clipmap]);
 				rgraphCtx.bindUav(1, 0, distanceMomentsVolumes[clipmap]);
 				rgraphCtx.bindUav(2, 0, probeValidityVolumes[clipmap]);
 
-				const UVec4 consts(clipmap);
-				cmdb.setFastConstants(&consts, sizeof(consts));
+				ProbeUpdateConsts consts;
+				consts.m_clipmapIdx = clipmap;
+				consts.m_radianceOctMapSize = g_cvarRenderIdcRadianceOctMapSize;
 
-				const U32 raysPerProbePerFrame = square<U32>(g_cvarRenderIdcRadianceOctMapSize);
-				const U32 threadCount = 64;
-				cmdb.dispatchCompute((raysPerProbePerFrame * m_consts.m_totalProbeCount + threadCount - 1) / threadCount, 1, 1);
-			}
-		});
+				// Do full updates
+				const U32 numthreads = 64;
+				for(U32 i = 0; i < fullUpdateRangeCount; ++i)
+				{
+					cmdb.pushDebugMarker("Full update", Vec3(0.0f, 1.0f, 1.0f));
+
+					consts.m_rayCountPerTexel = g_cvarRenderIdcRayCountPerTexelOfNewProbe;
+					consts.m_clipmapRegion.m_probesBegin = UVec3(fullUpdateRanges[i].m_begin);
+					consts.m_clipmapRegion.m_probeCounts = UVec3(fullUpdateRanges[i].m_end - fullUpdateRanges[i].m_begin);
+					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
+														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_maxProbesToUpdate = consts.m_clipmapRegion.m_probeCount;
+					consts.m_clipmapRegion.m_partialUpdate = 0;
+
+					cmdb.setFastConstants(&consts, sizeof(consts));
+
+					U32 threadCount = consts.m_clipmapRegion.m_probeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize);
+					threadCount = (threadCount + numthreads - 1) / numthreads;
+					cmdb.dispatchCompute(threadCount, 1, 1);
+
+					cmdb.popDebugMarker();
+				}
+
+				// Do partial updates
+				if(partialUpdateProbeCount)
+				{
+					cmdb.pushDebugMarker("Partial update", Vec3(0.0f, 1.0f, 1.0f));
+
+					consts.m_rayCountPerTexel = 1;
+					consts.m_clipmapRegion.m_probesBegin = UVec3(partialUpdateRange.m_begin);
+					consts.m_clipmapRegion.m_probeCounts = UVec3(partialUpdateRange.m_end - partialUpdateRange.m_begin);
+					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
+														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_maxProbesToUpdate = partialUpdateProbeCount;
+					consts.m_clipmapRegion.m_partialUpdate = 1;
+
+					cmdb.setFastConstants(&consts, sizeof(consts));
+
+					U32 threadCount = consts.m_maxProbesToUpdate * square<U32>(g_cvarRenderIdcRadianceOctMapSize);
+					threadCount = (threadCount + numthreads - 1) / numthreads;
+					cmdb.dispatchCompute(threadCount, 1, 1);
+
+					cmdb.popDebugMarker();
+				}
+			});
+		}
 	}
 
 	// Compute irradiance
@@ -557,12 +691,15 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			bindRgenSpace2Resources(ctx, rgraphCtx);
 			rgraphCtx.bindUav(0, 2, lowRezRt);
 
-			const Vec4 consts(g_cvarRenderIdcFirstBounceRayDistance);
+			const Array<Vec4, 3> consts = {Vec4(g_cvarRenderIdcFirstBounceRayDistance), {}, {}};
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-							  getRenderer().getInternalResolution().x() / 2,
-							  getRenderer().getInternalResolution().y() / (!g_cvarRenderIdcApplyHighQuality + 1), 1);
+			const U32 width = getRenderer().getInternalResolution().x() / 2;
+			const U32 height = getRenderer().getInternalResolution().y() / (!g_cvarRenderIdcApplyHighQuality + 1);
+			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1, width,
+							  height, 1);
+
+			g_svarIdcRays.increment(width * height);
 		});
 	}
 	else

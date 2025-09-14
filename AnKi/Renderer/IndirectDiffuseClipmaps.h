@@ -21,6 +21,12 @@ constexpr U32 kDefaultClipmapProbeCountY = 12;
 constexpr F32 kDefaultClipmap0ProbeSize = 1.5f;
 constexpr F32 kDefaultClipmap1ProbeSize = 3.0f;
 constexpr F32 kDefaultClipmap2ProbeSize = 6.0f;
+constexpr U32 kDefaultRadianceOctMapSize = 10;
+constexpr U32 kDefaultRayCountPerTexelOfNewProbe = 4;
+
+/// As if you are updating 25% of the probes each frame.
+constexpr U32 kDefaultProbeRayBudget =
+	(kIndirectDiffuseClipmapCount * square(kDefaultClipmapProbeCountXZ) * kDefaultClipmapProbeCountY * square(kDefaultRadianceOctMapSize)) * 25 / 100;
 
 ANKI_CVAR2(NumericCVar<U32>, Render, Idc, ProbesXZ, kDefaultClipmapProbeCountXZ, 10, 100, "The cell count of each dimension of 1st clipmap")
 ANKI_CVAR2(NumericCVar<U32>, Render, Idc, ProbesY, kDefaultClipmapProbeCountY, 4, 100, "The cell count of each dimension of 1st clipmap")
@@ -41,7 +47,7 @@ ANKI_CVAR2(NumericCVar<F32>, Render, Idc, Clipmap2YSize, F32(kDefaultClipmapProb
 		   "The clipmap size in meters")
 
 ANKI_CVAR2(
-	NumericCVar<U32>, Render, Idc, RadianceOctMapSize, 10,
+	NumericCVar<U32>, Render, Idc, RadianceOctMapSize, kDefaultRadianceOctMapSize,
 	[](U32 val) {
 		return val >= 4 && val <= 30 && val % 2 == 0;
 	},
@@ -51,7 +57,10 @@ ANKI_CVAR2(NumericCVar<U32>, Render, Idc, IrradianceOctMapSize, 5, 4, 20, "Size 
 ANKI_CVAR2(NumericCVar<F32>, Render, Idc, FirstBounceRayDistance, 0.0f, 0.0f, 10000.0f,
 		   "For the 1st bounce shoot rays instead of sampling the clipmaps")
 ANKI_CVAR2(BoolCVar, Render, Idc, ApplyHighQuality, false, "If true use 1/2 resolution else use 1/4")
-ANKI_CVAR2(NumericCVar<U8>, Render, Idc, TexelRayCountNewProbe, 4, 1, 16,
+ANKI_CVAR2(NumericCVar<U8>, Render, Idc, RayCountPerTexelOfNewProbe, kDefaultRayCountPerTexelOfNewProbe, 1, 16,
+		   "The number of rays for a single texel of the oct map that will be cast for probes that are seen for the 1st time")
+
+ANKI_CVAR2(NumericCVar<U32>, Render, Idc, ProbeRayBudget, kDefaultProbeRayBudget, 1024, 100 * 1024 * 1024,
 		   "The number of rays for a single texel of the oct map that will be cast for probes that are seen for the 1st time")
 
 /// @memberof IndirectDiffuseClipmaps

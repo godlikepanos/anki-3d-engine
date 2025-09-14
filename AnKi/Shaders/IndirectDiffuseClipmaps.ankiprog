@@ -40,43 +40,75 @@ constexpr F32 kGaussianSigma = 0.55;
 constexpr F32 kMaxBilateralSamplesPerDirection = 5.0;
 constexpr Bool kLocalLightShadow = false;
 
+struct ClipmapRegion
+{
+	UVec3 m_probesBegin;
+	U32 m_partialUpdate;
+
+	UVec3 m_probeCounts;
+	U32 m_probeCount;
+};
+
+struct ProbeUpdateConsts
+{
+	U32 m_clipmapIdx;
+	U32 m_radianceOctMapSize; // Have it here as well as well as a mutator. Can't use the mutator cause it will create may raygen variants
+	U32 m_rayCountPerTexel; // Ray count per oct map texel
+	U32 m_maxProbesToUpdate;
+
+	ClipmapRegion m_clipmapRegion;
+};
+
 // ===========================================================================
 // RtMaterialFetch                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch)
+#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) && NOT_ZERO(RT_MATERIAL_FETCH_CLIPMAP)
 
-#	if RT_MATERIAL_FETCH_CLIPMAP
-struct Consts
-{
-	U32 m_clipmapIdx;
-	U32 m_radianceOctMapSize; // Don't use the mutator because we don't want to create may raygen variants
-	F32 m_padding1;
-	F32 m_padding2;
-};
-ANKI_FAST_CONSTANTS(Consts, g_consts)
+ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 
 [Shader("raygeneration")] void main()
 {
 	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
-	const UVec3 probeCounts = idConsts.m_probeCounts;
-	const U32 probeCountTotal = idConsts.m_totalProbeCount;
-	const Vec3 clipmapSize = idConsts.m_sizes[g_consts.m_clipmapIdx];
-	const Vec3 clipmapAabbMin = idConsts.m_aabbMins[g_consts.m_clipmapIdx];
+	const U32 octMapTexelCount = square(g_consts.m_radianceOctMapSize);
 
 	// Compute probe info. Make sure you shoot coherent rays as much as possible by using the same direction on a specific wave
-	const U32 outPixelIdx = DispatchRaysIndex().x / probeCountTotal;
-	const U32 probeIdx = DispatchRaysIndex().x % probeCountTotal;
+	U32 probeIdx;
+	U32 subRayIdx;
+	U32 octMapTexelIdx;
+	unflatten3dArrayIndex(octMapTexelCount, g_consts.m_maxProbesToUpdate, g_consts.m_rayCountPerTexel, DispatchRaysIndex().x, octMapTexelIdx,
+						  probeIdx, subRayIdx);
 
-	UVec3 probe3dIdx;
-	unflatten3dArrayIndex(probeCounts.z, probeCounts.y, probeCounts.x, probeIdx, probe3dIdx.z, probe3dIdx.y, probe3dIdx.x);
+	if(g_consts.m_clipmapRegion.m_partialUpdate)
+	{
+		// Choose every other probe depending on the budget
+		const U32 div = g_consts.m_clipmapRegion.m_probeCount / g_consts.m_maxProbesToUpdate;
 
-	const Vec3 probeSize = clipmapSize / probeCounts;
-	const Vec3 probeWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmapAabbMin;
+		probeIdx = g_globalRendererConstants.m_frame + div * probeIdx;
+		probeIdx = probeIdx % g_consts.m_clipmapRegion.m_probeCount;
+	}
+
+	UVec3 probeId;
+	unflatten3dArrayIndex(g_consts.m_clipmapRegion.m_probeCounts.z, g_consts.m_clipmapRegion.m_probeCounts.y,
+						  g_consts.m_clipmapRegion.m_probeCounts.x, probeIdx, probeId.z, probeId.y, probeId.x);
+	probeId += g_consts.m_clipmapRegion.m_probesBegin;
+	probeIdx = probeId.z * idConsts.m_probeCounts.x * idConsts.m_probeCounts.y + probeId.y * idConsts.m_probeCounts.x + probeId.x;
+
+	// Check
+	{
+		const UVec3 probeIdBegin = g_consts.m_clipmapRegion.m_probesBegin;
+		[unroll] for(U32 i = 1; i < 2; ++i)
+		{
+			ANKI_ASSERT(probeId[i] >= probeIdBegin[i] && probeId[i] < probeIdBegin[i] + g_consts.m_clipmapRegion.m_probeCounts[i]);
+		}
+	}
+
+	const Vec3 probeSize = idConsts.m_sizes[g_consts.m_clipmapIdx] / idConsts.m_probeCounts;
+	const Vec3 probeWorldPos = probeId * probeSize + probeSize * 0.5 + idConsts.m_aabbMins[g_consts.m_clipmapIdx];
 
 	// Generate direction
-	const UVec2 radianceOctCoord = UVec2(outPixelIdx % g_consts.m_radianceOctMapSize, outPixelIdx / g_consts.m_radianceOctMapSize);
+	const UVec2 radianceOctCoord = UVec2(octMapTexelIdx % g_consts.m_radianceOctMapSize, octMapTexelIdx / g_consts.m_radianceOctMapSize);
 	ANKI_ASSERT(all(radianceOctCoord < g_consts.m_radianceOctMapSize));
-	const U32 sampleIdx = (g_globalRendererConstants.m_frame + probeIdx) % 16;
+	const U32 sampleIdx = (g_globalRendererConstants.m_frame * g_consts.m_rayCountPerTexel + subRayIdx) % 16;
 	const Vec2 sampleCoord = radianceOctCoord + 0.5 + generateMsaa16x(sampleIdx) / (16.0 * 2.0);
 	const HVec3 dir = octahedronDecode(sampleCoord / g_consts.m_radianceOctMapSize);
 
@@ -108,99 +140,9 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	}
 
 	// Store result
-	const U32 raysPerProbePerFrame = square(g_consts.m_radianceOctMapSize);
 	const F32 kMaxDist = 1000.0; // Chose something small and make sure its square doesn't overflow F16
-	TEX(g_lightResultTex, UVec2(probeIdx, outPixelIdx + raysPerProbePerFrame * g_consts.m_clipmapIdx)) = HVec4(radiance, min(rayT, kMaxDist));
+	TEX(g_lightResultTex, UVec2(probeIdx, octMapTexelIdx * g_consts.m_rayCountPerTexel + subRayIdx)) = HVec4(radiance, min(rayT, kMaxDist));
 }
-
-// ===========================================================================
-// RtMaterialFetch (Apply)                                                   =
-// ===========================================================================
-#	else // RT_MATERIAL_FETCH_CLIPMAP
-struct Consts
-{
-	F32 m_rayMax;
-	F32 m_padding1;
-	F32 m_padding2;
-	F32 m_padding3;
-};
-ANKI_FAST_CONSTANTS(Consts, g_consts)
-
-[Shader("raygeneration")] void main()
-{
-#		if SPATIAL_RECONSTRUCT_TYPE == 0
-	const UVec2 fullCoord = UVec2(DispatchRaysIndex().x * 2u + (DispatchRaysIndex().y & 1u), DispatchRaysIndex().y);
-	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * UVec2(2, 1));
-#		else
-	const UVec2 fullCoord = DispatchRaysIndex().xy * 2u;
-	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * 2);
-#		endif
-
-	const F32 depth = TEX(g_depthTex, fullCoord).x;
-	const Vec4 rt2 = TEX(g_gbufferRt2, fullCoord);
-	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
-
-	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
-	const Vec3 worldPos = v4.xyz / v4.w;
-
-	const Vec3 biasDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
-	const Vec3 biasedWorldPos = worldPos + biasDir * 0.1;
-
-	// Rand
-	const UVec3 seed = rand3DPCG16(UVec3(fullCoord, g_globalRendererConstants.m_frame % 8u));
-	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
-
-	const Mat3 tbn = rotationFromDirection(worldNormal);
-	const Vec3 rayDir = normalize(mul(tbn, hemisphereSampleCos(randFactors)));
-
-	// Trace
-	const F32 tMax = g_consts.m_rayMax;
-	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
-	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
-	F32 rayT = 0.0;
-	Bool backfacing = false;
-	const Bool hit = materialRayTrace<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
-
-	HVec3 radiance = 0.0;
-	Vec3 hitPos = 0.0;
-	if(hit)
-	{
-		hitPos = biasedWorldPos + rayDir * (rayT - 0.01);
-		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
-	}
-
-	Vec3 rayOrigin;
-	Vec3 rayDir2;
-	if(hit)
-	{
-		// 2nd bounce
-		rayOrigin = hitPos;
-		rayDir2 = gbuffer.m_worldNormal;
-	}
-	else
-	{
-		rayOrigin = biasedWorldPos;
-		rayDir2 = worldNormal;
-	}
-	const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality | kSampleClipmapFlagBiasSamplePointSurfaceNormal;
-	const Vec3 irradiance =
-		sampleClipmapIrradiance(rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, g_globalRendererConstants.m_indirectDiffuseClipmaps,
-								g_linearAnyRepeatSampler, flags, randFactors.x);
-
-	Vec3 final;
-	if(hit)
-	{
-		final = radiance + irradiance * gbuffer.m_diffuse;
-	}
-	else
-	{
-		final = irradiance;
-	}
-
-	TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = Vec4(final, 0.0);
-	// TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = lerp(TEX(g_colorAndPdfTex, DispatchRaysIndex().xy), Vec4(final, 0.0), 0.05);
-}
-#	endif // RT_MATERIAL_FETCH_CLIPMAP
 #endif
 
 // ===========================================================================
@@ -215,56 +157,87 @@ RWTexture3D<Vec4> g_probeValidiryVolume : register(u2);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
-struct Consts
-{
-	U32 m_clipmapIdx;
-	U32 m_padding1;
-	U32 m_padding2;
-	U32 m_padding3;
-};
-ANKI_FAST_CONSTANTS(Consts, g_consts)
+ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 
 [NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
 	const U32 clipmapIdx = g_consts.m_clipmapIdx;
 	const Vec3 clipmapSize = idConsts.m_sizes[clipmapIdx].xyz;
-	const UVec3 probeCounts = idConsts.m_probeCounts;
-	const Vec3 clipmapAabbMin = idConsts.m_aabbMins[clipmapIdx].xyz;
 	const Vec3 prevClipmapAabbMin = idConsts.m_previousFrameAabbMins[clipmapIdx].xyz;
+	const U32 octMapTexelCount = square(RADIANCE_OCTAHEDRON_MAP_SIZE);
 
-	const U32 raysPerProbePerFrame = square(RADIANCE_OCTAHEDRON_MAP_SIZE);
+	U32 probeIdx = svDispatchThreadId.x / octMapTexelCount;
+	const U32 octMapTexelIdx = svDispatchThreadId.x % octMapTexelCount;
 
-	const U32 rtPixelIdx = svDispatchThreadId.x % raysPerProbePerFrame;
-	const U32 probeIdx = svDispatchThreadId.x / raysPerProbePerFrame;
-	if(probeIdx >= idConsts.m_totalProbeCount)
+	if(octMapTexelIdx >= octMapTexelCount || probeIdx >= g_consts.m_maxProbesToUpdate)
 	{
 		return;
 	}
 
-	const Vec3 probeSize = clipmapSize / probeCounts;
-	UVec3 probe3dIdx;
-	unflatten3dArrayIndex(probeCounts.z, probeCounts.y, probeCounts.x, probeIdx, probe3dIdx.z, probe3dIdx.y, probe3dIdx.x);
-	const Vec3 probeWorldPos = probe3dIdx * probeSize + probeSize * 0.5 + clipmapAabbMin;
-	const Bool blendWithHistory = all(probeWorldPos > prevClipmapAabbMin) && all(probeWorldPos < prevClipmapAabbMin + clipmapSize);
-
-	UVec3 noOctTexCoord = frac(probeWorldPos / clipmapSize) * probeCounts;
-	noOctTexCoord = min(noOctTexCoord, probeCounts - 1u);
-	noOctTexCoord = noOctTexCoord.xzy;
-
-	// Read the result from RT
-	const HVec4 comp = TEX(g_rtResultTex, UVec2(probeIdx, rtPixelIdx + g_consts.m_clipmapIdx * raysPerProbePerFrame));
-	HVec3 radiance = comp.xyz;
-	const Vec2 moments = Vec2(comp.w, square(comp.w));
-	if(all(radiance == HVec3(1.0, 0.0, 1.0)))
+	if(g_consts.m_clipmapRegion.m_partialUpdate)
 	{
-		radiance = 0.0;
+		// Choose every other probe depending on the budget
+		const U32 div = g_consts.m_clipmapRegion.m_probeCount / g_consts.m_maxProbesToUpdate;
+
+		probeIdx = g_globalRendererConstants.m_frame + div * probeIdx;
+		probeIdx = probeIdx % g_consts.m_clipmapRegion.m_probeCount;
 	}
+
+	UVec3 probeId;
+	unflatten3dArrayIndex(g_consts.m_clipmapRegion.m_probeCounts.z, g_consts.m_clipmapRegion.m_probeCounts.y,
+						  g_consts.m_clipmapRegion.m_probeCounts.x, probeIdx, probeId.z, probeId.y, probeId.x);
+	probeId += g_consts.m_clipmapRegion.m_probesBegin;
+	probeIdx = probeId.z * idConsts.m_probeCounts.x * idConsts.m_probeCounts.y + probeId.y * idConsts.m_probeCounts.x + probeId.x;
+
+	// Check
+	{
+		const UVec3 probeIdBegin = g_consts.m_clipmapRegion.m_probesBegin;
+		[unroll] for(U32 i = 1; i < 2; ++i)
+		{
+			ANKI_ASSERT(probeId[i] >= probeIdBegin[i] && probeId[i] < probeIdBegin[i] + g_consts.m_clipmapRegion.m_probeCounts[i]);
+		}
+	}
+
+	// Read the result of RT
+	HVec3 radiance = 0.0;
+	Vec2 moments = 0.0;
+	F32 weightSum = 0.0;
+	for(U32 subray = 0; subray < g_consts.m_rayCountPerTexel; ++subray)
+	{
+		HVec4 comp = TEX(g_rtResultTex, UVec2(probeIdx, octMapTexelIdx * g_consts.m_rayCountPerTexel + subray));
+		const F32 weight = 1.0 / g_consts.m_rayCountPerTexel;
+
+		if(any(comp.xyz != HVec3(1.0, 0.0, 1.0)))
+		{
+			radiance += comp.xyz * weight;
+			moments += Vec2(comp.w, square(comp.w)) * weight;
+
+			weightSum += weight;
+		}
+	}
+
+	if(weightSum > 0.0)
+	{
+		radiance /= weightSum;
+		moments /= weightSum;
+	}
+
+	// Compute probe info
+	const Vec3 probeSize = clipmapSize / idConsts.m_probeCounts;
+	const Vec3 probeWorldPos = probeId * probeSize + probeSize * 0.5 + idConsts.m_aabbMins[clipmapIdx].xyz;
+
+	const Bool blendWithHistory =
+		g_consts.m_clipmapRegion.m_partialUpdate && all(probeWorldPos > prevClipmapAabbMin) && all(probeWorldPos < prevClipmapAabbMin + clipmapSize);
+
+	UVec3 noOctTexCoord = frac(probeWorldPos / clipmapSize) * idConsts.m_probeCounts;
+	noOctTexCoord = min(noOctTexCoord, idConsts.m_probeCounts - 1u);
+	noOctTexCoord = noOctTexCoord.xzy;
 
 	// Update the radiance and distance moments volumes
 	{
 		// Compute oct coord
-		const UVec2 radianceOctCoord = UVec2(rtPixelIdx % RADIANCE_OCTAHEDRON_MAP_SIZE, rtPixelIdx / RADIANCE_OCTAHEDRON_MAP_SIZE);
+		const UVec2 radianceOctCoord = UVec2(octMapTexelIdx % RADIANCE_OCTAHEDRON_MAP_SIZE, octMapTexelIdx / RADIANCE_OCTAHEDRON_MAP_SIZE);
 		ANKI_ASSERT(all(radianceOctCoord < RADIANCE_OCTAHEDRON_MAP_SIZE));
 
 		UVec3 actualVolumeTexCoord;
@@ -308,19 +281,21 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	}
 
 	// Update probe validity
-	if(rtPixelIdx == 0)
+	if(octMapTexelIdx == 0)
 	{
+		// Loop the directions again
 		F32 invalidRayCount = 0.0;
-		for(U32 i = 0; i < raysPerProbePerFrame; ++i)
+		for(U32 i = 0; i < octMapTexelCount; ++i)
 		{
-			const HVec3 radiance = TEX(g_rtResultTex, UVec2(probeIdx, i + g_consts.m_clipmapIdx * raysPerProbePerFrame));
+			const U32 subray = 0;
+			const HVec3 radiance = TEX(g_rtResultTex, UVec2(probeIdx, i * g_consts.m_rayCountPerTexel + subray));
 			if(all(radiance == HVec3(1.0, 0.0, 1.0)))
 			{
 				invalidRayCount += 1.0;
 			}
 		}
 
-		F32 valid = 1.0 - min(1.0, invalidRayCount / F32(raysPerProbePerFrame / 4));
+		F32 valid = 1.0 - min(1.0, invalidRayCount / F32(octMapTexelCount / 4));
 		if(blendWithHistory)
 		{
 			const F32 prev = TEX(g_probeValidiryVolume, noOctTexCoord).x;
@@ -525,6 +500,98 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	}
 
 	TEX(g_outTex, realSvDispatchThreadId) = Vec4(irradiance, 0.0);
+}
+#endif
+
+// ===========================================================================
+// RtMaterialFetch (Apply)                                                   =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) && !RT_MATERIAL_FETCH_CLIPMAP
+
+struct Consts
+{
+	F32 m_rayMax;
+	F32 m_padding1;
+	F32 m_padding2;
+	F32 m_padding3;
+
+	Vec4 m_padding[2];
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+[Shader("raygeneration")] void main()
+{
+#	if SPATIAL_RECONSTRUCT_TYPE == 0
+	const UVec2 fullCoord = UVec2(DispatchRaysIndex().x * 2u + (DispatchRaysIndex().y & 1u), DispatchRaysIndex().y);
+	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * UVec2(2, 1));
+#	else
+	const UVec2 fullCoord = DispatchRaysIndex().xy * 2u;
+	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * 2);
+#	endif
+
+	const F32 depth = TEX(g_depthTex, fullCoord).x;
+	const Vec4 rt2 = TEX(g_gbufferRt2, fullCoord);
+	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+
+	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
+	const Vec3 worldPos = v4.xyz / v4.w;
+
+	const Vec3 biasDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
+	const Vec3 biasedWorldPos = worldPos + biasDir * 0.1;
+
+	// Rand
+	const UVec3 seed = rand3DPCG16(UVec3(fullCoord, g_globalRendererConstants.m_frame % 8u));
+	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
+
+	const Mat3 tbn = rotationFromDirection(worldNormal);
+	const Vec3 rayDir = normalize(mul(tbn, hemisphereSampleCos(randFactors)));
+
+	// Trace
+	const F32 tMax = g_consts.m_rayMax;
+	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
+	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
+	F32 rayT = 0.0;
+	Bool backfacing = false;
+	const Bool hit = materialRayTrace<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
+
+	HVec3 radiance = 0.0;
+	Vec3 hitPos = 0.0;
+	if(hit)
+	{
+		hitPos = biasedWorldPos + rayDir * (rayT - 0.01);
+		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
+	}
+
+	Vec3 rayOrigin;
+	Vec3 rayDir2;
+	if(hit)
+	{
+		// 2nd bounce
+		rayOrigin = hitPos;
+		rayDir2 = gbuffer.m_worldNormal;
+	}
+	else
+	{
+		rayOrigin = biasedWorldPos;
+		rayDir2 = worldNormal;
+	}
+	const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality | kSampleClipmapFlagBiasSamplePointSurfaceNormal;
+	const Vec3 irradiance =
+		sampleClipmapIrradiance(rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, g_globalRendererConstants.m_indirectDiffuseClipmaps,
+								g_linearAnyRepeatSampler, flags, randFactors.x);
+
+	Vec3 final;
+	if(hit)
+	{
+		final = radiance + irradiance * gbuffer.m_diffuse;
+	}
+	else
+	{
+		final = irradiance;
+	}
+
+	TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = Vec4(final, 0.0);
+	// TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = lerp(TEX(g_colorAndPdfTex, DispatchRaysIndex().xy), Vec4(final, 0.0), 0.05);
 }
 #endif
 
