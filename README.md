@@ -76,7 +76,7 @@ To build the release version open `PowerShell` and type:
 	$cd path/to/anki
 	$mkdir build
 	$cd build
-	$cmake .. -G "Visual Studio 17 2022 Win64" -DCMAKE_BUILD_TYPE=Release
+	$cmake .. -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release
 	$cmake --build . --config Release
 
 Alternatively, recent Visual Studio versions support building CMake projects from inside the IDE:

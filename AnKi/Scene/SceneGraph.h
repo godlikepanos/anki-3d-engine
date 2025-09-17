@@ -73,14 +73,13 @@ public:
 		ANKI_ASSERT(m_mainCam != nullptr);
 		return *m_mainCam;
 	}
+
 	const SceneNode& getActiveCameraNode() const
 	{
 		return *m_mainCam;
 	}
-	void setActiveCameraNode(SceneNode* cam)
-	{
-		m_mainCam = cam;
-	}
+
+	void setActiveCameraNode(SceneNode* cam);
 
 	U32 getSceneNodesCount() const
 	{

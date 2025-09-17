@@ -196,9 +196,10 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			else
 			{
 				const Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
-				F32 distSq = dot(diff, diff) / (vol.m_aabbMaxOrSphereRadius.x * vol.m_aabbMaxOrSphereRadius.x);
-				distSq = min(1.0, distSq);
-				factor = 1.0 - distSq;
+				factor = dot(diff, diff) / (vol.m_aabbMaxOrSphereRadius.x * vol.m_aabbMaxOrSphereRadius.x);
+				factor = 1.0 - factor;
+				factor = max(0.0, factor);
+				factor *= factor;
 			}
 
 			fogDensity += vol.m_density * factor;

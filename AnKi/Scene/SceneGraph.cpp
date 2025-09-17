@@ -156,7 +156,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		SceneNode* node = m_nodesForRegistration.popFront();
 
 		// Add to dict if it has a name
-		if(node->getName())
+		if(node->getName() != "Unnamed")
 		{
 			if(tryFindSceneNode(node->getName()))
 			{
@@ -216,7 +216,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		}
 
 		// Remove from dict
-		if(node->getName())
+		if(node->getName() != "Unnamed")
 		{
 			auto it = m_nodesDict.find(node->getName());
 			ANKI_ASSERT(it != m_nodesDict.getEnd());
@@ -258,12 +258,6 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 		}
 	});
 
-	// Update children
-	node.visitChildrenMaxDepth(0, [&](SceneNode& child) {
-		updateNode(prevTime, crntTime, child);
-		return true;
-	});
-
 	// Frame update
 	{
 		if(sceneComponentUpdatedCount)
@@ -279,6 +273,12 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 		node.frameUpdate(prevTime, crntTime);
 	}
+
+	// Update children
+	node.visitChildrenMaxDepth(0, [&](SceneNode& child) {
+		updateNode(prevTime, crntTime, child);
+		return true;
+	});
 }
 
 void SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
@@ -345,6 +345,14 @@ LightComponent* SceneGraph::getDirectionalLight() const
 		ANKI_ASSERT(out->getLightComponentType() == LightComponentType::kDirectional);
 	}
 	return out;
+}
+
+void SceneGraph::setActiveCameraNode(SceneNode* cam)
+{
+	if(ANKI_EXPECT(cam->hasComponent<CameraComponent>()))
+	{
+		m_mainCam = cam;
+	}
 }
 
 } // end namespace anki

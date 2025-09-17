@@ -18,6 +18,7 @@ class ScriptEnvironment;
 #define ANKI_SCRIPT_LOGE(...) ANKI_LOG("SCRI", kError, __VA_ARGS__)
 #define ANKI_SCRIPT_LOGW(...) ANKI_LOG("SCRI", kWarning, __VA_ARGS__)
 #define ANKI_SCRIPT_LOGF(...) ANKI_LOG("SCRI", kFatal, __VA_ARGS__)
+#define ANKI_SCRIPT_LOGV(...) ANKI_LOG("SCRI", kVerbose, __VA_ARGS__)
 
 class ScriptMemoryPool : public HeapMemoryPool, public MakeSingleton<ScriptMemoryPool>
 {

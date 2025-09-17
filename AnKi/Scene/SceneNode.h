@@ -34,7 +34,7 @@ public:
 	/// Return the name. It may be empty for nodes that we don't want to track.
 	CString getName() const
 	{
-		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
+		return (!m_name.isEmpty()) ? m_name.toCString() : "Unnamed";
 	}
 
 	U32 getUuid() const

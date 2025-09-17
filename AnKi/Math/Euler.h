@@ -145,9 +145,26 @@ public:
 
 	/// @name Other
 	/// @{
+
+	/// Return lerp(this, v1, t)
+	[[nodiscard]] TEuler lerp(const TEuler& v1, T t) const
+	{
+		TEuler out;
+		for(U i = 0; i < 3; ++i)
+		{
+			out[i] = m_arr[i] * (T(1) - t) + v1.m_arr[i] * t;
+		}
+		return out;
+	}
+
 	String toString() const requires(std::is_floating_point<T>::value)
 	{
 		return String().sprintf("%f %f %f", m_vec.m_x, m_vec.m_y, m_vec.m_z);
+	}
+
+	String toStringDegrees() const requires(std::is_floating_point<T>::value)
+	{
+		return String().sprintf("%f %f %f", toDegrees(m_vec.m_x), toDegrees(m_vec.m_y), toDegrees(m_vec.m_z));
 	}
 	/// @}
 

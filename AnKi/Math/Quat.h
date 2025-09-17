@@ -58,43 +58,42 @@ public:
 	{
 	}
 
-	explicit TQuat(const TMat<T, 3, 3>& m3)
+	/// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+	explicit TQuat(const TMat<T, 3, 3>& m)
 	{
-		const T trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + T(1.0);
-		if(trace > kEpsilonf)
+		const T tr = m(0, 0) + m(1, 1) + m(2, 2);
+
+		if(tr > T(0))
 		{
-			T s = T(0.5) / sqrt<T>(trace);
-			w() = T(0.25) / s;
-			x() = (m3(2, 1) - m3(1, 2)) * s;
-			y() = (m3(0, 2) - m3(2, 0)) * s;
-			z() = (m3(1, 0) - m3(0, 1)) * s;
+			const T S = sqrt<T>(tr + T(1)) * T(2); // S=4*qw
+			w() = T(0.25) * S;
+			x() = (m(2, 1) - m(1, 2)) / S;
+			y() = (m(0, 2) - m(2, 0)) / S;
+			z() = (m(1, 0) - m(0, 1)) / S;
+		}
+		else if((m(0, 0) > m(1, 1)) & (m(0, 0) > m(2, 2)))
+		{
+			const T S = sqrt<T>(T(1) + m(0, 0) - m(1, 1) - m(2, 2)) * T(2); // S=4*qx
+			w() = (m(2, 1) - m(1, 2)) / S;
+			x() = T(0.25) * S;
+			y() = (m(0, 1) + m(1, 0)) / S;
+			z() = (m(0, 2) + m(2, 0)) / S;
+		}
+		else if(m(1, 1) > m(2, 2))
+		{
+			const T S = sqrt<T>(T(1) + m(1, 1) - m(0, 0) - m(2, 2)) * T(2); // S=4*qy
+			w() = (m(0, 2) - m(2, 0)) / S;
+			x() = (m(0, 1) + m(1, 0)) / S;
+			y() = T(0.25) * S;
+			z() = (m(1, 2) + m(2, 1)) / S;
 		}
 		else
 		{
-			if(m3(0, 0) > m3(1, 1) && m3(0, 0) > m3(2, 2))
-			{
-				T s = T(0.5) / sqrt<T>(T(1.0) + m3(0, 0) - m3(1, 1) - m3(2, 2));
-				w() = (m3(1, 2) - m3(2, 1)) * s;
-				x() = T(0.25) / s;
-				y() = (m3(0, 1) + m3(1, 0)) * s;
-				z() = (m3(0, 2) + m3(2, 0)) * s;
-			}
-			else if(m3(1, 1) > m3(2, 2))
-			{
-				T s = T(0.5) / sqrt<T>(T(1.0) + m3(1, 1) - m3(0, 0) - m3(2, 2));
-				w() = (m3(0, 2) - m3(2, 0)) * s;
-				x() = (m3(0, 1) + m3(1, 0)) * s;
-				y() = T(0.25) / s;
-				z() = (m3(1, 2) + m3(2, 1)) * s;
-			}
-			else
-			{
-				T s = T(0.5) / sqrt<T>(T(1.0) + m3(2, 2) - m3(0, 0) - m3(1, 1));
-				w() = (m3(0, 1) - m3(1, 0)) * s;
-				x() = (m3(0, 2) + m3(2, 0)) * s;
-				y() = (m3(1, 2) + m3(2, 1)) * s;
-				z() = T(0.25) / s;
-			}
+			const T S = sqrt<T>(T(1) + m(2, 2) - m(0, 0) - m(1, 1)) * T(2); // S=4*qz
+			w() = (m(1, 0) - m(0, 1)) / S;
+			x() = (m(0, 2) + m(2, 0)) / S;
+			y() = (m(1, 2) + m(2, 1)) / S;
+			z() = T(0.25) * S;
 		}
 	}
 
@@ -107,13 +106,13 @@ public:
 	explicit TQuat(const TEuler<T>& eu)
 	{
 		T cx, sx;
-		sinCos(eu.y() * 0.5, sx, cx);
+		sinCos(eu.y() * T(0.5), sx, cx);
 
 		T cy, sy;
-		sinCos(eu.z() * 0.5, sy, cy);
+		sinCos(eu.z() * T(0.5), sy, cy);
 
 		T cz, sz;
-		sinCos(eu.x() * 0.5, sz, cz);
+		sinCos(eu.x() * T(0.5), sz, cz);
 
 		const T cxcy = cx * cy;
 		const T sxsy = sx * sy;
@@ -426,6 +425,11 @@ public:
 	static constexpr U32 getSize()
 	{
 		return 4;
+	}
+
+	String toString() const requires(std::is_floating_point<T>::value)
+	{
+		return m_value.toString();
 	}
 	/// @}
 

@@ -5,64 +5,9 @@
 
 #include <cstdio>
 #include <Samples/Common/SampleApp.h>
-#include <Samples/PhysicsPlayground/FpsCharacter.h>
+#include <Samples/PhysicsPlayground/FpsCharacterNode.h>
 
 using namespace anki;
-
-static Error createDestructionEvent(SceneNode* node)
-{
-	CString script = R"(
-function update(event, prevTime, crntTime)
-	-- Do nothing
-end
-
-function onKilled(event, prevTime, crntTime)
-	logi(string.format("Will kill %s", event:getAssociatedSceneNodes():getAt(0):getName()))
-	event:getAssociatedSceneNodes():getAt(0):markForDeletion()
-end
-	)";
-	ScriptEvent* event = SceneGraph::getSingleton().getEventManager().newEvent<ScriptEvent>(-1.0f, 10.0f, script);
-	event->addAssociatedSceneNode(node);
-
-	return Error::kNone;
-}
-
-static Error createFogVolumeFadeEvent(SceneNode* node)
-{
-	CString script = R"(
-density = 15
-radius = 3.5
-
-function update(event, prevTime, crntTime)
-	node = event:getAssociatedSceneNodes():getAt(0)
-	-- logi(string.format("Will fade fog for %s", node:getName()))
-	fogComponent = node:getFirstFogDensityComponent()
-
-	dt = crntTime - prevTime
-	density = density - 4.0 * dt
-	radius = radius + 0.5 * dt
-
-	pos = node:getLocalOrigin()
-	pos:setY(pos:getY() - 1.1 * dt)
-	node:setLocalOrigin(pos)
-
-	if density <= 0.0 or radius <= 0.0 then
-		node:markForDeletion()
-	else
-		node:setLocalScale(Vec3.new(radius))
-		fogComponent:setDensity(density)
-	end
-end
-
-function onKilled(event, prevTime, crntTime)
-	-- Nothing
-end
-	)";
-	ScriptEvent* event = SceneGraph::getSingleton().getEventManager().newEvent<ScriptEvent>(-1, 10.0, script);
-	event->addAssociatedSceneNode(node);
-
-	return Error::kNone;
-}
 
 class MyApp : public SampleApp
 {
@@ -80,7 +25,7 @@ Error MyApp::sampleExtraInit()
 	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
 	// Create the player
-	if(1)
+	if(0)
 	{
 		SceneNode& cam = SceneGraph::getSingleton().getActiveCameraNode();
 		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 0.0, 0.0), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
@@ -94,6 +39,11 @@ Error MyApp::sampleExtraInit()
 		playerc->moveToPosition(Vec3(0.0f, 10.5f, 0.0f));
 
 		player->addChild(&cam);
+	}
+
+	{
+		FpsCharacter* c = SceneGraph::getSingleton().newSceneNode<FpsCharacter>("FpsCharacter");
+		SceneGraph::getSingleton().setActiveCameraNode(c->m_cameraNode);
 	}
 
 	// Create a body component with hinge joint
@@ -194,6 +144,11 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 	Renderer& renderer = Renderer::getSingleton();
 	Input& in = Input::getSingleton();
 
+	if(in.getKey(KeyCode::kGrave) == 1)
+	{
+		toggleDeveloperConsole();
+	}
+
 	if(Input::getSingleton().getKey(KeyCode::kEscape))
 	{
 		quit = true;
@@ -281,189 +236,6 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		g_cvarRenderDbgPhysics = !g_cvarRenderDbgPhysics;
 		renderer.getDbg().setDepthTestEnabled(true);
 		renderer.getDbg().setDitheredDepthTestEnabled(false);
-	}
-
-	// Move player
-	{
-		SceneNode& player = SceneGraph::getSingleton().findSceneNode("player");
-		PlayerControllerComponent& playerc = player.getFirstComponentOfType<PlayerControllerComponent>();
-
-		if(Input::getSingleton().getKey(KeyCode::kR))
-		{
-			player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec3(0.0f, 2.0f, 0.0f));
-		}
-
-		constexpr F32 ang = toRad(7.0f);
-
-		F32 y = Input::getSingleton().getMousePosition().y();
-		F32 x = Input::getSingleton().getMousePosition().x();
-		if(y != 0.0 || x != 0.0)
-		{
-			// Set rotation
-			Mat3 rot(Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
-
-			rot = player.getLocalRotation() * rot;
-
-			Vec3 newz = rot.getColumn(2).normalize();
-			Vec3 newx = Vec3(0.0, 1.0, 0.0).cross(newz);
-			Vec3 newy = newz.cross(newx);
-			rot.setColumns(newx, newy, newz);
-			rot = rot.reorthogonalize();
-
-			// Update move
-			player.setLocalRotation(rot);
-		}
-
-		const F32 speed = 8.5;
-		Vec3 moveVec(0.0);
-		if(Input::getSingleton().getKey(KeyCode::kW))
-		{
-			moveVec.z() += 1.0f;
-		}
-
-		if(Input::getSingleton().getKey(KeyCode::kA))
-		{
-			moveVec.x() += 1.0f;
-		}
-
-		if(Input::getSingleton().getKey(KeyCode::kS))
-		{
-			moveVec.z() -= 1.0f;
-		}
-
-		if(Input::getSingleton().getKey(KeyCode::kD))
-		{
-			moveVec.x() -= 1.0f;
-		}
-
-		F32 jumpSpeed = 0.0f;
-		if(Input::getSingleton().getKey(KeyCode::kSpace))
-		{
-			jumpSpeed += 8.0f;
-		}
-
-		static Bool crouch = false;
-		Bool crouchChanged = false;
-		if(Input::getSingleton().getKey(KeyCode::kC))
-		{
-			crouch = !crouch;
-			crouchChanged = true;
-		}
-
-		if(moveVec != 0.0f || jumpSpeed != 0.0f || crouchChanged)
-		{
-			Vec3 dir;
-			if(moveVec != 0.0f)
-			{
-				dir = -(player.getLocalRotation() * moveVec);
-				dir.y() = 0.0f;
-				dir = dir.normalize();
-			}
-
-			F32 speed1 = speed;
-			if(Input::getSingleton().getKey(KeyCode::kLeftShift))
-			{
-				speed1 *= 2.0f;
-			}
-			playerc.setVelocity(speed1, jumpSpeed, dir, crouch);
-		}
-	}
-
-	if(Input::getSingleton().getMouseButton(MouseButton::kRight) == 1)
-	{
-		ANKI_LOGI("Firing a grenade");
-
-		static U32 instance = 0;
-
-		Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
-		const Vec3 newPos = camTrf.getOrigin().xyz() + camTrf.getRotation().getZAxis() * -3.0f;
-		camTrf.setOrigin(newPos.xyz0());
-
-		SceneNode* grenade = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("Grenade%u", instance++).toCString());
-		grenade->setLocalScale(Vec3(2.8f));
-		grenade->newComponent<MeshComponent>()->setMeshFilename("Assets/MESH_grenade_818651700502e14b.ankimesh");
-		grenade->newComponent<MaterialComponent>()->setMaterialFilename("Assets/MTL_grenade_4346150e31bdb957.ankimtl");
-		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
-
-		BodyComponent* bodyc = grenade->newComponent<BodyComponent>();
-		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
-		bodyc->teleportTo(camTrf.getOrigin().xyz(), camTrf.getRotation().getRotationPart());
-		bodyc->setMass(1.0f);
-
-		bodyc->applyForce(camTrf.getRotation().getZAxis().xyz() * -1200.0f, Vec3(0.0f, 0.0f, 0.0f));
-
-		// Create the destruction event
-		ANKI_CHECK(createDestructionEvent(grenade));
-	}
-
-	if(Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
-	{
-		const Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
-
-		for(U32 i = 0; i < 8; ++i)
-		{
-			F32 spredAngle = toRad(getRandomRange(-2.0f, 2.0f));
-			Mat3 randDirection(Axisang(spredAngle, Vec3(1.0f, 0.0f, 0.0f)));
-			spredAngle = toRad(getRandomRange(-2.0f, 2.0f));
-			randDirection = randDirection * Mat3(Axisang(spredAngle, Vec3(0.0f, 1.0f, 0.0f)));
-			randDirection = camTrf.getRotation().getRotationPart() * randDirection;
-
-			const Vec3 from = camTrf.getOrigin().xyz();
-			const Vec3 to = from + -randDirection.getZAxis() * 100.0f;
-
-			RayHitResult result;
-			const Bool hit = PhysicsWorld::getSingleton().castRayClosestHit(from, to, PhysicsLayerBit::kStatic, result);
-
-			if(hit)
-			{
-				// Create rotation
-				const Vec3& zAxis = result.m_normal;
-				Vec3 yAxis = Vec3(0, 1, 0.5);
-				Vec3 xAxis = yAxis.cross(zAxis).normalize();
-				yAxis = zAxis.cross(xAxis);
-
-				Mat3x4 rot = Mat3x4::getIdentity();
-				rot.setXAxis(xAxis);
-				rot.setYAxis(yAxis);
-				rot.setZAxis(zAxis);
-
-				Transform trf(result.m_hitPosition.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
-
-				// Create an obj
-				static U32 id = 0;
-				SceneNode* bulletDecal = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("decal%u", id++).toCString());
-				bulletDecal->setLocalTransform(trf);
-				bulletDecal->setLocalScale(Vec3(0.1f, 0.1f, 0.3f));
-				DecalComponent* decalc = bulletDecal->newComponent<DecalComponent>();
-				decalc->loadDiffuseImageResource("Assets/bullet_hole_decal.ankitex", 1.0f);
-
-				ANKI_CHECK(createDestructionEvent(bulletDecal));
-
-#if 0
-			// Create some particles
-			ParticleEmitterComponent* partc = monkey->newComponent<ParticleEmitterComponent>();
-			partc->loadParticleEmitterResource("Assets/Smoke.ankipart");
-#endif
-
-				// Create some fog volumes
-				if(i == 0)
-				{
-					static int id = 0;
-					String name;
-					name.sprintf("fog%u", id++);
-
-					SceneNode* fogNode = SceneGraph::getSingleton().newSceneNode<SceneNode>(name.toCString());
-					FogDensityComponent* fogComp = fogNode->newComponent<FogDensityComponent>();
-					fogNode->setLocalScale(Vec3(2.1f));
-					fogComp->setDensity(15.0f);
-
-					fogNode->setLocalTransform(trf);
-
-					ANKI_CHECK(createDestructionEvent(fogNode));
-					ANKI_CHECK(createFogVolumeFadeEvent(fogNode));
-				}
-			}
-		}
 	}
 
 	if(0)

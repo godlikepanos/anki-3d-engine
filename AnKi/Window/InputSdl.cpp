@@ -113,12 +113,22 @@ void Input::hideCursor(Bool hide)
 		{
 			ANKI_WIND_LOGE("SDL_HideCursor() failed: %s", SDL_GetError());
 		}
+
+		if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, true))
+		{
+			ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
+		}
 	}
 	else
 	{
 		if(!SDL_ShowCursor())
 		{
 			ANKI_WIND_LOGE("SDL_ShowCursor() failed: %s", SDL_GetError());
+		}
+
+		if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, false))
+		{
+			ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
 		}
 	}
 }

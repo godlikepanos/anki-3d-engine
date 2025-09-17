@@ -329,6 +329,15 @@ inline constexpr F32 operator""_mm(long double x)
 }
 /// @}
 
+/// @name Other user literals
+/// @{
+inline constexpr F32 operator""_degrees(long double x)
+{
+	constexpr F32 kPi = 3.14159265358979323846f;
+	return F32(x) * (kPi / 180.0f);
+}
+/// @}
+
 /// Convenience macro that defines the type of a class.
 #define ANKI_DEFINE_CLASS_SELF(selfType) \
 	typedef auto _selfFn##selfType()->decltype(*this); \

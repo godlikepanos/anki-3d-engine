@@ -123,12 +123,51 @@ static int wraplogw(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap function logv.
+static inline int pwraplogv(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
+	{
+		return -1;
+	}
+
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
+	{
+		return -1;
+	}
+
+	// Call the function
+	ANKI_SCRIPT_LOGV("%s", arg0);
+
+	return 0;
+}
+
+/// Wrap function logv.
+static int wraplogv(lua_State* l)
+{
+	int res = pwraplogv(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Wrap the module.
 void wrapModuleLogger(lua_State* l)
 {
 	LuaBinder::pushLuaCFunc(l, "logi", wraplogi);
 	LuaBinder::pushLuaCFunc(l, "loge", wraploge);
 	LuaBinder::pushLuaCFunc(l, "logw", wraplogw);
+	LuaBinder::pushLuaCFunc(l, "logv", wraplogv);
 }
 
 } // end namespace anki
