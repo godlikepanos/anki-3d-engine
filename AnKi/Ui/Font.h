@@ -21,13 +21,12 @@ ANKI_CVAR(NumericCVar<F32>, Ui, GlobalFontScale, 1.0f, 0.1f, 100.0f, "Scale that
 /// Font class.
 class Font : public UiObject
 {
+	friend class UiManager;
+
 public:
 	Font() = default;
 
 	~Font();
-
-	/// Initialize the font.
-	Error init(const CString& filename, ConstWeakArray<U32> fontHeights);
 
 	/// Get font image atlas.
 	ANKI_INTERNAL const TexturePtr& getTexture() const
@@ -74,6 +73,9 @@ private:
 
 	TexturePtr m_tex;
 	UiImageIdData m_imgData;
+
+	/// Initialize the font.
+	Error init(CString filename, ConstWeakArray<U32> fontHeights);
 
 	void createTexture(const void* data, U32 width, U32 height);
 };

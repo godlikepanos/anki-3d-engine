@@ -4,6 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Ui/UiManager.h>
+#include <AnKi/Ui/Font.h>
+#include <AnKi/Ui/Canvas.h>
 
 namespace anki {
 
@@ -36,6 +38,34 @@ Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackDat
 
 	ImGui::SetAllocatorFunctions(imguiAllocCallback, imguiFreeCallback, nullptr);
 
+	return Error::kNone;
+}
+
+Error UiManager::newFont(CString filename, ConstWeakArray<U32> fontHeights, FontPtr& font)
+{
+	Font* pFont = newInstance<Font>(UiMemoryPool::getSingleton());
+	if(pFont->init(filename, fontHeights))
+	{
+		ANKI_UI_LOGE("Unable to create font");
+		deleteInstance(UiMemoryPool::getSingleton(), pFont);
+		return Error::kFunctionFailed;
+	}
+
+	font.reset(pFont);
+	return Error::kNone;
+}
+
+Error UiManager::newCanvas(Font* font, U32 fontHeight, U32 width, U32 height, CanvasPtr& canvas)
+{
+	Canvas* pCanvas = newInstance<Canvas>(UiMemoryPool::getSingleton());
+	if(pCanvas->init(font, fontHeight, width, height))
+	{
+		ANKI_UI_LOGE("Unable to create canvas");
+		deleteInstance(UiMemoryPool::getSingleton(), pCanvas);
+		return Error::kFunctionFailed;
+	}
+
+	canvas.reset(pCanvas);
 	return Error::kNone;
 }
 

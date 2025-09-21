@@ -13,15 +13,13 @@ using namespace anki;
 
 namespace {
 
-class Label : public UiImmediateModeBuilder
+class Label
 {
 public:
-	using UiImmediateModeBuilder::UiImmediateModeBuilder;
-
 	Bool m_windowInitialized = false;
 	U32 m_buttonClickCount = 0;
 
-	void build(CanvasPtr canvas) final
+	void build(CanvasPtr canvas)
 	{
 		Vec4 oldBackground = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 		ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.8f;
@@ -37,7 +35,7 @@ public:
 
 		ImGui::Text("Label default size");
 
-		canvas->pushFont(canvas->getDefaultFont(), 30);
+		canvas->pushFont(canvas->getDefaultFont().get(), 30);
 		ImGui::Text("Label size 30");
 		ImGui::PopFont();
 
@@ -74,13 +72,13 @@ ANKI_TEST(Ui, Ui)
 
 	{
 		FontPtr font;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "UbuntuRegular.ttf", Array<U32, 4>{10, 20, 30, 60}));
+		ANKI_TEST_EXPECT_NO_ERR(ui->newFont("UbuntuRegular.ttf", Array<U32, 4>{10, 20, 30, 60}, font));
 
 		CanvasPtr canvas;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight()));
+		ANKI_TEST_EXPECT_NO_ERR(
+			ui->newCanvas(font.get(), 20, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight(), canvas));
 
-		IntrusivePtr<Label, UiObjectDeleter> label;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
+		Label label;
 
 		Bool done = false;
 		while(!done)
@@ -98,7 +96,7 @@ ANKI_TEST(Ui, Ui)
 			}
 
 			canvas->beginBuilding();
-			label->build(canvas);
+			label.build(canvas);
 
 			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 

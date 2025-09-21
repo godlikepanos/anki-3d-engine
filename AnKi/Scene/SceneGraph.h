@@ -70,14 +70,11 @@ public:
 
 	SceneNode& getActiveCameraNode()
 	{
-		ANKI_ASSERT(m_mainCam != nullptr);
-		return *m_mainCam;
+		const SceneNode& cam = static_cast<const SceneGraph*>(this)->getActiveCameraNode();
+		return const_cast<SceneNode&>(cam);
 	}
 
-	const SceneNode& getActiveCameraNode() const
-	{
-		return *m_mainCam;
-	}
+	const SceneNode& getActiveCameraNode() const;
 
 	void setActiveCameraNode(SceneNode* cam);
 
@@ -105,7 +102,7 @@ public:
 
 	/// Iterate the scene nodes using a lambda
 	template<typename Func>
-	void iterateSceneNodes(Func func)
+	void visitNodes(Func func)
 	{
 		for(SceneNode& psn : m_nodes)
 		{

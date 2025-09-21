@@ -137,9 +137,10 @@ Canvas::~Canvas()
 	}
 }
 
-Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
+Error Canvas::init(Font* font, U32 fontHeight, U32 width, U32 height)
 {
-	m_font = font;
+	ANKI_ASSERT(font);
+	m_font.reset(font);
 	m_dfltFontHeight = fontHeight;
 	resize(width, height);
 
@@ -283,9 +284,9 @@ void Canvas::beginBuilding()
 	ImGui::PushFont(&m_font->getImFont(m_dfltFontHeight));
 }
 
-void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
+void Canvas::pushFont(Font* font, U32 fontHeight)
 {
-	m_references.pushBack(UiObjectPtr(const_cast<Font*>(font.get())));
+	m_references.pushBack(UiObjectPtr(font));
 	ImGui::PushFont(&font->getImFont(fontHeight));
 }
 

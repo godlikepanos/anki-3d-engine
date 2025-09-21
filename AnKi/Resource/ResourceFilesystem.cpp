@@ -392,10 +392,10 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 	{
 		// It's simple directory
 
-		ANKI_CHECK(walkDirectoryTree(filepath, [&](const CString& fname, Bool isDir) -> Error {
-			if(!isDir && includePath(fname))
+		ANKI_CHECK(walkDirectoryTree(filepath, [&](WalkDirectoryArgs& args) -> Error {
+			if(!args.m_isDirectory && includePath(args.m_path))
 			{
-				path.m_files.pushBackSprintf("%s", fname.cstr());
+				path.m_files.pushBackSprintf("%s", args.m_path.cstr());
 				++fileCount;
 			}
 

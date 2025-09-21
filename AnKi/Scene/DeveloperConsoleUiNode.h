@@ -63,7 +63,7 @@ private:
 		static_cast<DeveloperConsoleUiNode*>(userData)->newLogItem(info);
 	}
 
-	void draw(CanvasPtr& canvas);
+	void draw(Canvas& canvas);
 };
 /// @}
 

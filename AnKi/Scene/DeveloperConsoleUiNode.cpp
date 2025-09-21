@@ -14,13 +14,13 @@ DeveloperConsoleUiNode::DeveloperConsoleUiNode(CString name)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(
-		[](CanvasPtr& canvas, void* ud) {
+		[](Canvas& canvas, void* ud) {
 			static_cast<DeveloperConsoleUiNode*>(ud)->draw(canvas);
 		},
 		this);
 	uic->setEnabled(false);
 
-	ANKI_CHECKF(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
+	ANKI_CHECKF(UiManager::getSingleton().newFont("EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}, m_font));
 }
 
 DeveloperConsoleUiNode::~DeveloperConsoleUiNode()
@@ -90,16 +90,16 @@ void DeveloperConsoleUiNode::newLogItem(const LoggerMessageInfo& inf)
 	m_logItemsTimestamp.fetchAdd(1);
 }
 
-void DeveloperConsoleUiNode::draw(CanvasPtr& canvas)
+void DeveloperConsoleUiNode::draw(Canvas& canvas)
 {
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
-	canvas->pushFont(m_font, 16);
+	canvas.pushFont(m_font.get(), 16);
 
 	ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
 
 	ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
-	ImGui::SetWindowSize(Vec2(F32(canvas->getWidth()), F32(canvas->getHeight()) * (2.0f / 3.0f)));
+	ImGui::SetWindowSize(Vec2(F32(canvas.getWidth()), F32(canvas.getHeight()) * (2.0f / 3.0f)));
 
 	// Push the items
 	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
@@ -162,7 +162,7 @@ void DeveloperConsoleUiNode::draw(CanvasPtr& canvas)
 
 	ImGui::End();
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
-	canvas->popFont();
+	canvas.popFont();
 }
 
 } // end namespace anki

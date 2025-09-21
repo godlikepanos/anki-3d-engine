@@ -49,6 +49,16 @@ public:
 		return m_parent;
 	}
 
+	Container& getChildren()
+	{
+		return m_children;
+	}
+
+	const Container& getChildren() const
+	{
+		return m_children;
+	}
+
 	Value& getChild(U32 i)
 	{
 		return *(*(m_children.getBegin() + i));

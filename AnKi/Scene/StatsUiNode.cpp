@@ -71,7 +71,7 @@ StatsUiNode::StatsUiNode(CString name)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(
-		[](CanvasPtr& canvas, void* ud) {
+		[](Canvas& canvas, void* ud) {
 			static_cast<StatsUiNode*>(ud)->draw(canvas);
 		},
 		this);
@@ -81,14 +81,14 @@ StatsUiNode::StatsUiNode(CString name)
 		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
 	}
 
-	ANKI_CHECKF(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
+	ANKI_CHECKF(UiManager::getSingleton().newFont("EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}, m_font));
 }
 
 StatsUiNode::~StatsUiNode()
 {
 }
 
-void StatsUiNode::draw(CanvasPtr& canvas)
+void StatsUiNode::draw(Canvas& canvas)
 {
 	Bool flush = false;
 	if(m_bufferedFrames == kBufferedFrames)
@@ -98,7 +98,7 @@ void StatsUiNode::draw(CanvasPtr& canvas)
 	}
 	++m_bufferedFrames;
 
-	canvas->pushFont(m_font, 24);
+	canvas.pushFont(m_font.get(), 24);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
@@ -166,7 +166,7 @@ void StatsUiNode::draw(CanvasPtr& canvas)
 	ImGui::End();
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
 
-	canvas->popFont();
+	canvas.popFont();
 }
 
 } // end namespace anki

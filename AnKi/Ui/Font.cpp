@@ -20,7 +20,7 @@ Font::~Font()
 	m_imFontAtlas.destroy();
 }
 
-Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
+Error Font::init(CString filename, ConstWeakArray<U32> fontHeights)
 {
 	m_imFontAtlas.construct();
 

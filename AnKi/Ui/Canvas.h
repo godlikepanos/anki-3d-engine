@@ -8,21 +8,22 @@
 #include <AnKi/Ui/UiObject.h>
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
+#include <AnKi/Gr/Sampler.h>
 
 namespace anki {
 
 /// @addtogroup ui
 /// @{
 
-/// UI canvas.
+/// UI canvas. It's more of a context.
 class Canvas : public UiObject
 {
+	friend class UiManager;
+
 public:
 	Canvas() = default;
 
 	~Canvas();
-
-	Error init(FontPtr font, U32 fontHeight, U32 width, U32 height);
 
 	const FontPtr& getDefaultFont() const
 	{
@@ -56,7 +57,7 @@ public:
 	/// Begin building the UI.
 	void beginBuilding();
 
-	void pushFont(const FontPtr& font, U32 fontHeight);
+	void pushFont(Font* font, U32 fontHeight);
 
 	void popFont()
 	{
@@ -86,6 +87,8 @@ private:
 	SamplerPtr m_nearestNearestRepeatSampler;
 
 	UiList<UiObjectPtr> m_references;
+
+	Error init(Font* font, U32 fontHeight, U32 width, U32 height);
 
 	void appendToCommandBufferInternal(CommandBuffer& cmdb);
 };

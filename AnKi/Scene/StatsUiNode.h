@@ -37,7 +37,7 @@ private:
 	SceneDynamicArray<Value> m_averageValues;
 	U32 m_bufferedFrames = 0;
 
-	void draw(CanvasPtr& canvas);
+	void draw(Canvas& canvas);
 };
 /// @}
 

@@ -26,6 +26,7 @@ public:
 	/// Create a fullscreen window with the desktop's resolution
 	Bool m_fullscreenDesktopRez = false;
 	Bool m_exclusiveFullscreen = false;
+	Bool m_borderless = false;
 
 	CString m_title = "AnKi";
 };

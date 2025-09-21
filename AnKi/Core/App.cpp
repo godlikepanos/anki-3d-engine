@@ -224,6 +224,7 @@ Error App::init()
 	nwinit.m_fullscreenDesktopRez = g_cvarWindowFullscreen > 0;
 	nwinit.m_exclusiveFullscreen = g_cvarWindowFullscreen == 2;
 	nwinit.m_targetFps = g_cvarCoreTargetFps;
+	nwinit.m_borderless = g_cvarWindowBorderless;
 	NativeWindow::allocateSingleton();
 	ANKI_CHECK(NativeWindow::getSingleton().init(nwinit));
 

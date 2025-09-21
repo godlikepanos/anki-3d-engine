@@ -1,5 +1,5 @@
 set(ANKI_SUB_DIRS Importer Core Script Renderer Scene Ui Window Resource Gr Collision Math Util ShaderCompiler
-	Shaders Physics GpuMemory)
+	Shaders Physics GpuMemory Editor)
 foreach(TMP ${ANKI_SUB_DIRS})
 	add_subdirectory(${TMP})
 endforeach()

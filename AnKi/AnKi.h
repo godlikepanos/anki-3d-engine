@@ -19,3 +19,4 @@
 #include <AnKi/Importer.h>
 #include <AnKi/ShaderCompiler.h>
 #include <AnKi/Ui.h>
+#include <AnKi/Editor.h>

@@ -30,23 +30,31 @@ void getParentFilepath(const CString& filename, String& out);
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);
 
+class WalkDirectoryArgs
+{
+public:
+	CString m_path;
+	Bool m_isDirectory;
+	Bool m_stopSearch;
+};
+
 /// @internal
-Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback);
+Error walkDirectoryTreeInternal(CString dir, const Function<Error(WalkDirectoryArgs& args)>& callback);
 
 /// Walk a directory tree.
 /// @param dir The dir to walk.
 /// @param func A lambda. See code example on how to use it.
 /// Example:
 /// @code
-/// walkDirectoryTree("./path/to", [&, this](CString path, Bool isDir) {
+/// walkDirectoryTree("./path/to", [&, this](WalkDirectoryArgs& args) {
 /// 	...
 /// 	return Error::kNone;
 /// });
 /// @endcode
 template<typename TFunc>
-Error walkDirectoryTree(const CString& dir, TFunc func)
+Error walkDirectoryTree(CString dir, TFunc func)
 {
-	Function<Error(const CString&, Bool)> f(func);
+	Function<Error(WalkDirectoryArgs & args)> f(func);
 	const Error err = walkDirectoryTreeInternal(dir, f);
 	return err;
 }

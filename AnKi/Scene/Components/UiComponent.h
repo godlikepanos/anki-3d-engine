@@ -13,7 +13,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-using UiQueueElementDrawCallback = void (*)(CanvasPtr& canvas, void* userData);
+using UiQueueElementDrawCallback = void (*)(Canvas& canvas, void* userData);
 
 /// UI scene component.
 class UiComponent : public SceneComponent
@@ -38,7 +38,7 @@ public:
 		m_userData = userData;
 	}
 
-	void drawUi(CanvasPtr& canvas)
+	void drawUi(Canvas& canvas)
 	{
 		if(m_drawCallback && m_enabled)
 		{

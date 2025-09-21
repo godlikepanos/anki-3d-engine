@@ -18,6 +18,7 @@ namespace anki {
 ANKI_CVAR(NumericCVar<U32>, Window, Width, 1920, 16, 16 * 1024, "Width")
 ANKI_CVAR(NumericCVar<U32>, Window, Height, 1080, 16, 16 * 1024, "Height")
 ANKI_CVAR(NumericCVar<U32>, Window, Fullscreen, 1, 0, 2, "0: windowed, 1: borderless fullscreen, 2: exclusive fullscreen")
+ANKI_CVAR(BoolCVar, Window, Borderless, false, "Borderless")
 ANKI_CVAR(NumericCVar<U32>, Core, TargetFps, 60u, 1u, kMaxU32, "Target FPS")
 ANKI_CVAR(NumericCVar<U32>, Core, JobThreadCount, clamp(getCpuCoresCount() / 2u, 2u, 16u), 2u, 1024u, "Number of job thread")
 ANKI_CVAR(NumericCVar<U32>, Core, DisplayStats, 0, 0, 2, "Display stats, 0: None, 1: Simple, 2: Detailed")

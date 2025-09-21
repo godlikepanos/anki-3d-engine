@@ -96,6 +96,11 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 	flags |= SDL_WINDOW_VULKAN;
 #endif
 
+	if(init.m_borderless)
+	{
+		flags |= SDL_WINDOW_BORDERLESS;
+	}
+
 	if(init.m_fullscreenDesktopRez)
 	{
 		flags |= SDL_WINDOW_FULLSCREEN;
@@ -130,6 +135,11 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 	{
 		ANKI_WIND_LOGE("SDL_CreateWindow() failed");
 		return Error::kFunctionFailed;
+	}
+
+	if(!SDL_ShowWindow(m_sdlWindow))
+	{
+		ANKI_WIND_LOGE("SDL_ShowWindow() failed: %s", SDL_GetError());
 	}
 
 	// Final check

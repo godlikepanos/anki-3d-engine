@@ -347,11 +347,28 @@ LightComponent* SceneGraph::getDirectionalLight() const
 	return out;
 }
 
+const SceneNode& SceneGraph::getActiveCameraNode() const
+{
+	ANKI_ASSERT(m_mainCam);
+	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()))
+	{
+		return *m_mainCam;
+	}
+	else
+	{
+		*m_defaultMainCam;
+	}
+}
+
 void SceneGraph::setActiveCameraNode(SceneNode* cam)
 {
-	if(ANKI_EXPECT(cam->hasComponent<CameraComponent>()))
+	if(cam)
 	{
 		m_mainCam = cam;
+	}
+	else
+	{
+		m_mainCam = m_defaultMainCam;
 	}
 }
 

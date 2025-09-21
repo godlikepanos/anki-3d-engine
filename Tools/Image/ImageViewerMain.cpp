@@ -17,12 +17,12 @@ public:
 	{
 		UiComponent* uic = newComponent<UiComponent>();
 		uic->init(
-			[](CanvasPtr& canvas, void* ud) {
+			[](Canvas& canvas, void* ud) {
 				static_cast<TextureViewerUiNode*>(ud)->draw(canvas);
 			},
 			this);
 
-		ANKI_CHECK_AND_IGNORE(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
+		ANKI_CHECK_AND_IGNORE(UiManager::getSingleton().newFont("EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}, m_font));
 
 		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource("ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
@@ -48,7 +48,7 @@ private:
 	Array<Bool, 4> m_colorChannel = {true, true, true, true};
 	F32 m_maxColorValue = 1.0f;
 
-	void draw(CanvasPtr& canvas)
+	void draw(Canvas& canvas)
 	{
 		const Texture& grTex = m_imageResource->getTexture();
 		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
@@ -66,10 +66,10 @@ private:
 
 		ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
-		canvas->pushFont(m_font, 16);
+		canvas.pushFont(m_font.get(), 16);
 
 		ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
-		ImGui::SetWindowSize(Vec2(F32(canvas->getWidth()), F32(canvas->getHeight())));
+		ImGui::SetWindowSize(Vec2(F32(canvas.getWidth()), F32(canvas.getHeight())));
 
 		ImGui::BeginChild("Tools", Vec2(-1.0f, 30.0f), false, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -245,7 +245,7 @@ private:
 
 		ImGui::EndChild();
 
-		canvas->popFont();
+		canvas.popFont();
 		ImGui::End();
 	}
 };

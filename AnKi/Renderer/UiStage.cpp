@@ -15,9 +15,9 @@ namespace anki {
 
 Error UiStage::init()
 {
-	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}));
-	ANKI_CHECK(UiManager::getSingleton().newInstance(m_canvas, m_font, 12, getRenderer().getPostProcessResolution().x(),
-													 getRenderer().getPostProcessResolution().y()));
+	ANKI_CHECK(UiManager::getSingleton().newFont("EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}, m_font));
+	ANKI_CHECK(UiManager::getSingleton().newCanvas(m_font.get(), 12, getRenderer().getPostProcessResolution().x(),
+												   getRenderer().getPostProcessResolution().y(), m_canvas));
 
 	return Error::kNone;
 }
@@ -38,7 +38,7 @@ void UiStage::draw(U32 width, U32 height, CommandBuffer& cmdb)
 
 	for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
 	{
-		comp.drawUi(m_canvas);
+		comp.drawUi(*m_canvas);
 	}
 
 	m_canvas->appendToCommandBuffer(cmdb);
