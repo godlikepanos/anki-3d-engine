@@ -681,7 +681,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 // ===========================================================================
 // RT material fetch                                                         =
 // ===========================================================================
-#if ANKI_TECHNIQUE_RtMaterialFetch
+#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch)
 
 #	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN
 

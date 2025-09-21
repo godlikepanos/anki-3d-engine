@@ -546,7 +546,7 @@ enum AccellerationStructureFlag : U32
 struct AccelerationStructureInstance
 {
 	Mat3x4 m_transform;
-	U32 m_instanceCustomIndex : 24;
+	U32 m_instanceCustomIndex : 24; ///< Custom value that can be accessed in the shaders.
 	U32 m_mask : 8;
 	U32 m_instanceShaderBindingTableRecordOffset : 24;
 	U32 m_flags : 8; ///< It's AccellerationStructureFlag.

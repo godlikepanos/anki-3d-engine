@@ -27,6 +27,9 @@ struct GpuSceneRenderable
 	U32 m_rtShadowsShaderHandleIndex; ///< The index of the shader handle in the array of library's handles.
 	U32 m_rtMaterialFetchShaderHandleIndex; ///< The index of the shader handle in the array of library's handles.
 	U32 m_uuid;
+
+	U32 m_diffuseColor : 24; ///< The average diffuse color of the renderable. Z is in low bits.
+	U32 m_padding : 8;
 };
 
 /// Almost similar to GpuSceneRenderable but with only what the material shaders need. Needs to fit in a UVec4 vertex attribute.

@@ -83,6 +83,11 @@ public:
 		return m_offsetInLocalConstants;
 	}
 
+	ImageResource* tryGetImageResource() const
+	{
+		return (m_image) ? m_image.get() : nullptr;
+	}
+
 protected:
 	ResourceString m_name;
 	U32 m_offsetInLocalConstants = kMaxU32;

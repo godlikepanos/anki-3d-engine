@@ -238,6 +238,17 @@ CHECK_TEXTURE_3()
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN
+#	define SpvRayQueryPositionFetchKHR 5391
+#	define SpvOpRayQueryGetIntersectionTriangleVertexPositionsKHR 5340
+#	define SpvRayQueryCandidateIntersectionKHR 0
+#	define SpvRayQueryCommittedIntersectionKHR 1
+
+[[vk::ext_capability(SpvRayQueryPositionFetchKHR)]] [[vk::ext_extension("SPV_KHR_ray_tracing_position_fetch")]] [[vk::ext_instruction(
+	SpvOpRayQueryGetIntersectionTriangleVertexPositionsKHR)]] float3
+spvRayQueryGetIntersectionTriangleVertexPositionsKHR([[vk::ext_reference]] RayQuery<RAY_FLAG_FORCE_OPAQUE> query, int committed)[3];
+#endif
+
+#if ANKI_GR_BACKEND_VULKAN
 #	define SpvDecorationRelaxedPrecision 0
 #	define ANKI_RELAXED_PRECISION [[vk::ext_decorate(SpvDecorationRelaxedPrecision)]]
 #else

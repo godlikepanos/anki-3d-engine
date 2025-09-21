@@ -260,25 +260,6 @@ inline U32 packColorToR10G10B10A2SNorm(F32 r, F32 g, F32 b, F32 a)
 	return out.m_packed;
 }
 
-template<typename TVec4>
-inline U32 packSnorm4x8(const TVec4& v)
-{
-	union
-	{
-		I8 in[4];
-		U32 out;
-	} u;
-
-	const TVec4 result = (v.clamp(-1.0f, 1.0f) * 127.0f).round();
-
-	u.in[0] = I8(result[0]);
-	u.in[1] = I8(result[1]);
-	u.in[2] = I8(result[2]);
-	u.in[3] = I8(result[3]);
-
-	return u.out;
-}
-
 /// Compute the abs triangle area.
 template<typename TVec>
 inline F32 computeTriangleArea(const TVec& a, const TVec& b, const TVec& c)
@@ -306,6 +287,41 @@ TVec<T, 3> sphericalToCartesian(T polar, T azimuth)
 	out.y() = cos(polar) * cos(azimuth);
 	out.z() = sin(polar);
 	return out;
+}
+
+template<typename T>
+inline [[nodiscard]] U32 packUnorm4x8(TVec<T, 4> value)
+{
+	ANKI_ASSERT((value <= TVec<T, 4>(T(1)) && value >= TVec<T, 4>(T(0))));
+	const TVec<U32, 4> packed(value * T(255));
+	return packed.x() | (packed.y() << 8u) | (packed.z() << 16u) | (packed.w() << 24u);
+}
+
+// Reverse of packUnorm4x8
+template<typename T>
+inline [[nodiscard]] TVec<T, 4> unpackUnorm4x8(const U32 value)
+{
+	const TVec<U32, 4> packed(value & 0xFF, (value >> 8u) & 0xFF, (value >> 16u) & 0xff, value >> 24u);
+	return TVec<T, 4>(packed) / T(255);
+}
+
+template<typename TVec4>
+inline [[nodiscard]] U32 packSnorm4x8(const TVec4& v)
+{
+	union
+	{
+		I8 in[4];
+		U32 out;
+	} u;
+
+	const TVec4 result = (v.clamp(-1.0f, 1.0f) * 127.0f).round();
+
+	u.in[0] = I8(result[0]);
+	u.in[1] = I8(result[1]);
+	u.in[2] = I8(result[2]);
+	u.in[3] = I8(result[3]);
+
+	return u.out;
 }
 
 } // end namespace anki

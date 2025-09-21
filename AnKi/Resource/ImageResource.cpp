@@ -68,6 +68,8 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	ANKI_CHECK(loader.load(file, filename, g_cvarRsrcMaxImageSize));
 
+	m_avgColor = loader.getAverageColor();
+
 	// Various sizes
 	init.m_width = loader.getWidth();
 	init.m_height = loader.getHeight();

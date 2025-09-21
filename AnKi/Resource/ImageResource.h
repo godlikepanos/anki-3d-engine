@@ -60,6 +60,11 @@ public:
 		return m_layerCount;
 	}
 
+	Vec4 getAverageColor() const
+	{
+		return m_avgColor;
+	}
+
 private:
 	static constexpr U32 kMaxCopiesBeforeFlush = 4;
 
@@ -69,6 +74,8 @@ private:
 	TexturePtr m_tex;
 	UVec3 m_size = UVec3(0u);
 	U32 m_layerCount = 0;
+
+	Vec4 m_avgColor = Vec4(0.0f);
 
 	[[nodiscard]] static Error load(LoadingContext& ctx);
 };

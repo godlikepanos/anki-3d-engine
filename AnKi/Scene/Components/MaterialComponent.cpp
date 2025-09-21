@@ -148,6 +148,56 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	const MeshResource& mesh = m_meshComponent->getMeshResource();
 	const U32 submeshIdx = min(mesh.getSubMeshCount() - 1, m_submeshIdx);
 
+	// Extract the diffuse color
+	Vec3 averageDiffuse(0.0f);
+	if(mtlUpdated)
+	{
+		const MaterialVariable* diffuseRelatedMtlVar = nullptr;
+
+		for(const MaterialVariable& mtlVar : mtl.getVariables())
+		{
+			SceneString name = mtlVar.getName();
+			name.toLower();
+
+			if(name.find("diffuse") != String::kNpos || name.find("albedo") != String::kNpos)
+			{
+				if(diffuseRelatedMtlVar)
+				{
+					if(name.find("tex") != String::kNpos)
+					{
+						diffuseRelatedMtlVar = &mtlVar;
+					}
+				}
+				else
+				{
+					diffuseRelatedMtlVar = &mtlVar;
+				}
+			}
+		}
+
+		if(diffuseRelatedMtlVar)
+		{
+			if(diffuseRelatedMtlVar->getDataType() >= ShaderVariableDataType::kTextureFirst
+			   && diffuseRelatedMtlVar->getDataType() <= ShaderVariableDataType::kTextureLast)
+			{
+				averageDiffuse = diffuseRelatedMtlVar->getValue<ImageResourcePtr>()->getAverageColor().xyz();
+			}
+			else if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kVec3)
+			{
+				averageDiffuse = diffuseRelatedMtlVar->getValue<Vec3>();
+			}
+			else if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kU32 && diffuseRelatedMtlVar->tryGetImageResource())
+			{
+				// Bindless texture
+				averageDiffuse = diffuseRelatedMtlVar->tryGetImageResource()->getAverageColor().xyz();
+			}
+			else
+			{
+				ANKI_SCENE_LOGW("Couldn't extract a diffuse value for material: %s", mtl.getFilename().cstr());
+			}
+		}
+	}
+
 	// Upload transforms
 	if(moved || movedLastFrame) [[unlikely]]
 	{
@@ -272,6 +322,9 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			gpuRenderable.m_rtMaterialFetchShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
 		}
 		gpuRenderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
+
+		const UVec3 u3(averageDiffuse.xyz().clamp(0.0f, 1.0f) * 255.0f);
+		gpuRenderable.m_diffuseColor = ((u3.x() << 16u) | (u3.y() << 8u) | u3.z()) & 0xFFFFFFF;
 
 		m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);
 	}

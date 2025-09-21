@@ -45,6 +45,7 @@ public:
 	U32 m_channelCount = 0;
 	U32 m_pixelSize = 0; ///< Texel size of an uncompressed image.
 	Bool m_hdr = false;
+	Vec4 m_averageColor = Vec4(0.0f);
 };
 
 class DdsPixelFormat
@@ -356,6 +357,40 @@ static void linearToSRgbBatch(WeakArray<TVec> pixels, TFunc func)
 	}
 }
 
+template<typename TVec>
+static Vec4 computeAverageColor(WeakArray<TVec> pixels)
+{
+	Vec4 average(0.0f);
+	const F32 weight = 1.0f / F32(pixels.getSize());
+
+	for(const TVec& color : pixels)
+	{
+		Vec4 v;
+		if constexpr(TVec::kComponentCount == 3)
+		{
+			v = Vec4(Vec3(color), 0.0f);
+		}
+		else
+		{
+			ANKI_ASSERT(TVec::kComponentCount == 4);
+			v = Vec4(color);
+		}
+
+		if(sizeof(color[0]) == 1)
+		{
+			v /= 255.0f;
+		}
+		else
+		{
+			ANKI_ASSERT(sizeof(color[0]) == 4);
+		}
+
+		average += v * weight;
+	}
+
+	return average;
+}
+
 static void applyScaleAndBias(WeakArray<Vec3> pixels, Vec3 scale, Vec3 bias)
 {
 	for(Vec3& pixel : pixels)
@@ -482,6 +517,32 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 		{
 			memcpy(mip0.m_surfacesOrVolume[i].m_pixels.getBegin(), data, dataSize);
 		}
+
+		Vec4 averageColor(0.0f);
+		if(ctx.m_channelCount == 3)
+		{
+			if(!ctx.m_hdr)
+			{
+				averageColor = computeAverageColor(WeakArray<U8Vec3>(static_cast<U8Vec3*>(data), ctx.m_width * ctx.m_height));
+			}
+			else
+			{
+				averageColor = computeAverageColor(WeakArray<Vec3>(static_cast<Vec3*>(data), ctx.m_width * ctx.m_height));
+			}
+		}
+		else
+		{
+			ANKI_ASSERT(ctx.m_channelCount == 4);
+			if(!ctx.m_hdr)
+			{
+				averageColor = computeAverageColor(WeakArray<U8Vec4>(static_cast<U8Vec4*>(data), ctx.m_width * ctx.m_height));
+			}
+			else
+			{
+				averageColor = computeAverageColor(WeakArray<Vec4>(static_cast<Vec4*>(data), ctx.m_width * ctx.m_height));
+			}
+		}
+		ctx.m_averageColor += averageColor / F32(config.m_inputFilenames.getSize());
 
 		stbi_image_free(data);
 	}
@@ -780,6 +841,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	header.m_mipmapCount = U8(ctx.m_mipmaps.getSize());
 	header.m_astcBlockSizeX = config.m_astcBlockSize.x();
 	header.m_astcBlockSizeY = config.m_astcBlockSize.y();
+	header.m_averageColor = {ctx.m_averageColor.x(), ctx.m_averageColor.y(), ctx.m_averageColor.z(), ctx.m_averageColor.w()};
 	ANKI_CHECK(outFile.write(&header, sizeof(header)));
 
 	// Write RAW

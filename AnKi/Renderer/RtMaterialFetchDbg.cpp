@@ -97,7 +97,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 			bindRgenSpace2Resources(ctx, rgraphCtx);
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
 
-			Vec4 dummy;
+			Vec4 dummy[3];
 			cmdb.setFastConstants(&dummy, sizeof(dummy));
 
 			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
