@@ -13,6 +13,7 @@ namespace anki {
 /// @{
 
 ANKI_CVAR2(BoolCVar, Render, Reflections, Rt, true, "Enable RT reflections")
+ANKI_CVAR2(BoolCVar, Render, Reflections, InlineRt, false, "Enable a cheap inline RT alternative path")
 ANKI_CVAR2(NumericCVar<F32>, Render, Reflections, RtMaxRayDistance, 100.0f, 1.0f, 10000.0f, "Max RT reflections ray distance")
 ANKI_CVAR2(NumericCVar<U32>, Render, Reflections, SsrStepIncrement, 32, 1, 256, "The number of steps for each loop")
 ANKI_CVAR2(NumericCVar<U32>, Render, Reflections, SsrMaxIterations, ANKI_PLATFORM_MOBILE ? 16 : 64, 1, 256, "Max SSR raymarching loop iterations")
@@ -50,6 +51,7 @@ public:
 	ShaderProgramResourcePtr m_missProg;
 	ShaderProgramPtr m_ssrGrProg;
 	ShaderProgramPtr m_libraryGrProg;
+	ShaderProgramPtr m_rtMaterialFetchInlineRtGrProg;
 	ShaderProgramPtr m_spatialDenoisingGrProg;
 	ShaderProgramPtr m_temporalDenoisingGrProg;
 	ShaderProgramPtr m_verticalBilateralDenoisingGrProg;

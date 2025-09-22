@@ -159,7 +159,7 @@ protected:
 									 RenderGraphBuilder& rgraph, BufferHandle sbtHandle, BufferView sbtBuffer);
 
 	/// Sets the the resources of space 2 in RtMaterialFetch.hlsl as dependencies on the given pass.
-	void setRgenSpace2Dependencies(RenderPassBase& pass);
+	void setRgenSpace2Dependencies(RenderPassBase& pass, Bool isComputeDispatch = false);
 
 	/// Bind the the resources of space 2 in RtMaterialFetch.hlsl.
 	void bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);

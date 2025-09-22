@@ -85,8 +85,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	}
 
 	// Iterate the visible probes to find a candidate for update
-	WeakArray<ReflectionProbeComponent*> visibleProbes =
-		getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_reflectionProbes;
+	WeakArray<ReflectionProbeComponent*> visibleProbes = getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_reflectionProbes;
 	ReflectionProbeComponent* probeToRefresh = nullptr;
 	for(ReflectionProbeComponent* probe : visibleProbes)
 	{
@@ -98,7 +97,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	}
 
 	if(probeToRefresh == nullptr || AsyncLoader::getSingleton().getTasksInFlightCount() != 0
-	   || getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt()) [[likely]]
+	   || (isIndirectDiffuseProbesEnabled() && getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())) [[likely]]
 	{
 		// Nothing to update or can't update right now, early exit
 		m_runCtx = {};

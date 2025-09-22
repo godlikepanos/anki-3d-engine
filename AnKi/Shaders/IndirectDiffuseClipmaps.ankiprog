@@ -12,6 +12,7 @@
 #pragma anki mutator SPATIAL_RECONSTRUCT_TYPE 0 1
 
 #pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_CLIPMAP SPATIAL_RECONSTRUCT_TYPE
+#pragma anki technique RtMaterialFetchInlineRt comp mutators
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique Apply comp mutators SPATIAL_RECONSTRUCT_TYPE
@@ -29,12 +30,8 @@
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/TemporalAA.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <ThirdParty/SHforHLSL/SH.hlsli>
-
-#if defined(RT_MATERIAL_FETCH_CLIPMAP) && RT_MATERIAL_FETCH_CLIPMAP
-#	define CLIPMAP_VOLUME
-#endif
-#include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 constexpr F32 kGaussianSigma = 0.55;
 constexpr F32 kMaxBilateralSamplesPerDirection = 5.0;
@@ -60,14 +57,28 @@ struct ProbeUpdateConsts
 };
 
 // ===========================================================================
-// RtMaterialFetch                                                           =
+// RtMaterialFetch and RtMaterialFetchInlineRt                               =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) && NOT_ZERO(RT_MATERIAL_FETCH_CLIPMAP)
+#if(NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) && NOT_ZERO(RT_MATERIAL_FETCH_CLIPMAP)) || NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetchInlineRt)
+
+#	define CLIPMAP_VOLUME
+#	define INCLUDE_ALL
+#	include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 
+#	if ANKI_COMPUTE_SHADER
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+#	else
 [Shader("raygeneration")] void main()
+#	endif
 {
+#	if ANKI_COMPUTE_SHADER
+	const U32 tid = svDispatchThreadId.x;
+#	else
+	const U32 tid = DispatchRaysIndex().x;
+#	endif
+
 	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
 	const U32 octMapTexelCount = square(g_consts.m_radianceOctMapSize);
 
@@ -75,8 +86,13 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 	U32 probeIdx;
 	U32 subRayIdx;
 	U32 octMapTexelIdx;
-	unflatten3dArrayIndex(octMapTexelCount, g_consts.m_maxProbesToUpdate, g_consts.m_rayCountPerTexel, DispatchRaysIndex().x, octMapTexelIdx,
-						  probeIdx, subRayIdx);
+	unflatten3dArrayIndex(octMapTexelCount, g_consts.m_maxProbesToUpdate, g_consts.m_rayCountPerTexel, tid, octMapTexelIdx, probeIdx, subRayIdx);
+#	if ANKI_COMPUTE_SHADER
+	if(octMapTexelIdx >= octMapTexelCount || probeIdx >= g_consts.m_maxProbesToUpdate || subRayIdx >= g_consts.m_rayCountPerTexel)
+	{
+		return;
+	}
+#	endif
 
 	if(g_consts.m_clipmapRegion.m_partialUpdate)
 	{
@@ -118,7 +134,11 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
 	F32 rayT = 0.0;
 	Bool backfacing = false;
+#	if ANKI_COMPUTE_SHADER
+	const Bool hit = materialRayTraceInlineRt<F16>(probeWorldPos, dir, 0.0, tMax, 1000.0, gbuffer, rayT, backfacing);
+#	else
 	const Bool hit = materialRayTrace<F16>(probeWorldPos, dir, 0.0, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
+#	endif
 
 	HVec3 radiance;
 	if(backfacing)
@@ -507,6 +527,8 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 // RtMaterialFetch (Apply)                                                   =
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) && !RT_MATERIAL_FETCH_CLIPMAP
+
+#	include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 struct Consts
 {

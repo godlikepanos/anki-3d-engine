@@ -257,28 +257,32 @@ void RtMaterialFetchRendererObject::patchShaderBindingTablePass(CString passName
 		});
 }
 
-void RtMaterialFetchRendererObject::setRgenSpace2Dependencies(RenderPassBase& pass)
+void RtMaterialFetchRendererObject::setRgenSpace2Dependencies(RenderPassBase& pass, Bool isComputeDispatch)
 {
-	pass.newAccelerationStructureDependency(getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-											AccelerationStructureUsageBit::kSrvDispatchRays);
+	const TextureUsageBit srvTexUsage = (isComputeDispatch) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvDispatchRays;
+	const BufferUsageBit srvBuffUsage = (isComputeDispatch) ? BufferUsageBit::kSrvCompute : BufferUsageBit::kSrvDispatchRays;
+	const AccelerationStructureUsageBit srvAsUsage =
+		(isComputeDispatch) ? AccelerationStructureUsageBit::kSrvCompute : AccelerationStructureUsageBit::kSrvDispatchRays;
+
+	pass.newAccelerationStructureDependency(getAccelerationStructureBuilder().getAccelerationStructureHandle(), srvAsUsage);
 
 	if(getGeneratedSky().isEnabled())
 	{
-		pass.newTextureDependency(getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
+		pass.newTextureDependency(getGeneratedSky().getEnvironmentMapRt(), srvTexUsage);
 	}
 
-	pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
+	pass.newTextureDependency(getShadowMapping().getShadowmapRt(), srvTexUsage);
 
-	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
-	pass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvDispatchRays);
-	pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
+	pass.newTextureDependency(getGBuffer().getDepthRt(), srvTexUsage);
+	pass.newTextureDependency(getGBuffer().getColorRt(1), srvTexUsage);
+	pass.newTextureDependency(getGBuffer().getColorRt(2), srvTexUsage);
 
 	{
 		AccelerationStructureVisibilityInfo asVis;
 		GpuVisibilityLocalLightsOutput lightVis;
 		getAccelerationStructureBuilder().getVisibilityInfo(asVis, lightVis);
 
-		pass.newBufferDependency(lightVis.m_dependency, BufferUsageBit::kSrvDispatchRays);
+		pass.newBufferDependency(lightVis.m_dependency, srvBuffUsage);
 	}
 }
 

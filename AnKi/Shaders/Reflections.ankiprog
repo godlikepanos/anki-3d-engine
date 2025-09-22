@@ -12,12 +12,12 @@
 #pragma anki technique Ssr comp
 #pragma anki technique ReflectionProbeFallback comp mutators
 #pragma anki technique RtMaterialFetch rgen mutators INDIRECT_DIFFUSE_CLIPMAPS
+#pragma anki technique RtMaterialFetchInlineRt comp mutators INDIRECT_DIFFUSE_CLIPMAPS
 #pragma anki technique SpatialDenoise comp mutators
 #pragma anki technique TemporalDenoise comp mutators
 #pragma anki technique BilateralDenoiseVertical comp mutators
 #pragma anki technique BilateralDenoiseHorizontal comp mutators
 
-#include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
@@ -27,6 +27,7 @@
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
 #include <AnKi/Shaders/TemporalAA.hlsl>
+#include <AnKi/Shaders/Sky.hlsl>
 
 // Config & debug
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
@@ -638,15 +639,7 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 	if(probeColor.x < 0.0)
 	{
 		// No probe, sample sky
-		if(g_globalRendererConstants.m_sky.m_type == 0)
-		{
-			probeColor = g_globalRendererConstants.m_sky.m_solidColor;
-		}
-		else
-		{
-			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(reflDir) : octahedronEncode(reflDir);
-			probeColor = g_envMap.SampleLevel(g_trilinearClampSampler, uv, 0.0).xyz;
-		}
+		probeColor = sampleSkyCheap<F32>(g_globalRendererConstants.m_sky, reflDir, g_trilinearClampSampler);
 	}
 
 	// Write out
@@ -660,9 +653,12 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 #endif
 
 // ===========================================================================
-// RayGen                                                                    =
+// RtMaterialFetch                                                           =
 // ===========================================================================
-#if ANKI_RAY_GEN_SHADER
+#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) || NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetchInlineRt)
+
+#	define INCLUDE_ALL
+#	include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 struct Consts
 {
@@ -704,12 +700,26 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	}
 }
 
+#	if ANKI_COMPUTE_SHADER
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+#	else
 [shader("raygeneration")] void main()
+#	endif
 {
+#	if ANKI_COMPUTE_SHADER
+	const U32 gtid = svDispatchThreadId.x;
+	if(gtid >= getStructuredBufferElementCount(g_pixelsFailedSsr))
+	{
+		return;
+	}
+#	else
+	const U32 gtid = DispatchRaysIndex().x;
+#	endif
+
 	UVec2 halfViewportSize;
 	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
 
-	const PixelFailedSsr pixelFailedSsr = g_pixelsFailedSsr[DispatchRaysIndex().x];
+	const PixelFailedSsr pixelFailedSsr = SBUFF(g_pixelsFailedSsr, gtid);
 	const UVec2 realCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
 	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
 	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
@@ -736,7 +746,12 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	GBufferLight<F16> gbuffer;
 	F32 rayT;
 	Bool unused;
+#	if ANKI_COMPUTE_SHADER
+	const Bool hasHitSky =
+		!materialRayTraceInlineRt(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT, unused);
+#	else
 	const Bool hasHitSky = !materialRayTrace(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT, unused);
+#	endif
 
 	const Vec3 hitPos = worldPos + reflDir * rayT;
 
@@ -766,7 +781,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	// Store depth in reverse for better precision
 	g_hitPosAndDepthTex[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
 }
-#endif // ANKI_RAY_GEN_SHADER
+#endif
 
 // ===========================================================================
 // SpatialDenoise                                                            =

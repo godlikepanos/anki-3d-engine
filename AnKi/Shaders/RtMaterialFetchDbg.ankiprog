@@ -39,7 +39,7 @@
 
 	if(!hit)
 	{
-		col = Vec3(1.0, 0.0, 1.0);
+		col = Vec3(0.0, 0.0, 1.0);
 	}
 	else if(backfacing)
 	{
@@ -61,19 +61,21 @@
 	ray.TMin = tMin;
 	ray.Direction = rayDir;
 	ray.TMax = tMax;
-	q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
-	q.Proceed();
+	q.TraceRayInline(g_tlas, RAY_FLAG_FORCE_OPAQUE, cullMask, ray);
+	while(q.Proceed())
+	{
+	}
 	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 
 	Bool backfacing = false;
 	if(hit)
 	{
-		backfacing = q.CandidateTriangleFrontFace();
+		backfacing = q.CommittedTriangleFrontFace();
 	}
 
 	if(!hit)
 	{
-		col = Vec3(1.0, 0.0, 1.0);
+		col = Vec3(0.0, 0.0, 1.0);
 	}
 	else if(backfacing)
 	{
@@ -89,7 +91,7 @@
 		const Vec3 positions[3] = spvRayQueryGetIntersectionTriangleVertexPositionsKHR(q, SpvRayQueryCommittedIntersectionKHR);
 		const Vec3 vertNormal = normalize(cross(positions[1] - positions[0], positions[2] - positions[1]));
 
-		const Vec3 worldNormal = normalize(mul(q.CandidateObjectToWorld3x4(), Vec4(vertNormal, 0.0)));
+		const Vec3 worldNormal = normalize(mul(q.CommittedObjectToWorld3x4(), Vec4(vertNormal, 0.0)));
 
 		GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
 		gbuffer.m_diffuse = color;
@@ -101,6 +103,7 @@
 		col += gbuffer.m_diffuse * 0.3;
 
 		// col = worldNormal / 2.0 + 0.5;
+		// col = frac(positions[0]);
 	}
 #endif
 

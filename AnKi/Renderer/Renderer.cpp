@@ -426,15 +426,19 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	if(isSolidColor)
 	{
 		consts.m_sky.m_solidColor = (sky) ? sky->getSolidColor() : Vec3(0.0);
-		consts.m_sky.m_type = 0;
+		consts.m_sky.m_type = U32(SkyType::kSolidColor);
 	}
 	else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 	{
-		consts.m_sky.m_type = 1;
+		consts.m_sky.m_type = U32(SkyType::kTextureWithEquirectangularMapping);
+		consts.m_sky.m_texture =
+			sky->getImageResource().getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
 	}
 	else
 	{
-		consts.m_sky.m_type = 2;
+		consts.m_sky.m_type = U32(SkyType::kTextureWithEctahedronMapping);
+		consts.m_sky.m_texture =
+			m_generatedSky->getEnvironmentMapTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
 	}
 
 	if(m_indirectDiffuseClipmaps)

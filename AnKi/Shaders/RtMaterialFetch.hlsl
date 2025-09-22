@@ -9,6 +9,7 @@
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
+#include <AnKi/Shaders/Sky.hlsl>
 
 struct [raypayload] RtMaterialFetchRayPayload
 {
@@ -27,7 +28,7 @@ struct [raypayload] RtMaterialFetchRayPayload
 };
 
 // Have a common resouce interface for all shaders. It should be compatible between all ray shaders in DX and VK
-#if ANKI_RAY_GEN_SHADER
+#if ANKI_RAY_GEN_SHADER || defined(INCLUDE_ALL)
 #	define SPACE space2
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0, SPACE);
@@ -100,16 +101,7 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	if(hasHitSky)
 	{
 		gbuffer = (GBufferLight<T>)0;
-
-		if(g_globalRendererConstants.m_sky.m_type == 0)
-		{
-			gbuffer.m_emission = g_globalRendererConstants.m_sky.m_solidColor;
-		}
-		else
-		{
-			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
-			gbuffer.m_emission = g_envMap.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
-		}
+		gbuffer.m_emission = sampleSkyCheap<T>(g_globalRendererConstants.m_sky, rayDir, g_linearAnyClampSampler);
 	}
 	else
 	{
@@ -119,6 +111,52 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	}
 
 	return !hasHitSky;
+}
+
+template<typename T>
+Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT,
+							  out Bool backfacing)
+{
+	gbuffer = (GBufferLight<T>)0;
+
+	RayQuery<RAY_FLAG_FORCE_OPAQUE> q;
+	const U32 cullMask = 0xFFu;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = tMin;
+	ray.Direction = rayDir;
+	ray.TMax = tMax;
+	q.TraceRayInline(g_tlas, RAY_FLAG_FORCE_OPAQUE, cullMask, ray);
+	while(q.Proceed())
+	{
+	}
+	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+
+	if(!hit)
+	{
+		backfacing = false;
+		gbuffer.m_emission = sampleSkyCheap<T>(g_globalRendererConstants.m_sky, rayDir, g_linearAnyClampSampler);
+		rayT = -1.0;
+	}
+	else
+	{
+		backfacing = q.CommittedTriangleFrontFace();
+
+		// Read the diff color from the AS instance
+		UVec3 diffColoru = q.CommittedInstanceID();
+		diffColoru >>= UVec3(16, 8, 0);
+		diffColoru &= 0xFF;
+		gbuffer.m_diffuse = Vec3(diffColoru) / 255.0;
+
+		// Compute the normal
+		const Vec3 positions[3] = spvRayQueryGetIntersectionTriangleVertexPositionsKHR(q, SpvRayQueryCommittedIntersectionKHR);
+		const Vec3 vertNormal = normalize(cross(positions[1] - positions[0], positions[2] - positions[1]));
+		gbuffer.m_worldNormal = normalize(mul(q.CommittedObjectToWorld3x4(), Vec4(vertNormal, 0.0)));
+
+		rayT = q.CommittedRayT();
+	}
+
+	return hit;
 }
 
 Bool rayVisibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax, U32 traceFlags)
@@ -131,7 +169,9 @@ Bool rayVisibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax, U32 traceFlags)
 	ray.Direction = rayDir;
 	ray.TMax = tMax;
 	q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
-	q.Proceed();
+	while(q.Proceed())
+	{
+	}
 	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 
 	return hit;

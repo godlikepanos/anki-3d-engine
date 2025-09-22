@@ -356,7 +356,7 @@ const SceneNode& SceneGraph::getActiveCameraNode() const
 	}
 	else
 	{
-		*m_defaultMainCam;
+		return *m_defaultMainCam;
 	}
 }
 

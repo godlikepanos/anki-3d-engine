@@ -64,9 +64,10 @@ Bool directoryExists(const CString& filename)
 class WalkDirectoryTreeCallbackContext
 {
 public:
-	const Function<Error(const CString&, Bool)>* m_callback = nullptr;
+	const Function<Error(WalkDirectoryArgs&)>* m_callback = nullptr;
 	U32 m_prefixLen;
 	Error m_err = {Error::kNone};
+	Bool m_stopSearch = false;
 };
 
 static thread_local WalkDirectoryTreeCallbackContext g_walkDirectoryTreeContext;
@@ -92,18 +93,22 @@ static int walkDirectoryTreeCallback(const char* filepath, [[maybe_unused]] cons
 		WalkDirectoryTreeCallbackContext& ctx = g_walkDirectoryTreeContext;
 		ANKI_ASSERT(ctx.m_callback);
 
-		if(ctx.m_err || strlen(filepath) <= ctx.m_prefixLen)
+		if(ctx.m_err || ctx.m_stopSearch || strlen(filepath) <= ctx.m_prefixLen)
 		{
 			return 0;
 		}
 
-		ctx.m_err = (*ctx.m_callback)(filepath + ctx.m_prefixLen, isDir);
+		WalkDirectoryArgs args;
+		args.m_path = filepath + ctx.m_prefixLen;
+		args.m_isDirectory = isDir;
+		ctx.m_err = (*ctx.m_callback)(args);
+		ctx.m_stopSearch = args.m_stopSearch;
 	}
 
 	return 0;
 }
 
-Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback)
+Error walkDirectoryTreeInternal(CString dir, const Function<Error(WalkDirectoryArgs& args)>& callback)
 {
 	ANKI_ASSERT(dir.getLength() > 0);
 	Error err = Error::kNone;

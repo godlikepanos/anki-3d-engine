@@ -15,6 +15,7 @@ namespace anki {
 /// @{
 
 ANKI_CVAR(BoolCVar, Render, Idc, false, "Enable ray traced indirect diffuse clipmaps")
+ANKI_CVAR2(BoolCVar, Render, Idc, InlineRt, false, "Use a cheap and less accurate path with inline RT");
 
 constexpr U32 kDefaultClipmapProbeCountXZ = 32;
 constexpr U32 kDefaultClipmapProbeCountY = 12;
@@ -132,6 +133,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramResourcePtr m_missProg;
 	ShaderProgramPtr m_rtLibraryGrProg;
+	ShaderProgramPtr m_rtMaterialFetchInlineRtGrProg;
 	ShaderProgramPtr m_populateCachesGrProg;
 	ShaderProgramPtr m_computeIrradianceGrProg;
 	ShaderProgramPtr m_applyGiGrProg;

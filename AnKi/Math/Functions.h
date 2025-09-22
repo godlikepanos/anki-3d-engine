@@ -290,23 +290,23 @@ TVec<T, 3> sphericalToCartesian(T polar, T azimuth)
 }
 
 template<typename T>
-inline [[nodiscard]] U32 packUnorm4x8(TVec<T, 4> value)
+inline U32 packUnorm4x8(TVec<T, 4> value)
 {
 	ANKI_ASSERT((value <= TVec<T, 4>(T(1)) && value >= TVec<T, 4>(T(0))));
-	const TVec<U32, 4> packed(value * T(255));
-	return packed.x() | (packed.y() << 8u) | (packed.z() << 16u) | (packed.w() << 24u);
+	const TVec<T, 4> packed(value * T(255));
+	return packed.x() | (U32(packed.y()) << 8u) | (U32(packed.z()) << 16u) | (U32(packed.w()) << 24u);
 }
 
 // Reverse of packUnorm4x8
 template<typename T>
-inline [[nodiscard]] TVec<T, 4> unpackUnorm4x8(const U32 value)
+inline TVec<T, 4> unpackUnorm4x8(const U32 value)
 {
-	const TVec<U32, 4> packed(value & 0xFF, (value >> 8u) & 0xFF, (value >> 16u) & 0xff, value >> 24u);
-	return TVec<T, 4>(packed) / T(255);
+	const TVec<T, 4> packed(value & 0xFF, (value >> 8u) & 0xFF, (value >> 16u) & 0xff, value >> 24u);
+	return packed / T(255);
 }
 
 template<typename TVec4>
-inline [[nodiscard]] U32 packSnorm4x8(const TVec4& v)
+inline U32 packSnorm4x8(const TVec4& v)
 {
 	union
 	{

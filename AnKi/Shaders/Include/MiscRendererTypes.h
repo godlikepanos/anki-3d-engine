@@ -66,10 +66,18 @@ struct CommonMatrices
 	F32 m_far;
 };
 
+enum class SkyType
+{
+	kSolidColor,
+	kTextureWithEquirectangularMapping,
+	kTextureWithEctahedronMapping,
+};
+
 struct Sky
 {
 	Vec3 m_solidColor;
-	U32 m_type;
+	U32 m_type : 2; // One of SkyType
+	U32 m_texture : 30;
 };
 
 struct IndirectDiffuseClipmapTextures

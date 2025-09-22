@@ -33,11 +33,11 @@ Error Reflections::init()
 
 	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer},
 												   {"INDIRECT_DIFFUSE_CLIPMAPS", isIndirectDiffuseClipmapsEnabled()}};
-
+	constexpr CString kProgFname = "ShaderBinaries/Reflections.ankiprogbin";
 	// Ray gen and miss
 	if(bRtReflections)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Reflections.ankiprogbin", m_mainProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(kProgFname, m_mainProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_mainProg);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
@@ -59,15 +59,14 @@ Error Reflections::init()
 											GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_verticalBilateralDenoisingGrProg,
-								 "BilateralDenoiseVertical"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_horizontalBilateralDenoisingGrProg,
-								 "BilateralDenoiseHorizontal"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_ssrGrProg, "Ssr"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_verticalBilateralDenoisingGrProg, "BilateralDenoiseVertical"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_horizontalBilateralDenoisingGrProg, "BilateralDenoiseHorizontal"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_ssrGrProg, "Ssr"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #1");
@@ -260,7 +259,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
-	if(bRtReflections)
+	if(bRtReflections && !g_cvarRenderReflectionsInlineRt)
 	{
 		buildShaderBindingTablePass("RtReflections: Build SBT", m_libraryGrProg.get(), m_rayGenShaderGroupIdx, m_missShaderGroupIdx, m_sbtRecordSize,
 									rgraph, sbtHandle, sbtBuffer);
@@ -271,22 +270,30 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections");
 
-		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavDispatchRays);
-		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavDispatchRays);
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectDispatchRays);
-		setRgenSpace2Dependencies(rpass);
+		const TextureUsageBit uavTexUsage = (g_cvarRenderReflectionsInlineRt) ? TextureUsageBit::kUavCompute : TextureUsageBit::kUavDispatchRays;
+		const BufferUsageBit indirectBuffUsage =
+			(g_cvarRenderReflectionsInlineRt) ? BufferUsageBit::kIndirectCompute : BufferUsageBit::kIndirectDispatchRays;
+		const TextureUsageBit srvTexUsage = (g_cvarRenderReflectionsInlineRt) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvDispatchRays;
+
+		if(!g_cvarRenderReflectionsInlineRt)
+		{
+			rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
+		}
+		rpass.newTextureDependency(transientRt1, uavTexUsage);
+		rpass.newTextureDependency(hitPosAndDepthRt, uavTexUsage);
+		rpass.newBufferDependency(indirectArgsHandle, indirectBuffUsage);
+		setRgenSpace2Dependencies(rpass, g_cvarRenderReflectionsInlineRt);
 
 		if(isIndirectDiffuseClipmapsEnabled())
 		{
-			getIndirectDiffuseClipmaps().setDependencies(rpass, TextureUsageBit::kSrvDispatchRays);
+			getIndirectDiffuseClipmaps().setDependencies(rpass, srvTexUsage);
 		}
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_libraryGrProg.get());
+			cmdb.bindShaderProgram((g_cvarRenderReflectionsInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get() : m_libraryGrProg.get());
 
 			// More globals
 			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
@@ -319,8 +326,16 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.dispatchRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-									  BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(DispatchIndirectArgs)));
+			if(g_cvarRenderReflectionsInlineRt)
+			{
+				cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer.get()).incrementOffset(sizeof(DispatchIndirectArgs)));
+			}
+			else
+			{
+
+				cmdb.dispatchRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+										  BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(DispatchIndirectArgs)));
+			}
 		});
 	}
 	else

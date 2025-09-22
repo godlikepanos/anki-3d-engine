@@ -268,21 +268,20 @@ Error IndirectDiffuseClipmaps::init()
 											 {"RT_MATERIAL_FETCH_CLIPMAP", 0},
 											 {"SPATIAL_RECONSTRUCT_TYPE", !g_cvarRenderIdcApplyHighQuality}}};
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_applyGiGrProg, "Apply"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_visProbesGrProg, "VisualizeProbes"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_populateCachesGrProg, "PopulateCaches"));
-	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_computeIrradianceGrProg, "ComputeIrradiance"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_temporalDenoiseGrProg, "TemporalDenoise"));
-	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_spatialReconstructGrProg, "SpatialReconstruct"));
-	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", mutation, m_prog, m_bilateralDenoiseGrProg, "BilateralDenoise"));
+	constexpr CString kProgFname = "ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin";
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_applyGiGrProg, "Apply"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_visProbesGrProg, "VisualizeProbes"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_populateCachesGrProg, "PopulateCaches"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_computeIrradianceGrProg, "ComputeIrradiance"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_temporalDenoiseGrProg, "TemporalDenoise"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_spatialReconstructGrProg, "SpatialReconstruct"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_bilateralDenoiseGrProg, "BilateralDenoise"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
 
 	for(MutatorValue rtMaterialFetchClipmap = 0; rtMaterialFetchClipmap < 2; ++rtMaterialFetchClipmap)
 	{
 		ShaderProgramResourcePtr tmpProg;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin", tmpProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(kProgFname, tmpProg));
 		ANKI_ASSERT(tmpProg == m_prog);
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
@@ -400,8 +399,11 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
-	buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[1], m_missShaderGroupIdx,
-								m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+	if(!g_cvarRenderIdcInlineRt)
+	{
+		buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[1],
+									m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+	}
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
@@ -455,9 +457,12 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		{
 			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("IndirectDiffuseClipmaps: RT (clipmap %u)", clipmap));
 
-			pass.newTextureDependency(rtResultHandle, TextureUsageBit::kUavCompute);
-			pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-			setRgenSpace2Dependencies(pass);
+			pass.newTextureDependency(rtResultHandle, (g_cvarRenderIdcInlineRt) ? TextureUsageBit::kUavCompute : TextureUsageBit::kUavDispatchRays);
+			if(!g_cvarRenderIdcInlineRt)
+			{
+				pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
+			}
+			setRgenSpace2Dependencies(pass, g_cvarRenderIdcInlineRt);
 
 			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 			{
@@ -468,7 +473,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 						  partialUpdateProbeCount](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
+				cmdb.bindShaderProgram((g_cvarRenderIdcInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get() : m_rtLibraryGrProg.get());
 
 				// More globals
 				cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
@@ -509,8 +514,15 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 					const U32 threadCount =
 						consts.m_clipmapRegion.m_probeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize) * consts.m_rayCountPerTexel;
-					cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-									  threadCount, 1, 1);
+					if(g_cvarRenderIdcInlineRt)
+					{
+						cmdb.dispatchCompute((threadCount + 64 - 1) / 64, 1, 1);
+					}
+					else
+					{
+						cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+										  threadCount, 1, 1);
+					}
 
 					cmdb.popDebugMarker();
 				}
@@ -531,8 +543,15 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 					cmdb.setFastConstants(&consts, sizeof(consts));
 
 					const U32 threadCount = partialUpdateProbeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize);
-					cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-									  threadCount, 1, 1);
+					if(g_cvarRenderIdcInlineRt)
+					{
+						cmdb.dispatchCompute((threadCount + 64 - 1) / 64, 1, 1);
+					}
+					else
+					{
+						cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+										  threadCount, 1, 1);
+					}
 
 					cmdb.popDebugMarker();
 				}
