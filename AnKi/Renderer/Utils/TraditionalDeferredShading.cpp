@@ -20,11 +20,11 @@ Error TraditionalDeferredLightShading::init()
 	// Init progs
 	for(MutatorValue specular = 0; specular <= 1; ++specular)
 	{
-		for(MutatorValue applyIndirectDiffuse = 0; applyIndirectDiffuse <= 1; ++applyIndirectDiffuse)
+		for(MutatorValue indirectDiffuseType = 0; indirectDiffuseType <= 2; ++indirectDiffuseType)
 		{
 			ANKI_CHECK(loadShaderProgram("ShaderBinaries/TraditionalDeferredShading.ankiprogbin",
-										 {{"SPECULAR", specular}, {"INDIRECT_DIFFUSE", applyIndirectDiffuse}}, m_lightProg,
-										 m_lightGrProg[specular][applyIndirectDiffuse]));
+										 {{"SPECULAR", specular}, {"INDIRECT_DIFFUSE", indirectDiffuseType}}, m_lightProg,
+										 m_lightGrProg[specular][indirectDiffuseType]));
 		}
 	}
 
@@ -139,15 +139,18 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		}
 
 		const Bool indirectDiffuse = info.m_applyIndirectDiffuse && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount();
+		Bool useIndirectDiffuseClipmaps = false;
 		if(indirectDiffuse)
 		{
 			cmdb.bindSrv(7, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 			cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+
+			useIndirectDiffuseClipmaps = info.m_useIndirectDiffuseClipmaps;
 		}
 
 		cmdb.bindConstantBuffer(1, 0, info.m_globalRendererConsts);
 
-		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular][indirectDiffuse].get());
+		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular][indirectDiffuse + useIndirectDiffuseClipmaps].get());
 
 		drawQuad(cmdb);
 	}

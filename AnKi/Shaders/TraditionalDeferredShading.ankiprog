@@ -5,8 +5,10 @@
 
 // Classic deferred lighting shader
 
+#pragma anki 16bit
+
 #pragma anki mutator SPECULAR 0 1
-#pragma anki mutator INDIRECT_DIFFUSE 0 1
+#pragma anki mutator INDIRECT_DIFFUSE 0 1 2
 
 #pragma anki technique vert pixel
 
@@ -15,6 +17,7 @@
 #if ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 #	include <AnKi/Shaders/LightFunctions.hlsl>
+#	include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
 #	include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 #	include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
@@ -43,6 +46,7 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b1);
 #	if INDIRECT_DIFFUSE
 Vec3 getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 {
+#		if INDIRECT_DIFFUSE == 1
 	const U32 probeCount = getStructuredBufferElementCount(g_giProbes);
 	U32 i;
 	for(i = 0; i < probeCount; ++i)
@@ -63,6 +67,14 @@ Vec3 getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	{
 		return 0.0;
 	}
+#		else
+	constexpr SampleClipmapFlag flags =
+		kSampleClipmapFlagBackfacingProbeRejection | kSampleClipmapFlagBiasSamplePointSurfaceNormal | kSampleClipmapFlagUsePreviousFrame;
+	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConsts.m_indirectDiffuseClipmaps;
+	const Vec3 irradiance =
+		sampleClipmapIrradiance(worldPos, worldNormal, g_globalRendererConsts.m_cameraPosition, idConsts, g_linearAnyClampSampler, flags);
+	return irradiance;
+#		endif
 }
 #	endif
 
@@ -99,12 +111,12 @@ Vec4 main(VertOut input) : SV_TARGET0
 	if(g_globalRendererConsts.m_directionalLight.m_active)
 	{
 		const F32 dist = length(g_consts.m_cameraPos - worldPos);
-		RF32 shadowFactor;
+		F32 shadowFactor;
 		if(dist < g_consts.m_dirLight.m_effectiveShadowDistance)
 		{
 			// Acceptable distance
 
-			shadowFactor = computeShadowFactorDirLight<RF32>(g_consts.m_dirLight.m_lightMatrix, worldPos, g_shadowMap, g_shadowMapSampler);
+			shadowFactor = computeShadowFactorDirLight<F32>(g_consts.m_dirLight.m_lightMatrix, worldPos, g_shadowMap, g_shadowMapSampler);
 		}
 		else
 		{
@@ -112,8 +124,8 @@ Vec4 main(VertOut input) : SV_TARGET0
 		}
 
 		const Vec3 l = -g_globalRendererConsts.m_directionalLight.m_direction;
-		const RF32 lambert = dot(l, gbuffer.m_normal);
-		const RF32 factor = shadowFactor * max(gbuffer.m_subsurface, lambert);
+		const F32 lambert = dot(l, gbuffer.m_normal);
+		const F32 factor = shadowFactor * max(gbuffer.m_subsurface, lambert);
 
 #	if SPECULAR == 1
 		const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
@@ -136,7 +148,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 		const F32 lambert = nol;
 		const F32 spot = ((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
-							 ? computeSpotFactor<RF32>(l, light.m_outerCos, light.m_innerCos, light.m_direction)
+							 ? computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction)
 							 : 1.0f;
 		const F32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
 

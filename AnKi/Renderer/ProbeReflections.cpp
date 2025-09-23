@@ -14,6 +14,7 @@
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Reflections.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
@@ -306,9 +307,13 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				pass.newTextureDependency(getRenderer().getGeneratedSky().getSkyLutRt(), TextureUsageBit::kSrvPixel);
 			}
 
-			if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
+			if(isIndirectDiffuseProbesEnabled() && getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
 			{
 				pass.newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), TextureUsageBit::kSrvPixel);
+			}
+			else if(!isIndirectDiffuseProbesEnabled())
+			{
+				getIndirectDiffuseClipmaps().setDependencies(pass, TextureUsageBit::kSrvPixel);
 			}
 
 			pass.setWork([this, visResult = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(),
@@ -335,6 +340,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				dsInfo.m_gbufferRenderTargets[2] = gbufferColorRts[2];
 				dsInfo.m_gbufferRenderTargetSubresource[2].m_face = faceIdx;
 				dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
+				dsInfo.m_useIndirectDiffuseClipmaps = isIndirectDiffuseClipmapsEnabled();
 				if(shadowMapRt.isValid())
 				{
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowMapRt;

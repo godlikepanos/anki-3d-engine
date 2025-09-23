@@ -33,7 +33,7 @@ struct TraditionalDeferredShadingConstants
 
 struct TraditionalDeferredSkyboxConstants
 {
-	RVec3 m_solidColor;
+	Vec3 m_solidColor;
 	F32 m_padding1;
 
 	Mat4 m_invertedViewProjectionMat;
