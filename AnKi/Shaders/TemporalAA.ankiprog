@@ -53,7 +53,7 @@ Vec3 computeTaa(Vec2 coord)
 	TEX(g_outTex, coord) = Vec4(computeTaa(coord), 0.0);
 }
 #elif ANKI_PIXEL_SHADER
-Vec3 main(VertOut input) : SV_Target0
+Vec3 main(VertOut input) : SV_TARGET0
 {
 	return computeTaa(floor(input.m_svPosition));
 }

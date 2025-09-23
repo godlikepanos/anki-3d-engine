@@ -16,6 +16,7 @@ namespace anki {
 
 ANKI_CVAR(BoolCVar, Render, Idc, false, "Enable ray traced indirect diffuse clipmaps")
 ANKI_CVAR2(BoolCVar, Render, Idc, InlineRt, false, "Use a cheap and less accurate path with inline RT");
+ANKI_CVAR2(BoolCVar, Render, Idc, UseSHL2, !ANKI_PLATFORM_MOBILE, "Use L2 SH for calculations. Else use L1");
 
 constexpr U32 kDefaultClipmapProbeCountXZ = 32;
 constexpr U32 kDefaultClipmapProbeCountY = 12;

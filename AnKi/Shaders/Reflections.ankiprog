@@ -109,8 +109,8 @@ groupshared U32 g_minRoughness;
 groupshared U32 g_maxRoughness;
 groupshared U32 g_allSky;
 
-[NumThreads(TILE_SIZE / 2, TILE_SIZE, 1)] void main(U32 svGroupIndex : SV_GroupIndex, UVec2 svDispatchThreadId : SV_DispatchThreadID,
-													UVec2 svGroupId : SV_GroupID)
+[numthreads(TILE_SIZE / 2, TILE_SIZE, 1)] void main(U32 svGroupIndex : SV_GROUPINDEX, UVec2 svDispatchThreadId : SV_DISPATCHTHREADID,
+													UVec2 svGroupId : SV_GROUPID)
 {
 	if(svDispatchThreadId.x == 0 && svDispatchThreadId.y == 0)
 	{
@@ -384,8 +384,8 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 }
 
 // All calculations in view space
-[NumThreads(NUM_THREADS_SQRT, NUM_THREADS_SQRT, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID,
-															  UVec2 svGroupThreadId : SV_GroupThreadID, U32 svGroupIndex : SV_GroupIndex)
+[numthreads(NUM_THREADS_SQRT, NUM_THREADS_SQRT, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID,
+															  UVec2 svGroupThreadId : SV_GROUPTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	UVec2 halfViewportSize;
 	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
@@ -608,7 +608,7 @@ SamplerState g_trilinearClampSampler : register(s0);
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 
-[NumThreads(64, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(64, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	if(svDispatchThreadId.x >= g_pixelsFailedSsrCount[0])
 	{
@@ -826,7 +826,7 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 	sumWeight += weight;
 }
 
-[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID, UVec2 svGroupThreadId : SV_GROUPTHREADID,
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID, UVec2 svGroupThreadId : SV_GROUPTHREADID,
 								U32 svGroupIndex : SV_GROUPINDEX)
 {
 	UVec2 viewportSize;
@@ -1104,7 +1104,7 @@ F16 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 #	endif
 }
 
-[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 outSize;
 	g_outTex.GetDimensions(outSize.x, outSize.y);
@@ -1177,7 +1177,7 @@ Texture2D<UVec4> g_classTileMap : register(t1);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
-[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 outSize;
 	g_outTex.GetDimensions(outSize.x, outSize.y);

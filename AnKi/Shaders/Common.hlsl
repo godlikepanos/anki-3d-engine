@@ -323,9 +323,9 @@ T square(T x)
 
 #define COMPUTE_ARGS \
 	U32 svGroupIndex : \
-		SV_GroupIndex, \
+		SV_GROUPINDEX, \
 		UVec3 svGroupId : \
-		SV_GroupID, \
+		SV_GROUPID, \
 		UVec3 svDispatchThreadId : \
-		SV_DispatchThreadID, \
-		UVec3 svGroupThreadId : SV_GroupThreadID
+		SV_DISPATCHTHREADID, \
+		UVec3 svGroupThreadId : SV_GROUPTHREADID

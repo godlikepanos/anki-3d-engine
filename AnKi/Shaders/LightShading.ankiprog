@@ -48,7 +48,7 @@ Texture2D<Vec4> g_integrationLut : register(t12);
 		const F16 att = computeAttenuationFactor<F16>(light.m_radius, frag2Light); \
 		F16 lambert = max(F16(0.0), dot(gbuffer.m_normal, l));
 
-Vec4 main(VertOut input) : SV_Target0
+Vec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
 	const Vec2 ndc = uvToNdc(uv);

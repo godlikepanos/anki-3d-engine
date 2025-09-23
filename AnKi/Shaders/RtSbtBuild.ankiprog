@@ -89,7 +89,7 @@ RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
 ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 
 // Patches only raygen and miss handles to the SBT
-[NumThreads(32, 1, 1)] void main(COMPUTE_ARGS)
+[numthreads(32, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const U32 dword = svGroupIndex;
 	if(dword < g_consts.m_shaderHandleDwordSize)

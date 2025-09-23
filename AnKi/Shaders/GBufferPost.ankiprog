@@ -24,7 +24,7 @@ ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 
 SamplerState g_linearAnyClampSampler : register(s0);
 
-[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 viewportSize;
 	g_depthTex.GetDimensions(viewportSize.x, viewportSize.y);

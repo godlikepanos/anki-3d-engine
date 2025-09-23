@@ -30,7 +30,7 @@ groupshared float4 g_tileMax[TILE_SIZE_X * TILE_SIZE_Y];
 
 [Shader("node")][NodeLaunch("broadcasting")][NodeIsProgramEntry][NodeMaxDispatchGrid(1, 1, 1)][numthreads(TILE_SIZE_X, TILE_SIZE_Y, 1)] void
 main(DispatchNodeInputRecord<FirstNodeInput> input, [MaxRecords(1)] NodeOutput<SecondNodeInput> secondNode,
-	 uint2 svDispatchThreadId : SV_DispatchThreadID, uint svGroupIndex : SV_GroupIndex, uint2 svGroupId : SV_GROUPID)
+	 uint2 svDispatchThreadId : SV_DISPATCHTHREADID, uint svGroupIndex : SV_GROUPINDEX, uint2 svGroupId : SV_GROUPID)
 {
 	g_tileMax[svGroupIndex] = g_inputTex[svDispatchThreadId];
 
@@ -79,7 +79,7 @@ main(DispatchNodeInputRecord<FirstNodeInput> input, [MaxRecords(1)] NodeOutput<S
 groupshared float4 g_maxColor[64];
 
 [Shader("node")][NodeLaunch("broadcasting")][NodeMaxDispatchGrid(1, 1, 1)][numthreads(64, 1, 1)] void
-secondNode(DispatchNodeInputRecord<SecondNodeInput> inp, uint svGroupIndex : SV_GroupIndex)
+secondNode(DispatchNodeInputRecord<SecondNodeInput> inp, uint svGroupIndex : SV_GROUPINDEX)
 {
 	const uint tilesPerThread = TILE_COUNT / 64;
 

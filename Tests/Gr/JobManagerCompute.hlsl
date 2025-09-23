@@ -55,7 +55,7 @@ groupshared uint g_outWorkItemCount;
 
 static const int kMashPushTries = 1000;
 
-[numthreads(NUMTHREADS, 1, 1)] void main(uint svGroupIndex : SV_GroupIndex)
+[numthreads(NUMTHREADS, 1, 1)] void main(uint svGroupIndex : SV_GROUPINDEX)
 {
 	if(svGroupIndex == 0)
 	{

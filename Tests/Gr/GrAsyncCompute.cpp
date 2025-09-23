@@ -88,7 +88,7 @@ ANKI_TEST(Gr, AsyncComputeBench)
 RWTexture2D<float4> g_inTex : register(u0);
 RWTexture2D<float4> g_outTex : register(u1);
 
-[NumThreads(8, 8, 1)] void main(uint2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(uint2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	uint2 texSize;
 	g_inTex.GetDimensions(texSize.x, texSize.y);
@@ -125,13 +125,13 @@ struct Consts
 ConstantBuffer<Consts> g_consts : register(b0, space3000);
 #endif
 
-float4 main(float3 svPosition : POSITION) : SV_Position
+float4 main(float3 svPosition : POSITION) : SV_POSITION
 {
 	return mul(g_consts.m_viewProjMat, float4(svPosition * g_consts.m_scale + g_consts.m_worldPosition, 1.0));
 })";
 
 		const CString pixelShaderSrc = R"(
-float4 main() : SV_Target0
+float4 main() : SV_TARGET0
 {
 	return float4(1.0, 0.0, 0.5, 0.0);
 })";
@@ -164,7 +164,7 @@ struct VertOut
 Texture2D g_inTex : register(t0);
 SamplerState g_sampler : register(s0);
 
-float4 main(VertOut input) : SV_Target0
+float4 main(VertOut input) : SV_TARGET0
 {
 	return g_inTex.Sample(g_sampler, input.m_uv);
 })";

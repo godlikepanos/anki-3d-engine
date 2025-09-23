@@ -10,11 +10,12 @@
 #pragma anki mutator IRRADIANCE_OCTAHEDRON_MAP_SIZE 4 5 6
 #pragma anki mutator RT_MATERIAL_FETCH_CLIPMAP 0 1
 #pragma anki mutator SPATIAL_RECONSTRUCT_TYPE 0 1
+#pragma anki mutator IRRADIANCE_USE_SH_L2 0 1
 
 #pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_CLIPMAP SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique RtMaterialFetchInlineRt comp mutators
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
-#pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE
+#pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_USE_SH_L2
 #pragma anki technique Apply comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique SpatialReconstruct comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique TemporalDenoise comp mutators
@@ -179,7 +180,7 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 
 ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 
-[NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
 	const U32 clipmapIdx = g_consts.m_clipmapIdx;
@@ -341,7 +342,17 @@ RWTexture3D<Vec4> g_avgIrradianceVolumes[kIndirectDiffuseClipmapCount] : registe
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
-groupshared SH::L2_F16_RGB g_sh[kThreadCount];
+#	if IRRADIANCE_USE_SH_L2
+#		define SH_TYPE SH::L2_F16_RGB
+#		define SH_PROJECT_ONTO_LX SH::ProjectOntoL2
+#		define SH_TO_L1(x) SH::L2toL1(x)
+#	else
+#		define SH_TYPE SH::L1_F16_RGB
+#		define SH_PROJECT_ONTO_LX SH::ProjectOntoL1
+#		define SH_TO_L1(x) (x)
+#	endif
+
+groupshared SH_TYPE g_sh[kThreadCount];
 
 struct StoreBorderFunc
 {
@@ -360,7 +371,7 @@ struct StoreBorderFunc
 // - Every thread reads a radiance value, converts it to SH and stores is in groupshared
 // - Then we do a reduction of all SH
 // - Then we use the SH to populate the irradiance
-[NumThreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
+[numthreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const IndirectDiffuseClipmapConstants idConsts = g_globalRendererConstants.m_indirectDiffuseClipmaps;
 	const U32 clipmapIdx = svGroupId.x / idConsts.m_probeCounts.x;
@@ -386,11 +397,11 @@ struct StoreBorderFunc
 		const F16 sampleCountf = square(RADIANCE_OCTAHEDRON_MAP_SIZE);
 		const F16 normalization = 1.0 / (sampleCountf * sampleDirectionSpherePdf());
 
-		g_sh[svGroupIndex] = SH::ProjectOntoL2(HVec3(sampleDir), HVec3(radiance)) * normalization;
+		g_sh[svGroupIndex] = SH_PROJECT_ONTO_LX(HVec3(sampleDir), HVec3(radiance)) * normalization;
 	}
 	else
 	{
-		g_sh[svGroupIndex] = SH::L2_F16_RGB::Zero();
+		g_sh[svGroupIndex] = SH_TYPE::Zero();
 	}
 
 	// Integrate, like parallel prefix sum
@@ -413,7 +424,7 @@ struct StoreBorderFunc
 #	endif
 	}
 
-	const SH::L2_F16_RGB sh = g_sh[0];
+	const SH_TYPE sh = g_sh[0];
 
 	// Store the irradiance
 	if(svGroupIndex < square(IRRADIANCE_OCTAHEDRON_MAP_SIZE))
@@ -445,7 +456,7 @@ struct StoreBorderFunc
 	// Store the average irradiance
 	HVec3 dir;
 	HVec3 color;
-	SH::ApproximateDirectionalLight(SH::L2toL1(sh), dir, color);
+	SH::ApproximateDirectionalLight(SH_TO_L1(sh), dir, color);
 	if(isInfOrNan(Vec3(color)))
 	{
 		color = 0.0;
@@ -470,7 +481,7 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 
 SamplerState g_linearAnyRepeatSampler : register(s0);
 
-[NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	Vec2 lowTextureSize;
 	g_outTex.GetDimensions(lowTextureSize.x, lowTextureSize.y);
@@ -909,20 +920,20 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 
 struct VertIn
 {
-	U32 m_svVertexId : SV_VertexID;
-	U32 m_svInstanceId : SV_InstanceID;
+	U32 m_svVertexId : SV_VERTEXID;
+	U32 m_svInstanceId : SV_INSTANCEID;
 };
 
 struct VertOut
 {
-	Vec4 m_svPosition : SV_Position;
+	Vec4 m_svPosition : SV_POSITION;
 
 	Vec3 m_probeCenter : PROBE_CENTER;
 };
 
 struct FragOut
 {
-	Vec4 m_color : SV_Target0;
+	Vec4 m_color : SV_TARGET0;
 	F32 m_svDepth : SV_Depth;
 };
 
@@ -945,7 +956,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 constexpr F32 kSphereRadius = 0.05;
 
 #	if ANKI_VERTEX_SHADER
-// Cube vertex positions indexed via SV_VertexID
+// Cube vertex positions indexed via SV_VERTEXID
 constexpr Vec3 cubeVertices[8] = {Vec3(-1, -1, -1), Vec3(1, -1, -1), Vec3(1, 1, -1), Vec3(-1, 1, -1),
 								  Vec3(-1, -1, 1),  Vec3(1, -1, 1),  Vec3(1, 1, 1),  Vec3(-1, 1, 1)};
 

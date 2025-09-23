@@ -41,7 +41,7 @@ groupshared uint g_isPrime;
 [numthreads(NUMTHREADS, 1, 1)]
 #endif
 	void
-	main(uint svGroupIndex : SV_GroupIndex, uint svGroupId : SV_GroupID
+	main(uint svGroupIndex : SV_GROUPINDEX, uint svGroupId : SV_GROUPID
 #if WORKGRAPHS
 		 ,
 		 DispatchNodeInputRecord<FirstNodeInput> input

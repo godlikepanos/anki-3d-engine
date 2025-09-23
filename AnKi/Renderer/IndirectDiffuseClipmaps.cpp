@@ -262,11 +262,12 @@ Error IndirectDiffuseClipmaps::init()
 		m_avgIrradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 	}
 
-	const Array<SubMutation, 5> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
+	const Array<SubMutation, 6> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
 											 {"RADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_cvarRenderIdcRadianceOctMapSize)},
 											 {"IRRADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_cvarRenderIdcIrradianceOctMapSize)},
 											 {"RT_MATERIAL_FETCH_CLIPMAP", 0},
-											 {"SPATIAL_RECONSTRUCT_TYPE", !g_cvarRenderIdcApplyHighQuality}}};
+											 {"SPATIAL_RECONSTRUCT_TYPE", !g_cvarRenderIdcApplyHighQuality},
+											 {"IRRADIANCE_USE_SH_L2", g_cvarRenderIdcUseSHL2}}};
 
 	constexpr CString kProgFname = "ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin";
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_applyGiGrProg, "Apply"));

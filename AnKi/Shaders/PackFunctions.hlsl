@@ -162,10 +162,10 @@ struct GbufferInfo
 
 struct GBufferPixelOut
 {
-	ANKI_RELAXED_PRECISION Vec4 m_rt0 : SV_Target0;
-	ANKI_RELAXED_PRECISION Vec4 m_rt1 : SV_Target1;
-	ANKI_RELAXED_PRECISION Vec4 m_rt2 : SV_Target2;
-	Vec2 m_rt3 : SV_Target3;
+	ANKI_RELAXED_PRECISION Vec4 m_rt0 : SV_TARGET0;
+	ANKI_RELAXED_PRECISION Vec4 m_rt1 : SV_TARGET1;
+	ANKI_RELAXED_PRECISION Vec4 m_rt2 : SV_TARGET2;
+	Vec2 m_rt3 : SV_TARGET3;
 };
 
 // Populate the G buffer
