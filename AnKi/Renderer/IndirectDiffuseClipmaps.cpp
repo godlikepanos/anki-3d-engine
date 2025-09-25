@@ -482,6 +482,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
+				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY_START, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
 		reg, 0, \
@@ -700,6 +701,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY_START, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
 		reg, 0, \
@@ -855,7 +857,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 
 	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-	const RenderTargetHandle visVolume = m_runCtx.m_handles.m_avgIrradianceVolumes[clipmap];
+	const RenderTargetHandle visVolume = m_runCtx.m_handles.m_radianceVolumes[clipmap];
 	rgraphCtx.bindSrv(0, 0, visVolume);
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_handles.m_probeValidityVolumes[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());

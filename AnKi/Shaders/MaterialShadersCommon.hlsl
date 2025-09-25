@@ -21,6 +21,7 @@ ConstantBuffer<MaterialGlobalConstants> g_globalConstants : register(ANKI_REG(b,
 ByteAddressBuffer g_gpuScene : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_GPU_SCENE));
 
 // Unified geom:
+ByteAddressBuffer g_unifiedGeom : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY_START));
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) Buffer<shaderType> g_unifiedGeom_##fmt : register(ANKI_REG(t, reg));
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
@@ -61,6 +62,7 @@ Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_S
 
 #undef ANKI_REG
 
+/// Used in vert shading.
 UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 {
 	UnpackedMeshVertex v;
@@ -79,6 +81,7 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	return v;
 }
 
+/// Used in mesh shading.
 UnpackedMeshVertex loadVertexLocalIndex(MeshletGeometryDescriptor meshlet, U32 localIdx, Bool bones)
 {
 	UnpackedMeshVertex v;
@@ -97,13 +100,14 @@ UnpackedMeshVertex loadVertexLocalIndex(MeshletGeometryDescriptor meshlet, U32 l
 	return v;
 }
 
+/// Used in SW meshlet rendering.
 UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 svVertexId, Bool bones)
 {
-	// Indices are stored in R8G8B8A8_Uint per primitive. Last component is not used. Instead of reading 4 bytes use the code bellow to read just 1.
-	// Find prev version in an older commit
-	const U32 componentsPerPrimitive = 4u;
-	const F32 offset = floor(F32(svVertexId) / 3.0f) * F32(componentsPerPrimitive) + fmod(F32(svVertexId), 3.0f);
-	const U32 localIdx = g_unifiedGeom_R8_Uint[meshlet.m_firstPrimitive * componentsPerPrimitive + U32(offset)];
+	// Indices are stored in R8G8B8A8_Uint per primitive. Last component is not used.
+	const U32 primitiveId = svVertexId / 3u;
+	const U32 primitiveIndices = g_unifiedGeom.Load<U32>((meshlet.m_firstPrimitive + primitiveId) * sizeof(U32));
+	const U32 vertOfPrimitive = svVertexId % 3u;
+	const U32 localIdx = (primitiveIndices >> (vertOfPrimitive * 8u)) & 0xFF;
 
 	return loadVertexLocalIndex(meshlet, localIdx, bones);
 }

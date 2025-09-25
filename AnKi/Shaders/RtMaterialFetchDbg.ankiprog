@@ -7,12 +7,10 @@
 
 #pragma anki technique RtMaterialFetch rgen
 
-#define ANKI_ASSERTIONS_ENABLED 1
-
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#define CHEAP 1
+#define CHEAP 0
 
 [shader("raygeneration")] void main()
 {

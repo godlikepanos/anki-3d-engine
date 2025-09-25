@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup gpu_memory
 /// @{
 
-ANKI_CVAR(NumericCVar<PtrSize>, Core, UnifiedGeometryBufferSize, 128_MB, 16_MB, 2_GB, "Global index and vertex buffer size")
+ANKI_CVAR(NumericCVar<PtrSize>, Core, UnifiedGeometryBufferSize, 256_MB, 16_MB, 2_GB, "Global index and vertex buffer size")
 
 /// @memberof UnifiedGeometryBuffer
 class UnifiedGeometryBufferAllocation

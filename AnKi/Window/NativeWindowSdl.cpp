@@ -103,7 +103,10 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 
 	if(init.m_fullscreenDesktopRez)
 	{
-		flags |= SDL_WINDOW_FULLSCREEN;
+		if(init.m_exclusiveFullscreen)
+		{
+			flags |= SDL_WINDOW_FULLSCREEN;
+		}
 
 		SDL_DisplayID display = SDL_GetPrimaryDisplay();
 		if(!display)

@@ -638,13 +638,10 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 
 	const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
 
-	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
-	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];
-	const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 2];
-
-	const UnpackedMeshVertex vert0 = loadVertex(mesh, idx0, false);
-	const UnpackedMeshVertex vert1 = loadVertex(mesh, idx1, false);
-	const UnpackedMeshVertex vert2 = loadVertex(mesh, idx2, false);
+	const U16Vec3 indices = g_unifiedGeom.Load<U16Vec3>(mesh.m_firstIndex * sizeof(U16) + PrimitiveIndex() * sizeof(U16Vec3));
+	const UnpackedMeshVertex vert0 = loadVertex(mesh, indices[0], false);
+	const UnpackedMeshVertex vert1 = loadVertex(mesh, indices[1], false);
+	const UnpackedMeshVertex vert2 = loadVertex(mesh, indices[2], false);
 
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 
@@ -702,13 +699,10 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 
 		const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
 
-		const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
-		const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];
-		const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 2];
-
-		const UnpackedMeshVertex vert0 = loadVertex(mesh, idx0, false);
-		const UnpackedMeshVertex vert1 = loadVertex(mesh, idx1, false);
-		const UnpackedMeshVertex vert2 = loadVertex(mesh, idx2, false);
+		const U16Vec3 indices = g_unifiedGeom.Load<U16Vec3>(mesh.m_firstIndex * sizeof(U16) + PrimitiveIndex() * sizeof(U16Vec3));
+		const UnpackedMeshVertex vert0 = loadVertex(mesh, indices[0], false);
+		const UnpackedMeshVertex vert1 = loadVertex(mesh, indices[1], false);
+		const UnpackedMeshVertex vert2 = loadVertex(mesh, indices[2], false);
 
 		uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 

@@ -42,7 +42,8 @@ VertOut main(VertIn input)
 	const GpuSceneMeshLod meshLod = g_meshLods[instance.m_meshLodIndex];
 
 	const U32 particleId = input.m_svVertexId / meshLod.m_indexCount;
-	const U32 vertexId = g_unifiedGeom_R16_Uint[meshLod.m_firstIndex + input.m_svVertexId % meshLod.m_indexCount];
+
+	const U32 vertexId = g_unifiedGeom.Load<U16>((meshLod.m_firstIndex + input.m_svVertexId % meshLod.m_indexCount) * sizeof(U16));
 
 	U32 idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePosition] + particleId * sizeof(Vec3);
 	const Vec3 particlePos = g_gpuScene.Load<Vec3>(idx);
