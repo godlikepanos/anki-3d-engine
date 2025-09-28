@@ -61,11 +61,16 @@ public:
 	{
 		Bool valid = true;
 
-		valid = valid && m_instanceCount > 0;
-
 		if(validateBuffers)
 		{
-			valid = valid && (m_instancesBuffer.getRange() == sizeof(AccelerationStructureInstance) * m_instanceCount);
+			if(m_instanceCount)
+			{
+				valid = valid && (m_instancesBuffer.getRange() == sizeof(AccelerationStructureInstance) * m_instanceCount);
+			}
+			else
+			{
+				valid = valid && (!m_instancesBuffer.isValid());
+			}
 		}
 
 		return valid;

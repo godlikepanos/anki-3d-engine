@@ -26,7 +26,8 @@ void RebarTransientMemoryPool::init()
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	buffInit.m_size = g_cvarCoreRebarGpuMemorySize;
 	buffInit.m_usage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kVertexOrIndex
-					   | BufferUsageBit::kShaderBindingTable | BufferUsageBit::kAllIndirect | BufferUsageBit::kCopySource;
+					   | BufferUsageBit::kShaderBindingTable | BufferUsageBit::kAllIndirect | BufferUsageBit::kCopySource
+					   | BufferUsageBit::kAccelerationStructureBuild;
 	m_buffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	m_bufferSize = buffInit.m_size;

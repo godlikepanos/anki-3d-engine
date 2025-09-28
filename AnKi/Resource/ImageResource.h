@@ -36,33 +36,14 @@ public:
 		return *m_tex;
 	}
 
-	U32 getWidth() const
-	{
-		ANKI_ASSERT(m_size.x());
-		return m_size.x();
-	}
-
-	U32 getHeight() const
-	{
-		ANKI_ASSERT(m_size.y());
-		return m_size.y();
-	}
-
-	U32 getDepth() const
-	{
-		ANKI_ASSERT(m_size.z());
-		return m_size.z();
-	}
-
-	U32 getLayerCount() const
-	{
-		ANKI_ASSERT(m_layerCount);
-		return m_layerCount;
-	}
-
 	Vec4 getAverageColor() const
 	{
 		return m_avgColor;
+	}
+
+	Bool isLoaded() const
+	{
+		return m_loadedMipCount.load() == m_tex->getMipmapCount();
 	}
 
 private:
@@ -72,12 +53,12 @@ private:
 	class LoadingContext;
 
 	TexturePtr m_tex;
-	UVec3 m_size = UVec3(0u);
-	U32 m_layerCount = 0;
 
 	Vec4 m_avgColor = Vec4(0.0f);
 
-	[[nodiscard]] static Error load(LoadingContext& ctx);
+	mutable Atomic<U32> m_loadedMipCount = {0};
+
+	Error loadAsync(LoadingContext& ctx) const;
 };
 /// @}
 

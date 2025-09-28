@@ -542,13 +542,20 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(passName);
 
-	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
-	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kUavCompute);
+	if(visOut.containsDrawcalls())
+	{
+		// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
+		pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kUavCompute);
+	}
 
-	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_legacy.m_mdiDrawCountsBuffer, clearTileIndirectArgs,
-				  dispatchMeshIndirectArgs = visOut.m_mesh.m_dispatchMeshIndirectArgsBuffer,
-				  drawIndirectArgs = visOut.m_mesh.m_drawIndirectArgs](RenderPassWorkContext& rpass) {
+	pass.setWork([this, &lightc, clearTileIndirectArgs, visOut](RenderPassWorkContext& rpass) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowmappingVet);
+
+		if(!visOut.containsDrawcalls()) [[unlikely]]
+		{
+			return;
+		}
+
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());
@@ -556,17 +563,21 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 		const UVec4 lightIndex(lightc.getGpuSceneLightAllocation().getIndex());
 		cmdb.setFastConstants(&lightIndex, sizeof(lightIndex));
 
-		cmdb.bindSrv(0, 0, hashBuff);
-		cmdb.bindUav(0, 0, mdiBuff.isValid() ? mdiBuff : BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(U32)));
+		cmdb.bindSrv(0, 0, visOut.m_visiblesHashBuffer);
+		cmdb.bindUav(0, 0,
+					 visOut.m_legacy.m_mdiDrawCountsBuffer.isValid() ? visOut.m_legacy.m_mdiDrawCountsBuffer
+																	 : BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(U32)));
 		cmdb.bindUav(1, 0, GpuSceneArrays::Light::getSingleton().getBufferView());
 		cmdb.bindUav(2, 0, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferView());
 		cmdb.bindUav(3, 0, clearTileIndirectArgs);
 		cmdb.bindUav(4, 0,
-					 dispatchMeshIndirectArgs.isValid() ? dispatchMeshIndirectArgs
-														: BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(DispatchIndirectArgs)));
+					 visOut.m_mesh.m_dispatchMeshIndirectArgsBuffer.isValid()
+						 ? visOut.m_mesh.m_dispatchMeshIndirectArgsBuffer
+						 : BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(DispatchIndirectArgs)));
 		cmdb.bindUav(5, 0,
-					 drawIndirectArgs.isValid() ? drawIndirectArgs
-												: BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(DrawIndirectArgs)));
+					 visOut.m_mesh.m_drawIndirectArgs.isValid()
+						 ? visOut.m_mesh.m_drawIndirectArgs
+						 : BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(DrawIndirectArgs)));
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);
@@ -605,11 +616,19 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	smRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({}, &smRti);
 
-	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
+	if(visOut.containsDrawcalls())
+	{
+		pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
+	}
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 
 	pass.setWork([this, visOut, subpasses](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
+
+		if(!visOut.containsDrawcalls()) [[unlikely]]
+		{
+			return;
+		}
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 

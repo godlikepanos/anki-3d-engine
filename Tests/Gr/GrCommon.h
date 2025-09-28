@@ -99,7 +99,8 @@ inline void commonInit(Bool validation = true)
 	g_cvarGrDebugMarkers = true;
 	if(validation)
 	{
-		[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 4>{"Validation", "1", "DebugMarkers", "1"});
+		g_cvarGrValidation = true;
+		g_cvarGrDebugMarkers = true;
 	}
 #if ANKI_TRACING_ENABLED
 	{

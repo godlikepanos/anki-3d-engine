@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Gr.h>
 
 namespace anki {
@@ -60,11 +61,9 @@ public:
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
 
 	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
-	void getVisibleAabbsBuffer(BufferView& visibleAaabbIndicesBuffer, BufferHandle& dep) const
+	const GpuVisibilityOutput& getVisibilityOutput() const
 	{
-		visibleAaabbIndicesBuffer = m_runCtx.m_visibleAaabbIndicesBuffer;
-		dep = m_runCtx.m_visibleAaabbIndicesBufferDepedency;
-		ANKI_ASSERT(visibleAaabbIndicesBuffer.isValid() && dep.isValid());
+		return m_runCtx.m_visOut;
 	}
 
 private:
@@ -87,8 +86,7 @@ private:
 		RenderTargetHandle m_prevFrameDepthRt;
 		RenderTargetHandle m_hzbRt;
 
-		BufferView m_visibleAaabbIndicesBuffer; ///< Optional
-		BufferHandle m_visibleAaabbIndicesBufferDepedency;
+		GpuVisibilityOutput m_visOut;
 	} m_runCtx;
 };
 /// @}

@@ -158,11 +158,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 	rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 
-	// GBuffer renderables
-	if(g_cvarRenderDbgScene)
+	// Common code for boxes stuff
 	{
-		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
-
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 		variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", U32(m_ditheredDepthTestOn != 0));
 		variantInitInfo.addMutation("OBJECT_TYPE", 0);
@@ -184,33 +181,30 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		cmdb.bindVertexBuffer(0, BufferView(m_cubeVertsBuffer.get()), sizeof(Vec3));
 		cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
 		cmdb.bindIndexBuffer(BufferView(m_cubeIndicesBuffer.get()), IndexType::kU16);
+	}
 
+	// GBuffer renderables
+	const U32 gbufferAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
+	if(g_cvarRenderDbgScene && gbufferAllAabbCount)
+	{
 		cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
 
-		BufferView indicesBuff;
-		BufferHandle dep;
-		getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
-		cmdb.bindSrv(2, 0, indicesBuff);
+		const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+		cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
 
-		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
+		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, gbufferAllAabbCount);
 	}
 
 	// Forward shading renderables
-	if(g_cvarRenderDbgScene)
+	const U32 forwardAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
+	if(g_cvarRenderDbgScene && forwardAllAabbCount)
 	{
-		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
+		cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
 
-		if(allAabbCount)
-		{
-			cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
+		const GpuVisibilityOutput& visOut = getForwardShading().getGpuVisibilityOutput();
+		cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
 
-			BufferView indicesBuff;
-			BufferHandle dep;
-			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-			cmdb.bindSrv(2, 0, indicesBuff);
-
-			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
-		}
+		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, forwardAllAabbCount);
 	}
 
 	// Draw non-renderables
@@ -323,15 +317,16 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 
 	if(g_cvarRenderDbgScene)
 	{
-		BufferView indicesBuff;
-		BufferHandle dep;
-		getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
-		pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
-
-		if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())
+		const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+		if(visOut.m_dependency.isValid())
 		{
-			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-			pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
+			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kSrvGeometry);
+		}
+
+		const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
+		if(fvisOut.m_dependency.isValid())
+		{
+			pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvGeometry);
 		}
 	}
 }

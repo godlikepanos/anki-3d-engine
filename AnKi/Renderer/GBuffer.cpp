@@ -94,7 +94,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Visibility
-	GpuVisibilityOutput visOut;
+	GpuVisibilityOutput& visOut = m_runCtx.m_visOut;
 	FrustumGpuVisibilityInput visIn;
 	{
 		const CommonMatrices& matrices = ctx.m_matrices;
@@ -112,9 +112,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		visIn.m_twoPhaseOcclusionCulling = getRenderer().getMeshletRenderingType() != MeshletRenderingType::kNone;
 
 		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
-
-		m_runCtx.m_visibleAaabbIndicesBuffer = visOut.m_visibleAaabbIndicesBuffer;
-		m_runCtx.m_visibleAaabbIndicesBufferDepedency = visOut.m_dependency;
 	}
 
 	// Create RTs
@@ -166,6 +163,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		pass.setWork([&ctx, visOut, this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(GBuffer);
+
+			if(!visOut.containsDrawcalls()) [[unlikely]]
+			{
+				return;
+			}
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 

@@ -652,4 +652,18 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	return variant;
 }
 
+Bool MaterialResource::isLoaded() const
+{
+	Bool loaded = true;
+	for(const MaterialVariable& var : m_vars)
+	{
+		if(var.m_image)
+		{
+			loaded = loaded && var.m_image->isLoaded();
+		}
+	}
+
+	return loaded;
+}
+
 } // end namespace anki

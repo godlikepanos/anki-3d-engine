@@ -112,6 +112,11 @@ public:
 
 	Error getOrCreateCollisionShape(Bool wantStatic, U32 lod, PhysicsCollisionShapePtr& out) const;
 
+	Bool isLoaded() const
+	{
+		return m_loadedLodCount.load() == m_lods.getSize();
+	}
+
 private:
 	class LoadTask;
 	class LoadContext;
@@ -156,6 +161,8 @@ private:
 
 	F32 m_positionsScale = 0.0f;
 	Vec3 m_positionsTranslation = Vec3(0.0f);
+
+	mutable Atomic<U32> m_loadedLodCount = {0};
 
 	Bool m_isConvex = false;
 

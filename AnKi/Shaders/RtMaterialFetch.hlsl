@@ -113,6 +113,7 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	return !hasHitSky;
 }
 
+#	if ANKI_GR_BACKEND_VULKAN
 template<typename T>
 Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT,
 							  out Bool backfacing)
@@ -158,6 +159,7 @@ Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T
 
 	return hit;
 }
+#	endif
 
 Bool rayVisibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax, U32 traceFlags)
 {

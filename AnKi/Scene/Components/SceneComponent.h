@@ -54,19 +54,34 @@ private:
 /// @memberof SceneComponent
 class SceneComponentUpdateInfo
 {
+	friend class SceneGraph;
+
 public:
 	SceneNode* m_node = nullptr;
 	const Second m_previousTime;
 	const Second m_currentTime;
 	const Second m_dt;
+	const Bool m_forceUpdateSceneBounds;
 	StackMemoryPool* m_framePool = nullptr;
 
-	SceneComponentUpdateInfo(Second prevTime, Second crntTime)
+	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds)
 		: m_previousTime(prevTime)
 		, m_currentTime(crntTime)
 		, m_dt(crntTime - prevTime)
+		, m_forceUpdateSceneBounds(forceUpdateSceneBounds)
 	{
 	}
+
+	void updateSceneBounds(Vec3 aabbMin, Vec3 aabbMax)
+	{
+		ANKI_ASSERT(aabbMin <= aabbMax);
+		m_sceneMin = m_sceneMin.min(aabbMin);
+		m_sceneMax = m_sceneMax.max(aabbMax);
+	}
+
+private:
+	Vec3 m_sceneMin = Vec3(kMaxF32);
+	Vec3 m_sceneMax = Vec3(kMinF32);
 };
 
 /// Scene node component.

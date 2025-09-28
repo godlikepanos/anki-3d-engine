@@ -189,14 +189,6 @@ public:
 	}
 
 	/// @note It's thread-safe.
-	void updateSceneBounds(const Vec3& min, const Vec3& max)
-	{
-		LockGuard lock(m_sceneBoundsMtx);
-		m_sceneMin = m_sceneMin.min(min);
-		m_sceneMax = m_sceneMax.max(max);
-	}
-
-	/// @note It's thread-safe.
 	Array<Vec3, 2> getSceneBounds() const
 	{
 		LockGuard lock(m_sceneBoundsMtx);
@@ -216,6 +208,8 @@ private:
 		}
 	} m_initMemPoolDummy;
 
+	static constexpr U32 kForceSetSceneBoundsFrameCount = 60 * 2; ///< Re-set the scene bounds after 2".
+
 	mutable StackMemoryPool m_framePool;
 
 	IntrusiveList<SceneNode> m_nodes;
@@ -227,8 +221,10 @@ private:
 
 	EventManager m_events;
 
-	Vec3 m_sceneMin = Vec3(kMaxF32);
-	Vec3 m_sceneMax = Vec3(kMinF32);
+	U64 m_frame = 0;
+
+	Vec3 m_sceneMin = Vec3(-0.1f);
+	Vec3 m_sceneMax = Vec3(+0.1f);
 	mutable SpinLock m_sceneBoundsMtx;
 
 	IntrusiveList<SceneNode> m_nodesForRegistration;
@@ -246,7 +242,7 @@ private:
 	~SceneGraph();
 
 	void updateNodes(UpdateSceneNodesCtx& ctx);
-	void updateNode(Second prevTime, Second crntTime, SceneNode& node);
+	void updateNode(SceneNode& node, SceneComponentUpdateInfo& compUpdate);
 };
 /// @}
 

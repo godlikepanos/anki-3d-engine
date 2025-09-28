@@ -121,15 +121,21 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	}
 	else
 	{
-		ANKI_ASSERT(sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_instanceCount <= inf.m_topLevel.m_instancesBuffer.getRange());
-		m_tlas.m_instancesBuffer.reset(&inf.m_topLevel.m_instancesBuffer.getBuffer());
+		const Bool isEmpty = inf.m_topLevel.m_instanceCount == 0;
+
+		if(!isEmpty)
+		{
+			ANKI_ASSERT(sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_instanceCount <= inf.m_topLevel.m_instancesBuffer.getRange());
+			m_tlas.m_instancesBuffer.reset(&inf.m_topLevel.m_instancesBuffer.getBuffer());
+		}
 
 		// Geom
 		VkAccelerationStructureGeometryKHR& geom = m_geometry;
 		geom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 		geom.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
 		geom.geometry.instances.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
-		geom.geometry.instances.data.deviceAddress = m_tlas.m_instancesBuffer->getGpuAddress() + inf.m_topLevel.m_instancesBuffer.getOffset();
+		geom.geometry.instances.data.deviceAddress =
+			(isEmpty) ? 0 : (m_tlas.m_instancesBuffer->getGpuAddress() + inf.m_topLevel.m_instancesBuffer.getOffset());
 		geom.geometry.instances.arrayOfPointers = false;
 		geom.flags = 0;
 

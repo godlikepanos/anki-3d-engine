@@ -54,6 +54,10 @@ public:
 
 	DynamicArray<SceneNode*, MemoryPoolPtrWrapper<StackMemoryPool>> m_nodesForDeletion;
 
+	Vec3 m_sceneMin = Vec3(kMaxF32);
+	Vec3 m_sceneMax = Vec3(kMinF32);
+	SpinLock m_sceneBoundsLock;
+
 	UpdateSceneNodesCtx()
 		: m_nodesForDeletion(&SceneGraph::getSingleton().m_framePool)
 	{
@@ -200,6 +204,21 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		}
 
 		CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
+
+		if(updateCtx.m_sceneMin != Vec3(kMaxF32))
+		{
+			const Bool forceUpdateSceneBounds = (m_frame % kForceSetSceneBoundsFrameCount) == 0;
+			if(forceUpdateSceneBounds)
+			{
+				m_sceneMin = updateCtx.m_sceneMin;
+				m_sceneMax = updateCtx.m_sceneMax;
+			}
+			else
+			{
+				m_sceneMin = m_sceneMin.min(updateCtx.m_sceneMin);
+				m_sceneMax = m_sceneMax.max(updateCtx.m_sceneMax);
+			}
+		}
 	}
 
 	// Cleanup
@@ -234,16 +253,14 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
 	g_svarSceneUpdateTime.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
+	++m_frame;
 }
 
-void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
+void SceneGraph::updateNode(SceneNode& node, SceneComponentUpdateInfo& componentUpdateInfo)
 {
 	ANKI_TRACE_INC_COUNTER(SceneNodeUpdated, 1);
 
 	// Components update
-	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
-	componentUpdateInfo.m_framePool = &m_framePool;
-
 	U32 sceneComponentUpdatedCount = 0;
 	node.iterateComponents([&](SceneComponent& comp) {
 		componentUpdateInfo.m_node = &node;
@@ -271,12 +288,12 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 			// No components or nothing updated, don't change the timestamp
 		}
 
-		node.frameUpdate(prevTime, crntTime);
+		node.frameUpdate(componentUpdateInfo.m_previousTime, componentUpdateInfo.m_currentTime);
 	}
 
 	// Update children
 	node.visitChildrenMaxDepth(0, [&](SceneNode& child) {
-		updateNode(prevTime, crntTime, child);
+		updateNode(child, componentUpdateInfo);
 		return true;
 	});
 }
@@ -286,6 +303,10 @@ void SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 	ANKI_TRACE_SCOPED_EVENT(SceneNodeUpdate);
 
 	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
+
+	const Bool forceUpdateSceneBounds = (m_frame % kForceSetSceneBoundsFrameCount) == 0;
+	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, forceUpdateSceneBounds);
+	componentUpdateInfo.m_framePool = &m_framePool;
 
 	Bool quit = false;
 	while(!quit)
@@ -332,8 +353,15 @@ void SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 		// Process nodes
 		for(U i = 0; i < batchSize; ++i)
 		{
-			updateNode(ctx.m_prevUpdateTime, ctx.m_crntTime, *batch[i]);
+			updateNode(*batch[i], componentUpdateInfo);
 		}
+	}
+
+	if(componentUpdateInfo.m_sceneMin != Vec3(kMaxF32))
+	{
+		LockGuard lock(ctx.m_sceneBoundsLock);
+		ctx.m_sceneMin = ctx.m_sceneMin.min(componentUpdateInfo.m_sceneMin);
+		ctx.m_sceneMax = ctx.m_sceneMax.max(componentUpdateInfo.m_sceneMax);
 	}
 }
 

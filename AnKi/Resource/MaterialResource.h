@@ -227,6 +227,8 @@ public:
 		return ConstWeakArray<U8>(static_cast<const U8*>(m_prefilledLocalConstants), m_localConstantsSize);
 	}
 
+	Bool isLoaded() const;
+
 private:
 	class PartialMutation
 	{

@@ -1293,9 +1293,9 @@ void CommandBufferImpl::traceRaysInternal(const BufferView& sbtBuffer, U32 sbtRe
 										  U32 height, U32 depth, BufferView argsBuff)
 {
 	ANKI_ASSERT(sbtBuffer.isValid());
+	ANKI_ASSERT(rayTypeCount > 0);
 
 	const PtrSize sbtRecordSize = sbtRecordSize32;
-	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
 	ANKI_ASSERT(m_rtProg);
 
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);

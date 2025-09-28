@@ -42,8 +42,8 @@ Error Tonemapping::init()
 
 		m_tonemapping.m_lut.reset(nullptr);
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/DefaultLut.ankitex", m_tonemapping.m_lut));
-		ANKI_ASSERT(m_tonemapping.m_lut->getWidth() == m_tonemapping.m_lut->getHeight());
-		ANKI_ASSERT(m_tonemapping.m_lut->getWidth() == m_tonemapping.m_lut->getDepth());
+		ANKI_ASSERT(m_tonemapping.m_lut->getTexture().getWidth() == m_tonemapping.m_lut->getTexture().getHeight());
+		ANKI_ASSERT(m_tonemapping.m_lut->getTexture().getWidth() == m_tonemapping.m_lut->getTexture().getDepth());
 	}
 
 	return Error::kNone;

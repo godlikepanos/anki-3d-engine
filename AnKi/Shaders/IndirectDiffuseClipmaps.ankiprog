@@ -136,7 +136,11 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 	F32 rayT = 0.0;
 	Bool backfacing = false;
 #	if ANKI_COMPUTE_SHADER
+#		if ANKI_GR_BACKEND_VULKAN
 	const Bool hit = materialRayTraceInlineRt<F16>(probeWorldPos, dir, 0.0, tMax, 1000.0, gbuffer, rayT, backfacing);
+#		else
+	const Bool hit = false;
+#		endif
 #	else
 	const Bool hit = materialRayTrace<F16>(probeWorldPos, dir, 0.0, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
 #	endif

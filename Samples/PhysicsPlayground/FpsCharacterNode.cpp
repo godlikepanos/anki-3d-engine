@@ -183,7 +183,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 	{
 		fireShotgun();
 
-		const Vec3 newPosition(0.0f, getRandomRange(-0.03f, -0.05f), 0.15f);
+		const Vec3 newPosition(0.0f, getRandomRange(-0.05f, -0.03f), 0.15f);
 		m_shotgunNode->setLocalOrigin(m_shotgunRestingPosition + newPosition);
 		const Euler newRotation(getRandomRange(0.0_degrees, 10.0_degrees), getRandomRange(-10.0_degrees, 1.0_degrees), 0.0f);
 		m_shotgunNode->setLocalRotation(Mat3(newRotation) * Mat3(m_shotgunRestingRotation));

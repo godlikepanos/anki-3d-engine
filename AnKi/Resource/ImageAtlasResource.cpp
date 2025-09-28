@@ -29,8 +29,8 @@ Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(el.getText(texFname));
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource<ImageResource>(texFname, m_image, async));
 
-	m_size[0] = m_image->getWidth();
-	m_size[1] = m_image->getHeight();
+	m_size[0] = m_image->getTexture().getWidth();
+	m_size[1] = m_image->getTexture().getHeight();
 
 	//
 	// <subImageMargin>
@@ -38,7 +38,7 @@ Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(rootel.getChildElement("subImageMargin", el));
 	I64 margin = 0;
 	ANKI_CHECK(el.getNumber(margin));
-	if(margin >= I(m_image->getWidth()) || margin >= I(m_image->getHeight()) || margin < 0)
+	if(margin >= I(m_image->getTexture().getWidth()) || margin >= I(m_image->getTexture().getHeight()) || margin < 0)
 	{
 		ANKI_RESOURCE_LOGE("Too big margin %d", I32(margin));
 		return Error::kUserData;

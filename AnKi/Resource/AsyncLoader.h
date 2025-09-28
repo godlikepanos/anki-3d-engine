@@ -17,14 +17,28 @@ class AsyncLoader;
 /// @addtogroup resource
 /// @{
 
+/// @memberof AsyncLoader
+enum class AsyncLoaderPriority : U8
+{
+	kHigh,
+	kMedium,
+	kLow,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AsyncLoaderPriority)
+
+/// @memberof AsyncLoader
 class AsyncLoaderTaskContext
 {
 public:
-	/// Resubmit the same task at the end of the queue.
-	Bool m_resubmitTask = false;
+	Bool m_resubmitTask = false; ///< Resubmit the same task at the end of the queue.
+	AsyncLoaderPriority m_priority = AsyncLoaderPriority::kCount;
 };
 
 /// Interface for tasks for the AsyncLoader.
+/// @memberof AsyncLoader
 class AsyncLoaderTask : public IntrusiveListEnabled<AsyncLoaderTask>
 {
 public:
@@ -43,9 +57,6 @@ public:
 
 	~AsyncLoader();
 
-	/// Submit a task.
-	void submitTask(AsyncLoaderTask* task);
-
 	/// Create a new asynchronous loading task.
 	template<typename TTask, typename... TArgs>
 	TTask* newTask(TArgs&&... args)
@@ -53,12 +64,8 @@ public:
 		return newInstance<TTask>(ResourceMemoryPool::getSingleton(), std::forward<TArgs>(args)...);
 	}
 
-	/// Create and submit a new asynchronous loading task.
-	template<typename TTask, typename... TArgs>
-	void submitNewTask(TArgs&&... args)
-	{
-		submitTask(newTask<TTask>(std::forward<TArgs>(args)...));
-	}
+	/// Submit a task.
+	void submitTask(AsyncLoaderTask* task, AsyncLoaderPriority priority);
 
 	/// Get the total number of completed tasks.
 	U32 getTasksInFlightCount() const
@@ -68,11 +75,10 @@ public:
 
 private:
 	Thread m_thread;
-	Barrier m_barrier = {2};
 
 	Mutex m_mtx;
 	ConditionVariable m_condVar;
-	IntrusiveList<AsyncLoaderTask> m_taskQueue;
+	Array<IntrusiveList<AsyncLoaderTask>, U32(AsyncLoaderPriority::kCount)> m_taskQueues;
 	Bool m_quit = false;
 
 	Atomic<U32> m_tasksInFlightCount = {0};

@@ -1495,6 +1495,27 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
 		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[queueType], 1, &submit, fence->getImplementation().m_handle));
+
+		// Throttle the number of fences
+		Bool fencesThrottled = false;
+		while(frame.m_fences.getSize() > 64)
+		{
+			fencesThrottled = true;
+			auto it = frame.m_fences.getBegin();
+			for(; it != frame.m_fences.getEnd(); ++it)
+			{
+				if((*it)->signaled())
+				{
+					frame.m_fences.erase(it);
+					break;
+				}
+			}
+		}
+
+		if(fencesThrottled)
+		{
+			ANKI_VK_LOGW("Had to throttle the number of fences");
+		}
 	}
 }
 

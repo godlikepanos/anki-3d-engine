@@ -7,6 +7,7 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
 
@@ -22,15 +23,17 @@ AsyncLoader::~AsyncLoader()
 {
 	stop();
 
-	if(!m_taskQueue.isEmpty())
+	for(auto& queue : m_taskQueues)
 	{
-		ANKI_RESOURCE_LOGW("Stoping loading thread while there is work to do");
-
-		while(!m_taskQueue.isEmpty())
+		if(!queue.isEmpty())
 		{
-			AsyncLoaderTask* task = &m_taskQueue.getFront();
-			m_taskQueue.popFront();
-			deleteInstance(ResourceMemoryPool::getSingleton(), task);
+			ANKI_RESOURCE_LOGW("Stoping loading thread while there is work to do");
+
+			while(!queue.isEmpty())
+			{
+				AsyncLoaderTask* task = queue.popFront();
+				deleteInstance(ResourceMemoryPool::getSingleton(), task);
+			}
 		}
 	}
 }
@@ -59,25 +62,33 @@ Error AsyncLoader::threadWorker()
 	while(!err)
 	{
 		AsyncLoaderTask* task = nullptr;
+		AsyncLoaderPriority taskPriority = AsyncLoaderPriority::kCount;
 		Bool quit = false;
 
+		// Block until there is work to do
 		{
-			// Wait for something
 			LockGuard<Mutex> lock(m_mtx);
-			while(m_taskQueue.isEmpty() && !m_quit)
+			while(m_taskQueues[AsyncLoaderPriority::kHigh].isEmpty() && m_taskQueues[AsyncLoaderPriority::kMedium].isEmpty()
+				  && m_taskQueues[AsyncLoaderPriority::kLow].isEmpty() && !m_quit)
 			{
 				m_condVar.wait(m_mtx);
 			}
 
-			// Do some work
 			if(m_quit)
 			{
 				quit = true;
 			}
 			else
 			{
-				task = &m_taskQueue.getFront();
-				m_taskQueue.popFront();
+				for(AsyncLoaderPriority priority : EnumIterable<AsyncLoaderPriority>())
+				{
+					if(!m_taskQueues[priority].isEmpty())
+					{
+						task = m_taskQueues[priority].popFront();
+						taskPriority = priority;
+						break;
+					}
+				}
 			}
 		}
 
@@ -90,8 +101,10 @@ Error AsyncLoader::threadWorker()
 			// Exec the task
 			ANKI_ASSERT(task);
 			AsyncLoaderTaskContext ctx;
+			ctx.m_priority = taskPriority;
 
 			{
+				// HighRezTimer::sleep(250.0_ms);
 				ANKI_TRACE_SCOPED_EVENT(RsrcAsyncTask);
 				err = (*task)(ctx);
 				g_svarAsyncTasksInFlight.decrement(1u);
@@ -110,7 +123,7 @@ Error AsyncLoader::threadWorker()
 			if(ctx.m_resubmitTask)
 			{
 				LockGuard<Mutex> lock(m_mtx);
-				m_taskQueue.pushBack(task);
+				m_taskQueues[ctx.m_priority].pushBack(task);
 			}
 			else
 			{
@@ -123,7 +136,7 @@ Error AsyncLoader::threadWorker()
 	return err;
 }
 
-void AsyncLoader::submitTask(AsyncLoaderTask* task)
+void AsyncLoader::submitTask(AsyncLoaderTask* task, AsyncLoaderPriority priority)
 {
 	ANKI_ASSERT(task);
 
@@ -131,7 +144,7 @@ void AsyncLoader::submitTask(AsyncLoaderTask* task)
 	g_svarAsyncTasksInFlight.increment(1);
 
 	LockGuard<Mutex> lock(m_mtx);
-	m_taskQueue.pushBack(task);
+	m_taskQueues[priority].pushBack(task);
 	m_condVar.notifyOne();
 }
 

@@ -117,13 +117,8 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	const Bool skinUpdated = m_skinDirty;
 	const Bool submeshUpdated = m_submeshIdxDirty;
 	const Bool hasSkin = m_skinComponent && m_skinComponent->isEnabled();
-	const Bool isValid = m_resource.isCreated() && m_meshComponent && m_meshComponent->isEnabled();
-	m_resourceDirty = false;
-	m_firstTimeUpdate = false;
-	m_meshComponentDirty = false;
-	m_movedLastFrame = moved;
-	m_skinDirty = false;
-	m_submeshIdxDirty = false;
+	const Bool isValid = m_resource.isCreated() && m_resource->isLoaded() && m_meshComponent && m_meshComponent->isEnabled()
+						 && m_meshComponent->getMeshResource().isLoaded();
 
 	updated = mtlUpdated || meshUpdated || moved || skinUpdated || submeshUpdated;
 
@@ -143,6 +138,13 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// From now on the component is considered valid
+
+	m_resourceDirty = false;
+	m_firstTimeUpdate = false;
+	m_meshComponentDirty = false;
+	m_movedLastFrame = moved;
+	m_skinDirty = false;
+	m_submeshIdxDirty = false;
 
 	const MaterialResource& mtl = *m_resource;
 	const MeshResource& mesh = m_meshComponent->getMeshResource();
@@ -331,10 +333,10 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	// Scene bounds update
 	const Bool aabbUpdated = moved || meshUpdated || submeshUpdated || hasSkin;
-	if(aabbUpdated) [[unlikely]]
+	if(aabbUpdated || info.m_forceUpdateSceneBounds) [[unlikely]]
 	{
 		const Aabb aabbWorld = computeAabb(submeshIdx, *info.m_node);
-		SceneGraph::getSingleton().updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
+		info.updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
 	}
 
 	// Update the buckets

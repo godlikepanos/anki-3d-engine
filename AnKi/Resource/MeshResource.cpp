@@ -191,48 +191,12 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		}
 	}
 
-	// Clear the buffers
-	if(async)
-	{
-		CommandBufferInitInfo cmdbinit("MeshResourceClear");
-		cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
-
-		for(const Lod& lod : m_lods)
-		{
-			cmdb->zeroBuffer(lod.m_indexBufferAllocationToken.getCompleteBufferView());
-
-			for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
-			{
-				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
-				{
-					cmdb->zeroBuffer(lod.m_vertexBuffersAllocationToken[stream].getCompleteBufferView());
-				}
-			}
-
-			if(lod.m_meshletIndices.isValid())
-			{
-				cmdb->zeroBuffer(lod.m_meshletIndices);
-				cmdb->zeroBuffer(lod.m_meshletBoundingVolumes);
-				cmdb->zeroBuffer(lod.m_meshletGeometryDescriptors);
-			}
-		}
-
-		const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), BufferUsageBit::kCopyDestination,
-										   BufferUsageBit::kVertexOrIndex};
-
-		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
-
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get());
-	}
-
 	// Submit the loading task
 	if(async)
 	{
-		AsyncLoader::getSingleton().submitTask(task.get());
 		LoadTask* pTask;
 		task.moveAndReset(pTask);
+		AsyncLoader::getSingleton().submitTask(pTask, AsyncLoaderPriority::kMedium);
 	}
 	else
 	{
@@ -441,6 +405,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	{
 		transferAlloc.release(handles[i], fence);
 	}
+
+	m_loadedLodCount.store(m_lods.getSize());
 
 	return Error::kNone;
 }

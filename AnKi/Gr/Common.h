@@ -730,7 +730,7 @@ enum class BufferUsageBit : U64
 	kCopySource = 1ull << 17ull,
 	kCopyDestination = 1ull << 18ull,
 
-	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build.
+	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build or instances buffer in a TLAS build.
 	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a dispatchRays() command.
 	kAccelerationStructureBuildScratch = 1ull << 21ull, ///< Used in buildAccelerationStructureXXX commands.
 	kAccelerationStructure = 1ull << 22ull, ///< Will be used as AS.

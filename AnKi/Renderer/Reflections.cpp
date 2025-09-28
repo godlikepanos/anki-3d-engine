@@ -333,7 +333,6 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-
 				cmdb.dispatchRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 										  BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(DispatchIndirectArgs)));
 			}

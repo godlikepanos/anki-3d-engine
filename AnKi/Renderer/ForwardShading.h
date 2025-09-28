@@ -32,12 +32,10 @@ public:
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
-	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
-	void getVisibleAabbsBuffer(BufferView& visibleAaabbIndicesBuffer, BufferHandle& dep) const
+	/// Use some of the output for debug drawing.
+	const GpuVisibilityOutput& getGpuVisibilityOutput() const
 	{
-		visibleAaabbIndicesBuffer = m_runCtx.m_visOut.m_visibleAaabbIndicesBuffer;
-		dep = m_runCtx.m_visOut.m_dependency;
-		ANKI_ASSERT(visibleAaabbIndicesBuffer.isValid() && dep.isValid());
+		return m_runCtx.m_visOut;
 	}
 
 private:

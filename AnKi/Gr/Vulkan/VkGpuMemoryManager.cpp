@@ -16,8 +16,8 @@ ANKI_SVAR(HostMemoryAllocated, StatCategory::kGpuMem, "Host mem", StatFlag::kByt
 ANKI_SVAR(HostMemoryInUse, StatCategory::kGpuMem, "Host mem in use", StatFlag::kBytes)
 ANKI_SVAR(HostMemoryAllocationCount, StatCategory::kGpuMem, "Host mem allocations", StatFlag::kNone)
 
-static constexpr Array<GpuMemoryManagerClassInfo, 7> kClasses{
-	{{4_KB, 256_KB}, {128_KB, 8_MB}, {1_MB, 64_MB}, {16_MB, 128_MB}, {64_MB, 128_MB}, {128_MB, 128_MB}, {256_MB, 256_MB}}};
+static constexpr Array<GpuMemoryManagerClassInfo, 8> kClasses{
+	{{4_KB, 256_KB}, {128_KB, 8_MB}, {1_MB, 64_MB}, {16_MB, 128_MB}, {64_MB, 128_MB}, {128_MB, 128_MB}, {256_MB, 256_MB}, {512_MB, 512_MB}}};
 
 /// Special classes for the ReBAR memory. Have that as a special case because it's so limited and needs special care.
 static constexpr Array<GpuMemoryManagerClassInfo, 3> kRebarClasses{{{1_MB, 1_MB}, {12_MB, 12_MB}, {24_MB, 24_MB}}};

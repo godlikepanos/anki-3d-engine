@@ -185,7 +185,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	if(RenderStateBucketContainer::getSingleton().getBucketsActiveUserCount(in.m_technique) == 0) [[unlikely]]
 	{
 		// Early exit
-		in = {};
+		out = {};
 		return;
 	}
 
@@ -828,6 +828,13 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 void GpuVisibility::populateRenderGraphStage3(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out)
 {
+	if(RenderStateBucketContainer::getSingleton().getBucketsActiveUserCount(in.m_technique) == 0) [[unlikely]]
+	{
+		// Early exit
+		out = {};
+		return;
+	}
+
 	RenderGraphBuilder& rgraph = *in.m_rgraph;
 
 	const GpuVisLimits limits = computeLimits(in.m_technique);
@@ -1110,9 +1117,26 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	m_lastFrameIdx = getRenderer().getFrameCount();
 #endif
 
-	// Allocate the transient buffers
 	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 
+	if(aabbCount == 0) [[unlikely]]
+	{
+		out.m_instancesBuffer = {};
+
+		WeakArray<U32> arr2;
+		out.m_renderablesBuffer = RebarTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(1, arr2);
+		arr2[0] = 0;
+
+		WeakArray<DispatchIndirectArgs> arr3;
+		out.m_buildSbtIndirectArgsBuffer = RebarTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(1, arr3);
+		zeroMemory(arr3[0]);
+
+		out.m_dependency = rgraph.importBuffer(out.m_renderablesBuffer, BufferUsageBit::kNone);
+
+		return;
+	}
+
+	// Allocate the transient buffers
 	out.m_instancesBuffer = allocateStructuredBuffer<AccelerationStructureInstance>(aabbCount);
 	out.m_dependency = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kNone);
 

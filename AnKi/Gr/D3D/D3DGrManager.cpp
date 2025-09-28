@@ -296,7 +296,30 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 	}
 
 	LockGuard lock(m_globalMtx);
-	m_frames[m_crntFrame].m_fences.emplaceBack(fence.get());
+	PerFrame& frame = m_frames[m_crntFrame];
+
+	frame.m_fences.emplaceBack(fence.get());
+
+	// Throttle the number of fences
+	Bool fencesThrottled = false;
+	while(frame.m_fences.getSize() > 64)
+	{
+		fencesThrottled = true;
+		auto it = frame.m_fences.getBegin();
+		for(; it != frame.m_fences.getEnd(); ++it)
+		{
+			if((*it)->signaled())
+			{
+				frame.m_fences.erase(it);
+				break;
+			}
+		}
+	}
+
+	if(fencesThrottled)
+	{
+		ANKI_D3D_LOGW("Had to throttle the number of fences");
+	}
 }
 
 void GrManagerImpl::finishInternal()
