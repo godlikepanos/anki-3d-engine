@@ -704,7 +704,7 @@ void CommandBuffer::clearTexture([[maybe_unused]] const TextureView& texView, [[
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView)
+void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView, const TextureRect& rect)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
 
@@ -713,10 +713,11 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	const BufferImpl& buffImpl = static_cast<const BufferImpl&>(buff.getBuffer());
 	const TextureImpl& texImpl = static_cast<const TextureImpl&>(texView.getTexture());
 
-	const U32 width = texImpl.getWidth() >> texView.getFirstMipmap();
-	const U32 height = texImpl.getHeight() >> texView.getFirstMipmap();
-	const U32 depth = (texImpl.getTextureType() == TextureType::k3D) ? (texImpl.getDepth() >> texView.getFirstMipmap()) : 1u;
-	ANKI_ASSERT(width && height && depth);
+	const U32 width = (rect.m_width != kMaxU32) ? rect.m_width : texImpl.getWidth() >> texView.getFirstMipmap();
+	const U32 height = (rect.m_height != kMaxU32) ? rect.m_height : texImpl.getHeight() >> texView.getFirstMipmap();
+	const U32 depth = (texImpl.getTextureType() == TextureType::k3D)
+						  ? ((rect.m_depth != kMaxU32) ? rect.m_depth : texImpl.getDepth() >> texView.getFirstMipmap())
+						  : 1u;
 
 	const FormatInfo& formatInfo = getFormatInfo(texImpl.getFormat());
 
@@ -735,7 +736,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	dstLocation.pResource = &texImpl.getD3DResource();
 	dstLocation.SubresourceIndex = texImpl.calcD3DSubresourceIndex(texView.getSubresource());
 
-	self.m_cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
+	self.m_cmdList->CopyTextureRegion(&dstLocation, rect.m_offsetX, rect.m_offsetY, rect.m_offsetZ, &srcLocation, nullptr);
 }
 
 void CommandBuffer::zeroBuffer(const BufferView& buff)

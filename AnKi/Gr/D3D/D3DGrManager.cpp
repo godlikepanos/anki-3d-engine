@@ -318,7 +318,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 	if(fencesThrottled)
 	{
-		ANKI_D3D_LOGW("Had to throttle the number of fences");
+		ANKI_D3D_LOGV("Had to throttle the number of fences");
 	}
 }
 

@@ -75,7 +75,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 
 	// Mouselook
 	const Input& inp = Input::getSingleton();
-	const Vec2 mousePos = inp.getMousePosition();
+	const Vec2 mousePos = inp.getMousePositionNdc();
 	if(mousePos != 0.0f)
 	{
 		Mat3 camRot = m_cameraNode->getLocalRotation();
@@ -95,34 +95,34 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 	// Movement
 	{
 		Vec3 moveVec(0.0);
-		if(inp.getKey(KeyCode::kW))
+		if(inp.getKey(KeyCode::kW) > 0)
 		{
 			moveVec.z() += 1.0f;
 		}
 
-		if(inp.getKey(KeyCode::kA))
+		if(inp.getKey(KeyCode::kA) > 0)
 		{
 			moveVec.x() += 1.0f;
 		}
 
-		if(inp.getKey(KeyCode::kS))
+		if(inp.getKey(KeyCode::kS) > 0)
 		{
 			moveVec.z() -= 1.0f;
 		}
 
-		if(inp.getKey(KeyCode::kD))
+		if(inp.getKey(KeyCode::kD) > 0)
 		{
 			moveVec.x() -= 1.0f;
 		}
 
 		F32 jumpSpeed = 0.0f;
-		if(inp.getKey(KeyCode::kSpace))
+		if(inp.getKey(KeyCode::kSpace) > 0)
 		{
 			jumpSpeed += m_jumpSpeed;
 		}
 
 		Bool crouchChanged = false;
-		if(inp.getKey(KeyCode::kC))
+		if(inp.getKey(KeyCode::kC) > 0)
 		{
 			m_crouching = !m_crouching;
 			crouchChanged = true;
@@ -139,7 +139,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 			}
 
 			F32 speed = m_walkingSpeed;
-			if(inp.getKey(KeyCode::kLeftShift))
+			if(inp.getKey(KeyCode::kLeftShift) > 0)
 			{
 				speed *= 2.0f;
 			}

@@ -17,29 +17,22 @@ public:
 	{
 		UiComponent* uic = newComponent<UiComponent>();
 		uic->init(
-			[](Canvas& canvas, void* ud) {
+			[](UiCanvas& canvas, void* ud) {
 				static_cast<TextureViewerUiNode*>(ud)->draw(canvas);
 			},
 			this);
-
-		ANKI_CHECK_AND_IGNORE(UiManager::getSingleton().newFont("EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}, m_font));
 
 		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource("ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
 	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
 	{
-		if(!m_imageIdExtra.m_textureView.isValid())
-		{
-			m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDesc::all());
-		}
 	}
 
 private:
-	FontPtr m_font;
+	ImFont* m_font = nullptr;
 	ShaderProgramResourcePtr m_imageProgram;
 	ShaderProgramPtr m_imageGrProgram;
-	UiImageIdData m_imageIdExtra;
 
 	U32 m_crntMip = 0;
 	F32 m_zoom = 1.0f;
@@ -48,8 +41,13 @@ private:
 	Array<Bool, 4> m_colorChannel = {true, true, true, true};
 	F32 m_maxColorValue = 1.0f;
 
-	void draw(Canvas& canvas)
+	void draw(UiCanvas& canvas)
 	{
+		if(!m_font)
+		{
+			m_font = canvas.addFont("EngineAssets/UbuntuMonoRegular.ttf");
+		}
+
 		const Texture& grTex = m_imageResource->getTexture();
 		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
 		ANKI_ASSERT(grTex.getTextureType() == TextureType::k2D || grTex.getTextureType() == TextureType::k3D);
@@ -64,14 +62,15 @@ private:
 			m_imageGrProgram.reset(&variant->getProgram());
 		}
 
-		ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+		const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
+		ImGui::Begin("Console", nullptr, windowFlags);
 
-		canvas.pushFont(m_font.get(), 16);
+		ImGui::PushFont(m_font, 16.0f);
 
 		ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
 		ImGui::SetWindowSize(Vec2(F32(canvas.getWidth()), F32(canvas.getHeight())));
 
-		ImGui::BeginChild("Tools", Vec2(-1.0f, 30.0f), false, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::BeginChild("Tools", Vec2(-1.0f, 30.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX, ImGuiWindowFlags_None);
 
 		// Zoom
 		if(ImGui::Button("-"))
@@ -118,7 +117,6 @@ private:
 				mipLabels.pushBackSprintf("Mip %u (%u x %u)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
 			}
 
-			const U32 lastCrntMip = m_crntMip;
 			if(ImGui::BeginCombo("##Mipmap", (mipLabels.getBegin() + m_crntMip)->cstr(), ImGuiComboFlags_HeightLarge))
 			{
 				for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
@@ -135,12 +133,6 @@ private:
 					}
 				}
 				ImGui::EndCombo();
-			}
-
-			if(lastCrntMip != m_crntMip)
-			{
-				// Re-create the image view
-				m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDesc::surface(m_crntMip, 0, 0));
 			}
 
 			ImGui::SameLine();
@@ -180,9 +172,22 @@ private:
 		ImGui::SliderFloat("##Max color", &m_maxColorValue, 0.0f, 5.0f, "Max color = %.3f");
 		ImGui::SameLine();
 
+		// Avg color
+		{
+			const Vec4 avgColor = m_imageResource->getAverageColor();
+
+			ImGui::Text("Average Color %.2f %.2f %.2f %.2f", avgColor.x(), avgColor.y(), avgColor.z(), avgColor.w());
+			ImGui::SameLine();
+
+			ImGui::ColorButton("Average color", avgColor);
+		}
+
 		// Next
 		ImGui::EndChild();
-		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), false, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
+
+		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX,
+						  ImGuiWindowFlags_HorizontalScrollbar
+							  | (Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0 ? ImGuiWindowFlags_NoScrollWithMouse : 0));
 
 		// Image
 		{
@@ -202,41 +207,51 @@ private:
 
 			pc.m_depth = Vec4((m_depth + 0.5f) / F32(grTex.getDepth()));
 
-			m_imageIdExtra.m_customProgram = m_imageGrProgram;
-			m_imageIdExtra.m_extraFastConstantsSize = U8(sizeof(pc));
-			m_imageIdExtra.setExtraFastConstants(&pc, sizeof(pc));
-			m_imageIdExtra.m_pointSampling = m_pointSampling;
-
-			ImGui::Image(UiImageId(&m_imageIdExtra), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f), Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImTextureID texid;
+			texid.m_texture = &m_imageResource->getTexture();
+			texid.m_textureSubresource = TextureSubresourceDesc::surface(m_crntMip, 0, 0, DepthStencilAspectBit::kNone);
+			texid.m_customProgram = m_imageGrProgram.get();
+			texid.m_extraFastConstantsSize = U8(sizeof(pc));
+			texid.setExtraFastConstants(&pc, sizeof(pc));
+			texid.m_pointSampling = m_pointSampling;
+			ImGui::Image(texid, imageSize);
 
 			if(ImGui::IsItemHovered())
 			{
-				if(ImGui::GetIO().KeyCtrl)
+				if(Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0)
 				{
 					// Zoom
 					const F32 zoomSpeed = 0.05f;
-					if(ImGui::GetIO().MouseWheel > 0.0f)
-					{
-						m_zoom *= 1.0f + zoomSpeed;
-					}
-					else if(ImGui::GetIO().MouseWheel < 0.0f)
+					if(Input::getSingleton().getMouseButton(MouseButton::kScrollDown) > 0)
 					{
 						m_zoom *= 1.0f - zoomSpeed;
 					}
+					else if(Input::getSingleton().getMouseButton(MouseButton::kScrollUp) > 0)
+					{
+						m_zoom *= 1.0f + zoomSpeed;
+					}
 
 					// Pan
-					if(ImGui::GetIO().MouseDown[0])
+					if(Input::getSingleton().getMouseButton(MouseButton::kLeft) > 0)
 					{
-						const Vec2 velocity = toAnki(ImGui::GetIO().MouseDelta);
+						auto toWindow = [](Vec2 in) {
+							in = in * 0.5f + 0.5f;
+							in.y() = 1.0f - in.y();
+							in *= Vec2(UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight()));
+							return in;
+						};
 
-						if(velocity.x() != 0.0f)
+						const Vec2 delta =
+							toWindow(Input::getSingleton().getMousePositionNdc()) - toWindow(Input::getSingleton().getMousePreviousPositionNdc());
+
+						if(delta.x() != 0.0f)
 						{
-							ImGui::SetScrollX(ImGui::GetScrollX() - velocity.x());
+							ImGui::SetScrollX(ImGui::GetScrollX() - delta.x());
 						}
 
-						if(velocity.y() != 0.0f)
+						if(delta.y() != 0.0f)
 						{
-							ImGui::SetScrollY(ImGui::GetScrollY() - velocity.y());
+							ImGui::SetScrollY(ImGui::GetScrollY() - delta.y());
 						}
 					}
 				}
@@ -245,7 +260,7 @@ private:
 
 		ImGui::EndChild();
 
-		canvas.popFont();
+		ImGui::PopFont();
 		ImGui::End();
 	}
 };
@@ -286,8 +301,8 @@ public:
 
 		// Change window name
 		String title;
-		title.sprintf("%s %u x %u Mips %u Format %s", m_argv[1], image->getWidth(), image->getHeight(), image->getTexture().getMipmapCount(),
-					  getFormatInfo(image->getTexture().getFormat()).m_name);
+		title.sprintf("%s %u x %u Mips %u Format %s", m_argv[1], image->getTexture().getWidth(), image->getTexture().getHeight(),
+					  image->getTexture().getMipmapCount(), getFormatInfo(image->getTexture().getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node
@@ -300,7 +315,7 @@ public:
 	Error userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime) override
 	{
 		Input& input = Input::getSingleton();
-		if(input.getKey(KeyCode::kEscape))
+		if(input.getKey(KeyCode::kEscape) > 0)
 		{
 			quit = true;
 		}

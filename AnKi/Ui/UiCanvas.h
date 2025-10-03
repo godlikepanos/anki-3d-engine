@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <AnKi/Ui/UiObject.h>
-#include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Ui/Common.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
+#include <AnKi/Resource/GenericResource.h>
 #include <AnKi/Gr/Sampler.h>
 
 namespace anki {
@@ -16,19 +16,14 @@ namespace anki {
 /// @{
 
 /// UI canvas. It's more of a context.
-class Canvas : public UiObject
+class UiCanvas : public UiObject
 {
 	friend class UiManager;
 
 public:
-	Canvas() = default;
+	UiCanvas() = default;
 
-	~Canvas();
-
-	const FontPtr& getDefaultFont() const
-	{
-		return m_font;
-	}
+	~UiCanvas();
 
 	/// Resize canvas.
 	void resize(U32 width, U32 height)
@@ -50,27 +45,31 @@ public:
 
 	/// @name building commands. The order matters.
 	/// @{
-
-	/// Handle input.
 	virtual void handleInput();
 
-	/// Begin building the UI.
 	void beginBuilding();
 
-	void pushFont(Font* font, U32 fontHeight);
+	ImFont* addFont(CString fname);
 
-	void popFont()
+	void endBuilding();
+
+	template<typename TFunc>
+	void visitTexturesForUpdate(TFunc func)
 	{
-		ImGui::PopFont();
+		for(const auto& pair : m_texturesPendingUpload)
+		{
+			func(*pair.first->GetTexID().m_texture, pair.second);
+		}
 	}
 
-	void appendToCommandBuffer(CommandBuffer& cmdb);
+	void appendNonGraphicsCommands(CommandBuffer& cmdb) const;
+
+	void appendGraphicsCommands(CommandBuffer& cmdb) const;
 	/// @}
 
 private:
-	FontPtr m_font;
-	U32 m_dfltFontHeight = 0;
 	ImGuiContext* m_imCtx = nullptr;
+	ImFont* m_defaultFont = nullptr;
 	U32 m_width;
 	U32 m_height;
 
@@ -86,11 +85,18 @@ private:
 	SamplerPtr m_linearLinearRepeatSampler;
 	SamplerPtr m_nearestNearestRepeatSampler;
 
-	UiList<UiObjectPtr> m_references;
+	class FontCacheEntry
+	{
+	public:
+		ImFont* m_font = nullptr;
+		GenericResourcePtr m_resource;
+	};
 
-	Error init(Font* font, U32 fontHeight, U32 width, U32 height);
+	UiHashMap<CString, FontCacheEntry> m_fontCache;
 
-	void appendToCommandBufferInternal(CommandBuffer& cmdb);
+	UiDynamicArray<std::pair<const ImTextureData*, Bool>> m_texturesPendingUpload;
+
+	Error init(U32 width, U32 height);
 };
 /// @}
 

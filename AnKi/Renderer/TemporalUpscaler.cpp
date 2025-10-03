@@ -24,14 +24,14 @@ Error TemporalUpscaler::init()
 		return Error::kNone;
 	}
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_dlss)
+	if(GrManager::getSingleton().getDeviceCapabilities().m_dlss && g_cvarRenderDlss)
 	{
 
 		GrUpscalerInitInfo inf;
 		inf.m_sourceTextureResolution = getRenderer().getInternalResolution();
 		inf.m_targetTextureResolution = getRenderer().getPostProcessResolution();
 		inf.m_upscalerType = GrUpscalerType::kDlss2;
-		inf.m_qualityMode = GrUpscalerQualityMode(g_cvarRenderDlssQuality - 1);
+		inf.m_qualityMode = GrUpscalerQualityMode(U32(g_cvarRenderDlssQuality));
 
 		m_grUpscaler = GrManager::getSingleton().newGrUpscaler(inf);
 	}

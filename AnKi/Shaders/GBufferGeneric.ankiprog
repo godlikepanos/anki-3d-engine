@@ -618,7 +618,7 @@ GBufferPixelOut main(
 // ===========================================================================
 // RT Shadows                                                                =
 // ===========================================================================
-#if ANKI_TECHNIQUE_RtShadows
+#if NOT_ZERO(ANKI_TECHNIQUE_RtShadows)
 
 #	if ANKI_ANY_HIT_SHADER
 

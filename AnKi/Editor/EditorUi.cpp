@@ -9,12 +9,14 @@
 
 namespace anki {
 
-void EditorUi::draw(Canvas& canvas)
+void EditorUi::draw(UiCanvas& canvas)
 {
-	if(m_font)
+	if(!m_font)
 	{
-		canvas.pushFont(m_font.get(), 20);
+		m_font = canvas.addFont("EngineAssets/UbuntuRegular.ttf");
 	}
+
+	ImGui::PushFont(m_font, 20);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.0f;
@@ -33,15 +35,11 @@ void EditorUi::draw(Canvas& canvas)
 
 	ImGui::End();
 
-	if(m_font)
-	{
-		canvas.popFont();
-	}
-
+	ImGui::PopFont();
 	m_firstBuild = false;
 }
 
-void EditorUi::buildMainMenu(Canvas& canvas)
+void EditorUi::buildMainMenu(UiCanvas& canvas)
 {
 	if(ImGui::BeginMainMenuBar())
 	{
@@ -107,7 +105,7 @@ void EditorUi::buildSceneNode(SceneNode& node)
 #endif
 }
 
-void EditorUi::buildSceneHierarchyWindow(Canvas& canvas)
+void EditorUi::buildSceneHierarchyWindow(UiCanvas& canvas)
 {
 	if(m_firstBuild)
 	{

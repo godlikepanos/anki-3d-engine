@@ -355,6 +355,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_motionBlur->populateRenderGraph(ctx);
 	m_bloom2->populateRenderGraph(ctx);
 	m_dbg->populateRenderGraph(ctx);
+	m_uiStage->populateRenderGraph(ctx);
 
 	m_finalComposite->populateRenderGraph(ctx);
 
@@ -775,6 +776,8 @@ Error Renderer::render()
 	// First thing, reset the temp mem pool
 	m_framePool.reset();
 
+	m_uiStage->buildUiAsync();
+
 	RenderingContext ctx(&m_framePool);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
 
@@ -844,6 +847,8 @@ Error Renderer::render()
 		pass.newTextureDependency(ctx.m_swapchainRenderTarget, TextureUsageBit::kRtvDsvWrite);
 		pass.newTextureDependency(m_finalComposite->getRenderTarget(), TextureUsageBit::kSrvPixel);
 
+		m_uiStage->setDependencies(pass);
+
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(BlitAndUi);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -856,7 +861,7 @@ Error Renderer::render()
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 
 			// Draw the UI
-			m_uiStage->draw(m_swapchainResolution.x(), m_swapchainResolution.y(), cmdb);
+			m_uiStage->drawUi(cmdb);
 		});
 	}
 

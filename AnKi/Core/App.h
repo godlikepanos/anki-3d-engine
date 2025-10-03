@@ -11,7 +11,6 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/Functions.h>
-#include <AnKi/Ui/UiImmediateModeBuilder.h>
 
 namespace anki {
 

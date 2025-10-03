@@ -3,14 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Ui/Canvas.h>
-#include <AnKi/Ui/Font.h>
+#include <AnKi/Ui/UiCanvas.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Window/Input.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>
+#include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Resource/GenericResource.h>
 
 namespace anki {
 
@@ -59,9 +60,9 @@ static void setColorStyleAdia()
 	// Tabs
 	colors[ImGuiCol_Tab] = panelColor;
 	colors[ImGuiCol_TabHovered] = panelHoverColor;
-	colors[ImGuiCol_TabActive] = panelActiveColor;
-	colors[ImGuiCol_TabUnfocused] = panelColor;
-	colors[ImGuiCol_TabUnfocusedActive] = panelHoverColor;
+	colors[ImGuiCol_TabSelected] = panelActiveColor;
+	colors[ImGuiCol_TabDimmed] = panelColor;
+	colors[ImGuiCol_TabDimmedSelected] = panelHoverColor;
 
 	// Title
 	colors[ImGuiCol_TitleBg] = bgColor;
@@ -129,19 +130,26 @@ static void setColorStyleAdia()
 	style.ItemInnerSpacing = ImVec2(4.0f, 4.0f);
 }
 
-Canvas::~Canvas()
+UiCanvas::~UiCanvas()
 {
 	if(m_imCtx)
 	{
+		ImGui::SetCurrentContext(m_imCtx);
+		for(ImTextureData* tex : ImGui::GetPlatformIO().Textures)
+		{
+			ImTextureID it = tex->GetTexID();
+			ANKI_ASSERT(it.m_textureIsRefcounted);
+			TexturePtr pTex(it.m_texture);
+			it.m_texture->release();
+		}
+		ImGui::SetCurrentContext(nullptr);
+
 		ImGui::DestroyContext(m_imCtx);
 	}
 }
 
-Error Canvas::init(Font* font, U32 fontHeight, U32 width, U32 height)
+Error UiCanvas::init(U32 width, U32 height)
 {
-	ANKI_ASSERT(font);
-	m_font.reset(font);
-	m_dfltFontHeight = fontHeight;
 	resize(width, height);
 
 	// Create program
@@ -157,7 +165,7 @@ Error Canvas::init(Font* font, U32 fontHeight, U32 width, U32 height)
 	}
 
 	// Sampler
-	SamplerInitInfo samplerInit("Canvas");
+	SamplerInitInfo samplerInit("UiCanvas");
 	samplerInit.m_minMagFilter = SamplingFilter::kLinear;
 	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
 	samplerInit.m_addressing = SamplingAddressing::kRepeat;
@@ -168,14 +176,100 @@ Error Canvas::init(Font* font, U32 fontHeight, U32 width, U32 height)
 	m_nearestNearestRepeatSampler = GrManager::getSingleton().newSampler(samplerInit);
 
 	// Create the context
-	m_imCtx = ImGui::CreateContext(font->getImFontAtlas());
+	m_imCtx = ImGui::CreateContext(nullptr);
 	ImGui::SetCurrentContext(m_imCtx);
+
 	ImGui::GetIO().IniFilename = nullptr;
 	ImGui::GetIO().LogFilename = nullptr;
+	ImGui::GetIO().BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
 	// ImGui::StyleColorsLight();
 	setColorStyleAdia();
 
-#define ANKI_HANDLE(ak, im) ImGui::GetIO().KeyMap[im] = static_cast<int>(ak);
+	m_defaultFont = addFont("EngineAssets/UbuntuRegular.ttf");
+
+	ImGui::SetCurrentContext(nullptr);
+
+	return Error::kNone;
+}
+
+ImFont* UiCanvas::addFont(CString fname)
+{
+	ANKI_ASSERT(GImGui);
+	ImFont* font = nullptr;
+
+	auto it = m_fontCache.find(fname);
+	if(it != m_fontCache.getEnd())
+	{
+		font = (*it).m_font;
+	}
+	else
+	{
+		GenericResourcePtr rsrc;
+		if(ResourceManager::getSingleton().loadResource(fname, rsrc))
+		{
+			ANKI_UI_LOGE("Failed to add font. Will use the default one");
+			font = m_defaultFont;
+		}
+		else
+		{
+			ConstWeakArray<U8> data = rsrc->getData();
+
+			const F32 someFontSize = 13.0f; // Doesn't matter
+
+			ImFontConfig cfg;
+			cfg.FontDataOwnedByAtlas = false;
+			font = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(const_cast<U8*>(data.getBegin()), data.getSize(), someFontSize, &cfg);
+			ANKI_ASSERT(font);
+
+			const FontCacheEntry entry = {font, rsrc};
+			m_fontCache.emplace(fname, entry);
+		}
+	}
+
+	return font;
+}
+
+void UiCanvas::handleInput()
+{
+	const Input& in = Input::getSingleton();
+
+	// Begin
+	ImGui::SetCurrentContext(m_imCtx);
+	ImGuiIO& io = ImGui::GetIO();
+
+	// Handle mouse
+	Array<U32, 4> viewport = {0, 0, m_width, m_height};
+	Vec2 mousePosf = in.getMousePositionNdc() / 2.0f + 0.5f;
+	mousePosf.y() = 1.0f - mousePosf.y();
+	const UVec2 mousePos(U32(mousePosf.x() * F32(viewport[2])), U32(mousePosf.y() * F32(viewport[3])));
+
+	io.MousePos.x = F32(mousePos.x());
+	io.MousePos.y = F32(mousePos.y());
+
+	io.MouseClicked[0] = in.getMouseButton(MouseButton::kLeft) == 1;
+	io.MouseDown[0] = in.getMouseButton(MouseButton::kLeft) > 0;
+
+	if(in.getMouseButton(MouseButton::kScrollUp) > 0)
+	{
+		io.AddMouseWheelEvent(0.0f, 1.0f);
+	}
+	else if(in.getMouseButton(MouseButton::kScrollDown) > 0)
+	{
+		io.AddMouseWheelEvent(0.0f, -1.0f);
+	}
+
+	// io.KeyCtrl = (in.getKey(KeyCode::kLeftCtrl) || in.getKey(KeyCode::kRightCtrl));
+
+// Handle keyboard
+#define ANKI_HANDLE(ak, imgui) \
+	if(in.getKey(ak) > 1) \
+	{ \
+		io.AddKeyEvent(imgui, true); \
+	} \
+	else if(in.getKey(ak) < 0) \
+	{ \
+		io.AddKeyEvent(imgui, false); \
+	}
 
 	ANKI_HANDLE(KeyCode::kTab, ImGuiKey_Tab)
 	ANKI_HANDLE(KeyCode::kLeft, ImGuiKey_LeftArrow)
@@ -199,70 +293,8 @@ Error Canvas::init(Font* font, U32 fontHeight, U32 width, U32 height)
 	ANKI_HANDLE(KeyCode::kX, ImGuiKey_X)
 	ANKI_HANDLE(KeyCode::kY, ImGuiKey_Y)
 	ANKI_HANDLE(KeyCode::kZ, ImGuiKey_Z)
-
-#undef ANKI_HANDLE
-
-	ImGui::SetCurrentContext(nullptr);
-
-	return Error::kNone;
-}
-
-void Canvas::handleInput()
-{
-	const Input& in = Input::getSingleton();
-
-	// Begin
-	ImGui::SetCurrentContext(m_imCtx);
-	ImGuiIO& io = ImGui::GetIO();
-
-	// Handle mouse
-	Array<U32, 4> viewport = {0, 0, m_width, m_height};
-	Vec2 mousePosf = in.getMousePosition() / 2.0f + 0.5f;
-	mousePosf.y() = 1.0f - mousePosf.y();
-	const UVec2 mousePos(U32(mousePosf.x() * F32(viewport[2])), U32(mousePosf.y() * F32(viewport[3])));
-
-	io.MousePos.x = F32(mousePos.x());
-	io.MousePos.y = F32(mousePos.y());
-
-	io.MouseClicked[0] = in.getMouseButton(MouseButton::kLeft) == 1;
-	io.MouseDown[0] = in.getMouseButton(MouseButton::kLeft) > 0;
-
-	if(in.getMouseButton(MouseButton::kScrollUp) == 1)
-	{
-		io.MouseWheel = F32(in.getMouseButton(MouseButton::kScrollUp));
-	}
-	else if(in.getMouseButton(MouseButton::kScrollDown) == 1)
-	{
-		io.MouseWheel = -F32(in.getMouseButton(MouseButton::kScrollDown));
-	}
-
-	io.KeyCtrl = (in.getKey(KeyCode::kLeftCtrl) || in.getKey(KeyCode::kRightCtrl));
-
-// Handle keyboard
-#define ANKI_HANDLE(ak) io.KeysDown[int(ak)] = (in.getKey(ak) == 1);
-
-	ANKI_HANDLE(KeyCode::kTab)
-	ANKI_HANDLE(KeyCode::kLeft)
-	ANKI_HANDLE(KeyCode::kRight)
-	ANKI_HANDLE(KeyCode::kUp)
-	ANKI_HANDLE(KeyCode::kDown)
-	ANKI_HANDLE(KeyCode::kPageUp)
-	ANKI_HANDLE(KeyCode::kPageDown)
-	ANKI_HANDLE(KeyCode::kHome)
-	ANKI_HANDLE(KeyCode::kEnd)
-	ANKI_HANDLE(KeyCode::kInsert)
-	ANKI_HANDLE(KeyCode::kDelete)
-	ANKI_HANDLE(KeyCode::kBackspace)
-	ANKI_HANDLE(KeyCode::kSpace)
-	ANKI_HANDLE(KeyCode::kReturn)
-	// ANKI_HANDLE(KeyCode::RETURN2)
-	ANKI_HANDLE(KeyCode::kEscape)
-	ANKI_HANDLE(KeyCode::kA)
-	ANKI_HANDLE(KeyCode::kC)
-	ANKI_HANDLE(KeyCode::kV)
-	ANKI_HANDLE(KeyCode::kX)
-	ANKI_HANDLE(KeyCode::kY)
-	ANKI_HANDLE(KeyCode::kZ)
+	ANKI_HANDLE(KeyCode::kLeftCtrl, ImGuiKey_LeftCtrl)
+	ANKI_HANDLE(KeyCode::kRightCtrl, ImGuiKey_RightCtrl)
 
 #undef ANKI_HANDLE
 
@@ -272,7 +304,7 @@ void Canvas::handleInput()
 	ImGui::SetCurrentContext(nullptr);
 }
 
-void Canvas::beginBuilding()
+void UiCanvas::beginBuilding()
 {
 	ImGui::SetCurrentContext(m_imCtx);
 
@@ -281,30 +313,92 @@ void Canvas::beginBuilding()
 	io.DisplaySize = ImVec2(F32(m_width), F32(m_height));
 
 	ImGui::NewFrame();
-	ImGui::PushFont(&m_font->getImFont(m_dfltFontHeight));
 }
 
-void Canvas::pushFont(Font* font, U32 fontHeight)
+void UiCanvas::endBuilding()
 {
-	m_references.pushBack(UiObjectPtr(font));
-	ImGui::PushFont(&font->getImFont(fontHeight));
-}
-
-void Canvas::appendToCommandBuffer(CommandBuffer& cmdb)
-{
-	appendToCommandBufferInternal(cmdb);
-
-	// Done
-	ImGui::SetCurrentContext(nullptr);
-
-	m_references.destroy();
-}
-
-void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
-{
-	ImGui::PopFont();
 	ImGui::Render();
+
+	// Create the new textures
+	m_texturesPendingUpload.destroy();
 	ImDrawData& drawData = *ImGui::GetDrawData();
+	if(drawData.Textures != nullptr)
+	{
+		for(ImTextureData* tex : *drawData.Textures)
+		{
+			if(tex->Status == ImTextureStatus_OK)
+			{
+				continue;
+			}
+
+			if(tex->Status == ImTextureStatus_WantCreate)
+			{
+				TextureInitInfo init("ImGui requested");
+				init.m_width = tex->Width;
+				init.m_height = tex->Height;
+				init.m_format = Format::kR8G8B8A8_Unorm;
+				init.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kCopyDestination;
+
+				TexturePtr aktex = GrManager::getSingleton().newTexture(init);
+				ImTextureID id;
+				id.m_texture = aktex.get();
+				id.m_texture->retain();
+				id.m_textureIsRefcounted = true;
+				tex->SetTexID(id);
+			}
+
+			if(tex->Status == ImTextureStatus_WantCreate || tex->Status == ImTextureStatus_WantUpdates)
+			{
+				m_texturesPendingUpload.emplaceBack(std::pair(tex, tex->Status == ImTextureStatus_WantCreate));
+			}
+			else if(tex->Status == ImTextureStatus_Destroyed)
+			{
+				ImTextureID id = tex->GetTexID();
+				ANKI_ASSERT(id.m_textureIsRefcounted);
+
+				TexturePtr pTex(id.m_texture);
+				id.m_texture->release();
+			}
+			else
+			{
+				ANKI_ASSERT(0);
+			}
+
+			tex->Status = ImTextureStatus_OK;
+		}
+	}
+
+	ImGui::SetCurrentContext(nullptr);
+}
+
+void UiCanvas::appendNonGraphicsCommands(CommandBuffer& cmdb) const
+{
+	for(const auto& pair : m_texturesPendingUpload)
+	{
+		const ImTextureData* tex = pair.first;
+
+		const UVec2 uploadOffset(tex->UpdateRect.x, tex->UpdateRect.y);
+		const UVec2 uploadSize(tex->UpdateRect.w, tex->UpdateRect.h);
+		const U32 uploadPitch = uploadSize.x() * U32(tex->BytesPerPixel);
+		const U32 copyBufferSize = uploadSize.y() * uploadPitch;
+
+		WeakArray<U8> mappedMem;
+		const BufferView copyBuffer = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(copyBufferSize, mappedMem);
+
+		for(U32 y = 0; y < uploadSize.y(); y++)
+		{
+			memcpy(&mappedMem[uploadPitch * y], tex->GetPixelsAt(uploadOffset.x(), uploadOffset.y() + y), uploadPitch);
+		}
+
+		cmdb.copyBufferToTexture(copyBuffer, TextureView(tex->GetTexID().m_texture, TextureSubresourceDesc::all()),
+								 {uploadOffset.x(), uploadOffset.y(), 0, uploadSize.x(), uploadSize.y(), 1});
+	}
+}
+
+void UiCanvas::appendGraphicsCommands(CommandBuffer& cmdb) const
+{
+	ImGui::SetCurrentContext(m_imCtx);
+	const ImDrawData& drawData = *ImGui::GetDrawData();
 
 	// Allocate index and vertex buffers
 	BufferView vertsToken, indicesToken;
@@ -385,15 +479,15 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					// Apply scissor/clipping rectangle
 					cmdb.setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()), U32(clipRect.w() - clipRect.y()));
 
-					UiImageId id(pcmd.TextureId);
-					const UiImageIdData* data = id.m_data;
+					const ImTextureID texid = pcmd.GetTexID();
+					const Bool hasTexture = texid.m_texture != nullptr;
 
 					// Bind program
-					if(data && data->m_customProgram.isCreated())
+					if(hasTexture && texid.m_customProgram)
 					{
-						cmdb.bindShaderProgram(data->m_customProgram.get());
+						cmdb.bindShaderProgram(texid.m_customProgram);
 					}
-					else if(data && data->m_textureView.isValid())
+					else if(hasTexture)
 					{
 						cmdb.bindShaderProgram(m_grProgs[kRgbaTex].get());
 					}
@@ -403,10 +497,10 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					}
 
 					// Bindings
-					if(data && data->m_textureView.isValid())
+					if(hasTexture)
 					{
-						cmdb.bindSampler(0, 0, (data->m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
-						cmdb.bindSrv(0, 0, data->m_textureView);
+						cmdb.bindSampler(0, 0, (texid.m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
+						cmdb.bindSrv(0, 0, TextureView(texid.m_texture, texid.m_textureSubresource));
 					}
 
 					// Push constants
@@ -414,19 +508,19 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					{
 					public:
 						Vec4 m_transform;
-						Array<U8, sizeof(UiImageIdData::m_extraFastConstants)> m_extra;
+						Array<U8, sizeof(AnKiImTextureID::m_extraFastConstants)> m_extra;
 					} pc;
 					pc.m_transform.x() = 2.0f / drawData.DisplaySize.x;
 					pc.m_transform.y() = -2.0f / drawData.DisplaySize.y;
 					pc.m_transform.z() = (drawData.DisplayPos.x / drawData.DisplaySize.x) * 2.0f - 1.0f;
 					pc.m_transform.w() = -((drawData.DisplayPos.y / drawData.DisplaySize.y) * 2.0f - 1.0f);
 					U32 extraFastConstantsSize = 0;
-					if(data && data->m_extraFastConstantsSize)
+					if(hasTexture && texid.m_extraFastConstantsSize)
 					{
-						ANKI_ASSERT(data->m_extraFastConstantsSize <= sizeof(data->m_extraFastConstants));
-						memcpy(&pc.m_extra[0], data->m_extraFastConstants.getBegin(), data->m_extraFastConstantsSize);
+						ANKI_ASSERT(texid.m_extraFastConstantsSize <= sizeof(texid.m_extraFastConstants));
+						memcpy(&pc.m_extra[0], texid.m_extraFastConstants.getBegin(), texid.m_extraFastConstantsSize);
 
-						extraFastConstantsSize = data->m_extraFastConstantsSize;
+						extraFastConstantsSize = texid.m_extraFastConstantsSize;
 					}
 					cmdb.setFastConstants(&pc, sizeof(Vec4) + extraFastConstantsSize);
 
@@ -442,6 +536,8 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 	// Restore state
 	cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	cmdb.setCullMode(FaceSelectionBit::kBack);
+
+	ImGui::SetCurrentContext(nullptr);
 }
 
 } // end namespace anki

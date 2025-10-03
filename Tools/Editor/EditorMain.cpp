@@ -19,7 +19,7 @@ public:
 	{
 		UiComponent* uic = newComponent<UiComponent>();
 		uic->init(
-			[](Canvas& canvas, void* ud) {
+			[](UiCanvas& canvas, void* ud) {
 				static_cast<EditorUiNode*>(ud)->m_editorUi.draw(canvas);
 			},
 			this);
@@ -96,7 +96,7 @@ public:
 	Error userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime) override
 	{
 		Input& input = Input::getSingleton();
-		if(input.getKey(KeyCode::kEscape) || m_editorUiNode->m_editorUi.m_quit)
+		if(input.getKey(KeyCode::kEscape) > 0 || m_editorUiNode->m_editorUi.m_quit)
 		{
 			quit = true;
 		}

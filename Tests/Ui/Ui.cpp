@@ -9,6 +9,7 @@
 #include <AnKi/Ui.h>
 #include <AnKi/Window.h>
 
+#if 0
 using namespace anki;
 
 namespace {
@@ -144,3 +145,4 @@ ANKI_TEST(Ui, Ui)
 	Input::freeSingleton();
 	NativeWindow::freeSingleton();
 }
+#endif

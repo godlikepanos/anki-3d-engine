@@ -316,7 +316,7 @@ public:
 	void clearTexture(const TextureView& texView, const ClearValue& clearValue);
 
 	/// Copy a buffer to a texture surface or volume.
-	void copyBufferToTexture(const BufferView& buff, const TextureView& texView);
+	void copyBufferToTexture(const BufferView& buff, const TextureView& texView, const TextureRect& rect = TextureRect());
 
 	/// Fill a buffer with zeros. It's a copy operation.
 	void zeroBuffer(const BufferView& buff);

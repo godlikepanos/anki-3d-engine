@@ -362,21 +362,24 @@ static Vec4 computeAverageColor(WeakArray<TVec> pixels)
 {
 	Vec4 average(0.0f);
 	const F32 weight = 1.0f / F32(pixels.getSize());
+	constexpr Bool unorm = sizeof(pixels[0][0]) == 1;
+	constexpr U32 componentCount = TVec::kComponentCount;
+	static_assert(componentCount == 3 || componentCount == 4);
 
 	for(const TVec& color : pixels)
 	{
 		Vec4 v;
-		if constexpr(TVec::kComponentCount == 3)
+		if constexpr(componentCount == 3)
 		{
 			v = Vec4(Vec3(color), 0.0f);
 		}
 		else
 		{
-			ANKI_ASSERT(TVec::kComponentCount == 4);
+			ANKI_ASSERT(componentCount == 4);
 			v = Vec4(color);
 		}
 
-		if(sizeof(color[0]) == 1)
+		if(unorm)
 		{
 			v /= 255.0f;
 		}
@@ -388,7 +391,7 @@ static Vec4 computeAverageColor(WeakArray<TVec> pixels)
 		average += v * weight;
 	}
 
-	return average;
+	return (componentCount == 3) ? average.xyz1() : average;
 }
 
 static void applyScaleAndBias(WeakArray<Vec3> pixels, Vec3 scale, Vec3 bias)

@@ -21,7 +21,6 @@ class GrObject;
 class GrManager;
 class GrManagerImpl;
 class TextureInitInfo;
-class TextureViewInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
 class FramebufferInitInfo;
@@ -1105,6 +1104,17 @@ public:
 		memcpy(this, &b, sizeof(*this));
 		return *this;
 	}
+};
+
+class TextureRect
+{
+public:
+	U32 m_offsetX = 0;
+	U32 m_offsetY = 0;
+	U32 m_offsetZ = 0;
+	U32 m_width = kMaxU32;
+	U32 m_height = kMaxU32;
+	U32 m_depth = kMaxU32;
 };
 
 /// Compute max number of mipmaps for a 2D texture.

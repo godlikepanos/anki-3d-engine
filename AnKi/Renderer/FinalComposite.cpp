@@ -132,6 +132,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		}
 	}
 
+	getUiStage().setDependencies(pass);
+
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
@@ -212,7 +214,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		const Bool bRendersToSwapchain = getRenderer().getSwapchainResolution() == getRenderer().getPostProcessResolution();
 		if(bRendersToSwapchain)
 		{
-			getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), cmdb);
+			getRenderer().getUiStage().drawUi(cmdb);
 		}
 	});
 }

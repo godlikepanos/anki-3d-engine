@@ -8,7 +8,6 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Ui/UiManager.h>
-#include <AnKi/Ui/Font.h>
 #include <AnKi/Renderer/Renderer.h>
 
 namespace anki {
@@ -71,7 +70,7 @@ StatsUiNode::StatsUiNode(CString name)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(
-		[](Canvas& canvas, void* ud) {
+		[](UiCanvas& canvas, void* ud) {
 			static_cast<StatsUiNode*>(ud)->draw(canvas);
 		},
 		this);
@@ -80,16 +79,19 @@ StatsUiNode::StatsUiNode(CString name)
 	{
 		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
 	}
-
-	ANKI_CHECKF(UiManager::getSingleton().newFont("EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}, m_font));
 }
 
 StatsUiNode::~StatsUiNode()
 {
 }
 
-void StatsUiNode::draw(Canvas& canvas)
+void StatsUiNode::draw(UiCanvas& canvas)
 {
+	if(!m_font)
+	{
+		m_font = canvas.addFont("EngineAssets/UbuntuMonoRegular.ttf");
+	}
+
 	Bool flush = false;
 	if(m_bufferedFrames == kBufferedFrames)
 	{
@@ -98,7 +100,7 @@ void StatsUiNode::draw(Canvas& canvas)
 	}
 	++m_bufferedFrames;
 
-	canvas.pushFont(m_font.get(), 24);
+	ImGui::PushFont(m_font, 24.0f);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
@@ -166,7 +168,7 @@ void StatsUiNode::draw(Canvas& canvas)
 	ImGui::End();
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
 
-	canvas.popFont();
+	ImGui::PopFont();
 }
 
 } // end namespace anki

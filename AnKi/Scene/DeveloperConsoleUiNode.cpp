@@ -14,13 +14,11 @@ DeveloperConsoleUiNode::DeveloperConsoleUiNode(CString name)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(
-		[](Canvas& canvas, void* ud) {
+		[](UiCanvas& canvas, void* ud) {
 			static_cast<DeveloperConsoleUiNode*>(ud)->draw(canvas);
 		},
 		this);
 	uic->setEnabled(false);
-
-	ANKI_CHECKF(UiManager::getSingleton().newFont("EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}, m_font));
 }
 
 DeveloperConsoleUiNode::~DeveloperConsoleUiNode()
@@ -90,11 +88,16 @@ void DeveloperConsoleUiNode::newLogItem(const LoggerMessageInfo& inf)
 	m_logItemsTimestamp.fetchAdd(1);
 }
 
-void DeveloperConsoleUiNode::draw(Canvas& canvas)
+void DeveloperConsoleUiNode::draw(UiCanvas& canvas)
 {
+	if(!m_font)
+	{
+		m_font = canvas.addFont("EngineAssets/UbuntuMonoRegular.ttf");
+	}
+
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
-	canvas.pushFont(m_font.get(), 16);
+	ImGui::PushFont(m_font, 16.0f);
 
 	ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
 
@@ -162,7 +165,7 @@ void DeveloperConsoleUiNode::draw(Canvas& canvas)
 
 	ImGui::End();
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
-	canvas.popFont();
+	ImGui::PopFont();
 }
 
 } // end namespace anki

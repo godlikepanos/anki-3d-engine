@@ -747,12 +747,8 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	F32 rayT;
 	Bool unused;
 #	if ANKI_COMPUTE_SHADER
-#		if ANKI_GR_BACKEND_VULKAN
 	const Bool hasHitSky =
 		!materialRayTraceInlineRt(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT, unused);
-#		else
-	const Bool hasHitSky = true;
-#		endif
 #	else
 	const Bool hasHitSky = !materialRayTrace(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT, unused);
 #	endif

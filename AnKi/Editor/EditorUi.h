@@ -20,18 +20,10 @@ class EditorUi
 public:
 	Bool m_quit = false;
 
-	EditorUi()
-	{
-		if(UiManager::getSingleton().newFont("EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}, m_font))
-		{
-			// Ignore
-		}
-	}
-
-	void draw(Canvas& canvas);
+	void draw(UiCanvas& canvas);
 
 private:
-	FontPtr m_font;
+	ImFont* m_font = nullptr;
 
 	F32 m_menuHeight = 0.0f;
 	Bool m_firstBuild = true;
@@ -45,9 +37,9 @@ private:
 		SceneNode* m_visibleNode;
 	} m_sceneHierarchyWindow;
 
-	void buildMainMenu(Canvas& canvas);
+	void buildMainMenu(UiCanvas& canvas);
 
-	void buildSceneHierarchyWindow(Canvas& canvas);
+	void buildSceneHierarchyWindow(UiCanvas& canvas);
 	void buildSceneNode(SceneNode& node);
 };
 /// @}

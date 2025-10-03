@@ -131,9 +131,9 @@ Error MyApp::sampleExtraInit()
 		node->setLocalOrigin(Vec3(4.0f, 0.5f, 0.0f));
 	}
 
-	Input::getSingleton().lockCursor(true);
+	Input::getSingleton().lockMouseWindowCenter(true);
 	Input::getSingleton().hideCursor(true);
-	Input::getSingleton().moveCursor(Vec2(0.0f));
+	Input::getSingleton().moveMouseNdc(Vec2(0.0f));
 
 	return Error::kNone;
 }
@@ -149,7 +149,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		toggleDeveloperConsole();
 	}
 
-	if(Input::getSingleton().getKey(KeyCode::kEscape))
+	if(in.getKey(KeyCode::kEscape) > 0)
 	{
 		quit = true;
 	}

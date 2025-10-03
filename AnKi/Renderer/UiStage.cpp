@@ -5,7 +5,6 @@
 
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
@@ -15,14 +14,82 @@ namespace anki {
 
 Error UiStage::init()
 {
-	ANKI_CHECK(UiManager::getSingleton().newFont("EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}, m_font));
-	ANKI_CHECK(UiManager::getSingleton().newCanvas(m_font.get(), 12, getRenderer().getPostProcessResolution().x(),
-												   getRenderer().getPostProcessResolution().y(), m_canvas));
+	ANKI_CHECK(
+		UiManager::getSingleton().newCanvas(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), m_canvas));
 
 	return Error::kNone;
 }
 
-void UiStage::draw(U32 width, U32 height, CommandBuffer& cmdb)
+void UiStage::buildUiAsync()
+{
+	if(SceneGraph::getSingleton().getComponentArrays().getUis().getSize() == 0)
+	{
+		// Early exit
+		return;
+	}
+
+	CoreThreadJobManager::getSingleton().dispatchTask([this]([[maybe_unused]] U32 tid) {
+		ANKI_TRACE_SCOPED_EVENT(UiBuild);
+
+		m_canvas->handleInput();
+		m_canvas->beginBuilding();
+		m_canvas->resize(getRenderer().getSwapchainResolution().x(), getRenderer().getSwapchainResolution().y());
+
+		for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
+		{
+			comp.drawUi(*m_canvas);
+		}
+
+		m_canvas->endBuilding();
+	});
+}
+
+void UiStage::populateRenderGraph(RenderingContext& ctx)
+{
+	// Create a pass that uploads UI textures
+
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	DynamicArray<RenderTargetHandle, MemoryPoolPtrWrapper<StackMemoryPool>> texHandles(&getRenderer().getFrameMemoryPool());
+
+	// Wait for the async task
+	CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
+
+	m_canvas->visitTexturesForUpdate([&](Texture& tex, Bool isNew) {
+		const RenderTargetHandle handle = rgraph.importRenderTarget(&tex, (isNew) ? TextureUsageBit::kNone : TextureUsageBit::kSrvPixel);
+		texHandles.emplaceBack(handle);
+	});
+
+	if(texHandles.getSize() == 0) [[likely]]
+	{
+		m_runCtx.m_handles = {};
+		return;
+	}
+
+	texHandles.moveAndReset(m_runCtx.m_handles);
+
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("UI copies");
+
+	for(RenderTargetHandle handle : m_runCtx.m_handles)
+	{
+		pass.newTextureDependency(handle, TextureUsageBit::kCopyDestination);
+	}
+
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(UiCopies);
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		m_canvas->appendNonGraphicsCommands(cmdb);
+	});
+}
+
+void UiStage::setDependencies(RenderPassBase& pass)
+{
+	for(RenderTargetHandle handle : m_runCtx.m_handles)
+	{
+		pass.newTextureDependency(handle, TextureUsageBit::kSrvPixel);
+	}
+}
+
+void UiStage::drawUi(CommandBuffer& cmdb)
 {
 	if(SceneGraph::getSingleton().getComponentArrays().getUis().getSize() == 0)
 	{
@@ -31,22 +98,7 @@ void UiStage::draw(U32 width, U32 height, CommandBuffer& cmdb)
 	}
 
 	ANKI_TRACE_SCOPED_EVENT(Ui);
-
-	m_canvas->handleInput();
-	m_canvas->beginBuilding();
-	m_canvas->resize(width, height);
-
-	for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
-	{
-		comp.drawUi(*m_canvas);
-	}
-
-	m_canvas->appendToCommandBuffer(cmdb);
-
-	// UI messes with the state, restore it
-	cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-	cmdb.setBlendOperation(0, BlendOperation::kAdd);
-	cmdb.setCullMode(FaceSelectionBit::kBack);
+	m_canvas->appendGraphicsCommands(cmdb);
 }
 
 } // end namespace anki

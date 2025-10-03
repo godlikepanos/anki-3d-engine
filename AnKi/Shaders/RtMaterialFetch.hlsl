@@ -113,13 +113,16 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	return !hasHitSky;
 }
 
-#	if ANKI_GR_BACKEND_VULKAN
 template<typename T>
 Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT,
 							  out Bool backfacing)
 {
 	gbuffer = (GBufferLight<T>)0;
+	Bool hit = false;
+	rayT = -1.0;
+	backfacing = false;
 
+#	if ANKI_GR_BACKEND_VULKAN
 	RayQuery<RAY_FLAG_FORCE_OPAQUE> q;
 	const U32 cullMask = 0xFFu;
 	RayDesc ray;
@@ -131,7 +134,7 @@ Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T
 	while(q.Proceed())
 	{
 	}
-	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+	hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 
 	if(!hit)
 	{
@@ -156,10 +159,10 @@ Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T
 
 		rayT = q.CommittedRayT();
 	}
+#	endif
 
 	return hit;
 }
-#	endif
 
 Bool rayVisibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax, U32 traceFlags)
 {

@@ -745,7 +745,7 @@ void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& c
 	}
 }
 
-void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView)
+void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView, const TextureRect& rect)
 {
 	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
@@ -760,10 +760,10 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	const VkImageSubresourceRange range = tex.computeVkImageSubresourceRange(texView.getSubresource());
 
 	// Compute the sizes of the mip
-	const U32 width = tex.getWidth() >> range.baseMipLevel;
-	const U32 height = tex.getHeight() >> range.baseMipLevel;
-	ANKI_ASSERT(width && height);
-	const U32 depth = (tex.getTextureType() == TextureType::k3D) ? (tex.getDepth() >> range.baseMipLevel) : 1u;
+	const U32 width = (rect.m_width != kMaxU32) ? rect.m_width : tex.getWidth() >> range.baseMipLevel;
+	const U32 height = (rect.m_height != kMaxU32) ? rect.m_height : tex.getHeight() >> range.baseMipLevel;
+	const U32 depth =
+		(tex.getTextureType() == TextureType::k3D) ? ((rect.m_depth != kMaxU32) ? rect.m_depth : tex.getDepth() >> range.baseMipLevel) : 1u;
 
 	if(tex.getTextureType() != TextureType::k3D)
 	{
@@ -780,7 +780,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
 	region.imageSubresource.layerCount = 1;
 	region.imageSubresource.mipLevel = range.baseMipLevel;
-	region.imageOffset = {0, 0, 0};
+	region.imageOffset = {I32(rect.m_offsetX), I32(rect.m_offsetY), I32(rect.m_offsetZ)};
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
 	region.imageExtent.depth = depth;

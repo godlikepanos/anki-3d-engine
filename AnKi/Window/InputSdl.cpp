@@ -86,7 +86,7 @@ Error Input::handleEvents()
 	return self->handleEventsInternal();
 }
 
-void Input::moveCursor(const Vec2& pos)
+void Input::moveMouseNdc(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
 	{
@@ -151,37 +151,52 @@ Error InputSdl::handleEventsInternal()
 	// add the times a key is being pressed
 	for(auto& k : m_keys)
 	{
-		if(k)
+		if(k > 0)
 		{
 			++k;
+		}
+		else if(k < 0)
+		{
+			k = 0;
 		}
 	}
 	for(auto& k : m_mouseBtns)
 	{
-		if(k)
+		if(k > 0)
 		{
 			++k;
 		}
+		else if(k < 0)
+		{
+			k = 0;
+		}
 	}
 
-	SDL_Event event;
-	KeyCode akkey;
+	m_prevMousePosNdc = m_mousePosNdc;
+
+	SDL_Event event = {};
+	KeyCode akkey = KeyCode::kCount;
 	if(!SDL_StartTextInput(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow))
 	{
 		ANKI_WIND_LOGE("SDL_StartTextInput() failed: %s", SDL_GetError());
 	}
 
+	MouseButton scrollKeyEvent = MouseButton::kCount;
 	while(SDL_PollEvent(&event))
 	{
 		switch(event.type)
 		{
 		case SDL_EVENT_KEY_DOWN:
-			akkey = sdlKeytoAnKi(event.key.key);
-			m_keys[akkey] = 1;
+			// key.repeat adds a delay but we only want the 1st time the key is pressed
+			if(!event.key.repeat)
+			{
+				akkey = sdlKeytoAnKi(event.key.key);
+				m_keys[akkey] = 1;
+			}
 			break;
 		case SDL_EVENT_KEY_UP:
 			akkey = sdlKeytoAnKi(event.key.key);
-			m_keys[akkey] = 0;
+			m_keys[akkey] = -1;
 			break;
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		{
@@ -197,17 +212,18 @@ Error InputSdl::handleEventsInternal()
 			MouseButton mb = sdlMouseButtonToAnKi(event.button.button);
 			if(mb != MouseButton::kCount)
 			{
-				m_mouseBtns[mb] = 0;
+				m_mouseBtns[mb] = -1;
 			}
 			break;
 		}
 		case SDL_EVENT_MOUSE_WHEEL:
-			m_mouseBtns[MouseButton::kScrollUp] = event.wheel.y > 0.0f;
-			m_mouseBtns[MouseButton::kScrollDown] = event.wheel.y < 0.0f;
+		{
+			const MouseButton btn = (event.wheel.y > 0.0f) ? MouseButton::kScrollUp : MouseButton::kScrollDown;
+			m_mouseBtns[btn] = max(m_mouseBtns[btn] + 1, 1);
+			scrollKeyEvent = btn;
 			break;
+		}
 		case SDL_EVENT_MOUSE_MOTION:
-			m_mousePosWin.x() = U32(event.button.x);
-			m_mousePosWin.y() = U32(event.button.y);
 			m_mousePosNdc.x() = F32(event.button.x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
 			m_mousePosNdc.y() = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 			break;
@@ -220,10 +236,20 @@ Error InputSdl::handleEventsInternal()
 		}
 	} // end while events
 
+	if(scrollKeyEvent != MouseButton::kScrollDown)
+	{
+		m_mouseBtns[MouseButton::kScrollDown] = (m_mouseBtns[MouseButton::kScrollDown] > 0) ? -1 : 0;
+	}
+
+	if(scrollKeyEvent != MouseButton::kScrollUp)
+	{
+		m_mouseBtns[MouseButton::kScrollUp] = (m_mouseBtns[MouseButton::kScrollUp] > 0) ? -1 : 0;
+	}
+
 	// Lock mouse
 	if(m_lockCurs)
 	{
-		moveCursor(Vec2(0.0));
+		moveMouseNdc(Vec2(0.0f));
 	}
 
 	return Error::kNone;

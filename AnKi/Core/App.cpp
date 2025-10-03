@@ -29,7 +29,7 @@
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Ui/UiManager.h>
-#include <AnKi/Ui/Canvas.h>
+#include <AnKi/Ui/UiCanvas.h>
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
 #include <csignal>
 

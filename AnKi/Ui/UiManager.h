@@ -21,9 +21,7 @@ class UiManager : public MakeSingleton<UiManager>
 public:
 	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
-	Error newFont(CString filename, ConstWeakArray<U32> fontHeights, FontPtr& font);
-
-	Error newCanvas(Font* font, U32 fontHeight, U32 width, U32 height, CanvasPtr& canvas);
+	Error newCanvas(U32 initialWidth, U32 initialHeight, UiCanvasPtr& canvas);
 
 private:
 	UiManager();

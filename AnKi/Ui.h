@@ -8,6 +8,4 @@
 /// @defgroup ui User interface that is using the ImGUI library.
 
 #include <AnKi/Ui/UiManager.h>
-#include <AnKi/Ui/Font.h>
-#include <AnKi/Ui/UiImmediateModeBuilder.h>
-#include <AnKi/Ui/Canvas.h>
+#include <AnKi/Ui/UiCanvas.h>

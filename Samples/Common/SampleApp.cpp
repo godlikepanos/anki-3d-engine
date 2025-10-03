@@ -41,7 +41,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	Renderer& renderer = Renderer::getSingleton();
 	Input& in = Input::getSingleton();
 
-	if(in.getKey(KeyCode::kEscape))
+	if(in.getKey(KeyCode::kEscape) > 0)
 	{
 		quit = true;
 		return Error::kNone;
@@ -125,11 +125,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		g_cvarGrVrs = !g_cvarGrVrs;
 	}
 
-	static Vec2 mousePosOn1stClick = in.getMousePosition();
+	static Vec2 mousePosOn1stClick = in.getMousePositionNdc();
 	if(in.getMouseButton(MouseButton::kRight) == 1)
 	{
 		// Re-init mouse pos
-		mousePosOn1stClick = in.getMousePosition();
+		mousePosOn1stClick = in.getMousePositionNdc();
 	}
 
 	if(in.getKey(KeyCode::kF1) == 1)
@@ -159,7 +159,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		g_cvarCoreTracingEnabled = !g_cvarCoreTracingEnabled;
 	}
 
-	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
+	if(in.getMouseButton(MouseButton::kRight) > 0 || in.hasTouchDevice())
 	{
 		in.hideCursor(true);
 
@@ -176,22 +176,22 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover = &scene.findSceneNode("Spot");
 		}
 
-		if(in.getKey(KeyCode::kUp))
+		if(in.getKey(KeyCode::kUp) > 0)
 		{
 			mover->rotateLocalX(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kDown))
+		if(in.getKey(KeyCode::kDown) > 0)
 		{
 			mover->rotateLocalX(-ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kLeft))
+		if(in.getKey(KeyCode::kLeft) > 0)
 		{
 			mover->rotateLocalY(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kRight))
+		if(in.getKey(KeyCode::kRight) > 0)
 		{
 			mover->rotateLocalY(-ROTATE_ANGLE);
 		}
@@ -209,38 +209,38 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			moveDistance = max(moveDistance, 0.1f);
 		}
 
-		if(in.getKey(KeyCode::kA))
+		if(in.getKey(KeyCode::kA) > 0)
 		{
 			mover->moveLocalX(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kD))
+		if(in.getKey(KeyCode::kD) > 0)
 		{
 			mover->moveLocalX(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kQ))
+		if(in.getKey(KeyCode::kQ) > 0)
 		{
 			mover->moveLocalY(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kE))
+		if(in.getKey(KeyCode::kE) > 0)
 		{
 			mover->moveLocalY(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kW))
+		if(in.getKey(KeyCode::kW) > 0)
 		{
 			mover->moveLocalZ(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kS))
+		if(in.getKey(KeyCode::kS) > 0)
 		{
 			mover->moveLocalZ(moveDistance);
 		}
 
-		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
-		in.moveCursor(mousePosOn1stClick);
+		const Vec2 velocity = in.getMousePositionNdc() - mousePosOn1stClick;
+		in.moveMouseNdc(mousePosOn1stClick);
 		if(velocity != Vec2(0.0))
 		{
 			Euler angles(mover->getLocalRotation().getRotationPart());

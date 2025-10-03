@@ -6,8 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Ui/Canvas.h>
-#include <AnKi/Ui/Font.h>
+#include <AnKi/Ui/UiCanvas.h>
 
 namespace anki {
 
@@ -20,11 +19,23 @@ class UiStage : public RendererObject
 public:
 	Error init();
 
-	void draw(U32 width, U32 height, CommandBuffer& cmdb);
+	/// Need to wait the CoreThreadJobManager for that to finish and before calling the methods bellow.
+	void buildUiAsync();
+
+	void populateRenderGraph(RenderingContext& ctx);
+
+	void setDependencies(RenderPassBase& pass);
+
+	void drawUi(CommandBuffer& cmdb);
 
 private:
-	FontPtr m_font;
-	CanvasPtr m_canvas;
+	UiCanvasPtr m_canvas;
+
+	class
+	{
+	public:
+		WeakArray<RenderTargetHandle> m_handles;
+	} m_runCtx;
 };
 /// @}
 
