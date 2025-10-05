@@ -107,30 +107,8 @@ void Input::moveMouseNdc(const Vec2& pos)
 
 void Input::hideCursor(Bool hide)
 {
-	if(hide)
-	{
-		if(!SDL_HideCursor())
-		{
-			ANKI_WIND_LOGE("SDL_HideCursor() failed: %s", SDL_GetError());
-		}
-
-		if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, true))
-		{
-			ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
-		}
-	}
-	else
-	{
-		if(!SDL_ShowCursor())
-		{
-			ANKI_WIND_LOGE("SDL_ShowCursor() failed: %s", SDL_GetError());
-		}
-
-		if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, false))
-		{
-			ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
-		}
-	}
+	InputSdl* self = static_cast<InputSdl*>(this);
+	self->m_crntHideCursor = hide;
 }
 
 Bool Input::hasTouchDevice() const
@@ -138,8 +116,47 @@ Bool Input::hasTouchDevice() const
 	return false;
 }
 
+void Input::setMouseCursor(MouseCursor cursor)
+{
+	ANKI_ASSERT(cursor < MouseCursor::kCount);
+	InputSdl* self = static_cast<InputSdl*>(this);
+	self->m_crntMouseCursor = cursor;
+}
+
+InputSdl::~InputSdl()
+{
+	for(MouseCursor cursor : EnumIterable<MouseCursor>())
+	{
+		if(m_cursors[cursor])
+		{
+			SDL_DestroyCursor(m_cursors[cursor]);
+		}
+	}
+}
+
 Error InputSdl::initInternal()
 {
+	m_cursors[MouseCursor::kArrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
+	m_cursors[MouseCursor::kTextInput] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT);
+	m_cursors[MouseCursor::kResizeAll] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_MOVE);
+	m_cursors[MouseCursor::kResizeNS] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NS_RESIZE);
+	m_cursors[MouseCursor::kResizeEW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_EW_RESIZE);
+	m_cursors[MouseCursor::kResizeNESW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NESW_RESIZE);
+	m_cursors[MouseCursor::kResizeNWSE] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NWSE_RESIZE);
+	m_cursors[MouseCursor::kHand] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER);
+	m_cursors[MouseCursor::kWait] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
+	m_cursors[MouseCursor::kProgress] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_PROGRESS);
+	m_cursors[MouseCursor::kNotAllowed] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NOT_ALLOWED);
+
+	for(MouseCursor cursor : EnumIterable<MouseCursor>())
+	{
+		if(!m_cursors[cursor])
+		{
+			ANKI_WIND_LOGE("Failed to create cursor: %u", U32(cursor));
+			return Error::kFunctionFailed;
+		}
+	}
+
 	// Call once to clear first events
 	return handleEvents();
 }
@@ -250,6 +267,42 @@ Error InputSdl::handleEventsInternal()
 	if(m_lockCurs)
 	{
 		moveMouseNdc(Vec2(0.0f));
+	}
+
+	if(m_crntMouseCursor != m_prevMouseCursor)
+	{
+		SDL_SetCursor(m_cursors[m_crntMouseCursor]);
+		m_prevMouseCursor = m_crntMouseCursor;
+	}
+
+	if(m_crntHideCursor != m_prevHideCursor)
+	{
+		m_prevHideCursor = m_crntHideCursor;
+
+		if(m_crntHideCursor)
+		{
+			if(!SDL_HideCursor())
+			{
+				ANKI_WIND_LOGE("SDL_HideCursor() failed: %s", SDL_GetError());
+			}
+
+			if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, true))
+			{
+				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
+			}
+		}
+		else
+		{
+			if(!SDL_ShowCursor())
+			{
+				ANKI_WIND_LOGE("SDL_ShowCursor() failed: %s", SDL_GetError());
+			}
+
+			if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, false))
+			{
+				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
+			}
+		}
 	}
 
 	return Error::kNone;

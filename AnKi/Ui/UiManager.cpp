@@ -43,7 +43,7 @@ Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackDat
 Error UiManager::newCanvas(U32 width, U32 height, UiCanvasPtr& canvas)
 {
 	UiCanvas* pCanvas = newInstance<UiCanvas>(UiMemoryPool::getSingleton());
-	if(pCanvas->init(width, height))
+	if(pCanvas->init(UVec2(width, height)))
 	{
 		ANKI_UI_LOGE("Unable to create canvas");
 		deleteInstance(UiMemoryPool::getSingleton(), pCanvas);

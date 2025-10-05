@@ -77,18 +77,12 @@ LightComponent::LightComponent(SceneNode* node)
 
 LightComponent::~LightComponent()
 {
-	if(m_type == LightComponentType::kDirectional)
-	{
-		SceneGraph::getSingleton().removeDirectionalLight(this);
-	}
 }
 
 void LightComponent::setLightComponentType(LightComponentType newType)
 {
 	ANKI_ASSERT(newType >= LightComponentType::kFirst && newType < LightComponentType::kCount);
-	const LightComponentType oldType = m_type;
-	const Bool typeChanged = newType != oldType;
-
+	const Bool typeChanged = newType != m_type;
 	if(typeChanged)
 	{
 		m_type = newType;
@@ -96,17 +90,6 @@ void LightComponent::setLightComponentType(LightComponentType newType)
 		m_shapeDirty = true;
 		m_otherDirty = true;
 		m_uuid = 0;
-
-		if(newType == LightComponentType::kDirectional)
-		{
-			// Now it's directional, inform the scene
-			SceneGraph::getSingleton().addDirectionalLight(this);
-		}
-		else if(oldType == LightComponentType::kDirectional)
-		{
-			// It was directional, inform the scene
-			SceneGraph::getSingleton().removeDirectionalLight(this);
-		}
 	}
 }
 

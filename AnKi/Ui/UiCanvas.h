@@ -26,21 +26,20 @@ public:
 	~UiCanvas();
 
 	/// Resize canvas.
-	void resize(U32 width, U32 height)
+	void resize(UVec2 size)
 	{
-		ANKI_ASSERT(width > 0 && height > 0);
-		m_width = width;
-		m_height = height;
+		ANKI_ASSERT(size > 0);
+		m_size = size;
 	}
 
-	U32 getWidth() const
+	UVec2 getSize() const
 	{
-		return m_width;
+		return m_size;
 	}
 
-	U32 getHeight() const
+	Vec2 getSizef() const
 	{
-		return m_height;
+		return Vec2(m_size);
 	}
 
 	/// @name building commands. The order matters.
@@ -50,6 +49,9 @@ public:
 	void beginBuilding();
 
 	ImFont* addFont(CString fname);
+
+	/// Merge fonts into one
+	ImFont* addFonts(ConstWeakArray<CString> fnames);
 
 	void endBuilding();
 
@@ -70,8 +72,7 @@ public:
 private:
 	ImGuiContext* m_imCtx = nullptr;
 	ImFont* m_defaultFont = nullptr;
-	U32 m_width;
-	U32 m_height;
+	UVec2 m_size;
 
 	enum ShaderType
 	{
@@ -89,14 +90,14 @@ private:
 	{
 	public:
 		ImFont* m_font = nullptr;
-		GenericResourcePtr m_resource;
+		UiDynamicArray<GenericResourcePtr> m_resources;
 	};
 
-	UiHashMap<CString, FontCacheEntry> m_fontCache;
+	UiHashMap<U64, FontCacheEntry> m_fontCache;
 
 	UiDynamicArray<std::pair<const ImTextureData*, Bool>> m_texturesPendingUpload;
 
-	Error init(U32 width, U32 height);
+	Error init(UVec2 size);
 };
 /// @}
 

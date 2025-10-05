@@ -9,6 +9,7 @@
 #include <AnKi/Util/Singleton.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/Enum.h>
 #include <AnKi/Window/KeyCode.h>
 
 namespace anki {
@@ -20,6 +21,25 @@ enum class InputEvent : U8
 	kWindowClosed,
 	kCount
 };
+
+enum class MouseCursor : U8
+{
+	kArrow,
+	kTextInput, // When hovering over InputText, etc.
+	kResizeAll,
+	kResizeNS, // When hovering over a horizontal border
+	kResizeEW, // When hovering over a vertical border or a column
+	kResizeNESW, // When hovering over the bottom-left corner of a window
+	kResizeNWSE, // When hovering over the bottom-right corner of a window
+	kHand,
+	kWait, // When waiting for something to process/load.
+	kProgress, // When waiting for something to process/load, but application is still interactive.
+	kNotAllowed,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MouseCursor)
 
 /// Handle the input and other events
 /// @note All positions are in NDC space
@@ -73,6 +93,8 @@ public:
 
 	/// Hide the mouse cursor
 	void hideCursor(Bool hide);
+
+	void setMouseCursor(MouseCursor cursor);
 
 	/// See getKey()
 	I32 getTouchPointer(TouchPointer p) const

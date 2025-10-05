@@ -102,7 +102,7 @@ void DeveloperConsoleUiNode::draw(UiCanvas& canvas)
 	ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
 
 	ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
-	ImGui::SetWindowSize(Vec2(F32(canvas.getWidth()), F32(canvas.getHeight()) * (2.0f / 3.0f)));
+	ImGui::SetWindowSize(canvas.getSizef() * Vec2(1.0f, 2.0f / 3.0f));
 
 	// Push the items
 	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();

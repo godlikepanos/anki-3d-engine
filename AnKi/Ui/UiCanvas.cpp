@@ -8,6 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Window/Input.h>
+#include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/CommandBuffer.h>
@@ -130,6 +131,36 @@ static void setColorStyleAdia()
 	style.ItemInnerSpacing = ImVec2(4.0f, 4.0f);
 }
 
+static MouseCursor imguiCursorToAnki(ImGuiMouseCursor imguiCursor)
+{
+#define ANKI_HANDLE(ak, imgui) \
+	case imgui: \
+		akCursor = MouseCursor::ak; \
+		break;
+
+	MouseCursor akCursor = MouseCursor::kCount;
+	switch(imguiCursor)
+	{
+		ANKI_HANDLE(kArrow, ImGuiMouseCursor_Arrow)
+		ANKI_HANDLE(kTextInput, ImGuiMouseCursor_TextInput)
+		ANKI_HANDLE(kResizeAll, ImGuiMouseCursor_ResizeAll)
+		ANKI_HANDLE(kResizeNS, ImGuiMouseCursor_ResizeNS)
+		ANKI_HANDLE(kResizeEW, ImGuiMouseCursor_ResizeEW)
+		ANKI_HANDLE(kResizeNESW, ImGuiMouseCursor_ResizeNESW)
+		ANKI_HANDLE(kResizeNWSE, ImGuiMouseCursor_ResizeNWSE)
+		ANKI_HANDLE(kHand, ImGuiMouseCursor_Hand)
+		ANKI_HANDLE(kWait, ImGuiMouseCursor_Wait)
+		ANKI_HANDLE(kProgress, ImGuiMouseCursor_Progress)
+		ANKI_HANDLE(kNotAllowed, ImGuiMouseCursor_NotAllowed)
+	default:
+		break;
+	}
+#undef ANKI_HANDLE
+
+	ANKI_ASSERT(akCursor != MouseCursor::kCount);
+	return akCursor;
+}
+
 UiCanvas::~UiCanvas()
 {
 	if(m_imCtx)
@@ -148,9 +179,9 @@ UiCanvas::~UiCanvas()
 	}
 }
 
-Error UiCanvas::init(U32 width, U32 height)
+Error UiCanvas::init(UVec2 size)
 {
-	resize(width, height);
+	resize(size);
 
 	// Create program
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
@@ -179,9 +210,12 @@ Error UiCanvas::init(U32 width, U32 height)
 	m_imCtx = ImGui::CreateContext(nullptr);
 	ImGui::SetCurrentContext(m_imCtx);
 
-	ImGui::GetIO().IniFilename = nullptr;
-	ImGui::GetIO().LogFilename = nullptr;
-	ImGui::GetIO().BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+	ImGuiIO& io = ImGui::GetIO();
+	io.IniFilename = nullptr;
+	io.LogFilename = nullptr;
+	io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures | ImGuiBackendFlags_HasMouseCursors;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
 	// ImGui::StyleColorsLight();
 	setColorStyleAdia();
 
@@ -194,36 +228,58 @@ Error UiCanvas::init(U32 width, U32 height)
 
 ImFont* UiCanvas::addFont(CString fname)
 {
+	Array<CString, 1> fnames = {fname};
+	return addFonts(fnames);
+}
+
+ImFont* UiCanvas::addFonts(ConstWeakArray<CString> fnames)
+{
+	ANKI_ASSERT(fnames.getSize() > 0);
 	ANKI_ASSERT(GImGui);
 	ImFont* font = nullptr;
 
-	auto it = m_fontCache.find(fname);
+	U64 hash = fnames[0].computeHash();
+	for(U32 i = 1; i < fnames.getSize(); ++i)
+	{
+		hash = appendHash(fnames[i].getBegin(), fnames[i].getLength(), hash);
+	}
+
+	auto it = m_fontCache.find(hash);
 	if(it != m_fontCache.getEnd())
 	{
 		font = (*it).m_font;
 	}
 	else
 	{
-		GenericResourcePtr rsrc;
-		if(ResourceManager::getSingleton().loadResource(fname, rsrc))
+		UiDynamicArray<GenericResourcePtr> resources;
+		resources.resize(fnames.getSize());
+
+		for(U32 i = 0; i < fnames.getSize(); ++i)
 		{
-			ANKI_UI_LOGE("Failed to add font. Will use the default one");
-			font = m_defaultFont;
+			if(ResourceManager::getSingleton().loadResource(fnames[i], resources[i]))
+			{
+				ANKI_UI_LOGE("Failed to add font. Will use the default one");
+				return m_defaultFont;
+			}
 		}
-		else
+
+		for(U32 i = 0; i < fnames.getSize(); ++i)
 		{
-			ConstWeakArray<U8> data = rsrc->getData();
+			ConstWeakArray<U8> data = resources[i]->getData();
 
 			const F32 someFontSize = 13.0f; // Doesn't matter
 
 			ImFontConfig cfg;
 			cfg.FontDataOwnedByAtlas = false;
-			font = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(const_cast<U8*>(data.getBegin()), data.getSize(), someFontSize, &cfg);
+			cfg.MergeMode = (i > 0);
+			ImFont* newFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(const_cast<U8*>(data.getBegin()), data.getSize(), someFontSize, &cfg);
+			ANKI_ASSERT(font == nullptr || newFont == font);
+			font = newFont;
 			ANKI_ASSERT(font);
-
-			const FontCacheEntry entry = {font, rsrc};
-			m_fontCache.emplace(fname, entry);
 		}
+
+		const FontCacheEntry entry = {font, std::move(resources)};
+		m_fontCache.emplace(hash, entry);
 	}
 
 	return font;
@@ -231,14 +287,14 @@ ImFont* UiCanvas::addFont(CString fname)
 
 void UiCanvas::handleInput()
 {
-	const Input& in = Input::getSingleton();
+	Input& in = Input::getSingleton();
 
 	// Begin
 	ImGui::SetCurrentContext(m_imCtx);
 	ImGuiIO& io = ImGui::GetIO();
 
 	// Handle mouse
-	Array<U32, 4> viewport = {0, 0, m_width, m_height};
+	Array<U32, 4> viewport = {0, 0, m_size.x(), m_size.y()};
 	Vec2 mousePosf = in.getMousePositionNdc() / 2.0f + 0.5f;
 	mousePosf.y() = 1.0f - mousePosf.y();
 	const UVec2 mousePos(U32(mousePosf.x() * F32(viewport[2])), U32(mousePosf.y() * F32(viewport[3])));
@@ -300,6 +356,19 @@ void UiCanvas::handleInput()
 
 	io.AddInputCharactersUTF8(in.getTextInput().cstr());
 
+	const ImGuiMouseCursor imguiCursor = ImGui::GetMouseCursor();
+	if(io.MouseDrawCursor || imguiCursor == ImGuiMouseCursor_None)
+	{
+		// Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
+		in.hideCursor(true);
+	}
+	else
+	{
+		// Show OS mouse cursor
+		in.hideCursor(false);
+		in.setMouseCursor(imguiCursorToAnki(imguiCursor));
+	}
+
 	// End
 	ImGui::SetCurrentContext(nullptr);
 }
@@ -310,7 +379,7 @@ void UiCanvas::beginBuilding()
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.DeltaTime = 1.0f / 60.0f;
-	io.DisplaySize = ImVec2(F32(m_width), F32(m_height));
+	io.DisplaySize = Vec2(m_size);
 
 	ImGui::NewFrame();
 }

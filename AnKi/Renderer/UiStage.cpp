@@ -33,7 +33,7 @@ void UiStage::buildUiAsync()
 
 		m_canvas->handleInput();
 		m_canvas->beginBuilding();
-		m_canvas->resize(getRenderer().getSwapchainResolution().x(), getRenderer().getSwapchainResolution().y());
+		m_canvas->resize(getRenderer().getSwapchainResolution());
 
 		for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
 		{

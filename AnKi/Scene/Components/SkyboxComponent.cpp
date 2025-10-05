@@ -14,12 +14,10 @@ namespace anki {
 SkyboxComponent::SkyboxComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 {
-	SceneGraph::getSingleton().addSkybox(this);
 }
 
 SkyboxComponent::~SkyboxComponent()
 {
-	SceneGraph::getSingleton().removeSkybox(this);
 }
 
 void SkyboxComponent::loadImageResource(CString filename)

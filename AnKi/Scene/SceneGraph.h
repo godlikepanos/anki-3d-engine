@@ -147,51 +147,18 @@ public:
 		return m_componentArrays;
 	}
 
-	void addDirectionalLight(LightComponent* comp)
+	LightComponent* getDirectionalLight() const
 	{
-		ANKI_ASSERT(m_dirLights.find(comp) == m_dirLights.getEnd());
-		m_dirLights.emplaceBack(comp);
-		if(m_dirLights.getSize() > 1)
-		{
-			ANKI_SCENE_LOGW("More than one directional lights detected");
-		}
-	}
-
-	void removeDirectionalLight(LightComponent* comp)
-	{
-		auto it = m_dirLights.find(comp);
-		ANKI_ASSERT(it != m_dirLights.getEnd());
-		m_dirLights.erase(it);
-	}
-
-	LightComponent* getDirectionalLight() const;
-
-	void addSkybox(SkyboxComponent* comp)
-	{
-		ANKI_ASSERT(m_skyboxes.find(comp) == m_skyboxes.getEnd());
-		m_skyboxes.emplaceBack(comp);
-		if(m_skyboxes.getSize() > 1)
-		{
-			ANKI_SCENE_LOGW("More than one skyboxes detected");
-		}
-	}
-
-	void removeSkybox(SkyboxComponent* comp)
-	{
-		auto it = m_skyboxes.find(comp);
-		ANKI_ASSERT(it != m_skyboxes.getEnd());
-		m_skyboxes.erase(it);
+		return m_activeDirLight;
 	}
 
 	SkyboxComponent* getSkybox() const
 	{
-		return (m_skyboxes.getSize()) ? m_skyboxes[0] : nullptr;
+		return m_activeSkybox;
 	}
 
-	/// @note It's thread-safe.
 	Array<Vec3, 2> getSceneBounds() const
 	{
-		LockGuard lock(m_sceneBoundsMtx);
 		ANKI_ASSERT(m_sceneMin < m_sceneMax);
 		return {m_sceneMin, m_sceneMax};
 	}
@@ -225,24 +192,26 @@ private:
 
 	Vec3 m_sceneMin = Vec3(-0.1f);
 	Vec3 m_sceneMax = Vec3(+0.1f);
-	mutable SpinLock m_sceneBoundsMtx;
 
 	IntrusiveList<SceneNode> m_nodesForRegistration;
+	SceneDynamicArray<std::pair<SceneNode*, SceneString>> m_nodesRenamed;
 	SpinLock m_nodesForRegistrationMtx;
 
 	Atomic<U32> m_nodesUuid = {1};
 
 	SceneComponentArrays m_componentArrays;
 
-	SceneDynamicArray<LightComponent*> m_dirLights;
-	SceneDynamicArray<SkyboxComponent*> m_skyboxes;
+	LightComponent* m_activeDirLight = nullptr;
+	SkyboxComponent* m_activeSkybox = nullptr;
 
 	SceneGraph();
 
 	~SceneGraph();
 
-	void updateNodes(UpdateSceneNodesCtx& ctx);
-	void updateNode(SceneNode& node, SceneComponentUpdateInfo& compUpdate);
+	void updateNodes(U32 tid, UpdateSceneNodesCtx& ctx);
+	void updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx);
+
+	void sceneNodeChangedName(SceneNode& node, CString oldName);
 };
 /// @}
 

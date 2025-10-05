@@ -37,6 +37,8 @@ public:
 		return (!m_name.isEmpty()) ? m_name.toCString() : "Unnamed";
 	}
 
+	void setName(CString name);
+
 	U32 getUuid() const
 	{
 		return m_uuid;

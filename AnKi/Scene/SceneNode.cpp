@@ -153,4 +153,11 @@ Bool SceneNode::updateTransform()
 	return needsUpdate;
 }
 
+void SceneNode::setName(CString name)
+{
+	const SceneString oldName = getName();
+	m_name = name;
+	SceneGraph::getSingleton().sceneNodeChangedName(*this, oldName);
+}
+
 } // end namespace anki

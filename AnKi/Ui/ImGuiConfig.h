@@ -14,6 +14,7 @@
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 #define IMGUI_DISABLE_DEFAULT_ALLOCATORS 1
+#define IMGUI_USE_WCHAR32 1
 
 #define IM_VEC2_CLASS_EXTRA \
 	ImVec2(const anki::Vec2& f) \
@@ -67,6 +68,12 @@ public:
 	AnKiImTextureID() = default;
 
 	AnKiImTextureID(const AnKiImTextureID& b) = default;
+
+	AnKiImTextureID(Texture* tex)
+		: m_texture(tex)
+	{
+		ANKI_ASSERT(tex);
+	}
 
 	explicit AnKiImTextureID(AnKiImTextureID_Invalid)
 	{
