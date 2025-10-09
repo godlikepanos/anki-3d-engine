@@ -29,6 +29,8 @@ enum class LoggerMessageType : U8
 	kCount
 };
 
+inline constexpr Array<const Char*, U(LoggerMessageType::kCount)> kLoggerMessageTypeText = {"I", "V", "E", "W", "F"};
+
 /// Used as parammeter when emitting the signal.
 /// @memberof Logger
 class LoggerMessageInfo

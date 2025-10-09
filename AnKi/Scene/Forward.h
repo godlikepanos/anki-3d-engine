@@ -9,7 +9,7 @@ namespace anki {
 
 // Components
 class SceneComponent;
-#define ANKI_DEFINE_SCENE_COMPONENT(name, updateOrder) class name##Component;
+#define ANKI_DEFINE_SCENE_COMPONENT(name, updateOrder, icon) class name##Component;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 // Nodes

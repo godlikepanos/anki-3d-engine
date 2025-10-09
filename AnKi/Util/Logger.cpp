@@ -19,8 +19,6 @@
 
 namespace anki {
 
-inline constexpr Array<const Char*, U(LoggerMessageType::kCount)> kMessageTypeTxt = {"I", "V", "E", "W", "F"};
-
 Logger::Logger()
 {
 	addMessageHandler(this, &defaultSystemMessageHandler);
@@ -189,7 +187,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out, "%s[%s][%-4s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
+	fprintf(out, "%s[%s][%-4s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kLoggerMessageTypeText[U(info.m_type)],
 			info.m_subsystem ? info.m_subsystem : "N/A ", endTerminalColor, terminalColor, info.m_msg, info.m_file, info.m_line, info.m_func,
 			info.m_threadName, endTerminalColor);
 #elif ANKI_OS_WINDOWS
@@ -236,7 +234,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		SetConsoleTextAttribute(consoleHandle, attribs);
 
 		// Print
-		fprintf(out, "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg,
+		fprintf(out, "[%s][%-4s] %s [%s:%d][%s][%s]\n", kLoggerMessageTypeText[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg,
 				info.m_file, info.m_line, info.m_func, info.m_threadName);
 
 		// Restore state
@@ -265,7 +263,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	}
 
 	static_assert(Thread::kThreadNameMaxLength == 15, "See file");
-	__android_log_print(andMsgType, "AnKi", "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type],
+	__android_log_print(andMsgType, "AnKi", "[%s][%-4s] %s [%s:%d][%s][%s]\n", kLoggerMessageTypeText[info.m_type],
 						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line, info.m_func, info.m_threadName);
 #else
 #	error "Not implemented"
@@ -276,7 +274,7 @@ void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
-	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type], info.m_msg, info.m_file, info.m_line, info.m_func);
+	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", kLoggerMessageTypeText[info.m_type], info.m_msg, info.m_file, info.m_line, info.m_func);
 
 	if(!err)
 	{

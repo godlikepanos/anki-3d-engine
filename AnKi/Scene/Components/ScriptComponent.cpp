@@ -20,11 +20,20 @@ ScriptComponent::ScriptComponent(SceneNode* node)
 
 ScriptComponent::~ScriptComponent()
 {
-	deleteInstance(SceneMemoryPool::getSingleton(), m_env);
+	deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
+	deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
 }
 
-void ScriptComponent::loadScriptResource(CString fname)
+void ScriptComponent::setScriptResourceFilename(CString fname)
 {
+	if(fname.isEmpty())
+	{
+		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
+		m_environments[1] = nullptr;
+		m_resource.reset(nullptr);
+		return;
+	}
+
 	// Load
 	ScriptResourcePtr rsrc;
 	Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
@@ -39,7 +48,7 @@ void ScriptComponent::loadScriptResource(CString fname)
 	// Exec the script
 	if(!err)
 	{
-		err = newEnv->evalString(m_script->getSource());
+		err = newEnv->evalString(m_resource->getSource());
 	}
 
 	// Error
@@ -50,21 +59,75 @@ void ScriptComponent::loadScriptResource(CString fname)
 	}
 	else
 	{
-		m_script = std::move(rsrc);
-		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
-		m_env = newEnv;
+		m_resource = std::move(rsrc);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
+		m_environments[1] = newEnv;
+	}
+}
+
+CString ScriptComponent::getScriptResourceFilename() const
+{
+	if(ANKI_EXPECT(m_resource.isCreated()))
+	{
+		return m_resource->getFilename();
+	}
+	else
+	{
+		return "*Error*";
+	}
+}
+
+void ScriptComponent::setScriptText(CString text)
+{
+	if(text.isEmpty())
+	{
+		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
+		m_environments[0] = nullptr;
+		m_text.destroy();
+		return;
+	}
+
+	// Create the env
+	ScriptEnvironment* newEnv = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
+
+	// Exec the script
+	const Error err = newEnv->evalString(text);
+
+	// Error
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load the script");
+		deleteInstance(SceneMemoryPool::getSingleton(), newEnv);
+	}
+	else
+	{
+		m_text = text;
+		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
+		m_environments[0] = newEnv;
+	}
+}
+
+CString ScriptComponent::getScriptText() const
+{
+	if(ANKI_EXPECT(m_text))
+	{
+		return m_text;
+	}
+	else
+	{
+		return "*Error*";
 	}
 }
 
 void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
-	if(m_env == nullptr)
+	if(!m_environments[0] && !m_environments[1])
 	{
 		return;
 	}
 
-	lua_State* lua = &m_env->getLuaState();
+	lua_State* lua = (m_environments[0]) ? &m_environments[0]->getLuaState() : &m_environments[1]->getLuaState();
 
 	// Push function name
 	lua_getglobal(lua, "update");

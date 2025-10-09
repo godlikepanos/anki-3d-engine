@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-/// Component of scripts.
+/// Component of scripts. It can point to a resource with the script code or have the script code embedded to it.
 class ScriptComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(ScriptComponent)
@@ -24,16 +24,33 @@ public:
 
 	~ScriptComponent();
 
-	void loadScriptResource(CString fname);
+	void setScriptResourceFilename(CString fname);
+
+	CString getScriptResourceFilename() const;
+
+	void setScriptText(CString text);
+
+	CString getScriptText() const;
+
+	Bool hasScriptText() const
+	{
+		return !m_text.isEmpty();
+	}
+
+	Bool hasScriptResource() const
+	{
+		return m_resource.isCreated();
+	}
 
 	Bool isEnabled() const
 	{
-		return m_script.isCreated();
+		return m_environments[0] || m_environments[1];
 	}
 
 private:
-	ScriptResourcePtr m_script;
-	ScriptEnvironment* m_env = nullptr;
+	ScriptResourcePtr m_resource;
+	SceneString m_text;
+	Array<ScriptEnvironment*, 2> m_environments = {};
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };

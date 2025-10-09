@@ -318,7 +318,7 @@ void UiCanvas::handleInput()
 
 // Handle keyboard
 #define ANKI_HANDLE(ak, imgui) \
-	if(in.getKey(ak) > 1) \
+	if(in.getKey(ak) > 0) \
 	{ \
 		io.AddKeyEvent(imgui, true); \
 	} \
@@ -351,7 +351,22 @@ void UiCanvas::handleInput()
 	ANKI_HANDLE(KeyCode::kZ, ImGuiKey_Z)
 	ANKI_HANDLE(KeyCode::kLeftCtrl, ImGuiKey_LeftCtrl)
 	ANKI_HANDLE(KeyCode::kRightCtrl, ImGuiKey_RightCtrl)
+#undef ANKI_HANDLE
 
+#define ANKI_HANDLE(ak, imgui) \
+	if(in.getKey(ak) > 0) \
+	{ \
+		io.AddKeyEvent(imgui, true); \
+	} \
+	else if(in.getKey(ak) < 0) \
+	{ \
+		io.AddKeyEvent(imgui, false); \
+	}
+
+	ANKI_HANDLE(KeyCode::kLeftCtrl, ImGuiMod_Ctrl)
+	ANKI_HANDLE(KeyCode::kLeftShift, ImGuiMod_Shift)
+	ANKI_HANDLE(KeyCode::kLeftAlt, ImGuiMod_Alt);
+	ANKI_HANDLE(KeyCode::kReturn, ImGuiMod_Super);
 #undef ANKI_HANDLE
 
 	io.AddInputCharactersUTF8(in.getTextInput().cstr());
@@ -395,12 +410,14 @@ void UiCanvas::endBuilding()
 	{
 		for(ImTextureData* tex : *drawData.Textures)
 		{
-			if(tex->Status == ImTextureStatus_OK)
+			const ImTextureStatus status = tex->Status;
+
+			if(status == ImTextureStatus_OK)
 			{
 				continue;
 			}
 
-			if(tex->Status == ImTextureStatus_WantCreate)
+			if(status == ImTextureStatus_WantCreate)
 			{
 				TextureInitInfo init("ImGui requested");
 				init.m_width = tex->Width;
@@ -414,26 +431,47 @@ void UiCanvas::endBuilding()
 				id.m_texture->retain();
 				id.m_textureIsRefcounted = true;
 				tex->SetTexID(id);
+
+				tex->SetStatus(ImTextureStatus_OK);
 			}
 
-			if(tex->Status == ImTextureStatus_WantCreate || tex->Status == ImTextureStatus_WantUpdates)
+			if(status == ImTextureStatus_WantCreate || status == ImTextureStatus_WantUpdates)
 			{
-				m_texturesPendingUpload.emplaceBack(std::pair(tex, tex->Status == ImTextureStatus_WantCreate));
+				const Bool isNew = status == ImTextureStatus_WantCreate;
+				ImTextureID id = tex->GetTexID();
+
+				UploadRequest req;
+				req.m_rect.m_offsetX = isNew ? 0 : tex->UpdateRect.x;
+				req.m_rect.m_offsetY = isNew ? 0 : tex->UpdateRect.y;
+				req.m_rect.m_width = isNew ? tex->Width : tex->UpdateRect.w;
+				req.m_rect.m_height = isNew ? tex->Height : tex->UpdateRect.h;
+				req.m_texture = id.m_texture;
+				req.m_isNew = isNew;
+
+				const U32 uploadPitch = req.m_rect.m_width * U32(tex->BytesPerPixel);
+				const U32 copyBufferSize = req.m_rect.m_height * uploadPitch;
+				req.m_data.resize(copyBufferSize);
+				for(U32 y = 0; y < req.m_rect.m_height; y++)
+				{
+					memcpy(&req.m_data[uploadPitch * y], tex->GetPixelsAt(req.m_rect.m_offsetX, req.m_rect.m_offsetY + y), uploadPitch);
+				}
+
+				m_texturesPendingUpload.emplaceBack(std::move(req));
+
+				tex->SetStatus(ImTextureStatus_OK);
 			}
-			else if(tex->Status == ImTextureStatus_Destroyed)
+			else if(status == ImTextureStatus_WantDestroy && tex->UnusedFrames >= kMaxFramesInFlight + 2) // kMaxFramesInFlight + 2 to be 100% sure
 			{
 				ImTextureID id = tex->GetTexID();
 				ANKI_ASSERT(id.m_textureIsRefcounted);
 
 				TexturePtr pTex(id.m_texture);
 				id.m_texture->release();
-			}
-			else
-			{
-				ANKI_ASSERT(0);
-			}
 
-			tex->Status = ImTextureStatus_OK;
+				tex->SetTexID(ImTextureID(ImTextureID_Invalid));
+
+				tex->SetStatus(ImTextureStatus_Destroyed);
+			}
 		}
 	}
 
@@ -442,25 +480,13 @@ void UiCanvas::endBuilding()
 
 void UiCanvas::appendNonGraphicsCommands(CommandBuffer& cmdb) const
 {
-	for(const auto& pair : m_texturesPendingUpload)
+	for(const UploadRequest& req : m_texturesPendingUpload)
 	{
-		const ImTextureData* tex = pair.first;
-
-		const UVec2 uploadOffset(tex->UpdateRect.x, tex->UpdateRect.y);
-		const UVec2 uploadSize(tex->UpdateRect.w, tex->UpdateRect.h);
-		const U32 uploadPitch = uploadSize.x() * U32(tex->BytesPerPixel);
-		const U32 copyBufferSize = uploadSize.y() * uploadPitch;
-
 		WeakArray<U8> mappedMem;
-		const BufferView copyBuffer = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(copyBufferSize, mappedMem);
+		const BufferView copyBuffer = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(req.m_data.getSize(), mappedMem);
+		memcpy(mappedMem.getBegin(), req.m_data.getBegin(), req.m_data.getSizeInBytes());
 
-		for(U32 y = 0; y < uploadSize.y(); y++)
-		{
-			memcpy(&mappedMem[uploadPitch * y], tex->GetPixelsAt(uploadOffset.x(), uploadOffset.y() + y), uploadPitch);
-		}
-
-		cmdb.copyBufferToTexture(copyBuffer, TextureView(tex->GetTexID().m_texture, TextureSubresourceDesc::all()),
-								 {uploadOffset.x(), uploadOffset.y(), 0, uploadSize.x(), uploadSize.y(), 1});
+		cmdb.copyBufferToTexture(copyBuffer, TextureView(req.m_texture, TextureSubresourceDesc::all()), req.m_rect);
 	}
 }
 

@@ -58,9 +58,9 @@ public:
 	template<typename TFunc>
 	void visitTexturesForUpdate(TFunc func)
 	{
-		for(const auto& pair : m_texturesPendingUpload)
+		for(const UploadRequest& req : m_texturesPendingUpload)
 		{
-			func(*pair.first->GetTexID().m_texture, pair.second);
+			func(*req.m_texture, req.m_isNew);
 		}
 	}
 
@@ -95,7 +95,16 @@ private:
 
 	UiHashMap<U64, FontCacheEntry> m_fontCache;
 
-	UiDynamicArray<std::pair<const ImTextureData*, Bool>> m_texturesPendingUpload;
+	class UploadRequest
+	{
+	public:
+		Texture* m_texture = nullptr;
+		TextureRect m_rect;
+		UiDynamicArray<U8> m_data;
+		Bool m_isNew = true;
+	};
+
+	UiDynamicArray<UploadRequest> m_texturesPendingUpload;
 
 	Error init(UVec2 size);
 };

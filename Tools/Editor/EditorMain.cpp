@@ -97,7 +97,7 @@ public:
 	{
 		Input& in = Input::getSingleton();
 		SceneGraph& scene = SceneGraph::getSingleton();
-		if(in.getKey(KeyCode::kEscape) > 0 || m_editorUiNode->m_editorUi.m_quit)
+		if(m_editorUiNode->m_editorUi.m_quit)
 		{
 			quit = true;
 		}

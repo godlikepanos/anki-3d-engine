@@ -31,7 +31,7 @@
 namespace anki {
 
 // Specialize newComponent(). Do that first
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon) \
 	template<> \
 	name##Component* SceneNode::newComponent<name##Component>() \
 	{ \
@@ -62,7 +62,7 @@ SceneNode::~SceneNode()
 
 		switch(comp->getType())
 		{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon) \
 	case SceneComponentType::k##name: \
 		SceneGraph::getSingleton().getComponentArrays().get##name##s().erase(comp->getArrayIndex()); \
 		break;

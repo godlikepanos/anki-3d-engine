@@ -38,7 +38,7 @@ ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneRenderables, 10 * 1024, 8, 100 * 1
 class SceneComponentArrays
 {
 public:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon) \
 	SceneBlockArray<name##Component>& get##name##s() \
 	{ \
 		return m_##name##Array; \
@@ -46,7 +46,7 @@ public:
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 private:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) SceneBlockArray<name##Component> m_##name##Array;
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon) SceneBlockArray<name##Component> m_##name##Array;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 

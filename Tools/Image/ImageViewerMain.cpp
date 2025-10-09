@@ -68,7 +68,7 @@ private:
 		ImGui::PushFont(m_font, 16.0f);
 
 		ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
-		ImGui::SetWindowSize(Vec2(F32(canvas.getWidth()), F32(canvas.getHeight())));
+		ImGui::SetWindowSize(canvas.getSizef());
 
 		ImGui::BeginChild("Tools", Vec2(-1.0f, 30.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX, ImGuiWindowFlags_None);
 
