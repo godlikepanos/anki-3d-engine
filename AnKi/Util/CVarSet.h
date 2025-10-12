@@ -260,8 +260,7 @@ public:
 	{
 		for(CVar& cvar : m_cvars)
 		{
-			const Bool stop = func(cvar);
-			if(stop)
+			if(func(cvar) == FunctorContinue::kStop)
 			{
 				return;
 			}

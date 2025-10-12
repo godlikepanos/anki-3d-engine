@@ -47,6 +47,18 @@ MaterialComponent& MaterialComponent::setMaterialFilename(CString fname)
 	return *this;
 }
 
+CString MaterialComponent::getMaterialFilename() const
+{
+	if(m_resource)
+	{
+		return m_resource->getFilename();
+	}
+	else
+	{
+		return "*Error*";
+	}
+}
+
 MaterialComponent& MaterialComponent::setSubmeshIndex(U32 submeshIdx)
 {
 	if(m_submeshIdx != submeshIdx)

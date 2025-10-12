@@ -27,6 +27,7 @@ public:
 	Bool m_fullscreenDesktopRez = false;
 	Bool m_exclusiveFullscreen = false;
 	Bool m_borderless = false;
+	Bool m_maximized = false;
 
 	CString m_title = "AnKi";
 };

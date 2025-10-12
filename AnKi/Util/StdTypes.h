@@ -343,6 +343,13 @@ inline constexpr F32 operator""_degrees(long double x)
 	typedef auto _selfFn##selfType()->decltype(*this); \
 	using _SelfRef##selfType = decltype(((_selfFn##selfType*)0)()); \
 	using selfType = std::remove_reference<_SelfRef##selfType>::type;
+
+/// Instead of using bool to break a loop, which it's difficult to tell if it means stop or continue, use this enum
+enum class FunctorContinue
+{
+	kContinue,
+	kStop
+};
 /// @}
 
 } // end namespace anki

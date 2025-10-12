@@ -45,9 +45,10 @@ public:
 
 	Error userPreInit() override
 	{
-		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
-		g_cvarWindowBorderless = true;
 		g_cvarWindowFullscreen = false;
+		g_cvarWindowMaximized = true;
+		g_cvarWindowBorderless = true;
+		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
 
 		if(CString(g_cvarEditorScene) != "")
 		{

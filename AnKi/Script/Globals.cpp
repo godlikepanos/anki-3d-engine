@@ -20,17 +20,17 @@ static CVar* findCVar(CString name)
 		// Possibly a CVAR
 
 		CString cvarName = name.getBegin() + prefix.getLength();
-		CVarSet::getSingleton().iterateCVars([&](CVar& cvar) -> Bool {
+		CVarSet::getSingleton().iterateCVars([&](CVar& cvar) {
 			ScriptString cvarName2 = cvar.getName();
 			cvarName2.replaceAll(".", "");
 
 			if(cvarName == cvarName2)
 			{
 				foundCVar = &cvar;
-				return true;
+				return FunctorContinue::kStop;
 			}
 
-			return false;
+			return FunctorContinue::kContinue;
 		});
 	}
 

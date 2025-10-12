@@ -101,6 +101,11 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 		flags |= SDL_WINDOW_BORDERLESS;
 	}
 
+	if(init.m_maximized)
+	{
+		flags |= SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE;
+	}
+
 	if(init.m_fullscreenDesktopRez)
 	{
 		if(init.m_exclusiveFullscreen)

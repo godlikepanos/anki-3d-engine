@@ -57,6 +57,8 @@ Error Reflections::init()
 
 		m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 											GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
+
+		ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
 	}
 
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
@@ -66,7 +68,6 @@ Error Reflections::init()
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_ssrGrProg, "Ssr"));
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #1");

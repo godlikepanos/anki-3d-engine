@@ -114,6 +114,20 @@ public:
 		return Error::kNone;
 	}
 
+	/// Iterate paths in the DataPaths CVar
+	template<typename TFunc>
+	void iterateAllResourceBasePaths(TFunc func) const
+	{
+		for(const Path& path : m_paths)
+		{
+			const FunctorContinue cont = func(path.m_path);
+			if(cont == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+	}
+
 #if !ANKI_TESTS
 private:
 #endif

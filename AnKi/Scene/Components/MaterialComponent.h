@@ -30,7 +30,19 @@ public:
 
 	MaterialComponent& setMaterialFilename(CString fname);
 
+	CString getMaterialFilename() const;
+
+	Bool hasMaterialResource() const
+	{
+		return !!m_resource;
+	}
+
 	MaterialComponent& setSubmeshIndex(U32 submeshIdx);
+
+	U32 getSubmeshIndex() const
+	{
+		return m_submeshIdx;
+	}
 
 private:
 	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;

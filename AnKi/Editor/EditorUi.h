@@ -7,10 +7,18 @@
 
 #include <AnKi/Ui.h>
 
+namespace std {
+namespace filesystem {
+class path;
+}
+} // namespace std
+
 namespace anki {
 
+// Forward
 class SceneNode;
 class ScriptComponent;
+class MaterialComponent;
 
 /// @addtogroup editor
 /// @{
@@ -29,8 +37,41 @@ public:
 
 private:
 	static constexpr F32 kMargin = 4.0f;
-	static constexpr F32 kConsoleHeight = 300.0f;
+	static constexpr F32 kConsoleHeight = 400.0f;
 	static constexpr U32 kMaxTextInputLen = 256;
+
+	enum class AssetFileType : U32
+	{
+		kNone,
+		kTexture,
+		kMaterial,
+		kMesh,
+		kLua
+	};
+
+	class AssetFile
+	{
+	public:
+		String m_basename;
+		String m_filename;
+		AssetFileType m_type = AssetFileType::kNone;
+	};
+
+	class AssetPath
+	{
+	public:
+		String m_dirname;
+		DynamicArray<AssetPath> m_children;
+		DynamicArray<AssetFile> m_files;
+		U32 m_id = 0;
+	};
+
+	class ImageCacheEntry
+	{
+	public:
+		ImageResourcePtr m_image;
+		U32 m_lastSeenInFrame = 0;
+	};
 
 	UiCanvas* m_canvas = nullptr;
 
@@ -43,6 +84,9 @@ private:
 	Bool m_showSceneNodePropsWindow = true;
 	Bool m_showSceneHierarcyWindow = true;
 	Bool m_showAssetsWindow = true;
+
+	ImageResourcePtr m_materialIcon;
+	ImageResourcePtr m_meshIcon;
 
 	class
 	{
@@ -83,24 +127,44 @@ private:
 		U32 m_currentSceneNodeUuid = 0;
 	} m_sceneNodePropsWindow;
 
-	void buildMainMenu();
+	class
+	{
+	public:
+		const AssetPath* m_pathSelected = nullptr;
+		DynamicArray<AssetPath> m_assetPaths;
 
-	void buildSceneHierarchyWindow();
-	void buildSceneNode(SceneNode& node);
+		DynamicArray<ImageCacheEntry> m_imageCache;
 
-	void buildSceneNodePropertiesWindow();
-	void buildScriptComponent(ScriptComponent& comp);
+		ImGuiTextFilter m_fileFilter;
 
-	void buildCVarsEditorWindow();
-	void buildConsoleWindow();
-	void buildAssetsWindow();
+		I32 m_cellSize = 8; ///< Icon size
+	} m_assetsWindow;
 
-	// Utils
-	void buildFilter(ImGuiTextFilter& filter);
-	Bool buildTextEditorWindow(CString extraWindowTitle, Bool* pOpen, String& inout);
+	void mainMenu();
+
+	void sceneHierarchyWindow();
+	void sceneNode(SceneNode& node);
+
+	void sceneNodePropertiesWindow();
+	void scriptComponent(ScriptComponent& comp);
+	void materialComponent(MaterialComponent& comp);
+
+	void cVarsWindow();
+	void consoleWindow();
+
+	void assetsWindow();
+	void dirTree(const AssetPath& path);
+
+	// Widget/UI utils
+	static void filter(ImGuiTextFilter& filter);
+	Bool textEditorWindow(CString extraWindowTitle, Bool* pOpen, String& inout) const;
+	static void dummyButton(I32 id);
 
 	// Misc
 	static void loggerMessageHandler(void* ud, const LoggerMessageInfo& info);
+	static void listDir(const std::filesystem::path& rootPath, const std::filesystem::path& parentPath, AssetPath& parent, U32& id);
+	static void gatherAssets(DynamicArray<AssetPath>& paths);
+	void loadImageToCache(CString fname, ImageResourcePtr& img);
 };
 /// @}
 
