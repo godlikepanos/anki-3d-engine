@@ -26,6 +26,10 @@ public:
 		registerDebugRenderTarget("GBufferNormals");
 		registerDebugRenderTarget("GBufferAlbedo");
 		registerDebugRenderTarget("GBufferVelocity");
+		registerDebugRenderTarget("GBufferRoughness");
+		registerDebugRenderTarget("GBufferMetallic");
+		registerDebugRenderTarget("GBufferSubsurface");
+		registerDebugRenderTarget("GBufferEmission");
 	}
 
 	~GBuffer();
@@ -58,7 +62,7 @@ public:
 	}
 
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
+							  Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override;
 
 	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
 	const GpuVisibilityOutput& getVisibilityOutput() const
@@ -70,9 +74,6 @@ private:
 	Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	TexturePtr m_hzbRt;
-
-	ShaderProgramResourcePtr m_visNormalProg;
-	ShaderProgramPtr m_visNormalGrProg;
 
 	ShaderProgramResourcePtr m_visualizeProbeProg;
 	ShaderProgramPtr m_visualizeGiProbeGrProg;

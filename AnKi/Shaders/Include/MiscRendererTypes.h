@@ -260,4 +260,20 @@ struct LodAndRenderableIndex
 	U32 m_lod_2bit_renderableIndex_30bit;
 };
 
+enum class DebugRenderTargetDrawStyle
+{
+	kPassthrough,
+	kTonemap,
+	kGBufferNormal,
+	kGBufferRoughness,
+	kGBufferMetallic,
+	kGBufferSubsurface,
+	kGBufferEmission,
+	kAlphaOnly,
+	kRedOnly,
+
+	kCount,
+	kFirst = 0
+};
+
 ANKI_END_NAMESPACE

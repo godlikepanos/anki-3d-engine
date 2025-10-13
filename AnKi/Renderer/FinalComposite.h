@@ -38,8 +38,8 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs; ///< [Debug on or off]
 
-	ShaderProgramResourcePtr m_defaultVisualizeRenderTargetProg;
-	ShaderProgramPtr m_defaultVisualizeRenderTargetGrProg;
+	ShaderProgramResourcePtr m_visualizeRenderTargetProg;
+	ShaderProgramPtr m_visualizeRenderTargetGrProg;
 
 	RenderTargetDesc m_rtDesc;
 

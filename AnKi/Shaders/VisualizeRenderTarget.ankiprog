@@ -6,17 +6,62 @@
 #pragma anki technique vert pixel
 
 #include <AnKi/Shaders/QuadVert.hlsl>
-
-#if ANKI_PIXEL_SHADER
-#	include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
-Texture2D g_inTex : register(t0);
+Texture2D<Vec4> g_inTex : register(t0);
+Texture2D<Vec4> g_inTex2 : register(t1);
 
+struct Consts
+{
+	U32 m_drawStyle;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+#if ANKI_PIXEL_SHADER
 Vec3 main(VertOut input) : SV_TARGET0
 {
-	const Vec4 rgba = g_inTex.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
-	// return (input.m_uv.x > 0.5) ? rgba.xyz : rgba.aaa * 1.0;
+	Vec4 rgba = g_inTex.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
+
+	switch((DebugRenderTargetDrawStyle)g_consts.m_drawStyle)
+	{
+	case DebugRenderTargetDrawStyle::kTonemap:
+		rgba.xyz = reinhardTonemap(rgba.xyz);
+		break;
+	case DebugRenderTargetDrawStyle::kGBufferNormal:
+		rgba.xyz = unpackNormalFromGBuffer(rgba) / 2.0f + 0.5f;
+		break;
+	case DebugRenderTargetDrawStyle::kGBufferRoughness:
+		rgba.xyz = unpackRoughnessFromGBuffer<F32>(rgba, 0.0).xxx;
+		break;
+	case DebugRenderTargetDrawStyle::kGBufferMetallic:
+		rgba.xyz = unpackSubsurfaceAndMetallicFromGBuffer(rgba).yyy;
+		break;
+	case DebugRenderTargetDrawStyle::kGBufferSubsurface:
+		rgba.xyz = unpackSubsurfaceAndMetallicFromGBuffer(rgba).xxx;
+		break;
+	case DebugRenderTargetDrawStyle::kGBufferEmission:
+	{
+		const Vec4 rt2 = g_inTex2.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
+		const Vec4 rt1 = rgba;
+		rgba.xyz = invertReinhardTonemap(Vec3(rt1.z, rt2.x, rt1.w));
+		break;
+	}
+	case DebugRenderTargetDrawStyle::kAlphaOnly:
+		rgba.xyz = rgba.www;
+		break;
+	case DebugRenderTargetDrawStyle::kRedOnly:
+		rgba.xyz = rgba.rrr;
+		break;
+	default:
+		break;
+	}
+
 	return rgba.xyz;
 }
-#endif // ANKI_PIXEL_SHADER
+#endif

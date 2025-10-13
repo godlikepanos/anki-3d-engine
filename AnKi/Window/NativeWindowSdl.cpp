@@ -36,9 +36,9 @@ void MakeSingletonPtr<NativeWindow>::freeSingleton()
 	}
 }
 
-Error NativeWindow::init(const NativeWindowInitInfo& inf)
+Error NativeWindow::init([[maybe_unused]] U32 targetFps, CString title)
 {
-	return static_cast<NativeWindowSdl*>(this)->initSdl(inf);
+	return static_cast<NativeWindowSdl*>(this)->initSdl(title);
 }
 
 void NativeWindow::setWindowTitle(CString title)
@@ -58,7 +58,7 @@ NativeWindowSdl::~NativeWindowSdl()
 	SDL_Quit();
 }
 
-Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
+Error NativeWindowSdl::initSdl(CString title)
 {
 #if ANKI_OS_WINDOWS
 	// Tell windows that the app will handle scaling. Otherwise SDL_GetDesktopDisplayMode will return a resolution that has the scaling applied
@@ -96,19 +96,20 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 	flags |= SDL_WINDOW_VULKAN;
 #endif
 
-	if(init.m_borderless)
+	if(g_cvarWindowBorderless)
 	{
 		flags |= SDL_WINDOW_BORDERLESS;
 	}
 
-	if(init.m_maximized)
+	if(g_cvarWindowMaximized)
 	{
 		flags |= SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE;
 	}
 
-	if(init.m_fullscreenDesktopRez)
+	U32 width, height;
+	if(g_cvarWindowFullscreen > 0)
 	{
-		if(init.m_exclusiveFullscreen)
+		if(g_cvarWindowFullscreen == 2)
 		{
 			flags |= SDL_WINDOW_FULLSCREEN;
 		}
@@ -128,16 +129,16 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 			return Error::kFunctionFailed;
 		}
 
-		m_width = U32(F32(mode->w) * mode->pixel_density);
-		m_height = U32(F32(mode->h) * mode->pixel_density);
+		width = U32(F32(mode->w) * mode->pixel_density);
+		height = U32(F32(mode->h) * mode->pixel_density);
 	}
 	else
 	{
-		m_width = init.m_width;
-		m_height = init.m_height;
+		width = g_cvarWindowWidth;
+		height = g_cvarWindowHeight;
 	}
 
-	m_sdlWindow = SDL_CreateWindow(&init.m_title[0], m_width, m_height, flags);
+	m_sdlWindow = SDL_CreateWindow(title.cstr(), width, height, flags);
 
 	if(m_sdlWindow == nullptr)
 	{
@@ -150,11 +151,22 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 		ANKI_WIND_LOGE("SDL_ShowWindow() failed: %s", SDL_GetError());
 	}
 
-	// Final check
+	// Get the actual width and height
 	{
 		int w, h;
 		SDL_GetWindowSize(m_sdlWindow, &w, &h);
-		ANKI_ASSERT(m_width == U32(w) && m_height == U32(h));
+
+		if(g_cvarWindowMaximized)
+		{
+			m_width = w;
+			m_height = h;
+		}
+		else
+		{
+			m_width = width;
+			m_height = height;
+			ANKI_ASSERT(m_width == U32(w) && m_height == U32(h));
+		}
 	}
 
 	ANKI_WIND_LOGI("SDL window created");

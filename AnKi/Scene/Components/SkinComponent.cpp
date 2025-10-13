@@ -22,7 +22,7 @@ SkinComponent::~SkinComponent()
 {
 }
 
-SkinComponent& SkinComponent::loadSkeletonResource(CString fname)
+SkinComponent& SkinComponent::setSkeletonFilename(CString fname)
 {
 	SkeletonResourcePtr rsrc;
 	const Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
@@ -52,6 +52,11 @@ SkinComponent& SkinComponent::loadSkeletonResource(CString fname)
 	}
 
 	return *this;
+}
+
+CString SkinComponent::getSkeletonFilename() const
+{
+	return (m_skeleton) ? m_skeleton->getFilename() : "*Error*";
 }
 
 void SkinComponent::playAnimation(U32 trackIdx, AnimationResourcePtr anim, const AnimationPlayInfo& info)

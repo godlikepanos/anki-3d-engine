@@ -56,7 +56,6 @@ Error GBuffer::init()
 		m_hzbRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvCompute, clear);
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeGBufferNormal.ankiprogbin", m_visNormalProg, m_visNormalGrProg));
 	ANKI_CHECK(
 		loadShaderProgram("ShaderBinaries/GBufferVisualizeProbe.ankiprogbin", {{"PROBE_TYPE", 0}}, m_visualizeProbeProg, m_visualizeGiProbeGrProg));
 	ANKI_CHECK(
@@ -271,7 +270,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 }
 
 void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-								   ShaderProgramPtr& optionalShaderProgram) const
+								   Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const
 {
 	if(rtName == "GBufferAlbedo")
 	{
@@ -280,15 +279,32 @@ void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMa
 	else if(rtName == "GBufferNormals")
 	{
 		handles[0] = m_runCtx.m_colorRts[2];
-		optionalShaderProgram = m_visNormalGrProg;
+		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferNormal;
 	}
 	else if(rtName == "GBufferVelocity")
 	{
 		handles[0] = m_runCtx.m_colorRts[3];
 	}
-	else
+	else if(rtName == "GBufferRoughness")
 	{
-		ANKI_ASSERT(!"See file");
+		handles[0] = m_runCtx.m_colorRts[1];
+		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferRoughness;
+	}
+	else if(rtName == "GBufferMetallic")
+	{
+		handles[0] = m_runCtx.m_colorRts[0];
+		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferMetallic;
+	}
+	else if(rtName == "GBufferSubsurface")
+	{
+		handles[0] = m_runCtx.m_colorRts[0];
+		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferSubsurface;
+	}
+	else if(rtName == "GBufferEmission")
+	{
+		handles[0] = m_runCtx.m_colorRts[1];
+		handles[1] = m_runCtx.m_colorRts[2];
+		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferEmission;
 	}
 }
 

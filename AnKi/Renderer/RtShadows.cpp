@@ -516,10 +516,4 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 }
 
-void RtShadows::getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-									 [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
-{
-	handles[0] = m_runCtx.m_upscaledRt;
-}
-
 } // end namespace anki

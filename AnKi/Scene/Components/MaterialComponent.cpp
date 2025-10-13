@@ -129,7 +129,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	const Bool skinUpdated = m_skinDirty;
 	const Bool submeshUpdated = m_submeshIdxDirty;
 	const Bool hasSkin = m_skinComponent && m_skinComponent->isEnabled();
-	const Bool isValid = m_resource.isCreated() && m_resource->isLoaded() && m_meshComponent && m_meshComponent->isEnabled()
+	const Bool isValid = m_resource.isCreated() && m_resource->isLoaded() && m_meshComponent && m_meshComponent->isValid()
 						 && m_meshComponent->getMeshResource().isLoaded();
 
 	updated = mtlUpdated || meshUpdated || moved || skinUpdated || submeshUpdated;

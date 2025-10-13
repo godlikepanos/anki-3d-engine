@@ -17,8 +17,8 @@ namespace anki {
 
 // Forward
 class SceneNode;
-class ScriptComponent;
-class MaterialComponent;
+#define ANKI_DEFINE_SCENE_COMPONENT(class_, weight, icon) class class_##Component;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 /// @addtogroup editor
 /// @{
@@ -32,6 +32,8 @@ public:
 	~EditorUi();
 
 	Bool m_quit = false;
+
+	Bool m_mouseHoveredOverAnyWindow = false; ///< Mouse is over one of the editor windows.
 
 	void draw(UiCanvas& canvas);
 
@@ -84,6 +86,7 @@ private:
 	Bool m_showSceneNodePropsWindow = true;
 	Bool m_showSceneHierarcyWindow = true;
 	Bool m_showAssetsWindow = true;
+	Bool m_showDebugRtsWindow = false;
 
 	ImageResourcePtr m_materialIcon;
 	ImageResourcePtr m_meshIcon;
@@ -140,19 +143,27 @@ private:
 		I32 m_cellSize = 8; ///< Icon size
 	} m_assetsWindow;
 
+	class
+	{
+	public:
+		Bool m_disableTonemapping = false;
+	} m_debugRtsWindow;
+
 	void mainMenu();
 
+	// Windows
 	void sceneHierarchyWindow();
-	void sceneNode(SceneNode& node);
-
 	void sceneNodePropertiesWindow();
-	void scriptComponent(ScriptComponent& comp);
-	void materialComponent(MaterialComponent& comp);
-
 	void cVarsWindow();
 	void consoleWindow();
-
 	void assetsWindow();
+	void debugRtsWindow();
+
+	void sceneNode(SceneNode& node);
+	void scriptComponent(ScriptComponent& comp);
+	void materialComponent(MaterialComponent& comp);
+	void meshComponent(MeshComponent& comp);
+	void skinComponent(SkinComponent& comp);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils

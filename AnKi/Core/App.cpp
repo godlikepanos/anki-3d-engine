@@ -216,18 +216,8 @@ Error App::init()
 	//
 	// Window
 	//
-	NativeWindowInitInfo nwinit;
-	nwinit.m_width = g_cvarWindowWidth;
-	nwinit.m_height = g_cvarWindowHeight;
-	nwinit.m_depthBits = 0;
-	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = g_cvarWindowFullscreen > 0;
-	nwinit.m_exclusiveFullscreen = g_cvarWindowFullscreen == 2;
-	nwinit.m_targetFps = g_cvarCoreTargetFps;
-	nwinit.m_borderless = g_cvarWindowBorderless;
-	nwinit.m_maximized = g_cvarWindowMaximized;
 	NativeWindow::allocateSingleton();
-	ANKI_CHECK(NativeWindow::getSingleton().init(nwinit));
+	ANKI_CHECK(NativeWindow::getSingleton().init(g_cvarCoreTargetFps, "AnKi"));
 
 	//
 	// Input

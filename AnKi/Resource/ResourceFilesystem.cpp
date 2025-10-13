@@ -263,6 +263,8 @@ Error ResourceFilesystem::init()
 		return Error::kUserData;
 	}
 
+	ANKI_RESOURCE_LOGI("%s value: %s", g_cvarRsrcDataPaths.getName().cstr(), CString(g_cvarRsrcDataPaths).cstr());
+
 	for(const auto& path : paths)
 	{
 		ResourceStringList includedStrings;

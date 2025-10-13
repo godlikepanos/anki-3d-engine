@@ -63,22 +63,6 @@ Error VrsSriGeneration::init()
 	return Error::kNone;
 }
 
-void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-											ShaderProgramPtr& optionalShaderProgram) const
-{
-	if(rtName == "VrsSri")
-	{
-		handles[0] = m_runCtx.m_rt;
-	}
-	else
-	{
-		ANKI_ASSERT(rtName == "VrsSriDownscaled");
-		handles[0] = m_runCtx.m_downscaledRt;
-	}
-
-	optionalShaderProgram = m_visualizeGrProg;
-}
-
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;

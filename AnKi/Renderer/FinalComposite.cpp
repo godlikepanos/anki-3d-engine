@@ -48,8 +48,7 @@ Error FinalComposite::initInternal()
 									 m_prog, m_grProgs[dbg]));
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg,
-								 m_defaultVisualizeRenderTargetGrProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_visualizeRenderTargetProg, m_visualizeRenderTargetGrProg));
 
 	if(getRenderer().getSwapchainResolution() != getRenderer().getPostProcessResolution())
 	{
@@ -119,8 +118,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getBloom().getBloomRt(), TextureUsageBit::kSrvPixel);
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
-	ShaderProgramPtr debugProgram;
-	const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, debugProgram);
+	Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets> drawStyles;
+	const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyles);
 	if(hasDebugRt)
 	{
 		for(const RenderTargetHandle& handle : dbgRts)
@@ -141,17 +140,13 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		const Bool dbgEnabled = g_cvarRenderDbgScene || g_cvarRenderDbgPhysics;
 
 		Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
-		ShaderProgramPtr optionalDebugProgram;
-		const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, optionalDebugProgram);
+		Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets> drawStyles;
+		const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyles);
 
 		// Bind program
-		if(hasDebugRt && optionalDebugProgram.isCreated())
+		if(hasDebugRt)
 		{
-			cmdb.bindShaderProgram(optionalDebugProgram.get());
-		}
-		else if(hasDebugRt)
-		{
-			cmdb.bindShaderProgram(m_defaultVisualizeRenderTargetGrProg.get());
+			cmdb.bindShaderProgram(m_visualizeRenderTargetGrProg.get());
 		}
 		else
 		{
@@ -198,13 +193,23 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 			U32 count = 0;
+			UVec4 consts;
 			for(const RenderTargetHandle& handle : dbgRts)
 			{
 				if(handle.isValid())
 				{
-					rgraphCtx.bindSrv(count++, 0, handle);
+					consts[count] = U32(drawStyles[count]);
+					rgraphCtx.bindSrv(count, 0, handle);
 				}
+				else
+				{
+					cmdb.bindSrv(count, 0, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+				}
+
+				++count;
 			}
+
+			cmdb.setFastConstants(&consts, sizeof(consts));
 		}
 
 		cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());

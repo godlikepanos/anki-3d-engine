@@ -35,6 +35,11 @@ MeshComponent& MeshComponent::setMeshFilename(CString fname)
 	return *this;
 }
 
+CString MeshComponent::getMeshFilename() const
+{
+	return (m_resource) ? m_resource->getFilename() : "*Error*";
+}
+
 void MeshComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_resourceDirty;

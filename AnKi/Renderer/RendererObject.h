@@ -29,7 +29,7 @@ public:
 	virtual ~RendererObject() = default;
 
 	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName, [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-									  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
+									  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const
 	{
 		ANKI_ASSERT(!"Object doesn't support that");
 	}

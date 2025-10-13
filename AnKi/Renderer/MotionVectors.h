@@ -31,13 +31,10 @@ public:
 		return m_runCtx.m_motionVectorsRtHandle;
 	}
 
-	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+							  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
 	{
-		if(rtName == "MotionVectors")
-		{
-			handles[0] = m_runCtx.m_motionVectorsRtHandle;
-		}
+		handles[0] = m_runCtx.m_motionVectorsRtHandle;
 	}
 
 private:

@@ -641,11 +641,11 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 #if ANKI_ASSERTIONS_ENABLED
 	for(const DebugRtInfo& inf : m_debugRts)
 	{
-		ANKI_ASSERT(inf.m_rtName != rtName && "Choose different name");
+		ANKI_ASSERT(inf.m_rtName != rtName && "Choose a different name");
 	}
 #endif
-
 	ANKI_ASSERT(obj);
+
 	DebugRtInfo inf;
 	inf.m_obj = obj;
 	inf.m_rtName = rtName;
@@ -653,8 +653,12 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(std::move(inf));
 }
 
-Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram)
+Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+										   Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles)
 {
+	handles = {};
+	drawStyles = {};
+
 	if(m_currentDebugRtName.isEmpty()) [[likely]]
 	{
 		return false;
@@ -671,7 +675,14 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 
 	if(obj)
 	{
-		obj->getDebugRenderTarget(m_currentDebugRtName, handles, optionalShaderProgram);
+		obj->getDebugRenderTarget(m_currentDebugRtName, handles, drawStyles);
+		for(DebugRenderTargetDrawStyle& style : drawStyles)
+		{
+			if(m_disableDebugRtTonemapping && style == DebugRenderTargetDrawStyle::kTonemap)
+			{
+				style = DebugRenderTargetDrawStyle::kPassthrough;
+			}
+		}
 		return true;
 	}
 	else
@@ -682,7 +693,7 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 	}
 }
 
-void Renderer::setCurrentDebugRenderTarget(CString rtName)
+void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping)
 {
 	m_currentDebugRtName.destroy();
 
@@ -690,6 +701,8 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 	{
 		m_currentDebugRtName = rtName;
 	}
+
+	m_disableDebugRtTonemapping = disableTonemapping;
 }
 
 Format Renderer::getHdrFormat() const

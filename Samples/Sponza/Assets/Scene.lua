@@ -47,7 +47,7 @@ node:newMaterialComponent():setMaterialFilename("Assets/skinFace_37e531adb0394fd
 node:newMaterialComponent():setMaterialFilename("Assets/ChainMail_e54428975578d25.ankimtl"):setSubmeshIndex(2)
 node:newMaterialComponent():setMaterialFilename("Assets/Leather_d5d86863309c9f2b.ankimtl"):setSubmeshIndex(3)
 node:newMaterialComponent():setMaterialFilename("Assets/material_cf698120548b7e7c.ankimtl"):setSubmeshIndex(4)
-node:newSkinComponent():loadSkeletonResource("Assets/Armature_de7b8c5e15ab3f1c.ankiskel")
+node:newSkinComponent():setSkeletonFilename("Assets/Armature_de7b8c5e15ab3f1c.ankiskel")
 trf = Transform.new()
 trf:setOrigin(Vec3.new(-8.969524, 0.000000, 0.000000))
 rot = Mat3.new()

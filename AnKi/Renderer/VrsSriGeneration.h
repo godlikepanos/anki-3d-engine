@@ -70,7 +70,18 @@ public:
 	} m_runCtx;
 
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  ShaderProgramPtr& optionalShaderProgram) const override;
+							  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
+	{
+		if(rtName == "VrsSri")
+		{
+			handles[0] = m_runCtx.m_rt;
+		}
+		else
+		{
+			ANKI_ASSERT(rtName == "VrsSriDownscaled");
+			handles[0] = m_runCtx.m_downscaledRt;
+		}
+	}
 };
 /// @}
 

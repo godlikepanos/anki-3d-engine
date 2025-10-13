@@ -21,6 +21,11 @@ ANKI_CVAR2(NumericCVar<U32>, Render, Bloom, UpscaleDivisor, 4, 1, 1024, "Defines
 class Bloom : public RendererObject
 {
 public:
+	Bloom()
+	{
+		registerDebugRenderTarget("Bloom");
+	}
+
 	Error init();
 
 	void importRenderTargets(RenderingContext& ctx);
@@ -45,6 +50,13 @@ public:
 	RenderTargetHandle getBloomRt() const
 	{
 		return m_runCtx.m_finalRt;
+	}
+
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+							  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
+	{
+		handles[0] = m_runCtx.m_finalRt;
+		drawStyles[0] = DebugRenderTargetDrawStyle::kTonemap;
 	}
 
 private:

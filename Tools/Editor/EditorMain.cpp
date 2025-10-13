@@ -64,10 +64,7 @@ public:
 
 			if(m_sceneLuaFname)
 			{
-				String dataPaths = CString(g_cvarRsrcDataPaths);
-				dataPaths += ":";
-				dataPaths += CString(g_cvarEditorScene);
-				g_cvarRsrcDataPaths = dataPaths;
+				g_cvarRsrcDataPaths = CString(g_cvarEditorScene);
 			}
 			else
 			{
@@ -110,7 +107,7 @@ public:
 			mousePosOn1stClick = in.getMousePositionNdc();
 		}
 
-		if(in.getMouseButton(MouseButton::kRight) > 0)
+		if(in.getMouseButton(MouseButton::kRight) > 0 && !m_editorUiNode->m_editorUi.m_mouseHoveredOverAnyWindow)
 		{
 			in.hideCursor(true);
 

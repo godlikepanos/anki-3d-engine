@@ -10,6 +10,7 @@
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Window/Input.h>
 #include <AnKi/Util/Filesystem.h>
+#include <AnKi/Renderer/Renderer.h>
 #include <filesystem>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
 
@@ -176,13 +177,15 @@ void EditorUi::draw(UiCanvas& canvas)
 	sceneNodePropertiesWindow();
 	consoleWindow();
 	assetsWindow();
-
 	cVarsWindow();
+	debugRtsWindow();
 
 	ImGui::End();
 
 	ImGui::PopStyleVar();
 	ImGui::PopFont();
+
+	m_mouseHoveredOverAnyWindow = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
 
 	m_canvas = nullptr;
 }
@@ -225,6 +228,11 @@ void EditorUi::mainMenu()
 			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " CVars Editor"))
 			{
 				m_showCVarEditorWindow = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
+			{
+				m_showDebugRtsWindow = true;
 			}
 
 			ImGui::EndMenu();
@@ -534,12 +542,14 @@ void EditorUi::sceneNodePropertiesWindow()
 
 						if(ImGui::Button(ICON_MDI_MINUS_BOX))
 						{
+							ANKI_LOGW("TODO");
 						}
 						ImGui::SetItemTooltip("Delete Component");
 						ImGui::SameLine();
 
 						if(ImGui::Button(ICON_MDI_EYE))
 						{
+							ANKI_LOGW("TODO");
 						}
 						ImGui::SetItemTooltip("Disable component");
 					}
@@ -555,6 +565,12 @@ void EditorUi::sceneNodePropertiesWindow()
 						break;
 					case SceneComponentType::kMaterial:
 						materialComponent(static_cast<MaterialComponent&>(comp));
+						break;
+					case SceneComponentType::kMesh:
+						meshComponent(static_cast<MeshComponent&>(comp));
+						break;
+					case SceneComponentType::kSkin:
+						skinComponent(static_cast<SkinComponent&>(comp));
 						break;
 					default:
 						ImGui::Text("TODO");
@@ -694,6 +710,78 @@ void EditorUi::materialComponent(MaterialComponent& comp)
 	}
 }
 
+void EditorUi::meshComponent(MeshComponent& comp)
+{
+	// Locate button
+	{
+		ImGui::BeginDisabled(!comp.hasMeshResource());
+		if(ImGui::Button(comp.hasMeshResource() ? ICON_MDI_MAP_MARKER : ICON_MDI_ALERT_CIRCLE "##MeshCompBtn"))
+		{
+			ANKI_LOGW("TODO");
+		}
+		ImGui::SetItemTooltip("Locate");
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+	}
+
+	// Filename
+	{
+		ImGui::SetNextItemWidth(-1.0f);
+
+		Char buff[kMaxTextInputLen] = "";
+		if(comp.hasMeshResource())
+		{
+			std::strncpy(buff, comp.getMeshFilename().cstr(), sizeof(buff));
+		}
+
+		if(ImGui::InputTextWithHint("##MeshCompFname", ".ankimesh Filename", buff, sizeof(buff)))
+		{
+			comp.setMeshFilename(buff);
+		}
+
+		if(comp.hasMeshResource())
+		{
+			ImGui::SetItemTooltip("%s", comp.getMeshFilename().cstr());
+		}
+	}
+}
+
+void EditorUi::skinComponent(SkinComponent& comp)
+{
+	// Locate button
+	{
+		ImGui::BeginDisabled(!comp.hasSkeletonResource());
+		if(ImGui::Button(comp.hasSkeletonResource() ? ICON_MDI_MAP_MARKER : ICON_MDI_ALERT_CIRCLE "##SkinCompBtn"))
+		{
+			ANKI_LOGW("TODO");
+		}
+		ImGui::SetItemTooltip("Locate");
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+	}
+
+	// Filename
+	{
+		ImGui::SetNextItemWidth(-1.0f);
+
+		Char buff[kMaxTextInputLen] = "";
+		if(comp.hasSkeletonResource())
+		{
+			std::strncpy(buff, comp.getSkeletonFilename().cstr(), sizeof(buff));
+		}
+
+		if(ImGui::InputTextWithHint("##SkelCompFname", ".ankiskel Filename", buff, sizeof(buff)))
+		{
+			comp.setSkeletonFilename(buff);
+		}
+
+		if(comp.hasSkeletonResource())
+		{
+			ImGui::SetItemTooltip("%s", comp.getSkeletonFilename().cstr());
+		}
+	}
+}
+
 void EditorUi::cVarsWindow()
 {
 	if(!m_showCVarEditorWindow)
@@ -820,6 +908,45 @@ void EditorUi::cVarsWindow()
 		ImGui::EndChild();
 	}
 
+	ImGui::End();
+}
+
+void EditorUi::debugRtsWindow()
+{
+	if(!m_showDebugRtsWindow)
+	{
+		return;
+	}
+
+	if(ImGui::GetFrameCount() > 1)
+	{
+		// Viewport is one frame delay so do that when frame >1
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+		const Vec2 initialSize = Vec2(450.0f, m_canvas->getSizef().y() * 0.4f);
+		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once, Vec2(0.5f));
+	}
+
+	if(ImGui::Begin("Debug Render Targets", &m_showDebugRtsWindow, 0))
+	{
+		const Bool refresh = ImGui::Checkbox("Disable tonemapping", &m_debugRtsWindow.m_disableTonemapping);
+		ImGui::TextUnformatted("");
+		ImGui::Separator();
+
+		if(ImGui::BeginChild("Content", Vec2(-1.0f, -1.0f)))
+		{
+			Renderer::getSingleton().iterateDebugRenderTargetNames([&](CString name) {
+				Bool isActive = (name == Renderer::getSingleton().getCurrentDebugRenderTarget());
+				if(ImGui::Checkbox(name.cstr(), &isActive) || (isActive && refresh))
+				{
+					Renderer::getSingleton().setCurrentDebugRenderTarget(isActive ? name : "", m_debugRtsWindow.m_disableTonemapping);
+				}
+				return FunctorContinue::kContinue;
+			});
+		}
+		ImGui::EndChild();
+	}
 	ImGui::End();
 }
 

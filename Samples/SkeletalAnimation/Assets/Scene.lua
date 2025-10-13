@@ -4,7 +4,7 @@ local events = getEventManager()
 
 node = scene:newSceneNode("droid.001")
 node:newModelComponent():loadModelResource("Assets/Mesh_Robot.001_514ce62fac09d811.ankimdl")
-node:newSkinComponent():loadSkeletonResource("Assets/Armature.002_9ddcea0a08bd9d11.ankiskel")
+node:newSkinComponent():setSkeletonFilename("Assets/Armature.002_9ddcea0a08bd9d11.ankiskel")
 trf = Transform.new()
 trf:setOrigin(Vec3.new(0.000000, 0.000000, 0.000000))
 rot = Mat3.new()

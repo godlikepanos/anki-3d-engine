@@ -40,9 +40,6 @@ Error LightShading::init()
 		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(internalResolution.x(), internalResolution.y(),
 																				 getRenderer().getHdrFormat(), "Light Shading");
 		m_lightShading.m_rtDescr.bake();
-
-		// Debug visualization
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg, m_visualizeRtGrProg));
 	}
 
 	{
@@ -313,14 +310,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// For forward shading
 	getRenderer().getForwardShading().setDependencies(pass);
-}
-
-void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-										ShaderProgramPtr& optionalShaderProgram) const
-{
-	ANKI_ASSERT(rtName == "LightShading");
-	handles[0] = m_runCtx.m_rt;
-	optionalShaderProgram = m_visualizeRtGrProg;
 }
 
 } // end namespace anki

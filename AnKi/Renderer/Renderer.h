@@ -171,7 +171,7 @@ public:
 	void registerDebugRenderTarget(RendererObject* obj, CString rtName);
 
 	/// Set the render target you want to show.
-	void setCurrentDebugRenderTarget(CString rtName);
+	void setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping = false);
 
 	/// Get the render target currently showing.
 	CString getCurrentDebugRenderTarget() const
@@ -180,7 +180,8 @@ public:
 	}
 
 	// Need to call it after the handle is set by the RenderGraph.
-	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram);
+	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+									 Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles);
 	/// @}
 
 	StackMemoryPool& getFrameMemoryPool()
@@ -201,6 +202,18 @@ public:
 		m_pipelineQueries[m_frameCount % kMaxFramesInFlight].emplaceBack(q);
 	}
 #endif
+
+	template<typename TFunc>
+	void iterateDebugRenderTargetNames(TFunc func) const
+	{
+		for(const auto& x : m_debugRts)
+		{
+			if(func(x.m_rtName) == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+	}
 
 private:
 	class Cleanup
@@ -244,6 +257,7 @@ private:
 	};
 	RendererDynamicArray<DebugRtInfo> m_debugRts;
 	RendererString m_currentDebugRtName;
+	Bool m_disableDebugRtTonemapping = false;
 
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;

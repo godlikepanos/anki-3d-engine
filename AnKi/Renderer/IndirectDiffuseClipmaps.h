@@ -83,7 +83,7 @@ class IndirectDiffuseClipmaps : public RtMaterialFetchRendererObject
 public:
 	IndirectDiffuseClipmaps()
 	{
-		registerDebugRenderTarget("IndirectDiffuseClipmapsTest");
+		registerDebugRenderTarget("IndirectDiffuseClipmaps");
 	}
 
 	Error init();
@@ -91,9 +91,10 @@ public:
 	void populateRenderGraph(RenderingContext& ctx);
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+							  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
 	{
 		handles[0] = m_runCtx.m_handles.m_appliedIrradiance;
+		drawStyles[0] = DebugRenderTargetDrawStyle::kTonemap;
 	}
 
 	const IndirectDiffuseClipmapConstants& getClipmapConsts() const

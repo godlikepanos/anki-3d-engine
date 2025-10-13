@@ -27,9 +27,16 @@ public:
 
 	MeshComponent& setMeshFilename(CString fname);
 
-	Bool isEnabled() const
+	Bool hasMeshResource() const
 	{
-		return m_resource.isCreated();
+		return !!m_resource;
+	}
+
+	CString getMeshFilename() const;
+
+	Bool isValid() const
+	{
+		return hasMeshResource();
 	}
 
 	const MeshResource& getMeshResource() const

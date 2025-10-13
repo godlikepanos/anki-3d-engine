@@ -1139,7 +1139,7 @@ Error GltfImporter::writeMeshMaterialNode(const cgltf_node& node, const Importer
 
 	if(node.skin)
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf("node:newSkinComponent():loadSkeletonResource(\"%s%s\")\n", m_rpath.cstr(),
+		ANKI_CHECK(m_sceneFile.writeTextf("node:newSkinComponent():setSkeletonFilename(\"%s%s\")\n", m_rpath.cstr(),
 										  computeSkeletonResourceFilename(*node.skin).cstr()));
 	}
 

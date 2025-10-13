@@ -33,8 +33,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  ShaderProgramPtr& optionalShaderProgram) const override;
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+							  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
+	{
+		handles[0] = m_runCtx.m_upscaledRt;
+	}
 
 	RenderTargetHandle getRt() const
 	{

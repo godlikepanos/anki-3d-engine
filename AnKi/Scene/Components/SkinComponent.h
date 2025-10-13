@@ -51,7 +51,14 @@ public:
 	~SkinComponent();
 
 	/// Load the skeleton resource.
-	SkinComponent& loadSkeletonResource(CString filename);
+	SkinComponent& setSkeletonFilename(CString filename);
+
+	CString getSkeletonFilename() const;
+
+	Bool hasSkeletonResource() const
+	{
+		return !!m_skeleton;
+	}
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 

@@ -218,6 +218,13 @@ T unpackRoughnessFromGBuffer(vector<T, 4> rt1)
 	return unpackRoughnessFromGBuffer<T>(rt1, kMinRoughness);
 }
 
+template<typename T>
+vector<T, 2> unpackSubsurfaceAndMetallicFromGBuffer(vector<T, 4> rt0)
+{
+	const vector<T, 2> unpackedSubsurfaceMetallic = unpackUnorm1ToUnorm2(rt0.w);
+	return unpackedSubsurfaceMetallic;
+}
+
 // Read part of the G-buffer
 template<typename T>
 void unpackGBufferNoVelocity(vector<T, 4> rt0, vector<T, 4> rt1, vector<T, 4> rt2, out GbufferInfo<T> g)
