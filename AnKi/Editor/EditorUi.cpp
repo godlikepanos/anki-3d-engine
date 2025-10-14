@@ -180,6 +180,15 @@ void EditorUi::draw(UiCanvas& canvas)
 	cVarsWindow();
 	debugRtsWindow();
 
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+		const Vec2 initialSize = Vec2(viewportSize.y() * 0.75f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_imageViewer.drawWindow(canvas, initialPos, initialSize, 0);
+	}
+
 	ImGui::End();
 
 	ImGui::PopStyleVar();
@@ -1172,17 +1181,18 @@ void EditorUi::assetsWindow()
 								{
 									const AssetFile& file = *filteredFiles[idx];
 
+									ImGui::PushID(idx);
 									if(file.m_type == AssetFileType::kMaterial)
 									{
 										ImTextureID id;
 										id.m_texture = &m_materialIcon->getTexture();
-										ImGui::Image(id, Vec2(cellWidth));
+										ImGui::ImageButton("##", id, Vec2(cellWidth));
 									}
 									else if(file.m_type == AssetFileType::kMesh)
 									{
 										ImTextureID id;
 										id.m_texture = &m_meshIcon->getTexture();
-										ImGui::Image(id, Vec2(cellWidth));
+										ImGui::ImageButton("##", id, Vec2(cellWidth));
 									}
 									else if(file.m_type == AssetFileType::kTexture)
 									{
@@ -1191,8 +1201,13 @@ void EditorUi::assetsWindow()
 										ImTextureID id;
 										id.m_texture = &img->getTexture();
 										id.m_textureSubresource = TextureSubresourceDesc::all();
-										ImGui::Image(id, Vec2(cellWidth));
+										if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
+										{
+											m_imageViewer.m_image = img;
+											m_imageViewer.m_open = true;
+										}
 									}
+									ImGui::PopID();
 
 									ImGui::TextWrapped("%s", file.m_basename.cstr());
 									ImGui::SetItemTooltip("%s", file.m_filename.cstr());

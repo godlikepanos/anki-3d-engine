@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Ui.h>
+#include <AnKi/Editor/ImageViewerUi.h>
 
 namespace std {
 namespace filesystem {
@@ -90,6 +91,8 @@ private:
 
 	ImageResourcePtr m_materialIcon;
 	ImageResourcePtr m_meshIcon;
+
+	ImageViewerUi m_imageViewer;
 
 	class
 	{
