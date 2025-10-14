@@ -638,20 +638,21 @@ void EditorUi::scriptComponent(ScriptComponent& comp)
 		{
 			comp.setScriptText("");
 		}
-		ImGui::SetItemTooltip("Clear");
+		ImGui::SetItemTooltip("Unset");
 		ImGui::SameLine();
 	}
 
 	// Button
 	{
 		String buttonTxt;
-		buttonTxt.sprintf(ICON_MDI_LANGUAGE_LUA " Embedded Script%s", (comp.hasScriptText()) ? "" : " *Empty*");
+		buttonTxt.sprintf(ICON_MDI_LANGUAGE_LUA " Embedded Script (%s)", comp.hasScriptText() ? "Set" : "Unset");
 		const Bool showEditor = ImGui::Button(buttonTxt.cstr(), Vec2(-1.0f, 0.0f));
 		if(showEditor && (state.m_scriptComponentThatHasTheTextEditorOpen == 0 || state.m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid()))
 		{
 			state.m_textEditorOpen = true;
 			state.m_scriptComponentThatHasTheTextEditorOpen = comp.getUuid();
-			state.m_textEditorTxt = (comp.hasScriptText()) ? comp.getScriptText() : "";
+			state.m_textEditorTxt =
+				(comp.hasScriptText()) ? comp.getScriptText() : "function update(node, prevTime, crntTime)\n    -- Your code here\nend";
 		}
 	}
 
@@ -1257,7 +1258,10 @@ Bool EditorUi::textEditorWindow(CString extraWindowTitle, Bool* pOpen, String& i
 {
 	Bool save = false;
 
-	ImGui::SetNextWindowSize(Vec2(600.0f, 800.0f), ImGuiCond_FirstUseEver);
+	const Vec2 windowSize(600.0f, 800.0f);
+	ImGui::SetNextWindowSize(windowSize, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(Vec2(ImGui::GetMainViewport()->WorkSize) / 2.0f - windowSize / 2.0f, ImGuiCond_FirstUseEver);
+
 	const String title = String().sprintf("Text Editor: %s", extraWindowTitle.cstr());
 	if(ImGui::Begin(title.cstr(), pOpen))
 	{
