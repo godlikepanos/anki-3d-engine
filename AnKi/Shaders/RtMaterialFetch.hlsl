@@ -197,35 +197,38 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
 	if(dirLight.m_active)
 	{
-		F32 shadow = 1.0;
-		if(dirLight.m_shadowCascadeCount)
-		{
-			// Trace shadow
-			Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
-			vv4.xy /= vv4.w;
-			const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
-
-			if(bInsideFrustum && tryShadowmapFirst)
-			{
-				const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
-				const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
-
-				const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
-
-				shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
-			}
-			else
-			{
-				shadow = rayVisibility(hitPos, -dirLight.m_direction, shadowTMax, traceFlags) ? 0.0 : 1.0;
-			}
-		}
-
-		// Do simple light shading
-
 		const vector<T, 3> l = -dirLight.m_direction;
-		const T lambert = max(T(0), dot(l, gbuffer.m_worldNormal));
-		const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
-		color += diffC * dirLight.m_diffuseColor * lambert * shadow;
+		const T lambert = dot(l, gbuffer.m_worldNormal);
+
+		if(lambert > T(0))
+		{
+			F32 shadow = 1.0;
+			if(dirLight.m_shadowCascadeCount)
+			{
+				// Trace shadow
+				Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
+				vv4.xy /= vv4.w;
+				const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
+
+				if(bInsideFrustum && tryShadowmapFirst)
+				{
+					const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
+					const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
+
+					const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
+
+					shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
+				}
+				else
+				{
+					shadow = rayVisibility(hitPos, -dirLight.m_direction, shadowTMax, traceFlags) ? 0.0 : 1.0;
+				}
+			}
+
+			// Simple light shading
+			const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
+			color += diffC * dirLight.m_diffuseColor * lambert * shadow;
+		}
 	}
 
 	// Local lights
@@ -251,6 +254,7 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 
 			const Vec3 frag2Light = light.m_position - hitPos;
 			const Vec3 nFrag2Light = normalize(frag2Light);
+			const T lambert = max(T(0), dot(nFrag2Light, gbuffer.m_worldNormal));
 
 			F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
 			if((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
@@ -258,13 +262,12 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 				attenuation *= computeSpotFactor(nFrag2Light, light.m_outerCos, light.m_innerCos, light.m_direction);
 			}
 
-			if(attenuation > kEpsilonF32 && doLocalLightShadow)
+			if(attenuation > kEpsilonF32 && lambert > kEpsilonF32 && doLocalLightShadow)
 			{
 				const F32 shadowFactor = rayVisibility(hitPos, nFrag2Light, length(frag2Light) - 0.1, traceFlags) ? 0.0 : 1.0;
 				attenuation *= shadowFactor;
 			}
 
-			const T lambert = max(T(0), dot(nFrag2Light, gbuffer.m_worldNormal));
 			const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
 			color += diffC * light.m_diffuseColor * lambert * attenuation * gridEdgesAttenuation;
 			// color += Vec3(0.5, 0, 0);
