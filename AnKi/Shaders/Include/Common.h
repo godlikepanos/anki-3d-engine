@@ -358,6 +358,12 @@ typedef bool Bool;
 				m_row1 = row(c0.y, c1.y, c2.y, c3.y); \
 				m_row2 = row(c0.z, c1.z, c2.z, c3.z); \
 			} \
+			void setColumn(U32 i, column c) \
+			{ \
+				m_row0[i] = c.x; \
+				m_row1[i] = c.y; \
+				m_row2[i] = c.z; \
+			} \
 		}; \
 		column mul(mat m, row v) \
 		{ \

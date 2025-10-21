@@ -10,6 +10,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Include/MeshTypes.h>
+#include <AnKi/Shaders/Include/ParticleTypes.h>
 
 ANKI_BEGIN_NAMESPACE
 
@@ -91,6 +92,30 @@ struct GpuSceneParticleEmitter
 	U32 m_aliveParticleCount;
 };
 static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
+
+/// Contains common properties for all particle emitters.
+struct GpuSceneParticleEmitter2
+{
+	U32 m_particleStateSteamOffsets[(U32)ParticleProperty::kCount]; // Points to arrays of data
+	U32 m_aliveParticleCount; // The number of the alive particles
+	U32 m_aliveParticleIndicesOffset; // Points to arrays of indices of the alive particles. Used when rendering
+	U32 m_particleCount; // The total number of particles
+
+	F32 m_emissionPeriod; // How often the emitter emits new particles. In secs. Required
+	F32 m_timeLeftForNextEmission;
+	U32 m_particlesPerEmission;
+	U32 m_particleEmitterPropertiesOffset; // Points to a AnKiParticleEmitterProperties struct that is located in the GPU scene
+
+	Vec3 m_particleAabbMin;
+	U32 m_renderableIndex;
+
+	Vec3 m_particleAabbMax;
+	U32 m_worldTransformsIndex;
+
+	U32 m_boundingVolumeOffset; // Points to its GpuSceneRenderableBoundingVolume. It's an offset because there are many arrays with bvolumes.
+	U32 m_padding[3];
+};
+static_assert(sizeof(GpuSceneParticleEmitter2) % sizeof(Vec4) == 0);
 
 enum class GpuSceneLightFlag : U32
 {

@@ -9,59 +9,63 @@
 
 ANKI_BEGIN_NAMESPACE
 
-// Particle emitter properties
-struct GpuParticleEmitterProperties
+/// Some data that are used temporarely by a simulation.
+struct ParticleSimulationScratch
 {
-	Vec3 m_minGravity;
-	F32 m_minMass;
+	IVec3 m_aabbMin; // U32 because of atomics. In cm
+	U32 m_threadgroupCount;
 
-	Vec3 m_maxGravity;
-	F32 m_maxMass;
-
-	Vec3 m_minForce;
-	F32 m_minLife;
-
-	Vec3 m_maxForce;
-	F32 m_maxLife;
-
-	Vec3 m_minStartingPosition;
-	F32 m_padding0;
-
-	Vec3 m_maxStartingPosition;
-	U32 m_particleCount;
+	IVec3 m_aabbMax; // U32 because of atomics. In cm
+	U32 m_emittedParticleCount;
 };
 
-// GPU particle state
-struct GpuParticle
-{
-	Vec3 m_oldWorldPosition;
-	F32 m_mass;
-
-	Vec3 m_newWorldPosition;
-	F32 m_life;
-
-	Vec3 m_acceleration;
-	F32 m_startingLife; // The original max life
-
-	Vec3 m_velocity;
-	F32 m_padding0;
-};
-
-struct GpuParticleSimulationState
+/// Constants used in the simulation.
+struct ParticleSimulationConstants
 {
 	Mat4 m_viewProjMat;
 
+	Mat4 m_invertedViewProjMat;
+
 	Vec4 m_unprojectionParams;
 
-	Vec2 m_padding0;
-	U32 m_randomIndex;
+	U32 m_randomNumber;
 	F32 m_dt;
-
-	Vec3 m_emitterPosition;
-	F32 m_padding1;
-
-	Mat3x4 m_emitterRotation;
-	Mat3x4 m_invViewRotation;
+	U32 m_gpuSceneParticleEmitterIndex;
+	U32 m_padding0;
 };
+
+/// The various properties of a GPU particle.
+enum class ParticleProperty
+{
+	kVelocity, // Vec3
+	kLife, // F32
+	kDeathTime, // F32
+	kPosition, // Vec3
+	kScale, // Vec3
+	kRotation, // Quat: 4xF32
+	kPreviousPosition, // Vec3
+	kPreviousRotation, // Quat: 4xF32
+	kPreviousScale, // Vec3
+	kMass, // F32
+	kUserDefined0, // 4x32bit
+	kUserDefined1, // 4x32bit
+	kUserDefined2, // 4x32bit
+
+	kCount,
+	kFirst = 0
+};
+
+// SRV
+#define ANKI_PARTICLE_SIM_DEPTH_BUFFER 0
+#define ANKI_PARTICLE_SIM_NORMAL_BUFFER 1
+#define ANKI_PARTICLE_SIM_GPU_SCENE_TRANSFORMS 2
+
+// UAV
+#define ANKI_PARTICLE_SIM_SCRATCH 0
+#define ANKI_PARTICLE_SIM_GPU_SCENE 1
+#define ANKI_PARTICLE_SIM_GPU_SCENE_PARTICLE_EMITTERS 2
+
+// CBV
+#define ANKI_PARTICLE_SIM_CONSTANTS 0
 
 ANKI_END_NAMESPACE

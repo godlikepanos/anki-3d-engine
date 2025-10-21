@@ -307,7 +307,9 @@ enum class PrimitiveTopology : U8
 	kLineStip,
 	kTriangles,
 	kTriangleStrip,
-	kPatches
+	kPatches,
+	kCount,
+	kFirst = 0
 };
 
 enum class FillMode : U8
@@ -315,7 +317,8 @@ enum class FillMode : U8
 	kPoints,
 	kWireframe,
 	kSolid,
-	kCount
+	kCount,
+	kFirst = 0
 };
 
 enum class FaceSelectionBit : U8

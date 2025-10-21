@@ -1,0 +1,213 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader does a particle simulation for gasses
+
+#pragma anki 16bit
+
+#pragma anki mutator ANKI_WAVE_SIZE 16 32 64
+
+#pragma anki technique comp
+
+#include <AnKi/Shaders/GpuParticlesCommon.hlsl>
+
+#pragma anki struct AnKiParticleEmitterProperties
+
+#pragma anki member F32 m_minParticleLife
+#pragma anki member F32 m_maxParticleLife
+
+#pragma anki member Vec3 m_minGravityDirection
+#pragma anki member Vec3 m_maxGravityDirection
+
+#pragma anki member F32 m_minGravityMagnitude
+#pragma anki member F32 m_maxGravityMagnitude
+
+#pragma anki member F32 m_minMass
+#pragma anki member F32 m_maxMass
+
+#pragma anki member Vec3 m_minInitialSize
+#pragma anki member Vec3 m_maxInitialSize
+#pragma anki member Vec3 m_minFinalSize
+#pragma anki member Vec3 m_maxFinalSize
+
+#pragma anki member F32 m_minInitialAlpha
+#pragma anki member F32 m_maxInitialAlpha
+#pragma anki member F32 m_minFinalAlpha
+#pragma anki member F32 m_maxFinalAlpha
+
+#pragma anki member Vec3 m_minStartingPosition
+#pragma anki member Vec3 m_maxStartingPosition
+
+#pragma anki struct_end
+
+#define GRAVITY_PROP ParticleProperty::kUserDefined0
+#define ALPHA_PROP ParticleProperty::kUserDefined1 // Initial alpha, final alpha, current alpha
+#define SIZE_PROP ParticleProperty::kUserDefined2 // Initial size, final size
+
+void appendAlive(GpuSceneParticleEmitter2 emitter, Vec3 particlePos, F32 particleScale)
+{
+	// Add the alive particle index to the array
+	U32 count;
+	InterlockedAdd(g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_aliveParticleCount, 1, count);
+	g_gpuScene.Store(emitter.m_aliveParticleIndicesOffset + count * sizeof(U32), g_particleIdx);
+
+	// Update the AABB
+	const F32 toCentimeters = 100.0;
+	const IVec3 quatizedPosMin = floor((particlePos + emitter.m_particleAabbMin * particleScale) * toCentimeters);
+	const IVec3 quatizedPosMax = ceil((particlePos + emitter.m_particleAabbMax * particleScale) * toCentimeters);
+	[unroll] for(U32 i = 0; i < 3; ++i)
+	{
+		InterlockedMin(g_scratch[0].m_aabbMin[i], quatizedPosMin[i]);
+		InterlockedMax(g_scratch[0].m_aabbMax[i], quatizedPosMax[i]);
+	}
+}
+
+void simulateParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitter2 emitter, F32 life, F32 death)
+{
+	const F32 m = readProp<F32>(emitter, ParticleProperty::kMass);
+	const Vec3 g = readProp<Vec4>(emitter, GRAVITY_PROP).xyz;
+	const Vec3 F = m * g;
+	Vec3 v = readProp<Vec3>(emitter, ParticleProperty::kVelocity);
+	Vec3 x = readProp<Vec3>(emitter, ParticleProperty::kPosition);
+	const Vec3 prevX = x;
+
+	const F32 lifeFactor = death / life;
+
+	simulatePhysics(F, m, g_consts.m_dt, v, x);
+
+	// Write
+	writeProp(emitter, ParticleProperty::kVelocity, v);
+	writeProp(emitter, ParticleProperty::kLife, life + g_consts.m_dt);
+	writeProp(emitter, ParticleProperty::kPosition, x);
+	writeProp(emitter, ParticleProperty::kPreviousPosition, prevX);
+
+	const Vec4 sizeProp = readProp<Vec4>(emitter, SIZE_PROP);
+	const F32 scale = lerp(sizeProp.x, sizeProp.y, lifeFactor);
+	writeProp(emitter, ParticleProperty::kScale, Vec3(scale, scale, scale));
+
+	const Vec4 alphaProp = readProp<Vec4>(emitter, ALPHA_PROP);
+	const F32 alpha = lerp(alphaProp.x, alphaProp.y, lifeFactor);
+	writeProp(emitter, ALPHA_PROP, Vec4(alphaProp.x, alphaProp.y, alpha, 0.0));
+
+	// Append alive particle
+	appendAlive(emitter, x, scale);
+}
+
+void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf)
+{
+	const Vec3 m = getRandomRange(props.m_minMass, props.m_maxMass);
+
+	Vec3 g = normalize(getRandomRange(props.m_minGravityDirection, props.m_maxGravityDirection));
+	g = mul(emitterTrf, Vec4(g, 0.0));
+	g *= getRandomRange(props.m_minGravityMagnitude, props.m_maxGravityMagnitude);
+
+	const F32 dt = 1.0 / 60;
+	const Vec3 v = g * dt;
+	const Vec3 x = getRandomRange(props.m_minStartingPosition, props.m_maxStartingPosition) + emitterTrf.getTranslationPart().xyz;
+
+	// Store
+	writeProp(emitter, ParticleProperty::kVelocity, v);
+	writeProp(emitter, ParticleProperty::kLife, 0.0);
+	writeProp(emitter, ParticleProperty::kDeathTime, getRandomRange(props.m_minParticleLife, props.m_maxParticleLife));
+	writeProp(emitter, ParticleProperty::kPosition, x);
+	writeProp(emitter, ParticleProperty::kPreviousPosition, x);
+	writeProp(emitter, ParticleProperty::kMass, m);
+	writeProp(emitter, GRAVITY_PROP, Vec4(g, 0.0));
+
+	const F32 initialAlpha = getRandomRange(props.m_minInitialAlpha, props.m_maxInitialAlpha);
+	const F32 finalAlpha = getRandomRange(props.m_minFinalAlpha, props.m_maxFinalAlpha);
+	writeProp(emitter, ALPHA_PROP, Vec4(initialAlpha, finalAlpha, initialAlpha, 0.0));
+
+	const F32 initialSize = getRandomRange(props.m_minInitialSize, props.m_maxInitialSize);
+	const F32 finalSize = getRandomRange(props.m_minFinalSize, props.m_maxFinalSize);
+	writeProp(emitter, SIZE_PROP, Vec4(initialSize, finalSize, 0.0, 0.0));
+
+	writeProp(emitter, ParticleProperty::kScale, Vec3(initialSize, initialSize, initialSize));
+
+	// Append into the alive particles
+	appendAlive(emitter, x, initialSize);
+}
+
+[numthreads(ANKI_WAVE_SIZE, 1, 1)] void main(COMPUTE_ARGS)
+{
+	GpuSceneParticleEmitter2 emitter = g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex];
+	const AnKiParticleEmitterProperties props = loadAnKiParticleEmitterProperties(g_gpuScene, emitter.m_particleEmitterPropertiesOffset);
+	const Mat3x4 emitterTrf = g_gpuSceneTransforms[emitter.m_worldTransformsIndex];
+
+	const Bool canEmitThisFrame = emitter.m_timeLeftForNextEmission - g_consts.m_dt <= 0.0;
+	const U32 particleIdx = svDispatchThreadId.x;
+
+	particlesInitGlobals(particleIdx);
+
+	if(emitter.m_particleCount < g_particleIdx)
+	{
+		const F32 life = readProp<F32>(emitter, ParticleProperty::kLife);
+		const F32 deathTime = readProp<F32>(emitter, ParticleProperty::kDeathTime);
+
+		const Bool alive = life < deathTime;
+		if(alive)
+		{
+			// Simulate the particle
+			simulateParticle(props, emitter, life, deathTime);
+		}
+		else if(canEmitThisFrame)
+		{
+			U32 emittedParticleCount;
+			InterlockedAdd(g_scratch[0].m_emittedParticleCount, 1, emittedParticleCount);
+
+			if(emittedParticleCount < emitter.m_particlesPerEmission)
+			{
+				// Emit new particle
+				initializeParticle(props, emitter, emitterTrf);
+			}
+		}
+	}
+
+	// Sync to make sure all the atomic ops have finished before the following code reads them
+	AllMemoryBarrierWithGroupSync();
+
+	// Check if it's the last threadgroup running
+	if(svGroupIndex == 0)
+	{
+		U32 threadgroupIdx;
+		InterlockedAdd(g_scratch[0].m_threadgroupCount, 1, threadgroupIdx);
+		const U32 threadgroupCount = (emitter.m_particleCount + ANKI_WAVE_SIZE - 1) / ANKI_WAVE_SIZE;
+		const Bool lastThreadExecuting = (threadgroupIdx + 1 == threadgroupCount);
+
+		if(lastThreadExecuting)
+		{
+			// Update the bounding volume of the renderable
+			const F32 toMeters = 1.0 / 100.0;
+			const Vec3 aabbMin = g_scratch[0].m_aabbMin * toMeters;
+			const Vec3 aabbMax = g_scratch[0].m_aabbMax * toMeters;
+
+			const Vec3 center = (aabbMax + aabbMin) / 2.0;
+			const F32 radius = length(aabbMax - center);
+
+			GpuSceneRenderableBoundingVolume bvol = g_gpuScene.Load<GpuSceneRenderableBoundingVolume>(emitter.m_boundingVolumeOffset);
+			bvol.m_aabbMin = aabbMin;
+			bvol.m_aabbMax = aabbMax;
+			bvol.m_sphereRadius = radius;
+
+			g_gpuScene.Store<GpuSceneRenderableBoundingVolume>(emitter.m_boundingVolumeOffset, bvol);
+
+			// Reset the scratch stract
+			g_scratch[0].m_aabbMin = kMaxI32;
+			g_scratch[0].m_aabbMax = kMinI32;
+			g_scratch[0].m_threadgroupCount = 0;
+			g_scratch[0].m_emittedParticleCount = 0;
+
+			// Update the GPU scene emitter
+			if(canEmitThisFrame)
+			{
+				g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_timeLeftForNextEmission = emitter.m_emissionPeriod;
+			}
+			else
+			{
+				g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_timeLeftForNextEmission -= g_consts.m_dt;
+			}
+		}
+	}
+}

@@ -146,7 +146,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	const Vec2 uv = Vec2(pixel) / g_consts.m_renderingSize;
 	const Vec2 ndc = uvToNdc(uv);
 
-	// Unproject the sample in world space
+	// Unproject the sample to world space
 	const Vec4 farWorldPos4 = mul(g_consts.m_invertedViewProjMat, Vec4(ndc, 1.0, 1.0));
 	const Vec3 farWorldPos = farWorldPos4.xyz / farWorldPos4.w;
 

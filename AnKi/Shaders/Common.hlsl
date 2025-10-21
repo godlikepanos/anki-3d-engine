@@ -47,6 +47,8 @@ RF32 getEpsilon()
 #endif
 
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
+constexpr I32 kMinI32 = -2147483648;
+constexpr I32 kMaxI32 = 2147483647;
 constexpr F32 kMaxF32 = 3.402823e+38;
 constexpr F32 kMinF32 = -3.402823e+38;
 #if !ANKI_SUPPORTS_16BIT_TYPES
