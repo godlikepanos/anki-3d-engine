@@ -38,8 +38,8 @@ struct ParticleSimulationConstants
 enum class ParticleProperty
 {
 	kVelocity, // Vec3
-	kLife, // F32
-	kDeathTime, // F32
+	kLifeFactor, // F32. 0.0: just born, 1.0 dead
+	kMaxLife, // F32
 	kPosition, // Vec3
 	kScale, // Vec3
 	kRotation, // Quat: 4xF32

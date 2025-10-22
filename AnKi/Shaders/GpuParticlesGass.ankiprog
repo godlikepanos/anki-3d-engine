@@ -64,7 +64,7 @@ void appendAlive(GpuSceneParticleEmitter2 emitter, Vec3 particlePos, F32 particl
 	}
 }
 
-void simulateParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitter2 emitter, F32 life, F32 death)
+void simulateParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitter2 emitter, F32 lifeFactor)
 {
 	const F32 m = readProp<F32>(emitter, ParticleProperty::kMass);
 	const Vec3 g = readProp<Vec4>(emitter, GRAVITY_PROP).xyz;
@@ -73,13 +73,12 @@ void simulateParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitt
 	Vec3 x = readProp<Vec3>(emitter, ParticleProperty::kPosition);
 	const Vec3 prevX = x;
 
-	const F32 lifeFactor = death / life;
-
 	simulatePhysics(F, m, g_consts.m_dt, v, x);
 
 	// Write
 	writeProp(emitter, ParticleProperty::kVelocity, v);
-	writeProp(emitter, ParticleProperty::kLife, life + g_consts.m_dt);
+	const F32 maxLife = readProp<F32>(emitter, ParticleProperty::kMaxLife);
+	writeProp(emitter, ParticleProperty::kLifeFactor, lifeFactor + g_consts.m_dt / maxLife);
 	writeProp(emitter, ParticleProperty::kPosition, x);
 	writeProp(emitter, ParticleProperty::kPreviousPosition, prevX);
 
@@ -95,7 +94,7 @@ void simulateParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitt
 	appendAlive(emitter, x, scale);
 }
 
-void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf)
+void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf, Bool makeAlive)
 {
 	const Vec3 m = getRandomRange(props.m_minMass, props.m_maxMass);
 
@@ -109,8 +108,8 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 
 	// Store
 	writeProp(emitter, ParticleProperty::kVelocity, v);
-	writeProp(emitter, ParticleProperty::kLife, 0.0);
-	writeProp(emitter, ParticleProperty::kDeathTime, getRandomRange(props.m_minParticleLife, props.m_maxParticleLife));
+	writeProp(emitter, ParticleProperty::kLifeFactor, makeAlive ? 0.0 : 1.0);
+	writeProp(emitter, ParticleProperty::kMaxLife, getRandomRange(props.m_minParticleLife, props.m_maxParticleLife));
 	writeProp(emitter, ParticleProperty::kPosition, x);
 	writeProp(emitter, ParticleProperty::kPreviousPosition, x);
 	writeProp(emitter, ParticleProperty::kMass, m);
@@ -132,36 +131,58 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 
 [numthreads(ANKI_WAVE_SIZE, 1, 1)] void main(COMPUTE_ARGS)
 {
+	particlesInitGlobals(svDispatchThreadId.x);
+
 	GpuSceneParticleEmitter2 emitter = g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex];
 	const AnKiParticleEmitterProperties props = loadAnKiParticleEmitterProperties(g_gpuScene, emitter.m_particleEmitterPropertiesOffset);
 	const Mat3x4 emitterTrf = g_gpuSceneTransforms[emitter.m_worldTransformsIndex];
 
+	const Bool reinit = emitter.m_reinitializeOnNextUpdate;
 	const Bool canEmitThisFrame = emitter.m_timeLeftForNextEmission - g_consts.m_dt <= 0.0;
-	const U32 particleIdx = svDispatchThreadId.x;
-
-	particlesInitGlobals(particleIdx);
 
 	if(emitter.m_particleCount < g_particleIdx)
 	{
-		const F32 life = readProp<F32>(emitter, ParticleProperty::kLife);
-		const F32 deathTime = readProp<F32>(emitter, ParticleProperty::kDeathTime);
+		// Decide what to do
+		Bool init = false;
+		Bool makeAlive = false;
+		Bool simulate = false;
+		F32 lifeFactor = 1.0;
 
-		const Bool alive = life < deathTime;
-		if(alive)
-		{
-			// Simulate the particle
-			simulateParticle(props, emitter, life, deathTime);
-		}
-		else if(canEmitThisFrame)
+		if(reinit)
 		{
 			U32 emittedParticleCount;
 			InterlockedAdd(g_scratch[0].m_emittedParticleCount, 1, emittedParticleCount);
 
-			if(emittedParticleCount < emitter.m_particlesPerEmission)
+			init = true;
+			makeAlive = emittedParticleCount < emitter.m_particlesPerEmission;
+		}
+		else
+		{
+			lifeFactor = readProp<F32>(emitter, ParticleProperty::kLifeFactor);
+			const Bool alive = lifeFactor < 1.0;
+
+			if(alive)
 			{
-				// Emit new particle
-				initializeParticle(props, emitter, emitterTrf);
+				simulate = true;
 			}
+			else if(canEmitThisFrame)
+			{
+				U32 emittedParticleCount;
+				InterlockedAdd(g_scratch[0].m_emittedParticleCount, 1, emittedParticleCount);
+
+				init = emittedParticleCount < emitter.m_particlesPerEmission;
+				makeAlive = true;
+			}
+		}
+
+		// Do the actual work
+		if(simulate)
+		{
+			simulateParticle(props, emitter, lifeFactor);
+		}
+		else if(init)
+		{
+			initializeParticle(props, emitter, emitterTrf, makeAlive);
 		}
 	}
 
@@ -207,6 +228,11 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 			else
 			{
 				g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_timeLeftForNextEmission -= g_consts.m_dt;
+			}
+
+			if(reinit)
+			{
+				g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_reinitializeOnNextUpdate = 0;
 			}
 		}
 	}
