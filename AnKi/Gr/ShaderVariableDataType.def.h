@@ -48,6 +48,8 @@ ANKI_SVDT_MACRO(Vec4, F32, 4, 1, false)
 ANKI_SVDT_MACRO(Mat3, F32, 3, 3, false)
 ANKI_SVDT_MACRO(Mat3x4, F32, 3, 4, false)
 ANKI_SVDT_MACRO(Mat4, F32, 4, 4, false)
+
+#	undef ANKI_SVDT_MACRO
 #endif
 
 // ANKI_SVDT_MACRO_OPAQUE(const, varType)
@@ -69,4 +71,6 @@ ANKI_SVDT_MACRO_OPAQUE(ImageCube, imageCube)
 ANKI_SVDT_MACRO_OPAQUE(ImageCubeArray, imageCubeArray)
 
 ANKI_SVDT_MACRO_OPAQUE(Sampler, sampler)
+
+#	undef ANKI_SVDT_MACRO_OPAQUE
 #endif

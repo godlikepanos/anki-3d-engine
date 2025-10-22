@@ -14,8 +14,6 @@ inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) {ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
-#undef ANKI_SVDT_MACRO_OPAQUE
 };
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)

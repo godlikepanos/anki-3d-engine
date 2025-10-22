@@ -607,8 +607,6 @@ enum class ShaderVariableDataType : U8
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) k##type,
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) k##constant,
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
-#undef ANKI_SVDT_MACRO_OPAQUE
 
 	// Derived
 	kCount,

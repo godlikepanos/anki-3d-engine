@@ -13,34 +13,34 @@
 
 #include <AnKi/Shaders/GpuParticlesCommon.hlsl>
 
+// clang-format off
 #pragma anki struct AnKiParticleEmitterProperties
+#	pragma anki member F32 m_minParticleLife 1.0
+#	pragma anki member F32 m_maxParticleLife 1.0
 
-#pragma anki member F32 m_minParticleLife
-#pragma anki member F32 m_maxParticleLife
+#	pragma anki member Vec3 m_minGravityDirection 0.0 -1.0 0.0
+#	pragma anki member Vec3 m_maxGravityDirection 0.0 -1.0 0.0
 
-#pragma anki member Vec3 m_minGravityDirection
-#pragma anki member Vec3 m_maxGravityDirection
+#	pragma anki member F32 m_minGravityMagnitude 9.8
+#	pragma anki member F32 m_maxGravityMagnitude 9.8
 
-#pragma anki member F32 m_minGravityMagnitude
-#pragma anki member F32 m_maxGravityMagnitude
+#	pragma anki member F32 m_minMass 1.0
+#	pragma anki member F32 m_maxMass 1.0
 
-#pragma anki member F32 m_minMass
-#pragma anki member F32 m_maxMass
+#	pragma anki member F32 m_minInitialSize 1.0
+#	pragma anki member F32 m_maxInitialSize 1.0
+#	pragma anki member F32 m_minFinalSize 1.0
+#	pragma anki member F32 m_maxFinalSize 1.0
 
-#pragma anki member Vec3 m_minInitialSize
-#pragma anki member Vec3 m_maxInitialSize
-#pragma anki member Vec3 m_minFinalSize
-#pragma anki member Vec3 m_maxFinalSize
+#	pragma anki member F32 m_minInitialAlpha 1.0
+#	pragma anki member F32 m_maxInitialAlpha 1.0
+#	pragma anki member F32 m_minFinalAlpha 1.0
+#	pragma anki member F32 m_maxFinalAlpha 1.0
 
-#pragma anki member F32 m_minInitialAlpha
-#pragma anki member F32 m_maxInitialAlpha
-#pragma anki member F32 m_minFinalAlpha
-#pragma anki member F32 m_maxFinalAlpha
-
-#pragma anki member Vec3 m_minStartingPosition
-#pragma anki member Vec3 m_maxStartingPosition
-
+#	pragma anki member Vec3 m_minStartingPosition 0.0 0.0 0.0
+#	pragma anki member Vec3 m_maxStartingPosition 0.0 0.0 0.0
 #pragma anki struct_end
+// clang-format on
 
 #define GRAVITY_PROP ParticleProperty::kUserDefined0
 #define ALPHA_PROP ParticleProperty::kUserDefined1 // Initial alpha, final alpha, current alpha

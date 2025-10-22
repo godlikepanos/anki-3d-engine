@@ -95,7 +95,6 @@ public:
 		static constexpr Bool kValue = rowCount * columnCount > 4; \
 	};
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
 
 template<typename T, Bool isMatrix = IsShaderVarDataTypeAMatrix<T>::kValue>
 class WriteShaderBlockMemory
@@ -130,7 +129,6 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 		WriteShaderBlockMemory<type>()(varBlkInfo, elements, elementsCount, buffBegin, buffEnd); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
 
 	default:
 		ANKI_ASSERT(0);

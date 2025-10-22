@@ -33,6 +33,7 @@ public:
 	ShaderCompilerString m_name;
 	ShaderVariableDataType m_type;
 	U32 m_offset = kMaxU32;
+	Array<U8, 16> m_defaultValues = {};
 };
 
 /// @memberof ShaderParser
@@ -65,7 +66,7 @@ public:
 /// #pragma anki extra_compiler_args ARG0 [ARG1 [ARG2...]]
 ///
 /// #pragma anki struct NAME
-/// #	pragma anki member TYPE NAME
+/// #	pragma anki member TYPE NAME [DEFAULT_VALUE0 [DEFAULT_VALUE1 ...]]
 /// 	...
 /// #pragma anki struct_end
 ///

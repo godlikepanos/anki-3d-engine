@@ -556,7 +556,7 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 {
 	ANKI_ASSERT(m_insideStruct);
 	const U tokenCount = U(end - begin);
-	if(tokenCount != 2)
+	if(tokenCount < 2)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
@@ -596,6 +596,45 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 	// Name
 	++begin;
 	member.m_name = *begin;
+
+	// Default values
+	++begin;
+	if(begin != end)
+	{
+		const ShaderVariableDataTypeInfo& typeInfo = getShaderVariableDataTypeInfo(member.m_type);
+		if(U32(end - begin) != typeInfo.m_size / sizeof(U32))
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Incorrect number of initial values");
+		}
+
+		U32 offset = 0;
+		while(begin != end)
+		{
+			F32 f;
+			U32 u;
+			if(typeInfo.m_isIntegral)
+			{
+				if(begin->toNumber(u))
+				{
+					ANKI_PP_ERROR_MALFORMED_MSG("Type conversion failed");
+				}
+				memcpy(member.m_defaultValues.getBegin() + offset, &u, sizeof(u));
+				offset += sizeof(u);
+			}
+			else
+			{
+				if(begin->toNumber(f))
+				{
+					ANKI_PP_ERROR_MALFORMED_MSG("Type conversion failed");
+				}
+				memcpy(member.m_defaultValues.getBegin() + offset, &f, sizeof(f));
+				offset += sizeof(f);
+			}
+
+			++begin;
+		}
+		ANKI_ASSERT(offset == typeInfo.m_size);
+	}
 
 	// Rest
 	member.m_offset = (structure.m_members.getSize())

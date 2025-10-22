@@ -11,6 +11,7 @@
 				<member name="m_name" type="Char" array_size="kMaxShaderBinaryNameLength + 1" constructor="= {}" />
 				<member name="m_offset" type="U32" constructor="= kMaxU32" />
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::kNone" />
+				<member name="m_defaultValues" type="U8" array_size="16" constructor="= {}" />
 			</members>
 		</class>
 
@@ -21,7 +22,7 @@
 				<member name="m_size" type="U32" />
 			</members>
 		</class>
-		
+
 		<class name="ShaderBinaryCodeBlock" comment="Contains the IR (SPIR-V or DXIL)">
 			<members>
 				<member name="m_binary" type="WeakArray&lt;U8&gt;" />
@@ -49,7 +50,7 @@
 				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::kCount)" constructor="= {}" comment="Points to ShaderBinary::m_codeBlocks. If the shader type is not present the value is kMaxU32" />
 			</members>
 		</class>
-		
+
 		<class name="ShaderBinaryVariant">
 			<members>
 				<member name="m_techniqueCodeBlocks" type="WeakArray&lt;ShaderBinaryTechniqueCodeBlocks&gt;" comment="One entry per technique" />

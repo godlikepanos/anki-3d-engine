@@ -7,12 +7,7 @@
 
 #include <AnKi/Ui.h>
 #include <AnKi/Editor/ImageViewerUi.h>
-
-namespace std {
-namespace filesystem {
-class path;
-}
-} // namespace std
+#include <filesystem>
 
 namespace anki {
 

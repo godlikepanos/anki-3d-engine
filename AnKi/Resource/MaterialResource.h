@@ -99,7 +99,6 @@ protected:
 	{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) type ANKI_CONCATENATE(m_, type);
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
 	};
 
 	ImageResourcePtr m_image;
@@ -114,11 +113,8 @@ protected:
 		ANKI_ASSERT(m_dataType == ShaderVariableDataType::k##type); \
 		return member; \
 	}
-
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type))
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
-
 #undef ANKI_SPECIALIZE_GET_VALUE
 
 template<>

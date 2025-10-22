@@ -20,6 +20,7 @@ public:
 	Array<Char, kMaxShaderBinaryNameLength + 1> m_name = {};
 	U32 m_offset = kMaxU32;
 	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
+	Array<U8, 16> m_defaultValues = {};
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -27,6 +28,7 @@ public:
 		s.doArray("m_name", offsetof(ShaderBinaryStructMember, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_offset", offsetof(ShaderBinaryStructMember, m_offset), self.m_offset);
 		s.doValue("m_type", offsetof(ShaderBinaryStructMember, m_type), self.m_type);
+		s.doArray("m_defaultValues", offsetof(ShaderBinaryStructMember, m_defaultValues), &self.m_defaultValues[0], self.m_defaultValues.getSize());
 	}
 
 	template<typename TDeserializer>
