@@ -55,6 +55,12 @@ enum class ParticleProperty
 	kFirst = 0
 };
 
+#if defined(__cplusplus)
+inline constexpr Array<U32, U32(ParticleProperty::kCount)> kParticlePropertySize = {
+	sizeof(Vec3), sizeof(F32),  sizeof(F32), sizeof(Vec3), sizeof(Vec3), sizeof(Vec4), sizeof(Vec3),
+	sizeof(Vec4), sizeof(Vec3), sizeof(F32), sizeof(Vec4), sizeof(Vec4), sizeof(Vec4)};
+#endif
+
 // SRV
 #define ANKI_PARTICLE_SIM_DEPTH_BUFFER 0
 #define ANKI_PARTICLE_SIM_NORMAL_BUFFER 1

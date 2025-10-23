@@ -19,6 +19,8 @@ ANKI_CAT_TYPE(MeshLod, ANKI_MESH_ARR, 0, g_cvarSceneMinGpuSceneMeshes)
 ANKI_CAT_SEPARATOR
 ANKI_CAT_TYPE(ParticleEmitter, GpuSceneParticleEmitter, 0, g_cvarSceneMinGpuSceneParticleEmitters)
 ANKI_CAT_SEPARATOR
+ANKI_CAT_TYPE(ParticleEmitter2, GpuSceneParticleEmitter2, 0, g_cvarSceneMinGpuSceneParticleEmitters)
+ANKI_CAT_SEPARATOR
 ANKI_CAT_TYPE(LightVisibleRenderablesHash, GpuSceneLightVisibleRenderablesHash, 0, g_cvarSceneMinGpuSceneLights)
 ANKI_CAT_SEPARATOR
 ANKI_CAT_TYPE(Light, GpuSceneLight, 0, g_cvarSceneMinGpuSceneLights)

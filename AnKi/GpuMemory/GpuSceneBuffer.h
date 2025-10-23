@@ -45,6 +45,11 @@ public:
 		return *this;
 	}
 
+	explicit operator Bool() const
+	{
+		return isValid();
+	}
+
 	Bool isValid() const
 	{
 		return m_token.m_offset != kMaxPtrSize;

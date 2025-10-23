@@ -107,14 +107,13 @@ struct GpuSceneParticleEmitter2
 	U32 m_particleEmitterPropertiesOffset; // Points to a AnKiParticleEmitterProperties struct that is located in the GPU scene
 
 	Vec3 m_particleAabbMin;
-	U32 m_renderableIndex;
+	U32 m_reinitializeOnNextUpdate ANKI_CPP_CODE(= 1); // Re-init all particles on next update
 
 	Vec3 m_particleAabbMax;
 	U32 m_worldTransformsIndex;
 
 	U32 m_boundingVolumeOffset; // Points to its GpuSceneRenderableBoundingVolume. It's an offset because there are many arrays with bvolumes.
-	U32 m_reinitializeOnNextUpdate ANKI_CPP_CODE(= 1); // Re-init all particles on next update
-	U32 m_padding[2];
+	U32 m_padding[3];
 };
 static_assert(sizeof(GpuSceneParticleEmitter2) % sizeof(Vec4) == 0);
 

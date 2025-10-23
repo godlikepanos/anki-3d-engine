@@ -158,6 +158,38 @@ public:
 protected:
 	U32 regenerateUuid();
 
+	// A convenience function for components to keep tabs on other components of a SceneNode
+	template<typename TComponent>
+	static void bookkeepComponent(SceneDynamicArray<TComponent*>& arr, SceneComponent* other, Bool added, Bool& firstDirty)
+	{
+		ANKI_ASSERT(other);
+		if(added)
+		{
+			for(auto it = arr.getBegin(); it != arr.getEnd(); ++it)
+			{
+				ANKI_ASSERT(*it != other);
+			}
+
+			arr.emplaceBack(static_cast<TComponent*>(other));
+			firstDirty = arr.getSize() == 1;
+		}
+		else
+		{
+			Bool found = false;
+			for(auto it = arr.getBegin(); it != arr.getEnd(); ++it)
+			{
+				if(*it == other)
+				{
+					firstDirty = it == arr.getBegin();
+					arr.erase(it);
+					found = true;
+					break;
+				}
+			}
+			ANKI_ASSERT(found);
+		}
+	}
+
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 	U32 m_uuid = 0;

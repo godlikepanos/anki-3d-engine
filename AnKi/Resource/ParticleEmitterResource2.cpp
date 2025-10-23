@@ -39,6 +39,31 @@ Error ParticleEmitterResource2::load(const ResourceFilename& filename, Bool asyn
 	ANKI_CHECK(rootEl.getChildElement("shaderProgram", shaderProgramEl));
 	ANKI_CHECK(parseShaderProgram(shaderProgramEl, async));
 
+	// <particleCount>
+	XmlElement particleCountEl;
+	ANKI_CHECK(rootEl.getChildElement("particleCount", particleCountEl));
+	ANKI_CHECK(particleCountEl.getAttributeNumber("value", m_commonProps.m_particleCount));
+	if(m_commonProps.m_particleCount == 0 || m_commonProps.m_particleCount > kMaxU16) // kMaxU16 is arbitary
+	{
+		ANKI_RESOURCE_LOGE("Can't accept particleCount of: %u", m_commonProps.m_particleCount);
+		return Error::kUserData;
+	}
+
+	// <emissionPeriod>
+	XmlElement emissionPeriodEl;
+	ANKI_CHECK(rootEl.getChildElement("emissionPeriod", emissionPeriodEl));
+	ANKI_CHECK(emissionPeriodEl.getAttributeNumber("value", m_commonProps.m_emissionPeriod));
+
+	// <particlesPerEmission>
+	XmlElement particlesPerEmissionEl;
+	ANKI_CHECK(rootEl.getChildElement("particlesPerEmission", particlesPerEmissionEl));
+	ANKI_CHECK(particlesPerEmissionEl.getAttributeNumber("value", m_commonProps.m_particlesPerEmission));
+	if(m_commonProps.m_particlesPerEmission == 0)
+	{
+		ANKI_RESOURCE_LOGE("Can't accept particlesPerEmission of: %u", m_commonProps.m_particlesPerEmission);
+		return Error::kUserData;
+	}
+
 	// Inputs
 	ANKI_CHECK(rootEl.getChildElementOptional("inputs", el));
 	if(el)

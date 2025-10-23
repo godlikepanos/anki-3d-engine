@@ -50,6 +50,11 @@ public:
 		return *this;
 	}
 
+	explicit operator Bool() const
+	{
+		return isValid();
+	}
+
 	U32 getIndex() const
 	{
 		ANKI_ASSERT(isValid());
