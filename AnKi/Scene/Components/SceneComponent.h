@@ -163,6 +163,7 @@ protected:
 	static void bookkeepComponent(SceneDynamicArray<TComponent*>& arr, SceneComponent* other, Bool added, Bool& firstDirty)
 	{
 		ANKI_ASSERT(other);
+		ANKI_ASSERT(other->getType() == TComponent::kClassType);
 		if(added)
 		{
 			for(auto it = arr.getBegin(); it != arr.getEnd(); ++it)

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 
 namespace anki {
 
@@ -21,11 +22,22 @@ public:
 	MoveComponent(SceneNode* node)
 		: SceneComponent(node, kClassType)
 	{
+		m_gpuSceneTransforms.allocate();
 	}
 
-	~MoveComponent() = default;
+	~MoveComponent()
+	{
+		m_gpuSceneTransforms.free();
+	}
+
+	ANKI_INTERNAL const GpuSceneArrays::Transform::Allocation& getGpuSceneTransforms() const
+	{
+		return m_gpuSceneTransforms;
+	}
 
 private:
+	GpuSceneArrays::Transform::Allocation m_gpuSceneTransforms;
+
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}

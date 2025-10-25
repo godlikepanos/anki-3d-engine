@@ -112,14 +112,14 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 
 	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, "SceneGraphFramePool");
 
+#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
+#include <AnKi/Scene/GpuSceneArrays.def.h>
+
 	// Init the default main camera
 	m_defaultMainCam = newSceneNode<SceneNode>("mainCamera");
 	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
-
-#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
-#include <AnKi/Scene/GpuSceneArrays.def.h>
 
 	RenderStateBucketContainer::allocateSingleton();
 

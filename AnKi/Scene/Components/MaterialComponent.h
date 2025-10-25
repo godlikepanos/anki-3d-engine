@@ -44,22 +44,22 @@ public:
 		return m_submeshIdx;
 	}
 
+	Bool isValid() const;
+
 private:
-	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
 	GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
 	GpuSceneArrays::RenderableBoundingVolumeGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
 	GpuSceneArrays::RenderableBoundingVolumeDepth::Allocation m_gpuSceneRenderableAabbDepth;
 	GpuSceneArrays::RenderableBoundingVolumeForward::Allocation m_gpuSceneRenderableAabbForward;
 	GpuSceneArrays::RenderableBoundingVolumeRt::Allocation m_gpuSceneRenderableAabbRt;
-	GpuSceneArrays::Transform::Allocation m_gpuSceneTransforms;
 	GpuSceneBufferAllocation m_gpuSceneConstants;
 
 	Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBucketIndices;
 
 	MaterialResourcePtr m_resource;
 
-	SkinComponent* m_skinComponent = nullptr;
-	MeshComponent* m_meshComponent = nullptr;
+	SceneDynamicArray<SkinComponent*> m_skinComponents;
+	SceneDynamicArray<MeshComponent*> m_meshComponents;
 
 	U32 m_submeshIdx = 0;
 

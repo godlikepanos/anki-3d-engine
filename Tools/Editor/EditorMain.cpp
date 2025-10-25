@@ -137,7 +137,12 @@ public:
 				mover->rotateLocalY(-kRotateAngle);
 			}
 
-			const F32 moveDistance = 0.1f;
+			F32 moveDistance = 0.1f;
+			if(in.getKey(KeyCode::kLeftShift) > 0)
+			{
+				moveDistance *= 4.0f;
+			}
+
 			if(in.getKey(KeyCode::kA) > 0)
 			{
 				mover->moveLocalX(-moveDistance);

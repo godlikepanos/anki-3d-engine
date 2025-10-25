@@ -6,6 +6,7 @@
 #include <AnKi/Scene/Components/MaterialComponent.h>
 #include <AnKi/Scene/Components/SkinComponent.h>
 #include <AnKi/Scene/Components/MeshComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -17,31 +18,26 @@ namespace anki {
 MaterialComponent::MaterialComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 {
-	m_gpuSceneTransforms.allocate();
 	m_gpuSceneRenderable.allocate();
-	m_gpuSceneMeshLods.allocate();
 }
 
 MaterialComponent::~MaterialComponent()
 {
-	m_gpuSceneTransforms.free();
 	m_gpuSceneRenderable.free();
-	m_gpuSceneMeshLods.free();
 }
 
 MaterialComponent& MaterialComponent::setMaterialFilename(CString fname)
 {
 	MaterialResourcePtr newRsrc;
-	const Error err = ResourceManager::getSingleton().loadResource(fname, newRsrc);
-	if(err)
+	if(ResourceManager::getSingleton().loadResource(fname, newRsrc))
 	{
 		ANKI_SCENE_LOGE("Failed to load resource: %s", fname.cstr());
 	}
 	else
 	{
+		m_resourceDirty = !m_resource || (m_resource->getUuid() != newRsrc->getUuid());
 		m_resource = std::move(newRsrc);
 		m_castsShadow = m_resource->castsShadow();
-		m_resourceDirty = true;
 	}
 
 	return *this;
@@ -74,34 +70,18 @@ void MaterialComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bo
 {
 	ANKI_ASSERT(other);
 
-	if(other->getType() == SceneComponentType::kSkin)
-	{
-		const Bool alreadyHasSkinComponent = m_skinComponent != nullptr;
-		if(added && !alreadyHasSkinComponent)
-		{
-			m_skinComponent = static_cast<SkinComponent*>(other);
-			m_skinDirty = true;
-		}
-		else if(!added && other == m_skinComponent)
-		{
-			m_skinComponent = nullptr;
-			m_skinDirty = true;
-		}
-	}
-
 	if(other->getType() == SceneComponentType::kMesh)
 	{
-		const Bool alreadyHasMeshComponent = m_meshComponent != nullptr;
-		if(added && !alreadyHasMeshComponent)
-		{
-			m_meshComponent = static_cast<MeshComponent*>(other);
-			m_meshComponentDirty = true;
-		}
-		else if(!added && other == m_meshComponent)
-		{
-			m_meshComponent = nullptr;
-			m_meshComponentDirty = true;
-		}
+		Bool dirty;
+		bookkeepComponent(m_meshComponents, other, added, dirty);
+		m_meshComponentDirty = dirty;
+	}
+
+	if(other->getType() == SceneComponentType::kSkin)
+	{
+		Bool dirty;
+		bookkeepComponent(m_skinComponents, other, added, dirty);
+		m_skinDirty = dirty;
 	}
 }
 
@@ -109,32 +89,30 @@ Aabb MaterialComponent::computeAabb(U32 submeshIndex, const SceneNode& node) con
 {
 	U32 firstIndex, indexCount, firstMeshlet, meshletCount;
 	Aabb aabbLocal;
-	m_meshComponent->getMeshResource().getSubMeshInfo(0, submeshIndex, firstIndex, indexCount, firstMeshlet, meshletCount, aabbLocal);
+	m_meshComponents[0]->getMeshResource().getSubMeshInfo(0, submeshIndex, firstIndex, indexCount, firstMeshlet, meshletCount, aabbLocal);
 
-	if(m_skinComponent)
+	if(m_skinComponents.getSize() && m_skinComponents[0]->isValid())
 	{
-		aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
+		aabbLocal = m_skinComponents[0]->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
 	}
 
 	const Aabb aabbWorld = aabbLocal.getTransformed(node.getWorldTransform());
 	return aabbWorld;
 }
 
+Bool MaterialComponent::isValid() const
+{
+	Bool valid = !!m_resource && m_resource->isLoaded() && m_meshComponents.getSize() && m_meshComponents[0]->isValid();
+	if(m_skinComponents.getSize())
+	{
+		valid = valid && m_skinComponents[0]->isValid();
+	}
+	return valid;
+}
+
 void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	const Bool mtlUpdated = m_resourceDirty;
-	const Bool meshUpdated = m_meshComponentDirty || (m_meshComponent && m_meshComponent->updatedThisFrame());
-	const Bool moved = info.m_node->movedThisFrame() || m_firstTimeUpdate;
-	const Bool movedLastFrame = m_movedLastFrame || m_firstTimeUpdate;
-	const Bool skinUpdated = m_skinDirty;
-	const Bool submeshUpdated = m_submeshIdxDirty;
-	const Bool hasSkin = m_skinComponent && m_skinComponent->isEnabled();
-	const Bool isValid = m_resource.isCreated() && m_resource->isLoaded() && m_meshComponent && m_meshComponent->isValid()
-						 && m_meshComponent->getMeshResource().isLoaded();
-
-	updated = mtlUpdated || meshUpdated || moved || skinUpdated || submeshUpdated;
-
-	if(!isValid) [[unlikely]]
+	if(!isValid()) [[unlikely]]
 	{
 		m_gpuSceneRenderableAabbGBuffer.free();
 		m_gpuSceneRenderableAabbDepth.free();
@@ -151,6 +129,16 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	// From now on the component is considered valid
 
+	const Bool mtlResourceChanged = m_resourceDirty;
+	const Bool meshChanged = m_meshComponentDirty || m_meshComponents[0]->gpuSceneReallocationsThisFrame();
+	const Bool moved = info.m_node->movedThisFrame() || m_firstTimeUpdate;
+	const Bool movedLastFrame = m_movedLastFrame || m_firstTimeUpdate;
+	const Bool hasSkin = m_skinComponents.getSize();
+	const Bool skinChanged = m_skinDirty || (hasSkin && m_skinComponents[0]->gpuSceneReallocationsThisFrame());
+	const Bool submeshChanged = m_submeshIdxDirty;
+
+	updated = mtlResourceChanged || meshChanged || moved || skinChanged || submeshChanged;
+
 	m_resourceDirty = false;
 	m_firstTimeUpdate = false;
 	m_meshComponentDirty = false;
@@ -159,12 +147,12 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_submeshIdxDirty = false;
 
 	const MaterialResource& mtl = *m_resource;
-	const MeshResource& mesh = m_meshComponent->getMeshResource();
+	const MeshResource& mesh = m_meshComponents[0]->getMeshResource();
 	const U32 submeshIdx = min(mesh.getSubMeshCount() - 1, m_submeshIdx);
 
 	// Extract the diffuse color
 	Vec3 averageDiffuse(0.0f);
-	if(mtlUpdated)
+	if(mtlResourceChanged)
 	{
 		const MaterialVariable* diffuseRelatedMtlVar = nullptr;
 
@@ -212,102 +200,17 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 	}
 
-	// Upload transforms
-	if(moved || movedLastFrame) [[unlikely]]
-	{
-		Array<Mat3x4, 2> trfs;
-		trfs[0] = Mat3x4(info.m_node->getWorldTransform());
-		trfs[1] = Mat3x4(info.m_node->getPreviousWorldTransform());
-		m_gpuSceneTransforms.uploadToGpuScene(trfs);
-	}
-
-	// Update mesh lods
-	const Bool meshLodsNeedUpdate = meshUpdated || submeshUpdated;
-	if(meshLodsNeedUpdate) [[unlikely]]
-	{
-		Array<GpuSceneMeshLod, kMaxLodCount> meshLods;
-
-		for(U32 l = 0; l < mesh.getLodCount(); ++l)
-		{
-			GpuSceneMeshLod& meshLod = meshLods[l];
-			meshLod = {};
-			meshLod.m_positionScale = mesh.getPositionsScale();
-			meshLod.m_positionTranslation = mesh.getPositionsTranslation();
-
-			U32 firstIndex, indexCount, firstMeshlet, meshletCount;
-			Aabb aabb;
-			mesh.getSubMeshInfo(l, submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabb);
-
-			U32 totalIndexCount;
-			IndexType indexType;
-			PtrSize indexUgbOffset;
-			mesh.getIndexBufferInfo(l, indexUgbOffset, totalIndexCount, indexType);
-
-			for(VertexStreamId stream = VertexStreamId::kMeshRelatedFirst; stream < VertexStreamId::kMeshRelatedCount; ++stream)
-			{
-				if(mesh.isVertexStreamPresent(stream))
-				{
-					U32 vertCount;
-					PtrSize ugbOffset;
-					mesh.getVertexBufferInfo(l, stream, ugbOffset, vertCount);
-					const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
-					ANKI_ASSERT(ugbOffset % elementSize == 0);
-					meshLod.m_vertexOffsets[U32(stream)] = U32(ugbOffset / elementSize);
-				}
-				else
-				{
-					meshLod.m_vertexOffsets[U32(stream)] = kMaxU32;
-				}
-			}
-
-			meshLod.m_indexCount = indexCount;
-
-			ANKI_ASSERT(indexUgbOffset % getIndexSize(indexType) == 0);
-			meshLod.m_firstIndex = U32(indexUgbOffset / getIndexSize(indexType)) + firstIndex;
-
-			meshLod.m_renderableIndex = m_gpuSceneRenderable.getIndex();
-
-			if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering)
-			{
-				U32 dummy;
-				PtrSize meshletBoundingVolumesUgbOffset, meshletGometryDescriptorsUgbOffset;
-				mesh.getMeshletBufferInfo(l, meshletBoundingVolumesUgbOffset, meshletGometryDescriptorsUgbOffset, dummy);
-
-				meshLod.m_firstMeshletBoundingVolume = firstMeshlet + U32(meshletBoundingVolumesUgbOffset / sizeof(MeshletBoundingVolume));
-				meshLod.m_firstMeshletGeometryDescriptor = firstMeshlet + U32(meshletGometryDescriptorsUgbOffset / sizeof(MeshletGeometryDescriptor));
-				meshLod.m_meshletCount = meshletCount;
-			}
-
-			meshLod.m_lod = l;
-
-			if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
-			{
-				const U64 address = mesh.getBottomLevelAccelerationStructure(l, submeshIdx)->getGpuAddress();
-				memcpy(&meshLod.m_blasAddress, &address, sizeof(meshLod.m_blasAddress));
-
-				meshLod.m_tlasInstanceMask = 0xFFFFFFFF;
-			}
-		}
-
-		// Copy the last LOD to the rest just in case
-		for(U32 l = mesh.getLodCount(); l < kMaxLodCount; ++l)
-		{
-			meshLods[l] = meshLods[l - 1];
-		}
-
-		m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
-	}
-
 	// Update the constants
-	const Bool constantsNeedUpdate = mtlUpdated;
-	if(mtlUpdated) [[unlikely]]
+	Bool constantsReallocated = false;
+	if(mtlResourceChanged) [[unlikely]]
 	{
 		ConstWeakArray<U8> preallocatedConsts = mtl.getPrefilledLocalConstants();
 
-		if(!m_gpuSceneConstants.isValid() || m_gpuSceneConstants.getAllocatedSize() != preallocatedConsts.getSizeInBytes())
+		if(!m_gpuSceneConstants || m_gpuSceneConstants.getAllocatedSize() != preallocatedConsts.getSizeInBytes())
 		{
 			GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneConstants);
 			m_gpuSceneConstants = GpuSceneBuffer::getSingleton().allocate(preallocatedConsts.getSizeInBytes(), 4);
+			constantsReallocated = true;
 		}
 
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneConstants.getOffset(), m_gpuSceneConstants.getAllocatedSize(),
@@ -315,13 +218,15 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Update renderable
-	if(constantsNeedUpdate || skinUpdated) [[unlikely]]
+	if(mtlResourceChanged || constantsReallocated || skinChanged || meshChanged || submeshChanged) [[unlikely]]
 	{
+		const MoveComponent& movec = info.m_node->getFirstComponentOfType<MoveComponent>();
+
 		GpuSceneRenderable gpuRenderable = {};
-		gpuRenderable.m_worldTransformsIndex = m_gpuSceneTransforms.getIndex() * 2;
+		gpuRenderable.m_worldTransformsIndex = movec.getGpuSceneTransforms().getIndex() * 2;
 		gpuRenderable.m_constantsOffset = m_gpuSceneConstants.getOffset();
-		gpuRenderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
-		gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
+		gpuRenderable.m_meshLodsIndex = m_meshComponents[0]->getGpuSceneMeshLods(submeshIdx).getIndex() * kMaxLodCount;
+		gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponents[0]->getBoneTransformsGpuSceneOffset() : 0;
 		gpuRenderable.m_particleEmitterIndex = kMaxU32;
 		if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
 		{
@@ -344,7 +249,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Scene bounds update
-	const Bool aabbUpdated = moved || meshUpdated || submeshUpdated || hasSkin;
+	const Bool aabbUpdated = moved || meshChanged || submeshChanged || hasSkin;
 	if(aabbUpdated || info.m_forceUpdateSceneBounds) [[unlikely]]
 	{
 		const Aabb aabbWorld = computeAabb(submeshIdx, *info.m_node);
@@ -352,7 +257,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Update the buckets
-	const Bool bucketsNeedUpdate = mtlUpdated || submeshUpdated || moved != movedLastFrame;
+	const Bool bucketsNeedUpdate = mtlResourceChanged || submeshChanged || moved != movedLastFrame || skinChanged;
 	if(bucketsNeedUpdate) [[unlikely]]
 	{
 		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())

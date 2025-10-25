@@ -24,31 +24,15 @@ SkinComponent::~SkinComponent()
 
 SkinComponent& SkinComponent::setSkeletonFilename(CString fname)
 {
-	SkeletonResourcePtr rsrc;
-	const Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
-	if(err)
+	SkeletonResourcePtr newRsrc;
+	if(ResourceManager::getSingleton().loadResource(fname, newRsrc))
 	{
 		ANKI_SCENE_LOGE("Failed to load skeleton");
 	}
 	else
 	{
-		m_resourceDirty = true;
-
-		m_skeleton = std::move(rsrc);
-
-		// Cleanup
-		m_boneTrfs[0].destroy();
-		m_boneTrfs[1].destroy();
-		m_animationTrfs.destroy();
-		GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneBoneTransforms);
-
-		// Create
-		const U32 boneCount = m_skeleton->getBones().getSize();
-		m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
-		m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
-		m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
-
-		m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
+		m_resourceDirty = !m_skeleton || (m_skeleton->getUuid() != newRsrc->getUuid());
+		m_skeleton = std::move(newRsrc);
 	}
 
 	return *this;
@@ -84,8 +68,20 @@ void SkinComponent::playAnimation(U32 trackIdx, AnimationResourcePtr anim, const
 
 void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = false;
-	if(!m_skeleton.isCreated())
+	m_boneTransformsReallocatedThisFrame = false;
+
+	if(m_resourceDirty || !isValid()) [[unlikely]]
+	{
+		// Cleanup
+		m_boneTrfs[0].destroy();
+		m_boneTrfs[1].destroy();
+		m_animationTrfs.destroy();
+		GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneBoneTransforms);
+
+		m_boneTransformsReallocatedThisFrame = true;
+	}
+
+	if(!isValid()) [[unlikely]]
 	{
 		return;
 	}
@@ -95,6 +91,19 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	const Bool resourceDirty = m_resourceDirty;
 	m_resourceDirty = false;
 	Bool animationRun = false;
+
+	if(resourceDirty) [[unlikely]]
+	{
+		// Create
+		const U32 boneCount = m_skeleton->getBones().getSize();
+		m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
+		m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
+		m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
+
+		m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
+
+		m_boneTransformsReallocatedThisFrame = true;
+	}
 
 	const Second dt = info.m_dt;
 

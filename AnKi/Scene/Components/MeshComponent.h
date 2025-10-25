@@ -7,13 +7,11 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Resource/Forward.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// Holds geometry information.
+// Holds geometry information.
 class MeshComponent final : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(MeshComponent)
@@ -34,21 +32,33 @@ public:
 
 	CString getMeshFilename() const;
 
-	Bool isValid() const
-	{
-		return hasMeshResource();
-	}
+	Bool isValid() const;
 
 	const MeshResource& getMeshResource() const
 	{
+		ANKI_ASSERT(isValid());
 		return *m_resource;
+	}
+
+	ANKI_INTERNAL const GpuSceneArrays::MeshLod::Allocation& getGpuSceneMeshLods(U32 submeshIdx) const
+	{
+		ANKI_ASSERT(isValid());
+		return m_gpuSceneMeshLods[submeshIdx];
+	}
+
+	ANKI_INTERNAL Bool gpuSceneReallocationsThisFrame() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_gpuSceneMeshLodsReallocatedThisFrame;
 	}
 
 private:
 	MeshResourcePtr m_resource;
 
+	SceneDynamicArray<GpuSceneArrays::MeshLod::Allocation> m_gpuSceneMeshLods;
+
 	Bool m_resourceDirty = true;
+	Bool m_gpuSceneMeshLodsReallocatedThisFrame = false;
 };
-/// @}
 
 } // end namespace anki
