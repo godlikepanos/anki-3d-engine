@@ -139,7 +139,7 @@ void MeshComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool
 			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 			{
 				const U64 address = mesh.getBottomLevelAccelerationStructure(l, submeshIdx)->getGpuAddress();
-				memcpy(&meshLod.m_blasAddress, &address, sizeof(meshLod.m_blasAddress));
+				memcpy(&meshLod.m_blasAddress[0], &address, sizeof(meshLod.m_blasAddress));
 
 				meshLod.m_tlasInstanceMask = 0xFFFFFFFF;
 			}

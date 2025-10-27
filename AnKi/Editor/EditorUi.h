@@ -13,7 +13,7 @@ namespace anki {
 
 // Forward
 class SceneNode;
-#define ANKI_DEFINE_SCENE_COMPONENT(class_, weight, icon) class class_##Component;
+#define ANKI_DEFINE_SCENE_COMPONENT(class_, weight, sceneNodeCanHaveMany, icon) class class_##Component;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 /// @addtogroup editor

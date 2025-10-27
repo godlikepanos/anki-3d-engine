@@ -32,10 +32,16 @@
 namespace anki {
 
 // Specialize newComponent(). Do that first
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
 	template<> \
 	name##Component* SceneNode::newComponent<name##Component>() \
 	{ \
+		if(hasComponent<name##Component>() && !kSceneComponentSceneNodeCanHaveMany[SceneComponentType::k##name]) \
+		{ \
+			ANKI_SCENE_LOGE("Can't have many %s components in scene node %s", kSceneComponentTypeName[SceneComponentType::k##name], \
+							getName().cstr()); \
+			return nullptr; \
+		} \
 		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(this); \
 		it->setArrayIndex(it.getArrayIndex()); \
 		newComponentInternal(&(*it)); \
@@ -63,7 +69,7 @@ SceneNode::~SceneNode()
 
 		switch(comp->getType())
 		{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
 	case SceneComponentType::k##name: \
 		SceneGraph::getSingleton().getComponentArrays().get##name##s().erase(comp->getArrayIndex()); \
 		break;

@@ -185,6 +185,19 @@ U32 checkStructuredBuffer(T buff, U32 idx)
 // Safely access a structured buffer. Throw an assertion if it's out of bounds
 #define SBUFF(buff, idx) buff[checkStructuredBuffer(buff, idx)]
 
+template<typename TStruct, typename TBab>
+U32 checkBab(TBab bab, U32 offset)
+{
+	U32 babSize;
+	bab.GetDimensions(babSize);
+	ANKI_ASSERT(offset + sizeof(TStruct) <= babSize);
+	return offset;
+}
+
+// Savely access a ByteAddressBuffer
+#define BAB_LOAD(bab, type, offset) bab.Load<type>(checkBab<type>(bab, offset))
+#define BAB_STORE(bab, type, offset, data) bab.Store<type>(checkBab<type>(bab, offset), data)
+
 #define CHECK_TEXTURE_3D(textureType) \
 	UVec3 checkTexture(textureType tex, UVec3 coords) \
 	{ \

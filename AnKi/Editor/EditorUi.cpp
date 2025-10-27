@@ -479,7 +479,7 @@ void EditorUi::sceneNodePropertiesWindow()
 			{
 				switch(SceneComponentType(state.m_selectedSceneComponentType))
 				{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
 	case SceneComponentType::k##name: \
 		node.newComponent<name##Component>(); \
 		break;
@@ -536,7 +536,7 @@ void EditorUi::sceneNodePropertiesWindow()
 					CString icon = ICON_MDI_TOY_BRICK;
 					switch(comp.getType())
 					{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, icon_) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon_) \
 	case SceneComponentType::k##name: \
 		icon = ANKI_CONCATENATE(ICON_MDI_, icon_); \
 		break;

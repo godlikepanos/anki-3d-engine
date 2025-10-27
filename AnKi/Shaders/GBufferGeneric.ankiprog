@@ -275,7 +275,7 @@ VertOut main(VertIn input)
 	output.m_meshletIndex = instance.m_meshletGeometryDescriptorIndex;
 #		endif
 
-#	else
+#	else // SW_MESHLETS
 	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);

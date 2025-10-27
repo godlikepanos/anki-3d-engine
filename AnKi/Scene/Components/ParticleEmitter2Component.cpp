@@ -5,8 +5,10 @@
 
 #include <AnKi/Scene/Components/ParticleEmitter2Component.h>
 #include <AnKi/Scene/Components/MeshComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ParticleEmitterResource2.h>
 #include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Resource/MeshResource.h>
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 
 namespace anki {
@@ -19,10 +21,18 @@ public:
 	UnifiedGeometryBufferAllocation m_quadUvs;
 	UnifiedGeometryBufferAllocation m_quadIndices;
 
+	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
+
 	U32 m_userCount = 0;
 	SpinLock m_mtx;
 
 	void init()
+	{
+		initGeom();
+		initGpuScene();
+	}
+
+	void initGeom()
 	{
 		// Allocate and populate a quad
 		const U32 vertCount = 4;
@@ -74,11 +84,32 @@ public:
 		GrManager::getSingleton().submit(cmdb.get());
 	}
 
+	void initGpuScene()
+	{
+		GpuSceneMeshLod meshLod = {};
+		meshLod.m_vertexOffsets[U32(VertexStreamId::kPosition)] =
+			m_quadPositions.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
+		meshLod.m_vertexOffsets[U32(VertexStreamId::kUv)] =
+			m_quadUvs.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kUv]).m_texelSize;
+		meshLod.m_indexCount = 6;
+		meshLod.m_firstIndex = m_quadIndices.getOffset() / sizeof(U16);
+		meshLod.m_positionScale = 1.0f;
+		meshLod.m_positionTranslation = Vec3(-0.5f, -0.5f, 0.0f);
+
+		Array<GpuSceneMeshLod, kMaxLodCount> meshLods;
+		meshLods.fill(meshLod);
+
+		m_gpuSceneMeshLods.allocate();
+		m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
+	}
+
 	void deinit()
 	{
 		UnifiedGeometryBuffer::getSingleton().deferredFree(m_quadPositions);
 		UnifiedGeometryBuffer::getSingleton().deferredFree(m_quadUvs);
 		UnifiedGeometryBuffer::getSingleton().deferredFree(m_quadIndices);
+
+		m_gpuSceneMeshLods.free();
 	}
 
 	void addUser()
@@ -153,14 +184,34 @@ void ParticleEmitter2Component::onOtherComponentRemovedOrAdded(SceneComponent* o
 
 	if(other->getType() == SceneComponentType::kMesh)
 	{
-		bookkeepComponent(m_meshComponents, other, added, m_meshComponentDirty);
+		bookkeepComponent(m_meshComponent, other, added);
+		m_meshComponentDirty = true;
 	}
+}
+
+Bool ParticleEmitter2Component::isValid() const
+{
+	Bool valid = !!m_particleEmitterResource;
+
+	if(m_geomType == ParticleGeometryType::kMeshComponent)
+	{
+		valid = valid && m_meshComponent->isValid();
+	}
+
+	return valid;
 }
 
 void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(!isValid())
+	if(!isValid()) [[unlikely]]
 	{
+		for(auto& s : m_gpuScene.m_particleStreams)
+		{
+			GpuSceneBuffer::getSingleton().deferredFree(s);
+		}
+		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_aliveParticleIndices);
+		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_anKiParticleEmitterProperties);
+		m_gpuScene.m_gpuSceneParticleEmitter.free();
 		return;
 	}
 
@@ -172,6 +223,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 	// From now on it's dirty and needs some kind of update
 
 	updated = true;
+	const ParticleEmitterResourceCommonProperties& commonProps = m_particleEmitterResource->getCommonProperties();
 
 	// Streams
 	if(m_resourceDirty)
@@ -179,14 +231,14 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		for(ParticleProperty prop : EnumIterable<ParticleProperty>())
 		{
 			GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_particleStreams[prop]);
-			m_gpuScene.m_particleStreams[prop] = GpuSceneBuffer::getSingleton().allocate(kParticlePropertySize[prop], alignof(U32));
+			m_gpuScene.m_particleStreams[prop] =
+				GpuSceneBuffer::getSingleton().allocate(commonProps.m_particleCount * kParticlePropertySize[prop], alignof(U32));
 		}
 	}
 
 	// Alive particles index buffer
 	if(m_resourceDirty)
 	{
-		const ParticleEmitterResourceCommonProperties& commonProps = m_particleEmitterResource->getCommonProperties();
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_aliveParticleIndices);
 		m_gpuScene.m_aliveParticleIndices = GpuSceneBuffer::getSingleton().allocate(commonProps.m_particleCount * sizeof(U32), alignof(U32));
 	}
@@ -211,8 +263,6 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 			m_gpuScene.m_gpuSceneParticleEmitter.allocate();
 		}
 
-		const ParticleEmitterResourceCommonProperties& commonProps = m_particleEmitterResource->getCommonProperties();
-
 		GpuSceneParticleEmitter2 emitter;
 		zeroMemory(emitter);
 
@@ -227,7 +277,35 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		emitter.m_particlesPerEmission = commonProps.m_particlesPerEmission;
 		emitter.m_particleEmitterPropertiesOffset = m_gpuScene.m_anKiParticleEmitterProperties.getOffset();
 
-		// TODO
+		if(m_geomType == ParticleGeometryType::kMeshComponent)
+		{
+			const MeshResource& meshr = m_meshComponent->getMeshResource();
+			emitter.m_particleAabbMin = meshr.getBoundingShape().getMin().xyz();
+			emitter.m_particleAabbMax = meshr.getBoundingShape().getMax().xyz();
+		}
+		else
+		{
+			emitter.m_particleAabbMin = Vec3(-0.5f);
+			emitter.m_particleAabbMax = Vec3(+0.5f);
+		}
+
+		emitter.m_reinitializeOnNextUpdate = 1;
+		emitter.m_worldTransformsIndex = info.m_node->getFirstComponentOfType<MoveComponent>().getGpuSceneTransforms().getIndex();
+
+		m_gpuScene.m_gpuSceneParticleEmitter.uploadToGpuScene(emitter);
+	}
+}
+
+U32 ParticleEmitter2Component::getGpuSceneMeshLodIndex(U32 submeshIdx) const
+{
+	ANKI_ASSERT(isValid());
+	if(m_geomType == ParticleGeometryType::kQuad)
+	{
+		return ParticleEmitterQuadGeometry::getSingleton().m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
+	}
+	else
+	{
+		return m_meshComponent->getGpuSceneMeshLods(submeshIdx).getIndex();
 	}
 }
 

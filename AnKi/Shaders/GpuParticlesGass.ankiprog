@@ -133,9 +133,9 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 {
 	particlesInitGlobals(svDispatchThreadId.x);
 
-	GpuSceneParticleEmitter2 emitter = g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex];
+	GpuSceneParticleEmitter2 emitter = SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex);
 	const AnKiParticleEmitterProperties props = loadAnKiParticleEmitterProperties(g_gpuScene, emitter.m_particleEmitterPropertiesOffset);
-	const Mat3x4 emitterTrf = g_gpuSceneTransforms[emitter.m_worldTransformsIndex];
+	const Mat3x4 emitterTrf = SBUFF(g_gpuSceneTransforms, emitter.m_worldTransformsIndex);
 
 	const Bool reinit = emitter.m_reinitializeOnNextUpdate;
 	const Bool canEmitThisFrame = emitter.m_timeLeftForNextEmission - g_consts.m_dt <= 0.0;
@@ -207,12 +207,18 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 			const Vec3 center = (aabbMax + aabbMin) / 2.0;
 			const F32 radius = length(aabbMax - center);
 
-			GpuSceneRenderableBoundingVolume bvol = g_gpuScene.Load<GpuSceneRenderableBoundingVolume>(emitter.m_boundingVolumeOffset);
-			bvol.m_aabbMin = aabbMin;
-			bvol.m_aabbMax = aabbMax;
-			bvol.m_sphereRadius = radius;
+			const U32 bvolumeCount = getStructuredBufferElementCount(g_gpuSceneBoundingVolumeList);
+			for(U32 i = 0; i < bvolumeCount; ++i)
+			{
+				const U32 offset = SBUFF(g_gpuSceneBoundingVolumeList, i);
 
-			g_gpuScene.Store<GpuSceneRenderableBoundingVolume>(emitter.m_boundingVolumeOffset, bvol);
+				GpuSceneRenderableBoundingVolume bvol = BAB_LOAD(g_gpuScene, GpuSceneRenderableBoundingVolume, offset);
+				bvol.m_aabbMin = aabbMin;
+				bvol.m_aabbMax = aabbMax;
+				bvol.m_sphereRadius = radius;
+
+				BAB_STORE(g_gpuScene, GpuSceneRenderableBoundingVolume, offset, bvol);
+			}
 
 			// Reset the scratch stract
 			g_scratch[0].m_aabbMin = kMaxI32;
@@ -223,16 +229,16 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 			// Update the GPU scene emitter
 			if(canEmitThisFrame)
 			{
-				g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_timeLeftForNextEmission = emitter.m_emissionPeriod;
+				SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex).m_timeLeftForNextEmission = emitter.m_emissionPeriod;
 			}
 			else
 			{
-				g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_timeLeftForNextEmission -= g_consts.m_dt;
+				SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex).m_timeLeftForNextEmission -= g_consts.m_dt;
 			}
 
 			if(reinit)
 			{
-				g_gpuSceneParticleEmitters[g_consts.m_gpuSceneParticleEmitterIndex].m_reinitializeOnNextUpdate = 0;
+				SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex).m_reinitializeOnNextUpdate = 0;
 			}
 		}
 	}

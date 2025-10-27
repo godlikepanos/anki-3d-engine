@@ -52,27 +52,24 @@ public:
 		return m_geomType;
 	}
 
-	Bool isValid() const
-	{
-		Bool invalid = !m_particleEmitterResource;
-		invalid = invalid || (m_geomType == ParticleGeometryType::kMeshComponent && m_meshComponents.getSize() == 0);
-		return !invalid;
-	}
+	Bool isValid() const;
+
+	ANKI_INTERNAL U32 getGpuSceneMeshLodIndex(U32 submeshIdx) const;
 
 private:
 	class ParticleEmitterQuadGeometry;
 
 	ParticleEmitterResource2Ptr m_particleEmitterResource;
 
-	SceneDynamicArray<MeshComponent*> m_meshComponents;
+	MeshComponent* m_meshComponent = nullptr;
 
 	class
 	{
 	public:
-		GpuSceneArrays::ParticleEmitter2::Allocation m_gpuSceneParticleEmitter;
 		Array<GpuSceneBufferAllocation, U32(ParticleProperty::kCount)> m_particleStreams;
 		GpuSceneBufferAllocation m_aliveParticleIndices;
 		GpuSceneBufferAllocation m_anKiParticleEmitterProperties;
+		GpuSceneArrays::ParticleEmitter2::Allocation m_gpuSceneParticleEmitter;
 	} m_gpuScene;
 
 	ParticleGeometryType m_geomType = ParticleGeometryType::kQuad;

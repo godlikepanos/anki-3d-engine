@@ -14,7 +14,7 @@
 
 struct VertIn
 {
-	UVec4 m_gpuSceneRenderable : MISC0;
+	UVec4 m_instanceData : MISC0;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -37,7 +37,7 @@ struct VertOut
 #if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
-	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
 	const GpuSceneParticleEmitter particles = g_particleEmitters[instance.m_boneTransformsOffsetOrParticleEmitterIndex];
 	const GpuSceneMeshLod meshLod = g_meshLods[instance.m_meshLodIndex];
 
