@@ -17,9 +17,6 @@ namespace anki {
 inline constexpr Array2d<U32, kMaxRegisterSpaces, U32(HlslResourceType::kCount)> kDxcVkBindingShifts = {
 	{{1000, 2000, 3000, 4000}, {5000, 6000, 7000, 8000}, {9000, 10000, 11000, 12000}}};
 
-// !!!!WARNING!!!! Need to change HLSL if you change the value bellow
-inline constexpr U32 kDxcVkBindlessRegisterSpace = 1000000;
-
 /// Compile HLSL to SPIR-V.
 Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderModel sm,
 						 ConstWeakArray<CString> compilerArgs, ShaderCompilerDynamicArray<U8>& spirv, ShaderCompilerString& errorMessage);

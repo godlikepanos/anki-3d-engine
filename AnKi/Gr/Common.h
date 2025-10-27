@@ -997,6 +997,7 @@ public:
 
 	Bool m_hasVkBindlessDescriptorSet = false; ///< Filled by the shader compiler.
 	U8 m_vkBindlessDescriptorSet = kMaxU8; ///< Filled by the VK backend.
+	Bool m_d3dHasDrawId = false;
 
 	void validate() const
 	{

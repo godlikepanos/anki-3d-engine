@@ -385,7 +385,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			{
 				// ConstantBuffer
 
-				if(bindDesc.Space == 3000 && bindDesc.BindPoint == 0)
+				if(bindDesc.Space == ANKI_D3D_FAST_CONSTANTS_SPACE && bindDesc.BindPoint == 0)
 				{
 					// It's push/root constants
 
@@ -397,7 +397,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 
 					continue;
 				}
-				else if(bindDesc.Space == 3001 && bindDesc.BindPoint == 0)
+				else if(bindDesc.Space == ANKI_D3D_SHADER_RECORD_CONSTANTS_SPACE && bindDesc.BindPoint == 0)
 				{
 					// It's SBT consts
 
@@ -411,6 +411,14 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 					D3D12_SHADER_BUFFER_DESC desc;
 					ANKI_DXC_CHECK(cbuffer->GetDesc(&desc));
 					refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize = desc.Size;
+
+					continue;
+				}
+				else if(bindDesc.Space == ANKI_D3D_DRAW_ID_CONSTANT_SPACE && bindDesc.BindPoint == 0)
+				{
+					// It's DrawID
+
+					refl.m_descriptor.m_d3dHasDrawId = true;
 
 					continue;
 				}

@@ -442,9 +442,11 @@ void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& b
 	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
+	const ShaderProgramImpl& internalProg = static_cast<const ShaderProgramImpl&>(self.m_graphicsState.getShaderProgram());
+
 	ID3D12CommandSignature* signature;
-	ANKI_CHECKF(
-		IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, sizeof(DrawIndirectArgs), signature));
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, sizeof(DrawIndirectArgs),
+																					 internalProg.m_rootSignature, signature));
 
 	const BufferImpl& buffImpl = static_cast<const BufferImpl&>(buff.getBuffer());
 	ANKI_ASSERT(!!(buffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
@@ -462,8 +464,11 @@ void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferVi
 	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
+	const ShaderProgramImpl& internalProg = static_cast<const ShaderProgramImpl&>(self.m_graphicsState.getShaderProgram());
+
 	ID3D12CommandSignature* signature;
-	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, argBufferStride, signature));
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, argBufferStride,
+																					 internalProg.m_rootSignature, signature));
 
 	const BufferImpl& argBuffImpl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
 	ANKI_ASSERT(!!(argBuffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
@@ -487,9 +492,11 @@ void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, const Buffer
 	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
+	const ShaderProgramImpl& internalProg = static_cast<const ShaderProgramImpl&>(self.m_graphicsState.getShaderProgram());
+
 	ID3D12CommandSignature* signature;
-	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,
-																					 sizeof(DrawIndexedIndirectArgs), signature));
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(
+		D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, sizeof(DrawIndexedIndirectArgs), internalProg.m_rootSignature, signature));
 
 	const BufferImpl& buffImpl = static_cast<const BufferImpl&>(buff.getBuffer());
 	ANKI_ASSERT(!!(buffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
@@ -509,9 +516,11 @@ void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const B
 	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
+	const ShaderProgramImpl& internalProg = static_cast<const ShaderProgramImpl&>(self.m_graphicsState.getShaderProgram());
+
 	ID3D12CommandSignature* signature;
-	ANKI_CHECKF(
-		IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, argBufferStride, signature));
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, argBufferStride,
+																					 internalProg.m_rootSignature, signature));
 
 	const BufferImpl& argBuffImpl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
 	ANKI_ASSERT(!!(argBuffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
@@ -551,7 +560,7 @@ void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawC
 
 	ID3D12CommandSignature* signature;
 	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH,
-																					 sizeof(DispatchIndirectArgs), signature));
+																					 sizeof(DispatchIndirectArgs), nullptr, signature));
 
 	self.m_cmdList->ExecuteIndirect(signature, drawCount, &impl.getD3DResource(), argBuffer.getOffset(), nullptr, 0);
 }
@@ -576,7 +585,7 @@ void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 
 	ID3D12CommandSignature* signature;
 	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
-																					 sizeof(DispatchIndirectArgs), signature));
+																					 sizeof(DispatchIndirectArgs), nullptr, signature));
 
 	self.m_cmdList->ExecuteIndirect(signature, 1, &impl.getD3DResource(), argBuffer.getOffset(), nullptr, 0);
 }
@@ -687,7 +696,7 @@ void CommandBuffer::dispatchRaysIndirect(const BufferView& sbtBuffer, U32 sbtRec
 	// Execute
 	ID3D12CommandSignature* signature;
 	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS,
-																					 sizeof(D3D12_DISPATCH_RAYS_DESC), signature));
+																					 sizeof(D3D12_DISPATCH_RAYS_DESC), nullptr, signature));
 
 	self.m_cmdList->ExecuteIndirect(signature, 1, self.m_indirectDispatchRays.m_indirectBuff, indirectBuffOffset, nullptr, 0);
 

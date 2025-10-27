@@ -104,18 +104,34 @@ struct Barycentrics
 #if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_FAST_CONSTANTS(type, var) [[vk::push_constant]] ConstantBuffer<type> var;
 #else
-#	define ANKI_FAST_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3000);
+#	define ANKI_FAST_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, ANKI_CONCATENATE(space, ANKI_D3D_FAST_CONSTANTS_SPACE));
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_SHADER_RECORD_CONSTANTS(type, var) [[vk::shader_record_ext]] ConstantBuffer<type> var : register(b0, space3001);
 #else
-#	define ANKI_SHADER_RECORD_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3001);
+#	define ANKI_SHADER_RECORD_CONSTANTS(type, var) \
+		ConstantBuffer<type> var : register(b0, ANKI_CONCATENATE(space, ANKI_D3D_SHADER_RECORD_CONSTANTS_SPACE));
+#endif
+
+// This is the implementation of gl_DrawID for both D3D anv VK
+#if ANKI_VERTEX_SHADER
+#	if ANKI_GR_BACKEND_VULKAN
+#		define SpvDrawIndex 4426
+[[vk::ext_builtin_input(SpvDrawIndex)]] const static U32 gl_DrawID;
+#	else
+struct U32Struct
+{
+	U32 m_data;
+};
+ConstantBuffer<U32Struct> g_drawIdConstant : register(b0, ANKI_CONCATENATE(space, ANKI_D3D_DRAW_ID_CONSTANT_SPACE));
+#		define gl_DrawID g_drawIdConstant.m_data
+#	endif
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_BINDLESS(texType, compType) \
-		[[vk::binding(0, 1000000)]] Texture##texType<compType> g_bindlessTextures##texType##compType[]; \
+		[[vk::binding(0, ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)]] Texture##texType<compType> g_bindlessTextures##texType##compType[]; \
 		Texture##texType<compType> getBindlessTexture##texType##compType(U32 idx) \
 		{ \
 			return g_bindlessTextures##texType##compType[idx]; \

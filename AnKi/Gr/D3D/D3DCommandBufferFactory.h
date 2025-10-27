@@ -12,6 +12,8 @@
 
 namespace anki {
 
+class RootSignature;
+
 /// @addtogroup directx
 /// @{
 
@@ -109,10 +111,11 @@ public:
 
 	Error init();
 
-	/// @note Thread-safe.
-	Error getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride, ID3D12CommandSignature*& signature)
+	// Thread-safe
+	// rootSignature: Only useful for drawcalls with vertex shader (needed for the DrawID)
+	Error getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride, RootSignature* rootSignature, ID3D12CommandSignature*& signature)
 	{
-		return getOrCreateSignatureInternal(true, type, stride, signature);
+		return getOrCreateSignatureInternal(true, type, stride, rootSignature, signature);
 	}
 
 private:
@@ -132,6 +135,7 @@ private:
 	{
 	public:
 		ID3D12CommandSignature* m_d3dSignature;
+		ID3D12RootSignature* m_d3dRootSignature;
 		U32 m_stride;
 	};
 
@@ -147,7 +151,8 @@ private:
 
 	Array<RWMutex, U32(IndirectCommandSignatureType::kCount)> m_mutexes;
 
-	Error getOrCreateSignatureInternal(Bool takeFastPath, D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride, ID3D12CommandSignature*& signature);
+	Error getOrCreateSignatureInternal(Bool tryThePreCreatedRootSignaturesFirst, D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride,
+									   RootSignature* rootSignature, ID3D12CommandSignature*& signature);
 };
 /// @}
 

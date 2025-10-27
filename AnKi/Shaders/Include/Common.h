@@ -450,6 +450,12 @@ constexpr F32 kPcssSearchTexelRadius = 12.0;
 constexpr F32 kPcssTexelRadius = 12.0;
 constexpr F32 kPcssDirLightMaxPenumbraMeters = 6.0; // If the occluder and the reciever have more than this value then do full penumbra
 
+// Some special spaces or sets for reflection to identify special shader input
+#define ANKI_D3D_FAST_CONSTANTS_SPACE 3000
+#define ANKI_D3D_SHADER_RECORD_CONSTANTS_SPACE 3001
+#define ANKI_D3D_DRAW_ID_CONSTANT_SPACE 3002
+#define ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET 1000000
+
 struct DrawIndirectArgs
 {
 	U32 m_vertexCount;

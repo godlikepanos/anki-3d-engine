@@ -541,7 +541,8 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 					++vkBindingCount[set];
 				}
 			}
-			else if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet && instructions[2] == kDxcVkBindlessRegisterSpace)
+			else if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet
+					&& instructions[2] == ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)
 			{
 				// Bindless set, rewrite its set
 				instructions[2] = refl.m_vkBindlessDescriptorSet;

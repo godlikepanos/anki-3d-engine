@@ -97,6 +97,7 @@ inline void commonInit(Bool validation = true)
 	g_cvarWindowHeight = kHeight;
 	g_cvarGrVsync = false;
 	g_cvarGrDebugMarkers = true;
+	g_cvarWindowFullscreen = 0;
 	if(validation)
 	{
 		g_cvarGrValidation = true;

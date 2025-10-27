@@ -174,6 +174,8 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 	c.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize =
 		max(a.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize, b.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize);
 
+	c.m_descriptor.m_d3dHasDrawId = a.m_descriptor.m_d3dHasDrawId || b.m_descriptor.m_d3dHasDrawId;
+
 	c.m_descriptor.m_hasVkBindlessDescriptorSet = a.m_descriptor.m_hasVkBindlessDescriptorSet || b.m_descriptor.m_hasVkBindlessDescriptorSet;
 
 	c.m_vertex.m_vkVertexAttributeLocations =
@@ -200,6 +202,7 @@ StringList ShaderReflectionDescriptorRelated::toString() const
 
 	list.pushBackSprintf("Fast constants: %u", m_fastConstantsSize);
 	list.pushBackSprintf("Has VK bindless sets: %u", m_hasVkBindlessDescriptorSet);
+	list.pushBackSprintf("Has D3D DrawID: %u", m_d3dHasDrawId);
 
 	return list;
 }

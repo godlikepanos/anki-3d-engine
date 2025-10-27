@@ -273,6 +273,11 @@ public:
 		return *m_rootSignature;
 	}
 
+	U32 getDrawIdRootParamIdx() const
+	{
+		return m_drawIdRootParamIdx;
+	}
+
 private:
 	class Descriptor
 	{
@@ -301,6 +306,8 @@ private:
 	ID3D12RootSignature* m_rootSignature = nullptr;
 
 	Array<Space, kMaxRegisterSpaces> m_spaces;
+
+	U32 m_drawIdRootParamIdx = kMaxU32;
 
 	U32 m_rootConstantsSize = kMaxU32;
 	U8 m_rootConstantsParameterIdx = kMaxU8;

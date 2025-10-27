@@ -207,7 +207,8 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 		Error visitErr = Error::kNone;
 		visitSpirv(WeakArray<U32>(reinterpret_cast<U32*>(newSpirv.getBegin()), U32(newSpirv.getSizeInBytes() / sizeof(U32))),
 				   [&](U32 cmd, WeakArray<U32> instructions) {
-					   if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet && instructions[2] == kDxcVkBindlessRegisterSpace)
+					   if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet
+						  && instructions[2] == ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)
 					   {
 						   // Bindless set, rewrite its set
 						   instructions[2] = kMaxRegisterSpaces;

@@ -3888,3 +3888,144 @@ void main()
 	COMMON_END()
 #endif
 }
+
+ANKI_TEST(Gr, DrawID)
+{
+	commonInit();
+
+	{
+		// Prog
+		constexpr const char* kVert = R"(
+struct Consts
+{
+	uint index;
+	int padding;
+	int padding1;
+	int padding2;
+};
+
+#if defined(__spirv__)
+#	define SpvDrawIndex 4426
+[[vk::ext_builtin_input(SpvDrawIndex)]] const static uint gl_DrawID;
+
+[[vk::push_constant]] ConstantBuffer<Consts> g_consts;
+#else
+struct U32Struct
+{
+	uint m_data;
+};
+ConstantBuffer<U32Struct> g_drawIdConstant : register(b0, space%u);
+#	define gl_DrawID g_drawIdConstant.m_data
+
+ConstantBuffer<Consts> g_consts : register(b0, space%u);
+#endif
+
+struct VertOut
+{
+	float4 m_svPosition : SV_POSITION;
+	float3 m_color : COLOR;
+};
+
+VertOut main(uint svVertexId : SV_VERTEXID)
+{
+	float2 verts[6] = {float2(0, 0), float2(0, 1), float2(1, 1), float2(1, 1), float2(1, 0), float2(0, 0)};
+
+	uint maxDraws = 32;
+
+	float2 pos = verts[svVertexId];
+	pos.x /= maxDraws;
+	pos.x += gl_DrawID * 1.0 / maxDraws;
+	pos = pos * 2.0 - 1.0;
+	pos.y *= -1.0;
+
+	VertOut o;
+	o.m_svPosition = float4(pos, 0.0, 1.0);
+
+	uint index = gl_DrawID + g_consts.index;
+	index = index %% 6;
+	o.m_color = float3(index & 1, (index / 2) & 1, (index / 3) & 1);
+
+	return o;
+})";
+
+		constexpr const char* kUboFrag = R"(
+struct VertOut
+{
+	float4 m_svPosition : SV_POSITION;
+	float3 m_color : COLOR;
+};
+
+float4 main(VertOut i) : SV_TARGET0
+{
+	return float4(i.m_color, 1.0);
+})";
+
+		ShaderProgramPtr prog = createVertFragProg(String().sprintf(kVert, ANKI_D3D_DRAW_ID_CONSTANT_SPACE, ANKI_D3D_FAST_CONSTANTS_SPACE), kUboFrag);
+
+		constexpr U32 maxDraws = 32;
+		Array<DrawIndirectArgs, maxDraws> data = {};
+		for(DrawIndirectArgs& arg : data)
+		{
+			arg.m_instanceCount = 1;
+			arg.m_vertexCount = 6;
+		}
+		BufferPtr indirectArgs = createBuffer(BufferUsageBit::kIndirectDraw, ConstWeakArray(data), "indirect args");
+
+		U32 count = maxDraws;
+		BufferPtr indirectCount = createBuffer(BufferUsageBit::kIndirectDraw, ConstWeakArray<U32>(&count, 1), "indirect count");
+
+		const U kIterationCount = 200;
+		U iterations = kIterationCount;
+		while(iterations--)
+		{
+			HighRezTimer timer;
+			timer.start();
+
+			GrManager::getSingleton().beginFrame();
+
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			cmdb->setViewport(0, 0, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
+			cmdb->bindShaderProgram(prog.get());
+
+			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
+												TextureUsageBit::kRtvDsvWrite};
+			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+
+			cmdb->pushDebugMarker("AnKi", Vec3(1.0f, 0.0f, 0.0f));
+
+			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDesc::firstSurface())});
+
+			UVec4 consts(iterations / 10);
+			cmdb->setFastConstants(&consts, sizeof(consts));
+
+			cmdb->drawIndirectCount(PrimitiveTopology::kTriangles, BufferView(indirectArgs.get()), sizeof(DrawIndirectArgs),
+									BufferView(indirectCount.get()), maxDraws);
+			cmdb->endRenderPass();
+
+			const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kRtvDsvWrite,
+												 TextureUsageBit::kPresent};
+			cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
+
+			cmdb->popDebugMarker();
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+
+			GrManager::getSingleton().endFrame();
+
+			timer.stop();
+			const Second kTick = 1.0f / 30.0f;
+			if(timer.getElapsedTime() < kTick)
+			{
+				HighRezTimer::sleep(kTick - timer.getElapsedTime());
+			}
+		}
+	}
+
+	commonDestroy();
+}

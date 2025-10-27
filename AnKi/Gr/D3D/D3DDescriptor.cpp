@@ -343,9 +343,24 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 		ANKI_ASSERT((refl.m_descriptor.m_fastConstantsSize % 4) == 0);
 		rootParam.Constants.Num32BitValues = refl.m_descriptor.m_fastConstantsSize / 4;
-		rootParam.Constants.RegisterSpace = 3000;
+		rootParam.Constants.RegisterSpace = ANKI_D3D_FAST_CONSTANTS_SPACE;
 		rootParam.Constants.ShaderRegister = 0;
 		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
+
+	// DrawID
+	U32 drawIdRootParam = kMaxU32;
+	if(refl.m_descriptor.m_d3dHasDrawId)
+	{
+		drawIdRootParam = rootParameters.getSize();
+
+		D3D12_ROOT_PARAMETER1& rootParam = *rootParameters.emplaceBack();
+		rootParam = {};
+		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+		rootParam.Constants.Num32BitValues = 1;
+		rootParam.Constants.RegisterSpace = ANKI_D3D_DRAW_ID_CONSTANT_SPACE;
+		rootParam.Constants.ShaderRegister = 0;
+		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 	}
 
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC verSigDesc = {};
@@ -372,6 +387,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	signature = newInstance<RootSignature>(GrMemoryPool::getSingleton());
 	signature->m_hash = hash;
 	signature->m_rootSignature = dxRootSig;
+	signature->m_drawIdRootParamIdx = drawIdRootParam;
 
 	U8 rootParameterIdx = 0;
 	for(U32 spaceIdx = 0; spaceIdx < kMaxRegisterSpaces; ++spaceIdx)
@@ -470,7 +486,7 @@ Error RootSignatureFactory::getOrCreateLocalRootSignature(const ShaderReflection
 	D3D12_ROOT_PARAMETER1 rootParam = {};
 	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	rootParam.Constants.Num32BitValues = refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize / 4;
-	rootParam.Constants.RegisterSpace = 3001;
+	rootParam.Constants.RegisterSpace = ANKI_D3D_SHADER_RECORD_CONSTANTS_SPACE;
 	rootParam.Constants.ShaderRegister = 0;
 
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC verSigDesc = {};
