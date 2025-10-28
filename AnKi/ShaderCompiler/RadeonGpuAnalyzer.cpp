@@ -13,6 +13,8 @@ namespace anki {
 
 static Atomic<U32> g_nextFileId = {1};
 
+static const Char* kAmdAsic = "gfx1201"; // RDNA4
+
 static CString getPipelineStageString(ShaderType shaderType)
 {
 	CString out;
@@ -26,6 +28,9 @@ static CString getPipelineStageString(ShaderType shaderType)
 		break;
 	case ShaderType::kCompute:
 		out = "comp";
+		break;
+	case ShaderType::kMesh:
+		out = "mesh";
 		break;
 	default:
 		ANKI_ASSERT(!"TODO");
@@ -61,7 +66,7 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 	args[0] = "-s";
 	args[1] = "vk-spv-offline";
 	args[2] = "-c";
-	args[3] = "gfx1030"; // Target RDNA2
+	args[3] = kAmdAsic;
 	args[4] = "-a";
 	args[5] = analysisFilename;
 	args[6] = stageStr;
@@ -71,7 +76,7 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 #if ANKI_OS_LINUX
 	CString rgaExecutable = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga";
 #elif ANKI_OS_WINDOWS
-	CString rgaExecutable = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonGpuAnalyzer/rga.exe";
+	CString rgaExecutable = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonDeveloperToolSuite-2025-07-01-1408/rga.exe";
 #else
 	CString rgaExecutable = "nothing";
 	ANKI_ASSERT(0);
@@ -94,7 +99,7 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 
 	// Construct the output filename
 	ShaderCompilerString outFilename;
-	outFilename.sprintf("%s/gfx1030_AnKiRgaOutAnalysis_%u_%s.csv", tmpDir.cstr(), rand, getPipelineStageString(shaderType).cstr());
+	outFilename.sprintf("%s/%s_AnKiRgaOutAnalysis_%u_%s.csv", tmpDir.cstr(), kAmdAsic, rand, getPipelineStageString(shaderType).cstr());
 
 	CleanupFile rgaFileCleanup(outFilename);
 

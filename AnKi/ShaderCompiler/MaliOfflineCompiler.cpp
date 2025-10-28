@@ -253,7 +253,7 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 	}
 	else
 	{
-		ANKI_ASSERT(shaderType == ShaderType::kCompute);
+		ANKI_ASSERT(shaderType == ShaderType::kCompute || (shaderType >= ShaderType::kFirstRayTracing && shaderType <= ShaderType::kLastRayTracing));
 
 		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX

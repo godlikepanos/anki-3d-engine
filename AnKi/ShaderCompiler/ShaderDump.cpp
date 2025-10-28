@@ -289,7 +289,9 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 
 		if(options.m_maliStats && !visitErr)
 		{
-			if((shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute) && !bRequiresMeshShaders)
+			if((shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute
+				|| (shaderType >= ShaderType::kFirstRayTracing && shaderType <= ShaderType::kLastRayTracing))
+			   && !bRequiresMeshShaders)
 			{
 				MaliOfflineCompilerOut maliocOut;
 				const Error err = runMaliOfflineCompiler(newSpirv, shaderType, maliocOut);
@@ -309,7 +311,8 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 
 		if(options.m_amdStats && !visitErr)
 		{
-			if((shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute) && !bRequiresMeshShaders)
+			if(shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute
+			   || shaderType == ShaderType::kMesh)
 			{
 				RgaOutput rgaOut = {};
 				const Error err = runRadeonGpuAnalyzer(newSpirv, shaderType, rgaOut);
