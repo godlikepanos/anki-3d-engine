@@ -411,46 +411,46 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 
 				<method name="newComponent&lt;LightComponent&gt;" alias="newLightComponent">
-					<return>LightComponent*</return>
+					<return canBeNullptr="1">LightComponent*</return>
 				</method>
 				<method name="newComponent&lt;LensFlareComponent&gt;" alias="newLensFlareComponent">
-					<return>LensFlareComponent*</return>
+					<return canBeNullptr="1">LensFlareComponent*</return>
 				</method>
 				<method name="newComponent&lt;DecalComponent&gt;" alias="newDecalComponent">
-					<return>DecalComponent*</return>
+					<return canBeNullptr="1">DecalComponent*</return>
 				</method>
 				<method name="newComponent&lt;TriggerComponent&gt;" alias="newTriggerComponent">
-					<return>TriggerComponent*</return>
+					<return canBeNullptr="1">TriggerComponent*</return>
 				</method>
 				<method name="newComponent&lt;FogDensityComponent&gt;" alias="newFogDensityComponent">
-					<return>FogDensityComponent*</return>
+					<return canBeNullptr="1">FogDensityComponent*</return>
 				</method>
 				<method name="newComponent&lt;CameraComponent&gt;" alias="newCameraComponent">
-					<return>CameraComponent*</return>
+					<return canBeNullptr="1">CameraComponent*</return>
 				</method>
 				<method name="newComponent&lt;GlobalIlluminationProbeComponent&gt;" alias="newGlobalIlluminationProbeComponent">
-					<return>GlobalIlluminationProbeComponent*</return>
+					<return canBeNullptr="1">GlobalIlluminationProbeComponent*</return>
 				</method>
 				<method name="newComponent&lt;ReflectionProbeComponent&gt;" alias="newReflectionProbeComponent">
-					<return>ReflectionProbeComponent*</return>
+					<return canBeNullptr="1">ReflectionProbeComponent*</return>
 				</method>
 				<method name="newComponent&lt;BodyComponent&gt;" alias="newBodyComponent">
-					<return>BodyComponent*</return>
+					<return canBeNullptr="1">BodyComponent*</return>
 				</method>
 				<method name="newComponent&lt;ParticleEmitterComponent&gt;" alias="newParticleEmitterComponent">
-					<return>ParticleEmitterComponent*</return>
+					<return canBeNullptr="1">ParticleEmitterComponent*</return>
 				</method>
 				<method name="newComponent&lt;MeshComponent&gt;" alias="newMeshComponent">
-					<return>MeshComponent*</return>
+					<return canBeNullptr="1">MeshComponent*</return>
 				</method>
 				<method name="newComponent&lt;MaterialComponent&gt;" alias="newMaterialComponent">
-					<return>MaterialComponent*</return>
+					<return canBeNullptr="1">MaterialComponent*</return>
 				</method>
 				<method name="newComponent&lt;SkinComponent&gt;" alias="newSkinComponent">
-					<return>SkinComponent*</return>
+					<return canBeNullptr="1">SkinComponent*</return>
 				</method>
 				<method name="newComponent&lt;SkyboxComponent&gt;" alias="newSkyboxComponent">
-					<return>SkyboxComponent*</return>
+					<return canBeNullptr="1">SkyboxComponent*</return>
 				</method>
 
 				<method name="getFirstComponentOfType&lt;LightComponent&gt;" alias="getFirstLightComponent">
@@ -515,7 +515,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>SceneNode*</return>
+					<return canBeNullptr="1">SceneNode*</return>
 				</method>
 			</methods>
 		</class>

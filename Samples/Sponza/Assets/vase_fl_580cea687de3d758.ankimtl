@@ -7,14 +7,12 @@
 			<mutator name="SPECULAR_TEX" value="0"/>
 			<mutator name="ROUGHNESS_METALNESS_TEX" value="1"/>
 			<mutator name="NORMAL_TEX" value="1"/>
-			<mutator name="PARALLAX" value="0"/>
 			<mutator name="EMISSIVE_TEX" value="0"/>
 			<mutator name="ALPHA_TEST" value="1"/>
 		</mutation>
 	</shaderProgram>
 
 	<inputs>
-		
 		<input name="m_diffuseTex" value="Assets/vase_plant.ankitex.ankitex"/>
 		<input name="m_diffuseScale" value="1.000000 1.000000 1.000000 1.000000"/>
 		<input name="m_specularScale" value="0.040000 0.040000 0.040000"/>
@@ -24,6 +22,5 @@
 		<input name="m_normalTex" value="Assets/VasePlant_normal.ankitex"/>
 		<input name="m_emissionScale" value="0.000000 0.000000 0.000000"/>
 		<input name="m_subsurface" value="0.250000"/>
-		
 	</inputs>
 </material>

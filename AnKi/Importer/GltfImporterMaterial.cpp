@@ -20,21 +20,18 @@ inline constexpr const Char* kMaterialTemplate = R"(<!-- This file is auto gener
 			<mutator name="SPECULAR_TEX" value="%specTexMutator%"/>
 			<mutator name="ROUGHNESS_METALNESS_TEX" value="%roughnessMetalnessTexMutator%"/>
 			<mutator name="NORMAL_TEX" value="%normalTexMutator%"/>
-			<mutator name="PARALLAX" value="%parallaxMutator%"/>
 			<mutator name="EMISSIVE_TEX" value="%emissiveTexMutator%"/>
 			<mutator name="ALPHA_TEST" value="%alphaTestMutator%"/>
 		</mutation>
 	</shaderProgram>
 
 	<inputs>
-		%parallaxInput%
 		%diff%
 		%spec%
 		%roughnessMetalness%
 		%normal%
 		%emission%
 		%subsurface%
-		%height%
 	</inputs>
 </material>
 )";
@@ -399,26 +396,6 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		}
 
 		xml.replaceAll("%subsurface%", ImporterString().sprintf("<input name=\"m_subsurface\" value=\"%f\"/>", subsurface));
-	}
-
-	// Height texture
-	auto it = extras.find("height_map");
-	if(it != extras.getEnd())
-	{
-		ImporterString uri;
-		uri.sprintf("%s%s", m_texrpath.cstr(), it->cstr());
-
-		xml.replaceAll("%height%", ImporterString().sprintf("<input name=\"m_heightTex\" value=\"%s\" \"/>\n"
-															"\t\t<input name=\"m_heightmapScale\" value=\"0.05\"/>",
-															uri.cstr()));
-
-		xml.replaceAll("%parallaxMutator%", "1");
-	}
-	else
-	{
-		xml.replaceAll("%height%", "");
-		xml.replaceAll("%parallaxInput%", "");
-		xml.replaceAll("%parallaxMutator%", "0");
 	}
 
 	// Replace texture extensions with .anki

@@ -182,21 +182,51 @@ Error ShaderParser::parsePragmaTechnique(const ShaderCompilerString* begin, cons
 
 		while(begin != end)
 		{
-			// Find mutator
-			U32 count = 0;
-			for(const Mutator& mutator : m_mutators)
+			if(*begin == "*")
 			{
-				if(mutator.m_name == *begin)
-				{
-					activeMutators |= 1_U64 << U64(count);
-					break;
-				}
-				++count;
-			}
+				// Enable all mutators
 
-			if(count == m_mutators.getSize())
+				activeMutators = kMaxU64;
+			}
+			else
 			{
-				ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
+				CString mutatorName = *begin;
+				Bool exclude = false;
+				if(mutatorName.find("!") == 0)
+				{
+					// Starts with !, exclude this mutator
+
+					if(mutatorName.getLength() < 2)
+					{
+						ANKI_PP_ERROR_MALFORMED_MSG("Found a ! alone");
+					}
+
+					mutatorName = &mutatorName[1];
+					exclude = true;
+				}
+
+				U32 count = 0;
+				for(const Mutator& mutator : m_mutators)
+				{
+					if(mutator.m_name == mutatorName)
+					{
+						if(!exclude)
+						{
+							activeMutators |= 1_U64 << U64(count);
+						}
+						else
+						{
+							activeMutators &= ~(1_U64 << U64(count));
+						}
+						break;
+					}
+					++count;
+				}
+
+				if(count == m_mutators.getSize())
+				{
+					ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
+				}
 			}
 
 			++begin;

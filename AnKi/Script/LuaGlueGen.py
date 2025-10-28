@@ -124,11 +124,20 @@ def ret(ret_el):
     (type, is_ref, is_ptr, is_const) = parse_type_decl(type_txt)
 
     if is_ptr:
+        if ret_el.get("canBeNullptr") is not None and ret_el.get("canBeNullptr") == "1":
+            can_be_nullptr = True
+        else:
+            can_be_nullptr = False
+
         wglue("if(ret == nullptr) [[unlikely]]")
         wglue("{")
         ident(1)
-        wglue("lua_pushstring(l, \"Glue code returned nullptr\");")
-        wglue("return -1;")
+        if can_be_nullptr:
+            wglue("lua_pushnil(l);")
+            wglue("return 1;")
+        else:
+            wglue("lua_pushstring(l, \"Glue code returned nullptr\");")
+            wglue("return -1;")
         ident(-1)
         wglue("}")
         wglue("")

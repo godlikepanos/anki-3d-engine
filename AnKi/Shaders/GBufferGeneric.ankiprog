@@ -11,28 +11,27 @@
 #pragma anki mutator SPECULAR_TEX 0 1
 #pragma anki mutator ROUGHNESS_METALNESS_TEX 0 1
 #pragma anki mutator NORMAL_TEX 0 1
-#pragma anki mutator PARALLAX 0 1
 #pragma anki mutator EMISSIVE_TEX 0 1
 #pragma anki mutator ALPHA_TEST 0 1
 
 #pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
 
-#pragma anki technique GBufferLegacy vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique GBufferLegacy vert mutators ANKI_VELOCITY ANKI_BONES NORMAL_TEX
 #pragma anki technique GBufferLegacy pixel
 
-#pragma anki technique ShadowsLegacy vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique ShadowsLegacy vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX ALPHA_TEST
 #pragma anki technique ShadowsLegacy pixel
 
-#pragma anki technique GBufferSwMeshletRendering vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique GBufferSwMeshletRendering vert mutators ANKI_VELOCITY ANKI_BONES NORMAL_TEX
 #pragma anki technique GBufferSwMeshletRendering pixel
 
-#pragma anki technique ShadowsSwMeshletRendering vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique ShadowsSwMeshletRendering vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX
 #pragma anki technique ShadowsSwMeshletRendering pixel
 
-#pragma anki technique GBufferMeshShaders mesh mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique GBufferMeshShaders mesh mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX ALPHA_TEST
 #pragma anki technique GBufferMeshShaders pixel
 
-#pragma anki technique ShadowsMeshShaders mesh mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique ShadowsMeshShaders mesh mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX ALPHA_TEST
 #pragma anki technique ShadowsMeshShaders pixel
 
 #pragma anki technique RtShadows ahit mutators ALPHA_TEST DIFFUSE_TEX
@@ -49,32 +48,20 @@
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 // Define a few things to avoid compilation errors
-#if ANKI_TECHNIQUE_RtShadows && ANKI_CLOSEST_HIT_SHADER
+#if !defined(ALPHA_TEST)
 #	define ALPHA_TEST 0
+#endif
+
+#if !defined(DIFFUSE_TEX)
 #	define DIFFUSE_TEX 0
-#	define ANKI_VELOCITY 0
-#	define ANKI_BONES 0
-#	define PARALLAX 0
 #endif
 
-#if ANKI_TECHNIQUE_RtShadows && ANKI_ANY_HIT_SHADER
+#if !defined(ANKI_VELOCITY)
 #	define ANKI_VELOCITY 0
-#	define ANKI_BONES 0
-#	define PARALLAX 0
 #endif
 
-#if ANKI_TECHNIQUE_RtMaterialFetch
-#	define ANKI_VELOCITY 0
+#if !defined(ANKI_BONES)
 #	define ANKI_BONES 0
-#	define PARALLAX 0
-#endif
-
-#if ANKI_AMPLIFICATION_SHADER
-#	define ALPHA_TEST 0
-#	define DIFFUSE_TEX 0
-#	define ANKI_VELOCITY 0
-#	define ANKI_BONES 0
-#	define PARALLAX 0
 #endif
 
 // General defines
@@ -82,12 +69,7 @@
 #define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
 #define UVS (GBUFFER || REALLY_ALPHA_TEST)
 #define REALLY_VELOCITY ((ANKI_VELOCITY || ANKI_BONES) && GBUFFER)
-#define REALLY_USING_PARALLAX (PARALLAX == 1 && GBUFFER && ALPHA_TEST == 0)
-#if GBUFFER
-#	define NORMAL_MAPPING (NORMAL_TEX == 1)
-#else
-#	define NORMAL_MAPPING 0
-#endif
+#define NORMAL_MAPPING (GBUFFER && NORMAL_TEX)
 #define SW_MESHLETS (ANKI_TECHNIQUE_GBufferSwMeshletRendering || ANKI_TECHNIQUE_ShadowsSwMeshletRendering)
 
 #define VISUALIZE_MESHLETS (0 && GBUFFER)
@@ -97,20 +79,18 @@
 
 #pragma anki struct AnKiLocalConstants
 
-#pragma anki member U32 m_diffuseTex
-#pragma anki member U32 m_normalTex
-#pragma anki member U32 m_roughnessMetalnessTex
-#pragma anki member U32 m_specularTex
-#pragma anki member U32 m_emissiveTex
-#pragma anki member U32 m_heightTex
+#pragma anki member U32 m_diffuseTex 0
+#pragma anki member U32 m_normalTex 0
+#pragma anki member U32 m_roughnessMetalnessTex 0
+#pragma anki member U32 m_specularTex 0
+#pragma anki member U32 m_emissiveTex 0
 
-#pragma anki member Vec4 m_diffuseScale
-#pragma anki member F32 m_roughnessScale
-#pragma anki member F32 m_metalnessScale
-#pragma anki member Vec3 m_specularScale
-#pragma anki member Vec3 m_emissionScale
-#pragma anki member F32 m_heightmapScale
-#pragma anki member F32 m_subsurface
+#pragma anki member Vec4 m_diffuseScale 1.0 1.0 1.0 1.0
+#pragma anki member F32 m_roughnessScale 1.0
+#pragma anki member F32 m_metalnessScale 1.0
+#pragma anki member Vec3 m_specularScale 1.0 1.0 1.0
+#pragma anki member Vec3 m_emissionScale 1.0 1.0 1.0
+#pragma anki member F32 m_subsurface 0.0
 
 #pragma anki struct_end
 
@@ -512,12 +492,7 @@ GBufferPixelOut main(
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
 
-#		if REALLY_USING_PARALLAX
-	// TODO
 	const Vec2 uv = vertInput.m_uv;
-#		else
-	const Vec2 uv = vertInput.m_uv;
-#		endif
 	ANKI_MAYBE_UNUSED(uv);
 
 #		if DIFFUSE_TEX
