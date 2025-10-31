@@ -107,7 +107,7 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u3);
 		SBUFF(g_drawIndexedIndirectArgs, indirectArgsIndex) = indirect;
 
 		GpuScenePerDraw perDraw;
-		perDraw.m_worldTransformsIndex =renderable.m_worldTransformsIndex;
+		perDraw.m_worldTransformsIndex = renderable.m_worldTransformsIndex;
 		perDraw.m_isParticleEmitter = isParticleEmitter;
 		perDraw.m_particleEmitterIndex = renderable.m_particleEmitterIndex;
 		perDraw.m_constantsOffset = renderable.m_constantsOffset;

@@ -942,14 +942,23 @@ void EditorUi::debugRtsWindow()
 
 		if(ImGui::BeginChild("Content", Vec2(-1.0f, -1.0f)))
 		{
+			// Gather the names
+			DynamicArray<String> rtNames;
 			Renderer::getSingleton().iterateDebugRenderTargetNames([&](CString name) {
+				rtNames.emplaceBack(name);
+				return FunctorContinue::kContinue;
+			});
+
+			std::sort(rtNames.getBegin(), rtNames.getEnd());
+
+			for(const String& name : rtNames)
+			{
 				Bool isActive = (name == Renderer::getSingleton().getCurrentDebugRenderTarget());
 				if(ImGui::Checkbox(name.cstr(), &isActive) || (isActive && refresh))
 				{
 					Renderer::getSingleton().setCurrentDebugRenderTarget(isActive ? name : "", m_debugRtsWindow.m_disableTonemapping);
 				}
-				return FunctorContinue::kContinue;
-			});
+			}
 		}
 		ImGui::EndChild();
 	}
