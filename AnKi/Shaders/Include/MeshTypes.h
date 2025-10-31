@@ -102,7 +102,8 @@ struct MeshletGeometryDescriptor
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_firstPrimitive; // In size of kMeshletPrimitiveFormat
-	U32 m_primitiveCount_R16_Uint_vertexCount_R16_Uint;
+	U32 m_primitiveCount : 16;
+	U32 m_vertexCount : 16;
 	F32 m_positionScale;
 
 	Vec3 m_positionTranslation;

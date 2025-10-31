@@ -312,7 +312,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 				outMeshletGeom.m_firstPrimitive =
 					lod.m_meshletIndices.getOffset() / getFormatInfo(kMeshletPrimitiveFormat).m_texelSize + inMeshlet.m_firstPrimitive;
-				outMeshletGeom.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) | inMeshlet.m_vertexCount;
+				outMeshletGeom.m_primitiveCount = inMeshlet.m_primitiveCount;
+				outMeshletGeom.m_vertexCount = inMeshlet.m_vertexCount;
 				outMeshletGeom.m_positionTranslation = m_positionsTranslation;
 				outMeshletGeom.m_positionScale = m_positionsScale;
 

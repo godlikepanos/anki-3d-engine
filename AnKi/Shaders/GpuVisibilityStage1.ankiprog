@@ -190,8 +190,10 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		{
 #if GATHER_MESHLETS
 			GpuVisibilityVisibleMeshletDesc desc;
-			desc.m_renderableIndex_30bit_renderStageBucket_12bit = (renderableIdx << 12u) | renderStateBucket;
-			desc.m_lod_2bit_meshletIndex_30bit = lod << 30u;
+			desc.m_renderableIndex = renderableIdx;
+			desc.m_renderStateBucket = renderStateBucket;
+			desc.m_lod = lod;
+			desc.m_meshletIndex = 0;
 
 			// X dimension will be fixed later
 			U32 firstMeshletIndex;
@@ -209,7 +211,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 				for(U32 i = 0; i < meshLod.m_meshletCount; ++i)
 				{
 					SBUFF(g_visibleMeshlets, firstMeshletIndex + i) = desc;
-					++desc.m_lod_2bit_meshletIndex_30bit;
+					++desc.m_meshletIndex;
 				}
 
 				// Add to the next bucket
@@ -237,9 +239,9 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 
 				// Store the renderable
 				GpuVisibilityVisibleRenderableDesc visRenderable;
-				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit = lod << 30u;
-				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit |= renderableIdx << 10u;
-				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit |= renderStateBucket;
+				visRenderable.m_lod = lod;
+				visRenderable.m_renderableIndex = renderableIdx;
+				visRenderable.m_renderStateBucket = renderStateBucket;
 				SBUFF(g_visibleRenderables, firstInstance) = visRenderable;
 
 				// Add to the next bucket

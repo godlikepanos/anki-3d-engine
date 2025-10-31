@@ -182,7 +182,6 @@ void EditorUi::draw(UiCanvas& canvas)
 
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
 		const Vec2 initialSize = Vec2(viewportSize.y() * 0.75f);
 		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
 
@@ -541,6 +540,8 @@ void EditorUi::sceneNodePropertiesWindow()
 		icon = ANKI_CONCATENATE(ICON_MDI_, icon_); \
 		break;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+					default:
+						ANKI_ASSERT(0);
 					}
 
 					// Header
@@ -712,7 +713,6 @@ void EditorUi::materialComponent(MaterialComponent& comp)
 		dummyButton(0);
 
 		I32 value = comp.getSubmeshIndex();
-		Char txt[100] = "lala";
 		if(ImGui::InputInt(ICON_MDI_VECTOR_POLYGON " Submesh ID", &value, 1, 1, 0))
 		{
 			comp.setSubmeshIndex(value);
@@ -808,8 +808,6 @@ void EditorUi::cVarsWindow()
 	if(ImGui::GetFrameCount() > 1)
 	{
 		// Viewport is one frame delay so do that when frame >1
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
 		const Vec2 initialSize = Vec2(900.0f, m_canvas->getSizef().y() * 0.8f);
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once, Vec2(0.5f));
@@ -931,8 +929,6 @@ void EditorUi::debugRtsWindow()
 	if(ImGui::GetFrameCount() > 1)
 	{
 		// Viewport is one frame delay so do that when frame >1
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
 		const Vec2 initialSize = Vec2(450.0f, m_canvas->getSizef().y() * 0.4f);
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once, Vec2(0.5f));

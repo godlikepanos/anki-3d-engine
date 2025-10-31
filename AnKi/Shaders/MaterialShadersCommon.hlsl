@@ -21,7 +21,7 @@ ConstantBuffer<MaterialGlobalConstants> g_globalConstants : register(ANKI_REG(b,
 ByteAddressBuffer g_gpuScene : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_GPU_SCENE));
 
 // Unified geom:
-ByteAddressBuffer g_unifiedGeom : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY_START));
+ByteAddressBuffer g_unifiedGeom : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY));
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) Buffer<shaderType> g_unifiedGeom_##fmt : register(ANKI_REG(t, reg));
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
@@ -34,12 +34,18 @@ StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(ANKI_REG
 StructuredBuffer<Mat3x4> g_transforms : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_TRANSFORMS));
 SamplerState g_nearestClampSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER));
 StructuredBuffer<U32> g_firstMeshlet : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_FIRST_MESHLET));
+StructuredBuffer<GpuScenePerDraw> g_perDraw : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_PER_DRAW));
 
-#if ANKI_MESH_SHADER
+// One for each bucket. Points to g_perDraw
+StructuredBuffer<U32> g_firstPerDraw : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_PER_DRAW_OFFSET));
+
+#if ANKI_MESH_SHADER || ANKI_VERTEX_SHADER
 struct Consts
 {
-	UVec3 m_padding;
 	U32 m_bucketIndex;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
 };
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 #endif
@@ -61,6 +67,13 @@ Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_S
 #endif
 
 #undef ANKI_REG
+
+#if ANKI_VERTEX_SHADER
+GpuScenePerDraw getGpuScenePerDraw()
+{
+	return g_perDraw[gl_DrawID + g_firstPerDraw[g_consts.m_bucketIndex]];
+}
+#endif
 
 /// Used in vert shading.
 UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)

@@ -18,7 +18,7 @@ public:
 
 	~NativeWindowAndroid();
 
-	Error initInternal(const NativeWindowInitInfo& init);
+	Error initInternal(U32 targetFps, CString title);
 };
 
 } // end namespace anki

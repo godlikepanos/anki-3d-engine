@@ -9,16 +9,6 @@
 
 ANKI_BEGIN_NAMESPACE
 
-inline GpuSceneRenderableInstance unpackGpuSceneRenderableVertex(UVec4 x)
-{
-	GpuSceneRenderableInstance o;
-	o.m_worldTransformsIndex = x[0];
-	o.m_constantsOffset = x[1];
-	o.m_meshLodIndex = x[2];
-	o.m_boneTransformsOffsetOrParticleEmitterIndex = x[3];
-	return o;
-}
-
 inline GpuSceneMeshletInstance unpackGpuSceneMeshletInstance(UVec4 x)
 {
 	GpuSceneMeshletInstance o;

@@ -256,13 +256,13 @@ VertOut main(VertIn input)
 #		endif
 
 #	else // SW_MESHLETS
-	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
+	const GpuScenePerDraw instance = getGpuScenePerDraw();
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
 
 	const U32 constantsOffset = instance.m_constantsOffset;
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
-	const U32 boneTransformsOffset = instance.m_boneTransformsOffsetOrParticleEmitterIndex;
+	const U32 boneTransformsOffset = instance.m_boneTransformsOffset;
 #	endif // SW_MESHLETS
 	ANKI_MAYBE_UNUSED(boneTransformsOffset);
 
@@ -325,8 +325,8 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 	ANKI_MAYBE_UNUSED(boneTransformsOffset);
 
 	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
-	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
-	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
+	const U32 primCount = meshlet.m_primitiveCount;
+	const U32 vertCount = meshlet.m_vertexCount & 0xFFFFu;
 
 	SetMeshOutputCounts(vertCount, primCount);
 
@@ -598,7 +598,7 @@ GBufferPixelOut main(
 #	if ANKI_ANY_HIT_SHADER
 
 #		if REALLY_ALPHA_TEST
-ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
+ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 #		endif
 
 [shader("anyhit")] void main(inout RtShadowsRayPayload payload, in Barycentrics barycentrics)
@@ -611,7 +611,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 
 	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
 
-	const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
+	const GpuSceneMeshLod mesh = g_meshLods[g_record.m_meshLodIndex];
 
 	const U16Vec3 indices = g_unifiedGeom.Load<U16Vec3>(mesh.m_firstIndex * sizeof(U16) + PrimitiveIndex() * sizeof(U16Vec3));
 	const UnpackedMeshVertex vert0 = loadVertex(mesh, indices[0], false);
@@ -620,7 +620,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_record.m_constantsOffset);
 	const HVec4 diffColorA =
 		getBindlessTexture2DVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0) * localConstants.m_diffuseScale;
 
@@ -658,11 +658,11 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 #	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN
 
 #	if ANKI_CLOSEST_HIT_SHADER
-ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
+ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 
 [shader("closesthit")] void main(inout RtMaterialFetchRayPayload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
 {
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_record.m_constantsOffset);
 
 	const Bool skipVerts = USE_POSITION_FETCH_NORMALS && payload.m_textureLod > 100.0;
 
@@ -672,7 +672,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 	{
 		const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
 
-		const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
+		const GpuSceneMeshLod mesh = g_meshLods[g_record.m_meshLodIndex];
 
 		const U16Vec3 indices = g_unifiedGeom.Load<U16Vec3>(mesh.m_firstIndex * sizeof(U16) + PrimitiveIndex() * sizeof(U16Vec3));
 		const UnpackedMeshVertex vert0 = loadVertex(mesh, indices[0], false);
@@ -732,7 +732,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuSceneRenderableInstance, g_gpuSceneRenderable)
 	payload.m_emission = emission;
 
 	// Normal
-	const Mat3x4 worldTransform = g_transforms[g_gpuSceneRenderable.m_worldTransformsIndex];
+	const Mat3x4 worldTransform = g_transforms[g_record.m_worldTransformsIndex];
 	const Vec3 normal = normalize(mul(worldTransform, Vec4(vertNormal, 0.0)));
 	payload.m_worldNormal = normal;
 

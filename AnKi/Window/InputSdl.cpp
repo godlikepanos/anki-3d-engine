@@ -166,7 +166,7 @@ Error InputSdl::handleEventsInternal()
 	m_textInput[0] = '\0';
 
 	// add the times a key is being pressed
-	for(auto& k : m_keys)
+	for(I32& k : m_keys)
 	{
 		if(k > 0)
 		{
@@ -177,7 +177,7 @@ Error InputSdl::handleEventsInternal()
 			k = 0;
 		}
 	}
-	for(auto& k : m_mouseBtns)
+	for(I32& k : m_mouseBtns)
 	{
 		if(k > 0)
 		{

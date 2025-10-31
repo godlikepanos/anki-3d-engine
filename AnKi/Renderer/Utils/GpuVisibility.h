@@ -11,10 +11,6 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// @memberof GpuVisibility
 class InstanceRange
 {
 	friend class GpuVisibility;
@@ -42,7 +38,6 @@ private:
 	U32 m_instanceCount = 0;
 };
 
-/// @memberof GpuVisibility
 class BaseGpuVisibilityInput
 {
 public:
@@ -54,13 +49,12 @@ public:
 
 	RenderGraphBuilder* m_rgraph = nullptr;
 
-	Bool m_gatherAabbIndices = false; ///< For debug draw.
-	Bool m_hashVisibles = false; ///< Create a hash for the visible renderables.
+	Bool m_gatherAabbIndices = false; // For debug draw.
+	Bool m_hashVisibles = false; // Create a hash for the visible renderables.
 
-	Bool m_limitMemory = false; ///< Use less memory but you pay some cost scheduling the work.
+	Bool m_limitMemory = false; // Use less memory but you pay some cost scheduling the work.
 };
 
-/// @memberof GpuVisibility
 class FrustumGpuVisibilityInput : public BaseGpuVisibilityInput
 {
 public:
@@ -69,12 +63,11 @@ public:
 	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
 	UVec2 m_viewportSize;
 
-	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
+	const RenderTargetHandle* m_hzbRt = nullptr; // Optional.
 
-	Bool m_twoPhaseOcclusionCulling = false; ///< If it's false then it's only a single phase. Only applies when meshlet rendering is enabled.
+	Bool m_twoPhaseOcclusionCulling = false; // If it's false then it's only a single phase. Only applies when meshlet rendering is enabled.
 };
 
-/// @memberof GpuVisibility
 class DistanceGpuVisibilityInput : public BaseGpuVisibilityInput
 {
 public:
@@ -82,39 +75,41 @@ public:
 	F32 m_testRadius = 1.0f;
 };
 
-/// @memberof GpuVisibility
 class GpuVisibilityOutput
 {
 	friend class GpuVisibility;
 
 public:
-	BufferHandle m_dependency; ///< Just expose one handle for depedencies. No need to track all buffers. Wait on it using indirect draw usage.
+	BufferHandle m_dependency; // Just expose one handle for depedencies. No need to track all buffers. Wait on it using indirect draw usage.
 
 	class
 	{
 	public:
-		BufferView m_renderableInstancesBuffer; ///< An array of GpuSceneRenderableInstance.
-		BufferView m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
-		BufferView m_drawIndexedIndirectArgsBuffer; ///< Array of DrawIndexedIndirectArgs or DrawIndirectArgs.
+		BufferView m_perDrawDataBuffer; // An array of GpuScenePerDraw.
+		BufferView m_mdiDrawCountsBuffer; // An array of U32, one for each render state bucket (even those that use task/mesh flow).
+		BufferView m_drawIndexedIndirectArgsBuffer; // Array of DrawIndexedIndirectArgs or DrawIndirectArgs.
 
-		/// Defines the element sub-ranges in the m_drawIndexedIndirectArgsBuffer per render state bucket.
+		// One for each bucket. It's an index to the m_perDrawDataBuffer. It basically gives the offset to the m_perDrawDataBuffer for each bucket
+		BufferView m_firstPerDrawBuffer;
+
+		// Defines the element sub-ranges in the m_drawIndexedIndirectArgsBuffer per render state bucket.
 		WeakArray<InstanceRange> m_bucketIndirectArgsRanges;
-	} m_legacy; ///< Legacy vertex shading.
+	} m_legacy; // Legacy vertex shading.
 
 	class
 	{
 	public:
-		BufferView m_dispatchMeshIndirectArgsBuffer; ///< H/W meshlet rendering array of DispatchIndirectArgs, one for each render state bucket.
-		BufferView m_drawIndirectArgs; ///< S/W meshlet rendering array of DrawIndirectArgs, one for each state bucket.
+		BufferView m_dispatchMeshIndirectArgsBuffer; // H/W meshlet rendering array of DispatchIndirectArgs, one for each render state bucket.
+		BufferView m_drawIndirectArgs; // S/W meshlet rendering array of DrawIndirectArgs, one for each state bucket.
 
 		BufferView m_meshletInstancesBuffer;
 
-		BufferView m_firstMeshletBuffer; ///< For H/W meshlet rendering. Points to the first meshlet in the m_meshletInstancesBuffer. One per bucket.
-	} m_mesh; ///< S/W or H/W meshlet rendering.
+		BufferView m_firstMeshletBuffer; // For H/W meshlet rendering. Points to the first meshlet in the m_meshletInstancesBuffer. One per bucket.
+	} m_mesh; // S/W or H/W meshlet rendering.
 
-	BufferView m_visibleAaabbIndicesBuffer; ///< [Optional] Indices to the AABB buffer. The 1st element is the count.
+	BufferView m_visibleAaabbIndicesBuffer; // [Optional] Indices to the AABB buffer. The 1st element is the count.
 
-	BufferView m_visiblesHashBuffer; ///< [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
+	BufferView m_visiblesHashBuffer; // [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
 
 	Bool containsDrawcalls() const
 	{
@@ -129,7 +124,7 @@ private:
 		BufferView m_counters;
 		BufferView m_meshletPrefixSums;
 		BufferView m_gpuVisIndirectDispatchArgs;
-	} m_stage1And2Mem; ///< Output of the 2nd (or 1st) stage that will be used in the 3rd
+	} m_stage1And2Mem; // Output of the 2nd (or 1st) stage that will be used in the 3rd
 
 	class
 	{
@@ -137,7 +132,7 @@ private:
 		BufferView m_indirectDrawArgs;
 		BufferView m_dispatchMeshIndirectArgs;
 		BufferView m_meshletInstances;
-	} m_stage3Mem; ///< Output of the 3rd stage.
+	} m_stage3Mem; // Output of the 3rd stage.
 };
 
 /// Performs GPU visibility for some pass.
@@ -188,7 +183,7 @@ private:
 		class
 		{
 		public:
-			BufferView m_instanceRateRenderables;
+			BufferView m_perDraw;
 			BufferView m_drawIndexedIndirectArgs;
 		} m_stage2Legacy;
 
@@ -216,7 +211,6 @@ private:
 	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
 };
 
-/// @memberof GpuVisibilityNonRenderables
 class GpuVisibilityNonRenderablesInput
 {
 public:
@@ -225,19 +219,18 @@ public:
 	Mat4 m_viewProjectionMat;
 	RenderGraphBuilder* m_rgraph = nullptr;
 
-	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
-	BufferView m_cpuFeedbackBuffer; ///< Optional.
+	const RenderTargetHandle* m_hzbRt = nullptr; // Optional.
+	BufferView m_cpuFeedbackBuffer; // Optional.
 };
 
-/// @memberof GpuVisibilityNonRenderables
 class GpuVisibilityNonRenderablesOutput
 {
 public:
-	BufferHandle m_visiblesBufferHandle; ///< Buffer handle holding the visible objects. Used for tracking. No need to track all buffers.
+	BufferHandle m_visiblesBufferHandle; // Buffer handle holding the visible objects. Used for tracking. No need to track all buffers.
 	BufferView m_visiblesBuffer;
 };
 
-/// GPU visibility of lights, probes etc.
+// GPU visibility of lights, probes etc.
 class GpuVisibilityNonRenderables : public RendererObject
 {
 public:
@@ -252,12 +245,11 @@ private:
 	static constexpr U32 kInitialCounterArraySize = 32;
 
 	BufferHandle m_counterBufferZeroingHandle;
-	BufferPtr m_counterBuffer; ///< A buffer containing multiple counters for atomic operations.
+	BufferPtr m_counterBuffer; // A buffer containing multiple counters for atomic operations.
 	U64 m_lastFrameIdx = kMaxU64;
 	U32 m_counterBufferOffset = 0;
 };
 
-/// @memberof GpuVisibilityAccelerationStructures
 class GpuVisibilityAccelerationStructuresInput
 {
 public:
@@ -284,19 +276,18 @@ public:
 	}
 };
 
-/// @memberof GpuVisibilityAccelerationStructures
 class GpuVisibilityAccelerationStructuresOutput
 {
 public:
-	BufferHandle m_dependency; ///< Some handle to track dependencies. No need to track every buffer.
+	BufferHandle m_dependency; // Some handle to track dependencies. No need to track every buffer.
 
-	BufferView m_instancesBuffer; ///< Points to AccelerationStructureBuildRangeInfo::m_primitiveCount number of AccelerationStructureInstance.
-	BufferView m_renderablesBuffer; ///< AccelerationStructureBuildRangeInfo::m_primitiveCount + 1 number of indices to renderables.
+	BufferView m_instancesBuffer; // Points to AccelerationStructureBuildRangeInfo::m_primitiveCount number of AccelerationStructureInstance.
+	BufferView m_renderablesBuffer; // AccelerationStructureBuildRangeInfo::m_primitiveCount + 1 number of indices to renderables.
 
-	BufferView m_buildSbtIndirectArgsBuffer; ///< The DispatchIndirectArgs for the SBT dispatches.
+	BufferView m_buildSbtIndirectArgsBuffer; // The DispatchIndirectArgs for the SBT dispatches.
 };
 
-/// Performs visibility to gather bottom-level acceleration structures in a buffer that can be used to build a TLAS.
+// Performs visibility to gather bottom-level acceleration structures in a buffer that can be used to build a TLAS.
 class GpuVisibilityAccelerationStructures : public RendererObject
 {
 public:
@@ -309,14 +300,13 @@ private:
 	ShaderProgramPtr m_visibilityGrProg;
 	ShaderProgramPtr m_zeroRemainingInstancesGrProg;
 
-	BufferPtr m_counterBuffer; ///< A buffer containing multiple counters for atomic operations.
+	BufferPtr m_counterBuffer; // A buffer containing multiple counters for atomic operations.
 
 #if ANKI_ASSERTIONS_ENABLED
 	U64 m_lastFrameIdx = kMaxU64;
 #endif
 };
 
-/// @memberof GpuVisibilityLocalLights
 class GpuVisibilityLocalLightsInput
 {
 public:
@@ -326,31 +316,28 @@ public:
 	Vec3 m_cameraPosition;
 	Vec3 m_lookDirection;
 
-	U32 m_lightIndexListSize = 0; ///< The number of light indices to store.
+	U32 m_lightIndexListSize = 0; // The number of light indices to store.
 
 	CString m_passesName = "GpuVisibilityLocalLights";
 
 	RenderGraphBuilder* m_rgraph = nullptr;
 };
 
-/// @memberof GpuVisibilityLocalLights
 class GpuVisibilityLocalLightsOutput
 {
 public:
-	BufferHandle m_dependency; ///< Some handle to track dependencies. No need to track every buffer.
+	BufferHandle m_dependency; // Some handle to track dependencies. No need to track every buffer.
 
-	BufferView m_lightIndexOffsetsPerCellBuffer; ///< One offset to the m_lightIndexBuffer. One offset per cell.
-	BufferView m_lightIndexCountsPerCellBuffer; ///< Number of lights per cell.
-	BufferView m_lightIndexListBuffer; ///< Contains indexes to the GPU scene lights array.
+	BufferView m_lightIndexOffsetsPerCellBuffer; // One offset to the m_lightIndexBuffer. One offset per cell.
+	BufferView m_lightIndexCountsPerCellBuffer; // Number of lights per cell.
+	BufferView m_lightIndexListBuffer; // Contains indexes to the GPU scene lights array.
 
-	/// @{
-	/// The volume of the grid.
+	// The volume of the grid.
 	Vec3 m_lightGridMin;
 	Vec3 m_lightGridMax;
-	/// @}
 };
 
-/// Gathers the local lights around the camera to a grid.
+// Gathers the local lights around the camera to a grid.
 class GpuVisibilityLocalLights : public RendererObject
 {
 public:
@@ -368,6 +355,5 @@ private:
 	ShaderProgramPtr m_prefixSumGrProg;
 	ShaderProgramPtr m_fillGrProg;
 };
-/// @}
 
 } // end namespace anki

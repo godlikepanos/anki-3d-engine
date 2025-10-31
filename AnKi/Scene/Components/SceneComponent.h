@@ -177,7 +177,7 @@ protected:
 		}
 		else
 		{
-			Bool found = false;
+			[[maybe_unused]] Bool found = false;
 			for(auto it = arr.getBegin(); it != arr.getEnd(); ++it)
 			{
 				if(*it == other)

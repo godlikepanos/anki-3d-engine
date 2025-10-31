@@ -41,7 +41,7 @@ ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 		++sbtDwordOffset;
 	}
 
-	// Copy the GpuSceneRenderableInstance
+	// Copy the GpuScenePerDraw
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_worldTransformsIndex;
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_constantsOffset;
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsIndex;

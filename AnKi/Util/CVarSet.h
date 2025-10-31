@@ -113,6 +113,10 @@ public:
 		else
 		{
 			ok = m_checkValueCallback(val);
+			if(ok)
+			{
+				m_value = val;
+			}
 		}
 
 		if(!ok)

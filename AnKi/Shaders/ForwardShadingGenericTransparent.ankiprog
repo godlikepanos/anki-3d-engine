@@ -70,7 +70,7 @@ VertOut main(VertIn input)
 	const UnpackedMeshVertex vertex = loadVertex(meshlet, input.m_svVertexId, false);
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
 #	else // SW_MESHLETS
-	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
+	const GpuScenePerDraw instance = getGpuScenePerDraw();
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
 	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
@@ -106,8 +106,8 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
 
 	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
-	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
-	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
+	const U32 primCount = meshlet.m_primitiveCount;
+	const U32 vertCount = meshlet.m_vertexCount;
 
 	SetMeshOutputCounts(vertCount, primCount);
 

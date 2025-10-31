@@ -46,14 +46,13 @@ StructuredBuffer<U32> g_renderablePrefixSums : register(t5);
 StructuredBuffer<UVec2> g_firstDrawIndirectArgAndCount : register(t6);
 
 // These 3 have the same size
-RWStructuredBuffer<UVec4> g_instanceRateRenderables : register(u0);
+RWStructuredBuffer<GpuScenePerDraw> g_perDraw : register(u0);
 RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs : register(u1);
-RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs : register(u2); // This points to the same buffer as the above
 
 // The MDI counts. One for each render state bucket
-RWStructuredBuffer<U32> g_mdiDrawCounts : register(u3);
+RWStructuredBuffer<U32> g_mdiDrawCounts : register(u2);
 
-RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
+RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u3);
 
 [numthreads(NUMTHREADS, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -64,9 +63,9 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
 
 	const GpuVisibilityVisibleRenderableDesc desc = SBUFF(g_visibleRenderables, svDispatchThreadId.x);
 
-	const U32 renderStateBucket = desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit & ((1u << 10u) - 1u);
-	const U32 renderableIdx = (desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit >> 10u) & ((1u << 20u) - 1u);
-	const U32 lod = desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit >> 30u;
+	const U32 renderStateBucket = desc.m_renderStateBucket;
+	const U32 renderableIdx = desc.m_renderableIndex;
+	const U32 lod = desc.m_lod;
 
 	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
 	const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
@@ -87,43 +86,34 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
 		InterlockedExchange(SBUFF(g_mdiDrawCounts, renderStateBucket), SBUFF(g_firstDrawIndirectArgAndCount, renderStateBucket).y, orig);
 		InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 2);
 	}
-	else if(!isParticleEmitter)
-	{
-		// Regular renderables are always indexed
-
-		DrawIndexedIndirectArgs indirect;
-		indirect.m_indexCount = meshLod.m_indexCount;
-		indirect.m_instanceCount = 1;
-		indirect.m_firstIndex = meshLod.m_firstIndex;
-		indirect.m_vertexOffset = 0;
-		indirect.m_firstInstance = instanceIndex;
-		SBUFF(g_drawIndexedIndirectArgs, indirectArgsIndex) = indirect;
-
-		UVec4 instanceVertex;
-		instanceVertex.x = renderable.m_worldTransformsIndex;
-		instanceVertex.y = renderable.m_constantsOffset;
-		instanceVertex.z = meshLodIndex;
-		instanceVertex.w = renderable.m_boneTransformsOffset;
-		SBUFF(g_instanceRateRenderables, instanceIndex) = instanceVertex;
-	}
 	else
 	{
-		const GpuSceneParticleEmitter emitter = SBUFF(g_particleEmitters, renderable.m_particleEmitterIndex);
+		DrawIndexedIndirectArgs indirect;
+		indirect.m_indexCount = meshLod.m_indexCount;
+		indirect.m_firstIndex = meshLod.m_firstIndex;
+		indirect.m_vertexOffset = 0;
+		indirect.m_firstInstance = 0;
 
-		DrawIndirectArgsWithPadding indirect;
-		indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
-		indirect.m_instanceCount = 1;
-		indirect.m_firstVertex = 0;
-		indirect.m_firstInstance = instanceIndex;
-		indirect.m_padding = 0;
-		SBUFF(g_drawIndirectArgs, indirectArgsIndex) = indirect;
+		if(isParticleEmitter)
+		{
+			const GpuSceneParticleEmitter emitter = SBUFF(g_particleEmitters, renderable.m_particleEmitterIndex);
+			indirect.m_instanceCount = emitter.m_aliveParticleCount;
+		}
+		else
+		{
+			indirect.m_instanceCount = 1;
+		}
 
-		UVec4 instanceVertex;
-		instanceVertex.x = renderable.m_worldTransformsIndex;
-		instanceVertex.y = renderable.m_constantsOffset;
-		instanceVertex.z = meshLodIndex;
-		instanceVertex.w = renderable.m_particleEmitterIndex;
-		SBUFF(g_instanceRateRenderables, instanceIndex) = instanceVertex;
+		SBUFF(g_drawIndexedIndirectArgs, indirectArgsIndex) = indirect;
+
+		GpuScenePerDraw perDraw;
+		perDraw.m_worldTransformsIndex =renderable.m_worldTransformsIndex;
+		perDraw.m_isParticleEmitter = isParticleEmitter;
+		perDraw.m_particleEmitterIndex = renderable.m_particleEmitterIndex;
+		perDraw.m_constantsOffset = renderable.m_constantsOffset;
+		perDraw.m_meshLodIndex = meshLodIndex;
+		perDraw.m_boneTransformsOffset = renderable.m_boneTransformsOffset;
+		SBUFF(g_perDraw, instanceIndex) = perDraw;
 	}
 }
 
@@ -235,10 +225,10 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 	{
 		const GpuVisibilityVisibleMeshletDesc desc = SBUFF(g_visibleMeshlets, svDispatchThreadId);
 
-		const U32 renderableIdx = desc.m_renderableIndex_30bit_renderStageBucket_12bit >> 12u;
-		const U32 renderStateBucket = desc.m_renderableIndex_30bit_renderStageBucket_12bit & ((1u << 12u) - 1u);
-		const U32 lod = desc.m_lod_2bit_meshletIndex_30bit >> 30u;
-		const U32 meshletIdx = desc.m_lod_2bit_meshletIndex_30bit & ((1u << 30u) - 1u);
+		const U32 renderableIdx = desc.m_renderableIndex;
+		const U32 renderStateBucket = desc.m_renderStateBucket;
+		const U32 lod = desc.m_lod;
+		const U32 meshletIdx = desc.m_meshletIndex;
 
 		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
 		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);

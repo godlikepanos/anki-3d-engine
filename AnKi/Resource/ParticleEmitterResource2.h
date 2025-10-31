@@ -16,8 +16,6 @@ class ShaderProgramResourceVariantInitInfo;
 class ParticleEmitterResourceProperty
 {
 public:
-	ParticleEmitterResourceProperty() = default;
-
 	ParticleEmitterResourceProperty(const ParticleEmitterResourceProperty&) = delete; // Non-copyable
 
 	ParticleEmitterResourceProperty& operator=(const ParticleEmitterResourceProperty&) = delete; // Non-copyable

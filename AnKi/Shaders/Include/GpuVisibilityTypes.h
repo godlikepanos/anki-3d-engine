@@ -57,13 +57,18 @@ struct GpuVisibilityHash
 
 struct GpuVisibilityVisibleRenderableDesc
 {
-	U32 m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit;
+	U32 m_lod : 2;
+	U32 m_renderableIndex : 20;
+	U32 m_renderStateBucket : 10;
 };
 
 struct GpuVisibilityVisibleMeshletDesc
 {
-	U32 m_renderableIndex_30bit_renderStageBucket_12bit;
-	U32 m_lod_2bit_meshletIndex_30bit;
+	U32 m_renderableIndex : 30;
+	U32 m_renderStateBucket : 12;
+
+	U32 m_lod : 2;
+	U32 m_meshletIndex : 30;
 };
 
 struct GpuVisibilityMeshletConstants

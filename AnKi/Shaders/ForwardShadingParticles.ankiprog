@@ -14,8 +14,8 @@
 
 struct VertIn
 {
-	UVec4 m_instanceData : MISC0;
 	U32 m_svVertexId : SV_VERTEXID;
+	U32 m_svInstanceId : SV_INSTANCEID;
 };
 
 struct VertOut
@@ -37,13 +37,11 @@ struct VertOut
 #if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
-	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
-	const GpuSceneParticleEmitter particles = g_particleEmitters[instance.m_boneTransformsOffsetOrParticleEmitterIndex];
+	const GpuScenePerDraw instance = getGpuScenePerDraw();
+	const GpuSceneParticleEmitter particles = g_particleEmitters[instance.m_particleEmitterIndex];
 	const GpuSceneMeshLod meshLod = g_meshLods[instance.m_meshLodIndex];
 
-	const U32 particleId = input.m_svVertexId / meshLod.m_indexCount;
-
-	const U32 vertexId = g_unifiedGeom.Load<U16>((meshLod.m_firstIndex + input.m_svVertexId % meshLod.m_indexCount) * sizeof(U16));
+	const U32 particleId = input.m_svInstanceId;
 
 	U32 idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePosition] + particleId * sizeof(Vec3);
 	const Vec3 particlePos = g_gpuScene.Load<Vec3>(idx);
@@ -54,10 +52,10 @@ VertOut main(VertIn input)
 
 	VertOut output;
 
-	output.m_uv = g_unifiedGeom_R32G32_Sfloat[meshLod.m_vertexOffsets[(U32)VertexStreamId::kUv] + vertexId];
+	output.m_uv = g_unifiedGeom_R32G32_Sfloat[meshLod.m_vertexOffsets[(U32)VertexStreamId::kUv] + input.m_svVertexId];
 
 	const Vec3 localPos =
-		g_unifiedGeom_R16G16B16A16_Unorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kPosition] + vertexId] * meshLod.m_positionScale
+		g_unifiedGeom_R16G16B16A16_Unorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kPosition] + input.m_svVertexId] * meshLod.m_positionScale
 		+ meshLod.m_positionTranslation;
 
 	// Apply the particle scale, rotate the mesh to face the camera (billboard) and finally apply the particle position

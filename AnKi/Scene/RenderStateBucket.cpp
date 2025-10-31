@@ -24,10 +24,9 @@ RenderStateBucketContainer::~RenderStateBucketContainer()
 RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingTechnique technique, U32 lod0MeshletCount)
 {
 	// Compute state gash
-	Array<U64, 3> toHash;
+	Array<U64, 2> toHash;
 	toHash[0] = state.m_program->getUuid();
 	toHash[1] = U64(state.m_primitiveTopology);
-	toHash[2] = state.m_indexedDrawcall;
 	const U64 hash = computeHash(toHash.getBegin(), toHash.getSizeInBytes());
 
 	SceneDynamicArray<ExtendedBucket>& buckets = m_buckets[technique];
@@ -86,7 +85,6 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	// Bucket not found, create one
 	ExtendedBucket& newBucket = *buckets.emplaceBack();
 	newBucket.m_hash = hash;
-	newBucket.m_indexedDrawcall = state.m_indexedDrawcall;
 	newBucket.m_primitiveTopology = state.m_primitiveTopology;
 	newBucket.m_program = state.m_program;
 	newBucket.m_userCount = 1;

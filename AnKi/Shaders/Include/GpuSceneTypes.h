@@ -33,17 +33,19 @@ struct GpuSceneRenderable
 	U32 m_padding : 8;
 };
 
-// Almost similar to GpuSceneRenderable but with only what the material shaders need. Needs to fit in a UVec4 vertex attribute.
-struct GpuSceneRenderableInstance
+// Almost similar to GpuSceneRenderable but with only what the material shaders need. Make it as small as possible
+struct GpuScenePerDraw
 {
-	U32 m_worldTransformsIndex;
+	U32 m_worldTransformsIndex : 20;
+	U32 m_particleEmitterIndex : 11;
+	U32 m_isParticleEmitter : 1;
 	U32 m_constantsOffset;
 	U32 m_meshLodIndex; // Points to a single GpuSceneMeshLod in the mesh lods.
-	U32 m_boneTransformsOffsetOrParticleEmitterIndex;
+	U32 m_boneTransformsOffset;
 };
-static_assert(sizeof(GpuSceneRenderableInstance) == sizeof(UVec4));
+static_assert(sizeof(GpuScenePerDraw) == sizeof(UVec4));
 
-// Minimal data passed to the vertex shaders in the case of meshlet rendering.
+// Minimal data passed to the vertex shaders in the case of meshlet rendering (both SW and HW).
 struct GpuSceneMeshletInstance
 {
 	U32 m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit;

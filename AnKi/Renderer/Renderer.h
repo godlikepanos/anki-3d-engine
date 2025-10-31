@@ -15,10 +15,18 @@ namespace anki {
 
 /// @addtogroup renderer
 /// @{
-ANKI_CVAR(NumericCVar<F32>, Render, InternalRenderScaling, 1.0f, 0.5f, 1.0f,
-		  "A factor over the requested swapchain resolution. Applies to all passes up to TAA")
-ANKI_CVAR(NumericCVar<F32>, Render, RenderScaling, 1.0f, 0.5f, 8.0f,
-		  "A factor over the requested swapchain resolution. Applies to post-processing and UI")
+ANKI_CVAR(
+	NumericCVar<F32>, Render, InternalRenderScaling, 1.0f,
+	[](F32 value) {
+		return (value > 0.1f && value <= 8.0f) || value == 540.0f || value == 720.0f || value == 1080.0f || value == 1440.0f || value == 2160.0f;
+	},
+	"A factor over the requested swapchain resolution or some common resolution values (eg 1080, 720 etc). Applies to all passes up to TAA")
+ANKI_CVAR(
+	NumericCVar<F32>, Render, RenderScaling, 1.0f,
+	[](F32 value) {
+		return (value > 0.1f && value <= 8.0f) || value == 540.0f || value == 720.0f || value == 1080.0f || value == 1440.0f || value == 2160.0f;
+	},
+	"A factor over the requested swapchain resolution. Applies to post-processing and UI")
 ANKI_CVAR(NumericCVar<U32>, Render, ZSplitCount, 64, 8, kMaxZsplitCount, "Clusterer number of Z splits")
 ANKI_CVAR(NumericCVar<U8>, Render, TextureAnisotropy, (ANKI_PLATFORM_MOBILE) ? 1 : 16, 1, 16, "Texture anisotropy for the main passes")
 ANKI_CVAR(BoolCVar, Render, PreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")

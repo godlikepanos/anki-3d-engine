@@ -42,7 +42,7 @@ Error MyApp::userPreInit()
 
 	// Config
 #if ANKI_OS_ANDROID
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
 #else
 	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 2, m_argv + 2));
 #endif

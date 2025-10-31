@@ -21,7 +21,6 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-	UVec4 m_gpuSceneRenderable : MISC0;
 };
 
 struct VertOut
@@ -37,8 +36,8 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneParticleEmitter particles = g_particleEmitters[renderable.m_boneTransformsOffsetOrParticleEmitterIndex];
+	const GpuScenePerDraw renderable = getGpuScenePerDraw();
+	const GpuSceneParticleEmitter particles = g_particleEmitters[renderable.m_particleEmitterIndex];
 
 	// Read vertex
 	const U32 particleId = input.m_svVertexId;

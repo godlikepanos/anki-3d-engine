@@ -128,13 +128,39 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_rgraph = GrManager::getSingleton().newRenderGraph();
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(m_swapchainResolution) * g_cvarRenderRenderScaling);
-	alignRoundDown(2, m_postProcessResolution.x());
-	alignRoundDown(2, m_postProcessResolution.y());
+	auto setResolution = [&](UVec2 baseResolution, F32 scale) {
+		UVec2 out;
+		if(scale == 540.0f)
+		{
+			out = UVec2(960, 540);
+		}
+		else if(scale == 720.0f)
+		{
+			out = UVec2(1280, 720);
+		}
+		else if(scale == 1080.0f)
+		{
+			out = UVec2(1920, 1080);
+		}
+		else if(scale == 1440.0f)
+		{
+			out = UVec2(2560, 1440);
+		}
+		else if(scale == 2160.0f)
+		{
+			out = UVec2(3840, 2160);
+		}
+		else
+		{
+			out = UVec2(Vec2(baseResolution) * scale);
+			alignRoundDown(2, out.x());
+			alignRoundDown(2, out.y());
+		}
+		return out;
+	};
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_cvarRenderInternalRenderScaling);
-	alignRoundDown(2, m_internalResolution.x());
-	alignRoundDown(2, m_internalResolution.y());
+	m_postProcessResolution = setResolution(m_swapchainResolution, g_cvarRenderRenderScaling);
+	m_internalResolution = setResolution(m_postProcessResolution, g_cvarRenderInternalRenderScaling);
 
 	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x(),
 				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());

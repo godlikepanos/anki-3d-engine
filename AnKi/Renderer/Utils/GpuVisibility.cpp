@@ -299,7 +299,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			allocateStructuredBuffer<GpuVisibilityVisibleRenderableDesc>(maxLimits.m_maxVisibleLegacyRenderables);
 		m_persistentMemory.m_stage1.m_visibleMeshlets = allocateStructuredBuffer<GpuVisibilityVisibleMeshletDesc>(maxLimits.m_maxVisibleMeshlets);
 
-		m_persistentMemory.m_stage2Legacy.m_instanceRateRenderables = allocateStructuredBuffer<UVec4>(maxLimits.m_maxVisibleLegacyRenderables);
+		m_persistentMemory.m_stage2Legacy.m_perDraw = allocateStructuredBuffer<GpuScenePerDraw>(maxLimits.m_maxVisibleLegacyRenderables);
 		m_persistentMemory.m_stage2Legacy.m_drawIndexedIndirectArgs =
 			allocateStructuredBuffer<DrawIndexedIndirectArgs>(maxLimits.m_maxVisibleLegacyRenderables);
 
@@ -401,7 +401,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		class
 		{
 		public:
-			BufferView m_instanceRateRenderables;
+			BufferView m_perDraw;
 			BufferView m_drawIndexedIndirectArgs;
 
 			BufferView m_mdiDrawCounts;
@@ -423,9 +423,9 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	{
 		if(in.m_limitMemory)
 		{
-			PtrSize newRange = sizeof(UVec4) * limits.m_maxVisibleLegacyRenderables;
-			ANKI_ASSERT(newRange <= m_persistentMemory.m_stage2Legacy.m_instanceRateRenderables.getRange());
-			stage2Mem.m_legacy.m_instanceRateRenderables = BufferView(m_persistentMemory.m_stage2Legacy.m_instanceRateRenderables).setRange(newRange);
+			PtrSize newRange = sizeof(GpuScenePerDraw) * limits.m_maxVisibleLegacyRenderables;
+			ANKI_ASSERT(newRange <= m_persistentMemory.m_stage2Legacy.m_perDraw.getRange());
+			stage2Mem.m_legacy.m_perDraw = BufferView(m_persistentMemory.m_stage2Legacy.m_perDraw).setRange(newRange);
 
 			newRange = sizeof(DrawIndexedIndirectArgs) * limits.m_maxVisibleLegacyRenderables;
 			ANKI_ASSERT(newRange <= m_persistentMemory.m_stage2Legacy.m_drawIndexedIndirectArgs.getRange());
@@ -433,7 +433,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		}
 		else
 		{
-			stage2Mem.m_legacy.m_instanceRateRenderables = allocateStructuredBuffer<UVec4>(limits.m_maxVisibleLegacyRenderables);
+			stage2Mem.m_legacy.m_perDraw = allocateStructuredBuffer<GpuScenePerDraw>(limits.m_maxVisibleLegacyRenderables);
 			stage2Mem.m_legacy.m_drawIndexedIndirectArgs = allocateStructuredBuffer<DrawIndexedIndirectArgs>(limits.m_maxVisibleLegacyRenderables);
 		}
 
@@ -514,7 +514,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 
 	// Setup output
-	out.m_legacy.m_renderableInstancesBuffer = stage2Mem.m_legacy.m_instanceRateRenderables;
+	out.m_legacy.m_perDrawDataBuffer = stage2Mem.m_legacy.m_perDraw;
 	out.m_legacy.m_mdiDrawCountsBuffer = stage2Mem.m_legacy.m_mdiDrawCounts;
 	out.m_legacy.m_drawIndexedIndirectArgsBuffer = stage2Mem.m_legacy.m_drawIndexedIndirectArgs;
 	out.m_mesh.m_dispatchMeshIndirectArgsBuffer = stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs;
@@ -525,6 +525,10 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	if(bHwMeshletRendering)
 	{
 		out.m_mesh.m_firstMeshletBuffer = stage1Mem.m_meshletPrefixSums;
+	}
+	if(bLegacyRendering)
+	{
+		out.m_legacy.m_firstPerDrawBuffer = stage1Mem.m_renderablePrefixSums;
 	}
 	if(bStoreMeshletsFailedHzb)
 	{
@@ -579,7 +583,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			ANKI_ZERO_PART(stage1Mem.m_visibleAabbIndices, true, sizeof(U32))
 			ANKI_ZERO(stage1Mem.m_hash, true)
 
-			ANKI_ZERO(stage2Mem.m_legacy.m_instanceRateRenderables, false)
+			ANKI_ZERO(stage2Mem.m_legacy.m_perDraw, false)
 			ANKI_ZERO(stage2Mem.m_legacy.m_drawIndexedIndirectArgs, true)
 			ANKI_ZERO(stage2Mem.m_legacy.m_mdiDrawCounts, true)
 			ANKI_ZERO(stage2Mem.m_meshlet.m_indirectDrawArgs, true)
@@ -757,13 +761,12 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 					firstDrawIndirectArgAndCount[ibucket].y() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_instanceCount;
 				}
 
-				cmdb.bindUav(0, 0, stage2Mem.m_legacy.m_instanceRateRenderables);
+				cmdb.bindUav(0, 0, stage2Mem.m_legacy.m_perDraw);
 				cmdb.bindUav(1, 0, stage2Mem.m_legacy.m_drawIndexedIndirectArgs);
-				cmdb.bindUav(2, 0, stage2Mem.m_legacy.m_drawIndexedIndirectArgs);
 
-				cmdb.bindUav(3, 0, stage2Mem.m_legacy.m_mdiDrawCounts);
+				cmdb.bindUav(2, 0, stage2Mem.m_legacy.m_mdiDrawCounts);
 
-				cmdb.bindUav(4, 0, m_outOfMemoryReadbackBuffer);
+				cmdb.bindUav(3, 0, m_outOfMemoryReadbackBuffer);
 
 				cmdb.dispatchComputeIndirect(
 					BufferView(stage1Mem.m_gpuVisIndirectDispatchArgs)

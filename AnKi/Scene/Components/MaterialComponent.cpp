@@ -281,7 +281,6 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 			RenderStateInfo state;
 			state.m_primitiveTopology = PrimitiveTopology::kTriangles;
-			state.m_indexedDrawcall = true;
 			state.m_program = mvariant.getShaderProgram();
 
 			U32 firstIndex, indexCount, firstMeshlet, meshletCount;
