@@ -51,6 +51,7 @@
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Renderer/HistoryLength.h>
+#include <AnKi/Renderer/GpuParticles.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -329,6 +330,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	gpuSceneCopy(ctx);
+	m_gpuParticles->populateRenderGraph(ctx);
 	m_primaryNonRenderableVisibility->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
 	{

@@ -12,11 +12,11 @@
 Texture2D<Vec4> g_depthTex : register(ANKI_CONCATENATE(t, ANKI_PARTICLE_SIM_DEPTH_BUFFER));
 Texture2D<Vec4> g_gbufferRt2Tex : register(ANKI_CONCATENATE(t, ANKI_PARTICLE_SIM_NORMAL_BUFFER));
 
+StructuredBuffer<Mat3x4> g_gpuSceneTransforms : register(ANKI_CONCATENATE(t, ANKI_PARTICLE_SIM_GPU_SCENE_TRANSFORMS));
+
 ConstantBuffer<ParticleSimulationConstants> g_consts : register(ANKI_CONCATENATE(b, ANKI_PARTICLE_SIM_CONSTANTS));
 
 RWByteAddressBuffer g_gpuScene : register(ANKI_CONCATENATE(u, ANKI_PARTICLE_SIM_GPU_SCENE));
-
-StructuredBuffer<Mat3x4> g_gpuSceneTransforms : register(ANKI_CONCATENATE(t, ANKI_PARTICLE_SIM_GPU_SCENE_TRANSFORMS));
 
 RWStructuredBuffer<GpuSceneParticleEmitter2> g_gpuSceneParticleEmitters :
 	register(ANKI_CONCATENATE(u, ANKI_PARTICLE_SIM_GPU_SCENE_PARTICLE_EMITTERS));

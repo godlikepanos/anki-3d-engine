@@ -102,6 +102,11 @@ public:
 		return m_prefilledAnKiParticleEmitterProperties;
 	}
 
+	ShaderProgram& getShaderProgram() const
+	{
+		return *m_grProg;
+	}
+
 private:
 	ResourceDynamicArray<U8> m_prefilledAnKiParticleEmitterProperties;
 

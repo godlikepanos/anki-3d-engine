@@ -9,7 +9,7 @@
 
 ANKI_BEGIN_NAMESPACE
 
-/// Some data that are used temporarely by a simulation.
+// Some data that are used temporarely by a simulation.
 struct ParticleSimulationScratch
 {
 	IVec3 m_aabbMin; // U32 because of atomics. In cm
@@ -19,7 +19,7 @@ struct ParticleSimulationScratch
 	U32 m_emittedParticleCount;
 };
 
-/// Constants used in the simulation.
+// Constants used in the simulation.
 struct ParticleSimulationConstants
 {
 	Mat4 m_viewProjMat;

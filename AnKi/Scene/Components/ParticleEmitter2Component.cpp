@@ -217,6 +217,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 	}
 
 	m_gpuSceneReallocationsThisFrame = false;
+	m_dt = F32(info.m_dt);
 
 	if(!m_resourceDirty && !m_geomTypeDirty && !m_meshComponentDirty) [[likely]]
 	{

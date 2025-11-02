@@ -82,6 +82,18 @@ public:
 		return m_boundingVolume;
 	}
 
+	ANKI_INTERNAL ParticleEmitterResource2& getParticleEmitterResource() const
+	{
+		ANKI_ASSERT(isValid());
+		return *m_particleEmitterResource;
+	}
+
+	ANKI_INTERNAL F32 getDt() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_dt;
+	}
+
 private:
 	class ParticleEmitterQuadGeometry;
 
@@ -99,6 +111,8 @@ private:
 	} m_gpuScene;
 
 	Array<Vec3, 2> m_boundingVolume;
+
+	F32 m_dt = 0.0f;
 
 	ParticleGeometryType m_geomType = ParticleGeometryType::kQuad;
 	Bool m_resourceDirty : 1 = true;
