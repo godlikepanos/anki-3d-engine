@@ -48,14 +48,17 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kSpot"/>
 			<enumerant name="kDirectional"/>
 		</enum>
-	</enums>
 
-	<enums>
 		<enum name="BodyComponentCollisionShapeType">
 			<enumerant name="kFromMeshComponent"/>
 			<enumerant name="kAabb"/>
 			<enumerant name="kSphere"/>
 			<enumerant name="kCount"/>
+		</enum>
+
+		<enum name="ParticleGeometryType">
+			<enumerant name="kQuad"/>
+			<enumerant name="kMeshComponent"/>
 		</enum>
 	</enums>
 
@@ -274,6 +277,29 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 
+		<class name="ParticleEmitter2Component">
+			<methods>
+				<method name="setParticleEmitterFilename">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>ParticleEmitter2Component&amp;</return>
+				</method>
+				<method name="getParticleEmitterFilename">
+					<return>CString</return>
+				</method>
+				<method name="setParticleGeometryType">
+					<args>
+						<arg>ParticleGeometryType</arg>
+					</args>
+					<return>ParticleEmitter2Component&amp;</return>
+				</method>
+				<method name="getParticleGeometryType">
+					<return>ParticleGeometryType</return>
+				</method>
+			</methods>
+		</class>
+
 		<class name="MeshComponent">
 			<methods>
 				<method name="setMeshFilename">
@@ -439,6 +465,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="newComponent&lt;ParticleEmitterComponent&gt;" alias="newParticleEmitterComponent">
 					<return canBeNullptr="1">ParticleEmitterComponent*</return>
+				</method>
+				<method name="newComponent&lt;ParticleEmitter2Component&gt;" alias="newParticleEmitter2Component">
+					<return canBeNullptr="1">ParticleEmitter2Component*</return>
 				</method>
 				<method name="newComponent&lt;MeshComponent&gt;" alias="newMeshComponent">
 					<return canBeNullptr="1">MeshComponent*</return>
