@@ -7,6 +7,7 @@
 #include <AnKi/Scene/Components/SkinComponent.h>
 #include <AnKi/Scene/Components/MeshComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
+#include <AnKi/Scene/Components/ParticleEmitter2Component.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -35,7 +36,7 @@ MaterialComponent& MaterialComponent::setMaterialFilename(CString fname)
 	}
 	else
 	{
-		m_resourceDirty = !m_resource || (m_resource->getUuid() != newRsrc->getUuid());
+		m_anyDirty = !m_resource || (m_resource->getUuid() != newRsrc->getUuid());
 		m_resource = std::move(newRsrc);
 		m_castsShadow = m_resource->castsShadow();
 	}
@@ -60,7 +61,7 @@ MaterialComponent& MaterialComponent::setSubmeshIndex(U32 submeshIdx)
 	if(m_submeshIdx != submeshIdx)
 	{
 		m_submeshIdx = submeshIdx;
-		m_submeshIdxDirty = true;
+		m_anyDirty = true;
 	}
 
 	return *this;
@@ -72,42 +73,69 @@ void MaterialComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bo
 
 	if(other->getType() == SceneComponentType::kMesh)
 	{
-		Bool dirty;
-		bookkeepComponent(m_meshComponents, other, added, dirty);
-		m_meshComponentDirty = dirty;
+		bookkeepComponent(m_meshComponent, other, added);
+		m_anyDirty = true;
 	}
 
 	if(other->getType() == SceneComponentType::kSkin)
 	{
-		Bool dirty;
-		bookkeepComponent(m_skinComponents, other, added, dirty);
-		m_skinDirty = dirty;
+		bookkeepComponent(m_skinComponent, other, added);
+		m_anyDirty = true;
 	}
-}
 
-Aabb MaterialComponent::computeAabb(U32 submeshIndex, const SceneNode& node) const
-{
-	U32 firstIndex, indexCount, firstMeshlet, meshletCount;
-	Aabb aabbLocal;
-	m_meshComponents[0]->getMeshResource().getSubMeshInfo(0, submeshIndex, firstIndex, indexCount, firstMeshlet, meshletCount, aabbLocal);
-
-	if(m_skinComponents.getSize() && m_skinComponents[0]->isValid())
+	if(other->getType() == SceneComponentType::kParticleEmitter2)
 	{
-		aabbLocal = m_skinComponents[0]->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
+		bookkeepComponent(m_emitterComponent, other, added);
+		m_anyDirty = true;
 	}
-
-	const Aabb aabbWorld = aabbLocal.getTransformed(node.getWorldTransform());
-	return aabbWorld;
 }
 
 Bool MaterialComponent::isValid() const
 {
-	Bool valid = !!m_resource && m_resource->isLoaded() && m_meshComponents.getSize() && m_meshComponents[0]->isValid();
-	if(m_skinComponents.getSize())
+	Bool valid = !!m_resource && m_resource->isLoaded();
+
+	if(m_meshComponent)
 	{
-		valid = valid && m_skinComponents[0]->isValid();
+		valid = valid && m_meshComponent->isValid();
+	}
+
+	if(m_emitterComponent)
+	{
+		valid = valid && m_emitterComponent->isValid();
+	}
+
+	valid = valid && (m_meshComponent || m_emitterComponent);
+
+	if(m_skinComponent)
+	{
+		valid = valid && m_skinComponent->isValid();
 	}
 	return valid;
+}
+
+Aabb MaterialComponent::computeAabb(const SceneNode& node) const
+{
+	const Bool prioritizeEmitter = m_emitterComponent != nullptr;
+	Aabb aabbWorld;
+	if(prioritizeEmitter)
+	{
+		aabbWorld = Aabb(m_emitterComponent->getBoundingVolume()[0], m_emitterComponent->getBoundingVolume()[1]);
+	}
+	else
+	{
+		Aabb aabbLocal;
+		U32 firstIndex, indexCount, firstMeshlet, meshletCount;
+		m_meshComponent->getMeshResource().getSubMeshInfo(0, m_submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabbLocal);
+
+		if(m_skinComponent && m_skinComponent->isValid())
+		{
+			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
+		}
+
+		aabbWorld = aabbLocal.getTransformed(node.getWorldTransform());
+	}
+
+	return aabbWorld;
 }
 
 void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -129,30 +157,81 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	// From now on the component is considered valid
 
-	const Bool mtlResourceChanged = m_resourceDirty;
-	const Bool meshChanged = m_meshComponentDirty || m_meshComponents[0]->gpuSceneReallocationsThisFrame();
-	const Bool moved = info.m_node->movedThisFrame() || m_firstTimeUpdate;
-	const Bool movedLastFrame = m_movedLastFrame || m_firstTimeUpdate;
-	const Bool hasSkin = m_skinComponents.getSize();
-	const Bool skinChanged = m_skinDirty || (hasSkin && m_skinComponents[0]->gpuSceneReallocationsThisFrame());
-	const Bool submeshChanged = m_submeshIdxDirty;
-
-	updated = mtlResourceChanged || meshChanged || moved || skinChanged || submeshChanged;
-
-	m_resourceDirty = false;
-	m_firstTimeUpdate = false;
-	m_meshComponentDirty = false;
+	const Bool moved = info.m_node->movedThisFrame();
+	const Bool movedLastFrame = m_movedLastFrame;
 	m_movedLastFrame = moved;
-	m_skinDirty = false;
-	m_submeshIdxDirty = false;
 
+	Bool dirty = m_anyDirty || moved != movedLastFrame;
+
+	const Bool prioritizeEmitter = !!m_emitterComponent;
 	const MaterialResource& mtl = *m_resource;
-	const MeshResource& mesh = m_meshComponents[0]->getMeshResource();
-	const U32 submeshIdx = min(mesh.getSubMeshCount() - 1, m_submeshIdx);
+
+	if(m_skinComponent)
+	{
+		dirty = dirty || m_skinComponent->gpuSceneReallocationsThisFrame();
+	}
+
+	if(m_emitterComponent)
+	{
+		dirty = dirty || m_emitterComponent->gpuSceneReallocationsThisFrame();
+	}
+
+	if(m_meshComponent)
+	{
+		dirty = dirty || m_meshComponent->gpuSceneReallocationsThisFrame();
+	}
+
+	if(!dirty) [[likely]]
+	{
+		// Update Scene bounds
+		if(info.m_forceUpdateSceneBounds) [[unlikely]]
+		{
+			const Aabb aabbWorld = computeAabb(*info.m_node);
+			info.updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
+		}
+
+		// Update the GPU scene AABBs
+		if(prioritizeEmitter)
+		{
+			const Aabb aabbWorld = computeAabb(*info.m_node);
+			for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(mtl.getRenderingTechniques()))
+			{
+				const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
+					aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), m_renderStateBucketIndices[t].get());
+
+				switch(t)
+				{
+				case RenderingTechnique::kGBuffer:
+					m_gpuSceneRenderableAabbGBuffer.uploadToGpuScene(gpuVolume);
+					break;
+				case RenderingTechnique::kDepth:
+					m_gpuSceneRenderableAabbDepth.uploadToGpuScene(gpuVolume);
+					break;
+				case RenderingTechnique::kForward:
+					m_gpuSceneRenderableAabbForward.uploadToGpuScene(gpuVolume);
+					break;
+				case RenderingTechnique::kRtMaterialFetch:
+					m_gpuSceneRenderableAabbRt.uploadToGpuScene(gpuVolume);
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
+			}
+		}
+
+		return;
+	}
+
+	// From now on something is dirty, update everything
+
+	updated = true;
+	m_anyDirty = false;
+
+	// Sanitize
+	m_submeshIdx = min(m_submeshIdx, (m_meshComponent) ? (m_meshComponent->getMeshResource().getSubMeshCount() - 1) : 0);
 
 	// Extract the diffuse color
 	Vec3 averageDiffuse(0.0f);
-	if(mtlResourceChanged)
 	{
 		const MaterialVariable* diffuseRelatedMtlVar = nullptr;
 
@@ -201,8 +280,6 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Update the constants
-	Bool constantsReallocated = false;
-	if(mtlResourceChanged) [[unlikely]]
 	{
 		ConstWeakArray<U8> preallocatedConsts = mtl.getPrefilledLocalConstants();
 
@@ -210,7 +287,6 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		{
 			GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneConstants);
 			m_gpuSceneConstants = GpuSceneBuffer::getSingleton().allocate(preallocatedConsts.getSizeInBytes(), 4);
-			constantsReallocated = true;
 		}
 
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneConstants.getOffset(), m_gpuSceneConstants.getAllocatedSize(),
@@ -218,16 +294,16 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Update renderable
-	if(mtlResourceChanged || constantsReallocated || skinChanged || meshChanged || submeshChanged) [[unlikely]]
 	{
 		const MoveComponent& movec = info.m_node->getFirstComponentOfType<MoveComponent>();
 
 		GpuSceneRenderable gpuRenderable = {};
-		gpuRenderable.m_worldTransformsIndex = movec.getGpuSceneTransforms().getIndex() * 2;
+		gpuRenderable.m_worldTransformsIndex = movec.getGpuSceneTransformsIndex();
 		gpuRenderable.m_constantsOffset = m_gpuSceneConstants.getOffset();
-		gpuRenderable.m_meshLodsIndex = m_meshComponents[0]->getGpuSceneMeshLods(submeshIdx).getIndex() * kMaxLodCount;
-		gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponents[0]->getBoneTransformsGpuSceneOffset() : 0;
-		gpuRenderable.m_particleEmitterIndex = kMaxU32;
+		gpuRenderable.m_meshLodsIndex =
+			(prioritizeEmitter) ? m_emitterComponent->getGpuSceneMeshLodIndex(m_submeshIdx) : m_meshComponent->getGpuSceneMeshLodsIndex(m_submeshIdx);
+		gpuRenderable.m_boneTransformsOffset = (m_skinComponent) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
+		gpuRenderable.m_particleEmitterIndex = (prioritizeEmitter) ? m_emitterComponent->getGpuSceneParticleEmitter2Index() : kMaxU32;
 		if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
 		{
 			const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false, false);
@@ -248,55 +324,53 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);
 	}
 
-	// Scene bounds update
-	const Bool aabbUpdated = moved || meshChanged || submeshChanged || hasSkin;
-	if(aabbUpdated || info.m_forceUpdateSceneBounds) [[unlikely]]
+	// Update scene bounds
 	{
-		const Aabb aabbWorld = computeAabb(submeshIdx, *info.m_node);
+		const Aabb aabbWorld = computeAabb(*info.m_node);
 		info.updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
 	}
 
 	// Update the buckets
-	const Bool bucketsNeedUpdate = mtlResourceChanged || submeshChanged || moved != movedLastFrame || skinChanged;
-	if(bucketsNeedUpdate) [[unlikely]]
+	for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 	{
-		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
+		RenderStateBucketContainer::getSingleton().removeUser(m_renderStateBucketIndices[t]);
+
+		if(!(RenderingTechniqueBit(1 << t) & mtl.getRenderingTechniques()))
 		{
-			RenderStateBucketContainer::getSingleton().removeUser(m_renderStateBucketIndices[t]);
-
-			if(!(RenderingTechniqueBit(1 << t) & mtl.getRenderingTechniques()))
-			{
-				continue;
-			}
-
-			// Fill the state
-			RenderingKey key;
-			key.setLod(0); // Materials don't care
-			key.setRenderingTechnique(t);
-			key.setSkinned(hasSkin);
-			key.setVelocity(moved);
-			key.setMeshletRendering(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering);
-
-			const MaterialVariant& mvariant = mtl.getOrCreateVariant(key);
-
-			RenderStateInfo state;
-			state.m_primitiveTopology = PrimitiveTopology::kTriangles;
-			state.m_program = mvariant.getShaderProgram();
-
-			U32 firstIndex, indexCount, firstMeshlet, meshletCount;
-			Aabb aabb;
-			mesh.getSubMeshInfo(0, submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabb);
-			const Bool wantsMesletCount = key.getMeshletRendering() && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
-
-			m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(state, t, (wantsMesletCount) ? meshletCount : 0);
+			continue;
 		}
+
+		// Fill the state
+		RenderingKey key;
+		key.setLod(0); // Materials don't care
+		key.setRenderingTechnique(t);
+		key.setSkinned(m_skinComponent != nullptr);
+		key.setVelocity(moved);
+		key.setMeshletRendering(!prioritizeEmitter
+								&& (GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering));
+
+		const MaterialVariant& mvariant = mtl.getOrCreateVariant(key);
+
+		RenderStateInfo state;
+		state.m_primitiveTopology = PrimitiveTopology::kTriangles;
+		state.m_program = mvariant.getShaderProgram();
+
+		Bool wantsMesletCount = false;
+		U32 meshletCount = 0;
+		if(!prioritizeEmitter)
+		{
+			U32 firstIndex, indexCount, firstMeshlet;
+			Aabb aabb;
+			m_meshComponent->getMeshResource().getSubMeshInfo(0, m_submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabb);
+			wantsMesletCount = key.getMeshletRendering() && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
+		}
+
+		m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(state, t, (wantsMesletCount) ? meshletCount : 0);
 	}
 
 	// Upload the AABBs to the GPU scene
-	const Bool gpuSceneAabbsNeedUpdate = aabbUpdated || bucketsNeedUpdate;
-	if(gpuSceneAabbsNeedUpdate) [[unlikely]]
 	{
-		const Aabb aabbWorld = computeAabb(submeshIdx, *info.m_node);
+		const Aabb aabbWorld = computeAabb(*info.m_node);
 
 		// Raster
 		for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(RenderingTechniqueBit::kAllRaster))

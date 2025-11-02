@@ -30,13 +30,15 @@ public:
 		m_gpuSceneTransforms.free();
 	}
 
-	ANKI_INTERNAL const GpuSceneArrays::Transform::Allocation& getGpuSceneTransforms() const
+	ANKI_INTERNAL U32 getGpuSceneTransformsIndex() const
 	{
-		return m_gpuSceneTransforms;
+		return m_gpuSceneTransforms.getIndex() * 2;
 	}
 
 private:
 	GpuSceneArrays::Transform::Allocation m_gpuSceneTransforms;
+
+	Bool m_movedLastFrame = true;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };

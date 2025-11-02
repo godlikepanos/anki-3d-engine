@@ -383,6 +383,7 @@ public:
 		return m_transformUpdatedThisFrame;
 	}
 
+	// Returns true if the transform got updated
 	ANKI_INTERNAL Bool updateTransform();
 	/// @}
 

@@ -199,26 +199,13 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 
 		if(lastThreadExecuting)
 		{
-			// Update the bounding volume of the renderable
+			// Inform about the bounding volume
 			const F32 toMeters = 1.0 / 100.0;
-			const Vec3 aabbMin = g_scratch[0].m_aabbMin * toMeters;
-			const Vec3 aabbMax = g_scratch[0].m_aabbMax * toMeters;
-
-			const Vec3 center = (aabbMax + aabbMin) / 2.0;
-			const F32 radius = length(aabbMax - center);
-
-			const U32 bvolumeCount = getStructuredBufferElementCount(g_gpuSceneBoundingVolumeList);
-			for(U32 i = 0; i < bvolumeCount; ++i)
-			{
-				const U32 offset = SBUFF(g_gpuSceneBoundingVolumeList, i);
-
-				GpuSceneRenderableBoundingVolume bvol = BAB_LOAD(g_gpuScene, GpuSceneRenderableBoundingVolume, offset);
-				bvol.m_aabbMin = aabbMin;
-				bvol.m_aabbMax = aabbMax;
-				bvol.m_sphereRadius = radius;
-
-				BAB_STORE(g_gpuScene, GpuSceneRenderableBoundingVolume, offset, bvol);
-			}
+			ParticleSimulationCpuFeedback feedback;
+			feedback.m_aabbMin = g_scratch[0].m_aabbMin * toMeters;
+			feedback.m_aabbMax = g_scratch[0].m_aabbMax * toMeters;
+			feedback.m_uuid = emitter.m_uuid;
+			g_cpuFeedback[0] = feedback;
 
 			// Reset the scratch stract
 			g_scratch[0].m_aabbMin = kMaxI32;

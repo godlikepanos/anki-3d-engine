@@ -15,10 +15,7 @@ namespace anki {
 // Forward
 class Aabb;
 
-/// @addtogroup scene
-/// @{
-
-/// Holds geometry information.
+// Connects the material resource with geometry based components (mesh or particle emitter)
 class MaterialComponent final : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(MaterialComponent)
@@ -58,25 +55,21 @@ private:
 
 	MaterialResourcePtr m_resource;
 
-	SceneDynamicArray<SkinComponent*> m_skinComponents;
-	SceneDynamicArray<MeshComponent*> m_meshComponents;
+	SkinComponent* m_skinComponent = nullptr;
+	MeshComponent* m_meshComponent = nullptr;
+	ParticleEmitter2Component* m_emitterComponent = nullptr;
 
 	U32 m_submeshIdx = 0;
 
-	Bool m_resourceDirty : 1 = true;
-	Bool m_skinDirty : 1 = true;
-	Bool m_meshComponentDirty : 1 = true;
-	Bool m_firstTimeUpdate : 1 = true; ///< Extra flag in case the component is added in a node that hasn't been moved.
+	Bool m_anyDirty : 1 = true; // A compound flag because it's too difficult to track everything
 	Bool m_movedLastFrame : 1 = true;
-	Bool m_submeshIdxDirty : 1 = true;
 	Bool m_castsShadow : 1 = false;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 
-	Aabb computeAabb(U32 submeshIndex, const SceneNode& node) const;
+	Aabb computeAabb(const SceneNode& node) const;
 };
-/// @}
 
 } // end namespace anki

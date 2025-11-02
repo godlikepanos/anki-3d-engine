@@ -56,6 +56,32 @@ public:
 
 	ANKI_INTERNAL U32 getGpuSceneMeshLodIndex(U32 submeshIdx) const;
 
+	ANKI_INTERNAL U32 getGpuSceneParticleEmitter2Index() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_gpuScene.m_gpuSceneParticleEmitter.getIndex();
+	}
+
+	// Return true if the above indices changed this frame
+	ANKI_INTERNAL Bool gpuSceneReallocationsThisFrame() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_gpuSceneReallocationsThisFrame;
+	}
+
+	// The renderer will call it to update the bounds of the emitter
+	ANKI_INTERNAL void updateBoundingVolume(Vec3 min, Vec3 max)
+	{
+		ANKI_ASSERT(min < max);
+		m_boundingVolume = {min, max};
+	}
+
+	ANKI_INTERNAL Array<Vec3, 2> getBoundingVolume() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_boundingVolume;
+	}
+
 private:
 	class ParticleEmitterQuadGeometry;
 
@@ -72,10 +98,13 @@ private:
 		GpuSceneArrays::ParticleEmitter2::Allocation m_gpuSceneParticleEmitter;
 	} m_gpuScene;
 
+	Array<Vec3, 2> m_boundingVolume;
+
 	ParticleGeometryType m_geomType = ParticleGeometryType::kQuad;
-	Bool m_resourceDirty = true;
-	Bool m_meshComponentDirty = true;
-	Bool m_geomTypeDirty = true;
+	Bool m_resourceDirty : 1 = true;
+	Bool m_meshComponentDirty : 1 = true;
+	Bool m_geomTypeDirty : 1 = true;
+	Bool m_gpuSceneReallocationsThisFrame : 1 = true; // Only tracks the memory shared externally
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

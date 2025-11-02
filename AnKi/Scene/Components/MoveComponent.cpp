@@ -10,7 +10,10 @@ namespace anki {
 
 void MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = info.m_node->updateTransform();
+	const Bool movedThisFrame = info.m_node->updateTransform();
+	const Bool movedLastFrame = m_movedLastFrame;
+	m_movedLastFrame = movedThisFrame;
+	updated = movedThisFrame || movedLastFrame != movedThisFrame;
 
 	if(updated) [[unlikely]]
 	{

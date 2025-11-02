@@ -40,10 +40,10 @@ public:
 		return *m_resource;
 	}
 
-	ANKI_INTERNAL const GpuSceneArrays::MeshLod::Allocation& getGpuSceneMeshLods(U32 submeshIdx) const
+	ANKI_INTERNAL U32 getGpuSceneMeshLodsIndex(U32 submeshIdx) const
 	{
 		ANKI_ASSERT(isValid());
-		return m_gpuSceneMeshLods[submeshIdx];
+		return m_gpuSceneMeshLods[submeshIdx].getIndex() * kMaxLodCount;
 	}
 
 	ANKI_INTERNAL Bool gpuSceneReallocationsThisFrame() const

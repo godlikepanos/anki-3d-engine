@@ -23,8 +23,7 @@ RWStructuredBuffer<GpuSceneParticleEmitter2> g_gpuSceneParticleEmitters :
 
 RWStructuredBuffer<ParticleSimulationScratch> g_scratch : register(ANKI_CONCATENATE(u, ANKI_PARTICLE_SIM_SCRATCH));
 
-// It's an array of offsets to GpuSceneRenderableBoundingVolume in the GPU scene
-StructuredBuffer<U32> g_gpuSceneBoundingVolumeList : register(ANKI_CONCATENATE(t, ANKI_PARTICLE_SIM_GPU_SCENE_BOUNDING_VOLUME_LIST));
+RWStructuredBuffer<ParticleSimulationCpuFeedback> g_cpuFeedback : register(ANKI_CONCATENATE(u, ANKI_PARTICLE_SIM_CPU_FEEDBACK));
 
 static U32 g_particleIdx;
 static U32 g_randomNumber;

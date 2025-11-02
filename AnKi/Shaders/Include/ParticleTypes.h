@@ -34,6 +34,16 @@ struct ParticleSimulationConstants
 	U32 m_padding0;
 };
 
+// Contains a few data that are filled by the GPU and fed to the CPU
+struct ParticleSimulationCpuFeedback
+{
+	Vec3 m_aabbMin;
+	U32 m_uuid; // This is the UUID of the ParticleEmitterComponent
+
+	Vec3 m_aabbMax;
+	U32 m_padding;
+};
+
 /// The various properties of a GPU particle.
 enum class ParticleProperty
 {
@@ -71,6 +81,7 @@ inline constexpr Array<U32, U32(ParticleProperty::kCount)> kParticlePropertySize
 #define ANKI_PARTICLE_SIM_SCRATCH 0
 #define ANKI_PARTICLE_SIM_GPU_SCENE 1
 #define ANKI_PARTICLE_SIM_GPU_SCENE_PARTICLE_EMITTERS 2
+#define ANKI_PARTICLE_SIM_CPU_FEEDBACK 3
 
 // CBV
 #define ANKI_PARTICLE_SIM_CONSTANTS 0

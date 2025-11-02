@@ -27,7 +27,7 @@ struct GpuSceneRenderable
 	U32 m_particleEmitterIndex; // Index to the GpuSceneParticleEmitter array or kMaxU32 if it's not an emitter.
 	U32 m_rtShadowsShaderHandleIndex; // The index of the shader handle in the array of library's handles.
 	U32 m_rtMaterialFetchShaderHandleIndex; // The index of the shader handle in the array of library's handles.
-	U32 m_uuid;
+	U32 m_uuid; // A UUID specific for this renderable. Don't come from some scene object
 
 	U32 m_diffuseColor : 24; // The average diffuse color of the renderable. Blue is in low bits.
 	U32 m_padding : 8;
@@ -95,10 +95,10 @@ struct GpuSceneParticleEmitter
 };
 static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 
-// Contains common properties for all particle emitters
+// Contains common properties for all particle emitters. Primary use is for the simulation
 struct GpuSceneParticleEmitter2
 {
-	U32 m_particleStateSteamOffsets[(U32)ParticleProperty::kCount]; // Points to arrays of data
+	U32 m_particleStateSteamOffsets[(U32)ParticleProperty::kCount]; // Points to arrays of particle properties. In the GPU scene
 	U32 m_aliveParticleCount; // The number of the alive particles
 	U32 m_aliveParticleIndicesOffset; // Points to arrays of indices of the alive particles. Used when rendering
 	U32 m_particleCount; // The total number of particles
@@ -113,6 +113,11 @@ struct GpuSceneParticleEmitter2
 
 	Vec3 m_particleAabbMax;
 	U32 m_worldTransformsIndex;
+
+	U32 m_uuid; // This is the UUID of the ParticleEmitterComponent
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
 };
 static_assert(sizeof(GpuSceneParticleEmitter2) % sizeof(Vec4) == 0);
 

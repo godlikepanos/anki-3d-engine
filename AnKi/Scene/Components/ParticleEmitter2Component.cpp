@@ -212,8 +212,11 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_aliveParticleIndices);
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_anKiParticleEmitterProperties);
 		m_gpuScene.m_gpuSceneParticleEmitter.free();
+		m_gpuSceneReallocationsThisFrame = true;
 		return;
 	}
+
+	m_gpuSceneReallocationsThisFrame = false;
 
 	if(!m_resourceDirty && !m_geomTypeDirty && !m_meshComponentDirty) [[likely]]
 	{
@@ -222,6 +225,8 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 
 	// From now on it's dirty and needs some kind of update
 
+	const Bool gpuSceneMeshLodsChanged = m_geomTypeDirty;
+	m_gpuSceneReallocationsThisFrame = gpuSceneMeshLodsChanged;
 	updated = true;
 	const ParticleEmitterResourceCommonProperties& commonProps = m_particleEmitterResource->getCommonProperties();
 
@@ -260,6 +265,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 	{
 		if(!m_gpuScene.m_gpuSceneParticleEmitter)
 		{
+			m_gpuSceneReallocationsThisFrame = true;
 			m_gpuScene.m_gpuSceneParticleEmitter.allocate();
 		}
 
@@ -290,7 +296,8 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		}
 
 		emitter.m_reinitializeOnNextUpdate = 1;
-		emitter.m_worldTransformsIndex = info.m_node->getFirstComponentOfType<MoveComponent>().getGpuSceneTransforms().getIndex();
+		emitter.m_worldTransformsIndex = info.m_node->getFirstComponentOfType<MoveComponent>().getGpuSceneTransformsIndex();
+		emitter.m_uuid = getUuid();
 
 		m_gpuScene.m_gpuSceneParticleEmitter.uploadToGpuScene(emitter);
 	}
@@ -305,7 +312,7 @@ U32 ParticleEmitter2Component::getGpuSceneMeshLodIndex(U32 submeshIdx) const
 	}
 	else
 	{
-		return m_meshComponent->getGpuSceneMeshLods(submeshIdx).getIndex();
+		return m_meshComponent->getGpuSceneMeshLodsIndex(submeshIdx);
 	}
 }
 
