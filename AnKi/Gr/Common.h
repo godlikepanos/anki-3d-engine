@@ -245,14 +245,13 @@ using GrAllocator = HeapAllocator<T>;
 class GrBaseInitInfo
 {
 public:
-	/// @name The name of the object.
+	// The name of the object
 	GrBaseInitInfo(CString name)
 	{
 		setName(name);
 	}
 
 	GrBaseInitInfo()
-		: GrBaseInitInfo(CString())
 	{
 	}
 
@@ -269,24 +268,16 @@ public:
 
 	CString getName() const
 	{
-		return (m_name[0] != '\0') ? CString(&m_name[0]) : CString();
+		return m_name;
 	}
 
 	void setName(CString name)
 	{
-		// Zero it because the derived classes may be hashed.
-		zeroMemory(m_name);
-
-		U32 len;
-		if(name && (len = name.getLength()) > 0)
-		{
-			len = min(len, kMaxGrObjectNameLength);
-			memcpy(&m_name[0], &name[0], len);
-		}
+		m_name = (name.getLength()) ? name : "N/A";
 	}
 
 private:
-	Array<char, kMaxGrObjectNameLength + 1> m_name;
+	GrString m_name;
 };
 
 enum class ColorBit : U8

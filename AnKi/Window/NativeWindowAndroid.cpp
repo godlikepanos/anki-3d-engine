@@ -66,7 +66,7 @@ NativeWindowAndroid::~NativeWindowAndroid()
 	m_nativeWindowAndroid = nullptr;
 }
 
-Error NativeWindowAndroid::initInternal(U32 targetFps, CString title)
+Error NativeWindowAndroid::initInternal(U32 targetFps, [[maybe_unused]] CString title)
 {
 	ANKI_WIND_LOGI("Initializing Android window");
 

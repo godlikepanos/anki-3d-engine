@@ -43,7 +43,7 @@ public:
 
 	Bool isLoaded() const
 	{
-		return m_loadedMipCount.load() == m_tex->getMipmapCount();
+		return m_pendingLoadedMips.load() == 0;
 	}
 
 private:
@@ -56,7 +56,7 @@ private:
 
 	Vec4 m_avgColor = Vec4(0.0f);
 
-	mutable Atomic<U32> m_loadedMipCount = {0};
+	mutable Atomic<U32> m_pendingLoadedMips = {0};
 
 	Error loadAsync(LoadingContext& ctx) const;
 };

@@ -1712,6 +1712,12 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 		return false;
 	}
 
+	if(pCallbackData->messageIdNumber == -1094381206)
+	{
+		// Complains that CullPrimitiveEXT is not a bool array, which is wrong
+		return false;
+	}
+
 	// Get all names of affected objects
 	GrString objectNames;
 	if(pCallbackData->objectCount)

@@ -63,7 +63,6 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	TextureInitInfo init(filenameExt);
 	init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kCopyDestination;
-	U32 faces = 0;
 
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
@@ -81,26 +80,22 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	case ImageBinaryType::k2D:
 		init.m_type = TextureType::k2D;
 		init.m_depth = 1;
-		faces = 1;
 		init.m_layerCount = 1;
 		break;
 	case ImageBinaryType::kCube:
 		init.m_type = TextureType::kCube;
 		init.m_depth = 1;
-		faces = 6;
 		init.m_layerCount = 1;
 		break;
 	case ImageBinaryType::k2DArray:
 		init.m_type = TextureType::k2DArray;
 		init.m_layerCount = loader.getLayerCount();
 		init.m_depth = 1;
-		faces = 1;
 		break;
 	case ImageBinaryType::k3D:
 		init.m_type = TextureType::k3D;
 		init.m_depth = loader.getDepth();
 		init.m_layerCount = 1;
-		faces = 1;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -194,6 +189,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	// mipmapsCount
 	init.m_mipmapCount = U8(loader.getMipmapCount());
+	m_pendingLoadedMips.setNonAtomically(init.m_mipmapCount);
 
 	// Create the texture
 	m_tex = GrManager::getSingleton().newTexture(init);
@@ -235,7 +231,7 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(m_tex->getLayerCount(), faceCount, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kAllSrv,
+			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kNone,
 										TextureUsageBit::kCopyDestination};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
@@ -290,7 +286,7 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 			unflatten3dArrayIndex(m_tex->getLayerCount(), faceCount, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
-										TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvGeometry};
+										TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
@@ -306,7 +302,8 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 		cmdb.reset(nullptr);
 	}
 
-	m_loadedMipCount.store(m_tex->getMipmapCount());
+	[[maybe_unused]] const U32 prevVal = m_pendingLoadedMips.fetchSub(m_tex->getMipmapCount());
+	ANKI_ASSERT(prevVal == m_tex->getMipmapCount());
 	return Error::kNone;
 }
 

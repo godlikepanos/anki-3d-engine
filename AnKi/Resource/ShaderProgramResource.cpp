@@ -156,6 +156,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 {
 	// Get the binary program variant
 	const ShaderBinaryVariant* binaryVariant = nullptr;
+	U32 binaryVariantIdx = kMaxU32;
 	U64 mutationHash = 0;
 	if(m_binary->m_mutators.getSize())
 	{
@@ -174,6 +175,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 					return nullptr;
 				}
 
+				binaryVariantIdx = mutation.m_variantIndex;
 				binaryVariant = &m_binary->m_variants[mutation.m_variantIndex];
 				break;
 			}
@@ -194,10 +196,11 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 		String fname;
 		getFilepathFilename(getFilename(), fname);
 
-		ResourceString progName = fname.cstr();
+		ResourceString progName;
+		progName.sprintf("%s var%05u", fname.cstr(), binaryVariantIdx);
 		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(info.m_shaderTypes))
 		{
-			progName += "_";
+			progName += " ";
 			progName += info.m_techniqueNames[shaderType].getBegin();
 		}
 
@@ -210,7 +213,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 			const U32 techniqueIdx = findTechnique(info.m_techniqueNames[shaderType].getBegin());
 			ANKI_ASSERT(!!(m_binary->m_techniques[techniqueIdx].m_shaderTypes & shaderBit));
 
-			const ResourceString shaderName = (progName + "_" + m_binary->m_techniques[techniqueIdx].m_name.getBegin()).cstr();
+			const ResourceString shaderName = (progName + " " + m_binary->m_techniques[techniqueIdx].m_name.getBegin()).cstr();
 			ShaderInitInfo inf(shaderName);
 			inf.m_shaderType = shaderType;
 			const ShaderBinaryCodeBlock& binBlock =

@@ -58,7 +58,7 @@ Error Bloom::init()
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom.ankiprogbin", {}, m_prog, m_upscaleGrProg, "Upscale"));
 
 		// Textures
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_lensDirtImg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_lensDirtImg, false));
 	}
 
 	return Error::kNone;

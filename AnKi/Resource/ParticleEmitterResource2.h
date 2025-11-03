@@ -64,7 +64,7 @@ public:
 // This is the a particle emitter resource containing shader and properties.
 // XML format:
 //	<particleEmitter>
-//		<shaderProgram name="name of the shader" />
+//		<shaderProgram name="name of the shader">
 //			[<mutation>
 //				<mutator name="str" value="value"/>
 //			</mutation>]

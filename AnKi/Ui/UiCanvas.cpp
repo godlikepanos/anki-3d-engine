@@ -529,7 +529,8 @@ void UiCanvas::endBuilding()
 
 				tex->SetStatus(ImTextureStatus_OK);
 			}
-			else if(status == ImTextureStatus_WantDestroy && tex->UnusedFrames >= kMaxFramesInFlight + 2) // kMaxFramesInFlight + 2 to be 100% sure
+			else if(status == ImTextureStatus_WantDestroy
+					&& tex->UnusedFrames >= I32(kMaxFramesInFlight + 2)) // kMaxFramesInFlight + 2 to be 100% sure
 			{
 				ImTextureID id = tex->GetTexID();
 				ANKI_ASSERT(id.m_textureIsRefcounted);
@@ -577,7 +578,7 @@ void UiCanvas::appendGraphicsCommands(CommandBuffer& cmdb) const
 		ImDrawIdx* indices;
 		indicesToken = RebarTransientMemoryPool::getSingleton().allocate(drawData.TotalIdxCount * sizeof(ImDrawIdx), sizeof(ImDrawIdx), indices);
 
-		for(I n = 0; n < drawData.CmdListsCount; ++n)
+		for(I32 n = 0; n < drawData.CmdListsCount; ++n)
 		{
 			const ImDrawList& cmdList = *drawData.CmdLists[n];
 			memcpy(verts, cmdList.VtxBuffer.Data, cmdList.VtxBuffer.Size * sizeof(ImDrawVert));

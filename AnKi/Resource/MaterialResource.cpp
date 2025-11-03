@@ -651,13 +651,26 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 Bool MaterialResource::isLoaded() const
 {
-	Bool loaded = true;
+	// Check the atomic first
+	U32 loaded = m_loaded.load();
+	if(loaded) [[likely]]
+	{
+		return true;
+	}
+
+	// Do expensive check after
+	loaded = 1;
 	for(const MaterialVariable& var : m_vars)
 	{
 		if(var.m_image)
 		{
 			loaded = loaded && var.m_image->isLoaded();
 		}
+	}
+
+	if(loaded)
+	{
+		m_loaded.store(1);
 	}
 
 	return loaded;

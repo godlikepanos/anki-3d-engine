@@ -373,7 +373,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 #	endif
 
 #	if REALLY_VELOCITY
-			velocity(worldTransform, prevWorldTransform, prevPos, output.m_svPosition, output.m_prevClipXyw, output.m_prevClipXyw);
+			velocity(worldTransform, prevWorldTransform, prevPos, output.m_svPosition, output.m_prevClipXyw, output.m_crntClipXyw);
 #	endif
 
 			verts[idx] = output;

@@ -260,6 +260,8 @@ private:
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
 	ShaderTechniqueBit m_shaderTechniques = ShaderTechniqueBit::kNone;
 
+	mutable Atomic<U32> m_loaded = {0};
+
 	Error parseMutators(XmlElement mutatorsEl);
 	Error parseShaderProgram(XmlElement techniqueEl, Bool async);
 	Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
