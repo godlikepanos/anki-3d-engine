@@ -14,7 +14,7 @@
 namespace anki {
 
 // Contains some shared geometry data and it's a singleton because we don't want to be wasting time and memory for every emitter
-class ParticleEmitter2Component::ParticleEmitterQuadGeometry : public MakeSingleton<ParticleEmitterQuadGeometry>
+class ParticleEmitter2Component::ParticleEmitterQuadGeometry : public MakeSingletonLazyInit<ParticleEmitterQuadGeometry>
 {
 public:
 	UnifiedGeometryBufferAllocation m_quadPositions;
@@ -160,7 +160,7 @@ ParticleEmitter2Component& ParticleEmitter2Component::setParticleEmitterFilename
 	else
 	{
 		m_particleEmitterResource = std::move(newRsrc);
-		m_resourceDirty = true;
+		m_anyDirty = true;
 	}
 
 	return *this;
@@ -185,7 +185,7 @@ void ParticleEmitter2Component::onOtherComponentRemovedOrAdded(SceneComponent* o
 	if(other->getType() == SceneComponentType::kMesh)
 	{
 		bookkeepComponent(m_meshComponent, other, added);
-		m_meshComponentDirty = true;
+		m_anyDirty = true;
 	}
 }
 
@@ -203,6 +203,9 @@ Bool ParticleEmitter2Component::isValid() const
 
 void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
+	m_gpuSceneReallocationsThisFrame = false;
+	m_dt = F32(info.m_dt);
+
 	if(!isValid()) [[unlikely]]
 	{
 		for(auto& s : m_gpuScene.m_particleStreams)
@@ -216,41 +219,33 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		return;
 	}
 
-	m_gpuSceneReallocationsThisFrame = false;
-	m_dt = F32(info.m_dt);
-
-	if(!m_resourceDirty && !m_geomTypeDirty && !m_meshComponentDirty) [[likely]]
+	if(!m_anyDirty) [[likely]]
 	{
 		return;
 	}
 
-	// From now on it's dirty and needs some kind of update
+	// From now on it's dirty, do all updates
 
-	const Bool gpuSceneMeshLodsChanged = m_geomTypeDirty;
-	m_gpuSceneReallocationsThisFrame = gpuSceneMeshLodsChanged;
+	m_gpuSceneReallocationsThisFrame = true; // Difficult to properly track so set it to true and don't bother
+	m_anyDirty = false;
 	updated = true;
 	const ParticleEmitterResourceCommonProperties& commonProps = m_particleEmitterResource->getCommonProperties();
 
 	// Streams
-	if(m_resourceDirty)
+	for(ParticleProperty prop : EnumIterable<ParticleProperty>())
 	{
-		for(ParticleProperty prop : EnumIterable<ParticleProperty>())
-		{
-			GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_particleStreams[prop]);
-			m_gpuScene.m_particleStreams[prop] =
-				GpuSceneBuffer::getSingleton().allocate(commonProps.m_particleCount * kParticlePropertySize[prop], alignof(U32));
-		}
+		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_particleStreams[prop]);
+		m_gpuScene.m_particleStreams[prop] =
+			GpuSceneBuffer::getSingleton().allocate(commonProps.m_particleCount * kParticlePropertySize[prop], alignof(U32));
 	}
 
 	// Alive particles index buffer
-	if(m_resourceDirty)
 	{
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_aliveParticleIndices);
 		m_gpuScene.m_aliveParticleIndices = GpuSceneBuffer::getSingleton().allocate(commonProps.m_particleCount * sizeof(U32), alignof(U32));
 	}
 
 	// AnKiParticleEmitterProperties
-	if(m_resourceDirty)
 	{
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_anKiParticleEmitterProperties);
 
@@ -261,12 +256,9 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 	}
 
 	// GpuSceneParticleEmitter2
-	const Bool updateGpuSceneEmitter = m_resourceDirty || m_meshComponentDirty || m_geomTypeDirty;
-	if(updateGpuSceneEmitter)
 	{
 		if(!m_gpuScene.m_gpuSceneParticleEmitter)
 		{
-			m_gpuSceneReallocationsThisFrame = true;
 			m_gpuScene.m_gpuSceneParticleEmitter.allocate();
 		}
 

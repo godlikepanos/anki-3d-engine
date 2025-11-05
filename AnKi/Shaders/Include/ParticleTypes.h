@@ -17,6 +17,9 @@ struct ParticleSimulationScratch
 
 	IVec3 m_aabbMax; // U32 because of atomics. In cm
 	U32 m_emittedParticleCount;
+
+	UVec3 m_padding;
+	U32 m_aliveParticleCount;
 };
 
 // Constants used in the simulation.

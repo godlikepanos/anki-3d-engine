@@ -52,52 +52,6 @@ void GpuParticles::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	// Handle the readbacks
-	for(ParticleEmitter2Component& emitter : emitters)
-	{
-		auto it = m_readbacks.find(emitter.getUuid());
-		if(it != m_readbacks.getEnd())
-		{
-			// Emitter found, access the readback
-			it->m_lastFrameSeen = getRenderer().getFrameCount();
-
-			ParticleSimulationCpuFeedback feedback;
-			PtrSize dataOut = 0;
-			getRenderer().getReadbackManager().readMostRecentData(it->m_readback, &feedback, sizeof(feedback), dataOut);
-			if(dataOut)
-			{
-				ANKI_ASSERT(feedback.m_uuid == emitter.getUuid());
-				emitter.updateBoundingVolume(feedback.m_aabbMin, feedback.m_aabbMax);
-			}
-		}
-		else
-		{
-			// Emitter not found, create new entry
-			ReadbackData& data = *m_readbacks.emplace(emitter.getUuid());
-			data.m_lastFrameSeen = getRenderer().getFrameCount();
-		}
-	}
-
-	// Remove old emitters
-	while(true)
-	{
-		Bool foundAnOldOne = false;
-		for(auto it = m_readbacks.getBegin(); it != m_readbacks.getEnd(); ++it)
-		{
-			const U32 deleteAfterNFrames = 10;
-			if(it->m_lastFrameSeen + deleteAfterNFrames < getRenderer().getFrameCount())
-			{
-				m_readbacks.erase(it);
-				foundAnOldOne = true;
-			}
-		}
-
-		if(!foundAnOldOne)
-		{
-			break;
-		}
-	}
-
 	// Create the renderpass
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("GPU particle sim");
@@ -110,9 +64,68 @@ void GpuParticles::populateRenderGraph(RenderingContext& ctx)
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		SceneBlockArray<ParticleEmitter2Component>& emitters = SceneGraph::getSingleton().getComponentArrays().getParticleEmitter2s();
+
+		// Handle the readbacks
+		for(ParticleEmitter2Component& emitter : emitters)
+		{
+			if(!emitter.isValid())
+			{
+				continue;
+			}
+
+			auto it = m_readbacks.find(emitter.getUuid());
+			if(it != m_readbacks.getEnd())
+			{
+				// Emitter found, access the readback
+				it->m_lastFrameSeen = getRenderer().getFrameCount();
+
+				ParticleSimulationCpuFeedback feedback;
+				PtrSize dataOut = 0;
+				getRenderer().getReadbackManager().readMostRecentData(it->m_readback, &feedback, sizeof(feedback), dataOut);
+
+				if(dataOut && feedback.m_aabbMin < feedback.m_aabbMax)
+				{
+					ANKI_ASSERT(feedback.m_uuid == emitter.getUuid());
+					emitter.updateBoundingVolume(feedback.m_aabbMin, feedback.m_aabbMax);
+				}
+			}
+			else
+			{
+				// Emitter not found, create new entry
+				ReadbackData& data = *m_readbacks.emplace(emitter.getUuid());
+				data.m_lastFrameSeen = getRenderer().getFrameCount();
+			}
+		}
+
+		// Remove old emitters
+		while(true)
+		{
+			Bool foundAnOldOne = false;
+			for(auto it = m_readbacks.getBegin(); it != m_readbacks.getEnd(); ++it)
+			{
+				const U32 deleteAfterNFrames = 10;
+				if(it->m_lastFrameSeen + deleteAfterNFrames < getRenderer().getFrameCount())
+				{
+					m_readbacks.erase(it);
+					foundAnOldOne = true;
+				}
+			}
+
+			if(!foundAnOldOne)
+			{
+				break;
+			}
+		}
+
+		// Compute work
 		U32 count = 0;
 		for(ParticleEmitter2Component& emitter : emitters)
 		{
+			if(!emitter.isValid())
+			{
+				continue;
+			}
+
 			cmdb.pushDebugMarker(generateTempPassName("Emitter %u", emitter.getUuid()), Vec3(1.0f, 1.0f, 0.0f));
 
 			const ParticleEmitterResource2& rsrc = emitter.getParticleEmitterResource();

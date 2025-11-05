@@ -251,7 +251,7 @@ Error ParticleEmitterResource2::parseInput(XmlElement inputEl)
 	case ShaderVariableDataType::k##type: \
 	{ \
 		Array<baseType, rowCount * columnCount> arr; \
-		ANKI_CHECK(inputEl.getNumbers(arr)); \
+		ANKI_CHECK(inputEl.getAttributeNumbers("value", arr)); \
 		ANKI_ASSERT(memberOffset + memberSize <= m_prefilledAnKiParticleEmitterProperties.getSize()); \
 		ANKI_ASSERT(memberSize == sizeof(arr)); \
 		memcpy(m_prefilledAnKiParticleEmitterProperties.getBegin() + memberOffset, arr.getBegin(), memberSize); \

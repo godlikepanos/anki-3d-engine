@@ -184,14 +184,14 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	if(!dirty) [[likely]]
 	{
 		// Update Scene bounds
-		if(info.m_forceUpdateSceneBounds) [[unlikely]]
+		if(info.m_forceUpdateSceneBounds || m_skinComponent) [[unlikely]]
 		{
 			const Aabb aabbWorld = computeAabb(*info.m_node);
 			info.updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
 		}
 
 		// Update the GPU scene AABBs
-		if(prioritizeEmitter)
+		if(prioritizeEmitter || m_skinComponent)
 		{
 			const Aabb aabbWorld = computeAabb(*info.m_node);
 			for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(mtl.getRenderingTechniques()))

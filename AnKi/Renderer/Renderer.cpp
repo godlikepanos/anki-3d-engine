@@ -330,13 +330,13 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	gpuSceneCopy(ctx);
-	m_gpuParticles->populateRenderGraph(ctx);
 	m_primaryNonRenderableVisibility->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_gbuffer->populateRenderGraph(ctx);
+	m_gpuParticles->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);
 	m_historyLength->populateRenderGraph(ctx);
 	m_depthDownscale->populateRenderGraph(ctx);

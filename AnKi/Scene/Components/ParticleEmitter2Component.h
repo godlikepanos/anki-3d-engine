@@ -41,7 +41,7 @@ public:
 		if(type != m_geomType && ANKI_EXPECT(type < ParticleGeometryType::kCount))
 		{
 			m_geomType = type;
-			m_geomTypeDirty = true;
+			m_anyDirty = true;
 		}
 
 		return *this;
@@ -115,10 +115,8 @@ private:
 	F32 m_dt = 0.0f;
 
 	ParticleGeometryType m_geomType = ParticleGeometryType::kQuad;
-	Bool m_resourceDirty : 1 = true;
-	Bool m_meshComponentDirty : 1 = true;
-	Bool m_geomTypeDirty : 1 = true;
-	Bool m_gpuSceneReallocationsThisFrame : 1 = true; // Only tracks the memory shared externally
+	Bool m_anyDirty = true;
+	Bool m_gpuSceneReallocationsThisFrame = true; // Only tracks the memory shared externally
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

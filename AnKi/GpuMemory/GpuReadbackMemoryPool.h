@@ -83,8 +83,10 @@ class GpuReadbackMemoryPool : public MakeSingleton<GpuReadbackMemoryPool>
 	friend class MakeSingleton;
 
 public:
+	// Thread-safe
 	GpuReadbackMemoryAllocation allocate(PtrSize size, U32 alignment);
 
+	// Thread-safe
 	template<typename T>
 	GpuReadbackMemoryAllocation allocateStructuredBuffer(U32 count)
 	{
@@ -92,6 +94,7 @@ public:
 		return allocate(sizeof(T) * count, alignment);
 	}
 
+	// Thread-safe
 	void deferredFree(GpuReadbackMemoryAllocation& allocation);
 
 	void endFrame();
