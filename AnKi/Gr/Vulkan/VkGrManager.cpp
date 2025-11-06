@@ -1737,6 +1737,11 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 		objectNames = "N/A";
 	}
 
+	if(CString(pCallbackData->pMessage).find("Assertion failed") != CString::kNpos)
+	{
+		messageSeverity = VkDebugUtilsMessageSeverityFlagBitsEXT(messageSeverity | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
+	}
+
 	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
 		ANKI_VK_LOGE("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());

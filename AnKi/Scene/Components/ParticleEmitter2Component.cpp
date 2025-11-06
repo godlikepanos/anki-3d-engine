@@ -24,6 +24,7 @@ public:
 	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
 
 	U32 m_userCount = 0;
+	Bool m_uploadedToGpuScene = false;
 	SpinLock m_mtx;
 
 	void init()
@@ -86,21 +87,7 @@ public:
 
 	void initGpuScene()
 	{
-		GpuSceneMeshLod meshLod = {};
-		meshLod.m_vertexOffsets[U32(VertexStreamId::kPosition)] =
-			m_quadPositions.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
-		meshLod.m_vertexOffsets[U32(VertexStreamId::kUv)] =
-			m_quadUvs.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kUv]).m_texelSize;
-		meshLod.m_indexCount = 6;
-		meshLod.m_firstIndex = m_quadIndices.getOffset() / sizeof(U16);
-		meshLod.m_positionScale = 1.0f;
-		meshLod.m_positionTranslation = Vec3(-0.5f, -0.5f, 0.0f);
-
-		Array<GpuSceneMeshLod, kMaxLodCount> meshLods;
-		meshLods.fill(meshLod);
-
 		m_gpuSceneMeshLods.allocate();
-		m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
 	}
 
 	void deinit()
@@ -135,6 +122,32 @@ public:
 		}
 
 		--m_userCount;
+	}
+
+	// Do that outside of init() because we can only upload to the GPU scene at specific places in the frame
+	void tryUploadToGpuScene()
+	{
+		LockGuard lock(m_mtx);
+
+		if(!m_uploadedToGpuScene)
+		{
+			m_uploadedToGpuScene = true;
+
+			GpuSceneMeshLod meshLod = {};
+			meshLod.m_vertexOffsets[U32(VertexStreamId::kPosition)] =
+				m_quadPositions.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
+			meshLod.m_vertexOffsets[U32(VertexStreamId::kUv)] =
+				m_quadUvs.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kUv]).m_texelSize;
+			meshLod.m_indexCount = 6;
+			meshLod.m_firstIndex = m_quadIndices.getOffset() / sizeof(U16);
+			meshLod.m_positionScale = 1.0f;
+			meshLod.m_positionTranslation = Vec3(-0.5f, -0.5f, 0.0f);
+
+			Array<GpuSceneMeshLod, kMaxLodCount> meshLods;
+			meshLods.fill(meshLod);
+
+			m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
+		}
 	}
 };
 
@@ -219,6 +232,8 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		return;
 	}
 
+	ParticleEmitterQuadGeometry::getSingleton().tryUploadToGpuScene();
+
 	if(!m_anyDirty) [[likely]]
 	{
 		return;
@@ -252,7 +267,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		ConstWeakArray<U8> prefilled = m_particleEmitterResource->getPrefilledAnKiParticleEmitterProperties();
 		m_gpuScene.m_anKiParticleEmitterProperties = GpuSceneBuffer::getSingleton().allocate(prefilled.getSizeInBytes(), alignof(U32));
 
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuScene.m_anKiParticleEmitterProperties, prefilled);
+		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuScene.m_anKiParticleEmitterProperties, prefilled);
 	}
 
 	// GpuSceneParticleEmitter2

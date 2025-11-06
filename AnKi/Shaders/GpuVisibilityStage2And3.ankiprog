@@ -36,14 +36,15 @@ struct DrawIndirectArgsWithPadding
 // GPU scene
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
 StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t1);
-StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<GpuSceneParticleEmitter2> g_particleEmitters2 : register(t2);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t3);
 
-StructuredBuffer<GpuVisibilityVisibleRenderableDesc> g_visibleRenderables : register(t3);
-StructuredBuffer<U32> g_counters : register(t4);
-StructuredBuffer<U32> g_renderablePrefixSums : register(t5);
+StructuredBuffer<GpuVisibilityVisibleRenderableDesc> g_visibleRenderables : register(t4);
+StructuredBuffer<U32> g_counters : register(t5);
+StructuredBuffer<U32> g_renderablePrefixSums : register(t6);
 
 // One for each bucket. Points to the 1st indirect args struct. 2nd element contains the max count
-StructuredBuffer<UVec2> g_firstDrawIndirectArgAndCount : register(t6);
+StructuredBuffer<UVec2> g_firstDrawIndirectArgAndCount : register(t7);
 
 // These 3 have the same size
 RWStructuredBuffer<GpuScenePerDraw> g_perDraw : register(u0);
@@ -71,7 +72,7 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u3);
 	const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
 	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
 
-	const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32;
+	const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32 || renderable.m_particleEmitterIndex2 < kMaxU32;
 
 	U32 bucketLocalIndex;
 	InterlockedAdd(SBUFF(g_mdiDrawCounts, renderStateBucket), 1u, bucketLocalIndex);
@@ -96,8 +97,16 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u3);
 
 		if(isParticleEmitter)
 		{
-			const GpuSceneParticleEmitter emitter = SBUFF(g_particleEmitters, renderable.m_particleEmitterIndex);
-			indirect.m_instanceCount = emitter.m_aliveParticleCount;
+			if(renderable.m_particleEmitterIndex < kMaxU32)
+			{
+				const GpuSceneParticleEmitter emitter = SBUFF(g_particleEmitters, renderable.m_particleEmitterIndex);
+				indirect.m_instanceCount = emitter.m_aliveParticleCount;
+			}
+			else
+			{
+				const GpuSceneParticleEmitter2 emitter = SBUFF(g_particleEmitters2, renderable.m_particleEmitterIndex2);
+				indirect.m_instanceCount = emitter.m_aliveParticleCount;
+			}
 		}
 		else
 		{

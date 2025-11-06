@@ -19,8 +19,12 @@ enum class ParticleGeometryType : U8
 {
 	kQuad,
 	kMeshComponent,
-	kCount
+	kCount,
+	kFirst = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ParticleGeometryType)
+
+inline constexpr Array<const Char*, U32(ParticleGeometryType::kCount)> kParticleEmitterGeometryTypeName = {"Quad", "MeshComponent"};
 
 // Contains a particle emitter resource and maybe connects to a mesh component
 class ParticleEmitter2Component : public SceneComponent
@@ -35,6 +39,11 @@ public:
 	ParticleEmitter2Component& setParticleEmitterFilename(CString filename);
 
 	CString getParticleEmitterFilename() const;
+
+	Bool hasParticleEmitterResource() const
+	{
+		return !!m_particleEmitterResource;
+	}
 
 	ParticleEmitter2Component& setParticleGeometryType(ParticleGeometryType type)
 	{
@@ -110,7 +119,7 @@ private:
 		GpuSceneArrays::ParticleEmitter2::Allocation m_gpuSceneParticleEmitter;
 	} m_gpuScene;
 
-	Array<Vec3, 2> m_boundingVolume;
+	Array<Vec3, 2> m_boundingVolume = {Vec3(-0.5f), Vec3(0.5f)};
 
 	F32 m_dt = 0.0f;
 

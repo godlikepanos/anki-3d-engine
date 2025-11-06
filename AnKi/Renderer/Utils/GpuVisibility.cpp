@@ -654,7 +654,6 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
 			cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 			cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
-			cmdb.bindSrv(4, 0, GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
 
 			cmdb.bindUav(0, 0, stage1Mem.m_counters);
 
@@ -701,7 +700,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 				if(frustumTestData->m_hzbRt.isValid())
 				{
-					rpass.bindSrv(5, 0, frustumTestData->m_hzbRt);
+					rpass.bindSrv(4, 0, frustumTestData->m_hzbRt);
 					cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 				}
 			}
@@ -747,14 +746,15 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 				cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
 				cmdb.bindSrv(1, 0, GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
-				cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+				cmdb.bindSrv(2, 0, GpuSceneArrays::ParticleEmitter2::getSingleton().getBufferViewSafe());
+				cmdb.bindSrv(3, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 
-				cmdb.bindSrv(3, 0, stage1Mem.m_visibleRenderables);
-				cmdb.bindSrv(4, 0, stage1Mem.m_counters);
-				cmdb.bindSrv(5, 0, stage1Mem.m_renderablePrefixSums);
+				cmdb.bindSrv(4, 0, stage1Mem.m_visibleRenderables);
+				cmdb.bindSrv(5, 0, stage1Mem.m_counters);
+				cmdb.bindSrv(6, 0, stage1Mem.m_renderablePrefixSums);
 
 				WeakArray<UVec2> firstDrawIndirectArgAndCount =
-					allocateAndBindSrvStructuredBuffer<UVec2>(cmdb, 6, 0, out.m_legacy.m_bucketIndirectArgsRanges.getSize());
+					allocateAndBindSrvStructuredBuffer<UVec2>(cmdb, 7, 0, out.m_legacy.m_bucketIndirectArgsRanges.getSize());
 				for(U32 ibucket = 0; ibucket < out.m_legacy.m_bucketIndirectArgsRanges.getSize(); ++ibucket)
 				{
 					firstDrawIndirectArgAndCount[ibucket].x() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_firstInstance;

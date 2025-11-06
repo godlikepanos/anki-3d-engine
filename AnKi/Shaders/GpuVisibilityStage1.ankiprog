@@ -27,7 +27,6 @@ StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes :
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
 StructuredBuffer<Mat3x4> g_transforms : register(t3);
-StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t4);
 
 // 1st counter is the visible renderable count, 2nd the visible meshlet count and 3rd the number of threadgroups having been executed
 RWStructuredBuffer<U32> g_counters : register(u0);
@@ -66,7 +65,7 @@ ANKI_FAST_CONSTANTS(DistanceGpuVisibilityConstants, g_consts)
 #endif
 
 #if HZB_TEST
-Texture2D<Vec4> g_hzbTex : register(t5);
+Texture2D<Vec4> g_hzbTex : register(t4);
 SamplerState g_nearestAnyClampSampler : register(s0);
 #endif
 
@@ -182,7 +181,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
 		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
 
-		const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32;
+		const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32 || renderable.m_particleEmitterIndex2 < kMaxU32;
 		ANKI_MAYBE_UNUSED(isParticleEmitter);
 
 		const Bool hasMeshlets = meshLod.m_meshletCount != 0u;

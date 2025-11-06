@@ -71,7 +71,7 @@ public:
 
 	void uploadToGpuScene(const TGpuSceneObject& data) const
 	{
-		GpuSceneMicroPatcher::getSingleton().newCopy(SceneGraph::getSingleton().getFrameMemoryPool(), getGpuSceneOffset(), data);
+		GpuSceneMicroPatcher::getSingleton().newCopy(getGpuSceneOffset(), data);
 	}
 
 	/// Allocate an element into the appropriate array. See GpuSceneArray::allocate()

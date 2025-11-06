@@ -305,7 +305,22 @@ void EditorUi::sceneNode(SceneNode& node)
 		treeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
 	}
 
-	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s", node.getName().cstr());
+	String componentsString;
+	for(SceneComponentType sceneComponentType : EnumBitsIterable<SceneComponentType, SceneComponentTypeMask>(node.getSceneComponentMask()))
+	{
+		switch(sceneComponentType)
+		{
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
+	case SceneComponentType::k##name: \
+		componentsString += ICON_MDI_##icon; \
+		break;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
+
+	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s  %s", node.getName().cstr(), componentsString.cstr());
 
 	if(ImGui::IsItemFocused())
 	{
@@ -582,6 +597,9 @@ void EditorUi::sceneNodePropertiesWindow()
 					case SceneComponentType::kSkin:
 						skinComponent(static_cast<SkinComponent&>(comp));
 						break;
+					case SceneComponentType::kParticleEmitter2:
+						particleEmitterComponent(static_cast<ParticleEmitter2Component&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -675,6 +693,13 @@ void EditorUi::scriptComponent(ScriptComponent& comp)
 
 void EditorUi::materialComponent(MaterialComponent& comp)
 {
+	if(!comp.isValid())
+	{
+		ImGui::SameLine();
+		ImGui::TextUnformatted(ICON_MDI_ALERT);
+		ImGui::SetItemTooltip("Component not valid");
+	}
+
 	// Locate button
 	{
 		ImGui::BeginDisabled(!comp.hasMaterialResource());
@@ -788,6 +813,66 @@ void EditorUi::skinComponent(SkinComponent& comp)
 		if(comp.hasSkeletonResource())
 		{
 			ImGui::SetItemTooltip("%s", comp.getSkeletonFilename().cstr());
+		}
+	}
+}
+
+void EditorUi::particleEmitterComponent(ParticleEmitter2Component& comp)
+{
+	// Locate button
+	{
+		ImGui::BeginDisabled(!comp.hasParticleEmitterResource());
+		if(ImGui::Button(comp.hasParticleEmitterResource() ? ICON_MDI_MAP_MARKER : ICON_MDI_ALERT_CIRCLE "##PemCompBtn"))
+		{
+			ANKI_LOGW("TODO");
+		}
+		ImGui::SetItemTooltip("Locate");
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+	}
+
+	// Filename
+	{
+		ImGui::SetNextItemWidth(-1.0f);
+
+		Char buff[kMaxTextInputLen] = "";
+		if(comp.hasParticleEmitterResource())
+		{
+			std::strncpy(buff, comp.getParticleEmitterFilename().cstr(), sizeof(buff));
+		}
+
+		if(ImGui::InputTextWithHint("##PemCompFname", ".ankiparts Filename", buff, sizeof(buff)))
+		{
+			comp.setParticleEmitterFilename(buff);
+		}
+
+		if(comp.hasParticleEmitterResource())
+		{
+			ImGui::SetItemTooltip("%s", comp.getParticleEmitterFilename().cstr());
+		}
+	}
+
+	// Geometry type
+	{
+		dummyButton(0);
+
+		if(ImGui::BeginCombo("Geometry Type", kParticleEmitterGeometryTypeName[comp.getParticleGeometryType()]))
+		{
+			for(ParticleGeometryType n : EnumIterable<ParticleGeometryType>())
+			{
+				const Bool isSelected = (comp.getParticleGeometryType() == n);
+				if(ImGui::Selectable(kParticleEmitterGeometryTypeName[n], isSelected))
+				{
+					comp.setParticleGeometryType(n);
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if(isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
 		}
 	}
 }

@@ -162,6 +162,7 @@ private:
 	void materialComponent(MaterialComponent& comp);
 	void meshComponent(MeshComponent& comp);
 	void skinComponent(SkinComponent& comp);
+	void particleEmitterComponent(ParticleEmitter2Component& comp);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils

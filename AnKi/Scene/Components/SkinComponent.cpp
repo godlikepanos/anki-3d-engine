@@ -219,7 +219,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			trfs[i * 2 + 0] = getBoneTransforms()[i];
 			trfs[i * 2 + 1] = getPreviousFrameBoneTransforms()[i];
 		}
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneBoneTransforms, trfs.getSizeInBytes(), trfs.getBegin());
+		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuSceneBoneTransforms, trfs.getSizeInBytes(), trfs.getBegin());
 	}
 	else
 	{

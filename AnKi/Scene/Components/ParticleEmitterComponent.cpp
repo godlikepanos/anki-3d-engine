@@ -349,9 +349,9 @@ void ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 	GpuSceneMicroPatcher& patcher = GpuSceneMicroPatcher::getSingleton();
 	if(m_aliveParticleCount > 0)
 	{
-		patcher.newCopy(*info.m_framePool, m_gpuScenePositions, sizeof(Vec3) * m_aliveParticleCount, positions);
-		patcher.newCopy(*info.m_framePool, m_gpuSceneScales, sizeof(F32) * m_aliveParticleCount, scales);
-		patcher.newCopy(*info.m_framePool, m_gpuSceneAlphas, sizeof(F32) * m_aliveParticleCount, alphas);
+		patcher.newCopy(m_gpuScenePositions, sizeof(Vec3) * m_aliveParticleCount, positions);
+		patcher.newCopy(m_gpuSceneScales, sizeof(F32) * m_aliveParticleCount, scales);
+		patcher.newCopy(m_gpuSceneAlphas, sizeof(F32) * m_aliveParticleCount, alphas);
 	}
 
 	if(m_resourceUpdated)
@@ -369,8 +369,7 @@ void ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 		m_gpuSceneParticleEmitter.uploadToGpuScene(particles);
 
 		// Upload uniforms
-		patcher.newCopy(*info.m_framePool, m_gpuSceneConstants,
-						m_particleEmitterResource->getMaterial()->getPrefilledLocalConstants().getSizeInBytes(),
+		patcher.newCopy(m_gpuSceneConstants, m_particleEmitterResource->getMaterial()->getPrefilledLocalConstants().getSizeInBytes(),
 						m_particleEmitterResource->getMaterial()->getPrefilledLocalConstants().getBegin());
 
 		// Upload mesh LODs
@@ -397,6 +396,7 @@ void ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 		renderable.m_constantsOffset = m_gpuSceneConstants.getOffset();
 		renderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 		renderable.m_particleEmitterIndex = m_gpuSceneParticleEmitter.getIndex();
+		renderable.m_particleEmitterIndex2 = kMaxU32;
 		renderable.m_worldTransformsIndex = 0;
 		renderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
 		if(!m_gpuSceneRenderable.isValid())

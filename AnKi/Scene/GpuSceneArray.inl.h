@@ -115,7 +115,7 @@ void GpuSceneArray<TGpuSceneObject, kId>::flushInternal(Bool nullifyElements)
 			for(U32 idx : m_freedAllocations)
 			{
 				const PtrSize offset = idx * sizeof(TGpuSceneObject) + m_gpuSceneAllocation.getOffset();
-				GpuSceneMicroPatcher::getSingleton().newCopy(SceneGraph::getSingleton().getFrameMemoryPool(), offset, nullObj);
+				GpuSceneMicroPatcher::getSingleton().newCopy(offset, nullObj);
 			}
 		}
 

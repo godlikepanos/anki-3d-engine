@@ -258,6 +258,11 @@ public:
 		return !!((1u << SceneComponentTypeMask(TComponent::kClassType)) & m_componentTypeMask);
 	}
 
+	SceneComponentTypeMask getSceneComponentMask() const
+	{
+		return m_componentTypeMask;
+	}
+
 	/// @name Movement
 	/// @{
 

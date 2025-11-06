@@ -419,8 +419,10 @@ Error App::mainLoop()
 			ANKI_CHECK(Input::getSingleton().handleEvents());
 			GrManager::getSingleton().beginFrame();
 
+			GpuSceneMicroPatcher::getSingleton().beginPatching();
 			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));
 			SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
+			GpuSceneMicroPatcher::getSingleton().endPatching();
 
 			ANKI_CHECK(Renderer::getSingleton().render());
 
