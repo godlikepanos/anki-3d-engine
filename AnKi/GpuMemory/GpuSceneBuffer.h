@@ -187,9 +187,6 @@ public:
 	void endPatching()
 	{
 		ANKI_ASSERT(m_bPatchingMode.fetchSub(1) == 1);
-#if ANKI_ASSERTIONS_ENABLED
-		m_patchingMode = false;
-#endif
 	}
 
 	// 4th optional thing to call. Check if there is a need to call patchGpuScene or if no copies are needed

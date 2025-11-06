@@ -71,6 +71,7 @@
 #define REALLY_VELOCITY ((ANKI_VELOCITY || ANKI_BONES) && GBUFFER)
 #define NORMAL_MAPPING (GBUFFER && NORMAL_TEX)
 #define SW_MESHLETS (ANKI_TECHNIQUE_GBufferSwMeshletRendering || ANKI_TECHNIQUE_ShadowsSwMeshletRendering)
+#define MESH_SHADING (ANKI_TECHNIQUE_GBufferMeshShaders || ANKI_TECHNIQUE_ShadowsMeshShaders)
 
 #define VISUALIZE_MESHLETS (0 && GBUFFER)
 #define PRIMITIVE_BACKFACE_CULLING 1
@@ -438,7 +439,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 // ===========================================================================
 #if ANKI_PIXEL_SHADER
 
-#	if SW_MESHLETS
+#	if SW_MESHLETS || MESH_SHADING
 #		define BINDLESS(x) getBindlessTextureNonUniformIndex2DVec4(x)
 #	else
 #		define BINDLESS(x) getBindlessTexture2DVec4(x)

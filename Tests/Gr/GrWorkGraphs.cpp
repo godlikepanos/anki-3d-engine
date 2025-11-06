@@ -10,7 +10,7 @@
 
 using namespace anki;
 
-static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
+[[maybe_unused]] static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
 {
 	const Bool continueCmdb = cmdb.isCreated();
 
