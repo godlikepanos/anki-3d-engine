@@ -52,7 +52,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	ANKI_ASSERT(inf.isValid());
 
 	// Create the shader references
-	GrHashMap<U64, U32> shaderUuidToMShadersIdx; // Shader UUID to m_shaders idx
+	GrHashMap<U32, U32> shaderUuidToMShadersIdx; // Shader UUID to m_shaders idx
 	if(inf.m_computeShader)
 	{
 		m_shaders.emplaceBack(inf.m_computeShader);

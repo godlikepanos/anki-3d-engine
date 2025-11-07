@@ -155,18 +155,23 @@ public:
 		}
 	}
 
-	void setPipelineLayout(const PipelineLayout2* layout, VkPipelineBindPoint bindPoint)
+	void setShaderProgram(const PipelineLayout2* layout, U32 shaderProgramUuid, VkPipelineBindPoint bindPoint)
 	{
-		ANKI_ASSERT(layout);
-		if(layout != m_pipelineLayout || bindPoint != m_pipelineBindPoint)
+		ANKI_ASSERT(layout && shaderProgramUuid != 0);
+
+		// Make it dirty if the program changed as well. There is a case where 2 different programs end up with the same ppline layout because of
+		// the binding re-write in SPIR-V
+		const Bool programChanged = m_shaderProgramUuid != shaderProgramUuid;
+		if(layout != m_pipelineLayout || bindPoint != m_pipelineBindPoint || programChanged)
 		{
+			m_shaderProgramUuid = shaderProgramUuid;
 			m_pipelineLayout = layout;
 			m_pipelineBindPoint = bindPoint;
 			m_pushConstantsDirty = m_pushConstantsDirty || (m_pushConstSize != m_pipelineLayout->m_refl.m_fastConstantsSize);
 
 			for(U32 iset = 0; iset < m_pipelineLayout->m_dsetCount; ++iset)
 			{
-				if(m_sets[iset].m_dsLayout != m_pipelineLayout->m_dsetLayouts[iset])
+				if(m_sets[iset].m_dsLayout != m_pipelineLayout->m_dsetLayouts[iset] || programChanged)
 				{
 					m_sets[iset].m_dirty = true;
 					m_sets[iset].m_dsLayout = m_pipelineLayout->m_dsetLayouts[iset];
@@ -330,6 +335,7 @@ private:
 	};
 
 	const PipelineLayout2* m_pipelineLayout = nullptr;
+	U32 m_shaderProgramUuid = 0;
 	VkPipelineBindPoint m_pipelineBindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
 	Array<DescriptorSet, kMaxRegisterSpaces> m_sets;
 	Array<VkDescriptorSet, kMaxRegisterSpaces> m_vkDsets = {};

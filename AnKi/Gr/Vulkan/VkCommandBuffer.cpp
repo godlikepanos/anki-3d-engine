@@ -362,7 +362,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 		bindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;
 	}
 
-	self.m_descriptorState.setPipelineLayout(&impl.getPipelineLayout(), bindPoint);
+	self.m_descriptorState.setShaderProgram(&impl.getPipelineLayout(), impl.getUuid(), bindPoint);
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, const TextureView& vrsRt, U8 vrsRtTexelSizeX,

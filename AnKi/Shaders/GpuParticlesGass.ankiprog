@@ -201,7 +201,7 @@ void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmi
 		{
 			// Inform about the bounding volume
 			const F32 toMeters = 1.0 / 100.0;
-			ParticleSimulationCpuFeedback feedback;
+			ParticleSimulationCpuFeedback feedback = (ParticleSimulationCpuFeedback)0;
 			feedback.m_aabbMin = g_scratch[0].m_aabbMin * toMeters;
 			feedback.m_aabbMax = g_scratch[0].m_aabbMax * toMeters;
 			feedback.m_uuid = emitter.m_uuid;

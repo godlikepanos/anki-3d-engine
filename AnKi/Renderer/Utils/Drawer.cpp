@@ -71,6 +71,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS, 0, GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
 	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS2, 0, GpuSceneArrays::ParticleEmitter2::getSingleton().getBufferViewSafe());
+
 	cmdb.bindSampler(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 	if(args.m_legacy.m_perDrawBuffer)
 	{
@@ -129,6 +130,8 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			return;
 		}
 
+		cmdb.pushDebugMarker(state.m_program->getName(), Vec3(0.0f, 1.0f, 0.0f));
+
 		cmdb.bindShaderProgram(state.m_program.get());
 
 		const Bool bMeshlets = meshletCount > 0;
@@ -169,6 +172,8 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, indirectArgsBuffView, sizeof(DrawIndexedIndirectArgs), mdiCountBuffView,
 										  maxDrawCount);
 		}
+
+		cmdb.popDebugMarker();
 	});
 
 #if ANKI_STATS_ENABLED

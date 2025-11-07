@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// Graphics object type.
+// Graphics object type
 enum class GrObjectType : U8
 {
 	kBuffer,
@@ -35,7 +32,7 @@ enum class GrObjectType : U8
 	kFirst = 0
 };
 
-/// Base of all graphics objects.
+// Base of all graphics objects
 class GrObject
 {
 public:
@@ -62,13 +59,13 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	/// A unique identifier for caching objects.
-	U64 getUuid() const
+	// A unique identifier for caching objects
+	U32 getUuid() const
 	{
 		return m_uuid;
 	}
 
-	/// Get its name.
+	// Get its name
 	CString getName() const
 	{
 		return m_name;
@@ -76,10 +73,9 @@ public:
 
 private:
 	Char* m_name = nullptr;
-	U64 m_uuid;
+	U32 m_uuid;
 	mutable Atomic<I32> m_refcount;
 	GrObjectType m_type;
 };
-/// @}
 
 } // end namespace anki

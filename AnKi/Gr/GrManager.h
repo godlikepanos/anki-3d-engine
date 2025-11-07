@@ -90,14 +90,14 @@ public:
 		return m_cacheDir.toCString();
 	}
 
-	ANKI_INTERNAL U64 getNewUuid()
+	ANKI_INTERNAL U32 getNewUuid()
 	{
 		return m_uuidIndex.fetchAdd(1);
 	}
 
 protected:
 	GrString m_cacheDir;
-	Atomic<U64> m_uuidIndex = {1};
+	Atomic<U32> m_uuidIndex = {1};
 	GpuDeviceCapabilities m_capabilities;
 
 	GrManager();
