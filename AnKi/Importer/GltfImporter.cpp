@@ -631,22 +631,24 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		F32 extraValuef = 0.0f;
 		Bool extraFound = false;
 
-		ANKI_CHECK(getExtra(extras, "particles", extraValueStr, extraFound));
+		ANKI_CHECK(getExtra(extras, "particleEmitterResource", extraValueStr, extraFound));
 		if(extraFound)
 		{
-			Bool gpuParticles = false;
-			ANKI_CHECK(getExtra(extras, "gpu_particles", extraValueBool, extraFound));
-			if(extraFound)
+			ImporterString materialFname;
+			ANKI_CHECK(getExtra(extras, "materialResource", materialFname, extraFound));
+			if(!extraFound)
 			{
-				gpuParticles = extraValueBool;
+				ANKI_IMPORTER_LOGE("A \"particleEmitterResource\" also requires a \"materialResource\". Ignoring node");
 			}
-
-			if(!gpuParticles) // TODO Re-enable GPU particles
+			else
 			{
 				ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
-				ANKI_CHECK(m_sceneFile.writeTextf("comp = node:newParticleEmitterComponent()\n"));
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadParticleEmitterResource(\"%s\")\n", extraValueStr.cstr()));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp = node:newParticleEmitter2Component()\n"));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setParticleEmitterFilename(\"%s\")\n", extraValueStr.cstr()));
+
+				ANKI_CHECK(m_sceneFile.writeTextf("comp = node:newMaterialComponent()\n"));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setMaterialFilename(\"%s\")\n", materialFname.cstr()));
 
 				Transform localTrf;
 				ANKI_CHECK(getNodeTransform(node, localTrf));

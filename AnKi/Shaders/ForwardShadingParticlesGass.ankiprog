@@ -21,7 +21,7 @@ struct VertIn
 struct VertOut
 {
 	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
-	nointerpolation F32 m_alpha : ALPHA;
+	ANKI_RELAXED_PRECISION nointerpolation F32 m_alpha : ALPHA;
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_worldPos : WORLD_POS;
 	Vec4 m_svPosition : SV_POSITION;
