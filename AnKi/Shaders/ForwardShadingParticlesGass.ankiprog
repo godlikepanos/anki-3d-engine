@@ -41,9 +41,10 @@ VertOut main(VertIn input)
 	const GpuSceneParticleEmitter2 particles = SBUFF(g_particleEmitters2, instance.m_particleEmitterIndex);
 	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, instance.m_meshLodIndex);
 
-	const U32 particleId = input.m_svInstanceId;
+	U32 offset = particles.m_aliveParticleIndicesOffset + input.m_svInstanceId * sizeof(U32);
+	const U32 particleId = BAB_LOAD(g_gpuScene, U32, offset);
 
-	U32 offset = particles.m_particleStateSteamOffsets[(U32)ParticleProperty::kPosition] + particleId * sizeof(Vec3);
+	offset = particles.m_particleStateSteamOffsets[(U32)ParticleProperty::kPosition] + particleId * sizeof(Vec3);
 	const Vec3 particlePos = BAB_LOAD(g_gpuScene, Vec3, offset);
 
 	offset = particles.m_particleStateSteamOffsets[(U32)ParticleProperty::kScale] + particleId * sizeof(Vec3);

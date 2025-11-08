@@ -168,5 +168,5 @@ void simulatePhysics(Vec3 F, F32 m, F32 dt, inout Vec3 v, inout Vec3 x, Bool che
 	}
 
 	// Add some small damping to avoid jitter
-	v *= 0.95;
+	// v *= 0.95;
 }

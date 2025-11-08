@@ -114,12 +114,17 @@ public:
 
 		const F32 dt = F32(crntTime - prevUpdateTime);
 
+#if 0
 		const Vec3 xp = m_crntPosition;
 		const Vec3 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
 
 		m_crntPosition = xc;
 
 		m_velocity += m_acceleration * dt;
+#else
+		m_velocity += m_acceleration * dt;
+		m_crntPosition += m_velocity * dt;
+#endif
 	}
 };
 

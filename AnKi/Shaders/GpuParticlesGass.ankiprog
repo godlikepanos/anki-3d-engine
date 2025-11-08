@@ -73,7 +73,7 @@ void simulateParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitt
 	Vec3 x = readProp<Vec3>(emitter, ParticleProperty::kPosition);
 	const Vec3 prevX = x;
 
-	simulatePhysics(F, m, g_consts.m_dt, v, x);
+	simulatePhysics(F, m, g_consts.m_dt, v, x, false);
 
 	// Write
 	writeProp(emitter, ParticleProperty::kVelocity, v);
@@ -96,10 +96,11 @@ void simulateParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitt
 
 void initializeParticle(AnKiParticleEmitterProperties props, GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf, Bool makeAlive)
 {
-	const Vec3 m = getRandomRange(props.m_minMass, props.m_maxMass);
+	const F32 m = getRandomRange(props.m_minMass, props.m_maxMass);
 
 	Vec3 g = normalize(getRandomRange(props.m_minGravityDirection, props.m_maxGravityDirection));
 	g = mul(emitterTrf, Vec4(g, 0.0));
+	g = normalize(g); // Because the emitter's trf might have scale
 	g *= getRandomRange(props.m_minGravityMagnitude, props.m_maxGravityMagnitude);
 
 	const F32 dt = 1.0 / 60;

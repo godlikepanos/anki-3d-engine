@@ -267,7 +267,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		ConstWeakArray<U8> prefilled = m_particleEmitterResource->getPrefilledAnKiParticleEmitterProperties();
 		m_gpuScene.m_anKiParticleEmitterProperties = GpuSceneBuffer::getSingleton().allocate(prefilled.getSizeInBytes(), alignof(U32));
 
-		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuScene.m_anKiParticleEmitterProperties, prefilled);
+		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuScene.m_anKiParticleEmitterProperties, prefilled.getSizeInBytes(), prefilled.getBegin());
 	}
 
 	// GpuSceneParticleEmitter2
