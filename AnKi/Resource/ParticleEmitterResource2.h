@@ -15,7 +15,14 @@ class ShaderProgramResourceVariantInitInfo;
 
 class ParticleEmitterResourceProperty
 {
+	friend class ParticleEmitterResource2;
+
 public:
+	ParticleEmitterResourceProperty()
+	{
+		zeroMemory(m_Mat4);
+	}
+
 	ParticleEmitterResourceProperty(const ParticleEmitterResourceProperty&) = delete; // Non-copyable
 
 	ParticleEmitterResourceProperty& operator=(const ParticleEmitterResourceProperty&) = delete; // Non-copyable
@@ -27,6 +34,12 @@ public:
 
 	template<typename T>
 	const T& getValue() const;
+
+	ShaderVariableDataType getDataType() const
+	{
+		ANKI_ASSERT(m_dataType != ShaderVariableDataType::kNone);
+		return m_dataType;
+	}
 
 private:
 	ResourceString m_name;
@@ -97,6 +110,11 @@ public:
 		return m_commonProps;
 	}
 
+	ConstWeakArray<ParticleEmitterResourceProperty> getOtherProperties() const
+	{
+		return m_otherProps;
+	}
+
 	ConstWeakArray<U8> getPrefilledAnKiParticleEmitterProperties() const
 	{
 		return m_prefilledAnKiParticleEmitterProperties;
@@ -107,6 +125,11 @@ public:
 		return *m_grProg;
 	}
 
+	const ShaderProgramResource& getShaderProgramResource() const
+	{
+		return *m_prog;
+	}
+
 private:
 	ResourceDynamicArray<U8> m_prefilledAnKiParticleEmitterProperties;
 
@@ -114,6 +137,8 @@ private:
 	ShaderProgramPtr m_grProg;
 
 	ParticleEmitterResourceCommonProperties m_commonProps;
+
+	ResourceDynamicArray<ParticleEmitterResourceProperty> m_otherProps;
 
 	Error parseShaderProgram(XmlElement shaderProgramEl, Bool async);
 

@@ -211,6 +211,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					m_gpuSceneRenderableAabbForward.uploadToGpuScene(gpuVolume);
 					break;
 				case RenderingTechnique::kRtMaterialFetch:
+				case RenderingTechnique::kRtShadow:
 					m_gpuSceneRenderableAabbRt.uploadToGpuScene(gpuVolume);
 					break;
 				default:

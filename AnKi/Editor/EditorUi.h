@@ -7,6 +7,7 @@
 
 #include <AnKi/Ui.h>
 #include <AnKi/Editor/ImageViewerUi.h>
+#include <AnKi/Editor/ParticleEditorUi.h>
 #include <filesystem>
 
 namespace anki {
@@ -16,20 +17,17 @@ class SceneNode;
 #define ANKI_DEFINE_SCENE_COMPONENT(class_, weight, sceneNodeCanHaveMany, icon) class class_##Component;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
-/// @addtogroup editor
-/// @{
-
-/// A class that builds the editor UI and manipulates the scene directly.
+// A class that builds the editor UI and manipulates the scene directly.
 class EditorUi
 {
 public:
+	Bool m_quit = false;
+
+	Bool m_mouseHoveredOverAnyWindow = false; // Mouse is over one of the editor windows.
+
 	EditorUi();
 
 	~EditorUi();
-
-	Bool m_quit = false;
-
-	Bool m_mouseHoveredOverAnyWindow = false; ///< Mouse is over one of the editor windows.
 
 	void draw(UiCanvas& canvas);
 
@@ -44,7 +42,8 @@ private:
 		kTexture,
 		kMaterial,
 		kMesh,
-		kLua
+		kLua,
+		kParticleEmitter
 	};
 
 	class AssetFile
@@ -88,6 +87,7 @@ private:
 	ImageResourcePtr m_meshIcon;
 
 	ImageViewerUi m_imageViewer;
+	ParticleEditorUi m_particlesEditor;
 
 	class
 	{
@@ -138,7 +138,7 @@ private:
 
 		ImGuiTextFilter m_fileFilter;
 
-		I32 m_cellSize = 8; ///< Icon size
+		I32 m_cellSize = 8; // Icon size
 	} m_assetsWindow;
 
 	class
@@ -176,6 +176,5 @@ private:
 	static void gatherAssets(DynamicArray<AssetPath>& paths);
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
 };
-/// @}
 
 } // end namespace anki

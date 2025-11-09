@@ -490,6 +490,7 @@ public:
 	/// Append using a range. Copies the range of [first, oneAfterLast)
 	BaseString& append(ConstIterator first, ConstIterator oneAfterLast)
 	{
+		ANKI_ASSERT(oneAfterLast >= first);
 		const PtrSize len = oneAfterLast - first;
 		appendInternal(first, len);
 		return *this;

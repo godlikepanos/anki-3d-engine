@@ -9,9 +9,6 @@
 
 namespace anki {
 
-/// @addtogroup editor
-/// @{
-
 class ImageViewerUi
 {
 public:
@@ -35,6 +32,5 @@ private:
 
 	U32 m_imageUuid = 0;
 };
-/// @}
 
 } // end namespace anki

@@ -102,16 +102,19 @@ public:
 
 	/// Iterate all the filenames from all paths provided.
 	template<typename TFunc>
-	Error iterateAllFilenames(TFunc func) const
+	void iterateAllFilenames(TFunc func) const
 	{
 		for(const Path& path : m_paths)
 		{
 			for(const ResourceString& fname : path.m_files)
 			{
-				ANKI_CHECK(func(fname.toCString()));
+				const FunctorContinue cont_ = func(fname.toCString());
+				if(cont_ == FunctorContinue::kStop)
+				{
+					break;
+				}
 			}
 		}
-		return Error::kNone;
 	}
 
 	/// Iterate paths in the DataPaths CVar

@@ -89,6 +89,10 @@ void EditorUi::listDir(const std::filesystem::path& rootPath, const std::filesys
 			{
 				file.m_type = AssetFileType::kMesh;
 			}
+			else if(extension == ".ankipart")
+			{
+				file.m_type = AssetFileType::kParticleEmitter;
+			}
 
 			if(file.m_type != AssetFileType::kNone)
 			{
@@ -186,6 +190,14 @@ void EditorUi::draw(UiCanvas& canvas)
 		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
 
 		m_imageViewer.drawWindow(canvas, initialPos, initialSize, 0);
+	}
+
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 initialSize = Vec2(800.0f, 600.0f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_particlesEditor.drawWindow(canvas, initialPos, initialSize, 0);
 	}
 
 	ImGui::End();
@@ -1297,6 +1309,17 @@ void EditorUi::assetsWindow()
 											m_imageViewer.m_image = img;
 											m_imageViewer.m_open = true;
 										}
+									}
+									else if(file.m_type == AssetFileType::kParticleEmitter)
+									{
+										ImGui::PushFont(nullptr, cellWidth - 1.0f);
+										if(ImGui::Button(ICON_MDI_CREATION, Vec2(cellWidth)))
+										{
+											ParticleEmitterResource2Ptr rsrc;
+											ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_filename, rsrc));
+											m_particlesEditor.open(*rsrc);
+										}
+										ImGui::PopFont();
 									}
 									ImGui::PopID();
 

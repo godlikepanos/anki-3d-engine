@@ -134,6 +134,7 @@ Error ParticleEmitterResource2::parseShaderProgram(XmlElement shaderProgramEl, B
 		}
 
 		m_prefilledAnKiParticleEmitterProperties.resize(propsStruct->m_size, 0_U8);
+		m_otherProps.resize(propsStruct->m_members.getSize());
 
 		for(U32 i = 0; i < propsStruct->m_members.getSize(); ++i)
 		{
@@ -142,6 +143,25 @@ Error ParticleEmitterResource2::parseShaderProgram(XmlElement shaderProgramEl, B
 
 			ANKI_ASSERT(member.m_offset + memberSize <= propsStruct->m_size);
 			memcpy(m_prefilledAnKiParticleEmitterProperties.getBegin() + member.m_offset, member.m_defaultValues.getBegin(), memberSize);
+
+			// Initialize the property with the default values
+			ParticleEmitterResourceProperty& prop = m_otherProps[i];
+			prop.m_offsetInAnKiParticleEmitterProperties = member.m_offset;
+			prop.m_name = member.m_name.getBegin();
+			prop.m_dataType = member.m_type;
+			switch(prop.m_dataType)
+			{
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	case ShaderVariableDataType::k##type: \
+	{ \
+		ANKI_ASSERT(sizeof(prop.m_##type) == memberSize); \
+		memcpy(&prop.m_##type, member.m_defaultValues.getBegin(), memberSize); \
+		break; \
+	}
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
+			default:
+				ANKI_ASSERT(0);
+			}
 		}
 	}
 
@@ -224,6 +244,7 @@ Error ParticleEmitterResource2::parseInput(XmlElement inputEl)
 
 	// Find the member
 	const ShaderBinaryStructMember* foundMember = nullptr;
+	U32 foundMemberIdx = kMaxU32;
 	for(U32 i = 0; i < propsStruct->m_members.getSize(); ++i)
 	{
 		const ShaderBinaryStructMember& member = propsStruct->m_members[i];
@@ -231,6 +252,7 @@ Error ParticleEmitterResource2::parseInput(XmlElement inputEl)
 		if(memberName == varName)
 		{
 			foundMember = &member;
+			foundMemberIdx = i;
 			break;
 		}
 	}
@@ -244,6 +266,8 @@ Error ParticleEmitterResource2::parseInput(XmlElement inputEl)
 	const U32 memberSize = getShaderVariableDataTypeInfo(foundMember->m_type).m_size;
 	const U32 memberOffset = foundMember->m_offset;
 
+	ParticleEmitterResourceProperty& prop = m_otherProps[foundMemberIdx];
+
 	// Set the value
 	switch(foundMember->m_type)
 	{
@@ -255,6 +279,7 @@ Error ParticleEmitterResource2::parseInput(XmlElement inputEl)
 		ANKI_ASSERT(memberOffset + memberSize <= m_prefilledAnKiParticleEmitterProperties.getSize()); \
 		ANKI_ASSERT(memberSize == sizeof(arr)); \
 		memcpy(m_prefilledAnKiParticleEmitterProperties.getBegin() + memberOffset, arr.getBegin(), memberSize); \
+		memcpy(&prop.m_##type, arr.getBegin(), memberSize); \
 		break; \
 	}
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
