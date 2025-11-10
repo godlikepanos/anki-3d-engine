@@ -48,6 +48,7 @@ public:
 		g_cvarWindowFullscreen = false;
 		g_cvarWindowMaximized = true;
 		g_cvarWindowBorderless = true;
+		g_cvarRsrcTrackFileUpdates = true;
 		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
 
 		if(CString(g_cvarEditorScene) != "")

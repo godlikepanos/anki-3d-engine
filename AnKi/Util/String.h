@@ -691,7 +691,7 @@ public:
 	U64 computeHash() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return anki::computeHash(&m_data[0], m_data.getSize());
+		return toCString().computeHash();
 	}
 
 	/// Replace all occurrences of "from" with "to".

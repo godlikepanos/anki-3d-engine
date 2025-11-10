@@ -73,11 +73,13 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 		AccelerationStructureScratchAllocator::allocateSingleton();
 	}
 
+	m_trackFileUpdateTimes = g_cvarRsrcTrackFileUpdates;
+
 	return Error::kNone;
 }
 
 template<typename T>
-Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out, Bool async)
+Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool async)
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
@@ -141,6 +143,11 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 			{
 				entry->m_resource = rsrc;
 			}
+
+			if(m_trackFileUpdateTimes)
+			{
+				entry->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
+			}
 		}
 	}
 
@@ -178,8 +185,44 @@ void ResourceManager::freeResource(T* ptr)
 
 // Instansiate
 #define ANKI_INSTANTIATE_RESOURCE(className) \
-	template Error ResourceManager::loadResource<className>(const CString& filename, ResourcePtr<className>& out, Bool async); \
+	template Error ResourceManager::loadResource<className>(CString filename, ResourcePtr<className> & out, Bool async); \
 	template void ResourceManager::freeResource<className>(className * ptr);
 #include <AnKi/Resource/Resources.def.h>
+
+template<typename T>
+void ResourceManager::refreshFileUpdateTimesInternal()
+{
+	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
+
+	WLockGuard lock(type.m_mtx);
+
+	for(auto& entry : type.m_entries)
+	{
+		LockGuard lock(entry.m_mtx);
+
+		if(!entry.m_resource)
+		{
+			continue;
+		}
+
+		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_resource->getFilename());
+		if(newTime != entry.m_fileUpdateTime)
+		{
+			ANKI_RESOURCE_LOGV("File updated: %s", entry.m_resource->getFilename().cstr());
+			entry.m_fileUpdateTime = newTime;
+		}
+	}
+}
+
+void ResourceManager::refreshFileUpdateTimes()
+{
+	if(!m_trackFileUpdateTimes)
+	{
+		return;
+	}
+
+#define ANKI_INSTANTIATE_RESOURCE(className) refreshFileUpdateTimesInternal<className>();
+#include <AnKi/Resource/Resources.def.h>
+}
 
 } // end namespace anki

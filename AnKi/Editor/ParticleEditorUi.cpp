@@ -5,6 +5,7 @@
 
 #include <AnKi/Editor/ParticleEditorUi.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
+#include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Filesystem.h>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
 
@@ -18,6 +19,7 @@ void ParticleEditorUi::open(const ParticleEmitterResource2& resource)
 	}
 
 	rebuildCache(resource);
+	m_filename = ResourceFilesystem::getSingleton().getFileFullPath(resource.getFilename());
 	m_open = true;
 }
 
@@ -48,7 +50,11 @@ void ParticleEditorUi::drawWindow([[maybe_unused]] UiCanvas& canvas, Vec2 initia
 		{
 			if(ImGui::Button(ICON_MDI_CONTENT_SAVE " Save"))
 			{
-				ANKI_LOGI("TODO");
+				if(saveCache())
+				{
+					ANKI_LOGE("Unnable to save the particles file. Ignoring save");
+				}
+				ResourceManager::getSingleton().refreshFileUpdateTimes();
 			}
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(-1.0f);
@@ -269,6 +275,64 @@ void ParticleEditorUi::rebuildCache(CString particleProgramName)
 		m_otherProps[i].m_type = foundProg->m_props[i].m_type;
 		m_otherProps[i].m_Mat4 = foundProg->m_props[i].m_Mat4;
 	}
+}
+
+Error ParticleEditorUi::saveCache()
+{
+	File file;
+	ANKI_CHECK(file.open(m_filename, FileOpenFlag::kWrite));
+
+	ANKI_CHECK(file.writeText("<particleEmitter>\n"));
+
+	ANKI_CHECK(file.writeTextf("\t<shaderProgram name=\"%s\"/>\n", m_currentlySelectedProgram.cstr()));
+
+	ANKI_CHECK(file.writeTextf("\t<particleCount value=\"%u\"/>\n", m_commonProps.m_particleCount));
+	ANKI_CHECK(file.writeTextf("\t<emissionPeriod value=\"%f\"/>\n", m_commonProps.m_emissionPeriod));
+	ANKI_CHECK(file.writeTextf("\t<particlesPerEmission value=\"%u\"/>\n", m_commonProps.m_particlesPerEmission));
+
+	ANKI_CHECK(file.writeText("\t<inputs>\n"));
+
+	for(const Prop& prop : m_otherProps)
+	{
+		String value;
+		switch(prop.m_type)
+		{
+		case ShaderVariableDataType::kU32:
+			value.toString(prop.m_U32);
+			break;
+		case ShaderVariableDataType::kUVec2:
+			value = prop.m_UVec2.toString();
+			break;
+		case ShaderVariableDataType::kUVec3:
+			value = prop.m_UVec3.toString();
+			break;
+		case ShaderVariableDataType::kUVec4:
+			value = prop.m_UVec4.toString();
+			break;
+		case ShaderVariableDataType::kF32:
+			value.toString(prop.m_F32);
+			break;
+		case ShaderVariableDataType::kVec2:
+			value = prop.m_Vec2.toString();
+			break;
+		case ShaderVariableDataType::kVec3:
+			value = prop.m_Vec3.toString();
+			break;
+		case ShaderVariableDataType::kVec4:
+			value = prop.m_Vec4.toString();
+			break;
+		default:
+			ANKI_ASSERT(!"TODO");
+		}
+
+		ANKI_CHECK(file.writeTextf("\t\t<input name=\"%s\" value=\"%s\"/>\n", prop.m_name.cstr(), value.cstr()));
+	}
+
+	ANKI_CHECK(file.writeText("\t</inputs>\n"));
+
+	ANKI_CHECK(file.writeText("</particleEmitter>\n"));
+
+	return Error::kNone;
 }
 
 } // end namespace anki

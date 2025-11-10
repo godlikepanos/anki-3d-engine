@@ -10,6 +10,7 @@
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #endif
+#include <filesystem>
 
 namespace anki {
 
@@ -291,6 +292,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 	ANKI_RESOURCE_LOGV("Adding new resource path: %s", filepath.cstr());
 
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
+	ResourceStringList filenameList;
 	constexpr CString extension(".ankizip");
 
 	auto includePath = [&](CString p) -> Bool {
@@ -344,7 +346,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 
 		do
 		{
-			Array<char, 1024> filename;
+			Array<Char, 1024> filename;
 
 			unz_file_info info;
 			if(unzGetCurrentFileInfo(zfile, &info, &filename[0], filename.getSize(), nullptr, 0, nullptr, 0) != UNZ_OK)
@@ -357,7 +359,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 			const Bool itsADir = info.uncompressed_size == 0;
 			if(!itsADir && includePath(&filename[0]))
 			{
-				path.m_files.pushBackSprintf("%s", &filename[0]);
+				filenameList.pushBack(filename.getBegin());
 				++fileCount;
 			}
 		} while(unzGoToNextFile(zfile) == UNZ_OK);
@@ -382,7 +384,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 		{
 			if(includePath(line))
 			{
-				path.m_files.pushBack(line);
+				filenameList.pushBack(line);
 				++fileCount;
 			}
 		}
@@ -397,7 +399,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 		ANKI_CHECK(walkDirectoryTree(filepath, [&](WalkDirectoryArgs& args) -> Error {
 			if(!args.m_isDirectory && includePath(args.m_path))
 			{
-				path.m_files.pushBackSprintf("%s", args.m_path.cstr());
+				filenameList.pushBack(args.m_path);
 				++fileCount;
 			}
 
@@ -405,14 +407,24 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 		}));
 	}
 
-	ANKI_ASSERT(path.m_files.getSize() == fileCount);
+	ANKI_ASSERT(filenameList.getSize() == fileCount);
 	if(fileCount == 0)
 	{
 		ANKI_RESOURCE_LOGW("Ignoring empty resource path: %s", &filepath[0]);
 	}
 	else
 	{
-		path.m_path.sprintf("%s", &filepath[0]);
+		path.m_path = filepath;
+
+		path.m_files.resize(fileCount);
+		U32 count = 0;
+		for(const ResourceString& str : filenameList)
+		{
+			path.m_files[count].m_filename = str;
+			path.m_files[count].m_filenameHash = str.computeHash();
+			++count;
+		}
+
 		m_paths.emplaceFront(std::move(path));
 
 		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
@@ -420,16 +432,16 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 
 	if(false)
 	{
-		for(const ResourceString& s : m_paths.getFront().m_files)
+		for(const File& s : m_paths.getFront().m_files)
 		{
-			printf("%s\n", s.cstr());
+			printf("%s\n", s.m_filename.cstr());
 		}
 	}
 
 	return Error::kNone;
 }
 
-Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFilePtr& filePtr) const
+Error ResourceFilesystem::openFile(ResourceFilename filename, ResourceFilePtr& filePtr) const
 {
 	ResourceFile* rfile;
 	Error err = openFileInternal(filename, rfile);
@@ -453,15 +465,20 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	ANKI_RESOURCE_LOGV("Opening resource file: %s", filename.cstr());
 	rfile = nullptr;
 
+	const U64 filenameHash = filename.computeHash();
+
 	// Search for the fname in reverse order
 	for(const Path& p : m_paths)
 	{
-		for(const ResourceString& pfname : p.m_files)
+		for(const File& fsfile : p.m_files)
 		{
-			if(pfname != filename)
+			if(filenameHash != fsfile.m_filenameHash)
 			{
 				continue;
 			}
+
+			CString pfname = fsfile.m_filename;
+			ANKI_ASSERT(pfname == filename);
 
 			// Found
 			if(p.m_isArchive)
@@ -476,7 +493,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 				ResourceString newFname;
 				if(!p.m_isSpecial)
 				{
-					newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
+					newFname.sprintf("%s/%s", p.m_path.cstr(), filename.cstr());
 				}
 				else
 				{
@@ -495,7 +512,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 				ANKI_CHECK(file->m_file.open(newFname, openFlags));
 
 #if 0
-				printf("Opening asset %s\n", &newFname[0]);
+				printf("Opening asset %s, update time %llu\n", newFname.cstr(), fsfile.m_fileUpdateTime);
 #endif
 			}
 		}
@@ -524,6 +541,52 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 #endif
 
 	return Error::kNone;
+}
+
+ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) const
+{
+	ResourceString out;
+	const U64 filenameHash = filename.computeHash();
+	Bool found = false;
+	for(const Path& p : m_paths)
+	{
+		for(const File& fsfile : p.m_files)
+		{
+			if(filenameHash != fsfile.m_filenameHash)
+			{
+				continue;
+			}
+
+			CString pfname = fsfile.m_filename;
+			ANKI_ASSERT(pfname == filename);
+
+			if(!p.m_isArchive && !p.m_isSpecial)
+			{
+				out.sprintf("%s/%s", p.m_path.cstr(), fsfile.m_filename.cstr());
+				found = true;
+				break;
+			}
+		}
+
+		if(found)
+		{
+			break;
+		}
+	}
+
+	ANKI_ASSERT(found);
+	return out;
+}
+
+U64 ResourceFilesystem::getFileUpdateTime(ResourceFilename filename) const
+{
+	const ResourceString fullFilename = getFileFullPath(filename);
+
+	const std::filesystem::path stdpath = fullFilename.cstr();
+	ANKI_ASSERT(std::filesystem::exists(stdpath));
+
+	const auto timeOfUpdate = std::filesystem::last_write_time(stdpath);
+	return std::chrono::time_point_cast<std::chrono::milliseconds>(timeOfUpdate).time_since_epoch().count();
 }
 
 } // end namespace anki

@@ -15,8 +15,6 @@ class ParticleEditorUi
 public:
 	void open(const ParticleEmitterResource2& resource);
 
-	void openNew();
-
 	void drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
 
 private:
@@ -63,6 +61,8 @@ private:
 
 	DynamicArray<ParticleProgram> m_programs;
 
+	String m_filename;
+
 	// Cache begin. The UI will manipulate this cache because the resource is immutable
 	String m_currentlySelectedProgram;
 	ParticleEmitterResourceCommonProperties m_commonProps = {};
@@ -75,6 +75,8 @@ private:
 	void rebuildCache(const ParticleEmitterResource2& resource);
 
 	void rebuildCache(CString particleProgramName);
+
+	Error saveCache();
 };
 
 } // end namespace anki

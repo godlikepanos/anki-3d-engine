@@ -25,12 +25,10 @@ class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
 class AccelerationStructureScratchAllocator;
 
-/// @addtogroup resource
-/// @{
-
 ANKI_CVAR(NumericCVar<PtrSize>, Rsrc, TransferScratchMemorySize, 256_MB, 1_MB, 4_GB, "Memory that is used fot texture and buffer uploads")
+ANKI_CVAR(BoolCVar, Rsrc, TrackFileUpdates, false, "If true the resource manager is able to track file update times")
 
-/// Resource manager. It holds a few global variables
+// Resource manager. It holds a few global variables
 class ResourceManager : public MakeSingleton<ResourceManager>
 {
 	template<typename T>
@@ -43,14 +41,18 @@ class ResourceManager : public MakeSingleton<ResourceManager>
 public:
 	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
-	/// Load a resource.
-	/// @node Thread-safe against itself and freeResource.
+	// Load a resource.
+	// Note: Thread-safe against itself, freeResource() and refreshFileUpdateTimes()
 	template<typename T>
-	Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
+	Error loadResource(CString filename, ResourcePtr<T>& out, Bool async = true);
+
+	// Iterate all loaded resource and check if the files have been updated since they were loaded.
+	// Note: Thread-safe against itself, loadResource() and freeResource()
+	void refreshFileUpdateTimes();
 
 	// Internals:
 
-	/// @node Thread-safe against itself and loadResource.
+	// Note: Thread-safe against itself, loadResource() and refreshFileUpdateTimes()
 	template<typename T>
 	ANKI_INTERNAL void freeResource(T* ptr);
 
@@ -63,6 +65,7 @@ private:
 		{
 		public:
 			Type* m_resource = nullptr;
+			U64 m_fileUpdateTime = 0;
 			SpinLock m_mtx;
 		};
 
@@ -92,10 +95,14 @@ public \
 
 	Atomic<U32> m_uuid = {1};
 
+	Bool m_trackFileUpdateTimes = false;
+
 	ResourceManager();
 
 	~ResourceManager();
+
+	template<typename T>
+	void refreshFileUpdateTimesInternal();
 };
-/// @}
 
 } // end namespace anki

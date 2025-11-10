@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
-/// The base of all resource objects.
+// The base of all resource objects.
 class ResourceObject
 {
 	friend class ResourceManager;
@@ -49,7 +46,7 @@ public:
 		return m_fname.toCString();
 	}
 
-	/// To check if 2 resource pointers are actually the same resource.
+	// To check if 2 resource pointers are actually the same resource.
 	U32 getUuid() const
 	{
 		ANKI_ASSERT(m_uuid > 0);
@@ -71,8 +68,7 @@ protected:
 private:
 	mutable Atomic<I32> m_refcount = {0};
 	U32 m_uuid = 0;
-	ResourceString m_fname; ///< Unique resource name.
+	ResourceString m_fname; // Unique resource name
 };
-/// @}
 
 } // end namespace anki
