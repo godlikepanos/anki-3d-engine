@@ -115,16 +115,17 @@ Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool 
 
 	ANKI_ASSERT(entry);
 
-	// Try loading the resource
+	// Try to load the resource
 	Error err = Error::kNone;
+	T* rsrc = nullptr;
 	{
 		LockGuard lock(entry->m_mtx);
 
-		if(entry->m_resource == nullptr)
+		if(entry->m_resources.getSize() == 0 || entry->m_resources.getBack()->isObsolete())
 		{
-			// Resource hasn't been loaded, load it
+			// Resource hasn't been loaded or it needs update, load it
 
-			T* rsrc = newInstance<T>(ResourceMemoryPool::getSingleton(), filename, m_uuid.fetchAdd(1));
+			rsrc = newInstance<T>(ResourceMemoryPool::getSingleton(), filename, m_uuid.fetchAdd(1));
 
 			// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
 			rsrc->retain();
@@ -138,10 +139,11 @@ Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool 
 			{
 				ANKI_RESOURCE_LOGE("Failed to load resource: %s", filename.cstr());
 				deleteInstance(ResourceMemoryPool::getSingleton(), rsrc);
+				rsrc = nullptr;
 			}
 			else
 			{
-				entry->m_resource = rsrc;
+				entry->m_resources.emplaceBack(rsrc);
 			}
 
 			if(m_trackFileUpdateTimes)
@@ -149,11 +151,16 @@ Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool 
 				entry->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
 			}
 		}
-	}
+		else
+		{
+			rsrc = entry->m_resources.getBack();
+		}
 
-	if(!err)
-	{
-		out.reset(entry->m_resource);
+		if(!err)
+		{
+			ANKI_ASSERT(rsrc);
+			out.reset(rsrc);
+		}
 	}
 
 	return err;
@@ -177,9 +184,18 @@ void ResourceManager::freeResource(T* ptr)
 
 	{
 		LockGuard lock(entry->m_mtx);
-		ANKI_ASSERT(entry->m_resource);
-		deleteInstance(ResourceMemoryPool::getSingleton(), entry->m_resource);
-		entry->m_resource = nullptr;
+
+		auto it = entry->m_resources.getBegin();
+		for(; it != entry->m_resources.getEnd(); ++it)
+		{
+			if(*it == ptr)
+			{
+				break;
+			}
+		}
+		ANKI_ASSERT(it != entry->m_resources.getEnd());
+		deleteInstance(ResourceMemoryPool::getSingleton(), *it);
+		entry->m_resources.erase(it);
 	}
 }
 
@@ -200,16 +216,21 @@ void ResourceManager::refreshFileUpdateTimesInternal()
 	{
 		LockGuard lock(entry.m_mtx);
 
-		if(!entry.m_resource)
+		if(entry.m_resources.getSize() == 0)
 		{
 			continue;
 		}
 
-		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_resource->getFilename());
+		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_resources[0]->getFilename());
 		if(newTime != entry.m_fileUpdateTime)
 		{
-			ANKI_RESOURCE_LOGV("File updated: %s", entry.m_resource->getFilename().cstr());
+			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: %s", entry.m_resources[0]->getFilename().cstr());
 			entry.m_fileUpdateTime = newTime;
+
+			for(T* rsrc : entry.m_resources)
+			{
+				rsrc->m_isObsolete.store(1);
+			}
 		}
 	}
 }

@@ -390,7 +390,7 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 	UpdateSceneNodesCtx::PerThread& thread = ctx.m_perThread[tid];
 
 	// Components update
-	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds);
+	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds, m_checkForResourceUpdates);
 	componentUpdateInfo.m_framePool = &m_framePool;
 	U32 sceneComponentUpdatedCount = 0;
 	node.iterateComponents([&](SceneComponent& comp) {

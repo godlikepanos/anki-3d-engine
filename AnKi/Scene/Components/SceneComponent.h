@@ -71,13 +71,15 @@ public:
 	const Second m_currentTime;
 	const Second m_dt;
 	const Bool m_forceUpdateSceneBounds;
+	const Bool m_checkForResourceUpdates;
 	StackMemoryPool* m_framePool = nullptr;
 
-	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds)
+	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds, Bool checkForResourceUpdates)
 		: m_previousTime(prevTime)
 		, m_currentTime(crntTime)
 		, m_dt(crntTime - prevTime)
 		, m_forceUpdateSceneBounds(forceUpdateSceneBounds)
+		, m_checkForResourceUpdates(checkForResourceUpdates)
 	{
 	}
 

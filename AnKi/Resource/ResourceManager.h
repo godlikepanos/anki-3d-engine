@@ -64,9 +64,9 @@ private:
 		class Entry
 		{
 		public:
-			Type* m_resource = nullptr;
-			U64 m_fileUpdateTime = 0;
+			DynamicArray<Type*> m_resources; // Hosts multiple versions of a resource. The last element is the newest
 			SpinLock m_mtx;
+			U64 m_fileUpdateTime = 0;
 		};
 
 		ResourceHashMap<CString, U32> m_map;
@@ -77,7 +77,7 @@ private:
 		{
 			for([[maybe_unused]] const Entry& e : m_entries)
 			{
-				ANKI_ASSERT(e.m_resource == nullptr && "Forgot to release some resource");
+				ANKI_ASSERT(e.m_resources.getSize() > 0 && "Forgot to release some resource");
 			}
 		}
 	};

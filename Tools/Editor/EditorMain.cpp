@@ -78,6 +78,7 @@ public:
 
 	Error userPostInit() override
 	{
+		SceneGraph::getSingleton().setCheckForResourceUpdates(true);
 		m_editorUiNode = SceneGraph::getSingleton().newSceneNode<EditorUiNode>("MainUi");
 
 		if(m_sceneLuaFname)

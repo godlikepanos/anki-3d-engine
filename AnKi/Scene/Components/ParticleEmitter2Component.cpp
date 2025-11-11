@@ -234,6 +234,28 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 
 	ParticleEmitterQuadGeometry::getSingleton().tryUploadToGpuScene();
 
+	if(info.m_checkForResourceUpdates) [[unlikely]]
+	{
+		if(m_particleEmitterResource->isObsolete()) [[unlikely]]
+		{
+			ANKI_SCENE_LOGV("Particle emitter resource is obsolete. Will reload it");
+			BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> fname(info.m_framePool);
+			fname = m_particleEmitterResource->getFilename();
+			ParticleEmitterResource2Ptr oldVersion = m_particleEmitterResource;
+			m_particleEmitterResource.reset(nullptr);
+			if(ResourceManager::getSingleton().loadResource(fname, m_particleEmitterResource))
+			{
+				ANKI_SCENE_LOGE("Can't update the particle resource. Ignoring the load");
+				m_particleEmitterResource = oldVersion;
+			}
+			else
+			{
+				m_anyDirty = true;
+				ANKI_ASSERT(!m_particleEmitterResource->isObsolete());
+			}
+		}
+	}
+
 	if(!m_anyDirty) [[likely]]
 	{
 		return;
