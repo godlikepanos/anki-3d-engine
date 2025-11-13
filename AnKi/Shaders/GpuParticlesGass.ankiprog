@@ -5,8 +5,6 @@
 
 // This shader does a particle simulation for gasses
 
-#pragma anki 16bit
-
 #pragma anki mutator ANKI_WAVE_SIZE 16 32 64
 
 #pragma anki technique comp

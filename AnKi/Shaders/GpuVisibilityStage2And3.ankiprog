@@ -17,6 +17,7 @@
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 #define NUMTHREADS 64u
 
@@ -134,7 +135,7 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u3);
 // ===========================================================================
 #if ANKI_TECHNIQUE_Meshlets
 
-#	define MESHLET_BACKFACE_CULLING 0 // Doesn't work correctly for some reason
+#	define MESHLET_BACKFACE_CULLING 1 // Doesn't cull much geometry
 #	define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
 #	define MESHLET_NO_SAMPLING_POINT_CULLING 1
 #	define MESHLET_HZB_CULLING HZB_TEST
@@ -187,14 +188,6 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 
 	const Mat3x4 worldTransform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
 
-#	if MESHLET_BACKFACE_CULLING
-	const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
-	if(cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_consts.m_cameraPos))
-	{
-		return true;
-	}
-#	endif
-
 	const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
 	const Mat4 mvp = mul(g_consts.m_viewProjectionMatrix, wordTransform4);
 
@@ -223,6 +216,28 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 #	if MESHLET_HZB_CULLING
 	meshletCulledByHzb = cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler);
 	return meshletCulledByHzb;
+#	endif
+
+#	if MESHLET_BACKFACE_CULLING
+	{
+		Vec3 center = (meshletBoundingVol.m_aabbMin + meshletBoundingVol.m_aabbMax) * 0.5;
+		center = mul(worldTransform, Vec4(center, 1.0));
+
+		const Vec4 coneDirAndAng = unpackSnorm4x8<F32>(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
+		Vec3 coneDir = coneDirAndAng.xyz;
+		coneDir = mul(worldTransform, Vec4(coneDir, 0.0));
+
+		const Vec3 scale = extractScale(worldTransform);
+		const F32 radius = meshletBoundingVol.m_sphereRadius * max3(scale);
+
+		// Using from meshoptimizer: dot(center - camera_position, cone_axis) >= cone_cutoff * length(center - camera_position) + radius
+		const Vec3 camPos = g_consts.m_cameraPos;
+		const Vec3 cam2center = center - camPos;
+		if(dot(cam2center, coneDir) >= coneDirAndAng.w * length(cam2center) + radius)
+		{
+			return true;
+		}
+	}
 #	endif
 
 	return false;

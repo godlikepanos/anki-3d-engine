@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki technique ForwardLegacy vert pixel
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>

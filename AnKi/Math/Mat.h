@@ -894,6 +894,27 @@ public:
 		return getColumn(3);
 	}
 
+	TMat& setDiagonal(ColumnVec diag)
+	{
+		TMat& m = *this;
+		for(U32 r = 0; r < kRowCount; ++r)
+		{
+			m(r, r) = diag[r];
+		}
+		return *this;
+	}
+
+	ColumnVec getDiagonal() const
+	{
+		TMat& m = *this;
+		ColumnVec diag;
+		for(U32 r = 0; r < kRowCount; ++r)
+		{
+			diag[r] = m(r, r);
+		}
+		return diag;
+	}
+
 	[[nodiscard]] TMat reorthogonalize() const requires(kTRowCount == 3)
 	{
 		// There are 2 methods, the standard and the Gram-Schmidt method with a twist for zAxis. This uses the 2nd. For the first see < r664
@@ -1337,21 +1358,19 @@ public:
 	}
 
 	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	[[nodiscard]] TMat invertTransformation() const requires(kSize == 16)
+	[[nodiscard]] TMat invertTransformation() const requires(kSize == 16 || kSize == 12)
 	{
-		const TMat<T, 3, 3> invertedRot = getRotationPart().transpose();
-		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
-		invertedTsl = -(invertedRot * invertedTsl);
-		return TMat(invertedTsl.xyz0(), invertedRot);
-	}
+		const TVec<T, 3> scale = extractScale();
+		const TVec<T, 3> invScale = T(1) / scale;
 
-	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	[[nodiscard]] TMat invertTransformation() const requires(kSize == 12)
-	{
-		const TMat<T, 3, 3> invertedRot = getRotationPart().transpose();
-		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
-		invertedTsl = -(invertedRot * invertedTsl);
-		return TMat(invertedTsl.xyz(), invertedRot);
+		TMat<T, 3, 3> rot;
+		rot.setRows(getRow(0).xyz() * invScale, getRow(1).xyz() * invScale, getRow(2).xyz() * invScale);
+
+		const TMat<T, 3, 3> invRot = rot.transpose();
+
+		const TVec<T, 3> invTsl = -(invRot * (getTranslationPart().xyz() * invScale));
+
+		return TMat(invTsl, invRot, invScale);
 	}
 
 	/// @note 9 muls, 9 adds
@@ -1408,6 +1427,12 @@ public:
 	[[nodiscard]] TMat lerp(const TMat& b, T t) const
 	{
 		return ((*this) * (T(1) - t)) + (b * t);
+	}
+
+	// If we assume this is a transformation matrix then extract the scale
+	[[nodiscard]] TVec<T, 3> extractScale() const
+	{
+		return TVec<T, 3>(getColumn(0).xyz().length(), getColumn(1).xyz().length(), getColumn(2).xyz().length());
 	}
 
 	static TMat getZero()

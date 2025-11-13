@@ -113,6 +113,7 @@ private:
 		List<std::pair<LoggerMessageType, String>> m_log;
 		Bool m_forceLogScrollDown = true;
 		SpinLock m_logMtx;
+		ImGuiTextFilter m_logFilter;
 	} m_consoleWindow;
 
 	class

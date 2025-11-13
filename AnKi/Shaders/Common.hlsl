@@ -15,11 +15,7 @@
 
 // Common constants
 constexpr F32 kEpsilonF32 = 0.000001f;
-#if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kEpsilonF16 = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee
-#else
-constexpr RF32 kEpsilonRF32 = 0.0001f;
-#endif
 
 template<typename T>
 T getEpsilon();
@@ -30,33 +26,18 @@ F32 getEpsilon()
 	return kEpsilonF32;
 }
 
-#if ANKI_SUPPORTS_16BIT_TYPES
 template<>
 F16 getEpsilon()
 {
 	return kEpsilonF16;
 }
-#endif
-
-#if !ANKI_FORCE_FULL_FP_PRECISION && !ANKI_SUPPORTS_16BIT_TYPES
-template<>
-RF32 getEpsilon()
-{
-	return kEpsilonRF32;
-}
-#endif
 
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
 constexpr I32 kMinI32 = -2147483648;
 constexpr I32 kMaxI32 = 2147483647;
 constexpr F32 kMaxF32 = 3.402823e+38;
 constexpr F32 kMinF32 = -3.402823e+38;
-#if !ANKI_SUPPORTS_16BIT_TYPES
-constexpr RF32 kMaxRF32 = 65504.0f; // Max half float value according to wikipedia
-#endif
-#if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kMaxF16 = (F16)65504.0;
-#endif
 
 template<typename T>
 T getMaxNumericLimit();
@@ -67,21 +48,11 @@ F32 getMaxNumericLimit()
 	return kMaxF32;
 }
 
-#if !ANKI_FORCE_FULL_FP_PRECISION && !ANKI_SUPPORTS_16BIT_TYPES
-template<>
-RF32 getMaxNumericLimit()
-{
-	return kMaxRF32;
-}
-#endif
-
-#if ANKI_SUPPORTS_16BIT_TYPES
 template<>
 F16 getMaxNumericLimit()
 {
 	return kMaxF16;
 }
-#endif
 
 template<>
 U32 getMaxNumericLimit()

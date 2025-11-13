@@ -5,8 +5,6 @@
 
 // Ground truth ambiend occlusion
 
-#pragma anki 16bit
-
 #pragma anki mutator SPATIAL_DENOISE_SAMPLE_COUNT 3 5 7 9
 #pragma anki mutator DENOISING_QUARTER_RESOLUTION 0 1
 

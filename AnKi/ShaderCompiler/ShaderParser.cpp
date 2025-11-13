@@ -532,10 +532,6 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 				ANKI_CHECK(checkActiveStruct());
 				ANKI_CHECK(parsePragmaMember(token + 1, end, line, fname));
 			}
-			else if(*token == "16bit")
-			{
-				ANKI_CHECK(parsePragma16bit(token + 1, end, line, fname));
-			}
 			else if(*token == "extra_compiler_args")
 			{
 				ANKI_CHECK(parseExtraCompilerArgs(token + 1, end, line, fname));
@@ -722,21 +718,6 @@ Error ShaderParser::parsePragmaStructEnd(const ShaderCompilerString* begin, cons
 	return Error::kNone;
 }
 
-Error ShaderParser::parsePragma16bit(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
-{
-	ANKI_ASSERT(begin && end);
-
-	// Check tokens
-	if(begin != end)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	m_16bitTypes = true;
-
-	return Error::kNone;
-}
-
 Error ShaderParser::parseExtraCompilerArgs(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -904,16 +885,6 @@ void ShaderParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const 
 	ShaderCompilerString header;
 	generateAnkiShaderHeader(shaderType, header);
 	source += header;
-
-	if(m_16bitTypes)
-	{
-		source += "#define ANKI_SUPPORTS_16BIT_TYPES 1\n";
-	}
-	else
-	{
-		source += "#define ANKI_SUPPORTS_16BIT_TYPES 0\n";
-	}
-
 	source += m_source;
 }
 

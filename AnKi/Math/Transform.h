@@ -36,13 +36,13 @@ public:
 
 	explicit TTransform(const TMat<T, 4, 4>& m4)
 	{
+		m_scale = m4.extractScale().xyz0();
+
 		const TVec<T, 3> s0 = m4.getColumn(0).xyz();
 		const TVec<T, 3> s1 = m4.getColumn(1).xyz();
 		const TVec<T, 3> s2 = m4.getColumn(2).xyz();
+		m_rotation.setColumns(s0 / m_scale.x(), s1 / m_scale.y(), s2 / m_scale.z(), TVec<T, 3>(T(0)));
 
-		m_scale = TVec<T, 4>(s0.length(), s1.length(), s2.length(), T(0));
-
-		m_rotation.setColumns(s0 / m_scale.x(), s1 / m_scale.x(), s2 / m_scale.x(), TVec<T, 3>(T(0)));
 		m_origin = m4.getTranslationPart().xyz0();
 		check();
 	}

@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki mutator GPU_WAVE_SIZE 16 32 64
 #pragma anki mutator RADIANCE_OCTAHEDRON_MAP_SIZE 8 10 12 14 16 18 20
 #pragma anki mutator IRRADIANCE_OCTAHEDRON_MAP_SIZE 4 5 6

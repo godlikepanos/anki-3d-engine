@@ -1084,16 +1084,6 @@ void EditorUi::consoleWindow()
 
 	if(ImGui::Begin("Console", &m_showConsoleWindow, ImGuiWindowFlags_NoCollapse))
 	{
-		// Log controls
-		{
-			if(ImGui::Button(ICON_MDI_DELETE))
-			{
-				state.m_log.destroy();
-			}
-			ImGui::SetItemTooltip("Clear log");
-			ImGui::SameLine();
-		}
-
 		// Lua input
 		{
 			Char consoleTxt[kMaxTextInputLen] = "";
@@ -1105,6 +1095,19 @@ void EditorUi::consoleWindow()
 				ImGui::SetKeyboardFocusHere(-1); // On enter it loses focus so call this to fix it
 			}
 		}
+
+		// Clear Log
+		{
+			if(ImGui::Button(ICON_MDI_DELETE))
+			{
+				state.m_log.destroy();
+			}
+			ImGui::SetItemTooltip("Clear log");
+			ImGui::SameLine();
+		}
+
+		// Search log
+		filter(state.m_logFilter);
 
 		// Log
 		{
@@ -1118,14 +1121,17 @@ void EditorUi::consoleWindow()
 
 					for(const auto& logEntry : state.m_log)
 					{
-						ImGui::TableNextRow();
-						ImGui::TableNextColumn();
-						constexpr Array<Vec3, U(LoggerMessageType::kCount)> colors = {Vec3(0.074f, 0.631f, 0.054f), Vec3(0.074f, 0.354f, 0.631f),
-																					  Vec3(1.0f, 0.0f, 0.0f), Vec3(0.756f, 0.611f, 0.0f),
-																					  Vec3(1.0f, 0.0f, 0.0f)};
-						ImGui::PushStyleColor(ImGuiCol_Text, colors[logEntry.first].xyz1());
-						ImGui::TextUnformatted(logEntry.second.cstr());
-						ImGui::PopStyleColor();
+						if(state.m_logFilter.PassFilter(logEntry.second.cstr()))
+						{
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+							constexpr Array<Vec3, U(LoggerMessageType::kCount)> colors = {Vec3(0.074f, 0.631f, 0.054f), Vec3(0.074f, 0.354f, 0.631f),
+																						  Vec3(1.0f, 0.0f, 0.0f), Vec3(0.756f, 0.611f, 0.0f),
+																						  Vec3(1.0f, 0.0f, 0.0f)};
+							ImGui::PushStyleColor(ImGuiCol_Text, colors[logEntry.first].xyz1());
+							ImGui::TextUnformatted(logEntry.second.cstr());
+							ImGui::PopStyleColor();
+						}
 					}
 
 					if(state.m_forceLogScrollDown)

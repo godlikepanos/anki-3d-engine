@@ -61,7 +61,6 @@ public:
 /// #pragma once
 /// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2 ...]]
 /// #pragma anki skip_mutation MUTATOR0 VALUE0 [MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]]
-/// #pragma anki 16bit // Works only in HLSL. Gain 16bit types but loose min16xxx types
 /// #pragma anki technique [NAME] STAGE0 [STAGE1 ...] [mutators [MUTATOR0 [MUTATOR1 ...]]]
 /// #pragma anki extra_compiler_args ARG0 [ARG1 [ARG2...]]
 ///
@@ -113,11 +112,6 @@ public:
 		return m_techniques;
 	}
 
-	Bool compileWith16bitTypes() const
-	{
-		return m_16bitTypes;
-	}
-
 	ConstWeakArray<CString> getExtraCompilerArgs() const
 	{
 		return m_extraCompilerArgsCString;
@@ -159,8 +153,6 @@ private:
 	ShaderCompilerDynamicArray<GhostStruct> m_ghostStructs;
 	Bool m_insideStruct = false;
 
-	Bool m_16bitTypes = false;
-
 	ShaderCompilerDynamicArray<ShaderCompilerString> m_extraCompilerArgs;
 	ShaderCompilerDynamicArray<CString> m_extraCompilerArgsCString;
 
@@ -173,7 +165,6 @@ private:
 	Error parsePragmaStructBegin(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parsePragmaStructEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parsePragmaMember(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
-	Error parsePragma16bit(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parseExtraCompilerArgs(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, ShaderCompilerDynamicArray<ShaderCompilerString>& tokens) const;

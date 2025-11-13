@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki mutator RAYS_PER_PIXEL 1 2 4 8
 
 #pragma anki technique RtShadows rgen miss

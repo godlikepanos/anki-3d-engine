@@ -11,7 +11,7 @@
 #	include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_linearAnyClampSampler : register(s0);
-Texture2D<RVec4> g_inputTex : register(t0);
+Texture2D<Vec4> g_inputTex : register(t0);
 
 #	if ANKI_COMPUTE_SHADER
 #		define USE_COMPUTE 1
@@ -20,7 +20,7 @@ Texture2D<RVec4> g_inputTex : register(t0);
 #	endif
 
 #	if USE_COMPUTE
-RWTexture2D<RVec4> g_storageTex : register(u0);
+RWTexture2D<Vec4> g_storageTex : register(u0);
 
 struct Consts
 {
@@ -33,7 +33,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 #	if USE_COMPUTE
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec3 main(VertOut input) : SV_TARGET0
+Vec3 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if USE_COMPUTE
@@ -47,10 +47,10 @@ RVec3 main(VertOut input) : SV_TARGET0
 	const Vec2 uv = input.m_uv;
 #	endif
 
-	const RVec3 color = g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
+	const Vec3 color = g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 
 #	if USE_COMPUTE
-	g_storageTex[svDispatchThreadId.xy] = RVec4(color, 0.0);
+	g_storageTex[svDispatchThreadId.xy] = Vec4(color, 0.0);
 #	else
 	return color;
 #	endif
