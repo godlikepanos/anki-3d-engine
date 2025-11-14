@@ -1,0 +1,65 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader does a particle simulation for spart-like particles
+
+#pragma anki mutator ANKI_WAVE_SIZE 16 32 64
+
+#pragma anki technique comp
+
+#include <AnKi/Shaders/GpuParticlesCommon.hlsl>
+
+// clang-format off
+#pragma anki struct AnKiParticleEmitterProperties
+#	pragma anki member F32 m_minParticleLife 1.0
+#	pragma anki member F32 m_maxParticleLife 1.0
+
+#	pragma anki member F32 m_minMass 0.5
+#	pragma anki member F32 m_maxMass 0.5
+
+#	pragma anki member F32 m_minInitialSize 1.0
+#	pragma anki member F32 m_maxInitialSize 1.0
+#	pragma anki member F32 m_minFinalSize 1.0
+#	pragma anki member F32 m_maxFinalSize 1.0
+
+#	pragma anki member Vec3 m_minStartingPosition 0.0 0.0 0.0
+#	pragma anki member Vec3 m_maxStartingPosition 0.0 0.0 0.0
+
+#	pragma anki member F32 m_forceAngle 1.2
+#	pragma anki member F32 m_minForce 1
+#	pragma anki member F32 m_maxForce 2
+#pragma anki struct_end
+// clang-format on
+
+struct ParticleInterface
+{
+	AnKiParticleEmitterProperties m_props;
+
+	void initAnKiParticleEmitterProperties(GpuSceneParticleEmitter2 emitter)
+	{
+		const AnKiParticleEmitterProperties props = loadAnKiParticleEmitterProperties(g_gpuScene, emitter.m_particleEmitterPropertiesOffset);
+		m_props = props;
+	}
+
+	void simulateParticle(GpuSceneParticleEmitter2 emitter, F32 lifeFactor, out Vec3 particlePosition, out F32 particleScale)
+	{
+		// TODO
+		particlePosition = 0.0;
+		particleScale = 0.0;
+	}
+
+	void initializeParticle(GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf, Bool makeAlive, out Vec3 particlePosition, out F32 particleScale)
+	{
+		// TODO
+		particlePosition = 0.0;
+		particleScale = 0.0;
+	}
+};
+
+[numthreads(ANKI_WAVE_SIZE, 1, 1)] void main(COMPUTE_ARGS)
+{
+	ParticleInterface iface;
+	particleMain(svDispatchThreadId.x, svGroupIndex, iface);
+}

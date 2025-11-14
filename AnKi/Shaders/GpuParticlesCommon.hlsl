@@ -170,3 +170,130 @@ void simulatePhysics(Vec3 F, F32 m, F32 dt, inout Vec3 v, inout Vec3 x, Bool che
 	// Add some small damping to avoid jitter
 	// v *= 0.95;
 }
+
+void appendAlive(GpuSceneParticleEmitter2 emitter, Vec3 particlePos, F32 particleScale)
+{
+	// Add the alive particle index to the array
+	U32 count;
+	InterlockedAdd(g_scratch[0].m_aliveParticleCount, 1, count);
+	BAB_STORE(g_gpuScene, U32, emitter.m_aliveParticleIndicesOffset + count * sizeof(U32), g_particleIdx);
+
+	// Update the AABB
+	const F32 toCentimeters = 100.0;
+	const IVec3 quatizedPosMin = floor((particlePos + emitter.m_particleAabbMin * particleScale) * toCentimeters);
+	const IVec3 quatizedPosMax = ceil((particlePos + emitter.m_particleAabbMax * particleScale) * toCentimeters);
+	[unroll] for(U32 i = 0; i < 3; ++i)
+	{
+		InterlockedMin(g_scratch[0].m_aabbMin[i], quatizedPosMin[i]);
+		InterlockedMax(g_scratch[0].m_aabbMax[i], quatizedPosMax[i]);
+	}
+}
+
+template<typename TInterface>
+void particleMain(U32 svDispatchThreadId, U32 svGroupIndex, TInterface iface)
+{
+	particlesInitGlobals(svDispatchThreadId.x);
+
+	GpuSceneParticleEmitter2 emitter = SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex);
+	iface.initAnKiParticleEmitterProperties(emitter);
+	const Mat3x4 emitterTrf = SBUFF(g_gpuSceneTransforms, emitter.m_worldTransformsIndex);
+
+	const Bool reinit = emitter.m_reinitializeOnNextUpdate;
+	const Bool canEmitThisFrame = emitter.m_timeLeftForNextEmission - g_consts.m_dt <= 0.0;
+
+	if(g_particleIdx < emitter.m_particleCount)
+	{
+		// Decide what to do
+		Bool init = false;
+		Bool makeAlive = false;
+		Bool simulate = false;
+		F32 lifeFactor = 1.0;
+
+		if(reinit)
+		{
+			U32 emittedParticleCount;
+			InterlockedAdd(g_scratch[0].m_emittedParticleCount, 1, emittedParticleCount);
+
+			init = true;
+			makeAlive = emittedParticleCount < emitter.m_particlesPerEmission;
+		}
+		else
+		{
+			lifeFactor = readProp<F32>(emitter, ParticleProperty::kLifeFactor);
+			const Bool alive = lifeFactor < 1.0;
+
+			if(alive)
+			{
+				simulate = true;
+			}
+			else if(canEmitThisFrame)
+			{
+				U32 emittedParticleCount;
+				InterlockedAdd(g_scratch[0].m_emittedParticleCount, 1, emittedParticleCount);
+
+				init = emittedParticleCount < emitter.m_particlesPerEmission;
+				makeAlive = true;
+			}
+		}
+
+		// Do the actual work
+		if(simulate)
+		{
+			Vec3 particlePosition;
+			F32 particleScale;
+			iface.simulateParticle(emitter, lifeFactor, particlePosition, particleScale);
+			appendAlive(emitter, particlePosition, particleScale);
+		}
+		else if(init)
+		{
+			Vec3 particlePosition;
+			F32 particleScale;
+			iface.initializeParticle(emitter, emitterTrf, makeAlive, particlePosition, particleScale);
+			appendAlive(emitter, particlePosition, particleScale);
+		}
+	}
+
+	// Check if it's the last threadgroup running
+	if(svGroupIndex == 0)
+	{
+		U32 threadgroupIdx;
+		InterlockedAdd(g_scratch[0].m_threadgroupCount, 1, threadgroupIdx);
+		const U32 threadgroupCount = (emitter.m_particleCount + ANKI_WAVE_SIZE - 1) / ANKI_WAVE_SIZE;
+		const Bool lastThreadExecuting = (threadgroupIdx + 1 == threadgroupCount);
+
+		if(lastThreadExecuting)
+		{
+			// Inform about the bounding volume
+			const F32 toMeters = 1.0 / 100.0;
+			ParticleSimulationCpuFeedback feedback = (ParticleSimulationCpuFeedback)0;
+			feedback.m_aabbMin = g_scratch[0].m_aabbMin * toMeters;
+			feedback.m_aabbMax = g_scratch[0].m_aabbMax * toMeters;
+			feedback.m_uuid = emitter.m_uuid;
+			g_cpuFeedback[0] = feedback;
+
+			// Update the GPU scene emitter
+			if(canEmitThisFrame)
+			{
+				SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex).m_timeLeftForNextEmission = emitter.m_emissionPeriod;
+			}
+			else
+			{
+				SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex).m_timeLeftForNextEmission -= g_consts.m_dt;
+			}
+
+			if(reinit)
+			{
+				SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex).m_reinitializeOnNextUpdate = 0;
+			}
+
+			SBUFF(g_gpuSceneParticleEmitters, g_consts.m_gpuSceneParticleEmitterIndex).m_aliveParticleCount = g_scratch[0].m_aliveParticleCount;
+
+			// Reset the scratch struct for next frame
+			g_scratch[0].m_aabbMin = kMaxI32;
+			g_scratch[0].m_aabbMax = kMinI32;
+			g_scratch[0].m_threadgroupCount = 0;
+			g_scratch[0].m_emittedParticleCount = 0;
+			g_scratch[0].m_aliveParticleCount = 0;
+		}
+	}
+}
