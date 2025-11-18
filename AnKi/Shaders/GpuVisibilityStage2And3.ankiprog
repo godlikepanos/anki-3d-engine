@@ -213,11 +213,6 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 	}
 #	endif
 
-#	if MESHLET_HZB_CULLING
-	meshletCulledByHzb = cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler);
-	return meshletCulledByHzb;
-#	endif
-
 #	if MESHLET_BACKFACE_CULLING
 	{
 		Vec3 center = (meshletBoundingVol.m_aabbMin + meshletBoundingVol.m_aabbMax) * 0.5;
@@ -238,6 +233,11 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 			return true;
 		}
 	}
+#	endif
+
+#	if MESHLET_HZB_CULLING
+	meshletCulledByHzb = cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler);
+	return meshletCulledByHzb;
 #	endif
 
 	return false;

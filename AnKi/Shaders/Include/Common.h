@@ -300,6 +300,11 @@ struct Mat3x4
 		m_row1[i] = c.y;
 		m_row2[i] = c.z;
 	}
+
+	Vec3 getColumn(U32 i)
+	{
+		return Vec3(m_row0[i], m_row1[i], m_row2[i]);
+	}
 };
 
 Vec3 mul(Mat3x4 m, Vec4 v)

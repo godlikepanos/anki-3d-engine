@@ -46,7 +46,7 @@ U32 genHash(U32 x)
 
 U32 getRandomU32()
 {
-	return genHash(g_randomNumber++);
+	return genHash(g_particleIdx + g_randomNumber++);
 }
 
 F32 getRandomRange(F32 min, F32 max)
@@ -74,7 +74,7 @@ void writeProp(GpuSceneParticleEmitter2 emitter, ParticleProperty prop, T value)
 }
 
 // Use the depth buffer and the normal buffer to resolve a collision
-Bool particleCollision(inout Vec3 x, out Vec3 n, F32 acceptablePenetrationDistance = 0.2)
+Bool particleCollision(inout Vec3 x, out Vec3 n, F32 acceptablePenetrationDistance)
 {
 	n = 0.0;
 
@@ -88,7 +88,7 @@ Bool particleCollision(inout Vec3 x, out Vec3 n, F32 acceptablePenetrationDistan
 
 	Vec2 texSize;
 	g_depthTex.GetDimensions(texSize.x, texSize.y);
-	UVec2 texCoord = ndcToUv(v4.xy) * texSize;
+	UVec2 texCoord = ndcToUv(v3.xy) * texSize;
 	const F32 refDepth = g_depthTex[texCoord].r;
 	const F32 particleDepth = v3.z;
 	if(particleDepth < refDepth)
@@ -107,40 +107,58 @@ Bool particleCollision(inout Vec3 x, out Vec3 n, F32 acceptablePenetrationDistan
 	// Collides, change the position
 
 	g_gbufferRt2Tex.GetDimensions(texSize.x, texSize.y);
-	texCoord = ndcToUv(v4.xy) * texSize;
+	texCoord = ndcToUv(v3.xy) * texSize;
 	n = unpackNormalFromGBuffer(g_gbufferRt2Tex[texCoord]);
 
 	v4 = mul(g_consts.m_invertedViewProjMat, Vec4(v3.xy, refDepth, 1.0));
 	x = v4.xyz / v4.w;
 
 	// Also push it a bit outside the surface
-	x += n * 0.1;
+	x += n * 0.01;
 
 	return true;
 }
+
+struct SimulationArgs
+{
+	Bool m_checkCollision; // Check collision using the depth buffer
+	F32 m_penetrationDistance; // Since collision is checked against the depth buffer add a threshold to avoid falce positives
+
+	U32 m_iterationCount; // The number of interations the simulation will run. Increase it for better accuracy
+	F32 m_e; // The coefficient of restitution. 0 is inelastic, 1 is bouncy
+	F32 m_mu; // The friction coefficient. From ~0.2 to 1.0
+
+	F32 m_velocityDamping; // Decreases the velocity a bit. Set it to 1 to disable damping
+
+	void init()
+	{
+		m_checkCollision = true;
+		m_penetrationDistance = 0.5;
+		m_iterationCount = 1;
+		m_e = 0.5;
+		m_mu = 0.2;
+		m_velocityDamping = 1.0;
+	}
+};
 
 // F Force
 // m Mass
 // dt Delta time
 // v Velocity
 // x Particle position
-// checkCollision Check collision
-// iterationCount The number of interations the simulation will run. Increase it for better accuracy
-// e The coefficient of restitution. 0 is inelastic, 1 is bouncy
-// mu The friction coefficient. From ~0.2 to 1.0
-void simulatePhysics(Vec3 F, F32 m, F32 dt, inout Vec3 v, inout Vec3 x, Bool checkCollision = true, U32 iterationCount = 1, F32 e = 0.5, F32 mu = 0.2)
+void simulatePhysics(Vec3 F, F32 m, F32 dt, inout Vec3 v, inout Vec3 x, SimulationArgs args)
 {
 	const Vec3 a = F / m;
 
-	const F32 sdt = dt / F32(iterationCount);
-	for(U32 i = 0; i < iterationCount; ++i)
+	const F32 sdt = dt / F32(args.m_iterationCount);
+	for(U32 i = 0; i < args.m_iterationCount; ++i)
 	{
 		// Compute the new pos and velocity
 		v += a * sdt; // a = dv/dt
 		x += v * sdt; // v = dx/dt
 
 		Vec3 n;
-		const Bool collides = checkCollision && particleCollision(x, n);
+		const Bool collides = args.m_checkCollision && particleCollision(x, n, args.m_penetrationDistance);
 		if(!collides)
 		{
 			continue;
@@ -153,22 +171,22 @@ void simulatePhysics(Vec3 F, F32 m, F32 dt, inout Vec3 v, inout Vec3 x, Bool che
 		}
 
 		// Restitution
-		v -= (1.0 + e) * vn * n;
+		v -= (1.0 + args.m_e) * vn * n;
 
 		// Friction
 		const Vec3 vt = v - dot(v, n) * n;
 		const F32 vtLen = length(vt);
 		if(vtLen > 0.0)
 		{
-			const F32 jn = -(1.0 + e) * m * vn;
+			const F32 jn = -(1.0 + args.m_e) * m * vn;
 			const F32 jtDesired = m * vtLen;
-			const F32 jt = min(jtDesired, mu * jn);
+			const F32 jt = min(jtDesired, args.m_mu * jn);
 			v -= (jt / m) * (vt / vtLen);
 		}
 	}
 
 	// Add some small damping to avoid jitter
-	// v *= 0.95;
+	v *= args.m_velocityDamping;
 }
 
 void appendAlive(GpuSceneParticleEmitter2 emitter, Vec3 particlePos, F32 particleScale)
@@ -249,7 +267,11 @@ void particleMain(U32 svDispatchThreadId, U32 svGroupIndex, TInterface iface)
 			Vec3 particlePosition;
 			F32 particleScale;
 			iface.initializeParticle(emitter, emitterTrf, makeAlive, particlePosition, particleScale);
-			appendAlive(emitter, particlePosition, particleScale);
+
+			if(makeAlive)
+			{
+				appendAlive(emitter, particlePosition, particleScale);
+			}
 		}
 	}
 

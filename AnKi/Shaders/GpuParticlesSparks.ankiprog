@@ -10,6 +10,7 @@
 #pragma anki technique comp
 
 #include <AnKi/Shaders/GpuParticlesCommon.hlsl>
+#include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 // clang-format off
 #pragma anki struct AnKiParticleEmitterProperties
@@ -19,17 +20,18 @@
 #	pragma anki member F32 m_minMass 0.5
 #	pragma anki member F32 m_maxMass 0.5
 
-#	pragma anki member F32 m_minInitialSize 1.0
-#	pragma anki member F32 m_maxInitialSize 1.0
-#	pragma anki member F32 m_minFinalSize 1.0
-#	pragma anki member F32 m_maxFinalSize 1.0
+#	pragma anki member Vec2 m_size 1.0 1.0
 
 #	pragma anki member Vec3 m_minStartingPosition 0.0 0.0 0.0
 #	pragma anki member Vec3 m_maxStartingPosition 0.0 0.0 0.0
 
+#	pragma anki member Vec3 m_forceDir 0 1 0
 #	pragma anki member F32 m_forceAngle 1.2
 #	pragma anki member F32 m_minForce 1
 #	pragma anki member F32 m_maxForce 2
+
+#	pragma anki member F32 m_coefOfRestitution 0.1
+#	pragma anki member F32 m_coefFriction 0.1
 #pragma anki struct_end
 // clang-format on
 
@@ -43,18 +45,68 @@ struct ParticleInterface
 		m_props = props;
 	}
 
-	void simulateParticle(GpuSceneParticleEmitter2 emitter, F32 lifeFactor, out Vec3 particlePosition, out F32 particleScale)
-	{
-		// TODO
-		particlePosition = 0.0;
-		particleScale = 0.0;
-	}
-
 	void initializeParticle(GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf, Bool makeAlive, out Vec3 particlePosition, out F32 particleScale)
 	{
-		// TODO
-		particlePosition = 0.0;
-		particleScale = 0.0;
+		const F32 m = getRandomRange(m_props.m_minMass, m_props.m_maxMass);
+
+		// Compute the force
+		const F32 randAng = getRandomRange(0.0, m_props.m_forceAngle);
+		const F32 adj = 10.0; // In meters. Something big
+		const F32 opposite = tan(randAng / 2.0) * adj; // Compute the opposite in the orthogonal triangle. tan(phi) = opposite/adj
+		const Vec3 sphereCenter = m_props.m_forceDir * adj;
+		const F32 sphereRadius = opposite;
+		const Vec3 randomPointInSphere = sphereCenter + normalize(getRandomRange((Vec3)-1.0, (Vec3)1.0)) * sphereRadius;
+		const Vec3 forceDir = normalize(randomPointInSphere);
+		const Vec3 F = getRandomRange(m_props.m_minForce, m_props.m_maxForce) * forceDir;
+
+		// Initial stuff
+		const Vec3 g = Vec3(0.0, -9.8, 0.0);
+		const Vec3 a = F / m + g;
+		const F32 dt = 1.0 / 60.0;
+		const Vec3 v = a * dt;
+		const Vec3 x = getRandomRange(m_props.m_minStartingPosition, m_props.m_maxStartingPosition) + emitterTrf.getTranslationPart().xyz;
+
+		// Store
+		writeProp(emitter, ParticleProperty::kVelocity, v);
+		writeProp(emitter, ParticleProperty::kLifeFactor, makeAlive ? 0.0 : 1.0);
+		writeProp(emitter, ParticleProperty::kMaxLife, getRandomRange(m_props.m_minParticleLife, m_props.m_maxParticleLife));
+		writeProp(emitter, ParticleProperty::kPosition, x);
+		writeProp(emitter, ParticleProperty::kPreviousPosition, x);
+		writeProp(emitter, ParticleProperty::kMass, m);
+		writeProp(emitter, ParticleProperty::kScale, Vec3(m_props.m_size, 1.0));
+
+		particlePosition = x;
+		particleScale = max2(m_props.m_size);
+	}
+
+	void simulateParticle(GpuSceneParticleEmitter2 emitter, F32 lifeFactor, out Vec3 particlePosition, out F32 particleScale)
+	{
+		const F32 m = readProp<F32>(emitter, ParticleProperty::kMass);
+		const Vec3 g = Vec3(0.0, -9.8, 0.0);
+		const Vec3 F = m * g;
+		Vec3 v = readProp<Vec3>(emitter, ParticleProperty::kVelocity);
+		Vec3 x = readProp<Vec3>(emitter, ParticleProperty::kPosition);
+		const Vec3 prevX = x;
+
+		SimulationArgs args;
+		args.init();
+		args.m_checkCollision = true;
+		args.m_penetrationDistance = 0.4;
+		args.m_iterationCount = 2;
+		args.m_e = saturate(m_props.m_coefOfRestitution);
+		args.m_mu = clamp(m_props.m_coefFriction, 0.1, 1.0);
+		simulatePhysics(F, m, g_consts.m_dt, v, x, args);
+
+		// Write
+		writeProp(emitter, ParticleProperty::kVelocity, v);
+		const F32 maxLife = readProp<F32>(emitter, ParticleProperty::kMaxLife);
+		writeProp(emitter, ParticleProperty::kLifeFactor, lifeFactor + g_consts.m_dt / maxLife);
+		writeProp(emitter, ParticleProperty::kPosition, x);
+		writeProp(emitter, ParticleProperty::kPreviousPosition, prevX);
+		writeProp(emitter, ParticleProperty::kScale, Vec3(m_props.m_size, 1.0));
+
+		particlePosition = x;
+		particleScale = max2(m_props.m_size);
 	}
 };
 

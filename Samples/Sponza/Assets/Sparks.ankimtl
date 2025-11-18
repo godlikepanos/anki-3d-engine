@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<material shadow="0">
+	<shaderProgram name="ForwardShadingParticlesSparks" />
+
+	<inputs>
+		<input name="m_diffColor" value="0 0 0"/>
+		<input name="m_roughness" value="0.9"/>
+		<input name="m_metallic" value="0.0"/>
+
+		<input name="m_initialEmission" value="15 2 0"/>
+		<input name="m_finalEmission" value="0.1 0.0 0"/>
+	</inputs>
+</material>
+

@@ -54,36 +54,6 @@ struct ParticleInterface
 		m_props = props;
 	}
 
-	void simulateParticle(GpuSceneParticleEmitter2 emitter, F32 lifeFactor, out Vec3 particlePosition, out F32 particleScale)
-	{
-		const F32 m = readProp<F32>(emitter, ParticleProperty::kMass);
-		const Vec3 g = readProp<Vec4>(emitter, GRAVITY_PROP).xyz;
-		const Vec3 F = m * g;
-		Vec3 v = readProp<Vec3>(emitter, ParticleProperty::kVelocity);
-		Vec3 x = readProp<Vec3>(emitter, ParticleProperty::kPosition);
-		const Vec3 prevX = x;
-
-		simulatePhysics(F, m, g_consts.m_dt, v, x, false);
-
-		// Write
-		writeProp(emitter, ParticleProperty::kVelocity, v);
-		const F32 maxLife = readProp<F32>(emitter, ParticleProperty::kMaxLife);
-		writeProp(emitter, ParticleProperty::kLifeFactor, lifeFactor + g_consts.m_dt / maxLife);
-		writeProp(emitter, ParticleProperty::kPosition, x);
-		writeProp(emitter, ParticleProperty::kPreviousPosition, prevX);
-
-		const Vec4 sizeProp = readProp<Vec4>(emitter, SIZE_PROP);
-		const F32 scale = lerp(sizeProp.x, sizeProp.y, lifeFactor);
-		writeProp(emitter, ParticleProperty::kScale, Vec3(scale, scale, scale));
-
-		const Vec4 alphaProp = readProp<Vec4>(emitter, ALPHA_PROP);
-		const F32 alpha = lerp(alphaProp.x, alphaProp.y, lifeFactor);
-		writeProp(emitter, ALPHA_PROP, Vec4(alphaProp.x, alphaProp.y, alpha, 0.0));
-
-		particlePosition = x;
-		particleScale = scale;
-	}
-
 	void initializeParticle(GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf, Bool makeAlive, out Vec3 particlePosition, out F32 particleScale)
 	{
 		const F32 m = getRandomRange(m_props.m_minMass, m_props.m_maxMass);
@@ -118,6 +88,39 @@ struct ParticleInterface
 
 		particlePosition = x;
 		particleScale = initialSize;
+	}
+
+	void simulateParticle(GpuSceneParticleEmitter2 emitter, F32 lifeFactor, out Vec3 particlePosition, out F32 particleScale)
+	{
+		const F32 m = readProp<F32>(emitter, ParticleProperty::kMass);
+		const Vec3 g = readProp<Vec4>(emitter, GRAVITY_PROP).xyz;
+		const Vec3 F = m * g;
+		Vec3 v = readProp<Vec3>(emitter, ParticleProperty::kVelocity);
+		Vec3 x = readProp<Vec3>(emitter, ParticleProperty::kPosition);
+		const Vec3 prevX = x;
+
+		SimulationArgs args;
+		args.init();
+		args.m_checkCollision = false;
+		simulatePhysics(F, m, g_consts.m_dt, v, x, args);
+
+		// Write
+		writeProp(emitter, ParticleProperty::kVelocity, v);
+		const F32 maxLife = readProp<F32>(emitter, ParticleProperty::kMaxLife);
+		writeProp(emitter, ParticleProperty::kLifeFactor, lifeFactor + g_consts.m_dt / maxLife);
+		writeProp(emitter, ParticleProperty::kPosition, x);
+		writeProp(emitter, ParticleProperty::kPreviousPosition, prevX);
+
+		const Vec4 sizeProp = readProp<Vec4>(emitter, SIZE_PROP);
+		const F32 scale = lerp(sizeProp.x, sizeProp.y, lifeFactor);
+		writeProp(emitter, ParticleProperty::kScale, Vec3(scale, scale, scale));
+
+		const Vec4 alphaProp = readProp<Vec4>(emitter, ALPHA_PROP);
+		const F32 alpha = lerp(alphaProp.x, alphaProp.y, lifeFactor);
+		writeProp(emitter, ALPHA_PROP, Vec4(alphaProp.x, alphaProp.y, alpha, 0.0));
+
+		particlePosition = x;
+		particleScale = scale;
 	}
 };
 
