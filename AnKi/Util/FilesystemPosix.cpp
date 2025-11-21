@@ -66,8 +66,7 @@ class WalkDirectoryTreeCallbackContext
 public:
 	const Function<Error(WalkDirectoryArgs&)>* m_callback = nullptr;
 	U32 m_prefixLen;
-	Error m_err = {Error::kNone};
-	Bool m_stopSearch = false;
+	Error m_error = Error::kNone;
 };
 
 static thread_local WalkDirectoryTreeCallbackContext g_walkDirectoryTreeContext;
@@ -93,7 +92,7 @@ static int walkDirectoryTreeCallback(const char* filepath, [[maybe_unused]] cons
 		WalkDirectoryTreeCallbackContext& ctx = g_walkDirectoryTreeContext;
 		ANKI_ASSERT(ctx.m_callback);
 
-		if(ctx.m_err || ctx.m_stopSearch || strlen(filepath) <= ctx.m_prefixLen)
+		if(strlen(filepath) <= ctx.m_prefixLen)
 		{
 			return 0;
 		}
@@ -101,8 +100,12 @@ static int walkDirectoryTreeCallback(const char* filepath, [[maybe_unused]] cons
 		WalkDirectoryArgs args;
 		args.m_path = filepath + ctx.m_prefixLen;
 		args.m_isDirectory = isDir;
-		ctx.m_err = (*ctx.m_callback)(args);
-		ctx.m_stopSearch = args.m_stopSearch;
+		ctx.m_error = (*ctx.m_callback)(args);
+
+		if(ctx.m_error || args.m_stopSearch)
+		{
+			return 666;
+		}
 	}
 
 	return 0;
@@ -123,17 +126,17 @@ Error walkDirectoryTreeInternal(CString dir, const Function<Error(WalkDirectoryA
 	WalkDirectoryTreeCallbackContext& ctx = g_walkDirectoryTreeContext;
 	ctx.m_callback = &callback;
 	ctx.m_prefixLen = prefixLen;
-	ctx.m_err = Error::kNone;
+	ctx.m_error = Error::kNone;
 
 	const int result = nftw(dir.cstr(), walkDirectoryTreeCallback, USE_FDS, FTW_PHYS);
-	if(result != 0)
+	if(result != 0 && result != 666)
 	{
 		ANKI_UTIL_LOGE("nftw() failed");
 		err = Error::kFunctionFailed;
 	}
 	else
 	{
-		err = ctx.m_err;
+		err = ctx.m_error;
 	}
 
 	return err;

@@ -430,7 +430,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
 	}
 
-	if(false)
+	if(false && m_paths.getSize())
 	{
 		for(const File& s : m_paths.getFront().m_files)
 		{

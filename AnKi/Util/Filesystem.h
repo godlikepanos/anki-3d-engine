@@ -34,8 +34,8 @@ class WalkDirectoryArgs
 {
 public:
 	CString m_path;
-	Bool m_isDirectory;
-	Bool m_stopSearch;
+	Bool m_isDirectory = false;
+	Bool m_stopSearch = false;
 };
 
 /// @internal
