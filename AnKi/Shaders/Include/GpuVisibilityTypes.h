@@ -101,13 +101,16 @@ enum class GpuVisibilityIndirectDispatches : U32
 	kCount
 };
 
-/// Counters used in non-renderables visibility
+// Counters used in non-renderables visibility
 struct GpuVisibilityNonRenderablesCounters
 {
 	U32 m_threadgroupCount; ///< Counts the no of threadgroups
 	U32 m_visibleObjectCount; ///< Counts the visible objects
 	U32 m_feedbackObjectCount; ///< Counts the visbile objects that need feedback
 };
+
+// Packs the LOD in the MSB 3bit and the rest it's an index to a GpuSceneRenderableBoundingVolume. It's actually U32 because of some shader logic
+typedef U32 LodAndGpuSceneRenderableBoundingVolumeIndex;
 
 struct GpuVisibilityLocalLightsConsts
 {

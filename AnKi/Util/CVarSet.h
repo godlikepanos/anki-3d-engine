@@ -68,6 +68,14 @@ protected:
 		registerSelf();
 	}
 
+	void validateSetValue() const
+#if ANKI_ASSERTIONS_ENABLED
+		;
+#else
+	{
+	}
+#endif
+
 private:
 	void registerSelf();
 };
@@ -103,6 +111,7 @@ public:
 
 	NumericCVar& operator=(TNumber val)
 	{
+		validateSetValue();
 		Bool ok = true;
 		if(!m_checkValueCallback)
 		{
@@ -176,6 +185,7 @@ public:
 
 	StringCVar& operator=(CString name)
 	{
+		validateSetValue();
 		if(m_str)
 		{
 			free(m_str);
@@ -216,6 +226,7 @@ public:
 
 	BoolCVar& operator=(Bool val)
 	{
+		validateSetValue();
 		m_val = val;
 		return *this;
 	}
@@ -273,6 +284,9 @@ public:
 
 private:
 	IntrusiveList<CVar> m_cvars;
+#if ANKI_ASSERTIONS_ENABLED
+	U64 m_mainThreadHandle = 0;
+#endif
 
 	void registerCVar(CVar* var);
 };

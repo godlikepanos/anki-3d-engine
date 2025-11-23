@@ -28,7 +28,8 @@ struct GpuSceneRenderable
 	U32 m_particleEmitterIndex2; // Index to the GpuSceneParticleEmitter2 array or kMaxU32 if it's not an emitter.
 	U32 m_rtShadowsShaderHandleIndex; // The index of the shader handle in the array of library's handles.
 	U32 m_rtMaterialFetchShaderHandleIndex; // The index of the shader handle in the array of library's handles.
-	U32 m_uuid; // A UUID specific for this renderable. Don't come from some scene object
+	U32 m_uuid; // A UUID specific for this renderable. Not related to the scene object
+	U32 m_sceneNodeUuid;
 
 	U32 m_diffuseColor : 24; // The average diffuse color of the renderable. Blue is in low bits.
 	U32 m_padding : 8;
@@ -63,7 +64,8 @@ struct GpuSceneRenderableBoundingVolume
 	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_renderableIndex_20bit_renderStateBucket_12bit;
+	U32 m_renderableIndex : 20;
+	U32 m_renderStateBucket : 12;
 };
 static_assert(sizeof(GpuSceneRenderableBoundingVolume) == sizeof(Vec4) * 2);
 

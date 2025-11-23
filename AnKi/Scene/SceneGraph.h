@@ -106,8 +106,7 @@ public:
 	{
 		for(SceneNode& psn : m_nodes)
 		{
-			const Bool continue_ = func(psn);
-			if(!continue_)
+			if(func(psn) == FunctorContinue::kStop)
 			{
 				break;
 			}

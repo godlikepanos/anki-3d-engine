@@ -211,31 +211,35 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)
 	{
+		DbgOption options = renderer.getDbg().getOptions();
+
 		static U mode = 0;
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_cvarRenderDbgScene = false;
+			options &= ~DbgOption::kBoundingBoxes;
 		}
 		else if(mode == 1)
 		{
-			g_cvarRenderDbgScene = true;
-			renderer.getDbg().setDepthTestEnabled(true);
-			renderer.getDbg().setDitheredDepthTestEnabled(false);
+			options |= DbgOption::kBoundingBoxes;
+			options |= DbgOption::kDepthTest;
+			options &= ~DbgOption::kDitheredDepthTest;
 		}
 		else
 		{
-			g_cvarRenderDbgScene = true;
-			renderer.getDbg().setDepthTestEnabled(false);
-			renderer.getDbg().setDitheredDepthTestEnabled(true);
+			options |= DbgOption::kBoundingBoxes;
+			options &= ~DbgOption::kDepthTest;
+			options |= DbgOption::kDitheredDepthTest;
 		}
+
+		renderer.getDbg().setOptions(options);
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kF2) == 1)
 	{
-		g_cvarRenderDbgPhysics = !g_cvarRenderDbgPhysics;
-		renderer.getDbg().setDepthTestEnabled(true);
-		renderer.getDbg().setDitheredDepthTestEnabled(false);
+		DbgOption options = renderer.getDbg().getOptions();
+		options ^= DbgOption::kPhysics;
+		renderer.getDbg().setOptions(options);
 	}
 
 	if(0)

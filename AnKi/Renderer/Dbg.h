@@ -6,18 +6,34 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/Utils/Readback.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Util/Enum.h>
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
+enum class DbgOption : U8
+{
+	kNone = 0,
 
-ANKI_CVAR2(BoolCVar, Render, Dbg, Scene, false, "Enable or not debug visualization of scene")
-ANKI_CVAR2(BoolCVar, Render, Dbg, Physics, false, "Enable or not physics debug visualization")
+	// Flags that draw something somewhere
+	kBoundingBoxes = 1 << 0,
+	kIcons = 1 << 1,
+	kPhysics = 1 << 2,
+	kObjectPicking = 1 << 3,
 
-/// Debugging stage
+	// Flags that affect how things are drawn
+	kDepthTest = 1 << 4,
+	kDitheredDepthTest = 1 << 5,
+
+	// Agregate flags
+	kGatherAabbs = kBoundingBoxes | kObjectPicking,
+	kDbgScene = kBoundingBoxes | kIcons | kPhysics,
+	kDbgEnabled = kDbgScene | kObjectPicking,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgOption)
+
+// Debugging visualization of the scene.
 class Dbg : public RendererObject
 {
 public:
@@ -27,7 +43,6 @@ public:
 
 	Error init();
 
-	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
 	RenderTargetHandle getRt() const
@@ -35,38 +50,36 @@ public:
 		return m_runCtx.m_rt;
 	}
 
-	Bool getDepthTestEnabled() const
+	void setOptions(DbgOption options)
 	{
-		return m_depthTestOn;
+		m_options = options;
 	}
 
-	void setDepthTestEnabled(Bool enable)
+	void enableOptions(DbgOption options)
 	{
-		m_depthTestOn = enable;
+		m_options |= options;
 	}
 
-	void switchDepthTestEnabled()
+	DbgOption getOptions() const
 	{
-		m_depthTestOn = !m_depthTestOn;
+		return m_options;
 	}
 
-	Bool getDitheredDepthTestEnabled() const
+	Bool isEnabled() const
 	{
-		return m_ditheredDepthTestOn;
+		return !!(m_options & DbgOption::kDbgEnabled);
 	}
 
-	void setDitheredDepthTestEnabled(Bool enable)
+	U32 getObjectUuidAtMousePosition() const
 	{
-		m_ditheredDepthTestOn = enable;
-	}
-
-	void switchDitheredDepthTestEnabled()
-	{
-		m_ditheredDepthTestOn = !m_ditheredDepthTestOn;
+		ANKI_ASSERT(!!(m_options & DbgOption::kObjectPicking));
+		return m_runCtx.m_objUuid;
 	}
 
 private:
 	RenderTargetDesc m_rtDescr;
+	RenderTargetDesc m_objectPickingRtDescr;
+	RenderTargetDesc m_objectPickingDepthRtDescr;
 
 	ImageResourcePtr m_giProbeImage;
 	ImageResourcePtr m_pointLightImage;
@@ -79,20 +92,23 @@ private:
 
 	ShaderProgramResourcePtr m_dbgProg;
 
-	Bool m_depthTestOn : 1 = false;
-	Bool m_ditheredDepthTestOn : 1 = false;
+	MultiframeReadbackToken m_readback;
+
+	DbgOption m_options = DbgOption::kDepthTest;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_rt;
+		U32 m_objUuid = 0;
 	} m_runCtx;
 
-	void run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx);
+	void populateRenderGraphMain(RenderingContext& ctx);
+
+	void populateRenderGraphObjectPicking(RenderingContext& ctx);
 
 	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
 						   CommandBuffer& cmdb);
 };
-/// @}
 
 } // end namespace anki

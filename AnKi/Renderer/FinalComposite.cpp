@@ -107,7 +107,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
-	if(g_cvarRenderDbgScene || g_cvarRenderDbgPhysics)
+	if(!!(getDbg().getOptions() & DbgOption::kDbgScene))
 	{
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
 	}
@@ -137,7 +137,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-		const Bool dbgEnabled = g_cvarRenderDbgScene || g_cvarRenderDbgPhysics;
+		const Bool dbgEnabled = !!(getDbg().getOptions() & DbgOption::kDbgScene);
 
 		Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 		Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets> drawStyles;

@@ -19,8 +19,7 @@ class UiStage : public RendererObject
 public:
 	Error init();
 
-	/// Need to wait the CoreThreadJobManager for that to finish and before calling the methods bellow.
-	void buildUiAsync();
+	void buildUi();
 
 	void populateRenderGraph(RenderingContext& ctx);
 

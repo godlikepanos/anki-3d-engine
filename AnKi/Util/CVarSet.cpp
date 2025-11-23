@@ -5,11 +5,21 @@
 
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/Thread.h>
 
 namespace anki {
 
+#if ANKI_ASSERTIONS_ENABLED
+void CVar::validateSetValue() const
+{
+	ANKI_ASSERT(Thread::getCurrentThreadId() == CVarSet::getSingleton().m_mainThreadHandle && "CVars can only be set by the main thread");
+}
+#endif
+
 void CVarSet::registerCVar(CVar* cvar)
 {
+	m_mainThreadHandle = Thread::getCurrentThreadId();
+
 	for([[maybe_unused]] CVar& it : m_cvars)
 	{
 		ANKI_ASSERT(it.m_name != cvar->m_name);

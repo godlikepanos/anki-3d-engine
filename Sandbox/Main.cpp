@@ -124,40 +124,28 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF1) == 1)
 	{
+		DbgOption options = renderer.getDbg().getOptions();
+
 		static U mode = 0;
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_cvarRenderDbgScene = false;
+			options &= ~DbgOption::kBoundingBoxes;
 		}
 		else if(mode == 1)
 		{
-			g_cvarRenderDbgScene = true;
-			renderer.getDbg().setDepthTestEnabled(true);
-			renderer.getDbg().setDitheredDepthTestEnabled(false);
+			options |= DbgOption::kBoundingBoxes;
+			options |= DbgOption::kDepthTest;
+			options &= ~DbgOption::kDitheredDepthTest;
 		}
 		else
 		{
-			g_cvarRenderDbgScene = true;
-			renderer.getDbg().setDepthTestEnabled(false);
-			renderer.getDbg().setDitheredDepthTestEnabled(true);
+			options |= DbgOption::kBoundingBoxes;
+			options &= ~DbgOption::kDepthTest;
+			options |= DbgOption::kDitheredDepthTest;
 		}
-	}
-	if(in.getKey(KeyCode::kF2) == 1)
-	{
-		// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
-	}
-	if(in.getKey(KeyCode::kF3) == 1)
-	{
-		// renderer.getDbg().flipFlags(DbgFlag::PHYSICS);
-	}
-	if(in.getKey(KeyCode::kF4) == 1)
-	{
-		// renderer.getDbg().flipFlags(DbgFlag::SECTOR_COMPONENT);
-	}
-	if(in.getKey(KeyCode::kF6) == 1)
-	{
-		renderer.getDbg().switchDepthTestEnabled();
+
+		renderer.getDbg().setOptions(options);
 	}
 
 	if(in.getKey(KeyCode::kF11) == 1)
@@ -187,24 +175,28 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::kF1) == 1)
 		{
+			DbgOption options = renderer.getDbg().getOptions();
+
 			static U mode = 0;
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				g_cvarRenderDbgScene = false;
+				options &= ~DbgOption::kBoundingBoxes;
 			}
 			else if(mode == 1)
 			{
-				g_cvarRenderDbgScene = true;
-				renderer.getDbg().setDepthTestEnabled(true);
-				renderer.getDbg().setDitheredDepthTestEnabled(false);
+				options |= DbgOption::kBoundingBoxes;
+				options |= DbgOption::kDepthTest;
+				options &= ~DbgOption::kDitheredDepthTest;
 			}
 			else
 			{
-				g_cvarRenderDbgScene = true;
-				renderer.getDbg().setDepthTestEnabled(false);
-				renderer.getDbg().setDitheredDepthTestEnabled(true);
+				options |= DbgOption::kBoundingBoxes;
+				options &= ~DbgOption::kDepthTest;
+				options |= DbgOption::kDitheredDepthTest;
 			}
+
+			renderer.getDbg().setOptions(options);
 		}
 
 		if(in.getKey(KeyCode::kUp) > 0)

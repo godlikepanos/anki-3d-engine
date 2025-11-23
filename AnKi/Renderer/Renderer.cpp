@@ -817,7 +817,7 @@ Error Renderer::render()
 	// First thing, reset the temp mem pool
 	m_framePool.reset();
 
-	m_uiStage->buildUiAsync();
+	m_uiStage->buildUi();
 
 	RenderingContext ctx(&m_framePool);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);

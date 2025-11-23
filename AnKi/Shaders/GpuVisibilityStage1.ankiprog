@@ -51,7 +51,8 @@ RWStructuredBuffer<DispatchIndirectArgs> g_gpuVisIndirectDispatchArgs : register
 RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u6);
 
 #if GATHER_AABBS
-RWStructuredBuffer<U32> g_visibleAabbIndices : register(u7); // Indices of the visible AABBs. The 1st element is the count.
+// Indices of the visible AABBs. The 1st element is the count.
+RWStructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleAabbIndices : register(u7);
 #endif
 
 #if HASH_VISIBLES
@@ -175,9 +176,9 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 
 		// Add the object
 		//
-		const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
+		const U32 renderableIdx = bvolume.m_renderableIndex;
 		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
-		const U32 renderStateBucket = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit & ((1u << 12u) - 1u);
+		const U32 renderStateBucket = bvolume.m_renderStateBucket;
 		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
 		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
 
@@ -278,7 +279,12 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 #if GATHER_AABBS
 		U32 index;
 		InterlockedAdd(SBUFF(g_visibleAabbIndices, 0), 1, index);
-		SBUFF(g_visibleAabbIndices, index + 1) = bvolumeIdx;
+		const U32 maxCount = getStructuredBufferElementCount(g_visibleAabbIndices) - 1;
+		if(index < maxCount)
+		{
+			const LodAndGpuSceneRenderableBoundingVolumeIndex pack = (lod << 29u) | bvolumeIdx;
+			SBUFF(g_visibleAabbIndices, index + 1) = pack;
+		}
 #endif
 	}
 
@@ -357,6 +363,16 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 
 			// Reset it for the next job
 			SBUFF(g_counters, (U32)GpuVisibilityCounter::kThreadgroupCount) = 0;
+
+#if GATHER_AABBS
+			// Fix the count if needed
+			const U32 count = SBUFF(g_visibleAabbIndices, 0);
+			const U32 maxCount = getStructuredBufferElementCount(g_visibleAabbIndices) - 1;
+			if(count > maxCount)
+			{
+				SBUFF(g_visibleAabbIndices, 0) = maxCount;
+			}
+#endif
 		}
 	}
 }

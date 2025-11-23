@@ -8,6 +8,7 @@
 #include <AnKi/Ui.h>
 #include <AnKi/Editor/ImageViewerUi.h>
 #include <AnKi/Editor/ParticleEditorUi.h>
+#include <AnKi/Util/Function.h>
 #include <filesystem>
 
 namespace anki {
@@ -98,7 +99,7 @@ private:
 	{
 	public:
 		ImGuiTextFilter m_filter;
-		SceneNode* m_visibleNode = nullptr;
+		SceneNode* m_selectedNode = nullptr;
 	} m_sceneHierarchyWindow;
 
 	class
@@ -176,6 +177,7 @@ private:
 	static void listDir(const std::filesystem::path& rootPath, const std::filesystem::path& parentPath, AssetPath& parent, U32& id);
 	static void gatherAssets(DynamicArray<AssetPath>& paths);
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
+	void selectSceneNode();
 };
 
 } // end namespace anki

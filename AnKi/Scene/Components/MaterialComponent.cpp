@@ -322,6 +322,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		const UVec3 u3(averageDiffuse.xyz().clamp(0.0f, 1.0f) * 255.0f);
 		gpuRenderable.m_diffuseColor = ((u3.x() << 16u) | (u3.y() << 8u) | u3.z()) & 0xFFFFFFF;
+		gpuRenderable.m_sceneNodeUuid = info.m_node->getUuid();
 
 		m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);
 	}

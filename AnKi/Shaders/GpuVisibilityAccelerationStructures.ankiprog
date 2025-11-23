@@ -84,7 +84,7 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 			lod = 2u;
 		}
 
-		const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
+		const U32 renderableIdx = bvolume.m_renderableIndex;
 		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
 
 		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;

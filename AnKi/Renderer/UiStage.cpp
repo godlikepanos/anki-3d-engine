@@ -20,7 +20,7 @@ Error UiStage::init()
 	return Error::kNone;
 }
 
-void UiStage::buildUiAsync()
+void UiStage::buildUi()
 {
 	if(SceneGraph::getSingleton().getComponentArrays().getUis().getSize() == 0)
 	{
@@ -28,20 +28,18 @@ void UiStage::buildUiAsync()
 		return;
 	}
 
-	CoreThreadJobManager::getSingleton().dispatchTask([this]([[maybe_unused]] U32 tid) {
-		ANKI_TRACE_SCOPED_EVENT(UiBuild);
+	ANKI_TRACE_SCOPED_EVENT(UiBuild);
 
-		m_canvas->handleInput();
-		m_canvas->beginBuilding();
-		m_canvas->resize(getRenderer().getSwapchainResolution());
+	m_canvas->handleInput();
+	m_canvas->beginBuilding();
+	m_canvas->resize(getRenderer().getSwapchainResolution());
 
-		for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
-		{
-			comp.drawUi(*m_canvas);
-		}
+	for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
+	{
+		comp.drawUi(*m_canvas);
+	}
 
-		m_canvas->endBuilding();
-	});
+	m_canvas->endBuilding();
 }
 
 void UiStage::populateRenderGraph(RenderingContext& ctx)
@@ -50,9 +48,6 @@ void UiStage::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	DynamicArray<RenderTargetHandle, MemoryPoolPtrWrapper<StackMemoryPool>> texHandles(&getRenderer().getFrameMemoryPool());
-
-	// Wait for the async task
-	CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
 
 	m_canvas->visitTexturesForUpdate([&](Texture& tex, Bool isNew) {
 		const RenderTargetHandle handle = rgraph.importRenderTarget(&tex, (isNew) ? TextureUsageBit::kNone : TextureUsageBit::kSrvPixel);

@@ -107,7 +107,8 @@ public:
 		BufferView m_firstMeshletBuffer; // For H/W meshlet rendering. Points to the first meshlet in the m_meshletInstancesBuffer. One per bucket.
 	} m_mesh; // S/W or H/W meshlet rendering.
 
-	BufferView m_visibleAaabbIndicesBuffer; // [Optional] Indices to the AABB buffer. The 1st element is the count.
+	// [Optional] Indices to the AABB buffer (LodAndGpuSceneRenderableBoundingVolumeIndex). The 1st element is the count
+	BufferView m_visibleAaabbIndicesBuffer;
 
 	BufferView m_visiblesHashBuffer; // [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
 

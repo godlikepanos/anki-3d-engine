@@ -11,6 +11,7 @@
 #include <AnKi/Window/Input.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/Dbg.h>
 #include <filesystem>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
 
@@ -147,6 +148,8 @@ void EditorUi::draw(UiCanvas& canvas)
 {
 	m_canvas = &canvas;
 
+	selectSceneNode();
+
 	if(!m_font)
 	{
 		const Array<CString, 2> fnames = {"EngineAssets/UbuntuRegular.ttf", "EngineAssets/Editor/materialdesignicons-webfont.ttf"};
@@ -258,6 +261,56 @@ void EditorUi::mainMenu()
 			ImGui::EndMenu();
 		}
 
+		if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
+		{
+			Bool bBoundingBoxes = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kBoundingBoxes);
+			if(ImGui::Checkbox("Bounding Boxes", &bBoundingBoxes))
+			{
+				DbgOption options = Renderer::getSingleton().getDbg().getOptions();
+				if(bBoundingBoxes)
+				{
+					options |= DbgOption::kBoundingBoxes | DbgOption::kIcons;
+				}
+				else
+				{
+					options &= ~(DbgOption::kBoundingBoxes | DbgOption::kIcons);
+				}
+				Renderer::getSingleton().getDbg().setOptions(options);
+			}
+
+			Bool bPhysics = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kPhysics);
+			if(ImGui::Checkbox("Physics Bodies", &bPhysics))
+			{
+				DbgOption options = Renderer::getSingleton().getDbg().getOptions();
+				if(bPhysics)
+				{
+					options |= DbgOption::kPhysics;
+				}
+				else
+				{
+					options &= ~DbgOption::kPhysics;
+				}
+				Renderer::getSingleton().getDbg().setOptions(options);
+			}
+
+			Bool bDepthTest = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kDepthTest);
+			if(ImGui::Checkbox("Depth Test", &bDepthTest))
+			{
+				DbgOption options = Renderer::getSingleton().getDbg().getOptions();
+				if(bDepthTest)
+				{
+					options |= DbgOption::kDepthTest;
+				}
+				else
+				{
+					options &= ~DbgOption::kDepthTest;
+				}
+				Renderer::getSingleton().getDbg().setOptions(options);
+			}
+
+			ImGui::EndMenu();
+		}
+
 		// Title
 		{
 			CString text = "AnKi 3D Engine Editor";
@@ -307,7 +360,7 @@ void EditorUi::sceneNode(SceneNode& node)
 	treeFlags |= ImGuiTreeNodeFlags_SpanFullWidth; // Span full width for easier mouse reach
 	treeFlags |= ImGuiTreeNodeFlags_DrawLinesToNodes; // Always draw hierarchy outlines
 
-	if(&node == m_sceneHierarchyWindow.m_visibleNode)
+	if(&node == m_sceneHierarchyWindow.m_selectedNode)
 	{
 		treeFlags |= ImGuiTreeNodeFlags_Selected;
 	}
@@ -336,7 +389,7 @@ void EditorUi::sceneNode(SceneNode& node)
 
 	if(ImGui::IsItemFocused())
 	{
-		m_sceneHierarchyWindow.m_visibleNode = &node;
+		m_sceneHierarchyWindow.m_selectedNode = &node;
 	}
 
 	if(nodeOpen)
@@ -380,7 +433,7 @@ void EditorUi::sceneHierarchyWindow()
 					{
 						sceneNode(node);
 					}
-					return true;
+					return FunctorContinue::kContinue;
 				});
 
 				ImGui::EndTable();
@@ -410,9 +463,9 @@ void EditorUi::sceneNodePropertiesWindow()
 		ImGui::SetNextWindowSize(Vec2(initialWidth, viewportSize.y() - kConsoleHeight), ImGuiCond_FirstUseEver);
 	}
 
-	if(ImGui::Begin("SceneNode Props", &m_showSceneNodePropsWindow, ImGuiWindowFlags_NoCollapse) && m_sceneHierarchyWindow.m_visibleNode)
+	if(ImGui::Begin("SceneNode Props", &m_showSceneNodePropsWindow, ImGuiWindowFlags_NoCollapse) && m_sceneHierarchyWindow.m_selectedNode)
 	{
-		SceneNode& node = *m_sceneHierarchyWindow.m_visibleNode;
+		SceneNode& node = *m_sceneHierarchyWindow.m_selectedNode;
 		I32 id = 0;
 
 		if(state.m_currentSceneNodeUuid != node.getUuid())
@@ -1476,6 +1529,27 @@ void EditorUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 		if(!foundStaleEntry)
 		{
 			break;
+		}
+	}
+}
+
+void EditorUi::selectSceneNode()
+{
+	if(!m_mouseHoveredOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
+	{
+		const U32 uuid = Renderer::getSingleton().getDbg().getObjectUuidAtMousePosition();
+
+		if(uuid != 0)
+		{
+			SceneGraph::getSingleton().visitNodes([this, uuid](SceneNode& node) {
+				if(node.getUuid() == uuid)
+				{
+					m_sceneHierarchyWindow.m_selectedNode = &node;
+					ANKI_LOGV("Selecting scene node: %s", node.getName().cstr());
+					return FunctorContinue::kStop;
+				}
+				return FunctorContinue::kContinue;
+			});
 		}
 	}
 }

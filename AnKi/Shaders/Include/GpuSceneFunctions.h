@@ -34,10 +34,10 @@ inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec
 #endif
 
 	ANKI_ASSERT(renderableIndex <= (1u << 20u) - 1u);
-	gpuVolume.m_renderableIndex_20bit_renderStateBucket_12bit = renderableIndex << 12u;
+	gpuVolume.m_renderableIndex = renderableIndex;
 
 	ANKI_ASSERT(renderStateBucket <= (1u << 12u) - 1u);
-	gpuVolume.m_renderableIndex_20bit_renderStateBucket_12bit |= renderStateBucket;
+	gpuVolume.m_renderStateBucket = renderStateBucket;
 	return gpuVolume;
 }
 
