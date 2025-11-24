@@ -76,6 +76,12 @@ public:
 		return m_runCtx.m_objUuid;
 	}
 
+	void setGizmosTransform(const Transform& trf, Bool enableGizmos)
+	{
+		m_gizmos.m_trf = Mat3x4(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
+		m_gizmos.m_enabled = enableGizmos;
+	}
+
 private:
 	RenderTargetDesc m_rtDescr;
 	RenderTargetDesc m_objectPickingRtDescr;
@@ -94,6 +100,20 @@ private:
 
 	MultiframeReadbackToken m_readback;
 
+	class
+	{
+	public:
+		BufferPtr m_arrowPositions;
+		BufferPtr m_arrowIndices;
+		BufferPtr m_scalePositions;
+		BufferPtr m_scaleIndices;
+		BufferPtr m_ringPositions;
+		BufferPtr m_ringIndices;
+
+		Mat3x4 m_trf;
+		Bool m_enabled = false;
+	} m_gizmos;
+
 	DbgOption m_options = DbgOption::kDepthTest;
 
 	class
@@ -103,12 +123,16 @@ private:
 		U32 m_objUuid = 0;
 	} m_runCtx;
 
+	void initGizmos();
+
 	void populateRenderGraphMain(RenderingContext& ctx);
 
 	void populateRenderGraphObjectPicking(RenderingContext& ctx);
 
 	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
 						   CommandBuffer& cmdb);
+
+	void drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, CommandBuffer& cmdb) const;
 };
 
 } // end namespace anki

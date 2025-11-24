@@ -1551,6 +1551,19 @@ void EditorUi::selectSceneNode()
 				return FunctorContinue::kContinue;
 			});
 		}
+		else
+		{
+			m_sceneHierarchyWindow.m_selectedNode = nullptr;
+		}
+	}
+
+	if(m_sceneHierarchyWindow.m_selectedNode)
+	{
+		Renderer::getSingleton().getDbg().setGizmosTransform(m_sceneHierarchyWindow.m_selectedNode->getWorldTransform(), true);
+	}
+	else
+	{
+		Renderer::getSingleton().getDbg().setGizmosTransform(Transform::getIdentity(), false);
 	}
 }
 

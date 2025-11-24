@@ -18,6 +18,8 @@
 // Pick one UUID at mouse position
 #pragma anki technique RenderableUuidsPick comp mutators
 
+#pragma anki technique Gizmos vert pixel mutators
+
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -282,6 +284,35 @@ Vec4 main(VertOut input) : SV_TARGET0
 #endif // ANKI_TECHNIQUE_Lines
 
 // ===========================================================================
+// Gizmos                                                                    =
+// ===========================================================================
+#if ANKI_TECHNIQUE_Gizmos
+
+struct Consts
+{
+	Mat4 m_mvp;
+	Vec4 m_color;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+#	if ANKI_VERTEX_SHADER
+Vec4 main(Vec3 positions : POSITION) : SV_POSITION
+{
+	return mul(g_consts.m_mvp, Vec4(positions, 1.0));
+}
+#	endif
+
+#	if ANKI_PIXEL_SHADER
+Vec4 main() : SV_TARGET0
+{
+	return g_consts.m_color;
+}
+#	endif
+
+#endif
+
+// ===========================================================================
 // PrepareRenderableUuids                                                    =
 // ===========================================================================
 #if ANKI_TECHNIQUE_PrepareRenderableUuids
@@ -412,5 +443,4 @@ ANKI_FAST_CONSTANTS(Consts, g_consts);
 	const U32 uuid = g_uuidsTex[g_consts.m_mousePos].x;
 	g_outUuid[0] = uuid;
 }
-
 #endif
