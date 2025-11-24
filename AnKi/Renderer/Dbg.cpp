@@ -206,6 +206,7 @@ static const U16 g_gizmoRingIndices[128][3] = {
 
 Dbg::Dbg()
 {
+	registerDebugRenderTarget("ObjectPicking");
 }
 
 Dbg::~Dbg()
@@ -374,6 +375,8 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
+
+	m_runCtx.m_objectPickingRt = {};
 
 	if(!isEnabled())
 	{
@@ -673,6 +676,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 
 	// The render pass that draws the UUIDs to a buffer
 	const RenderTargetHandle objectPickingRt = rgraph.newRenderTarget(m_objectPickingRtDescr);
+	m_runCtx.m_objectPickingRt = objectPickingRt;
 	const RenderTargetHandle objectPickingDepthRt = rgraph.newRenderTarget(m_objectPickingDepthRtDescr);
 	{
 		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Object Picking: Draw UUIDs");
@@ -711,6 +715,9 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 				cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 				cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 				cmdb.bindSrv(4, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR16G16B16A16_Unorm);
+				cmdb.bindSrv(5, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Uint);
+				cmdb.bindSrv(6, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Snorm);
+				cmdb.bindSrv(7, 0, GpuSceneBuffer::getSingleton().getBufferView());
 
 				cmdb.setFastConstants(&ctx.m_matrices.m_viewProjection, sizeof(ctx.m_matrices.m_viewProjection));
 

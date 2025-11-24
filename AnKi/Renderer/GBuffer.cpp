@@ -269,8 +269,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-								   Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const
+void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+								   DebugRenderTargetDrawStyle& drawStyle) const
 {
 	if(rtName == "GBufferAlbedo")
 	{
@@ -279,7 +279,7 @@ void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMa
 	else if(rtName == "GBufferNormals")
 	{
 		handles[0] = m_runCtx.m_colorRts[2];
-		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferNormal;
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferNormal;
 	}
 	else if(rtName == "GBufferVelocity")
 	{
@@ -288,23 +288,23 @@ void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMa
 	else if(rtName == "GBufferRoughness")
 	{
 		handles[0] = m_runCtx.m_colorRts[1];
-		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferRoughness;
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferRoughness;
 	}
 	else if(rtName == "GBufferMetallic")
 	{
 		handles[0] = m_runCtx.m_colorRts[0];
-		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferMetallic;
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferMetallic;
 	}
 	else if(rtName == "GBufferSubsurface")
 	{
 		handles[0] = m_runCtx.m_colorRts[0];
-		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferSubsurface;
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferSubsurface;
 	}
 	else if(rtName == "GBufferEmission")
 	{
 		handles[0] = m_runCtx.m_colorRts[1];
 		handles[1] = m_runCtx.m_colorRts[2];
-		drawStyles[0] = DebugRenderTargetDrawStyle::kGBufferEmission;
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferEmission;
 	}
 }
 

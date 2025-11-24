@@ -52,11 +52,11 @@ public:
 		return m_runCtx.m_finalRt;
 	}
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		handles[0] = m_runCtx.m_finalRt;
-		drawStyles[0] = DebugRenderTargetDrawStyle::kTonemap;
+		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
 	}
 
 private:

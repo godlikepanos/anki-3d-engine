@@ -53,8 +53,6 @@ constexpr U32 kMinDrawcallsPerSecondaryCommandBuffer = 16;
 /// Bloom size is rendererSize/kBloomFraction.
 constexpr U32 kBloomFraction = 4;
 
-constexpr U32 kMaxDebugRenderTargets = 2;
-
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal (see shaders)
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {

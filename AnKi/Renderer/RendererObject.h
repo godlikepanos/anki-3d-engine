@@ -28,8 +28,9 @@ public:
 
 	virtual ~RendererObject() = default;
 
-	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName, [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-									  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const
+	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName,
+									  [[maybe_unused]] Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+									  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const
 	{
 		ANKI_ASSERT(!"Object doesn't support that");
 	}

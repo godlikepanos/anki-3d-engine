@@ -200,9 +200,13 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		m_dummyResources.m_texture2DSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
 
+		texinit.m_format = Format::kR32G32B32A32_Uint;
+		m_dummyResources.m_texture2DUintSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
+
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
 		texinit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllUav;
+		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		m_dummyResources.m_texture3DSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
 
 		texinit.m_type = TextureType::k2D;
@@ -681,11 +685,11 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(std::move(inf));
 }
 
-Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-										   Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles)
+Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+										   DebugRenderTargetDrawStyle& drawStyle)
 {
 	handles = {};
-	drawStyles = {};
+	drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
 
 	if(m_currentDebugRtName.isEmpty()) [[likely]]
 	{
@@ -703,14 +707,27 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 
 	if(obj)
 	{
-		obj->getDebugRenderTarget(m_currentDebugRtName, handles, drawStyles);
-		for(DebugRenderTargetDrawStyle& style : drawStyles)
+		obj->getDebugRenderTarget(m_currentDebugRtName, handles, drawStyle);
+
+		Bool valid = false;
+		for(const RenderTargetHandle& handle : handles)
 		{
-			if(m_disableDebugRtTonemapping && style == DebugRenderTargetDrawStyle::kTonemap)
+			if(handle.isValid())
 			{
-				style = DebugRenderTargetDrawStyle::kPassthrough;
+				valid = true;
 			}
 		}
+
+		if(!valid)
+		{
+			return false;
+		}
+
+		if(m_disableDebugRtTonemapping && drawStyle == DebugRenderTargetDrawStyle::kTonemap)
+		{
+			drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
+		}
+
 		return true;
 	}
 	else

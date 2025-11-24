@@ -120,6 +120,7 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
+		RenderTargetHandle m_objectPickingRt;
 		U32 m_objUuid = 0;
 	} m_runCtx;
 
@@ -133,6 +134,13 @@ private:
 						   CommandBuffer& cmdb);
 
 	void drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, CommandBuffer& cmdb) const;
+
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  DebugRenderTargetDrawStyle& drawStyle) const override
+	{
+		handles[DebugRenderTargetRegister::kUintTex] = m_runCtx.m_objectPickingRt;
+		drawStyle = DebugRenderTargetDrawStyle::kIntegerTexture;
+	}
 };
 
 } // end namespace anki

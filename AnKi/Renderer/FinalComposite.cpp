@@ -117,9 +117,9 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 							  TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getBloom().getBloomRt(), TextureUsageBit::kSrvPixel);
 
-	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
-	Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets> drawStyles;
-	const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyles);
+	Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)> dbgRts;
+	DebugRenderTargetDrawStyle drawStyle = {};
+	const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyle);
 	if(hasDebugRt)
 	{
 		for(const RenderTargetHandle& handle : dbgRts)
@@ -139,9 +139,9 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 		const Bool dbgEnabled = !!(getDbg().getOptions() & DbgOption::kDbgScene);
 
-		Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
-		Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets> drawStyles;
-		const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyles);
+		Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)> dbgRts;
+		DebugRenderTargetDrawStyle drawStyle;
+		const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyle);
 
 		// Bind program
 		if(hasDebugRt)
@@ -192,24 +192,25 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		{
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-			U32 count = 0;
-			UVec4 consts;
+			DebugRenderTargetRegister reg = DebugRenderTargetRegister::kFirst;
+			const UVec4 consts((U32)drawStyle);
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
 			for(const RenderTargetHandle& handle : dbgRts)
 			{
 				if(handle.isValid())
 				{
-					consts[count] = U32(drawStyles[count]);
-					rgraphCtx.bindSrv(count, 0, handle);
+					rgraphCtx.bindSrv(U32(reg), 0, handle);
 				}
 				else
 				{
-					cmdb.bindSrv(count, 0, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+					Texture* tex = (reg == DebugRenderTargetRegister::kUintTex) ? getDummyGpuResources().m_texture2DUintSrv.get()
+																				: getDummyGpuResources().m_texture2DSrv.get();
+					cmdb.bindSrv(U32(reg), 0, TextureView(tex, TextureSubresourceDesc::all()));
 				}
 
-				++count;
+				++reg;
 			}
-
-			cmdb.setFastConstants(&consts, sizeof(consts));
 		}
 
 		cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());

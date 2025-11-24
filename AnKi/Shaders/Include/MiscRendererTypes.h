@@ -271,9 +271,21 @@ enum class DebugRenderTargetDrawStyle
 	kGBufferEmission,
 	kAlphaOnly,
 	kRedOnly,
+	kIntegerTexture,
 
 	kCount,
 	kFirst = 0
 };
+
+enum class DebugRenderTargetRegister
+{
+	kTex1,
+	kTex2,
+	kUintTex,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DebugRenderTargetRegister)
 
 ANKI_END_NAMESPACE

@@ -9,6 +9,7 @@
 #if defined(__cplusplus)
 
 #	include <AnKi/Math.h>
+#	include <AnKi/Util/Enum.h>
 
 #	define ANKI_HLSL 0
 #	define ANKI_GLSL 0

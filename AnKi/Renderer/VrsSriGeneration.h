@@ -69,8 +69,8 @@ public:
 		RenderTargetHandle m_downscaledRt;
 	} m_runCtx;
 
-	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		if(rtName == "VrsSri")
 		{

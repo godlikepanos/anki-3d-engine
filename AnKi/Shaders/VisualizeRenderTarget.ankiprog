@@ -13,6 +13,7 @@
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D<Vec4> g_inTex : register(t0);
 Texture2D<Vec4> g_inTex2 : register(t1);
+Texture2D<UVec4> g_integerTex : register(t2);
 
 struct Consts
 {
@@ -24,6 +25,22 @@ struct Consts
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 #if ANKI_PIXEL_SHADER
+Vec3 uintToColor(U32 v)
+{
+	// simple integer hash → 0..1
+	const F32 h = frac(sin(v * 12.9898) * 43758.5453);
+
+	const F32 s = 0.6; // moderate saturation
+	const F32 val = 0.9; // bright
+
+	// HSV → RGB
+	const Vec3 k = Vec3(1.0, 2.0 / 3.0, 1.0 / 3.0);
+	const Vec3 p = abs(frac(h + k) * 6.0 - 3.0);
+	const Vec3 rgb = val * lerp(1.0, saturate(p - 1.0), s);
+
+	return rgb; // 0..1
+}
+
 Vec3 main(VertOut input) : SV_TARGET0
 {
 	Vec4 rgba = g_inTex.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
@@ -58,6 +75,11 @@ Vec3 main(VertOut input) : SV_TARGET0
 	case DebugRenderTargetDrawStyle::kRedOnly:
 		rgba.xyz = rgba.rrr;
 		break;
+	case DebugRenderTargetDrawStyle::kIntegerTexture:
+	{
+		const UVec4 val = g_integerTex.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
+		rgba = Vec4(uintToColor(val.x), 1.0);
+	}
 	default:
 		break;
 	}

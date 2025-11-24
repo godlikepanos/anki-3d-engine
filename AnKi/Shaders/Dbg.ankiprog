@@ -377,7 +377,11 @@ StructuredBuffer<U32> g_lodAndRenderableIndices : register(t0);
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
 StructuredBuffer<Mat3x4> g_transforms : register(t3);
+
 Buffer<Vec4> g_unifiedGeom_R16G16B16A16_Unorm : register(t4);
+Buffer<UVec4> g_unifiedGeom_R8G8B8A8_Uint : register(t5);
+Buffer<Vec4> g_unifiedGeom_R8G8B8A8_Snorm : register(t6);
+ByteAddressBuffer g_gpuScene : register(t7);
 
 ANKI_FAST_CONSTANTS(Mat4, g_mvp);
 
@@ -388,6 +392,12 @@ struct VertOut
 };
 
 #	if ANKI_VERTEX_SHADER
+struct Mat3x4_2
+{
+	Mat3x4 m_a;
+	Mat3x4 m_b;
+};
+
 VertOut main(U32 svVertexId : SV_VERTEXID)
 {
 	const U32 packed = SBUFF(g_lodAndRenderableIndices, gl_DrawID);
@@ -401,6 +411,24 @@ VertOut main(U32 svVertexId : SV_VERTEXID)
 
 	Vec3 position = g_unifiedGeom_R16G16B16A16_Unorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kPosition] + svVertexId];
 	position = position * meshLod.m_positionScale + meshLod.m_positionTranslation;
+
+	if(renderable.m_boneTransformsOffset)
+	{
+		const UVec4 boneIndices = g_unifiedGeom_R8G8B8A8_Uint[meshLod.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + svVertexId];
+		const Vec4 boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + svVertexId];
+
+		Mat3x4 skinMat = (Mat3x4)0.0;
+		for(U32 i = 0; i < 4; ++i)
+		{
+			U32 byteOffset = renderable.m_boneTransformsOffset;
+			byteOffset += boneIndices[i] * sizeof(Mat3x4_2);
+
+			const Mat3x4_2 mats = g_gpuScene.Load<Mat3x4_2>(byteOffset);
+			skinMat = skinMat + mats.m_a * boneWeights[i];
+		}
+
+		position = mul(skinMat, Vec4(position, 1.0)).xyz;
+	}
 
 	const Mat3x4 trf = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
 	position = mul(trf, Vec4(position, 1.0));

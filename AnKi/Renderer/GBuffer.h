@@ -61,8 +61,8 @@ public:
 		return m_runCtx.m_hzbRt;
 	}
 
-	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override;
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  DebugRenderTargetDrawStyle& drawStyle) const override;
 
 	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
 	const GpuVisibilityOutput& getVisibilityOutput() const

@@ -35,11 +35,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		handles[0] = m_runCtx.m_rt;
-		drawStyles[0] = DebugRenderTargetDrawStyle::kTonemap;
+		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
 	}
 
 	RenderTargetHandle getRt() const

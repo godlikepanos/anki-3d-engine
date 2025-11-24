@@ -61,6 +61,7 @@ class DummyGpuResources
 {
 public:
 	TexturePtr m_texture2DSrv;
+	TexturePtr m_texture2DUintSrv;
 	TexturePtr m_texture3DSrv;
 	TexturePtr m_texture2DUav;
 	TexturePtr m_texture3DUav;
@@ -188,8 +189,8 @@ public:
 	}
 
 	// Need to call it after the handle is set by the RenderGraph.
-	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-									 Array<DebugRenderTargetDrawStyle, kMaxDebugRenderTargets>& drawStyles);
+	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+									 DebugRenderTargetDrawStyle& drawStyle);
 	/// @}
 
 	StackMemoryPool& getFrameMemoryPool()
