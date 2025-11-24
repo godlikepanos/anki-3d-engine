@@ -146,13 +146,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		{
 			options |= DbgOption::kBoundingBoxes;
 			options |= DbgOption::kDepthTest;
-			options &= ~DbgOption::kDitheredDepthTest;
 		}
 		else
 		{
 			options |= DbgOption::kBoundingBoxes;
 			options &= ~DbgOption::kDepthTest;
-			options |= DbgOption::kDitheredDepthTest;
 		}
 
 		renderer.getDbg().setOptions(options);

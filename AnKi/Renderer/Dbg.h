@@ -21,15 +21,15 @@ enum class DbgOption : U8
 	kIcons = 1 << 1,
 	kPhysics = 1 << 2,
 	kObjectPicking = 1 << 3,
+	kSelectedObjectOutline = 1 << 4,
 
 	// Flags that affect how things are drawn
-	kDepthTest = 1 << 4,
-	kDitheredDepthTest = 1 << 5,
+	kDepthTest = 1 << 5,
 
 	// Agregate flags
 	kGatherAabbs = kBoundingBoxes | kObjectPicking,
-	kDbgScene = kBoundingBoxes | kIcons | kPhysics,
-	kDbgEnabled = kDbgScene | kObjectPicking,
+	kDbgScene = kBoundingBoxes | kIcons | kPhysics | kSelectedObjectOutline,
+	kDbgEnabled = kDbgScene | kObjectPicking | kSelectedObjectOutline,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgOption)
 

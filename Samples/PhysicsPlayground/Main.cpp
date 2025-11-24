@@ -223,13 +223,11 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		{
 			options |= DbgOption::kBoundingBoxes;
 			options |= DbgOption::kDepthTest;
-			options &= ~DbgOption::kDitheredDepthTest;
 		}
 		else
 		{
 			options |= DbgOption::kBoundingBoxes;
 			options &= ~DbgOption::kDepthTest;
-			options |= DbgOption::kDitheredDepthTest;
 		}
 
 		renderer.getDbg().setOptions(options);

@@ -147,7 +147,7 @@ public:
 	void setFillMode(FillMode mode);
 
 	/// Set cull mode.
-	/// By default it's FaceSelectionBit::BACK.
+	/// By default it's FaceSelectionBit::kBack.
 	void setCullMode(FaceSelectionBit mode);
 
 	/// Set depth offset and units. Set zeros to both to disable it.

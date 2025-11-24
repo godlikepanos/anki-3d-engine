@@ -90,7 +90,7 @@ public:
 			ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 		}
 
-		Renderer::getSingleton().getDbg().enableOptions(DbgOption::kObjectPicking);
+		Renderer::getSingleton().getDbg().enableOptions(DbgOption::kObjectPicking | DbgOption::kIcons);
 
 		return Error::kNone;
 	}

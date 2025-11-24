@@ -264,16 +264,16 @@ void EditorUi::mainMenu()
 		if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
 		{
 			Bool bBoundingBoxes = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kBoundingBoxes);
-			if(ImGui::Checkbox("Bounding Boxes", &bBoundingBoxes))
+			if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))
 			{
 				DbgOption options = Renderer::getSingleton().getDbg().getOptions();
 				if(bBoundingBoxes)
 				{
-					options |= DbgOption::kBoundingBoxes | DbgOption::kIcons;
+					options |= DbgOption::kBoundingBoxes;
 				}
 				else
 				{
-					options &= ~(DbgOption::kBoundingBoxes | DbgOption::kIcons);
+					options &= ~(DbgOption::kBoundingBoxes);
 				}
 				Renderer::getSingleton().getDbg().setOptions(options);
 			}

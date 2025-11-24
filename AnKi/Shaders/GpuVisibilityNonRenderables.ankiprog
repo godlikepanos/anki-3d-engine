@@ -30,6 +30,12 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 #endif
 
 StructuredBuffer<ObjectType> g_objects : register(t0);
+
+#if HZB_TEST
+Texture2D g_hzbTex : register(t1);
+SamplerState g_nearestAnyClampSampler : register(s0);
+#endif
+
 RWStructuredBuffer<U32> g_visibleIndices : register(u0); // 1st element is the count. What follows is indices
 
 ANKI_FAST_CONSTANTS(GpuVisibilityNonRenderableConstants, g_consts)
@@ -90,11 +96,29 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 
 	// Frustum test
 	//
+	Vec4 sphere = 0.0;
 	if(!skip)
 	{
-		const Vec4 sphere = getSphere(g_objects[svDispatchThreadId]);
+		sphere = getSphere(g_objects[svDispatchThreadId]);
 		skip = !frustumTest(g_consts.m_clipPlanes, sphere.xyz, sphere.w);
 	}
+
+#if HZB_TEST
+	if(!skip)
+	{
+		const Vec3 aabbMin = sphere.xyz - sphere.w;
+		const Vec3 aabbMax = sphere.xyz + sphere.w;
+
+		Vec2 minNdc, maxNdc;
+		F32 aabbMinDepth;
+		projectAabb(aabbMin, aabbMax, g_consts.m_viewProjectionMat, minNdc, maxNdc, aabbMinDepth);
+
+		if(cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTex, g_nearestAnyClampSampler))
+		{
+			skip = true;
+		}
+	}
+#endif
 
 	// Add the object
 	//

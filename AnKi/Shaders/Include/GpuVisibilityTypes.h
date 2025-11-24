@@ -36,6 +36,8 @@ struct DistanceGpuVisibilityConstants
 
 struct GpuVisibilityNonRenderableConstants
 {
+	Mat4 m_viewProjectionMat;
+
 	Vec4 m_clipPlanes[6u];
 };
 

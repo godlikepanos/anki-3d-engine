@@ -124,7 +124,6 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 							CommandBuffer& cmdb)
 {
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-	variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", !!(m_options & DbgOption::kDitheredDepthTest));
 	variantInitInfo.addMutation("OBJECT_TYPE", U32(type));
 	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Bilboards");
 	const ShaderProgramResourceVariant* variant;
@@ -136,9 +135,13 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	public:
 		Mat4 m_viewProjMat;
 		Mat3x4 m_camTrf;
+
+		UVec3 m_padding;
+		U32 m_depthFailureVisualization;
 	} consts;
 	consts.m_viewProjMat = ctx.m_matrices.m_viewProjection;
 	consts.m_camTrf = ctx.m_matrices.m_cameraTransform;
+	consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
 	cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(type));
@@ -217,13 +220,11 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 		cmdb.setDepthCompareOperation(!!(m_options & DbgOption::kDepthTest) ? CompareOperation::kLess : CompareOperation::kAlways);
 		cmdb.setLineWidth(2.0f);
 
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 
 		// Common code for boxes stuff
 		{
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", !!(m_options & DbgOption::kDitheredDepthTest));
 			variantInitInfo.addMutation("OBJECT_TYPE", 0);
 			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderableBoxes");
 			const ShaderProgramResourceVariant* variant;
@@ -235,9 +236,13 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 			public:
 				Vec4 m_color;
 				Mat4 m_viewProjMat;
+
+				UVec3 m_padding;
+				U32 m_depthFailureVisualization;
 			} consts;
-			consts.m_color = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
+			consts.m_color = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
 			consts.m_viewProjMat = ctx.m_matrices.m_viewProjection;
+			consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 			cmdb.bindVertexBuffer(0, BufferView(m_cubeVertsBuffer.get()), sizeof(Vec3));
@@ -324,7 +329,6 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 				memcpy(colors, drawerInterface.m_colors.getBegin(), drawerInterface.m_colors.getSizeInBytes());
 
 				ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-				variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", !!(m_options & DbgOption::kDitheredDepthTest));
 				variantInitInfo.addMutation("OBJECT_TYPE", 0);
 				variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Lines");
 				const ShaderProgramResourceVariant* variant;
@@ -406,7 +410,6 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", 0);
 			variantInitInfo.addMutation("OBJECT_TYPE", 0);
 			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "PrepareRenderableUuids");
 			const ShaderProgramResourceVariant* variant;
@@ -471,7 +474,6 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 				cmdb.setDepthCompareOperation(CompareOperation::kLess);
 
 				ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-				variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", 0);
 				variantInitInfo.addMutation("OBJECT_TYPE", 0);
 				variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderableUuids");
 				const ShaderProgramResourceVariant* variant;
@@ -517,7 +519,6 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", 0);
 			variantInitInfo.addMutation("OBJECT_TYPE", 0);
 			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "RenderableUuidsPick");
 			const ShaderProgramResourceVariant* variant;

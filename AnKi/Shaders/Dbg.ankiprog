@@ -3,12 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator DEPTH_FAIL_VISUALIZATION 0 1
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
-#pragma anki technique RenderableBoxes vert pixel mutators DEPTH_FAIL_VISUALIZATION
+#pragma anki technique RenderableBoxes vert pixel mutators
 #pragma anki technique Bilboards vert pixel
-#pragma anki technique Lines vert pixel mutators DEPTH_FAIL_VISUALIZATION
+#pragma anki technique Lines vert pixel mutators
 
 // Prepare the indirect calls for RenderableUuids
 #pragma anki technique PrepareRenderableUuids comp mutators
@@ -26,19 +25,22 @@
 // ===========================================================================
 // RenderableBoxes                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_RenderableBoxes)
-#	include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#if ANKI_TECHNIQUE_RenderableBoxes
+
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t1);
+StructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleRenderableBoundingVolumeIndices : register(t2);
+
+Texture2D g_depthRt : register(t0);
 
 struct Constants
 {
 	Vec4 m_color;
 	Mat4 m_viewProjMat;
+
+	UVec3 m_padding;
+	U32 m_depthFailureVisualization;
 };
-
 ANKI_FAST_CONSTANTS(Constants, g_consts)
-
-StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t1);
-StructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleRenderableBoundingVolumeIndices : register(t2);
 
 struct VertOut
 {
@@ -77,33 +79,24 @@ VertOut main(VertIn input)
 #	endif // ANKI_VERTEX_SHADER
 
 #	if ANKI_PIXEL_SHADER
-#		include <AnKi/Shaders/ImportanceSampling.hlsl>
-
-// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#		if DEPTH_FAIL_VISUALIZATION == 1
-SamplerState g_nearestAnyClampSampler : register(s0);
-Texture2D g_depthRt : register(t0);
-#		endif
-
 Vec4 main(VertOut input) : SV_TARGET0
 {
-	ANKI_MAYBE_UNUSED(input);
+	Vec4 col = g_consts.m_color;
 
-	// Check if we should skip the frag
-#		if DEPTH_FAIL_VISUALIZATION == 1
-	Vec2 texSize;
-	g_depthRt.GetDimensions(texSize.x, texSize.y);
-	const Vec2 uv = input.m_svPosition.xy / texSize;
-	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
-	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
-	if(depthTestFailed)
+	if(g_consts.m_depthFailureVisualization)
 	{
-		return g_consts.m_color * 0.5;
+		Vec2 texSize;
+		g_depthRt.GetDimensions(texSize.x, texSize.y);
+		const F32 depthRef = g_depthRt[clamp(input.m_svPosition.xy, 0.0, texSize - 1.0)].r;
+		const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+		if(depthTestFailed)
+		{
+			col.xyz *= 0.4;
+		}
 	}
-#		endif
 
 	// Write the color
-	return g_consts.m_color;
+	return col;
 }
 #	endif // ANKI_PIXEL_SHADER
 #endif // ANKI_TECHNIQUE_RenderableBoxes
@@ -122,6 +115,9 @@ struct Constants
 {
 	Mat4 m_viewProjMat;
 	Mat3x4 m_camTrf;
+
+	UVec3 m_padding;
+	U32 m_depthFailureVisualization;
 };
 
 ANKI_FAST_CONSTANTS(Constants, g_consts)
@@ -140,14 +136,19 @@ typedef GlobalIlluminationProbe ClusteredType;
 #		error See file
 #	endif
 
+Texture2D g_depthRt : register(t0);
 StructuredBuffer<ClusteredType> g_visibleObjects : register(t1);
 StructuredBuffer<U32> g_visibleObjectCount : register(t2);
+Texture2D<Vec4> g_tex : register(t3);
+Texture2D<Vec4> g_tex2 : register(t4);
+
+SamplerState g_trilinearRepeatSampler : register(s1);
 
 struct VertOut
 {
 	Vec4 m_svPosition : SV_POSITION;
 	Vec2 m_uv : TEXCOORD;
-	Vec4 m_colorScale : COLOR;
+	Vec3 m_colorScale : COLOR;
 	nointerpolation U32 m_textureIndex : TEX_INDEX;
 };
 
@@ -162,7 +163,7 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	output.m_colorScale = Vec4(1.0f, 1.0f, 1.0f, kAlpha);
+	output.m_colorScale = 1.0;
 	output.m_textureIndex = 0;
 
 	output.m_uv = Vec2(input.m_svVertexId & 1u, ((input.m_svVertexId + 1u) / 3u) & 1u);
@@ -173,7 +174,7 @@ VertOut main(VertIn input)
 	{
 #		if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
-		output.m_colorScale.xyz = reinhardTonemap(g_visibleObjects[input.m_svInstanceId].m_diffuseColor);
+		output.m_colorScale = reinhardTonemap(g_visibleObjects[input.m_svInstanceId].m_diffuseColor);
 		output.m_textureIndex = g_visibleObjects[input.m_svInstanceId].m_lightType;
 #		elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_sphereCenter;
@@ -204,45 +205,37 @@ VertOut main(VertIn input)
 #	endif // ANKI_VERTEX_SHADER
 
 #	if ANKI_PIXEL_SHADER
-#		include <AnKi/Shaders/ImportanceSampling.hlsl>
-
-SamplerState g_trilinearRepeatSampler : register(s1);
-Texture2D<Vec4> g_tex : register(t3);
-Texture2D<Vec4> g_tex2 : register(t4);
-
-// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#		if DEPTH_FAIL_VISUALIZATION == 1
-SamplerState g_nearestAnyClampSampler : register(s0);
-Texture2D g_depthRt : register(t0);
-#		endif
-
 Vec4 main(VertOut input) : SV_TARGET0
 {
 	ANKI_MAYBE_UNUSED(input);
 
-	// Check if we should skip the frag
-	F32 colorFactor = 1.0f;
-#		if DEPTH_FAIL_VISUALIZATION == 1
-	Vec2 texSize;
-	g_depthRt.GetDimensions(texSize.x, texSize.y);
-	const Vec2 uv = input.m_svPosition.xy / texSize;
-	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
-	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
-	if(depthTestFailed)
-	{
-		colorFactor = 0.6;
-	}
-#		endif
-
 	// Write the color
+	Vec4 color;
 	if(input.m_textureIndex == 0)
 	{
-		return g_tex.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
+		color = g_tex.Sample(g_trilinearRepeatSampler, input.m_uv);
 	}
 	else
 	{
-		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
+		color = g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv);
 	}
+
+	color.xyz *= input.m_colorScale;
+
+	if(g_consts.m_depthFailureVisualization)
+	{
+		Vec2 texSize;
+		g_depthRt.GetDimensions(texSize.x, texSize.y);
+
+		const F32 depthRef = g_depthRt[clamp(input.m_svPosition.xy, 0.0, texSize - 1.0)].r;
+		const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+		if(depthTestFailed)
+		{
+			color.xyz *= 0.5;
+		}
+	}
+
+	return color;
 }
 #	endif // ANKI_PIXEL_SHADER
 #endif // ANKI_TECHNIQUE_Bilboards

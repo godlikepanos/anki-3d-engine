@@ -1040,13 +1040,14 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
 				  visibleIndicesBuffHandle = out.m_visiblesBufferHandle, counterBuffer = m_counterBuffer, counterBufferOffset = m_counterBufferOffset,
-				  objCount](RenderPassWorkContext& rgraph) {
+				  objCount, hzbRt = (in.m_hzbRt) ? *in.m_hzbRt : RenderTargetHandle()](RenderPassWorkContext& rgraph) {
 		ANKI_TRACE_SCOPED_EVENT(GpuVisNonRenderables);
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 		const Bool needsFeedback = feedbackBuffer.isValid();
+		const Bool hasHzb = hzbRt.isValid();
 
-		cmdb.bindShaderProgram(m_grProgs[0][objType][needsFeedback].get());
+		cmdb.bindShaderProgram(m_grProgs[hasHzb][objType][needsFeedback].get());
 
 		BufferView objBuffer;
 		switch(objType)
@@ -1078,6 +1079,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		{
 			consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
+		consts.m_viewProjectionMat = viewProjectionMat;
 		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		rgraph.bindUav(0, 0, visibleIndicesBuffHandle);
@@ -1086,6 +1088,12 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		if(needsFeedback)
 		{
 			cmdb.bindUav(2, 0, feedbackBuffer);
+		}
+
+		if(hasHzb)
+		{
+			rgraph.bindSrv(1, 0, hzbRt);
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, objCount, 1);
