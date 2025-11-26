@@ -93,7 +93,10 @@ private:
 	class
 	{
 	public:
-	} m_mainMenu;
+		U32 m_translationAxisSelected = kMaxU32;
+		U32 m_scaleAxisSelected = kMaxU32;
+		Vec3 m_pivotPoint;
+	} m_objectPicking;
 
 	class
 	{
@@ -177,7 +180,7 @@ private:
 	static void listDir(const std::filesystem::path& rootPath, const std::filesystem::path& parentPath, AssetPath& parent, U32& id);
 	static void gatherAssets(DynamicArray<AssetPath>& paths);
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
-	void selectSceneNode();
+	void objectPicking();
 };
 
 } // end namespace anki

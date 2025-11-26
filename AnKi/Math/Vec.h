@@ -2549,7 +2549,7 @@ public:
 #endif
 	}
 
-	[[nodiscard]] TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 3)
+	[[nodiscard]] TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 3 || kTComponentCount == 2)
 	{
 		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
 	}
@@ -2560,7 +2560,7 @@ public:
 		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
 	}
 
-	[[nodiscard]] TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 3)
+	[[nodiscard]] TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 3 || kTComponentCount == 2)
 	{
 		const auto& a = *this;
 		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));

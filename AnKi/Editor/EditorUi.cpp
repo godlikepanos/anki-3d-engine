@@ -46,6 +46,51 @@ public:
 	const F32 labelWidthMax = ImGui::GetContentRegionAvail().x * 0.40f; /* ...but always leave some room for framed widgets. */ \
 	ANKI_PUSH_POP(ItemWidth, -min(labelWidthBase, labelWidthMax))
 
+// Using some NDC coords find the closest point these coords are to a ray
+static F32 projectNdcToRay(Vec2 ndc, Vec3 rayOrigin, Vec3 rayDir)
+{
+	const Frustum& frustum = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>().getFrustum();
+	const Mat4 invMvp = frustum.getViewProjectionMatrix().invert();
+
+	Vec4 v4 = frustum.getViewProjectionMatrix() * rayOrigin.xyz1();
+	const Vec2 rayOriginNdc = v4.xy() / v4.w();
+
+	v4 = frustum.getViewProjectionMatrix() * (rayOrigin + rayDir).xyz1();
+	const Vec2 rayDirNdc = (v4.xy() / v4.w() - rayOriginNdc).normalize();
+
+	const Vec2 disiredPosNdc = ndc.projectTo(rayOriginNdc, rayDirNdc);
+	const Bool positiveSizeOfAxis = (disiredPosNdc - rayOriginNdc).dot(rayDirNdc) > 0.0f;
+
+	// Create 2 lines (0 and 1) and find the closest point between them on line 1
+	// Line equation: r(t) = a + t * b
+
+	// Create line 0 which is built from the camera origin and a far point that was unprojected from NDC
+	v4 = invMvp * Vec4(disiredPosNdc, 1.0f, 1.0f);
+	const Vec3 a0 = v4.xyz() / v4.w();
+	const Vec3 b0 = frustum.getWorldTransform().getOrigin().xyz() - a0;
+
+	// Line 1 is built from the ray
+	const Vec3 a1 = rayOrigin;
+	const Vec3 b1 = rayDir; // = rayDir + rayOrigin - rayOrigin
+
+	// Solve the system
+	const Vec3 w = a0 - a1;
+
+	const F32 A = b0.dot(b0);
+	const F32 B = b0.dot(b1);
+	const F32 C = b1.dot(b1);
+	const F32 D = b0.dot(w);
+	const F32 E = b1.dot(w);
+
+	const F32 t = (A * E - B * D) / (A * C - B * B);
+
+	const Vec3 touchingPoint = a1 + t * b1;
+
+	const F32 distFromOrign = (touchingPoint - rayOrigin).length() * ((positiveSizeOfAxis) ? 1.0f : -1.0f);
+
+	return distFromOrign;
+}
+
 EditorUi::EditorUi()
 {
 	Logger::getSingleton().addMessageHandler(this, loggerMessageHandler);
@@ -148,7 +193,7 @@ void EditorUi::draw(UiCanvas& canvas)
 {
 	m_canvas = &canvas;
 
-	selectSceneNode();
+	objectPicking();
 
 	if(!m_font)
 	{
@@ -1533,15 +1578,15 @@ void EditorUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 	}
 }
 
-void EditorUi::selectSceneNode()
+void EditorUi::objectPicking()
 {
 	if(!m_mouseHoveredOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
 	{
-		const U32 uuid = Renderer::getSingleton().getDbg().getObjectUuidAtMousePosition();
+		const DbgObjectPickingResult& res = Renderer::getSingleton().getDbg().getObjectPickingResultAtMousePosition();
 
-		if(uuid != 0)
+		if(res.m_sceneNodeUuid != 0)
 		{
-			SceneGraph::getSingleton().visitNodes([this, uuid](SceneNode& node) {
+			SceneGraph::getSingleton().visitNodes([this, uuid = res.m_sceneNodeUuid](SceneNode& node) {
 				if(node.getUuid() == uuid)
 				{
 					m_sceneHierarchyWindow.m_selectedNode = &node;
@@ -1550,10 +1595,99 @@ void EditorUi::selectSceneNode()
 				}
 				return FunctorContinue::kContinue;
 			});
+
+			m_objectPicking.m_translationAxisSelected = kMaxU32;
+			m_objectPicking.m_scaleAxisSelected = kMaxU32;
+		}
+		else if(res.isValid())
+		{
+			// Clicked a gizmo
+
+			const Transform& nodeTrf = m_sceneHierarchyWindow.m_selectedNode->getLocalTransform();
+			const Vec3 nodeOrigin = nodeTrf.getOrigin().xyz();
+			Array<Vec3, 3> rotationAxis;
+			rotationAxis[0] = nodeTrf.getRotation().getXAxis();
+			rotationAxis[1] = nodeTrf.getRotation().getYAxis();
+			rotationAxis[2] = nodeTrf.getRotation().getZAxis();
+
+			if(res.m_translationAxis < 3)
+			{
+				m_objectPicking.m_translationAxisSelected = res.m_translationAxis;
+				m_objectPicking.m_scaleAxisSelected = kMaxU32;
+			}
+			else if(res.m_scaleAxis < 3)
+			{
+				m_objectPicking.m_translationAxisSelected = kMaxU32;
+				m_objectPicking.m_scaleAxisSelected = res.m_scaleAxis;
+			}
+
+			if(res.m_translationAxis < 3 || res.m_scaleAxis < 3)
+			{
+				const U32 axis = (res.m_translationAxis < 3) ? res.m_translationAxis : res.m_scaleAxis;
+				m_objectPicking.m_pivotPoint =
+					nodeOrigin + rotationAxis[axis] * projectNdcToRay(Input::getSingleton().getMousePositionNdc(), nodeOrigin, rotationAxis[axis]);
+			}
 		}
 		else
 		{
+			// Clicked on sky
 			m_sceneHierarchyWindow.m_selectedNode = nullptr;
+			m_objectPicking.m_translationAxisSelected = kMaxU32;
+			m_objectPicking.m_scaleAxisSelected = kMaxU32;
+		}
+	}
+
+	if(!m_mouseHoveredOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) > 1)
+	{
+		// Dragging?
+
+		const Transform& nodeTrf = m_sceneHierarchyWindow.m_selectedNode->getLocalTransform();
+		Array<Vec3, 3> rotationAxis;
+		rotationAxis[0] = nodeTrf.getRotation().getXAxis();
+		rotationAxis[1] = nodeTrf.getRotation().getYAxis();
+		rotationAxis[2] = nodeTrf.getRotation().getZAxis();
+
+		if(m_objectPicking.m_translationAxisSelected < 3)
+		{
+			const U32 axis = m_objectPicking.m_translationAxisSelected;
+			const F32 moveDistance = projectNdcToRay(Input::getSingleton().getMousePositionNdc(), m_objectPicking.m_pivotPoint, rotationAxis[axis]);
+			m_objectPicking.m_pivotPoint = m_objectPicking.m_pivotPoint + rotationAxis[axis] * moveDistance;
+
+			if(m_objectPicking.m_translationAxisSelected == 0)
+			{
+				m_sceneHierarchyWindow.m_selectedNode->moveLocalX(moveDistance);
+			}
+			else if(m_objectPicking.m_translationAxisSelected == 1)
+			{
+				m_sceneHierarchyWindow.m_selectedNode->moveLocalY(moveDistance);
+			}
+			else
+			{
+				m_sceneHierarchyWindow.m_selectedNode->moveLocalZ(moveDistance);
+			}
+		}
+		else if(m_objectPicking.m_scaleAxisSelected < 3)
+		{
+			const U32 axis = m_objectPicking.m_scaleAxisSelected;
+			const F32 moveDistance = projectNdcToRay(Input::getSingleton().getMousePositionNdc(), m_objectPicking.m_pivotPoint, rotationAxis[axis]);
+			m_objectPicking.m_pivotPoint = m_objectPicking.m_pivotPoint + rotationAxis[axis] * moveDistance;
+
+			Vec3 scale = nodeTrf.getScale().xyz();
+
+			if(m_objectPicking.m_scaleAxisSelected == 0)
+			{
+				scale.x() += moveDistance;
+			}
+			else if(m_objectPicking.m_scaleAxisSelected == 1)
+			{
+				scale.y() += moveDistance;
+			}
+			else
+			{
+				scale.z() += moveDistance;
+			}
+
+			m_sceneHierarchyWindow.m_selectedNode->setLocalScale(scale);
 		}
 	}
 

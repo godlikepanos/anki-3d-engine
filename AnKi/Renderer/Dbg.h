@@ -33,6 +33,22 @@ enum class DbgOption : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgOption)
 
+class DbgObjectPickingResult
+{
+public:
+	U32 m_sceneNodeUuid = 0;
+	U32 m_translationAxis = kMaxU32; // Can be 0, 1 or 2
+	U32 m_scaleAxis = kMaxU32;
+	U32 m_rotationAxis = kMaxU32;
+
+	Bool operator==(const DbgObjectPickingResult&) const = default;
+
+	Bool isValid() const
+	{
+		return *this != DbgObjectPickingResult();
+	}
+};
+
 // Debugging visualization of the scene.
 class Dbg : public RendererObject
 {
@@ -70,10 +86,10 @@ public:
 		return !!(m_options & DbgOption::kDbgEnabled);
 	}
 
-	U32 getObjectUuidAtMousePosition() const
+	const DbgObjectPickingResult& getObjectPickingResultAtMousePosition() const
 	{
 		ANKI_ASSERT(!!(m_options & DbgOption::kObjectPicking));
-		return m_runCtx.m_objUuid;
+		return m_runCtx.m_objPickingRes;
 	}
 
 	void setGizmosTransform(const Transform& trf, Bool enableGizmos)
@@ -121,7 +137,8 @@ private:
 	public:
 		RenderTargetHandle m_rt;
 		RenderTargetHandle m_objectPickingRt;
-		U32 m_objUuid = 0;
+
+		DbgObjectPickingResult m_objPickingRes;
 	} m_runCtx;
 
 	void initGizmos();
@@ -133,7 +150,7 @@ private:
 	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
 						   CommandBuffer& cmdb);
 
-	void drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, CommandBuffer& cmdb) const;
+	void drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, Bool objectPicking, CommandBuffer& cmdb) const;
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  DebugRenderTargetDrawStyle& drawStyle) const override

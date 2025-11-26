@@ -19,6 +19,7 @@
 #pragma anki technique RenderableUuidsPick comp mutators
 
 #pragma anki technique Gizmos vert pixel mutators
+#pragma anki technique GizmosPick vert pixel mutators
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
@@ -307,6 +308,37 @@ Vec4 main(Vec3 positions : POSITION) : SV_POSITION
 Vec4 main() : SV_TARGET0
 {
 	return g_consts.m_color;
+}
+#	endif
+
+#endif
+
+// ===========================================================================
+// GizmosPick                                                                =
+// ===========================================================================
+#if ANKI_TECHNIQUE_GizmosPick
+
+struct Consts
+{
+	Mat4 m_mvp;
+
+	UVec3 m_padding;
+	U32 m_id;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+#	if ANKI_VERTEX_SHADER
+Vec4 main(Vec3 positions : POSITION) : SV_POSITION
+{
+	return mul(g_consts.m_mvp, Vec4(positions, 1.0));
+}
+#	endif
+
+#	if ANKI_PIXEL_SHADER
+U32 main() : SV_TARGET0
+{
+	return g_consts.m_id;
 }
 #	endif
 
