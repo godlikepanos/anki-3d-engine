@@ -12,6 +12,7 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/Dbg.h>
+#include <AnKi/Collision.h>
 #include <filesystem>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
 
@@ -89,6 +90,28 @@ static F32 projectNdcToRay(Vec2 ndc, Vec3 rayOrigin, Vec3 rayDir)
 	const F32 distFromOrign = (touchingPoint - rayOrigin).length() * ((positiveSizeOfAxis) ? 1.0f : -1.0f);
 
 	return distFromOrign;
+}
+
+static Bool projectNdcToPlane(Vec2 ndc, Plane plane, Vec3& point)
+{
+	const Frustum& frustum = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>().getFrustum();
+	const Mat4 invMvp = frustum.getViewProjectionMatrix().invert();
+
+	Vec4 v4 = invMvp * Vec4(ndc, 1.0f, 1.0f);
+	v4 /= v4.w();
+
+	const Vec3 rayOrigin = frustum.getWorldTransform().getOrigin().xyz();
+	const Vec3 rayDir = (v4.xyz() - rayOrigin).normalize();
+
+	Vec4 collisionPoint;
+	const Bool collides = testCollision(plane, Ray(rayOrigin, rayDir), collisionPoint);
+
+	if(collides)
+	{
+		point = collisionPoint.xyz();
+	}
+
+	return collides;
 }
 
 EditorUi::EditorUi()
@@ -253,144 +276,182 @@ void EditorUi::draw(UiCanvas& canvas)
 	ImGui::PopStyleVar();
 	ImGui::PopFont();
 
-	m_mouseHoveredOverAnyWindow = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
+	// Mouse is over any window if mouse is hovering or if clicked on a window
+	m_mouseOverAnyWindow = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::GetIO().WantCaptureMouse;
 
 	m_canvas = nullptr;
 }
 
 void EditorUi::mainMenu()
 {
-	if(ImGui::BeginMainMenuBar())
+	// The menu and toolbox is based on the comments in https://github.com/ocornut/imgui/issues/3518
+
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+
+	if(ImGui::BeginViewportSideBar("##MainMenu", viewport, ImGuiDir_Up, ImGui::GetFrameHeight(), windowFlags))
 	{
-		if(ImGui::BeginMenu(ICON_MDI_FOLDER_OUTLINE " File"))
+		if(ImGui::BeginMenuBar())
 		{
-			if(ImGui::MenuItem(ICON_MDI_CLOSE_CIRCLE " Quit", "CTRL+Q"))
+			if(ImGui::BeginMenu(ICON_MDI_FOLDER_OUTLINE " File"))
 			{
-				m_quit = true;
+				if(ImGui::MenuItem(ICON_MDI_CLOSE_CIRCLE " Quit", "CTRL+Q"))
+				{
+					m_quit = true;
+				}
+				ImGui::EndMenu();
 			}
-			ImGui::EndMenu();
+
+			if(ImGui::BeginMenu(ICON_MDI_APPLICATION_OUTLINE " Windows"))
+			{
+				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Console"))
+				{
+					m_showConsoleWindow = true;
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " SceneNode Props"))
+				{
+					m_showSceneNodePropsWindow = true;
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Scene Hierarchy"))
+				{
+					m_showSceneHierarcyWindow = true;
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Assets"))
+				{
+					m_showAssetsWindow = true;
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " CVars Editor"))
+				{
+					m_showCVarEditorWindow = true;
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
+				{
+					m_showDebugRtsWindow = true;
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
+			{
+				Bool bBoundingBoxes = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kBoundingBoxes);
+				if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))
+				{
+					DbgOption options = Renderer::getSingleton().getDbg().getOptions();
+					if(bBoundingBoxes)
+					{
+						options |= DbgOption::kBoundingBoxes;
+					}
+					else
+					{
+						options &= ~(DbgOption::kBoundingBoxes);
+					}
+					Renderer::getSingleton().getDbg().setOptions(options);
+				}
+
+				Bool bPhysics = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kPhysics);
+				if(ImGui::Checkbox("Physics Bodies", &bPhysics))
+				{
+					DbgOption options = Renderer::getSingleton().getDbg().getOptions();
+					if(bPhysics)
+					{
+						options |= DbgOption::kPhysics;
+					}
+					else
+					{
+						options &= ~DbgOption::kPhysics;
+					}
+					Renderer::getSingleton().getDbg().setOptions(options);
+				}
+
+				Bool bDepthTest = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kDepthTest);
+				if(ImGui::Checkbox("Depth Test", &bDepthTest))
+				{
+					DbgOption options = Renderer::getSingleton().getDbg().getOptions();
+					if(bDepthTest)
+					{
+						options |= DbgOption::kDepthTest;
+					}
+					else
+					{
+						options &= ~DbgOption::kDepthTest;
+					}
+					Renderer::getSingleton().getDbg().setOptions(options);
+				}
+
+				ImGui::EndMenu();
+			}
+
+			// Title
+			{
+				CString text = "AnKi 3D Engine Editor";
+				const F32 menuBarWidth = ImGui::GetWindowWidth();
+				const F32 textWidth = ImGui::CalcTextSize(text.cstr()).x;
+				ImGui::SameLine(menuBarWidth - menuBarWidth / 2.0f - textWidth / 2.0f);
+
+				ImGui::TextUnformatted(text.cstr());
+			}
+
+			// Quit bnt
+			{
+				const Char* text = ICON_MDI_CLOSE_CIRCLE;
+				const Vec2 textSize = ImGui::CalcTextSize(text);
+
+				const F32 menuBarWidth = ImGui::GetWindowWidth();
+				ImGui::SameLine(menuBarWidth - textSize.x() - ImGui::GetStyle().FramePadding.x * 2.0f - kMargin);
+
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+				if(ImGui::Button(text))
+				{
+					m_quit = true;
+				}
+
+				ImGui::PopStyleColor();
+			}
+
+			ImGui::EndMenuBar();
 		}
 
-		if(ImGui::BeginMenu(ICON_MDI_APPLICATION_OUTLINE " Windows"))
+		if(Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0 && Input::getSingleton().getKey(KeyCode::kQ) > 0)
 		{
-			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Console"))
-			{
-				m_showConsoleWindow = true;
-			}
-
-			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " SceneNode Props"))
-			{
-				m_showSceneNodePropsWindow = true;
-			}
-
-			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Scene Hierarchy"))
-			{
-				m_showSceneHierarcyWindow = true;
-			}
-
-			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Assets"))
-			{
-				m_showAssetsWindow = true;
-			}
-
-			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " CVars Editor"))
-			{
-				m_showCVarEditorWindow = true;
-			}
-
-			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
-			{
-				m_showDebugRtsWindow = true;
-			}
-
-			ImGui::EndMenu();
+			m_quit = true;
 		}
-
-		if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
-		{
-			Bool bBoundingBoxes = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kBoundingBoxes);
-			if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))
-			{
-				DbgOption options = Renderer::getSingleton().getDbg().getOptions();
-				if(bBoundingBoxes)
-				{
-					options |= DbgOption::kBoundingBoxes;
-				}
-				else
-				{
-					options &= ~(DbgOption::kBoundingBoxes);
-				}
-				Renderer::getSingleton().getDbg().setOptions(options);
-			}
-
-			Bool bPhysics = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kPhysics);
-			if(ImGui::Checkbox("Physics Bodies", &bPhysics))
-			{
-				DbgOption options = Renderer::getSingleton().getDbg().getOptions();
-				if(bPhysics)
-				{
-					options |= DbgOption::kPhysics;
-				}
-				else
-				{
-					options &= ~DbgOption::kPhysics;
-				}
-				Renderer::getSingleton().getDbg().setOptions(options);
-			}
-
-			Bool bDepthTest = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kDepthTest);
-			if(ImGui::Checkbox("Depth Test", &bDepthTest))
-			{
-				DbgOption options = Renderer::getSingleton().getDbg().getOptions();
-				if(bDepthTest)
-				{
-					options |= DbgOption::kDepthTest;
-				}
-				else
-				{
-					options &= ~DbgOption::kDepthTest;
-				}
-				Renderer::getSingleton().getDbg().setOptions(options);
-			}
-
-			ImGui::EndMenu();
-		}
-
-		// Title
-		{
-			CString text = "AnKi 3D Engine Editor";
-			const F32 menuBarWidth = ImGui::GetWindowWidth();
-			const F32 textWidth = ImGui::CalcTextSize(text.cstr()).x;
-			ImGui::SameLine(menuBarWidth - menuBarWidth / 2.0f - textWidth / 2.0f);
-
-			ImGui::TextUnformatted(text.cstr());
-		}
-
-		// Quit bnt
-		{
-			const Char* text = ICON_MDI_CLOSE_CIRCLE;
-			const Vec2 textSize = ImGui::CalcTextSize(text);
-
-			const F32 menuBarWidth = ImGui::GetWindowWidth();
-			ImGui::SameLine(menuBarWidth - textSize.x() - ImGui::GetStyle().FramePadding.x * 2.0f - kMargin);
-
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-			if(ImGui::Button(text))
-			{
-				m_quit = true;
-			}
-
-			ImGui::PopStyleColor();
-		}
-
-		ImGui::EndMainMenuBar();
 	}
+	ImGui::End();
 
-	if(Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0 && Input::getSingleton().getKey(KeyCode::kQ) > 0)
+	// Toolbox
+	if(ImGui::BeginViewportSideBar("##Toolbox", viewport, ImGuiDir_Up, ImGui::GetFrameHeight(), windowFlags))
 	{
-		m_quit = true;
+		if(ImGui::BeginMenuBar())
+		{
+			ImGui::SetNextItemWidth(ImGui::CalcTextSize("00.000").x);
+
+			if(ImGui::SliderFloat(ICON_MDI_AXIS_ARROW "&" ICON_MDI_ARROW_EXPAND_ALL " Snapping", &m_toolbox.m_scaleTranslationSnapping, 0.0, 10.0f))
+			{
+				const F32 roundTo = 0.5f;
+				m_toolbox.m_scaleTranslationSnapping = round(m_toolbox.m_scaleTranslationSnapping / roundTo) * roundTo;
+			}
+
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(ImGui::CalcTextSize("00.000").x);
+
+			if(ImGui::SliderFloat(ICON_MDI_ROTATE_ORBIT " Snapping", &m_toolbox.m_rotationSnappingDeg, 0.0, 90.0f))
+			{
+				const F32 roundTo = 1.0f;
+				m_toolbox.m_rotationSnappingDeg = round(m_toolbox.m_rotationSnappingDeg / roundTo) * roundTo;
+			}
+
+			ImGui::EndMenuBar();
+		}
 	}
+	ImGui::End();
 }
 
 void EditorUi::sceneNode(SceneNode& node)
@@ -1580,7 +1641,7 @@ void EditorUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 
 void EditorUi::objectPicking()
 {
-	if(!m_mouseHoveredOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
+	if(!m_mouseOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
 	{
 		const DbgObjectPickingResult& res = Renderer::getSingleton().getDbg().getObjectPickingResultAtMousePosition();
 
@@ -1598,6 +1659,7 @@ void EditorUi::objectPicking()
 
 			m_objectPicking.m_translationAxisSelected = kMaxU32;
 			m_objectPicking.m_scaleAxisSelected = kMaxU32;
+			m_objectPicking.m_rotationAxisSelected = kMaxU32;
 		}
 		else if(res.isValid())
 		{
@@ -1614,11 +1676,39 @@ void EditorUi::objectPicking()
 			{
 				m_objectPicking.m_translationAxisSelected = res.m_translationAxis;
 				m_objectPicking.m_scaleAxisSelected = kMaxU32;
+				m_objectPicking.m_rotationAxisSelected = kMaxU32;
 			}
 			else if(res.m_scaleAxis < 3)
 			{
 				m_objectPicking.m_translationAxisSelected = kMaxU32;
 				m_objectPicking.m_scaleAxisSelected = res.m_scaleAxis;
+				m_objectPicking.m_rotationAxisSelected = kMaxU32;
+			}
+			else if(res.m_rotationAxis < 3)
+			{
+				m_objectPicking.m_translationAxisSelected = kMaxU32;
+				m_objectPicking.m_scaleAxisSelected = kMaxU32;
+				m_objectPicking.m_rotationAxisSelected = res.m_rotationAxis;
+
+				// Calc the pivot point
+				const Transform camTrf =
+					SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>().getFrustum().getWorldTransform();
+
+				Plane axisPlane;
+				axisPlane.setFromRay(nodeOrigin, rotationAxis[res.m_rotationAxis]);
+
+				Bool collides = projectNdcToPlane(Input::getSingleton().getMousePositionNdc(), axisPlane, m_objectPicking.m_pivotPoint);
+				if(!collides)
+				{
+					// Clicked the gizmo from the back side, use the negative plane
+					axisPlane.setFromRay(nodeOrigin, -rotationAxis[res.m_rotationAxis]);
+					collides = projectNdcToPlane(Input::getSingleton().getMousePositionNdc(), axisPlane, m_objectPicking.m_pivotPoint);
+					if(!collides)
+					{
+						ANKI_LOGW("Can't determin the pivot point");
+						m_objectPicking.m_pivotPoint = nodeOrigin;
+					}
+				}
 			}
 
 			if(res.m_translationAxis < 3 || res.m_scaleAxis < 3)
@@ -1634,12 +1724,13 @@ void EditorUi::objectPicking()
 			m_sceneHierarchyWindow.m_selectedNode = nullptr;
 			m_objectPicking.m_translationAxisSelected = kMaxU32;
 			m_objectPicking.m_scaleAxisSelected = kMaxU32;
+			m_objectPicking.m_rotationAxisSelected = kMaxU32;
 		}
 	}
 
-	if(!m_mouseHoveredOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) > 1)
+	if(!m_mouseOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) > 1 && m_sceneHierarchyWindow.m_selectedNode)
 	{
-		// Dragging?
+		// Possibly dragging
 
 		const Transform& nodeTrf = m_sceneHierarchyWindow.m_selectedNode->getLocalTransform();
 		Array<Vec3, 3> rotationAxis;
@@ -1651,53 +1742,118 @@ void EditorUi::objectPicking()
 		{
 			const U32 axis = m_objectPicking.m_translationAxisSelected;
 			const F32 moveDistance = projectNdcToRay(Input::getSingleton().getMousePositionNdc(), m_objectPicking.m_pivotPoint, rotationAxis[axis]);
-			m_objectPicking.m_pivotPoint = m_objectPicking.m_pivotPoint + rotationAxis[axis] * moveDistance;
 
-			if(m_objectPicking.m_translationAxisSelected == 0)
+			const Vec3 oldPosition = nodeTrf.getOrigin().xyz();
+			Vec3 newPosition = oldPosition + rotationAxis[axis] * moveDistance;
+
+			// Snap position
+			for(U32 i = 0; i < 3 && m_toolbox.m_scaleTranslationSnapping > kEpsilonf; ++i)
 			{
-				m_sceneHierarchyWindow.m_selectedNode->moveLocalX(moveDistance);
+				newPosition[i] = round(newPosition[i] / m_toolbox.m_scaleTranslationSnapping) * m_toolbox.m_scaleTranslationSnapping;
 			}
-			else if(m_objectPicking.m_translationAxisSelected == 1)
-			{
-				m_sceneHierarchyWindow.m_selectedNode->moveLocalY(moveDistance);
-			}
-			else
-			{
-				m_sceneHierarchyWindow.m_selectedNode->moveLocalZ(moveDistance);
-			}
+			m_sceneHierarchyWindow.m_selectedNode->setLocalOrigin(newPosition);
+
+			// Update the pivot
+			const Vec3 moveDiff = newPosition - oldPosition; // Move the pivot as you moved the node origin
+			m_objectPicking.m_pivotPoint = m_objectPicking.m_pivotPoint + moveDiff;
 		}
 		else if(m_objectPicking.m_scaleAxisSelected < 3)
 		{
 			const U32 axis = m_objectPicking.m_scaleAxisSelected;
 			const F32 moveDistance = projectNdcToRay(Input::getSingleton().getMousePositionNdc(), m_objectPicking.m_pivotPoint, rotationAxis[axis]);
-			m_objectPicking.m_pivotPoint = m_objectPicking.m_pivotPoint + rotationAxis[axis] * moveDistance;
+
+			const F32 oldAxisScale = nodeTrf.getScale()[axis];
+			F32 newAxisScale = oldAxisScale + moveDistance;
+
+			// Snap scale
+			if(m_toolbox.m_scaleTranslationSnapping > kEpsilonf)
+			{
+				newAxisScale = round(newAxisScale / m_toolbox.m_scaleTranslationSnapping) * m_toolbox.m_scaleTranslationSnapping;
+			}
 
 			Vec3 scale = nodeTrf.getScale().xyz();
-
-			if(m_objectPicking.m_scaleAxisSelected == 0)
-			{
-				scale.x() += moveDistance;
-			}
-			else if(m_objectPicking.m_scaleAxisSelected == 1)
-			{
-				scale.y() += moveDistance;
-			}
-			else
-			{
-				scale.z() += moveDistance;
-			}
-
+			scale[axis] = max(newAxisScale, m_toolbox.m_scaleTranslationSnapping);
 			m_sceneHierarchyWindow.m_selectedNode->setLocalScale(scale);
+
+			// Update the pivot
+			const F32 adjustedMoveDistance = newAxisScale - oldAxisScale;
+			m_objectPicking.m_pivotPoint = m_objectPicking.m_pivotPoint + rotationAxis[axis] * adjustedMoveDistance;
+		}
+		else if(m_objectPicking.m_rotationAxisSelected < 3)
+		{
+			const U32 axis = m_objectPicking.m_rotationAxisSelected;
+			const Vec3 nodeOrigin = nodeTrf.getOrigin().xyz();
+
+			// Compute the new pivot point
+			Plane axisPlane;
+			axisPlane.setFromRay(nodeOrigin, rotationAxis[axis]);
+
+			Vec3 newPivotPoint;
+			Bool collides = projectNdcToPlane(Input::getSingleton().getMousePositionNdc(), axisPlane, newPivotPoint);
+			if(!collides)
+			{
+				// Clicked the gizmo from the back side, use the negative plane
+				axisPlane.setFromRay(nodeOrigin, -rotationAxis[axis]);
+				collides = projectNdcToPlane(Input::getSingleton().getMousePositionNdc(), axisPlane, newPivotPoint);
+				if(!collides)
+				{
+					ANKI_LOGW("Can't determin the pivot point");
+					newPivotPoint = nodeOrigin;
+				}
+			}
+
+			// Compute the angle between the points
+			const Vec3 dir0 = (newPivotPoint - nodeOrigin).normalize();
+			const Vec3 dir1 = (m_objectPicking.m_pivotPoint - nodeOrigin).normalize();
+			F32 angle = acos(saturate(dir1.dot(dir0)));
+			if(m_toolbox.m_rotationSnappingDeg > kEpsilonf)
+			{
+				const F32 rad = toRad(m_toolbox.m_rotationSnappingDeg);
+				angle = round(angle / rad) * rad;
+			}
+
+			Vec3 cross = dir1.cross(dir0);
+
+			if(cross != Vec3(0.0f))
+			{
+				cross = cross.normalize();
+				const F32 angleSign = (cross.dot(rotationAxis[axis]) < 1.0f) ? -1.0f : 1.0f;
+				angle *= angleSign;
+
+				// Apply the angle
+				if(m_objectPicking.m_rotationAxisSelected == 0)
+				{
+					m_sceneHierarchyWindow.m_selectedNode->rotateLocalX(angle);
+				}
+				else if(m_objectPicking.m_rotationAxisSelected == 1)
+				{
+					m_sceneHierarchyWindow.m_selectedNode->rotateLocalY(angle);
+				}
+				else
+				{
+					m_sceneHierarchyWindow.m_selectedNode->rotateLocalZ(angle);
+				}
+
+				// Use the snapped angle to adjust the pivot point
+				Mat3 rot;
+				rot.setZAxis(rotationAxis[axis]);
+				rot.setXAxis(dir1);
+				rot.setYAxis(rotationAxis[axis].cross(dir1).normalize());
+				rot.rotateZAxis(angle);
+				newPivotPoint = nodeOrigin + rot.getXAxis() * (newPivotPoint - nodeOrigin).length();
+
+				m_objectPicking.m_pivotPoint = newPivotPoint;
+			}
 		}
 	}
 
 	if(m_sceneHierarchyWindow.m_selectedNode)
 	{
-		Renderer::getSingleton().getDbg().setGizmosTransform(m_sceneHierarchyWindow.m_selectedNode->getWorldTransform(), true);
+		Renderer::getSingleton().getDbg().enableGizmos(m_sceneHierarchyWindow.m_selectedNode->getWorldTransform(), true);
 	}
 	else
 	{
-		Renderer::getSingleton().getDbg().setGizmosTransform(Transform::getIdentity(), false);
+		Renderer::getSingleton().getDbg().enableGizmos(Transform::getIdentity(), false);
 	}
 }
 

@@ -111,7 +111,7 @@ public:
 			mousePosOn1stClick = in.getMousePositionNdc();
 		}
 
-		if(in.getMouseButton(MouseButton::kRight) > 0 && !m_editorUiNode->m_editorUi.m_mouseHoveredOverAnyWindow)
+		if(in.getMouseButton(MouseButton::kRight) > 0 && !m_editorUiNode->m_editorUi.m_mouseOverAnyWindow)
 		{
 			in.hideCursor(true);
 

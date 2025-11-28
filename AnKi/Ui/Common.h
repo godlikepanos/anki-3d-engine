@@ -8,6 +8,7 @@
 // Include ImGUI
 #include <AnKi/Ui/ImGuiConfig.h>
 #include <ImGui/imgui.h>
+#include <ImGui/imgui_internal.h>
 
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/Texture.h>

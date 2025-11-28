@@ -24,7 +24,7 @@ class EditorUi
 public:
 	Bool m_quit = false;
 
-	Bool m_mouseHoveredOverAnyWindow = false; // Mouse is over one of the editor windows.
+	Bool m_mouseOverAnyWindow = false; // Mouse is over one of the editor windows.
 
 	EditorUi();
 
@@ -95,6 +95,7 @@ private:
 	public:
 		U32 m_translationAxisSelected = kMaxU32;
 		U32 m_scaleAxisSelected = kMaxU32;
+		U32 m_rotationAxisSelected = kMaxU32;
 		Vec3 m_pivotPoint;
 	} m_objectPicking;
 
@@ -151,6 +152,13 @@ private:
 	public:
 		Bool m_disableTonemapping = false;
 	} m_debugRtsWindow;
+
+	class
+	{
+	public:
+		F32 m_scaleTranslationSnapping = 0.1f;
+		F32 m_rotationSnappingDeg = 1.0f;
+	} m_toolbox;
 
 	void mainMenu();
 

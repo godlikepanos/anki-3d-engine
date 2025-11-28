@@ -373,6 +373,25 @@ static const U16 g_gizmoRingIndices[512][3] = {
 	{173, 172, 245}, {174, 173, 247}, {175, 174, 226}, {176, 175, 225}, {129, 176, 227}, {128, 129, 229}, {132, 128, 228}, {131, 132, 235},
 	{130, 131, 231}, {138, 130, 230}, {134, 138, 234}, {133, 134, 232}, {137, 133, 233}, {135, 137, 255}, {136, 135, 250}, {181, 136, 251}};
 
+static constexpr F32 kCubePositions[] = {
+	// Front face
+	-0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+
+	// Back face
+	0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,
+
+	// Left face
+	-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, -0.5f,
+
+	// Right face
+	0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f,
+
+	// Top face
+	-0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f,
+
+	// Bottom face
+	-0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f};
+
 Dbg::Dbg()
 {
 	registerDebugRenderTarget("ObjectPicking");
@@ -411,9 +430,9 @@ Error Dbg::init()
 		buffInit.m_size = sizeof(Vec3) * 8;
 		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		m_cubeVertsBuffer = GrManager::getSingleton().newBuffer(buffInit);
+		m_boxLines.m_positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		Vec3* verts = static_cast<Vec3*>(m_cubeVertsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		Vec3* verts = static_cast<Vec3*>(m_boxLines.m_positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		constexpr F32 kSize = 1.0f;
 		verts[0] = Vec3(kSize, kSize, kSize); // front top right
@@ -425,14 +444,14 @@ Error Dbg::init()
 		verts[6] = Vec3(-kSize, -kSize, -kSize); // back bottom left
 		verts[7] = Vec3(kSize, -kSize, -kSize); // back bottom right
 
-		m_cubeVertsBuffer->unmap();
+		m_boxLines.m_positionsBuff->unmap();
 
 		constexpr U kIndexCount = 12 * 2;
 		buffInit.setName("Dbg cube indices");
 		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 		buffInit.m_size = kIndexCount * sizeof(U16);
-		m_cubeIndicesBuffer = GrManager::getSingleton().newBuffer(buffInit);
-		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		m_boxLines.m_indexBuff = GrManager::getSingleton().newBuffer(buffInit);
+		U16* indices = static_cast<U16*>(m_boxLines.m_indexBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		U c = 0;
 		indices[c++] = 0;
@@ -462,12 +481,24 @@ Error Dbg::init()
 		indices[c++] = 3;
 		indices[c++] = 7;
 
-		m_cubeIndicesBuffer->unmap();
+		m_boxLines.m_indexBuff->unmap();
 
 		ANKI_ASSERT(c == kIndexCount);
 	}
 
 	initGizmos();
+
+	{
+		BufferInitInfo buffInit("Debug cube");
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+		buffInit.m_size = sizeof(kCubePositions);
+		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
+		m_debugPoint.m_positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
+
+		void* mapped = m_debugPoint.m_positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		memcpy(mapped, kCubePositions, sizeof(kCubePositions));
+		m_debugPoint.m_positionsBuff->unmap();
+	}
 
 	return Error::kNone;
 }
@@ -634,9 +665,9 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 			consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
-			cmdb.bindVertexBuffer(0, BufferView(m_cubeVertsBuffer.get()), sizeof(Vec3));
+			cmdb.bindVertexBuffer(0, BufferView(m_boxLines.m_positionsBuff.get()), sizeof(Vec3));
 			cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
-			cmdb.bindIndexBuffer(BufferView(m_cubeIndicesBuffer.get()), IndexType::kU16);
+			cmdb.bindIndexBuffer(BufferView(m_boxLines.m_indexBuff.get()), IndexType::kU16);
 		}
 
 		// GBuffer AABBs
@@ -732,6 +763,42 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 				cmdb.setFastConstants(&ctx.m_matrices.m_viewProjection, sizeof(ctx.m_matrices.m_viewProjection));
 
 				cmdb.draw(PrimitiveTopology::kLines, vertCount);
+			}
+		}
+
+		// Debug point
+		if(m_debugPoint.m_position != kMaxF32)
+		{
+			struct Consts
+			{
+				Mat4 m_mvp;
+				Vec4 m_color;
+			} consts;
+			const Mat4 trf = Mat4(m_debugPoint.m_position, Mat3::getIdentity(), Vec3(m_debugPoint.m_size));
+			consts.m_mvp = ctx.m_matrices.m_viewProjection * trf;
+			consts.m_color = m_debugPoint.m_color;
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
+			variantInitInfo.addMutation("OBJECT_TYPE", 0);
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Gizmos");
+			const ShaderProgramResourceVariant* variant;
+			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
+			cmdb.bindShaderProgram(&variant->getProgram());
+
+			cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
+			cmdb.bindVertexBuffer(0, BufferView(m_debugPoint.m_positionsBuff.get()), sizeof(Vec3));
+
+			if(!m_debugPoint.m_enableDepthTest)
+			{
+				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+			}
+
+			cmdb.draw(PrimitiveTopology::kTriangles, sizeof(kCubePositions) / sizeof(F32));
+
+			if(!m_debugPoint.m_enableDepthTest)
+			{
+				cmdb.setDepthCompareOperation(CompareOperation::kLess);
 			}
 		}
 

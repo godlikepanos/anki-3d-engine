@@ -92,10 +92,20 @@ public:
 		return m_runCtx.m_objPickingRes;
 	}
 
-	void setGizmosTransform(const Transform& trf, Bool enableGizmos)
+	void enableGizmos(const Transform& trf, Bool enableGizmos)
 	{
 		m_gizmos.m_trf = Mat3x4(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
 		m_gizmos.m_enabled = enableGizmos;
+	}
+
+	// Draw a debug solid cube in world space
+	void enableDebugCube(Vec3 pos, F32 size, Vec4 color, Bool enable, Bool enableDepthTesting = true)
+	{
+		ANKI_ASSERT(size > kEpsilonf);
+		m_debugPoint.m_position = (enable) ? pos : Vec3(kMaxF32);
+		m_debugPoint.m_size = size;
+		m_debugPoint.m_color = color;
+		m_debugPoint.m_enableDepthTest = enableDepthTesting;
 	}
 
 private:
@@ -109,12 +119,16 @@ private:
 	ImageResourcePtr m_decalImage;
 	ImageResourcePtr m_reflectionImage;
 
-	BufferPtr m_cubeVertsBuffer;
-	BufferPtr m_cubeIndicesBuffer;
-
 	ShaderProgramResourcePtr m_dbgProg;
 
 	MultiframeReadbackToken m_readback;
+
+	class
+	{
+	public:
+		BufferPtr m_positionsBuff;
+		BufferPtr m_indexBuff;
+	} m_boxLines;
 
 	class
 	{
@@ -129,6 +143,16 @@ private:
 		Mat3x4 m_trf;
 		Bool m_enabled = false;
 	} m_gizmos;
+
+	class
+	{
+	public:
+		Vec3 m_position = Vec3(kMaxF32);
+		BufferPtr m_positionsBuff;
+		F32 m_size = 1.0f;
+		Vec4 m_color = Vec4(1.0f);
+		Bool m_enableDepthTest = false;
+	} m_debugPoint;
 
 	DbgOption m_options = DbgOption::kDepthTest;
 
