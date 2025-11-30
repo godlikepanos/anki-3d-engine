@@ -21,8 +21,13 @@ enum class BodyComponentCollisionShapeType : U8
 	kAabb,
 	kSphere,
 
-	kCount
+	kCount,
+	kFirst = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BodyComponentCollisionShapeType)
+
+inline constexpr Array<const Char*, U32(BodyComponentCollisionShapeType::kCount)> kBodyComponentCollisionShapeTypeNames = {"Mesh Component", "AABB",
+																														   "Sphere"};
 
 /// Rigid body component.
 class BodyComponent : public SceneComponent
@@ -33,6 +38,20 @@ public:
 	BodyComponent(SceneNode* node);
 
 	~BodyComponent();
+
+	void setCollisionShapeType(BodyComponentCollisionShapeType type)
+	{
+		if(ANKI_EXPECT(type <= BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
+		{
+			m_shapeType = type;
+			cleanup(); // Force recreate
+		}
+	}
+
+	BodyComponentCollisionShapeType getCollisionShapeType() const
+	{
+		return m_shapeType;
+	}
 
 	void setBoxExtend(Vec3 extend)
 	{
@@ -68,15 +87,6 @@ public:
 		return m_sphere.m_radius;
 	}
 
-	void setCollisionShapeType(BodyComponentCollisionShapeType type)
-	{
-		if(ANKI_EXPECT(type <= BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
-		{
-			m_shapeType = type;
-			cleanup(); // Force recreate
-		}
-	}
-
 	void setMass(F32 mass)
 	{
 		if(ANKI_EXPECT(mass >= 0.0f) && m_mass != mass)
@@ -108,6 +118,8 @@ public:
 	{
 		return *m_node;
 	}
+
+	Bool isValid() const;
 
 private:
 	SceneNode* m_node = nullptr;
@@ -146,7 +158,7 @@ private:
 
 	Bool m_teleported = false;
 
-	BodyComponentCollisionShapeType m_shapeType = BodyComponentCollisionShapeType::kCount;
+	BodyComponentCollisionShapeType m_shapeType = BodyComponentCollisionShapeType::kAabb;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

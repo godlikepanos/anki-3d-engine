@@ -177,6 +177,8 @@ private:
 	void skinComponent(SkinComponent& comp);
 	void particleEmitterComponent(ParticleEmitter2Component& comp);
 	void lightComponent(LightComponent& comp);
+	void jointComponent(JointComponent& comp);
+	void bodyComponent(BodyComponent& comp);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils

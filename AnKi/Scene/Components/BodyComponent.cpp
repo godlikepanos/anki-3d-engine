@@ -36,10 +36,14 @@ void BodyComponent::teleportTo(Vec3 position, const Mat3& rotation)
 	m_node->setLocalRotation(rotation);
 }
 
+Bool BodyComponent::isValid() const
+{
+	return m_shapeType != BodyComponentCollisionShapeType::kFromMeshComponent || (m_mesh.m_meshc && m_mesh.m_meshc->hasMeshResource());
+}
+
 void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	const Bool meshIsValid = m_mesh.m_meshc && m_mesh.m_meshc->hasMeshResource();
-	if(m_shapeType == BodyComponentCollisionShapeType::kCount || (m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent && !meshIsValid))
+	if(!isValid())
 	{
 		// It's invalid, return
 		ANKI_ASSERT(!m_body);

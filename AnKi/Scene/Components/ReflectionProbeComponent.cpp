@@ -52,9 +52,6 @@ void ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
 		m_halfSize = info.m_node->getWorldTransform().getScale().xyz();
 
-		// Update the UUID
-		const U32 uuid = (m_reflectionNeedsRefresh) ? regenerateUuid() : 0;
-
 		// Upload to the GPU scene
 		GpuSceneReflectionProbe gpuProbe;
 		gpuProbe.m_position = m_worldPos;
@@ -64,8 +61,9 @@ void ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
 
-		gpuProbe.m_uuid = uuid;
+		gpuProbe.m_uuid = getUuid();
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
+		gpuProbe.m_cpuFeedback = m_reflectionNeedsRefresh;
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 }

@@ -120,22 +120,21 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 	// Upload to GPU scene
 	if(moved || shapeDirty || m_dirty)
 	{
-		// Change the UUID
-		U32 uuid;
+		Bool cpuFeedback = false;
 		if(m_cellsRefreshedCount == 0)
 		{
-			// Refresh starts over, get a new UUID
-			uuid = regenerateUuid();
+			// Refresh starts over
+			cpuFeedback = true;
 		}
 		else if(m_cellsRefreshedCount < m_totalCellCount)
 		{
 			// In the middle of the refresh process
-			uuid = getUuid();
+			cpuFeedback = true;
 		}
 		else
 		{
 			// Refresh it done
-			uuid = 0;
+			cpuFeedback = false;
 		}
 
 		// Upload to the GPU scene
@@ -148,8 +147,9 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
-		gpuProbe.m_uuid = uuid;
+		gpuProbe.m_uuid = getUuid();
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
+		gpuProbe.m_cpuFeedback = cpuFeedback;
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 

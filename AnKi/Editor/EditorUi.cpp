@@ -774,6 +774,12 @@ void EditorUi::sceneNodePropertiesWindow()
 					case SceneComponentType::kLight:
 						lightComponent(static_cast<LightComponent&>(comp));
 						break;
+					case SceneComponentType::kBody:
+						bodyComponent(static_cast<BodyComponent&>(comp));
+						break;
+					case SceneComponentType::kJoint:
+						jointComponent(static_cast<JointComponent&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -957,6 +963,13 @@ void EditorUi::meshComponent(MeshComponent& comp)
 
 void EditorUi::skinComponent(SkinComponent& comp)
 {
+	if(!comp.isValid())
+	{
+		ImGui::SameLine();
+		ImGui::TextUnformatted(ICON_MDI_ALERT);
+		ImGui::SetItemTooltip("Component not valid");
+	}
+
 	// Locate button
 	{
 		ImGui::BeginDisabled(!comp.hasSkeletonResource());
@@ -1145,6 +1158,90 @@ void EditorUi::lightComponent(LightComponent& comp)
 		if(fieldChanged)
 		{
 			comp.setDirectionFromTimeOfDay(month, day, hour);
+		}
+	}
+}
+
+void EditorUi::jointComponent(JointComponent& comp)
+{
+	if(!comp.isValid())
+	{
+		ImGui::SameLine();
+		ImGui::TextUnformatted(ICON_MDI_ALERT);
+		ImGui::SetItemTooltip("Component not valid");
+	}
+
+	// Joint type
+	if(ImGui::BeginCombo("Type", kJointComponentTypeName[comp.getJointType()]))
+	{
+		for(JointComponentyType type : EnumIterable<JointComponentyType>())
+		{
+			const Bool selected = type == comp.getJointType();
+			if(ImGui::Selectable(kBodyComponentCollisionShapeTypeNames[type], selected))
+			{
+				comp.setJointType(type);
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if(selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+}
+
+void EditorUi::bodyComponent(BodyComponent& comp)
+{
+	if(!comp.isValid())
+	{
+		ImGui::SameLine();
+		ImGui::TextUnformatted(ICON_MDI_ALERT);
+		ImGui::SetItemTooltip("Component not valid");
+	}
+
+	// Shape type
+	if(ImGui::BeginCombo("Type", kBodyComponentCollisionShapeTypeNames[comp.getCollisionShapeType()]))
+	{
+		for(BodyComponentCollisionShapeType type : EnumIterable<BodyComponentCollisionShapeType>())
+		{
+			const Bool selected = type == comp.getCollisionShapeType();
+			if(ImGui::Selectable(kBodyComponentCollisionShapeTypeNames[type], selected))
+			{
+				comp.setCollisionShapeType(type);
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if(selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	// Mass
+	F32 mass = comp.getMass();
+	if(ImGui::SliderFloat("Mass", &mass, 0.0f, 100.0f))
+	{
+		comp.setMass(mass);
+	}
+
+	if(comp.getCollisionShapeType() == BodyComponentCollisionShapeType::kAabb)
+	{
+		Vec3 extend = comp.getBoxExtend();
+		if(ImGui::SliderFloat3("Box Extend", &extend[0], 0.01f, 100.0f))
+		{
+			comp.setBoxExtend(extend);
+		}
+	}
+	else if(comp.getCollisionShapeType() == BodyComponentCollisionShapeType::kSphere)
+	{
+		F32 radius = comp.getSphereRadius();
+		if(ImGui::SliderFloat("Radius", &radius, 0.01f, 100.0f))
+		{
+			comp.setSphereRadius(radius);
 		}
 	}
 }

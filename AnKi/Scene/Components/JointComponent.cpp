@@ -11,6 +11,7 @@ namespace anki {
 
 JointComponent::JointComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
+	, m_node(node)
 {
 	node->setIgnoreParentTransform(true);
 }
@@ -19,12 +20,10 @@ JointComponent::~JointComponent()
 {
 }
 
-void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+Bool JointComponent::isValid() const
 {
-	SceneNode& node = *info.m_node;
-
-	SceneNode* parent = node.getParent();
-	SceneNode* child = node.hasChildren() ? &node.getChild(0) : nullptr;
+	SceneNode* parent = m_node->getParent();
+	SceneNode* child = m_node->hasChildren() ? &m_node->getChild(0) : nullptr;
 
 	BodyComponent* bodyc1 = (parent) ? parent->tryGetFirstComponentOfType<BodyComponent>() : nullptr;
 	BodyComponent* bodyc2 = (child) ? child->tryGetFirstComponentOfType<BodyComponent>() : nullptr;
@@ -32,11 +31,27 @@ void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	PhysicsBody* body1 = (bodyc1) ? bodyc1->getPhysicsBody().tryGet() : nullptr;
 	PhysicsBody* body2 = (bodyc2) ? bodyc2->getPhysicsBody().tryGet() : nullptr;
 
-	if(!body1 || !body2 || m_type == JointType::kCount)
+	return body1 && body2 && m_type < JointComponentyType::kCount;
+}
+
+void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	SceneNode& node = *info.m_node;
+
+	if(!isValid())
 	{
 		m_joint.reset(nullptr);
 		return;
 	}
+
+	SceneNode* parent = node.getParent();
+	SceneNode* child = &node.getChild(0);
+
+	BodyComponent* bodyc1 = parent->tryGetFirstComponentOfType<BodyComponent>();
+	BodyComponent* bodyc2 = child->tryGetFirstComponentOfType<BodyComponent>();
+
+	PhysicsBody* body1 = bodyc1->getPhysicsBody().tryGet();
+	PhysicsBody* body2 = bodyc2->getPhysicsBody().tryGet();
 
 	const Bool parentChanged = parent && m_parentNodeUuid != parent->getUuid();
 	const Bool childChanged = child && m_childNodeUuid != child->getUuid();
@@ -56,10 +71,10 @@ void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		switch(m_type)
 		{
-		case JointType::kPoint:
+		case JointComponentyType::kPoint:
 			m_joint = PhysicsWorld::getSingleton().newPointJoint(body1, body2, node.getWorldTransform().getOrigin().xyz());
 			break;
-		case JointType::kHinge:
+		case JointComponentyType::kHinge:
 			m_joint = PhysicsWorld::getSingleton().newHingeJoint(body1, body2, node.getWorldTransform());
 			break;
 		default:

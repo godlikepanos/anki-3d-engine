@@ -161,10 +161,11 @@ struct GpuSceneLight
 struct GpuSceneReflectionProbe
 {
 	Vec3 m_position; // Position of the probe in world space.
-	U32 m_cubeTexture; // Bindless index of the reflection texture.
+	U32 m_cubeTexture : 30; // Bindless index of the reflection texture
+	U32 m_cpuFeedback : 1;
 
 	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_uuid; // The UUID of that probe. If it's zero the GPU will not inform the CPU about it.
+	U32 m_uuid; // The UUID of that probe
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	U32 m_componentArrayIndex; // Array in the CPU scene.
@@ -176,7 +177,7 @@ static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe
 struct GpuSceneGlobalIlluminationProbe
 {
 	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_uuid; // The UUID of that probe. If it's zero the GPU will not inform the CPU about it.
+	U32 m_uuid; // The UUID of that probe
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	U32 m_componentArrayIndex; // Array in the CPU scene.
@@ -184,7 +185,7 @@ struct GpuSceneGlobalIlluminationProbe
 	U32 m_volumeTexture; // Bindless index of the irradiance volume texture.
 	F32 m_halfTexelSizeU; // (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
 	F32 m_fadeDistance; // Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less
-	F32 m_padding2;
+	U32 m_cpuFeedback;
 };
 constexpr U32 kSizeof_GpuSceneGlobalIlluminationProbe = 3u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneGlobalIlluminationProbe) == kSizeof_GpuSceneGlobalIlluminationProbe);

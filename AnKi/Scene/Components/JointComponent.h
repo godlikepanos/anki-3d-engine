@@ -10,20 +10,19 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// @memberof JointComponent
-enum class JointType : U8
+enum class JointComponentyType : U8
 {
 	kPoint,
 	kHinge,
 
 	kCount,
-	kFirst
+	kFirst = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(JointComponentyType)
 
-/// Contains a single joint that connects the parent node with the 1st child node of the node that has this component.
+inline constexpr Array<const Char*, U32(JointComponentyType::kCount)> kJointComponentTypeName = {"Point", "Hinge"};
+
+// Contains a single joint that connects the parent node with the 1st child node of the node that has this component.
 class JointComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(JointComponent)
@@ -33,21 +32,32 @@ public:
 
 	~JointComponent();
 
-	void setType(JointType type)
+	void setJointType(JointComponentyType type)
 	{
-		m_type = type;
+		if(ANKI_EXPECT(type < JointComponentyType::kCount))
+		{
+			m_type = type;
+		}
 	}
+
+	JointComponentyType getJointType() const
+	{
+		return m_type;
+	}
+
+	Bool isValid() const;
 
 private:
 	PhysicsJointPtr m_joint;
 
+	SceneNode* m_node = nullptr;
+
 	U32 m_parentNodeUuid = 0;
 	U32 m_childNodeUuid = 0;
 
-	JointType m_type = JointType::kCount;
+	JointComponentyType m_type = JointComponentyType::kPoint;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
-/// @}
 
 } // end namespace anki

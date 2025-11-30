@@ -133,11 +133,7 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	// Give feedback to the CPU
 	//
 #if CPU_FEEDBACK
-#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 	const Bool doFeedback = g_objects[svDispatchThreadId].m_cpuFeedback;
-#	else
-	const Bool doFeedback = true;
-#	endif
 
 	if(!skip && doFeedback)
 	{

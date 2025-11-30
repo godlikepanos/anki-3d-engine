@@ -57,7 +57,7 @@ Error MyApp::sampleExtraInit()
 
 		SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>("hinge");
 		JointComponent* jointc = joint->newComponent<JointComponent>();
-		jointc->setType(JointType::kHinge);
+		jointc->setJointType(JointComponentyType::kHinge);
 		joint->setLocalOrigin(Vec3(-0.0f, 4.8f, -3.0f));
 		base->addChild(joint);
 
@@ -97,7 +97,7 @@ Error MyApp::sampleExtraInit()
 		{
 			SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("joint_chain%u", i));
 			JointComponent* jointc = joint->newComponent<JointComponent>();
-			jointc->setType(JointType::kPoint);
+			jointc->setJointType(JointComponentyType::kPoint);
 			joint->setLocalOrigin(trf.getOrigin().xyz());
 			joint->setParent(prevNode);
 

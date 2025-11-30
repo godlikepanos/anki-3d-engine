@@ -191,7 +191,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Update the GPU scene AABBs
-		if(prioritizeEmitter || m_skinComponent)
+		if(prioritizeEmitter || m_skinComponent || moved)
 		{
 			const Aabb aabbWorld = computeAabb(*info.m_node);
 			for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(mtl.getRenderingTechniques()))
