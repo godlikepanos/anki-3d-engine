@@ -29,7 +29,9 @@ static WeakArray<TComponent*> gatherComponents(ConstWeakArray<UVec2> pairs, TArr
 		}
 
 		TComponent* comp = &array[pair.y()];
-		if(comp->getUuid() == pair.x())
+		const U32 uuid = pair.x();
+		ANKI_ASSERT(uuid != 0);
+		if(comp->getUuid() == uuid)
 		{
 			components.emplaceBack(comp);
 		}

@@ -133,7 +133,13 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	// Give feedback to the CPU
 	//
 #if CPU_FEEDBACK
-	if(!skip && g_objects[svDispatchThreadId].m_uuid != 0)
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+	const Bool doFeedback = g_objects[svDispatchThreadId].m_cpuFeedback;
+#	else
+	const Bool doFeedback = true;
+#	endif
+
+	if(!skip && doFeedback)
 	{
 		U32 idx;
 		InterlockedAdd(g_counterBuffer[0].m_feedbackObjectCount, 1, idx);

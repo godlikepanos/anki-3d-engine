@@ -771,6 +771,9 @@ void EditorUi::sceneNodePropertiesWindow()
 					case SceneComponentType::kParticleEmitter2:
 						particleEmitterComponent(static_cast<ParticleEmitter2Component&>(comp));
 						break;
+					case SceneComponentType::kLight:
+						lightComponent(static_cast<LightComponent&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -1044,6 +1047,104 @@ void EditorUi::particleEmitterComponent(ParticleEmitter2Component& comp)
 				}
 			}
 			ImGui::EndCombo();
+		}
+	}
+}
+
+void EditorUi::lightComponent(LightComponent& comp)
+{
+	// Light type
+	if(ImGui::BeginCombo("Type", kLightComponentTypeNames[comp.getLightComponentType()]))
+	{
+		for(LightComponentType type : EnumIterable<LightComponentType>())
+		{
+			const Bool selected = type == comp.getLightComponentType();
+			if(ImGui::Selectable(kLightComponentTypeNames[type], selected))
+			{
+				comp.setLightComponentType(type);
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if(selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	// Diffuse color
+	Vec4 diffuseCol = comp.getDiffuseColor();
+	if(ImGui::InputFloat4("Diffuse Color", &diffuseCol[0]))
+	{
+		comp.setDiffuseColor(diffuseCol.max(0.01f));
+	}
+
+	// Shadow
+	Bool shadow = comp.getShadowEnabled();
+	if(ImGui::Checkbox("Shadow", &shadow))
+	{
+		comp.setShadowEnabled(shadow);
+	}
+
+	if(comp.getLightComponentType() == LightComponentType::kPoint)
+	{
+		// Radius
+		F32 radius = comp.getRadius();
+		if(ImGui::SliderFloat("Radius", &radius, 0.01f, 100.0f))
+		{
+			comp.setRadius(max(radius, 0.01f));
+		}
+	}
+	else if(comp.getLightComponentType() == LightComponentType::kSpot)
+	{
+		// Radius
+		F32 distance = comp.getDistance();
+		if(ImGui::SliderFloat("Distance", &distance, 0.01f, 100.0f))
+		{
+			comp.setDistance(max(distance, 0.01f));
+		}
+
+		// Inner & outter angles
+		Vec2 angles(comp.getInnerAngle(), comp.getOuterAngle());
+		angles[0] = toDegrees(angles[0]);
+		angles[1] = toDegrees(angles[1]);
+		if(ImGui::SliderFloat2("Inner & Outer Angles", &angles[0], 1.0f, 89.0f))
+		{
+			angles[0] = clamp(toRad(angles[0]), 1.0_degrees, 80.0_degrees);
+			angles[1] = clamp(toRad(angles[1]), angles[0], 89.0_degrees);
+
+			comp.setInnerAngle(angles[0]);
+			comp.setOuterAngle(angles[1]);
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(comp.getLightComponentType() == LightComponentType::kDirectional);
+
+		// Day of month
+		I32 month, day;
+		F32 hour;
+		comp.getTimeOfDay(month, day, hour);
+		Bool fieldChanged = false;
+		if(ImGui::SliderInt("Month", &month, 0, 11))
+		{
+			fieldChanged = true;
+		}
+
+		if(ImGui::SliderInt("Day", &day, 0, 30))
+		{
+			fieldChanged = true;
+		}
+
+		if(ImGui::SliderFloat("Hour (0-24)", &hour, 0.0f, 24.0f))
+		{
+			fieldChanged = true;
+		}
+
+		if(fieldChanged)
+		{
+			comp.setDirectionFromTimeOfDay(month, day, hour);
 		}
 	}
 }

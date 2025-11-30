@@ -124,15 +124,6 @@ struct GpuSceneParticleEmitter2
 };
 static_assert(sizeof(GpuSceneParticleEmitter2) % sizeof(Vec4) == 0);
 
-enum class GpuSceneLightFlag : U32
-{
-	kNone = 0,
-	kPointLight = 1 << 0,
-	kSpotLight = 1 << 1,
-	kShadow = 1 << 2
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneLightFlag)
-
 // A hash of all visible renderables. If it matches between vis tests then skip the drawcalls. Touched only by the GPU.
 struct GpuSceneLightVisibleRenderablesHash
 {
@@ -148,7 +139,11 @@ struct GpuSceneLight
 	Vec3 m_diffuseColor;
 	U32 m_visibleRenderablesHashIndex; // Points to a GpuSceneLightVisibleRenderablesHash
 
-	GpuSceneLightFlag m_flags;
+	U32 m_isPointLight : 1;
+	U32 m_isSpotLight : 1;
+	U32 m_shadow : 1;
+	U32 m_cpuFeedback : 1; // If true the GPU visibility will inform the CPU about it
+	U32 m_padding : 28;
 	U32 m_componentArrayIndex; // Array index of the LightComponent in the CPU scene.
 	U32 m_uuid; // The UUID of that light. If it's zero the GPU will not inform the CPU about it.
 	F32 m_innerCos; // Only for spot light.
@@ -158,8 +153,7 @@ struct GpuSceneLight
 
 	Vec4 m_edgePoints[4u]; // Edge points in world space. Only for spot light.
 
-	// If it's a spot light the 4 first rows are the texture matrix. If it's point light it's the UV viewports in the
-	// shadow atlas.
+	// If it's a spot light the 4 first rows are the texture matrix. If it's point light it's the UV viewports in the shadow atlas
 	Vec4 m_spotLightMatrixOrPointLightUvViewports[6u];
 };
 

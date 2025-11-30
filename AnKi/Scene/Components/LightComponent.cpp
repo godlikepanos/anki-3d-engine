@@ -89,7 +89,6 @@ void LightComponent::setLightComponentType(LightComponentType newType)
 		m_shadowAtlasUvViewportCount = 0;
 		m_shapeDirty = true;
 		m_otherDirty = true;
-		m_uuid = 0;
 	}
 }
 
@@ -105,15 +104,6 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	if(updated && m_type == LightComponentType::kPoint)
 	{
-		if(!m_shadow)
-		{
-			m_uuid = 0;
-		}
-		else if(m_uuid == 0)
-		{
-			m_uuid = SceneGraph::getSingleton().getNewUuid();
-		}
-
 		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 6;
 
 		// Upload the hash
@@ -137,10 +127,12 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_radius = m_point.m_radius;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
-		gpuLight.m_flags = GpuSceneLightFlag::kPointLight;
-		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
+		gpuLight.m_isPointLight = 1;
+		gpuLight.m_isSpotLight = 0;
+		gpuLight.m_shadow = reallyShadow;
+		gpuLight.m_cpuFeedback = m_shadow;
 		gpuLight.m_componentArrayIndex = getArrayIndex();
-		gpuLight.m_uuid = m_uuid;
+		gpuLight.m_uuid = getUuid();
 		for(U32 f = 0; f < m_shadowAtlasUvViewportCount; ++f)
 		{
 			gpuLight.m_spotLightMatrixOrPointLightUvViewports[f] = m_shadowAtlasUvViewports[f];
@@ -154,15 +146,6 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
-		if(!m_shadow)
-		{
-			m_uuid = 0;
-		}
-		else if(m_uuid == 0)
-		{
-			m_uuid = SceneGraph::getSingleton().getNewUuid();
-		}
-
 		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 1;
 
 		// Upload the hash
@@ -186,10 +169,12 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_radius = m_spot.m_distance;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
-		gpuLight.m_flags = GpuSceneLightFlag::kSpotLight;
-		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
+		gpuLight.m_isPointLight = 0;
+		gpuLight.m_isSpotLight = 1;
+		gpuLight.m_shadow = reallyShadow;
+		gpuLight.m_cpuFeedback = m_shadow;
 		gpuLight.m_componentArrayIndex = getArrayIndex();
-		gpuLight.m_uuid = m_uuid;
+		gpuLight.m_uuid = getUuid();
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);

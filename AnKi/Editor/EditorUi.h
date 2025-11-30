@@ -176,6 +176,7 @@ private:
 	void meshComponent(MeshComponent& comp);
 	void skinComponent(SkinComponent& comp);
 	void particleEmitterComponent(ParticleEmitter2Component& comp);
+	void lightComponent(LightComponent& comp);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils

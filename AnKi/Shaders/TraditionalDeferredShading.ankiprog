@@ -145,9 +145,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 		const F32 lambert = nol;
-		const F32 spot = ((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
-							 ? computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction)
-							 : 1.0f;
+		const F32 spot = light.m_isSpotLight ? computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0f;
 		const F32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
 
 #	if SPECULAR == 1

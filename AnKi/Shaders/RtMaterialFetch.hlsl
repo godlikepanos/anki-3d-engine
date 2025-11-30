@@ -257,7 +257,7 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 			const T lambert = max(T(0), dot(nFrag2Light, gbuffer.m_worldNormal));
 
 			F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
-			if((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
+			if(light.m_isSpotLight)
 			{
 				attenuation *= computeSpotFactor(nFrag2Light, light.m_outerCos, light.m_innerCos, light.m_direction);
 			}

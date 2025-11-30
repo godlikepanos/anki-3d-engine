@@ -58,7 +58,7 @@ void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 cellIdx, 
 		// Get the light bounds
 		Vec3 worldLightAabbMin;
 		Vec3 worldLightAabbMax;
-		if((U32)light.m_flags & (U32)GpuSceneLightFlag::kPointLight)
+		if(light.m_isPointLight)
 		{
 			worldLightAabbMin = light.m_position - light.m_radius;
 			worldLightAabbMax = light.m_position + light.m_radius;
@@ -83,7 +83,7 @@ void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 cellIdx, 
 		if(detailedTests)
 		{
 			Vec4 spotLightPlanes[5];
-			if((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
+			if(light.m_isSpotLight)
 			{
 				const Vec3 pe = light.m_position;
 				const Vec3 p0 = light.m_edgePoints[0];
@@ -97,11 +97,11 @@ void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 cellIdx, 
 				spotLightPlanes[4] = computePlane(p3, p0, p1);
 			}
 
-			if((U32)light.m_flags & (U32)GpuSceneLightFlag::kPointLight && !aabbSphereOverlap(cellMin, cellMax, light.m_position, light.m_radius))
+			if(light.m_isPointLight && !aabbSphereOverlap(cellMin, cellMax, light.m_position, light.m_radius))
 			{
 				continue;
 			}
-			else if((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight && !insideFrustum(spotLightPlanes, cellMin, cellMax))
+			else if(light.m_isSpotLight && !insideFrustum(spotLightPlanes, cellMin, cellMax))
 			{
 				continue;
 			}
