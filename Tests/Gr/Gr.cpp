@@ -1220,7 +1220,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 }
 #endif
 
-static void drawOffscreen(GrManager& gr)
+static void drawOffscreen([[maybe_unused]] GrManager& gr)
 {
 #if 0
 	//

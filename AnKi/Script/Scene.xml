@@ -196,12 +196,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getSphereRadius">
 					<return>F32</return>
 				</method>
-				<method name="teleportTo">
-					<args>
-						<arg>Vec3</arg>
-						<arg>const Mat3&amp;</arg>
-					</args>
-				</method>
 			</methods>
 		</class>
 

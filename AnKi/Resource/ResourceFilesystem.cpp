@@ -432,7 +432,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 
 	if(false && m_paths.getSize())
 	{
-		for(const File& s : m_paths.getFront().m_files)
+		for(const FileInfo& s : m_paths.getFront().m_files)
 		{
 			printf("%s\n", s.m_filename.cstr());
 		}
@@ -470,7 +470,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	// Search for the fname in reverse order
 	for(const Path& p : m_paths)
 	{
-		for(const File& fsfile : p.m_files)
+		for(const FileInfo& fsfile : p.m_files)
 		{
 			if(filenameHash != fsfile.m_filenameHash)
 			{
@@ -550,7 +550,7 @@ ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) co
 	Bool found = false;
 	for(const Path& p : m_paths)
 	{
-		for(const File& fsfile : p.m_files)
+		for(const FileInfo& fsfile : p.m_files)
 		{
 			if(filenameHash != fsfile.m_filenameHash)
 			{

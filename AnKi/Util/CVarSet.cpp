@@ -18,7 +18,9 @@ void CVar::validateSetValue() const
 
 void CVarSet::registerCVar(CVar* cvar)
 {
+#if ANKI_ASSERTIONS_ENABLED
 	m_mainThreadHandle = Thread::getCurrentThreadId();
+#endif
 
 	for([[maybe_unused]] CVar& it : m_cvars)
 	{

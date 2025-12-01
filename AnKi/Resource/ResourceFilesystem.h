@@ -109,7 +109,7 @@ public:
 	{
 		for(const Path& path : m_paths)
 		{
-			for(const File& file : path.m_files)
+			for(const FileInfo& file : path.m_files)
 			{
 				if(func(file.m_filename.toCString()) == FunctorContinue::kStop)
 				{
@@ -136,7 +136,7 @@ public:
 #if !ANKI_TESTS
 private:
 #endif
-	class File
+	class FileInfo
 	{
 	public:
 		ResourceString m_filename;
@@ -146,7 +146,7 @@ private:
 	class Path
 	{
 	public:
-		ResourceDynamicArray<File> m_files; // Files inside the directory.
+		ResourceDynamicArray<FileInfo> m_files; // Files inside the directory.
 		ResourceString m_path; // A directory or an archive.
 		Bool m_isArchive = false;
 		Bool m_isSpecial = false;

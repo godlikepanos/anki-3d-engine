@@ -270,7 +270,8 @@ void FpsCharacter::fireGrenade()
 	camTrf.setOrigin(newPos.xyz0());
 
 	SceneNode* grenade = SceneGraph::getSingleton().newSceneNode<GrenadeNode>("");
+	grenade->setLocalOrigin(camTrf.getOrigin().xyz());
+	grenade->setLocalRotation(camTrf.getRotation().getRotationPart());
 	BodyComponent& bodyc = grenade->getFirstComponentOfType<BodyComponent>();
-	bodyc.teleportTo(camTrf.getOrigin().xyz(), camTrf.getRotation().getRotationPart());
 	bodyc.applyForce(camTrf.getRotation().getZAxis().xyz() * -1200.0f, Vec3(0.0f, 0.0f, 0.0f));
 }

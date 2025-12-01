@@ -390,6 +390,11 @@ public:
 
 	// Returns true if the transform got updated
 	ANKI_INTERNAL Bool updateTransform();
+
+	ANKI_INTERNAL Bool isLocalTransformDirty() const
+	{
+		return m_localTransformDirty;
+	}
 	/// @}
 
 private:

@@ -245,6 +245,29 @@ static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CS
 	return Error::kNone;
 }
 
+static Bool isNodeValid(const cgltf_node& node)
+{
+	if(node.mesh == nullptr)
+	{
+		return false;
+	}
+
+	if(node.mesh->primitives_count == 0)
+	{
+		return false;
+	}
+
+	for(U32 i = 0; i < node.mesh->primitives_count; ++i)
+	{
+		if(node.mesh->primitives[i].material == nullptr)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 GltfImporter::GltfImporter()
 {
 }
@@ -805,7 +828,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			const Transform localTrf = Transform(tsl, rot, scale);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else
+		else if(isNodeValid(node))
 		{
 			// Mesh+Material node
 
@@ -847,9 +870,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					const ImporterString meshFname = computeMeshResourceFilename(*node.mesh);
 
 					ANKI_CHECK(m_sceneFile.writeText("comp:setCollisionShapeType(BodyComponentCollisionShapeType.kFromMeshComponent)\n"));
-					ANKI_CHECK(m_sceneFile.writeText("comp:teleportTo(trf:getOrigin(), trf:getRotation())\n"));
 				}
 			}
+		}
+		else
+		{
+			ANKI_IMPORTER_LOGV("Ignoring invalid node: %s", getNodeName(node).cstr());
 		}
 	}
 	else

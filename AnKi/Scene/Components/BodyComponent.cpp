@@ -25,17 +25,6 @@ BodyComponent::~BodyComponent()
 {
 }
 
-void BodyComponent::teleportTo(Vec3 position, const Mat3& rotation)
-{
-	m_teleportPosition = position;
-	m_teleportedRotation = rotation;
-	m_teleported = true;
-
-	// Set those just to be sure
-	m_node->setLocalOrigin(position);
-	m_node->setLocalRotation(rotation);
-}
-
 Bool BodyComponent::isValid() const
 {
 	return m_shapeType != BodyComponentCollisionShapeType::kFromMeshComponent || (m_mesh.m_meshc && m_mesh.m_meshc->hasMeshResource());
@@ -50,24 +39,34 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		return;
 	}
 
-	const Bool shapeDirty = !m_body.isCreated()
-							|| (m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent
-								&& m_mesh.m_meshc->getMeshResource().getUuid() != m_mesh.m_meshResourceUuid);
+	// Find if the shape is dirty
+	Bool shapeDirty = false;
+	if(!m_body.isCreated())
+	{
+		shapeDirty = true;
+	}
+
+	if(!shapeDirty
+	   && (m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent
+		   && m_mesh.m_meshc->getMeshResource().getUuid() != m_mesh.m_meshResourceUuid))
+	{
+		shapeDirty = true;
+	}
+
+	if(!shapeDirty && (info.m_node->isLocalTransformDirty() && info.m_node->getLocalScale() != m_creationScale))
+	{
+		shapeDirty = true;
+	}
+
 	if(shapeDirty)
 	{
+		// Re-create the body
+
 		updated = true;
 
 		PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
-		if(m_teleported)
-		{
-			init.m_transform = Transform(m_teleportPosition, m_teleportedRotation, m_node->getLocalTransform().getScale().xyz());
-			m_teleported = false; // Cancel teleportation since the body was re-created
-		}
-		else
-		{
-			init.m_transform = m_node->getLocalTransform();
-		}
+		init.m_transform = m_node->getLocalTransform();
 
 		const Bool isStatic = m_mass == 0.0f;
 		if(isStatic)
@@ -104,13 +103,13 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		m_body = PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(this);
+		m_creationScale = init.m_transform.getScale().xyz();
 	}
 
-	if(m_teleported)
+	if(info.m_node->isLocalTransformDirty())
 	{
 		updated = true;
-		m_teleported = false;
-		m_body->setPositionAndRotation(m_teleportPosition, m_teleportedRotation);
+		m_body->setPositionAndRotation(info.m_node->getLocalOrigin(), info.m_node->getLocalRotation());
 	}
 
 	U32 version;

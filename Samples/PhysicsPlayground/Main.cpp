@@ -53,7 +53,7 @@ Error MyApp::sampleExtraInit()
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
 		bodyc->setBoxExtend(Vec3(0.1f));
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
-		bodyc->teleportTo(Vec3(-0.0f, 5.0f, -3.0f), Mat3::getIdentity());
+		base->setLocalOrigin(Vec3(-0.0f, 5.0f, -3.0f));
 
 		SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>("hinge");
 		JointComponent* jointc = joint->newComponent<JointComponent>();
@@ -70,8 +70,8 @@ Error MyApp::sampleExtraInit()
 
 		bodyc = monkey->newComponent<BodyComponent>();
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
-		bodyc->teleportTo(Vec3(-0.0f, 4.8f - height / 2.0f, -3.0f), Mat3::getIdentity());
 		bodyc->setMass(2.0f);
+		monkey->setLocalOrigin(Vec3(-0.0f, 4.8f - height / 2.0f, -3.0f));
 
 		joint->addChild(monkey);
 	}
@@ -87,7 +87,7 @@ Error MyApp::sampleExtraInit()
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
 		bodyc->setBoxExtend(Vec3(0.1f));
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
-		bodyc->teleportTo(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
+		base->setLocalOrigin(trf.getOrigin().xyz());
 
 		trf.setOrigin(trf.getOrigin() - Vec4(0.0f, 0.5f, 0.0f, 0.0f));
 
@@ -111,9 +111,10 @@ Error MyApp::sampleExtraInit()
 
 			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
 			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
-			bodyc->teleportTo(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
 			bodyc->setMass(1.0f);
 			joint->addChild(monkey);
+			monkey->setLocalOrigin(trf.getOrigin().xyz());
+			monkey->setLocalRotation(trf.getRotation().getRotationPart());
 
 			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));
 
