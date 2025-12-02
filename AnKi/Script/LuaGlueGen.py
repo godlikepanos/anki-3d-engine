@@ -551,6 +551,130 @@ def destructor(class_name):
     wglue("")
 
 
+def do__newindex(vars_el, class_name):
+    """ Write the __newindex cfunction which is called when assigning to a class instance """
+
+    wglue("// Wrap writing the member vars of %s" % class_name)
+    wglue("static int wrap%s__newindex(lua_State* l)" % class_name)
+    wglue("{")
+    ident(1)
+    write_local_vars()
+
+    check_args(None, 3)
+
+    wglue("// Get \"this\" as \"self\"")
+    wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("%s* self = ud->getData<%s>();" % (class_name, class_name))
+    wglue("")
+
+    wglue("// Get the member variable name")
+    wglue("const Char* ckey;")
+    wglue("if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]")
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("CString key = ckey;")
+    wglue("")
+
+    wglue("// Try to find the member variable")
+    count = 0
+    for var_el in vars_el.iter("var"):
+        wglue("%sif(key == \"%s\")" % (("else " if count > 0 else ""), var_el.get("name")))
+        count = count + 1
+        wglue("{")
+        ident(1)
+
+        arg(var_el.text, 3, 0)
+        wglue("self->%s = arg0;" % var_el.get("name"))
+        wglue("return 0;")
+
+        ident(-1)
+        wglue("}")
+    wglue("")
+
+    wglue("return luaL_error(l, \"Unknown field %s. Location %s:%d %s\", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);")
+
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+
+def do__index(vars_el, class_name):
+    """ Write the __index cfunction which is called when assigning to a class instance """
+
+    wglue("// Wrap reading the member vars of %s" % class_name)
+    wglue("static int wrap%s__index(lua_State* l)" % class_name)
+    wglue("{")
+    ident(1)
+    write_local_vars()
+
+    check_args(None, 2)
+
+    wglue("// Get \"this\" as \"self\"")
+    wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("%s* self = ud->getData<%s>();" % (class_name, class_name))
+    wglue("")
+
+    wglue("// Get the member variable name")
+    wglue("const Char* ckey;")
+    wglue("if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]")
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("CString key = ckey;")
+    wglue("")
+
+    wglue("// Try to find the member variable")
+    count = 0
+    for var_el in vars_el.iter("var"):
+        wglue("%sif(key == \"%s\")" % (("else " if count > 0 else ""), var_el.get("name")))
+        count = count + 1
+        wglue("{")
+        ident(1)
+
+        wglue("%s ret = self->%s;" % (var_el.text, var_el.get("name")))
+        ret(var_el)
+
+        ident(-1)
+        wglue("}")
+    wglue("")
+
+    wglue("// Fallback to methods")
+    wglue("luaL_getmetatable(l, \"%s\");" % class_name)
+    wglue("lua_getfield(l, -1, ckey);")
+    wglue("if (!lua_isnil(l, -1))")
+    wglue("{")
+    ident(1)
+    wglue("return 1;")
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+    wglue("return luaL_error(l, \"Unknown field %s. Location %s:%d %s\", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);")
+
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+
 def class_(class_el):
     """ Create a class """
 
@@ -618,6 +742,14 @@ def class_(class_el):
     if has_constructor:
         destructor(class_name)
 
+    # Member variables
+    has_member_vars = False
+    vars_el = class_el.find("vars")
+    if vars_el is not None:
+        has_member_vars = True
+        do__newindex(vars_el, class_name)
+        do__index(vars_el, class_name)
+
     # Methods LUA C functions declarations
     meth_names_aliases = []
     meths_el = class_el.find("methods")
@@ -661,6 +793,11 @@ def class_(class_el):
                       (class_name, meth_alias, class_name, meth_alias))
             else:
                 wglue("LuaBinder::pushLuaCFuncMethod(l, \"%s\", wrap%s%s);" % (meth_alias, class_name, meth_alias))
+
+    # Register member vars
+    if has_member_vars:
+        wglue("LuaBinder::pushLuaCFuncMethod(l, \"__newindex\", wrap%s__newindex);" % class_name)
+        wglue("LuaBinder::pushLuaCFuncMethod(l, \"__index\", wrap%s__index);" % class_name)
 
     wglue("lua_settop(l, 0);")
 
