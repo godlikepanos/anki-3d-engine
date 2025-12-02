@@ -9,23 +9,23 @@
 
 namespace anki {
 
-/// Pre-wrap function logi.
-static inline int pwraplogi(lua_State* l)
+// Wrap function logi.
+static inline int wraplogi(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, arg0)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Call the function
@@ -34,36 +34,23 @@ static inline int pwraplogi(lua_State* l)
 	return 0;
 }
 
-/// Wrap function logi.
-static int wraplogi(lua_State* l)
-{
-	int res = pwraplogi(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap function loge.
-static inline int pwraploge(lua_State* l)
+// Wrap function loge.
+static inline int wraploge(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, arg0)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Call the function
@@ -72,36 +59,23 @@ static inline int pwraploge(lua_State* l)
 	return 0;
 }
 
-/// Wrap function loge.
-static int wraploge(lua_State* l)
-{
-	int res = pwraploge(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap function logw.
-static inline int pwraplogw(lua_State* l)
+// Wrap function logw.
+static inline int wraplogw(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, arg0)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Call the function
@@ -110,36 +84,23 @@ static inline int pwraplogw(lua_State* l)
 	return 0;
 }
 
-/// Wrap function logw.
-static int wraplogw(lua_State* l)
-{
-	int res = pwraplogw(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap function logv.
-static inline int pwraplogv(lua_State* l)
+// Wrap function logv.
+static inline int wraplogv(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, arg0)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Call the function
@@ -148,20 +109,7 @@ static inline int pwraplogv(lua_State* l)
 	return 0;
 }
 
-/// Wrap function logv.
-static int wraplogv(lua_State* l)
-{
-	int res = pwraplogv(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap the module.
+// Wrap the module.
 void wrapModuleLogger(lua_State* l)
 {
 	LuaBinder::pushLuaCFunc(l, "logi", wraplogi);

@@ -39,13 +39,13 @@ static CVar* findCVar(CString name)
 
 static inline int pwrap__newindex(lua_State* l)
 {
-	if(LuaBinder::checkArgsCount(l, 3))
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3))
 	{
 		return -1;
 	}
 
 	const Char* varName_;
-	if(LuaBinder::checkString(l, 2, varName_))
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, varName_))
 	{
 		return -1;
 	}
@@ -60,7 +60,7 @@ static inline int pwrap__newindex(lua_State* l)
 	case CVarValueType::kNumeric##type: \
 	{ \
 		type val; \
-		if(LuaBinder::checkNumber(l, 3, val)) \
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, val)) \
 		{ \
 			return -1; \
 		} \
@@ -73,7 +73,7 @@ static inline int pwrap__newindex(lua_State* l)
 		case CVarValueType::kString:
 		{
 			const Char* val;
-			if(LuaBinder::checkString(l, 3, val))
+			if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, val))
 			{
 				return -1;
 			}
@@ -83,7 +83,7 @@ static inline int pwrap__newindex(lua_State* l)
 		case CVarValueType::kBool:
 		{
 			I32 val;
-			if(LuaBinder::checkNumber(l, 3, val))
+			if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, val))
 			{
 				return -1;
 			}
@@ -125,13 +125,13 @@ static int wrap__newindex(lua_State* l)
 
 static inline int pwrap__index(lua_State* l)
 {
-	if(LuaBinder::checkArgsCount(l, 2))
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2))
 	{
 		return -1;
 	}
 
 	const Char* varName_;
-	if(LuaBinder::checkString(l, 2, varName_))
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, varName_))
 	{
 		return -1;
 	}

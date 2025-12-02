@@ -19,31 +19,31 @@ static Renderer* getRenderer(lua_State* l)
 	return &Renderer::getSingleton();
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoRenderer = {4110901869536678112, "Renderer", LuaUserData::computeSizeForGarbageCollected<Renderer>(), nullptr,
-												   nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoRenderer = {-8680680372486703494, "Renderer", LuaUserData::computeSizeForGarbageCollected<Renderer>(),
+													 nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Renderer>()
 {
-	return luaUserDataTypeInfoRenderer;
+	return g_luaUserDataTypeInfoRenderer;
 }
 
-/// Pre-wrap method Renderer::getAspectRatio.
-static inline int pwrapRenderergetAspectRatio(lua_State* l)
+// Wrap method Renderer::getAspectRatio.
+static inline int wrapRenderergetAspectRatio(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoRenderer, ud))
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoRenderer, ud)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	Renderer* self = ud->getData<Renderer>();
@@ -57,44 +57,31 @@ static inline int pwrapRenderergetAspectRatio(lua_State* l)
 	return 1;
 }
 
-/// Wrap method Renderer::getAspectRatio.
-static int wrapRenderergetAspectRatio(lua_State* l)
-{
-	int res = pwrapRenderergetAspectRatio(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method Renderer::setCurrentDebugRenderTarget.
-static inline int pwrapRenderersetCurrentDebugRenderTarget(lua_State* l)
+// Wrap method Renderer::setCurrentDebugRenderTarget.
+static inline int wrapRenderersetCurrentDebugRenderTarget(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoRenderer, ud))
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoRenderer, ud)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	Renderer* self = ud->getData<Renderer>();
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Call the method
@@ -103,38 +90,25 @@ static inline int pwrapRenderersetCurrentDebugRenderTarget(lua_State* l)
 	return 0;
 }
 
-/// Wrap method Renderer::setCurrentDebugRenderTarget.
-static int wrapRenderersetCurrentDebugRenderTarget(lua_State* l)
-{
-	int res = pwrapRenderersetCurrentDebugRenderTarget(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class Renderer.
+// Wrap class Renderer.
 static inline void wrapRenderer(lua_State* l)
 {
-	LuaBinder::createClass(l, &luaUserDataTypeInfoRenderer);
+	LuaBinder::createClass(l, &g_luaUserDataTypeInfoRenderer);
 	LuaBinder::pushLuaCFuncMethod(l, "getAspectRatio", wrapRenderergetAspectRatio);
 	LuaBinder::pushLuaCFuncMethod(l, "setCurrentDebugRenderTarget", wrapRenderersetCurrentDebugRenderTarget);
 	lua_settop(l, 0);
 }
 
-/// Pre-wrap function getRenderer.
-static inline int pwrapgetRenderer(lua_State* l)
+// Wrap function getRenderer.
+static inline int wrapgetRenderer(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, 0)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 0)) [[unlikely]]
 	{
-		return -1;
+		return lua_error(l);
 	}
 
 	// Call the function
@@ -143,33 +117,19 @@ static inline int pwrapgetRenderer(lua_State* l)
 	// Push return value
 	if(ret == nullptr) [[unlikely]]
 	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
+		return luaL_error(l, "Returned nullptr. Location %s:%d %s", ANKI_FILE, __LINE__, ANKI_FUNC);
 	}
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Renderer");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoRenderer;
-	ud->initPointed(&luaUserDataTypeInfoRenderer, ret);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoRenderer;
+	ud->initPointed(&g_luaUserDataTypeInfoRenderer, ret);
 
 	return 1;
 }
 
-/// Wrap function getRenderer.
-static int wrapgetRenderer(lua_State* l)
-{
-	int res = pwrapgetRenderer(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap the module.
+// Wrap the module.
 void wrapModuleRenderer(lua_State* l)
 {
 	wrapRenderer(l);

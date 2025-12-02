@@ -159,7 +159,7 @@ void LuaBinder::pushLuaCFunc(lua_State* l, const char* name, lua_CFunction luafu
 	lua_register(l, name, luafunc);
 }
 
-Error LuaBinder::checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number)
+Error LuaBinder::checkNumberInternal(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, lua_Number& number)
 {
 	Error err = Error::kNone;
 	lua_Number lnum;
@@ -173,16 +173,22 @@ Error LuaBinder::checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& num
 	else
 	{
 		err = Error::kUserData;
-		lua_pushfstring(l, "Number expected. Got %s", luaL_typename(l, stackIdx));
+		lua_pushfstring(l, "Number expected, got %s. Location: %s:%d %s", luaL_typename(l, stackIdx), file, line, func);
 	}
 
 	return err;
 }
 
-Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
+Error LuaBinder::checkString(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const char*& out)
 {
 	Error err = Error::kNone;
-	const char* s = lua_tolstring(l, stackIdx, nullptr);
+	const Char* s = nullptr;
+
+	if(lua_type(l, stackIdx) == LUA_TSTRING)
+	{
+		s = lua_tolstring(l, stackIdx, nullptr);
+	}
+
 	if(s != nullptr)
 	{
 		out = s;
@@ -190,13 +196,14 @@ Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 	else
 	{
 		err = Error::kUserData;
-		lua_pushfstring(l, "String expected. Got %s", luaL_typename(l, stackIdx));
+		lua_pushfstring(l, "String expected, got %s. Location: %s:%d %s", luaL_typename(l, stackIdx), file, line, func);
 	}
 
 	return err;
 }
 
-Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo, LuaUserData*& out)
+Error LuaBinder::checkUserData(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo,
+							   LuaUserData*& out)
 {
 	Error err = Error::kNone;
 
@@ -223,19 +230,19 @@ Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataType
 
 	if(err)
 	{
-		lua_pushfstring(l, "Userdata of %s expected. Got %s", typeInfo.m_typeName, luaL_typename(l, stackIdx));
+		lua_pushfstring(l, "Userdata of %s expected, got %s. Location %s:%d %s", typeInfo.m_typeName, luaL_typename(l, stackIdx), file, line, func);
 	}
 
 	return err;
 }
 
-Error LuaBinder::checkArgsCount(lua_State* l, I argsCount)
+Error LuaBinder::checkArgsCount(lua_State* l, const Char* file, U32 line, const Char* func, I argsCount)
 {
 	const I actualArgsCount = lua_gettop(l);
 
 	if(argsCount != actualArgsCount)
 	{
-		lua_pushfstring(l, "Expecting %d arguments, got %d", argsCount, actualArgsCount);
+		lua_pushfstring(l, "Expecting %d arguments, got %d. Location %s:%d %s", argsCount, actualArgsCount, file, line, func);
 		return Error::kUserData;
 	}
 

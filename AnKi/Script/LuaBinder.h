@@ -21,16 +21,12 @@ namespace anki {
 // Forward
 class LuaUserData;
 
-/// @addtogroup script
-/// @{
+#define ANKI_LUA_ERROR() luaL_error(l, "Glue error at: " ANKI_FILE ":" ANKI_STRINGIZE(__LINE__) " %s", ANKI_FUNC)
+#define ANKI_LUA_ERROR_MSG(message) luaL_error(l, "Glue error: " message " (" ANKI_FILE ":" ANKI_STRINGIZE(__LINE__) " %s)", ANKI_FUNC)
 
-/// @memberof LuaUserData
 using LuaUserDataSerializeCallback = void (*)(LuaUserData& self, void* data, PtrSize& size);
-
-/// @memberof LuaUserData
 using LuaUserDataDeserializeCallback = void (*)(const void* data, LuaUserData& self);
 
-/// @memberof LuaUserData
 class LuaUserDataTypeInfo
 {
 public:
@@ -41,11 +37,11 @@ public:
 	LuaUserDataDeserializeCallback m_deserializeCallback;
 };
 
-/// LUA userdata.
+// LUA userdata.
 class LuaUserData
 {
 public:
-	/// @note NEVER ADD A DESTRUCTOR. LUA cannot call that.
+	// Note: NEVER ADD A DESTRUCTOR. LUA cannot call that.
 	~LuaUserData() = delete;
 
 	I64 getSig() const
@@ -61,7 +57,7 @@ public:
 		m_addressOrGarbageCollect = kGarbageCollectedMagic;
 	}
 
-	/// @note Accepting const void* is wrong because getData returns a mutable pointer. Fix that.
+	// Note: Accepting const void* is wrong because getData returns a mutable pointer. Fix that.
 	void initPointed(const LuaUserDataTypeInfo* info, const void* ptrToObject)
 	{
 		ANKI_ASSERT(info);
@@ -128,14 +124,13 @@ private:
 	const LuaUserDataTypeInfo* m_info = nullptr;
 };
 
-/// @memberof LuaBinder
 class LuaBinderSerializeGlobalsCallback
 {
 public:
 	virtual void write(const void* data, PtrSize dataSize) = 0;
 };
 
-/// Lua binder class. A wrapper on top of LUA
+// Lua binder class. A wrapper on top of LUA
 class LuaBinder
 {
 public:
@@ -153,7 +148,7 @@ public:
 		return m_l;
 	}
 
-	/// Expose a variable to the lua state
+	// Expose a variable to the lua state
 	template<typename T>
 	static void exposeVariable(lua_State* state, CString name, T* y)
 	{
@@ -173,7 +168,7 @@ public:
 		luaL_setmetatable(state, LuaUserData::getDataTypeInfoFor<T>().m_typeName);
 	}
 
-	/// Evaluate a string
+	// Evaluate a string
 	static Error evalString(lua_State* state, const CString& str);
 
 	static void garbageCollect(lua_State* state)
@@ -181,36 +176,36 @@ public:
 		lua_gc(state, LUA_GCCOLLECT, 0);
 	}
 
-	/// For debugging purposes
+	// For debugging purposes
 	static void stackDump(lua_State* l);
 
-	/// Create a new LUA class
+	// Create a new LUA class
 	static void createClass(lua_State* l, const LuaUserDataTypeInfo* typeInfo);
 
-	/// Add new function in a class that it's already in the stack
+	// Add new function in a class that it's already in the stack
 	static void pushLuaCFuncMethod(lua_State* l, const char* name, lua_CFunction luafunc);
 
-	/// Add a new static function in the class.
+	// Add a new static function in the class.
 	static void pushLuaCFuncStaticMethod(lua_State* l, const char* className, const char* name, lua_CFunction luafunc);
 
-	/// Add a new function.
+	// Add a new function.
 	static void pushLuaCFunc(lua_State* l, const char* name, lua_CFunction luafunc);
 
-	/// Dump global variables.
+	// Dump global variables.
 	static void serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback);
 
-	/// Deserialize global variables.
+	// Deserialize global variables.
 	static void deserializeGlobals(lua_State* l, const void* data, PtrSize dataSize);
 
-	/// Make sure that the arguments match the argsCount number
-	static Error checkArgsCount(lua_State* l, I argsCount);
+	// Make sure that the arguments match the argsCount number
+	static Error checkArgsCount(lua_State* l, const Char* file, U32 line, const Char* func, I argsCount);
 
-	/// Get a number from the stack.
+	// Get a number from the stack.
 	template<typename TNumber>
-	static Error checkNumber(lua_State* l, I32 stackIdx, TNumber& number)
+	static Error checkNumber(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, TNumber& number)
 	{
 		lua_Number lnum;
-		Error err = checkNumberInternal(l, stackIdx, lnum);
+		Error err = checkNumberInternal(l, file, line, func, stackIdx, lnum);
 		if(!err)
 		{
 			number = TNumber(lnum);
@@ -218,13 +213,14 @@ public:
 		return err;
 	}
 
-	/// Get a string from the stack.
-	static Error checkString(lua_State* l, I32 stackIdx, const char*& out);
+	// Get a string from the stack.
+	static Error checkString(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const char*& out);
 
-	/// Get some user data from the stack.
-	/// The function uses the type signature to validate the type and not the
-	/// typeName. That is supposed to be faster.
-	static Error checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo, LuaUserData*& out);
+	// Get some user data from the stack.
+	// The function uses the type signature to validate the type and not the
+	// typeName. That is supposed to be faster.
+	static Error checkUserData(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo,
+							   LuaUserData*& out);
 
 private:
 	lua_State* m_l = nullptr;
@@ -232,8 +228,7 @@ private:
 
 	static void* luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize);
 
-	static Error checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number);
+	static Error checkNumberInternal(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, lua_Number& number);
 };
-/// @}
 
 } // end namespace anki
