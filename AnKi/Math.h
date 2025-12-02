@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Math/Vec.h>
+#include <AnKi/Math/Vec2.h>
 #include <AnKi/Math/Mat.h>
 #include <AnKi/Math/Quat.h>
 #include <AnKi/Math/Euler.h>

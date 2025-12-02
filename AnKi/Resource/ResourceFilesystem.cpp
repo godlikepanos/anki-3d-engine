@@ -477,7 +477,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 				continue;
 			}
 
-			CString pfname = fsfile.m_filename;
+			[[maybe_unused]] CString pfname = fsfile.m_filename;
 			ANKI_ASSERT(pfname == filename);
 
 			// Found
@@ -557,8 +557,7 @@ ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) co
 				continue;
 			}
 
-			CString pfname = fsfile.m_filename;
-			ANKI_ASSERT(pfname == filename);
+			ANKI_ASSERT(fsfile.m_filename == filename);
 
 			if(!p.m_isArchive && !p.m_isSpecial)
 			{
