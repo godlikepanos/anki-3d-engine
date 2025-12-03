@@ -15,7 +15,8 @@ DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 {
 	m_gpuSceneDecal.allocate();
-	loadDiffuseImageResource("EngineAssets/DefaultDecal.png", 0.9f);
+	setDiffuseImageFilename("EngineAssets/DefaultDecal.png");
+	setDiffuseBlendFactor(0.9f);
 
 	m_defaultDecalImage = m_layers[LayerType::kDiffuse].m_image;
 }
@@ -24,22 +25,34 @@ DecalComponent::~DecalComponent()
 {
 }
 
-void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
+void DecalComponent::setImage(LayerType type, CString fname)
 {
-	Layer& l = m_layers[type];
-
 	ImageResourcePtr rsrc;
-	if(ResourceManager::getSingleton().loadResource(fname, rsrc))
+	if(ANKI_EXPECT(type < LayerType::kCount && !ResourceManager::getSingleton().loadResource(fname, rsrc)))
 	{
-		ANKI_SCENE_LOGE("Failed to load image");
-		return;
+		Layer& l = m_layers[type];
+		if(!l.m_image || rsrc->getUuid() != l.m_image->getUuid())
+		{
+			m_dirty = true;
+
+			l.m_image = std::move(rsrc);
+			l.m_bindlessTextureIndex = l.m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+		}
 	}
+}
 
-	m_dirty = true;
-
-	l.m_image = std::move(rsrc);
-	l.m_bindlessTextureIndex = l.m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
-	l.m_blendFactor = clamp(blendFactor, 0.0f, 1.0f);
+void DecalComponent::setBlendFactor(LayerType type, F32 blendFactor)
+{
+	if(ANKI_EXPECT(type < LayerType::kCount))
+	{
+		Layer& l = m_layers[type];
+		blendFactor = saturate(blendFactor);
+		if(l.m_blendFactor != blendFactor)
+		{
+			l.m_blendFactor = blendFactor;
+			m_dirty = true;
+		}
+	}
 }
 
 void DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)

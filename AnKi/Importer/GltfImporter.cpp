@@ -809,7 +809,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(getExtra(extras, "decal_diffuse_factor", extraValuef, extraFound));
 
 				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", extraValueStr.cstr(), (extraFound) ? extraValuef : 1.0f));
+					m_sceneFile.writeTextf("comp:setDiffuseImageFilename(\"%s\", %f)\n", extraValueStr.cstr(), (extraFound) ? extraValuef : 1.0f));
 			}
 
 			ANKI_CHECK(getExtra(extras, "decal_metal_roughness", extraValueStr, extraFound));
@@ -817,7 +817,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			{
 				ANKI_CHECK(getExtra(extras, "decal_metal_roughness_factor", extraValuef, extraFound));
 
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadMetalRoughnessImageResource(\"%s\", %f)\n", extraValueStr.cstr(),
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setMetalRoughnessImageFilename(\"%s\", %f)\n", extraValueStr.cstr(),
 												  (extraFound) ? extraValuef : 1.0f));
 			}
 

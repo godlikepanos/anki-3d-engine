@@ -367,21 +367,18 @@ Error App::mainLoop()
 	if((err = userPreInit()))
 	{
 		ANKI_CORE_LOGE("User initialization failed. Shutting down");
-		cleanup();
 		return err;
 	}
 
 	if((err = init()))
 	{
 		ANKI_CORE_LOGE("App initialization failed. Shutting down");
-		cleanup();
 		return err;
 	}
 
 	if((err = userPostInit()))
 	{
 		ANKI_CORE_LOGE("User initialization failed. Shutting down");
-		cleanup();
 		return err;
 	}
 

@@ -138,17 +138,41 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="DecalComponent">
 			<methods>
-				<method name="loadDiffuseImageResource">
+				<method name="setDiffuseImageFilename">
 					<args>
 						<arg>CString</arg>
-						<arg>F32</arg>
 					</args>
+					<return>DecalComponent&amp;</return>
 				</method>
-				<method name="loadMetalRoughnessImageResource">
+				<method name="getDiffuseImageFilename">
+					<return>CString</return>
+				</method>
+				<method name="setDiffuseBlendFactor">
 					<args>
-						<arg>CString</arg>
 						<arg>F32</arg>
 					</args>
+					<return>DecalComponent&amp;</return>
+				</method>
+				<method name="getDiffuseBlendFactor">
+					<return>F32</return>
+				</method>
+				<method name="setRoughnessMetalnessImageFilename">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>DecalComponent&amp;</return>
+				</method>
+				<method name="getRoughnessMetalnessImageFilename">
+					<return>CString</return>
+				</method>
+				<method name="setRoughnessMetalnessBlendFactor">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>DecalComponent&amp;</return>
+				</method>
+				<method name="getRoughnessMetalnessBlendFactor">
+					<return>F32</return>
 				</method>
 			</methods>
 		</class>

@@ -237,7 +237,7 @@ void FpsCharacter::fireShotgun()
 				bulletDecal->setLocalTransform(trf);
 				bulletDecal->setLocalScale(Vec3(0.1f, 0.1f, 0.3f));
 				DecalComponent* decalc = bulletDecal->newComponent<DecalComponent>();
-				decalc->loadDiffuseImageResource("Assets/bullet_hole_decal.ankitex", 1.0f);
+				decalc->setDiffuseImageFilename("Assets/bullet_hole_decal.ankitex");
 
 				createDestructionEvent(bulletDecal, 10.0_sec);
 			}

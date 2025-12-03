@@ -780,6 +780,9 @@ void EditorUi::sceneNodePropertiesWindow()
 					case SceneComponentType::kJoint:
 						jointComponent(static_cast<JointComponent&>(comp));
 						break;
+					case SceneComponentType::kDecal:
+						decalComponent(static_cast<DecalComponent&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -1244,6 +1247,80 @@ void EditorUi::bodyComponent(BodyComponent& comp)
 			comp.setSphereRadius(radius);
 		}
 	}
+}
+
+void EditorUi::decalComponent(DecalComponent& comp)
+{
+	if(!comp.isValid())
+	{
+		ImGui::SameLine();
+		ImGui::TextUnformatted(ICON_MDI_ALERT);
+		ImGui::SetItemTooltip("Component not valid");
+	}
+
+	ImGui::SeparatorText("Diffuse");
+
+	// Diffuse filename
+	{
+		ImGui::SetNextItemWidth(-1.0f);
+
+		Char buff[kMaxTextInputLen] = "";
+		if(comp.hasDiffuseImageResource())
+		{
+			std::strncpy(buff, comp.getDiffuseImageFilename().cstr(), sizeof(buff));
+		}
+
+		if(ImGui::InputTextWithHint("##DiffImgFname", ".ankitex Filename", buff, sizeof(buff)))
+		{
+			comp.setDiffuseImageFilename(buff);
+		}
+
+		if(comp.hasDiffuseImageResource())
+		{
+			ImGui::SetItemTooltip("%s", comp.getDiffuseImageFilename().cstr());
+		}
+	}
+
+	// Diffuse factor
+	ImGui::SetNextItemWidth(-1.0f);
+	F32 diffFactor = comp.getDiffuseBlendFactor();
+	if(ImGui::SliderFloat("##Factor0", &diffFactor, 0.0f, 1.0f))
+	{
+		comp.setDiffuseBlendFactor(diffFactor);
+	}
+	ImGui::SetItemTooltip("Blend Factor");
+
+	ImGui::SeparatorText("Roughness and Metallic");
+
+	// Roughness/metallic filename
+	{
+		ImGui::SetNextItemWidth(-1.0f);
+
+		Char buff[kMaxTextInputLen] = "";
+		if(comp.hasRoughnessMetalnessImageResource())
+		{
+			std::strncpy(buff, comp.getRoughnessMetalnessImageFilename().cstr(), sizeof(buff));
+		}
+
+		if(ImGui::InputTextWithHint("##RoughMetImgFname", ".ankitex Filename", buff, sizeof(buff)))
+		{
+			comp.setRoughnessMetalnessImageFilename(buff);
+		}
+
+		if(comp.hasRoughnessMetalnessImageResource())
+		{
+			ImGui::SetItemTooltip("%s", comp.getRoughnessMetalnessImageFilename().cstr());
+		}
+	}
+
+	// Roughness/metallic factor
+	ImGui::SetNextItemWidth(-1.0f);
+	F32 rmFactor = comp.getRoughnessMetalnessBlendFactor();
+	if(ImGui::SliderFloat("##Factor1", &rmFactor, 0.0f, 1.0f))
+	{
+		comp.setRoughnessMetalnessBlendFactor(rmFactor);
+	}
+	ImGui::SetItemTooltip("Blend Factor");
 }
 
 void EditorUi::cVarsWindow()
