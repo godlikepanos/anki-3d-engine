@@ -56,7 +56,7 @@ ANKI_CVAR2(
 	"Size of the octahedral for the light cache")
 ANKI_CVAR2(NumericCVar<U32>, Render, Idc, IrradianceOctMapSize, 5, 4, 20, "Size of the octahedral for the irradiance")
 
-ANKI_CVAR2(NumericCVar<F32>, Render, Idc, FirstBounceRayDistance, 0.0f, 0.0f, 10000.0f,
+ANKI_CVAR2(NumericCVar<F32>, Render, Idc, FirstBounceRayDistance, (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, 10000.0f,
 		   "For the 1st bounce shoot rays instead of sampling the clipmaps")
 ANKI_CVAR2(BoolCVar, Render, Idc, ApplyHighQuality, false, "If true use 1/2 resolution else use 1/4")
 ANKI_CVAR2(NumericCVar<U8>, Render, Idc, RayCountPerTexelOfNewProbe, kDefaultRayCountPerTexelOfNewProbe, 1, 16,
@@ -139,6 +139,7 @@ private:
 	ShaderProgramPtr m_populateCachesGrProg;
 	ShaderProgramPtr m_computeIrradianceGrProg;
 	ShaderProgramPtr m_applyGiGrProg;
+	ShaderProgramPtr m_applyGiUsingInlineRtGrProg;
 	ShaderProgramPtr m_visProbesGrProg;
 	ShaderProgramPtr m_temporalDenoiseGrProg;
 	ShaderProgramPtr m_spatialReconstructGrProg;

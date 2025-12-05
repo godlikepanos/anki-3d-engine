@@ -278,6 +278,7 @@ Error IndirectDiffuseClipmaps::init()
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_spatialReconstructGrProg, "SpatialReconstruct"));
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_bilateralDenoiseGrProg, "BilateralDenoise"));
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_applyGiUsingInlineRtGrProg, "ApplyInlineRt"));
 
 	for(MutatorValue rtMaterialFetchClipmap = 0; rtMaterialFetchClipmap < 2; ++rtMaterialFetchClipmap)
 	{
@@ -673,12 +674,18 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	// Apply GI
 	if(firstBounceUsesRt)
 	{
-		patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[0],
-									m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+		if(!g_cvarRenderIdcInlineRt)
+		{
+			patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[0],
+										m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+		}
 
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: RTApply");
 
-		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
+		if(!g_cvarRenderIdcInlineRt)
+		{
+			pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
+		}
 
 		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
@@ -692,8 +699,6 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 		pass.setWork([this, &ctx, sbtBuffer, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
 
 			// More globals
 			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
@@ -718,8 +723,20 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			const U32 width = getRenderer().getInternalResolution().x() / 2;
 			const U32 height = getRenderer().getInternalResolution().y() / (!g_cvarRenderIdcApplyHighQuality + 1);
-			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1, width,
-							  height, 1);
+
+			if(g_cvarRenderIdcInlineRt)
+			{
+				cmdb.bindShaderProgram(m_applyGiUsingInlineRtGrProg.get());
+
+				dispatchPPCompute(cmdb, 8, 8, width, height);
+			}
+			else
+			{
+				cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
+
+				cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1, width,
+								  height, 1);
+			}
 
 			g_svarIdcRays.increment(width * height);
 		});

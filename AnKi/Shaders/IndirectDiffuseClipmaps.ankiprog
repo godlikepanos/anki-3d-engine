@@ -15,6 +15,7 @@
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_USE_SH_L2
 #pragma anki technique Apply comp mutators SPATIAL_RECONSTRUCT_TYPE
+#pragma anki technique ApplyInlineRt comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique SpatialReconstruct comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique TemporalDenoise comp mutators
 #pragma anki technique BilateralDenoise comp mutators
@@ -535,9 +536,12 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 // ===========================================================================
 // RtMaterialFetch (Apply)                                                   =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) && !RT_MATERIAL_FETCH_CLIPMAP
+#if(ANKI_TECHNIQUE_RtMaterialFetch && !RT_MATERIAL_FETCH_CLIPMAP) || ANKI_TECHNIQUE_ApplyInlineRt
 
+#	define INCLUDE_ALL
 #	include <AnKi/Shaders/RtMaterialFetch.hlsl>
+
+#	define INLINE_RT ANKI_TECHNIQUE_ApplyInlineRt
 
 struct Consts
 {
@@ -550,14 +554,30 @@ struct Consts
 };
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
-[Shader("raygeneration")] void main()
-{
-#	if SPATIAL_RECONSTRUCT_TYPE == 0
-	const UVec2 fullCoord = UVec2(DispatchRaysIndex().x * 2u + (DispatchRaysIndex().y & 1u), DispatchRaysIndex().y);
-	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * UVec2(2, 1));
+#	if INLINE_RT
+[numthreads(8, 8, 1)] void main(COMPUTE_ARGS)
 #	else
-	const UVec2 fullCoord = DispatchRaysIndex().xy * 2u;
-	const Vec2 uv = (fullCoord + 0.5) / (DispatchRaysDimensions().xy * 2);
+[Shader("raygeneration")] void main()
+#	endif
+{
+#	if INLINE_RT
+	UVec2 texSize;
+	g_colorAndPdfTex.GetDimensions(texSize.x, texSize.y);
+	if(any(svDispatchThreadId.xy >= texSize))
+	{
+		return;
+	}
+#	else
+	const UVec2 svDispatchThreadId = DispatchRaysIndex();
+	const UVec2 texSize = DispatchRaysDimensions().xy;
+#	endif
+
+#	if SPATIAL_RECONSTRUCT_TYPE == 0
+	const UVec2 fullCoord = UVec2(svDispatchThreadId.x * 2u + (svDispatchThreadId.y & 1u), svDispatchThreadId.y);
+	const Vec2 uv = (fullCoord + 0.5) / (texSize * UVec2(2, 1));
+#	else
+	const UVec2 fullCoord = svDispatchThreadId.xy * 2u;
+	const Vec2 uv = (fullCoord + 0.5) / (texSize * 2);
 #	endif
 
 	const F32 depth = TEX(g_depthTex, fullCoord).x;
@@ -583,7 +603,11 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
 	F32 rayT = 0.0;
 	Bool backfacing = false;
+#	if INLINE_RT
+	const Bool hit = materialRayTraceInlineRt<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing);
+#	else
 	const Bool hit = materialRayTrace<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
+#	endif
 
 	HVec3 radiance = 0.0;
 	Vec3 hitPos = 0.0;
@@ -621,7 +645,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		final = irradiance;
 	}
 
-	TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = Vec4(final, 0.0);
+	TEX(g_colorAndPdfTex, svDispatchThreadId.xy) = Vec4(final, 0.0);
 	// TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = lerp(TEX(g_colorAndPdfTex, DispatchRaysIndex().xy), Vec4(final, 0.0), 0.05);
 }
 #endif
