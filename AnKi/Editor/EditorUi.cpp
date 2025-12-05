@@ -823,13 +823,18 @@ void EditorUi::scriptComponent(ScriptComponent& comp)
 
 	// Filename input
 	{
-		Char rsrcTxt[kMaxTextInputLen] = "";
-		if(comp.hasScriptResource())
-		{
-			std::strncpy(rsrcTxt, comp.getScriptResourceFilename().cstr(), sizeof(rsrcTxt));
-		}
+		const DynamicArray<CString> filenames = gatherResourceFilenames(".lua");
+
+		const String currentFilename = (comp.hasScriptResource()) ? comp.getScriptResourceFilename() : "";
+		U32 newSelectedFilename = kMaxU32;
+
 		ImGui::SetNextItemWidth(-1.0f);
-		ImGui::InputTextWithHint("##", "Script Filename", rsrcTxt, sizeof(rsrcTxt));
+		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
+
+		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
+		{
+			comp.setScriptResourceFilename(filenames[newSelectedFilename]);
+		}
 	}
 
 	ImGui::Text(" -- or --");
@@ -883,43 +888,24 @@ void EditorUi::materialComponent(MaterialComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
-	// Locate button
-	{
-		ImGui::BeginDisabled(!comp.hasMaterialResource());
-		if(ImGui::Button(comp.hasMaterialResource() ? ICON_MDI_MAP_MARKER : ICON_MDI_ALERT_CIRCLE "##MaterialCompBtn"))
-		{
-			ANKI_LOGW("TODO");
-		}
-		ImGui::SetItemTooltip("Locate");
-		ImGui::EndDisabled();
-		ImGui::SameLine();
-	}
-
 	// Filename
 	{
+		const DynamicArray<CString> mtlFilenames = gatherResourceFilenames(".ankimtl");
+
+		const String currentFilename = (comp.hasMaterialResource()) ? comp.getMaterialFilename() : "";
+		U32 newSelectedFilename = kMaxU32;
+
 		ImGui::SetNextItemWidth(-1.0f);
+		comboWithFilter("##Filenames", mtlFilenames, currentFilename, newSelectedFilename, m_tempFilter);
 
-		Char buff[kMaxTextInputLen] = "";
-		if(comp.hasMaterialResource())
+		if(newSelectedFilename < mtlFilenames.getSize() && currentFilename != mtlFilenames[newSelectedFilename])
 		{
-			std::strncpy(buff, comp.getMaterialFilename().cstr(), sizeof(buff));
-		}
-
-		if(ImGui::InputTextWithHint("##MaterialCompFname", ".ankimtl Filename", buff, sizeof(buff)))
-		{
-			comp.setMaterialFilename(buff);
-		}
-
-		if(comp.hasMaterialResource())
-		{
-			ImGui::SetItemTooltip("%s", comp.getMaterialFilename().cstr());
+			comp.setMaterialFilename(mtlFilenames[newSelectedFilename]);
 		}
 	}
 
 	// Submesh ID
 	{
-		dummyButton(0);
-
 		I32 value = comp.getSubmeshIndex();
 		if(ImGui::InputInt(ICON_MDI_VECTOR_POLYGON " Submesh ID", &value, 1, 1, 0))
 		{
@@ -930,36 +916,26 @@ void EditorUi::materialComponent(MaterialComponent& comp)
 
 void EditorUi::meshComponent(MeshComponent& comp)
 {
-	// Locate button
+	if(!comp.isValid())
 	{
-		ImGui::BeginDisabled(!comp.hasMeshResource());
-		if(ImGui::Button(comp.hasMeshResource() ? ICON_MDI_MAP_MARKER : ICON_MDI_ALERT_CIRCLE "##MeshCompBtn"))
-		{
-			ANKI_LOGW("TODO");
-		}
-		ImGui::SetItemTooltip("Locate");
-		ImGui::EndDisabled();
 		ImGui::SameLine();
+		ImGui::TextUnformatted(ICON_MDI_ALERT);
+		ImGui::SetItemTooltip("Component not valid");
 	}
 
 	// Filename
 	{
+		const DynamicArray<CString> meshFilenames = gatherResourceFilenames(".ankimesh");
+
+		const String currentFilename = (comp.hasMeshResource()) ? comp.getMeshFilename() : "";
+		U32 newSelectedFilename = kMaxU32;
+
 		ImGui::SetNextItemWidth(-1.0f);
+		comboWithFilter("##Filenames", meshFilenames, currentFilename, newSelectedFilename, m_tempFilter);
 
-		Char buff[kMaxTextInputLen] = "";
-		if(comp.hasMeshResource())
+		if(newSelectedFilename < meshFilenames.getSize() && currentFilename != meshFilenames[newSelectedFilename])
 		{
-			std::strncpy(buff, comp.getMeshFilename().cstr(), sizeof(buff));
-		}
-
-		if(ImGui::InputTextWithHint("##MeshCompFname", ".ankimesh Filename", buff, sizeof(buff)))
-		{
-			comp.setMeshFilename(buff);
-		}
-
-		if(comp.hasMeshResource())
-		{
-			ImGui::SetItemTooltip("%s", comp.getMeshFilename().cstr());
+			comp.setMeshFilename(meshFilenames[newSelectedFilename]);
 		}
 	}
 }
@@ -973,72 +949,38 @@ void EditorUi::skinComponent(SkinComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
-	// Locate button
-	{
-		ImGui::BeginDisabled(!comp.hasSkeletonResource());
-		if(ImGui::Button(comp.hasSkeletonResource() ? ICON_MDI_MAP_MARKER : ICON_MDI_ALERT_CIRCLE "##SkinCompBtn"))
-		{
-			ANKI_LOGW("TODO");
-		}
-		ImGui::SetItemTooltip("Locate");
-		ImGui::EndDisabled();
-		ImGui::SameLine();
-	}
-
 	// Filename
 	{
+		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankiskel");
+
+		const String currentFilename = (comp.hasSkeletonResource()) ? comp.getSkeletonFilename() : "";
+		U32 newSelectedFilename = kMaxU32;
+
 		ImGui::SetNextItemWidth(-1.0f);
+		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
 
-		Char buff[kMaxTextInputLen] = "";
-		if(comp.hasSkeletonResource())
+		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
 		{
-			std::strncpy(buff, comp.getSkeletonFilename().cstr(), sizeof(buff));
-		}
-
-		if(ImGui::InputTextWithHint("##SkelCompFname", ".ankiskel Filename", buff, sizeof(buff)))
-		{
-			comp.setSkeletonFilename(buff);
-		}
-
-		if(comp.hasSkeletonResource())
-		{
-			ImGui::SetItemTooltip("%s", comp.getSkeletonFilename().cstr());
+			comp.setSkeletonFilename(filenames[newSelectedFilename]);
 		}
 	}
 }
 
 void EditorUi::particleEmitterComponent(ParticleEmitter2Component& comp)
 {
-	// Locate button
-	{
-		ImGui::BeginDisabled(!comp.hasParticleEmitterResource());
-		if(ImGui::Button(comp.hasParticleEmitterResource() ? ICON_MDI_MAP_MARKER : ICON_MDI_ALERT_CIRCLE "##PemCompBtn"))
-		{
-			ANKI_LOGW("TODO");
-		}
-		ImGui::SetItemTooltip("Locate");
-		ImGui::EndDisabled();
-		ImGui::SameLine();
-	}
-
 	// Filename
 	{
+		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankiparts");
+
+		const String currentFilename = (comp.hasParticleEmitterResource()) ? comp.getParticleEmitterFilename() : "";
+		U32 newSelectedFilename = kMaxU32;
+
 		ImGui::SetNextItemWidth(-1.0f);
+		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
 
-		Char buff[kMaxTextInputLen] = "";
-		if(comp.hasParticleEmitterResource())
+		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
 		{
-			std::strncpy(buff, comp.getParticleEmitterFilename().cstr(), sizeof(buff));
-		}
-
-		if(ImGui::InputTextWithHint("##PemCompFname", ".ankiparts Filename", buff, sizeof(buff)))
-		{
-			comp.setParticleEmitterFilename(buff);
-		}
-
-		if(comp.hasParticleEmitterResource())
-		{
-			ImGui::SetItemTooltip("%s", comp.getParticleEmitterFilename().cstr());
+			comp.setParticleEmitterFilename(filenames[newSelectedFilename]);
 		}
 	}
 
@@ -1262,22 +1204,17 @@ void EditorUi::decalComponent(DecalComponent& comp)
 
 	// Diffuse filename
 	{
+		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
+
+		const String currentFilename = (comp.hasDiffuseImageResource()) ? comp.getDiffuseImageFilename() : "";
+		U32 newSelectedFilename = kMaxU32;
+
 		ImGui::SetNextItemWidth(-1.0f);
+		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
 
-		Char buff[kMaxTextInputLen] = "";
-		if(comp.hasDiffuseImageResource())
+		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
 		{
-			std::strncpy(buff, comp.getDiffuseImageFilename().cstr(), sizeof(buff));
-		}
-
-		if(ImGui::InputTextWithHint("##DiffImgFname", ".ankitex Filename", buff, sizeof(buff)))
-		{
-			comp.setDiffuseImageFilename(buff);
-		}
-
-		if(comp.hasDiffuseImageResource())
-		{
-			ImGui::SetItemTooltip("%s", comp.getDiffuseImageFilename().cstr());
+			comp.setDiffuseImageFilename(filenames[newSelectedFilename]);
 		}
 	}
 
@@ -1294,22 +1231,17 @@ void EditorUi::decalComponent(DecalComponent& comp)
 
 	// Roughness/metallic filename
 	{
+		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
+
+		const String currentFilename = (comp.hasRoughnessMetalnessImageResource()) ? comp.getRoughnessMetalnessImageFilename() : "";
+		U32 newSelectedFilename = kMaxU32;
+
 		ImGui::SetNextItemWidth(-1.0f);
+		comboWithFilter("##Filenames2", filenames, currentFilename, newSelectedFilename, m_tempFilter);
 
-		Char buff[kMaxTextInputLen] = "";
-		if(comp.hasRoughnessMetalnessImageResource())
+		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
 		{
-			std::strncpy(buff, comp.getRoughnessMetalnessImageFilename().cstr(), sizeof(buff));
-		}
-
-		if(ImGui::InputTextWithHint("##RoughMetImgFname", ".ankitex Filename", buff, sizeof(buff)))
-		{
-			comp.setRoughnessMetalnessImageFilename(buff);
-		}
-
-		if(comp.hasRoughnessMetalnessImageResource())
-		{
-			ImGui::SetItemTooltip("%s", comp.getRoughnessMetalnessImageFilename().cstr());
+			comp.setRoughnessMetalnessImageFilename(filenames[newSelectedFilename]);
 		}
 	}
 
@@ -1807,6 +1739,48 @@ void EditorUi::dummyButton(I32 id)
 	ImGui::SameLine();
 };
 
+template<typename TItemArray>
+void EditorUi::comboWithFilter(CString text, const TItemArray& items, CString selectedItemIn, U32& selectedItemOut, ImGuiTextFilter& filter)
+{
+	if(ImGui::BeginCombo(text.cstr(), selectedItemIn.cstr()))
+	{
+		if (ImGui::IsWindowAppearing())
+		{
+			ImGui::SetKeyboardFocusHere();
+			filter.Clear();
+		}
+
+		ImGui::SetNextItemWidth(-1.0f);
+		if(ImGui::InputTextWithHint("##Filter", ICON_MDI_MAGNIFY " Search incl,-excl", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf),
+								ImGuiInputTextFlags_EscapeClearsAll))
+		{
+			filter.Build();
+		}
+
+		for(U32 i = 0; i < items.getSize(); ++i)
+		{
+			CString item = items[i];
+			if (!filter.PassFilter(item.cstr()))
+			{
+				continue;
+			}
+
+			const Bool isSelected = (selectedItemIn == item);
+			if(ImGui::Selectable(item.cstr(), isSelected))
+			{
+				selectedItemOut = i;
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if(isSelected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+}
+
 Bool EditorUi::textEditorWindow(CString extraWindowTitle, Bool* pOpen, String& inout) const
 {
 	Bool save = false;
@@ -2130,6 +2104,22 @@ void EditorUi::objectPicking()
 	{
 		Renderer::getSingleton().getDbg().enableGizmos(Transform::getIdentity(), false);
 	}
+}
+
+DynamicArray<CString> EditorUi::gatherResourceFilenames(CString filenameContains)
+{
+	DynamicArray<CString> out;
+	ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString fname){
+
+		if(fname.find(filenameContains) != CString::kNpos)
+		{
+			out.emplaceBack(fname);
+		}
+
+		return FunctorContinue::kContinue;
+	});
+
+	return out;
 }
 
 } // end namespace anki

@@ -90,6 +90,8 @@ private:
 	ImageViewerUi m_imageViewer;
 	ParticleEditorUi m_particlesEditor;
 
+	ImGuiTextFilter m_tempFilter;
+
 	class
 	{
 	public:
@@ -186,6 +188,8 @@ private:
 	static void filter(ImGuiTextFilter& filter);
 	Bool textEditorWindow(CString extraWindowTitle, Bool* pOpen, String& inout) const;
 	static void dummyButton(I32 id);
+	template<typename TItemArray>
+	static void comboWithFilter(CString text, const TItemArray& items, CString selectedItemIn, U32& selectedItemOut, ImGuiTextFilter& filter);
 
 	// Misc
 	static void loggerMessageHandler(void* ud, const LoggerMessageInfo& info);
@@ -193,6 +197,7 @@ private:
 	static void gatherAssets(DynamicArray<AssetPath>& paths);
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
 	void objectPicking();
+	static DynamicArray<CString> gatherResourceFilenames(CString filenameContains);
 };
 
 } // end namespace anki

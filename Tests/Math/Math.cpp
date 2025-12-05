@@ -174,6 +174,88 @@ ANKI_TEST(Math, Vec4)
 	commonVecTests<UVec4>();
 }
 
+ANKI_TEST(Math, VecOperators)
+{
+	// Float vec vs scalar
+	const v2::Vec3 a(1.0f, -2.0f, 3.5f);
+	const v2::Vec3 add = a + 2.0f;
+	const v2::Vec3 sub = a - 1.0f;
+	const v2::Vec3 mul = a * 2.0f;
+	const v2::Vec3 div = a / 2.0f;
+	ANKI_TEST_EXPECT_EQ(add, v2::Vec3(3.0f, 0.0f, 5.5f));
+	ANKI_TEST_EXPECT_EQ(sub, v2::Vec3(0.0f, -3.0f, 2.5f));
+	ANKI_TEST_EXPECT_EQ(mul, v2::Vec3(2.0f, -4.0f, 7.0f));
+	ANKI_TEST_EXPECT_NEAR(div.x, 0.5f, 1e-6f);
+	ANKI_TEST_EXPECT_NEAR(div.y, -1.0f, 1e-6f);
+	ANKI_TEST_EXPECT_NEAR(div.z, 1.75f, 1e-6f);
+
+	// Integer-specific operators
+	const v2::IVec2 ai(4, 8);
+	const v2::IVec2 bi(1, 3);
+	ANKI_TEST_EXPECT_EQ(ai << bi, v2::IVec2(8, 64));
+	ANKI_TEST_EXPECT_EQ(ai >> bi, v2::IVec2(2, 1));
+	ANKI_TEST_EXPECT_EQ(ai & bi, v2::IVec2(0, 0));
+	ANKI_TEST_EXPECT_EQ(ai | bi, v2::IVec2(5, 11));
+	ANKI_TEST_EXPECT_EQ(ai ^ bi, v2::IVec2(5, 11));
+	ANKI_TEST_EXPECT_EQ(ai % bi, v2::IVec2(0, 2));
+
+	// Mixed vector/scalar integer operators
+	v2::IVec2 ci(2, 3);
+	ci <<= 1;
+	ANKI_TEST_EXPECT_EQ(ci, v2::IVec2(4, 6));
+	ci &= v2::IVec2(6);
+	ANKI_TEST_EXPECT_EQ(ci, v2::IVec2(4, 6));
+	ci |= 1;
+	ANKI_TEST_EXPECT_EQ(ci, v2::IVec2(5, 7));
+}
+
+ANKI_TEST(Math, VecExtras)
+{
+	// Cross product (Vec3)
+	const v2::Vec3 a(1.0f, 2.0f, 3.0f);
+	const v2::Vec3 b(4.0f, 5.0f, 6.0f);
+	const v2::Vec3 cross = a.cross(b);
+	ANKI_TEST_EXPECT_NEAR(cross.x, -3.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(cross.y, 6.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(cross.z, -3.0f, 1e-5f);
+
+	// Projection on vector
+	const v2::Vec3 proj = a.projectTo(v2::Vec3::xAxis());
+	ANKI_TEST_EXPECT_NEAR(proj.x, 1.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(proj.y, 0.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(proj.z, 0.0f, 1e-5f);
+
+	// Projection on ray
+	const v2::Vec3 projRay = a.projectTo(v2::Vec3(0.0f), v2::Vec3::yAxis());
+	ANKI_TEST_EXPECT_NEAR(projRay.x, 0.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(projRay.y, 2.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(projRay.z, 0.0f, 1e-5f);
+
+	// Lerp (scalar t)
+	const v2::Vec3 lerpRes = a.lerp(b, 0.5f);
+	ANKI_TEST_EXPECT_NEAR(lerpRes.x, 2.5f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(lerpRes.y, 3.5f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(lerpRes.z, 4.5f, 1e-5f);
+
+	// Clamp and reciprocal
+	const v2::Vec3 clamped = v2::Vec3(-1.0f, 2.0f, 10.0f).clamp(0.0f, 5.0f);
+	ANKI_TEST_EXPECT_NEAR(clamped.x, 0.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(clamped.y, 2.0f, 1e-5f);
+	ANKI_TEST_EXPECT_NEAR(clamped.z, 5.0f, 1e-5f);
+
+	const v2::Vec2 recip = v2::Vec2(2.0f, -4.0f).reciprocal();
+	ANKI_TEST_EXPECT_NEAR(recip.x, 0.5f, 1e-6f);
+	ANKI_TEST_EXPECT_NEAR(recip.y, -0.25f, 1e-6f);
+
+	// Perspective divide (Vec4)
+	const v2::Vec4 v4(2.0f, 4.0f, 6.0f, 2.0f);
+	const v2::Vec4 pdiv = v4.perspectiveDivide();
+	ANKI_TEST_EXPECT_NEAR(pdiv.x, 1.0f, 1e-6f);
+	ANKI_TEST_EXPECT_NEAR(pdiv.y, 2.0f, 1e-6f);
+	ANKI_TEST_EXPECT_NEAR(pdiv.z, 3.0f, 1e-6f);
+	ANKI_TEST_EXPECT_NEAR(pdiv.w, 1.0f, 1e-6f);
+}
+
 /// Test the common operators between a matrices
 template<typename Mat>
 void matOperatorsSame()
