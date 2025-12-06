@@ -1476,11 +1476,11 @@ public:
 	}
 
 	// Perspective divide. Divide the xyzw of this to the w of this. This method will handle some edge cases.
-	[[nodiscard]] TVec perspectiveDivide() const requires(kTComponentCount == 4)
+	[[nodiscard]] TVec perspectiveDivide() const requires(kTComponentCount == 4 && !kIsInteger)
 	{
 		auto invw = T(1) / this->w; // This may become (+-)inf
-		invw = (invw > 1e+11) ? 1e+11 : invw; // Clamp
-		invw = (invw < -1e+11) ? -1e+11 : invw; // Clamp
+		invw = (invw > T(1e+11)) ? T(1e+11) : invw; // Clamp
+		invw = (invw < T(-1e+11)) ? T(-1e+11) : invw; // Clamp
 		return (*this) * invw;
 	}
 

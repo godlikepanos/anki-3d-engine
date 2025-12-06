@@ -373,7 +373,7 @@ RWStructuredBuffer<U32> g_lodAndRenderableIndices : register(u2);
 	const GpuSceneRenderableBoundingVolume bvol = SBUFF(g_renderableBoundingVolumes, bvolIdx);
 	const GpuSceneRenderable renderable = SBUFF(g_renderables, bvol.m_renderableIndex);
 
-	const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32 || renderable.m_particleEmitterIndex2 < kMaxU32;
+	const Bool isParticleEmitter = renderable.m_particleEmitterIndex2 < kMaxU32;
 	if(isParticleEmitter)
 	{
 		// Can't draw particle emitters as is

@@ -24,7 +24,6 @@ struct GpuSceneRenderable
 	U32 m_constantsOffset;
 	U32 m_meshLodsIndex; // Points to the array of GpuSceneMeshLod. kMaxLodCount are reserved for each renderable.
 	U32 m_boneTransformsOffset; // Array of Mat3x4 or 0 if its not a skin.
-	U32 m_particleEmitterIndex; // Index to the GpuSceneParticleEmitter array or kMaxU32 if it's not an emitter.
 	U32 m_particleEmitterIndex2; // Index to the GpuSceneParticleEmitter2 array or kMaxU32 if it's not an emitter.
 	U32 m_rtShadowsShaderHandleIndex; // The index of the shader handle in the array of library's handles.
 	U32 m_rtMaterialFetchShaderHandleIndex; // The index of the shader handle in the array of library's handles.
@@ -90,13 +89,6 @@ struct GpuSceneMeshLod
 	U32 m_padding3;
 };
 static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 5);
-
-struct GpuSceneParticleEmitter
-{
-	U32 m_vertexOffsets[(U32)VertexStreamId::kParticleRelatedCount];
-	U32 m_aliveParticleCount;
-};
-static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 
 // Contains common properties for all particle emitters. Primary use is for the simulation
 struct GpuSceneParticleEmitter2

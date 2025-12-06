@@ -16,7 +16,6 @@
 #include <AnKi/Resource/CpuMeshResource.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Resource/DummyResource.h>
-#include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Resource/ParticleEmitterResource2.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/GenericResource.h>

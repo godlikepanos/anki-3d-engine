@@ -69,7 +69,6 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_RENDERABLES, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
 	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS, 0, GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
 	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS2, 0, GpuSceneArrays::ParticleEmitter2::getSingleton().getBufferViewSafe());
 
 	cmdb.bindSampler(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());

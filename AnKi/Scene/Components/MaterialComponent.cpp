@@ -304,7 +304,6 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuRenderable.m_meshLodsIndex =
 			(prioritizeEmitter) ? m_emitterComponent->getGpuSceneMeshLodIndex(m_submeshIdx) : m_meshComponent->getGpuSceneMeshLodsIndex(m_submeshIdx);
 		gpuRenderable.m_boneTransformsOffset = (m_skinComponent) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
-		gpuRenderable.m_particleEmitterIndex = kMaxU32;
 		gpuRenderable.m_particleEmitterIndex2 = (prioritizeEmitter) ? m_emitterComponent->getGpuSceneParticleEmitter2Index() : kMaxU32;
 		if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
 		{

@@ -182,7 +182,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
 		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
 
-		const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32 || renderable.m_particleEmitterIndex2 < kMaxU32;
+		const Bool isParticleEmitter = renderable.m_particleEmitterIndex2 < kMaxU32;
 		ANKI_MAYBE_UNUSED(isParticleEmitter);
 
 		const Bool hasMeshlets = meshLod.m_meshletCount != 0u;

@@ -1744,7 +1744,7 @@ void EditorUi::comboWithFilter(CString text, const TItemArray& items, CString se
 {
 	if(ImGui::BeginCombo(text.cstr(), selectedItemIn.cstr()))
 	{
-		if (ImGui::IsWindowAppearing())
+		if(ImGui::IsWindowAppearing())
 		{
 			ImGui::SetKeyboardFocusHere();
 			filter.Clear();
@@ -1752,7 +1752,7 @@ void EditorUi::comboWithFilter(CString text, const TItemArray& items, CString se
 
 		ImGui::SetNextItemWidth(-1.0f);
 		if(ImGui::InputTextWithHint("##Filter", ICON_MDI_MAGNIFY " Search incl,-excl", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf),
-								ImGuiInputTextFlags_EscapeClearsAll))
+									ImGuiInputTextFlags_EscapeClearsAll))
 		{
 			filter.Build();
 		}
@@ -1760,7 +1760,7 @@ void EditorUi::comboWithFilter(CString text, const TItemArray& items, CString se
 		for(U32 i = 0; i < items.getSize(); ++i)
 		{
 			CString item = items[i];
-			if (!filter.PassFilter(item.cstr()))
+			if(!filter.PassFilter(item.cstr()))
 			{
 				continue;
 			}
@@ -2109,8 +2109,7 @@ void EditorUi::objectPicking()
 DynamicArray<CString> EditorUi::gatherResourceFilenames(CString filenameContains)
 {
 	DynamicArray<CString> out;
-	ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString fname){
-
+	ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString fname) {
 		if(fname.find(filenameContains) != CString::kNpos)
 		{
 			out.emplaceBack(fname);

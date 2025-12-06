@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Resource/ParticleEmitterResource2.h>
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Resource/ScriptResource.h>

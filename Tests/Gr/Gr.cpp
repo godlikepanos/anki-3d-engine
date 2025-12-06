@@ -1220,7 +1220,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 }
 #endif
 
-static void drawOffscreen([[maybe_unused]] GrManager& gr)
+[[maybe_unused]] static void drawOffscreen([[maybe_unused]] GrManager& gr)
 {
 #if 0
 	//
@@ -1572,7 +1572,7 @@ ANKI_TEST(Gr, 3DTextures)
 #endif
 }
 
-static RenderTargetDesc newRTDescr(CString name)
+[[maybe_unused]] static RenderTargetDesc newRTDescr(CString name)
 {
 	RenderTargetDesc texInf(name);
 	texInf.m_width = texInf.m_height = 16;
@@ -2706,7 +2706,7 @@ RWTexture2D<float4> g_uav : register(u0);
 		U32 sbtRecordSize;
 		{
 			const U32 handleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-			sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment, handleSize + sizeof(Vec3));
+			sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment, handleSize + U32(sizeof(Vec3)));
 
 			ConstWeakArray<U8> handles = prog->getShaderGroupHandles();
 
@@ -2893,7 +2893,8 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 	commonDestroy();
 }
 
-static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& indexBuffer, BufferPtr& vertBuffer, Bool turnInsideOut = false)
+[[maybe_unused]] static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& indexBuffer, BufferPtr& vertBuffer,
+											   Bool turnInsideOut = false)
 {
 	BufferInitInfo inf;
 	inf.m_mapAccess = BufferMapAccessBit::kWrite;

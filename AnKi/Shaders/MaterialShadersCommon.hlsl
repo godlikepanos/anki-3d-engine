@@ -30,7 +30,6 @@ StructuredBuffer<MeshletGeometryDescriptor> g_meshletGeometryDescriptors : regis
 StructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_MESHLET_INSTANCES));
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_RENDERABLES));
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_MESH_LODS));
-StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS));
 StructuredBuffer<GpuSceneParticleEmitter2> g_particleEmitters2 : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS2));
 StructuredBuffer<Mat3x4> g_transforms : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_TRANSFORMS));
 SamplerState g_nearestClampSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER));
