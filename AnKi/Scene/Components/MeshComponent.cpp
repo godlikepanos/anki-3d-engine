@@ -155,4 +155,10 @@ void MeshComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool
 	}
 }
 
+Error MeshComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_resource, 1);
+	return Error::kNone;
+}
+
 } // end namespace anki

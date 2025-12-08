@@ -146,4 +146,10 @@ void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_resetExit = true;
 }
 
+Error TriggerComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_type, 1);
+	return Error::kNone;
+}
+
 } // end namespace anki

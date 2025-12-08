@@ -11,10 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// Component of scripts. It can point to a resource with the script code or have the script code embedded to it.
+// Component of scripts. It can point to a resource with the script code or have the script code embedded to it.
 class ScriptComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(ScriptComponent)
@@ -53,7 +50,8 @@ private:
 	Array<ScriptEnvironment*, 2> m_environments = {};
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
-/// @}
 
 } // end namespace anki

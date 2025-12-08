@@ -172,7 +172,7 @@ ParticleEmitter2Component& ParticleEmitter2Component::setParticleEmitterFilename
 	}
 	else
 	{
-		m_particleEmitterResource = std::move(newRsrc);
+		m_resource = std::move(newRsrc);
 		m_anyDirty = true;
 	}
 
@@ -181,9 +181,9 @@ ParticleEmitter2Component& ParticleEmitter2Component::setParticleEmitterFilename
 
 CString ParticleEmitter2Component::getParticleEmitterFilename() const
 {
-	if(m_particleEmitterResource)
+	if(m_resource)
 	{
-		return m_particleEmitterResource->getFilename();
+		return m_resource->getFilename();
 	}
 	else
 	{
@@ -204,7 +204,7 @@ void ParticleEmitter2Component::onOtherComponentRemovedOrAdded(SceneComponent* o
 
 Bool ParticleEmitter2Component::isValid() const
 {
-	Bool valid = !!m_particleEmitterResource;
+	Bool valid = !!m_resource;
 
 	if(m_geomType == ParticleGeometryType::kMeshComponent)
 	{
@@ -236,22 +236,22 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 
 	if(info.m_checkForResourceUpdates) [[unlikely]]
 	{
-		if(m_particleEmitterResource->isObsolete()) [[unlikely]]
+		if(m_resource->isObsolete()) [[unlikely]]
 		{
 			ANKI_SCENE_LOGV("Particle emitter resource is obsolete. Will reload it");
 			BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> fname(info.m_framePool);
-			fname = m_particleEmitterResource->getFilename();
-			ParticleEmitterResource2Ptr oldVersion = m_particleEmitterResource;
-			m_particleEmitterResource.reset(nullptr);
-			if(ResourceManager::getSingleton().loadResource(fname, m_particleEmitterResource))
+			fname = m_resource->getFilename();
+			ParticleEmitterResource2Ptr oldVersion = m_resource;
+			m_resource.reset(nullptr);
+			if(ResourceManager::getSingleton().loadResource(fname, m_resource))
 			{
 				ANKI_SCENE_LOGE("Can't update the particle resource. Ignoring the load");
-				m_particleEmitterResource = oldVersion;
+				m_resource = oldVersion;
 			}
 			else
 			{
 				m_anyDirty = true;
-				ANKI_ASSERT(!m_particleEmitterResource->isObsolete());
+				ANKI_ASSERT(!m_resource->isObsolete());
 			}
 		}
 	}
@@ -266,7 +266,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 	m_gpuSceneReallocationsThisFrame = true; // Difficult to properly track so set it to true and don't bother
 	m_anyDirty = false;
 	updated = true;
-	const ParticleEmitterResourceCommonProperties& commonProps = m_particleEmitterResource->getCommonProperties();
+	const ParticleEmitterResourceCommonProperties& commonProps = m_resource->getCommonProperties();
 
 	// Streams
 	for(ParticleProperty prop : EnumIterable<ParticleProperty>())
@@ -286,7 +286,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 	{
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuScene.m_anKiParticleEmitterProperties);
 
-		ConstWeakArray<U8> prefilled = m_particleEmitterResource->getPrefilledAnKiParticleEmitterProperties();
+		ConstWeakArray<U8> prefilled = m_resource->getPrefilledAnKiParticleEmitterProperties();
 		m_gpuScene.m_anKiParticleEmitterProperties = GpuSceneBuffer::getSingleton().allocate(prefilled.getSizeInBytes(), alignof(U32));
 
 		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuScene.m_anKiParticleEmitterProperties, prefilled.getSizeInBytes(), prefilled.getBegin());
@@ -344,6 +344,12 @@ U32 ParticleEmitter2Component::getGpuSceneMeshLodIndex(U32 submeshIdx) const
 	{
 		return m_meshComponent->getGpuSceneMeshLodsIndex(submeshIdx);
 	}
+}
+
+Error ParticleEmitter2Component::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_resource, 1);
+	return Error::kNone;
 }
 
 } // end namespace anki

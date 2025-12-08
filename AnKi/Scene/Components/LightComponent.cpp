@@ -431,4 +431,23 @@ void LightComponent::setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports)
 	}
 }
 
+Error LightComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_type, 1);
+	ANKI_SERIALIZE(m_diffColor, 1);
+	ANKI_SERIALIZE(m_point.m_radius, 1);
+	ANKI_SERIALIZE(m_spot.m_distance, 1);
+	ANKI_SERIALIZE(m_spot.m_outerAngle, 1);
+	ANKI_SERIALIZE(m_spot.m_innerAngle, 1);
+	ANKI_SERIALIZE(m_dir.m_month, 1);
+	ANKI_SERIALIZE(m_dir.m_day, 1);
+	ANKI_SERIALIZE(m_dir.m_hour, 1);
+
+	U32 shadow = m_shadow;
+	ANKI_SERIALIZE(shadow, 1);
+	m_shadow = Bool(shadow);
+
+	return Error::kNone;
+}
+
 } // end namespace anki

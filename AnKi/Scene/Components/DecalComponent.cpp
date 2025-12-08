@@ -93,4 +93,28 @@ void DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 }
 
+Error DecalComponent::serialize(SceneSerializer& serializer)
+{
+	Layer& diffuse = m_layers[LayerType::kDiffuse];
+	Layer& roughnessMetalness = m_layers[LayerType::kRoughnessMetalness];
+
+	ANKI_SERIALIZE(diffuse.m_image, 1);
+	ANKI_SERIALIZE(roughnessMetalness.m_image, 1);
+	ANKI_SERIALIZE(diffuse.m_blendFactor, 1);
+	ANKI_SERIALIZE(roughnessMetalness.m_blendFactor, 1);
+
+	if(!serializer.isInWriteMode() && diffuse.m_image)
+	{
+		diffuse.m_bindlessTextureIndex = diffuse.m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+	}
+
+	if(!serializer.isInWriteMode() && roughnessMetalness.m_image)
+	{
+		roughnessMetalness.m_bindlessTextureIndex =
+			roughnessMetalness.m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+	}
+
+	return Error::kNone;
+}
+
 } // end namespace anki

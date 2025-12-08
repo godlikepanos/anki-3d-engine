@@ -63,9 +63,10 @@ private:
 
 	Bool m_anyDirty : 1 = true; // A compound flag because it's too difficult to track everything
 	Bool m_movedLastFrame : 1 = true;
-	Bool m_castsShadow : 1 = false;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 

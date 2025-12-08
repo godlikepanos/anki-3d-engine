@@ -31,8 +31,8 @@ SkinComponent& SkinComponent::setSkeletonFilename(CString fname)
 	}
 	else
 	{
-		m_resourceDirty = !m_skeleton || (m_skeleton->getUuid() != newRsrc->getUuid());
-		m_skeleton = std::move(newRsrc);
+		m_resourceDirty = !m_resource || (m_resource->getUuid() != newRsrc->getUuid());
+		m_resource = std::move(newRsrc);
 	}
 
 	return *this;
@@ -40,7 +40,7 @@ SkinComponent& SkinComponent::setSkeletonFilename(CString fname)
 
 CString SkinComponent::getSkeletonFilename() const
 {
-	return (m_skeleton) ? m_skeleton->getFilename() : "*Error*";
+	return (m_resource) ? m_resource->getFilename() : "*Error*";
 }
 
 void SkinComponent::playAnimation(U32 trackIdx, AnimationResourcePtr anim, const AnimationPlayInfo& info)
@@ -95,7 +95,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	if(resourceDirty) [[unlikely]]
 	{
 		// Create
-		const U32 boneCount = m_skeleton->getBones().getSize();
+		const U32 boneCount = m_resource->getBones().getSize();
 		m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
 		m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
 		m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
@@ -143,7 +143,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		for(U32 i = 0; i < track.m_anim->getChannels().getSize(); ++i)
 		{
 			const AnimationChannel& channel = track.m_anim->getChannels()[i];
-			const Bone* bone = m_skeleton->tryFindBone(channel.m_name.toCString());
+			const Bone* bone = m_resource->tryFindBone(channel.m_name.toCString());
 			if(!bone)
 			{
 				ANKI_SCENE_LOGW("Animation is referencing unknown bone \"%s\"", &channel.m_name[0]);
@@ -204,14 +204,14 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_crntBoneTrfs = m_crntBoneTrfs ^ 1;
 
 		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_skeleton->getRootBone(), Mat3x4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+		visitBones(m_resource->getRootBone(), Mat3x4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
 		const Vec4 e(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - e);
 		m_boneBoundingVolume.setMax(maxExtend + e);
 
 		// Update the GPU scene
-		const U32 boneCount = m_skeleton->getBones().getSize();
+		const U32 boneCount = m_resource->getBones().getSize();
 		DynamicArray<Mat3x4, MemoryPoolPtrWrapper<StackMemoryPool>> trfs(info.m_framePool);
 		trfs.resize(boneCount * 2);
 		for(U32 i = 0; i < boneCount; ++i)
@@ -256,6 +256,24 @@ void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const 
 	{
 		visitBones(*child, outMat, bonesAnimated, minExtend, maxExtend);
 	}
+}
+
+Error SkinComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_resource, 1);
+
+	for(Track& track : m_tracks)
+	{
+		ANKI_SERIALIZE(track.m_anim, 1);
+		ANKI_SERIALIZE(track.m_absoluteStartTime, 1);
+		ANKI_SERIALIZE(track.m_relativeTimePassed, 1);
+		ANKI_SERIALIZE(track.m_blendInTime, 1);
+		ANKI_SERIALIZE(track.m_blendOutTime, 1);
+		ANKI_SERIALIZE(track.m_repeatTimes, 1);
+		ANKI_SERIALIZE(track.m_animationSpeedScale, 1);
+	}
+
+	return Error::kNone;
 }
 
 } // end namespace anki

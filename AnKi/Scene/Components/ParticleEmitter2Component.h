@@ -42,7 +42,7 @@ public:
 
 	Bool hasParticleEmitterResource() const
 	{
-		return !!m_particleEmitterResource;
+		return !!m_resource;
 	}
 
 	ParticleEmitter2Component& setParticleGeometryType(ParticleGeometryType type)
@@ -94,7 +94,7 @@ public:
 	ANKI_INTERNAL ParticleEmitterResource2& getParticleEmitterResource() const
 	{
 		ANKI_ASSERT(isValid());
-		return *m_particleEmitterResource;
+		return *m_resource;
 	}
 
 	ANKI_INTERNAL F32 getDt() const
@@ -106,7 +106,7 @@ public:
 private:
 	class ParticleEmitterQuadGeometry;
 
-	ParticleEmitterResource2Ptr m_particleEmitterResource;
+	ParticleEmitterResource2Ptr m_resource;
 
 	MeshComponent* m_meshComponent = nullptr;
 
@@ -128,6 +128,8 @@ private:
 	Bool m_gpuSceneReallocationsThisFrame = true; // Only tracks the memory shared externally
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 };

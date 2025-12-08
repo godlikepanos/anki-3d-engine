@@ -111,6 +111,8 @@ private:
 	void setBlendFactor(LayerType type, F32 blendFactor);
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 
 } // end namespace anki

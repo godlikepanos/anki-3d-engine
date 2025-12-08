@@ -38,7 +38,6 @@ MaterialComponent& MaterialComponent::setMaterialFilename(CString fname)
 	{
 		m_anyDirty = !m_resource || (m_resource->getUuid() != newRsrc->getUuid());
 		m_resource = std::move(newRsrc);
-		m_castsShadow = m_resource->castsShadow();
 	}
 
 	return *this;
@@ -448,6 +447,14 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			m_gpuSceneRenderableAabbRt.free();
 		}
 	}
+}
+
+Error MaterialComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_resource, 1);
+	ANKI_SERIALIZE(m_submeshIdx, 1);
+
+	return Error::kNone;
 }
 
 } // end namespace anki

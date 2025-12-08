@@ -53,14 +53,14 @@ public:
 
 	Bool hasSkeletonResource() const
 	{
-		return !!m_skeleton;
+		return !!m_resource;
 	}
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
 	Bool isValid() const
 	{
-		return m_skeleton.isCreated();
+		return m_resource.isCreated();
 	}
 
 	ANKI_INTERNAL ConstWeakArray<Mat3x4> getBoneTransforms() const
@@ -78,7 +78,7 @@ public:
 	ANKI_INTERNAL const SkeletonResourcePtr& getSkeleronResource() const
 	{
 		ANKI_ASSERT(isValid());
-		return m_skeleton;
+		return m_resource;
 	}
 
 	ANKI_INTERNAL const Aabb& getBoneBoundingVolumeLocalSpace() const
@@ -120,7 +120,7 @@ private:
 		F32 m_scale;
 	};
 
-	SkeletonResourcePtr m_skeleton;
+	SkeletonResourcePtr m_resource;
 	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
 	SceneDynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
@@ -136,6 +136,8 @@ private:
 	GpuSceneBufferAllocation m_gpuSceneBoneTransforms;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 
 	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend);
 };

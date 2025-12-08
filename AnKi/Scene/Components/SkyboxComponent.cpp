@@ -39,4 +39,22 @@ void SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bo
 	updated = false;
 }
 
+Error SkyboxComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_type, 1);
+	ANKI_SERIALIZE(m_color, 1);
+	ANKI_SERIALIZE(m_image, 1);
+	ANKI_SERIALIZE(m_imageScale, 1);
+	ANKI_SERIALIZE(m_imageBias, 1);
+	ANKI_SERIALIZE(m_fog.m_minDensity, 1);
+	ANKI_SERIALIZE(m_fog.m_maxDensity, 1);
+	ANKI_SERIALIZE(m_fog.m_heightOfMinDensity, 1);
+	ANKI_SERIALIZE(m_fog.m_heightOfMaxDensity, 1);
+	ANKI_SERIALIZE(m_fog.m_scatteringCoeff, 1);
+	ANKI_SERIALIZE(m_fog.m_absorptionCoeff, 1);
+	ANKI_SERIALIZE(m_fog.m_diffuseColor, 1);
+
+	return Error::kNone;
+}
+
 } // end namespace anki

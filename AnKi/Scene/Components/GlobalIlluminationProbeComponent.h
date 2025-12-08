@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// Global illumination probe component. It's an axis aligned box divided into cells.
+// Global illumination probe component. It's an axis aligned box divided into cells.
 class GlobalIlluminationProbeComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(GlobalIlluminationProbeComponent)
@@ -25,7 +22,7 @@ public:
 
 	~GlobalIlluminationProbeComponent();
 
-	/// Set the cell size in meters.
+	// Set the cell size in meters.
 	void setCellSize(F32 cellSize)
 	{
 		if(ANKI_EXPECT(cellSize > 0.0f) && m_cellSize != cellSize)
@@ -59,7 +56,7 @@ public:
 		return m_halfSize * 2.0f;
 	}
 
-	/// Check if any of the probe's cells need to be re-rendered.
+	// Check if any of the probe's cells need to be re-rendered.
 	Bool getCellsNeedsRefresh() const
 	{
 		return m_cellsRefreshedCount < m_totalCellCount;
@@ -71,7 +68,7 @@ public:
 		return m_cellsRefreshedCount;
 	}
 
-	/// Add to the number of texels that got refreshed this frame.
+	// Add to the number of texels that got refreshed this frame.
 	ANKI_INTERNAL void incrementRefreshedCells(U32 cellCount)
 	{
 		ANKI_ASSERT(getCellsNeedsRefresh());
@@ -80,7 +77,7 @@ public:
 		m_dirty = true;
 	}
 
-	/// The radius around the probe's center that can infuence the rendering of the env texture.
+	// The radius around the probe's center that can infuence the rendering of the env texture.
 	ANKI_INTERNAL F32 getRenderRadius() const;
 
 	ANKI_INTERNAL F32 getShadowsRenderRadius() const;
@@ -115,7 +112,7 @@ private:
 	Vec3 m_worldPos = Vec3(0.0f);
 	UVec3 m_cellCounts = UVec3(2u);
 	U32 m_totalCellCount = 8u;
-	F32 m_cellSize = 4.0f; ///< Cell size in meters.
+	F32 m_cellSize = 4.0f; // Cell size in meters.
 	F32 m_fadeDistance = 0.2f;
 
 	TexturePtr m_volTex;
@@ -130,7 +127,8 @@ private:
 	Bool m_dirty = true;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
-/// @}
 
 } // end namespace anki

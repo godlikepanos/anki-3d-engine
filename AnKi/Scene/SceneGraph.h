@@ -17,9 +17,6 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
 ANKI_CVAR(NumericCVar<F32>, Scene, ProbeEffectiveDistance, 256.0f, 1.0f, kMaxF32, "How far various probes can render")
 ANKI_CVAR(NumericCVar<F32>, Scene, ProbeShadowEffectiveDistance, 32.0f, 1.0f, kMaxF32, "How far to render shadows for the various probes")
 
@@ -38,19 +35,23 @@ ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneRenderables, 10 * 1024, 8, 100 * 1
 class SceneComponentArrays
 {
 public:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
 	SceneBlockArray<name##Component>& get##name##s() \
+	{ \
+		return m_##name##Array; \
+	} \
+	const SceneBlockArray<name##Component>& get##name##s() const \
 	{ \
 		return m_##name##Array; \
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 private:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) SceneBlockArray<name##Component> m_##name##Array;
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) SceneBlockArray<name##Component> m_##name##Array;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 
-/// The scene graph that  all the scene entities
+// The scene graph that  all the scene entities
 class SceneGraph : public MakeSingleton<SceneGraph>
 {
 	template<typename>
@@ -94,13 +95,13 @@ public:
 
 	void update(Second prevUpdateTime, Second crntTime);
 
-	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	// Note: Thread-safe against itself. Can be called by SceneNode::update
 	SceneNode* tryFindSceneNode(const CString& name);
 
-	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	// Note: Thread-safe against itself. Can be called by SceneNode::update
 	SceneNode& findSceneNode(const CString& name);
 
-	/// Iterate the scene nodes using a lambda
+	// Iterate the scene nodes using a lambda
 	template<typename Func>
 	void visitNodes(Func func)
 	{
@@ -113,8 +114,8 @@ public:
 		}
 	}
 
-	/// Create a new SceneNode
-	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	// Create a new SceneNode
+	// Note: Thread-safe against itself. Can be called by SceneNode::update
 	template<typename TNode>
 	TNode* newSceneNode(CString name)
 	{
@@ -134,8 +135,8 @@ public:
 		return m_sceneMax;
 	}
 
-	/// Get a unique UUID.
-	/// @note It's thread-safe.
+	// Get a unique UUID.
+	// Note: It's thread-safe.
 	U32 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
@@ -169,6 +170,8 @@ public:
 		m_checkForResourceUpdates = enable;
 	}
 
+	Error saveToTextFile(CString filename);
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -181,7 +184,7 @@ private:
 		}
 	} m_initMemPoolDummy;
 
-	static constexpr U32 kForceSetSceneBoundsFrameCount = 60 * 2; ///< Re-set the scene bounds after 2".
+	static constexpr U32 kForceSetSceneBoundsFrameCount = 60 * 2; // Re-set the scene bounds after 2".
 
 	mutable StackMemoryPool m_framePool;
 
@@ -221,6 +224,5 @@ private:
 
 	void sceneNodeChangedName(SceneNode& node, CString oldName);
 };
-/// @}
 
 } // end namespace anki

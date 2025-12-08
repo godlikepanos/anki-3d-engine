@@ -221,6 +221,8 @@ private:
 	U8 m_shadowAtlasUvViewportCount : 3 = 0;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 
 } // end namespace anki

@@ -169,4 +169,13 @@ F32 GlobalIlluminationProbeComponent::getShadowsRenderRadius() const
 	return min<F32>(getRenderRadius(), g_cvarSceneProbeShadowEffectiveDistance);
 }
 
+Error GlobalIlluminationProbeComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_cellSize, 1);
+	ANKI_SERIALIZE(m_fadeDistance, 1);
+	ANKI_SERIALIZE(m_halfSize, 1);
+
+	return Error::kNone;
+}
+
 } // end namespace anki

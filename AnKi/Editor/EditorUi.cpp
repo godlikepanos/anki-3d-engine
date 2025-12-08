@@ -430,6 +430,21 @@ void EditorUi::mainMenu()
 	{
 		if(ImGui::BeginMenuBar())
 		{
+			if(ImGui::Button(ICON_MDI_CONTENT_SAVE_ALL))
+			{
+				if(SceneGraph::getSingleton().saveToTextFile("./scene.ankiscene"))
+				{
+					ANKI_LOGE("Failed to save scene");
+				}
+				else
+				{
+					ANKI_LOGI("Scene saved");
+				}
+			}
+			ImGui::SetItemTooltip("Save scene");
+
+			ImGui::SameLine();
+
 			ImGui::SetNextItemWidth(ImGui::CalcTextSize("00.000").x);
 
 			if(ImGui::SliderFloat(ICON_MDI_AXIS_ARROW "&" ICON_MDI_ARROW_EXPAND_ALL " Snapping", &m_toolbox.m_scaleTranslationSnapping, 0.0, 10.0f))
@@ -481,7 +496,7 @@ void EditorUi::sceneNode(SceneNode& node)
 	{
 		switch(sceneComponentType)
 		{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
 	case SceneComponentType::k##name: \
 		componentsString += ICON_MDI_##icon; \
 		break;
@@ -664,7 +679,7 @@ void EditorUi::sceneNodePropertiesWindow()
 			{
 				switch(SceneComponentType(state.m_selectedSceneComponentType))
 				{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
 	case SceneComponentType::k##name: \
 		node.newComponent<name##Component>(); \
 		break;
@@ -721,7 +736,7 @@ void EditorUi::sceneNodePropertiesWindow()
 					CString icon = ICON_MDI_TOY_BRICK;
 					switch(comp.getType())
 					{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon_) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon_, serializable) \
 	case SceneComponentType::k##name: \
 		icon = ANKI_CONCATENATE(ICON_MDI_, icon_); \
 		break;

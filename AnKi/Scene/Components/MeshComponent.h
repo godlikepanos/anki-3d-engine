@@ -21,8 +21,6 @@ public:
 
 	~MeshComponent();
 
-	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	MeshComponent& setMeshFilename(CString fname);
 
 	Bool hasMeshResource() const
@@ -59,6 +57,10 @@ private:
 
 	Bool m_resourceDirty = true;
 	Bool m_gpuSceneMeshLodsReallocatedThisFrame = false;
+
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 
 } // end namespace anki

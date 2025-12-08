@@ -77,6 +77,8 @@ private:
 	Bool m_reflectionNeedsRefresh = true;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 /// @}
 

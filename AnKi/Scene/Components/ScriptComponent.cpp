@@ -147,4 +147,14 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	updated = true;
 }
 
+Error ScriptComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_resource, 1);
+	ANKI_SERIALIZE(m_text, 1);
+
+	// TODO Serialize environments
+
+	return Error::kNone;
+}
+
 } // end namespace anki

@@ -556,4 +556,31 @@ void SceneGraph::sceneNodeChangedName(SceneNode& node, CString oldName)
 	m_nodesRenamed.emplaceBack(std::pair(&node, oldName));
 }
 
+Error SceneGraph::saveToTextFile(CString filename)
+{
+	File file;
+	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
+
+	TextSceneSerializer serializer(&file, true);
+
+	U32 version = kSceneBinaryVersion;
+	ANKI_SERIALIZE(version, 1);
+
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+	if(serializable) \
+	{ \
+		U32 name##Count = m_componentArrays.get##name##s().getSize(); \
+		ANKI_SERIALIZE(name##Count, 1); \
+		for(SceneComponent & comp : m_componentArrays.get##name##s()) \
+		{ \
+			U32 uuid = comp.getUuid(); \
+			ANKI_SERIALIZE(uuid, 1); \
+			ANKI_CHECK(comp.serialize(serializer)); \
+		} \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
+	return Error::kNone;
+}
+
 } // end namespace anki

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Common.h>
+#include <AnKi/Scene/SceneSerializer.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/BitMask.h>
 #include <AnKi/Util/Enum.h>
@@ -15,7 +16,7 @@ namespace anki {
 
 enum class SceneComponentType : U8
 {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) k##name,
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) k##name,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 	kCount,
@@ -27,7 +28,7 @@ enum class SceneComponentTypeMask : U32
 {
 	kNone = 0,
 
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) k##name = 1 << U32(SceneComponentType::k##name),
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) k##name = 1 << U32(SceneComponentType::k##name),
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentTypeMask)
@@ -35,7 +36,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentTypeMask)
 class SceneComponentType2
 {
 public:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
 	static constexpr SceneComponentType k##name##Component = SceneComponentType::k##name;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
@@ -48,14 +49,14 @@ private:
 
 // Component names
 inline Array<const Char*, U32(SceneComponentType::kCount)> kSceneComponentTypeName = {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) ANKI_STRINGIZE(name)
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) ANKI_STRINGIZE(name)
 #define ANKI_SCENE_COMPONENT_SEPARATOR ,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 
 // Just a flag per component
 inline Array<Bool, U32(SceneComponentType::kCount)> kSceneComponentSceneNodeCanHaveMany = {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) sceneNodeCanHaveMany
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) sceneNodeCanHaveMany
 #define ANKI_SCENE_COMPONENT_SEPARATOR ,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
@@ -158,6 +159,11 @@ public:
 		return m_timestamp == GlobalFrameIndex::getSingleton().m_value;
 	}
 
+	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
+	{
+		return Error::kNone;
+	}
+
 protected:
 	U32 regenerateUuid();
 
@@ -220,7 +226,7 @@ private:
 	U32 m_type : 8 = 0; ///< Cache the type ID.
 
 	static constexpr Array<F32, U32(SceneComponentType::kCount)> m_updateOrderWeights = {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon) weight
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) weight
 #define ANKI_SCENE_COMPONENT_SEPARATOR ,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 	};

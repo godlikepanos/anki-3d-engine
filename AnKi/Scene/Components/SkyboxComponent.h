@@ -14,10 +14,6 @@ namespace anki {
 // Forward
 class SkyboxQueueElement;
 
-/// @addtogroup scene
-/// @{
-
-/// @memberof SkyboxComponent
 enum class SkyboxType : U8
 {
 	kSolidColor,
@@ -25,7 +21,7 @@ enum class SkyboxType : U8
 	kGenerated
 };
 
-/// Skybox config.
+// Skybox config.
 class SkyboxComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(SkyboxComponent)
@@ -170,15 +166,16 @@ private:
 	public:
 		F32 m_minDensity = 0.0f;
 		F32 m_maxDensity = 0.9f;
-		F32 m_heightOfMinDensity = 20.0f; ///< The height (meters) where fog density is max.
-		F32 m_heightOfMaxDensity = 0.0f; ///< The height (meters) where fog density is the min value.
+		F32 m_heightOfMinDensity = 20.0f; // The height (meters) where fog density is max.
+		F32 m_heightOfMaxDensity = 0.0f; // The height (meters) where fog density is the min value.
 		F32 m_scatteringCoeff = 0.01f;
 		F32 m_absorptionCoeff = 0.02f;
 		Vec3 m_diffuseColor = Vec3(1.0f);
 	} m_fog;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
-/// @}
 
 } // end namespace anki
