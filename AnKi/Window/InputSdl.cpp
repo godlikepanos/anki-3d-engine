@@ -245,6 +245,7 @@ Error InputSdl::handleEventsInternal()
 			m_mousePosNdc.y() = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 			break;
 		case SDL_EVENT_QUIT:
+			ANKI_WIND_LOGI("Recieved SDL_EVENT_QUIT");
 			addEvent(InputEvent::kWindowClosed);
 			break;
 		case SDL_EVENT_TEXT_INPUT:

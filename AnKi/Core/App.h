@@ -22,6 +22,7 @@ ANKI_CVAR(BoolCVar, Core, VerboseLog, false, "Verbose logging")
 ANKI_CVAR(BoolCVar, Core, BenchmarkMode, false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS")
 ANKI_CVAR(NumericCVar<U32>, Core, BenchmarkModeFrameCount, 60 * 60 * 2, 1, kMaxU32, "How many frames the benchmark will run before it quits")
 ANKI_CVAR(BoolCVar, Core, MeshletRendering, false, "Do meshlet culling and rendering")
+ANKI_CVAR(StringCVar, Core, LoadScene, "", "Load this scene at startup")
 
 #if ANKI_PLATFORM_MOBILE
 ANKI_CVAR(BoolCVar, Core, MaliHwCounters, false, "Enable Mali counters")

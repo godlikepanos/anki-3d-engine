@@ -14,6 +14,7 @@
 #include <AnKi/Core/App.h>
 #include <AnKi/Scene/StatsUiNode.h>
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
+#include <AnKi/Scene/EditorUiNode.h>
 
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
@@ -115,14 +116,14 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
 	// Init the default main camera
-	m_defaultMainCam = newSceneNode<SceneNode>("mainCamera");
+	m_defaultMainCam = newSceneNode<SceneNode>("_MainCamera");
 	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
 	RenderStateBucketContainer::allocateSingleton();
 
-	// Construct a few common nodex
+	// Construct a few common nodes
 	if(g_cvarCoreDisplayStats > 0)
 	{
 		StatsUiNode* statsNode = newSceneNode<StatsUiNode>("_StatsUi");
@@ -130,6 +131,10 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	}
 
 	newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
+
+	EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
+	editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
+	m_editorUi = editorNode;
 
 	return Error::kNone;
 }

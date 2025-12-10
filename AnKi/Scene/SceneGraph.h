@@ -79,6 +79,12 @@ public:
 
 	void setActiveCameraNode(SceneNode* cam);
 
+	SceneNode& getEditorUiNode()
+	{
+		ANKI_ASSERT(m_editorUi);
+		return *m_editorUi;
+	}
+
 	U32 getSceneNodesCount() const
 	{
 		return m_nodesCount;
@@ -194,6 +200,7 @@ private:
 
 	SceneNode* m_mainCam = nullptr;
 	SceneNode* m_defaultMainCam = nullptr;
+	SceneNode* m_editorUi = nullptr;
 
 	EventManager m_events;
 

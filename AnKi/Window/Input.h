@@ -112,16 +112,18 @@ public:
 	/// Populate the key and button with the new state
 	Error handleEvents();
 
-	/// Add a new event
+	// Add a new event
+	// It's thread-safe
 	void addEvent(InputEvent eventId)
 	{
-		++m_events[eventId];
+		m_events[eventId].fetchAdd(1);
 	}
 
-	/// Get the times an event was triggered and resets the counter
+	// Get the times an event was triggered and resets the counter
+	// It's thread-safe
 	U32 getEvent(InputEvent eventId) const
 	{
-		return m_events[eventId];
+		return m_events[eventId].exchange(0);
 	}
 
 	/// Get some easy to digest input from the keyboard.
@@ -140,7 +142,7 @@ protected:
 	Array<I32, U(TouchPointer::kCount)> m_touchPointers;
 	Array<Vec2, U(TouchPointer::kCount)> m_touchPointerPosNdc;
 
-	Array<U8, U(InputEvent::kCount)> m_events;
+	mutable Array<Atomic<U32>, U(InputEvent::kCount)> m_events;
 
 	/// The keybord input as ascii.
 	static constexpr U32 kMaxTexInput = 256;

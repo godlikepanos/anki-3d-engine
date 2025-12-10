@@ -32,3 +32,5 @@
 #include <AnKi/Scene/Events/JitterMoveEvent.h>
 #include <AnKi/Scene/Events/LightEvent.h>
 #include <AnKi/Scene/Events/ScriptEvent.h>
+
+#include <AnKi/Scene/EditorUiNode.h>

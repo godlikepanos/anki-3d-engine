@@ -31,7 +31,7 @@
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/UiCanvas.h>
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
-#include <csignal>
+#include <AnKi/Resource/ScriptResource.h>
 
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
@@ -382,6 +382,14 @@ Error App::mainLoop()
 		return err;
 	}
 
+	if(CString(g_cvarCoreLoadScene) != "")
+	{
+		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreLoadScene).cstr());
+		ScriptResourcePtr script;
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(g_cvarCoreLoadScene, script));
+		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
+	}
+
 	// Continue with the main loop
 	ANKI_CORE_LOGI("Entering main loop");
 	Bool quit = false;
@@ -414,6 +422,11 @@ Error App::mainLoop()
 			crntTime = (!benchmarkMode) ? HighRezTimer::getCurrentTime() : (prevUpdateTime + 1.0_sec / 60.0_sec);
 
 			ANKI_CHECK(Input::getSingleton().handleEvents());
+			if(Input::getSingleton().getEvent(InputEvent::kWindowClosed))
+			{
+				quit = true;
+			}
+
 			GrManager::getSingleton().beginFrame();
 
 			GpuSceneMicroPatcher::getSingleton().beginPatching();
