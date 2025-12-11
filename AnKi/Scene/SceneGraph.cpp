@@ -467,7 +467,7 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 	// Update children
 	node.visitChildrenMaxDepth(0, [&](SceneNode& child) {
 		updateNode(tid, child, ctx);
-		return true;
+		return FunctorContinue::kContinue;
 	});
 
 	ctx.m_perThread[tid].m_sceneMin = ctx.m_perThread[tid].m_sceneMin.min(componentUpdateInfo.m_sceneMin);
@@ -584,6 +584,39 @@ Error SceneGraph::saveToTextFile(CString filename)
 		} \
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
+	// Scene nodes
+	Error err = Error::kNone;
+
+	visitNodes([&](SceneNode& node) {
+		if(node.getParent() != nullptr)
+		{
+			// Skip non-root nodes
+			return FunctorContinue::kContinue;
+		}
+
+		node.visitThisAndChildren([&](SceneNode& node) {
+			err = node.serializeCommon(serializer);
+			if(err)
+			{
+				return FunctorContinue::kStop;
+			}
+
+			return FunctorContinue::kContinue;
+		});
+
+		if(err)
+		{
+			return FunctorContinue::kStop;
+		}
+
+		return FunctorContinue::kContinue;
+	});
+
+	if(err)
+	{
+		return err;
+	}
 
 	return Error::kNone;
 }

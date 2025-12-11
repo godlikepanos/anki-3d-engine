@@ -55,30 +55,30 @@ void Hierarchy<T, TMemoryPool>::removeChild(Value* child)
 
 template<typename T, typename TMemoryPool>
 template<typename TVisitorFunc>
-Bool Hierarchy<T, TMemoryPool>::visitChildren(TVisitorFunc vis)
+FunctorContinue Hierarchy<T, TMemoryPool>::visitChildren(TVisitorFunc vis)
 {
 	auto it = m_children.getBegin();
-	Bool continue_ = true;
-	for(; it != m_children.getEnd() && continue_; it++)
+	FunctorContinue cont = FunctorContinue::kContinue;
+	for(; it != m_children.getEnd() && cont == FunctorContinue::kContinue; it++)
 	{
-		continue_ = vis(*(*it));
+		cont = vis(*(*it));
 
-		if(continue_)
+		if(cont == FunctorContinue::kContinue)
 		{
-			continue_ = (*it)->visitChildren(vis);
+			cont = (*it)->visitChildren(vis);
 		}
 	}
 
-	return continue_;
+	return cont;
 }
 
 template<typename T, typename TMemoryPool>
 template<typename TVisitorFunc>
 void Hierarchy<T, TMemoryPool>::visitThisAndChildren(TVisitorFunc vis)
 {
-	const Bool continue_ = vis(*getSelf());
+	const FunctorContinue cont = vis(*getSelf());
 
-	if(continue_)
+	if(cont == FunctorContinue::kContinue)
 	{
 		visitChildren(vis);
 	}
@@ -100,24 +100,24 @@ void Hierarchy<T, TMemoryPool>::visitTree(TVisitorFunc vis)
 
 template<typename T, typename TMemoryPool>
 template<typename TVisitorFunc>
-Bool Hierarchy<T, TMemoryPool>::visitChildrenMaxDepth(I maxDepth, TVisitorFunc vis)
+FunctorContinue Hierarchy<T, TMemoryPool>::visitChildrenMaxDepth(I maxDepth, TVisitorFunc vis)
 {
 	ANKI_ASSERT(maxDepth >= 0);
 	--maxDepth;
 
-	Bool continue_ = true;
+	FunctorContinue cont = FunctorContinue::kContinue;
 	auto it = m_children.getBegin();
-	for(; it != m_children.getEnd() && continue_; ++it)
+	for(; it != m_children.getEnd() && cont == FunctorContinue::kContinue; ++it)
 	{
-		continue_ = vis(*(*it));
+		cont = vis(*(*it));
 
-		if(continue_ && maxDepth >= 0)
+		if(cont == FunctorContinue::kContinue && maxDepth >= 0)
 		{
-			continue_ = (*it)->visitChildrenMaxDepth(maxDepth, vis);
+			cont = (*it)->visitChildrenMaxDepth(maxDepth, vis);
 		}
 	}
 
-	return continue_;
+	return cont;
 }
 
 } // end namespace anki

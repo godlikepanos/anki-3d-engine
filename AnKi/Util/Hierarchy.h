@@ -96,7 +96,7 @@ public:
 
 	/// Visit the children and the children's children. Use it with lambda
 	template<typename TVisitorFunc>
-	Bool visitChildren(TVisitorFunc vis);
+	FunctorContinue visitChildren(TVisitorFunc vis);
 
 	/// Visit this object and move to the children. Use it with lambda
 	template<typename TVisitorFunc>
@@ -108,7 +108,7 @@ public:
 
 	/// Visit the children and limit the depth. Use it with lambda.
 	template<typename TVisitorFunc>
-	Bool visitChildrenMaxDepth(I maxDepth, TVisitorFunc vis);
+	FunctorContinue visitChildrenMaxDepth(I maxDepth, TVisitorFunc vis);
 
 private:
 	Value* m_parent = nullptr; ///< May be nullptr

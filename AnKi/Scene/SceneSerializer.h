@@ -48,11 +48,11 @@ public:
 	virtual Error write(CString name, ConstWeakArray<F32> values) = 0;
 	virtual Error read(CString name, WeakArray<F32> values) = 0;
 
+	Error write(CString name, ConstWeakArray<F64> values);
+	Error read(CString name, WeakArray<F64> values);
+
 	virtual Error write(CString name, CString value) = 0;
 	virtual Error read(CString name, SceneString& value) = 0;
-
-	virtual Error write(CString name, ConstWeakArray<U8> byteArray) = 0;
-	virtual Error read(CString name, SceneDynamicArray<U8>& byteArray, U32& arraySize) = 0;
 
 	// For resources
 	template<typename T>
@@ -83,14 +83,12 @@ public:
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
 	}
 
-	// For regular arithmetic
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, F64& varValue)
+	// SceneDynamicArray of numbers
+	template<typename T>
+	Error serialize(String varName, U32 varVersion, Bool varDeprecated, SceneDynamicArray<T>& array) requires(std::is_arithmetic_v<T>)
 	{
-		F32 val = F32(varValue);
-		WeakArray<F32> arr(&val, 1);
-		ANKI_CHECK(serializeInternal(varName, varVersion, varDeprecated, arr));
-		varValue = val;
-		return Error::kNone;
+		WeakArray<T> arr(array);
+		return serializeInternal(varName, varVersion, varDeprecated, arr);
 	}
 
 	// Vector 3
@@ -106,6 +104,14 @@ public:
 	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TVec<T, 4>& varValue)
 	{
 		WeakArray<T> arr(&varValue[0], 4);
+		return serializeInternal(varName, varVersion, varDeprecated, arr);
+	}
+
+	// Mat
+	template<typename T, U kTRowCount, U kTColumnCount>
+	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TMat<T, kTRowCount, kTColumnCount>& varValue)
+	{
+		WeakArray<T> arr(&varValue[0], kTRowCount * kTColumnCount);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
 	}
 
@@ -259,24 +265,6 @@ public:
 	}
 
 	Error read([[maybe_unused]] CString name, [[maybe_unused]] SceneString& value) final
-	{
-		ANKI_ASSERT(!"TODO");
-		return Error::kNone;
-	}
-
-	Error write(CString name, ConstWeakArray<U8> byteArray) final
-	{
-		ANKI_CHECK(m_file.writeTextf("%s %u ", name.cstr(), byteArray.getSize()));
-
-		for(U32 i = 0; i < byteArray.getSize(); ++i)
-		{
-			ANKI_CHECK(m_file.writeTextf((i < byteArray.getSize() - 1) ? "%u " : "%u\n", byteArray[i]));
-		}
-
-		return Error::kNone;
-	}
-
-	Error read([[maybe_unused]] CString name, [[maybe_unused]] SceneDynamicArray<U8>& byteArray, [[maybe_unused]] U32& arraySize) final
 	{
 		ANKI_ASSERT(!"TODO");
 		return Error::kNone;

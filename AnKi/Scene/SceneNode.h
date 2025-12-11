@@ -14,24 +14,22 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// Interface class backbone of scene
+// Base class of the scene
 class SceneNode : public SceneHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
 	friend class SceneComponent;
+	friend class SceneGraph;
 
 public:
 	using Base = SceneHierarchy<SceneNode>;
 
-	/// The one and only constructor.
-	/// @param name The unique name of the node. If it's empty the the node is not searchable.
+	// The one and only constructor.
+	// name: The unique name of the node. If it's empty the the node is not searchable.
 	SceneNode(CString name);
 
 	virtual ~SceneNode();
 
-	/// Return the name. It may be empty for nodes that we don't want to track.
+	// Return the name. It may be empty for nodes that we don't want to track.
 	CString getName() const
 	{
 		return (!m_name.isEmpty()) ? m_name.toCString() : "Unnamed";
@@ -72,14 +70,20 @@ public:
 		Base::setParent(obj);
 	}
 
-	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
-	/// @param prevUpdateTime Timestamp of the previous update
-	/// @param crntTime Timestamp of this update
+	// This is called by the scenegraph every frame after all component updates. By default it does nothing.
+	// prevUpdateTime: Timestamp of the previous update
+	// crntTime: Timestamp of this update
 	virtual void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
 	}
 
-	/// Iterate all components.
+	// Extra serialization for the derived classes
+	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
+	{
+		return Error::kNone;
+	}
+
+	// Iterate all components.
 	template<typename TFunct>
 	void iterateComponents(TFunct func) const
 	{
@@ -89,7 +93,7 @@ public:
 		}
 	}
 
-	/// Iterate all components.
+	// Iterate all components.
 	template<typename TFunct>
 	void iterateComponents(TFunct func)
 	{
@@ -99,7 +103,7 @@ public:
 		}
 	}
 
-	/// Iterate all components of a specific type
+	// Iterate all components of a specific type
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func) const
 	{
@@ -115,7 +119,7 @@ public:
 		}
 	}
 
-	/// Iterate all components of a specific type
+	// Iterate all components of a specific type
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func)
 	{
@@ -131,7 +135,7 @@ public:
 		}
 	}
 
-	/// Try geting a pointer to the first component of the requested type
+	// Try geting a pointer to the first component of the requested type
 	template<typename TComponent>
 	const TComponent* tryGetFirstComponentOfType() const
 	{
@@ -148,7 +152,7 @@ public:
 		return nullptr;
 	}
 
-	/// Try geting a pointer to the first component of the requested type
+	// Try geting a pointer to the first component of the requested type
 	template<typename TComponent>
 	TComponent* tryGetFirstComponentOfType()
 	{
@@ -156,7 +160,7 @@ public:
 		return const_cast<TComponent*>(c);
 	}
 
-	/// Get a pointer to the first component of the requested type
+	// Get a pointer to the first component of the requested type
 	template<typename TComponent>
 	const TComponent& getFirstComponentOfType() const
 	{
@@ -165,7 +169,7 @@ public:
 		return *out;
 	}
 
-	/// Get a pointer to the first component of the requested type
+	// Get a pointer to the first component of the requested type
 	template<typename TComponent>
 	TComponent& getFirstComponentOfType()
 	{
@@ -173,7 +177,7 @@ public:
 		return const_cast<TComponent&>(c);
 	}
 
-	/// Try geting a pointer to the nth component of the requested type.
+	// Try geting a pointer to the nth component of the requested type.
 	template<typename TComponent>
 	const TComponent* tryGetNthComponentOfType(U32 nth) const
 	{
@@ -191,7 +195,7 @@ public:
 		return nullptr;
 	}
 
-	/// Try geting a pointer to the nth component of the requested type.
+	// Try geting a pointer to the nth component of the requested type.
 	template<typename TComponent>
 	TComponent* tryGetNthComponentOfType(U32 nth)
 	{
@@ -215,7 +219,7 @@ public:
 		return *out;
 	}
 
-	/// Get the nth component.
+	// Get the nth component.
 	template<typename TComponent>
 	TComponent& getComponentAt(U32 idx)
 	{
@@ -224,7 +228,7 @@ public:
 		return *static_cast<TComponent*>(c);
 	}
 
-	/// Get the nth component.
+	// Get the nth component.
 	template<typename TComponent>
 	const TComponent& getComponentAt(U32 idx) const
 	{
@@ -248,7 +252,7 @@ public:
 		return count;
 	}
 
-	/// Create and append a component to the components container. The SceneNode has the ownership.
+	// Create and append a component to the components container. The SceneNode has the ownership.
 	template<typename TComponent>
 	TComponent* newComponent();
 
@@ -263,10 +267,9 @@ public:
 		return m_componentTypeMask;
 	}
 
-	/// @name Movement
-	/// @{
+	// Movement methods //
 
-	/// Ignore parent nodes's transform.
+	// Ignore parent nodes's transform.
 	void setIgnoreParentTransform(Bool ignore)
 	{
 		m_ignoreParentNodeTransform = ignore;
@@ -395,10 +398,11 @@ public:
 	{
 		return m_localTransformDirty;
 	}
-	/// @}
+
+	// End movement methods //
 
 private:
-	SceneString m_name; ///< A unique name.
+	SceneString m_name; // A unique name.
 	U32 m_uuid;
 
 	SceneComponentTypeMask m_componentTypeMask = SceneComponentTypeMask::kNone;
@@ -407,14 +411,9 @@ private:
 
 	Timestamp m_maxComponentTimestamp = 0;
 
-	/// The transformation in local space.
-	Transform m_ltrf = Transform::getIdentity();
-
-	/// The transformation in world space (local combined with parent's transformation).
-	Transform m_wtrf = Transform::getIdentity();
-
-	/// Keep the previous transformation for checking if it moved.
-	Transform m_prevWTrf = Transform::getIdentity();
+	Transform m_ltrf = Transform::getIdentity(); // The transformation in local space
+	Transform m_wtrf = Transform::getIdentity(); // The transformation in world space (local combined with parent's transformation)
+	Transform m_prevWTrf = Transform::getIdentity(); // Keep the previous transformation for checking if it moved
 
 	// Flags
 	Bool m_markedForDeletion : 1 = false;
@@ -423,7 +422,8 @@ private:
 	Bool m_transformUpdatedThisFrame : 1 = true;
 
 	void newComponentInternal(SceneComponent* newc);
+
+	Error serializeCommon(SceneSerializer& serializer);
 };
-/// @}
 
 } // end namespace anki
