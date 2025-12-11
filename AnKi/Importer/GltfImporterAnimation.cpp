@@ -208,7 +208,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			{
 				GltfAnimKey<Quat> key;
 				key.m_time = keys[i];
-				key.m_value = Quat(rotations[i].x(), rotations[i].y(), rotations[i].z(), rotations[i].w());
+				key.m_value = Quat(rotations[i].x, rotations[i].y, rotations[i].z, rotations[i].w);
 
 				tempChannels[channelCount].m_rotations.emplaceBack(key);
 			}
@@ -329,8 +329,8 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
 			for(const GltfAnimKey<Quat>& key : channel.m_rotations)
 			{
-				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n", key.m_time, key.m_value.x(), key.m_value.y(),
-										   key.m_value.z(), key.m_value.w()));
+				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n", key.m_time, key.m_value.x, key.m_value.y, key.m_value.z,
+										   key.m_value.w));
 			}
 			ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
 		}

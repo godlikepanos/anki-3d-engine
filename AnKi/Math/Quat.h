@@ -21,44 +21,73 @@ public:
 	static constexpr Bool kSimdEnabled = std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 	static constexpr Bool kSseEnabled = kSimdEnabled && ANKI_SIMD_SSE;
 
-	/// @name Constructors
-	/// @{
+	// Data //
+
+	// Skip some warnings cause we really nead anonymous structs inside unions
+#if ANKI_COMPILER_MSVC
+#	pragma warning(push)
+#	pragma warning(disable : 4201)
+#elif ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wgnu-anonymous-struct"
+#	pragma GCC diagnostic ignored "-Wnested-anon-types"
+#endif
+	union
+	{
+		struct
+		{
+			T x;
+			T y;
+			T z;
+			T w;
+		};
+
+		TVec<T, 4> m_vec;
+	};
+#if ANKI_COMPILER_MSVC
+#	pragma warning(pop)
+#elif ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
+
+	// Constructors //
+
 	TQuat()
-		: m_value(T(0), T(0), T(0), T(1))
+		: m_vec(T(0), T(0), T(0), T(1))
 	{
 	}
 
 	TQuat(const TQuat& b)
-		: m_value(b.m_value)
+		: m_vec(b.m_vec)
 	{
 	}
 
 	explicit TQuat(const T x_, const T y_, const T z_, const T w_)
-		: m_value(x_, y_, z_, w_)
+		: m_vec(x_, y_, z_, w_)
 	{
 	}
 
 	explicit TQuat(const T arr[])
-		: m_value(arr)
+		: m_vec(arr)
 	{
 	}
 
 	explicit TQuat(const TVec<T, 2>& v, const T z_, const T w_)
-		: m_value(v, z_, w_)
+		: m_vec(v, z_, w_)
 	{
 	}
 
 	explicit TQuat(const TVec<T, 3>& v, const T w_)
-		: m_value(v, w_)
+		: m_vec(v, w_)
 	{
 	}
 
 	explicit TQuat(const TVec<T, 4>& v)
-		: m_value(v)
+		: m_vec(v)
 	{
 	}
 
-	/// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+	// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
 	explicit TQuat(const TMat<T, 3, 3>& m)
 	{
 		const T tr = m(0, 0) + m(1, 1) + m(2, 2);
@@ -66,34 +95,34 @@ public:
 		if(tr > T(0))
 		{
 			const T S = sqrt<T>(tr + T(1)) * T(2); // S=4*qw
-			w() = T(0.25) * S;
-			x() = (m(2, 1) - m(1, 2)) / S;
-			y() = (m(0, 2) - m(2, 0)) / S;
-			z() = (m(1, 0) - m(0, 1)) / S;
+			w = T(0.25) * S;
+			x = (m(2, 1) - m(1, 2)) / S;
+			y = (m(0, 2) - m(2, 0)) / S;
+			z = (m(1, 0) - m(0, 1)) / S;
 		}
 		else if(m(0, 0) > m(1, 1) && m(0, 0) > m(2, 2))
 		{
 			const T S = sqrt<T>(T(1) + m(0, 0) - m(1, 1) - m(2, 2)) * T(2); // S=4*qx
-			w() = (m(2, 1) - m(1, 2)) / S;
-			x() = T(0.25) * S;
-			y() = (m(0, 1) + m(1, 0)) / S;
-			z() = (m(0, 2) + m(2, 0)) / S;
+			w = (m(2, 1) - m(1, 2)) / S;
+			x = T(0.25) * S;
+			y = (m(0, 1) + m(1, 0)) / S;
+			z = (m(0, 2) + m(2, 0)) / S;
 		}
 		else if(m(1, 1) > m(2, 2))
 		{
 			const T S = sqrt<T>(T(1) + m(1, 1) - m(0, 0) - m(2, 2)) * T(2); // S=4*qy
-			w() = (m(0, 2) - m(2, 0)) / S;
-			x() = (m(0, 1) + m(1, 0)) / S;
-			y() = T(0.25) * S;
-			z() = (m(1, 2) + m(2, 1)) / S;
+			w = (m(0, 2) - m(2, 0)) / S;
+			x = (m(0, 1) + m(1, 0)) / S;
+			y = T(0.25) * S;
+			z = (m(1, 2) + m(2, 1)) / S;
 		}
 		else
 		{
 			const T S = sqrt<T>(T(1) + m(2, 2) - m(0, 0) - m(1, 1)) * T(2); // S=4*qz
-			w() = (m(1, 0) - m(0, 1)) / S;
-			x() = (m(0, 2) + m(2, 0)) / S;
-			y() = (m(1, 2) + m(2, 1)) / S;
-			z() = T(0.25) * S;
+			w = (m(1, 0) - m(0, 1)) / S;
+			x = (m(0, 2) + m(2, 0)) / S;
+			y = (m(1, 2) + m(2, 1)) / S;
+			z = T(0.25) * S;
 		}
 	}
 
@@ -116,10 +145,10 @@ public:
 
 		const T cxcy = cx * cy;
 		const T sxsy = sx * sy;
-		x() = cxcy * sz + sxsy * cz;
-		y() = sx * cy * cz + cx * sy * sz;
-		z() = cx * sy * cz - sx * cy * sz;
-		w() = cxcy * cz - sxsy * sz;
+		x = cxcy * sz + sxsy * cz;
+		y = sx * cy * cz + cx * sy * sz;
+		z = cx * sy * cz - sx * cy * sz;
+		w = cxcy * cz - sxsy * sz;
 	}
 
 	explicit TQuat(const TAxisang<T>& axisang)
@@ -138,180 +167,133 @@ public:
 
 		const T scalefactor = sintheta / sqrt(lengthsq);
 
-		m_value = TVec<T, 4>(axisang.getAxis(), costheta) * TVec<T, 4>(scalefactor, scalefactor, scalefactor, T(1));
+		m_vec = TVec<T, 4>(axisang.getAxis(), costheta) * TVec<T, 4>(scalefactor, scalefactor, scalefactor, T(1));
 	}
-	/// @}
 
-	/// @name Operators with same type
-	/// @{
+	// Operators with same type //
 
-	/// Copy.
 	TQuat& operator=(const TQuat& b)
 	{
-		m_value = b.m_value;
+		m_vec = b.m_vec;
 		return *this;
 	}
 
 	Bool operator==(const TQuat& b) const
 	{
-		return m_value == b.m_value;
+		return m_vec == b.m_vec;
 	}
 
 	Bool operator!=(const TQuat& b) const
 	{
-		return m_value != b.m_value;
+		return m_vec != b.m_vec;
 	}
 
-#if ANKI_SIMD_SSE
-	/// Combine rotations (SIMD version)
+	// Combine rotations (SIMD version)
 	TQuat operator*(const TQuat& b) requires(kSseEnabled)
 	{
-		// Taken from: http://momchil-velikov.blogspot.nl/2013/10/fast-sse-quternion-multiplication.html
-		const __m128 abcd = m_value.getSimd();
-		const __m128 xyzw = b.m_value.getSimd();
+#if ANKI_SIMD_SSE
+		if constexpr(kSseEnabled)
+		{
+			// Taken from: http://momchil-velikov.blogspot.nl/2013/10/fast-sse-quternion-multiplication.html
+			const __m128 abcd = m_vec.getSimd();
+			const __m128 xyzw = b.m_vec.getSimd();
 
-		const __m128 t0 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(3, 3, 3, 3));
-		const __m128 t1 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(2, 3, 0, 1));
+			const __m128 t0 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(3, 3, 3, 3));
+			const __m128 t1 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(2, 3, 0, 1));
 
-		const __m128 t3 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(0, 0, 0, 0));
-		const __m128 t4 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(1, 0, 3, 2));
+			const __m128 t3 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(0, 0, 0, 0));
+			const __m128 t4 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(1, 0, 3, 2));
 
-		const __m128 t5 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(1, 1, 1, 1));
-		const __m128 t6 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(2, 0, 3, 1));
+			const __m128 t5 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(1, 1, 1, 1));
+			const __m128 t6 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(2, 0, 3, 1));
 
-		// [d,d,d,d] * [z,w,x,y] = [dz,dw,dx,dy]
-		const __m128 m0 = _mm_mul_ps(t0, t1);
+			// [d,d,d,d] * [z,w,x,y] = [dz,dw,dx,dy]
+			const __m128 m0 = _mm_mul_ps(t0, t1);
 
-		// [a,a,a,a] * [y,x,w,z] = [ay,ax,aw,az]
-		const __m128 m1 = _mm_mul_ps(t3, t4);
+			// [a,a,a,a] * [y,x,w,z] = [ay,ax,aw,az]
+			const __m128 m1 = _mm_mul_ps(t3, t4);
 
-		// [b,b,b,b] * [z,x,w,y] = [bz,bx,bw,by]
-		const __m128 m2 = _mm_mul_ps(t5, t6);
+			// [b,b,b,b] * [z,x,w,y] = [bz,bx,bw,by]
+			const __m128 m2 = _mm_mul_ps(t5, t6);
 
-		// [c,c,c,c] * [w,z,x,y] = [cw,cz,cx,cy]
-		const __m128 t7 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(2, 2, 2, 2));
-		const __m128 t8 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(3, 2, 0, 1));
-		const __m128 m3 = _mm_mul_ps(t7, t8);
+			// [c,c,c,c] * [w,z,x,y] = [cw,cz,cx,cy]
+			const __m128 t7 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(2, 2, 2, 2));
+			const __m128 t8 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(3, 2, 0, 1));
+			const __m128 m3 = _mm_mul_ps(t7, t8);
 
-		// [dz,dw,dx,dy] + -[ay,ax,aw,az] = [dz+ay,dw-ax,dx+aw,dy-az]
-		__m128 e = _mm_addsub_ps(m0, m1);
+			// [dz,dw,dx,dy] + -[ay,ax,aw,az] = [dz+ay,dw-ax,dx+aw,dy-az]
+			__m128 e = _mm_addsub_ps(m0, m1);
 
-		// [dx+aw,dz+ay,dy-az,dw-ax]
-		e = _mm_shuffle_ps(e, e, _MM_SHUFFLE(1, 3, 0, 2));
+			// [dx+aw,dz+ay,dy-az,dw-ax]
+			e = _mm_shuffle_ps(e, e, _MM_SHUFFLE(1, 3, 0, 2));
 
-		// [dx+aw,dz+ay,dy-az,dw-ax] + -[bz,bx,bw,by] = [dx+aw+bz,dz+ay-bx,dy-az+bw,dw-ax-by]
-		e = _mm_addsub_ps(e, m2);
+			// [dx+aw,dz+ay,dy-az,dw-ax] + -[bz,bx,bw,by] = [dx+aw+bz,dz+ay-bx,dy-az+bw,dw-ax-by]
+			e = _mm_addsub_ps(e, m2);
 
-		// [dz+ay-bx,dw-ax-by,dy-az+bw,dx+aw+bz]
-		e = _mm_shuffle_ps(e, e, _MM_SHUFFLE(2, 0, 1, 3));
+			// [dz+ay-bx,dw-ax-by,dy-az+bw,dx+aw+bz]
+			e = _mm_shuffle_ps(e, e, _MM_SHUFFLE(2, 0, 1, 3));
 
-		// [dz+ay-bx,dw-ax-by,dy-az+bw,dx+aw+bz] + -[cw,cz,cx,cy] = [dz+ay-bx+cw,dw-ax-by-cz,dy-az+bw+cx,dx+aw+bz-cy]
-		e = _mm_addsub_ps(e, m3);
+			// [dz+ay-bx,dw-ax-by,dy-az+bw,dx+aw+bz] + -[cw,cz,cx,cy] = [dz+ay-bx+cw,dw-ax-by-cz,dy-az+bw+cx,dx+aw+bz-cy]
+			e = _mm_addsub_ps(e, m3);
 
-		// [dw-ax-by-cz,dz+ay-bx+cw,dy-az+bw+cx,dx+aw+bz-cy]
-		return TQuat(TVec<T, 4>(_mm_shuffle_ps(e, e, _MM_SHUFFLE(2, 3, 1, 0))));
-	}
+			// [dw-ax-by-cz,dz+ay-bx+cw,dy-az+bw+cx,dx+aw+bz-cy]
+			return TQuat(TVec<T, 4>(_mm_shuffle_ps(e, e, _MM_SHUFFLE(2, 3, 1, 0))));
+		}
+		else
 #endif
+		{
+			// Non-SIMD version
 
-	/// Combine rotations (non-SIMD version)
-	TQuat operator*(const TQuat& b) requires(!kSseEnabled)
-	{
-		const T lx = m_value.x();
-		const T ly = m_value.y();
-		const T lz = m_value.z();
-		const T lw = m_value.w();
+			const T lx = m_vec.x();
+			const T ly = m_vec.y();
+			const T lz = m_vec.z();
+			const T lw = m_vec.w();
 
-		const T rx = b.m_value.x();
-		const T ry = b.m_value.y();
-		const T rz = b.m_value.z();
-		const T rw = b.m_value.w();
+			const T rx = b.m_vec.x();
+			const T ry = b.m_vec.y();
+			const T rz = b.m_vec.z();
+			const T rw = b.m_vec.w();
 
-		const T x = lw * rx + lx * rw + ly * rz - lz * ry;
-		const T y = lw * ry - lx * rz + ly * rw + lz * rx;
-		const T z = lw * rz + lx * ry - ly * rx + lz * rw;
-		const T w = lw * rw - lx * rx - ly * ry - lz * rz;
+			const T x = lw * rx + lx * rw + ly * rz - lz * ry;
+			const T y = lw * ry - lx * rz + ly * rw + lz * rx;
+			const T z = lw * rz + lx * ry - ly * rx + lz * rw;
+			const T w = lw * rw - lx * rx - ly * ry - lz * rz;
 
-		return Quat(x, y, z, w);
+			return Quat(x, y, z, w);
+		}
 	}
 
-	/// Convert to Vec4.
+	// Convert to Vec4.
 	explicit operator TVec<T, 4>() const
 	{
-		return m_value;
+		return m_vec;
 	}
-	/// @}
 
-	/// @name Operators with other types
-	/// @{
+	// Operators with other types //
 
 	T operator[](const U32 i) const
 	{
-		return m_value[i];
+		return m_vec[i];
 	}
 
 	T& operator[](const U32 i)
 	{
-		return m_value[i];
+		return m_vec[i];
 	}
 
-	/// Rotate a vector by this quat.
+	// Rotate a vector by this quat.
 	TVec<T, 3> operator*(const TVec<T, 3>& inValue) const
 	{
 		// Rotating a vector by a quaternion is done by: p' = q * p * q^-1 (q^-1 = conjugated(q) for a unit quaternion)
-		ANKI_ASSERT(isZero<T>(T(1) - m_value.getLength()));
-		return TVec<T, 3>((*this * TQuat(TVec<T, 4>(inValue, T(0))) * conjugated()).m_value.xyz());
-	}
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	T x() const
-	{
-		return m_value.x();
+		ANKI_ASSERT(isZero<T>(T(1) - m_vec.getLength()));
+		return TVec<T, 3>((*this * TQuat(TVec<T, 4>(inValue, T(0))) * conjugated()).m_vec.xyz());
 	}
 
-	T& x()
-	{
-		return m_value.x();
-	}
-
-	T y() const
-	{
-		return m_value.y();
-	}
-
-	T& y()
-	{
-		return m_value.y();
-	}
-
-	T z() const
-	{
-		return m_value.z();
-	}
-
-	T& z()
-	{
-		return m_value.z();
-	}
-
-	T w() const
-	{
-		return m_value.w();
-	}
-
-	T& w()
-	{
-		return m_value.w();
-	}
-	/// @}
-
-	/// @name Other
-	/// @{
+	// Other //
 
 	[[nodiscard]] T length() const
 	{
-		return m_value.length();
+		return m_vec.length();
 	}
 
 	/// Calculates the rotation from vector "from" to "to".
@@ -340,14 +322,14 @@ public:
 
 	[[nodiscard]] TQuat invert() const
 	{
-		const T len = m_value.length();
+		const T len = m_vec.length();
 		ANKI_ASSERT(!isZero<T>(len));
 		return conjugated() / len;
 	}
 
 	[[nodiscard]] TQuat conjugated() const
 	{
-		return TQuat(m_value * TVec<T, 4>(T(-1), T(-1), T(-1), T(1)));
+		return TQuat(m_vec * TVec<T, 4>(T(-1), T(-1), T(-1), T(1)));
 	}
 
 	/// Returns slerp(this, q1, t)
@@ -358,7 +340,7 @@ public:
 
 		// Calc cosine
 		T sinScale1 = T(1);
-		T cosComega = m_value.dot(destination.m_value);
+		T cosComega = m_vec.dot(destination.m_vec);
 
 		// Adjust signs (if necessary)
 		if(cosComega < T(0))
@@ -385,7 +367,7 @@ public:
 		}
 
 		// Interpolate between the two quaternions
-		const TVec<T, 4> v = TVec<T, 4>(scale0) * m_value + TVec<T, 4>(scale1) * destination.m_value;
+		const TVec<T, 4> v = TVec<T, 4>(scale0) * m_vec + TVec<T, 4>(scale1) * destination.m_vec;
 		return TQuat(v.normalize());
 	}
 
@@ -409,7 +391,7 @@ public:
 
 	[[nodiscard]] TQuat normalize() const
 	{
-		return TQuat(m_value.normalize());
+		return TQuat(m_vec.normalize());
 	}
 
 	void setIdentity()
@@ -429,19 +411,11 @@ public:
 
 	String toString() const requires(std::is_floating_point<T>::value)
 	{
-		return m_value.toString();
+		return m_vec.toString();
 	}
-	/// @}
-
-private:
-	TVec<T, 4> m_value;
 };
 
-/// F32 quaternion
 using Quat = TQuat<F32>;
-
-/// F64 quaternion
 using DQuat = TQuat<F64>;
-/// @}
 
 } // end namespace anki

@@ -101,18 +101,18 @@ public:
 
 		T xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
-		xs = q.x() + q.x();
-		ys = q.y() + q.y();
-		zs = q.z() + q.z();
-		wx = q.w() * xs;
-		wy = q.w() * ys;
-		wz = q.w() * zs;
-		xx = q.x() * xs;
-		xy = q.x() * ys;
-		xz = q.x() * zs;
-		yy = q.y() * ys;
-		yz = q.y() * zs;
-		zz = q.z() * zs;
+		xs = q.x + q.x;
+		ys = q.y + q.y;
+		zs = q.z + q.z;
+		wx = q.w * xs;
+		wy = q.w * ys;
+		wz = q.w * zs;
+		xx = q.x * xs;
+		xy = q.x * ys;
+		xz = q.x * zs;
+		yy = q.y * ys;
+		yz = q.y * zs;
+		zz = q.z * zs;
 
 		m(0, 0) = T(1) - (yy + zz);
 		m(0, 1) = xy - wz;

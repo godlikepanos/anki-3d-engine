@@ -232,7 +232,7 @@ inline JPH::RVec3 toJPH(Vec3 ak)
 
 inline JPH::Quat toJPH(Quat ak)
 {
-	return JPH::Quat(ak.x(), ak.y(), ak.z(), ak.w());
+	return JPH::Quat(ak.x, ak.y, ak.z, ak.w);
 }
 
 inline Vec4 toAnKi(const JPH::Vec4& jph)
