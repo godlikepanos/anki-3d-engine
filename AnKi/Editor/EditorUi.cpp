@@ -663,7 +663,7 @@ void EditorUi::sceneNodePropertiesWindow()
 			dummyButton(id++);
 
 			const Euler rot(node.getLocalRotation());
-			F32 localRotation[3] = {toDegrees(rot.x()), toDegrees(rot.y()), toDegrees(rot.z())};
+			F32 localRotation[3] = {toDegrees(rot.x), toDegrees(rot.y), toDegrees(rot.z)};
 			if(ImGui::DragFloat3(ICON_MDI_ROTATE_ORBIT " Rotation", localRotation, 0.25f, -360.0f, 360.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
 			{
 				const Euler rot(toRad(localRotation[0]), toRad(localRotation[1]), toRad(localRotation[2]));

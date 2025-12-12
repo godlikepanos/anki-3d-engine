@@ -263,10 +263,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(velocity != Vec2(0.0))
 		{
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.z() = 0.0f;
+			angles.x += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
 
@@ -293,10 +293,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.z() = 0.0f;
+			angles.x += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
 

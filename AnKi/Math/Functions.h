@@ -7,7 +7,6 @@
 
 #include <AnKi/Util/Functions.h>
 #include <cmath>
-#include <cstdlib>
 
 namespace anki {
 

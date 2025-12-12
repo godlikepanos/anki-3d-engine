@@ -135,13 +135,13 @@ public:
 	explicit TQuat(const TEuler<T>& eu)
 	{
 		T cx, sx;
-		sinCos(eu.y() * T(0.5), sx, cx);
+		sinCos(eu.y * T(0.5), sx, cx);
 
 		T cy, sy;
-		sinCos(eu.z() * T(0.5), sy, cy);
+		sinCos(eu.z * T(0.5), sy, cy);
 
 		T cz, sz;
-		sinCos(eu.x() * T(0.5), sz, cz);
+		sinCos(eu.x * T(0.5), sz, cz);
 
 		const T cxcy = cx * cy;
 		const T sxsy = sx * sy;

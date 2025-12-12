@@ -131,9 +131,9 @@ public:
 	{
 		TMat& m = *this;
 		T ch, sh, ca, sa, cb, sb;
-		sinCos(e.y(), sh, ch);
-		sinCos(e.z(), sa, ca);
-		sinCos(e.x(), sb, cb);
+		sinCos(e.y, sh, ch);
+		sinCos(e.z, sa, ca);
+		sinCos(e.x, sb, cb);
 
 		m(0, 0) = ch * ca;
 		m(0, 1) = sh * sb - ch * sa * cb;
