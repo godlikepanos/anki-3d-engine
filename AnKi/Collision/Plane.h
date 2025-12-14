@@ -88,7 +88,7 @@ public:
 	// Set the plane from a point in plane and a direction
 	void setFromRay(Vec3 rayOrigin, Vec3 rayDir)
 	{
-		m_normal = rayDir.xyz0();
+		m_normal = rayDir.xyz0;
 		m_offset = rayDir.dot(rayOrigin);
 	}
 
@@ -110,7 +110,7 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_normal.w() == 0.0f);
+		ANKI_ASSERT(m_normal.w == 0.0f);
 		ANKI_ASSERT(m_offset != kMaxF32);
 	}
 };

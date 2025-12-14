@@ -22,27 +22,11 @@ namespace anki {]]></head>
 					</args>
 				</constructor>
 			</constructors>
+			<vars>
+				<var name="x">F32</var>
+				<var name="y">F32</var>
+			</vars>
 			<methods>
-				<method name="getX">
-					<overrideCall>F32 ret = (*self).x();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="getY">
-					<overrideCall>F32 ret = (*self).y();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="setX">
-					<overrideCall>(*self).x() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setY">
-					<overrideCall>(*self).y() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
 				<method name="setAll">
 					<overrideCall>(*self) = Vec2(arg0, arg1);</overrideCall>
 					<args>
@@ -53,14 +37,14 @@ namespace anki {]]></head>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
 					<args>
-						<arg>U</arg>
+						<arg>U32</arg>
 					</args>
 					<return>F32</return>
 				</method>
 				<method name="setAt">
 					<overrideCall>(*self)[arg0] = arg1;</overrideCall>
 					<args>
-						<arg>U</arg>
+						<arg>U32</arg>
 						<arg>F32</arg>
 					</args>
 				</method>
@@ -129,37 +113,12 @@ namespace anki {]]></head>
 					</args>
 				</constructor>
 			</constructors>
+			<vars>
+				<var name="x">F32</var>
+				<var name="y">F32</var>
+				<var name="z">F32</var>
+			</vars>
 			<methods>
-				<method name="getX">
-					<overrideCall>F32 ret = (*self).x();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="getY">
-					<overrideCall>F32 ret = (*self).y();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="getZ">
-					<overrideCall>F32 ret = (*self).z();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="setX">
-					<overrideCall>(*self).x() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setY">
-					<overrideCall>(*self).y() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setZ">
-					<overrideCall>(*self).z() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
 				<method name="setAll">
 					<overrideCall>(*self) = Vec3(arg0, arg1, arg2);</overrideCall>
 					<args>
@@ -171,14 +130,14 @@ namespace anki {]]></head>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
 					<args>
-						<arg>U</arg>
+						<arg>U32</arg>
 					</args>
 					<return>F32</return>
 				</method>
 				<method name="setAt">
 					<overrideCall>(*self)[arg0] = arg1;</overrideCall>
 					<args>
-						<arg>U</arg>
+						<arg>U32</arg>
 						<arg>F32</arg>
 					</args>
 				</method>
@@ -249,47 +208,13 @@ namespace anki {]]></head>
 					</args>
 				</constructor>
 			</constructors>
+			<vars>
+				<var name="x">F32</var>
+				<var name="y">F32</var>
+				<var name="z">F32</var>
+				<var name="w">F32</var>
+			</vars>
 			<methods>
-				<method name="getX">
-					<overrideCall>F32 ret = (*self).x();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="getY">
-					<overrideCall>F32 ret = (*self).y();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="getZ">
-					<overrideCall>F32 ret = (*self).z();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="getW">
-					<overrideCall>F32 ret = (*self).w();</overrideCall>
-					<return>F32</return>
-				</method>
-				<method name="setX">
-					<overrideCall>(*self).x() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setY">
-					<overrideCall>(*self).y() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setZ">
-					<overrideCall>(*self).z() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setW">
-					<overrideCall>(*self).w() = arg0;</overrideCall>
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
 				<method name="setAll">
 					<overrideCall>(*self) = Vec4(arg0, arg1, arg2, arg3);</overrideCall>
 					<args>
@@ -302,14 +227,14 @@ namespace anki {]]></head>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
 					<args>
-						<arg>U</arg>
+						<arg>U32</arg>
 					</args>
 					<return>F32</return>
 				</method>
 				<method name="setAt">
 					<overrideCall>(*self)[arg0] = arg1;</overrideCall>
 					<args>
-						<arg>U</arg>
+						<arg>U32</arg>
 						<arg>F32</arg>
 					</args>
 				</method>
@@ -381,16 +306,16 @@ namespace anki {]]></head>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)(arg0, arg1);</overrideCall>
 					<args>
-						<arg>U</arg>
-						<arg>U</arg>
+						<arg>U32</arg>
+						<arg>U32</arg>
 					</args>
 					<return>F32</return>
 				</method>
 				<method name="setAt">
 					<overrideCall>(*self)(arg0, arg1) = arg2;</overrideCall>
 					<args>
-						<arg>U</arg>
-						<arg>U</arg>
+						<arg>U32</arg>
+						<arg>U32</arg>
 						<arg>F32</arg>
 					</args>
 				</method>
@@ -428,16 +353,16 @@ namespace anki {]]></head>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)(arg0, arg1);</overrideCall>
 					<args>
-						<arg>U</arg>
-						<arg>U</arg>
+						<arg>U32</arg>
+						<arg>U32</arg>
 					</args>
 					<return>F32</return>
 				</method>
 				<method name="setAt">
 					<overrideCall>(*self)(arg0, arg1) = arg2;</overrideCall>
 					<args>
-						<arg>U</arg>
-						<arg>U</arg>
+						<arg>U32</arg>
+						<arg>U32</arg>
 						<arg>F32</arg>
 					</args>
 				</method>
@@ -478,7 +403,7 @@ namespace anki {]]></head>
 					</args>
 				</method>
 				<method name="getOrigin">
-					<overrideCall>Vec3 ret = self->getOrigin().xyz();</overrideCall>
+					<overrideCall>Vec3 ret = self->getOrigin().xyz;</overrideCall>
 					<return>Vec3</return>
 				</method>
 				<method name="setOrigin">
@@ -496,7 +421,7 @@ namespace anki {]]></head>
 					</args>
 				</method>
 				<method name="getScale">
-					<overrideCall>Vec3 ret = self->getScale().xyz();</overrideCall>
+					<overrideCall>Vec3 ret = self->getScale().xyz;</overrideCall>
 					<return>Vec3</return>
 				</method>
 				<method name="setScale">

@@ -133,7 +133,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		{
 			frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
 			frustum.setWorldTransform(
-				Transform(probeToRefresh->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+				Transform(probeToRefresh->getWorldPosition().xyz0, Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 			frustum.update();
 
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
@@ -324,7 +324,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				TraditionalDeferredLightShadingDrawInfo dsInfo;
 				dsInfo.m_viewProjectionMatrix = viewProjMat;
 				dsInfo.m_invViewProjectionMatrix = viewProjMat.invert();
-				dsInfo.m_cameraPosWSpace = probeToRefresh->getWorldPosition().xyz1();
+				dsInfo.m_cameraPosWSpace = probeToRefresh->getWorldPosition().xyz1;
 				dsInfo.m_viewport = UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 				dsInfo.m_effectiveShadowDistance = probeToRefresh->getShadowsRenderRadius();
 				dsInfo.m_applyIndirectDiffuse = true;

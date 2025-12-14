@@ -75,7 +75,7 @@ static Vec2 generateJitter(U32 frame)
 	F32 fraction = invBase;
 	while(index > 0)
 	{
-		result.x() += F32(index % baseX) * fraction;
+		result.x += F32(index % baseX) * fraction;
 		index /= baseX;
 		fraction *= invBase;
 	}
@@ -86,13 +86,13 @@ static Vec2 generateJitter(U32 frame)
 	fraction = invBase;
 	while(index > 0)
 	{
-		result.y() += F32(index % baseY) * fraction;
+		result.y += F32(index % baseY) * fraction;
 		index /= baseY;
 		fraction *= invBase;
 	}
 
-	result.x() -= 0.5f;
-	result.y() -= 0.5f;
+	result.x -= 0.5f;
+	result.y -= 0.5f;
 	return result;
 }
 
@@ -154,8 +154,8 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		else
 		{
 			out = UVec2(Vec2(baseResolution) * scale);
-			alignRoundDown(2, out.x());
-			alignRoundDown(2, out.y());
+			alignRoundDown(2, out.x);
+			alignRoundDown(2, out.y);
 		}
 		return out;
 	};
@@ -163,11 +163,11 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_postProcessResolution = setResolution(m_swapchainResolution, g_cvarRenderRenderScaling);
 	m_internalResolution = setResolution(m_postProcessResolution, g_cvarRenderInternalRenderScaling);
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x(),
-				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x, m_postProcessResolution.y,
+				m_internalResolution.x, m_internalResolution.y);
 
-	m_tileCounts.x() = (m_internalResolution.x() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
-	m_tileCounts.y() = (m_internalResolution.y() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+	m_tileCounts.x = (m_internalResolution.x + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+	m_tileCounts.y = (m_internalResolution.y + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
 	m_zSplitCount = g_cvarRenderZSplitCount;
 
 	if(g_cvarCoreMeshletRendering && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
@@ -184,7 +184,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	}
 
 	// A few sanity checks
-	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
+	if(m_internalResolution.x < 64 || m_internalResolution.y < 64)
 	{
 		ANKI_R_LOGE("Incorrect sizes");
 		return Error::kUserData;
@@ -286,7 +286,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		}
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
-		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
+		F32 scalingMipBias = log2(F32(m_internalResolution.x) / F32(m_postProcessResolution.x));
 		if(getTemporalUpscaler().getEnabled())
 		{
 			// DLSS wants more bias
@@ -401,21 +401,21 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	GlobalRendererConstants consts;
 	memset(&consts, 0, sizeof(consts));
 
-	consts.m_renderingSize = Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()));
+	consts.m_renderingSize = Vec2(F32(m_internalResolution.x), F32(m_internalResolution.y));
 
 	consts.m_time = F32(HighRezTimer::getCurrentTime());
 	consts.m_frame = m_frameCount & kMaxU32;
 
 	Plane nearPlane;
 	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-	consts.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
-	consts.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+	consts.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz, nearPlane.getOffset());
+	consts.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 
 	consts.m_tileCounts = m_tileCounts;
 	consts.m_zSplitCount = m_zSplitCount;
 	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
-	consts.m_zSplitMagic.x() = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / (ctx.m_matrices.m_near * F32(m_zSplitCount));
-	consts.m_zSplitMagic.y() = ctx.m_matrices.m_far / (ctx.m_matrices.m_near * F32(m_zSplitCount));
+	consts.m_zSplitMagic.x = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / (ctx.m_matrices.m_near * F32(m_zSplitCount));
+	consts.m_zSplitMagic.y = ctx.m_matrices.m_far / (ctx.m_matrices.m_near * F32(m_zSplitCount));
 	consts.m_lightVolumeLastZSplit = min(g_cvarRenderVolumetricLightingAccumulationFinalZSplit - 1, m_zSplitCount);
 
 	consts.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
@@ -430,7 +430,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 		DirectionalLight& out = consts.m_directionalLight;
 		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_cvarRenderShadowCascadeCount : 0;
 
-		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
+		out.m_diffuseColor = dirLight->getDiffuseColor().xyz;
 		out.m_power = dirLight->getLightPower();
 		out.m_shadowCascadeCount = shadowCascadeCount;
 		out.m_active = 1;
@@ -438,7 +438,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 		out.m_shadowCascadeDistances = Vec4(g_cvarRenderShadowCascade0Distance, g_cvarRenderShadowCascade1Distance,
 											g_cvarRenderShadowCascade2Distance, g_cvarRenderShadowCascade3Distance);
 
-		for(U cascade = 0; cascade < shadowCascadeCount; ++cascade)
+		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
 			ANKI_ASSERT(ctx.m_dirLightTextureMatrices[cascade] != Mat4::getZero());
 			out.m_textureMatrices[cascade] = ctx.m_dirLightTextureMatrices[cascade];
@@ -642,11 +642,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
-					wgSize.x() = (8 - 1 + (tex->getWidth() >> mip)) / 8;
-					wgSize.y() = (8 - 1 + (tex->getHeight() >> mip)) / 8;
-					wgSize.z() = (inf.m_type == TextureType::k3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
+					wgSize.x = (8 - 1 + (tex->getWidth() >> mip)) / 8;
+					wgSize.y = (8 - 1 + (tex->getHeight() >> mip)) / 8;
+					wgSize.z = (inf.m_type == TextureType::k3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
 
-					cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
+					cmdb->dispatchCompute(wgSize.x, wgSize.y, wgSize.z);
 
 					if(!!initialUsage)
 					{
@@ -910,7 +910,7 @@ Error Renderer::render()
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(BlitAndUi);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
+			cmdb.setViewport(0, 0, m_swapchainResolution.x, m_swapchainResolution.y);
 
 			cmdb.bindShaderProgram(m_blitGrProg.get());
 			cmdb.bindSampler(0, 0, m_samplers.m_trilinearClamp.get());

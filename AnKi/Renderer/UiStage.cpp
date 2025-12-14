@@ -14,8 +14,7 @@ namespace anki {
 
 Error UiStage::init()
 {
-	ANKI_CHECK(
-		UiManager::getSingleton().newCanvas(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), m_canvas));
+	ANKI_CHECK(UiManager::getSingleton().newCanvas(getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y, m_canvas));
 
 	return Error::kNone;
 }

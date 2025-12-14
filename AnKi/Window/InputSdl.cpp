@@ -90,8 +90,8 @@ void Input::moveMouseNdc(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
 	{
-		const F32 x = F32(NativeWindow::getSingleton().getWidth()) * (pos.x() * 0.5f + 0.5f);
-		const F32 y = F32(NativeWindow::getSingleton().getHeight()) * (-pos.y() * 0.5f + 0.5f);
+		const F32 x = F32(NativeWindow::getSingleton().getWidth()) * (pos.x * 0.5f + 0.5f);
+		const F32 y = F32(NativeWindow::getSingleton().getHeight()) * (-pos.y * 0.5f + 0.5f);
 
 		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, x, y);
 
@@ -241,8 +241,8 @@ Error InputSdl::handleEventsInternal()
 			break;
 		}
 		case SDL_EVENT_MOUSE_MOTION:
-			m_mousePosNdc.x() = F32(event.button.x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
-			m_mousePosNdc.y() = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
+			m_mousePosNdc.x = F32(event.button.x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
+			m_mousePosNdc.y = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 			break;
 		case SDL_EVENT_QUIT:
 			ANKI_WIND_LOGI("Recieved SDL_EVENT_QUIT");

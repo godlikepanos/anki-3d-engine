@@ -186,7 +186,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		if(info.m_forceUpdateSceneBounds || m_skinComponent) [[unlikely]]
 		{
 			const Aabb aabbWorld = computeAabb(*info.m_node);
-			info.updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
+			info.updateSceneBounds(aabbWorld.getMin().xyz, aabbWorld.getMax().xyz);
 		}
 
 		// Update the GPU scene AABBs
@@ -196,7 +196,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(mtl.getRenderingTechniques()))
 			{
 				const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
-					aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), m_renderStateBucketIndices[t].get());
+					aabbWorld.getMin().xyz, aabbWorld.getMax().xyz, m_gpuSceneRenderable.getIndex(), m_renderStateBucketIndices[t].get());
 
 				switch(t)
 				{
@@ -261,7 +261,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(diffuseRelatedMtlVar->getDataType() >= ShaderVariableDataType::kTextureFirst
 			   && diffuseRelatedMtlVar->getDataType() <= ShaderVariableDataType::kTextureLast)
 			{
-				averageDiffuse = diffuseRelatedMtlVar->getValue<ImageResourcePtr>()->getAverageColor().xyz();
+				averageDiffuse = diffuseRelatedMtlVar->getValue<ImageResourcePtr>()->getAverageColor().xyz;
 			}
 			else if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kVec3)
 			{
@@ -270,7 +270,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			else if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kU32 && diffuseRelatedMtlVar->tryGetImageResource())
 			{
 				// Bindless texture
-				averageDiffuse = diffuseRelatedMtlVar->tryGetImageResource()->getAverageColor().xyz();
+				averageDiffuse = diffuseRelatedMtlVar->tryGetImageResource()->getAverageColor().xyz;
 			}
 			else
 			{
@@ -318,8 +318,8 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 		gpuRenderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
 
-		const UVec3 u3(averageDiffuse.xyz().clamp(0.0f, 1.0f) * 255.0f);
-		gpuRenderable.m_diffuseColor = ((u3.x() << 16u) | (u3.y() << 8u) | u3.z()) & 0xFFFFFFF;
+		const UVec3 u3(averageDiffuse.xyz.clamp(0.0f, 1.0f) * 255.0f);
+		gpuRenderable.m_diffuseColor = ((u3.x << 16u) | (u3.y << 8u) | u3.z) & 0xFFFFFFF;
 		gpuRenderable.m_sceneNodeUuid = info.m_node->getUuid();
 
 		m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);
@@ -328,7 +328,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	// Update scene bounds
 	{
 		const Aabb aabbWorld = computeAabb(*info.m_node);
-		info.updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
+		info.updateSceneBounds(aabbWorld.getMin().xyz, aabbWorld.getMax().xyz);
 	}
 
 	// Update the buckets
@@ -397,7 +397,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			else
 			{
 				const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
-					aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), m_renderStateBucketIndices[t].get());
+					aabbWorld.getMin().xyz, aabbWorld.getMax().xyz, m_gpuSceneRenderable.getIndex(), m_renderStateBucketIndices[t].get());
 
 				switch(t)
 				{
@@ -438,7 +438,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 			const U32 bucketIdx = 0;
 			const GpuSceneRenderableBoundingVolume gpuVolume =
-				initGpuSceneRenderableBoundingVolume(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), bucketIdx);
+				initGpuSceneRenderableBoundingVolume(aabbWorld.getMin().xyz, aabbWorld.getMax().xyz, m_gpuSceneRenderable.getIndex(), bucketIdx);
 
 			m_gpuSceneRenderableAabbRt.uploadToGpuScene(gpuVolume);
 		}

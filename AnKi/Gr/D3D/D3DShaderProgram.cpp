@@ -204,8 +204,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			CD3DX12_BROADCASTING_LAUNCH_NODE_OVERRIDES* spec = wgSubObj->CreateBroadcastingLaunchNodeOverrides(nodeNames[i].getBegin());
 
 			ANKI_ASSERT(specialization.m_maxNodeDispatchGrid > UVec3(0u));
-			spec->MaxDispatchGrid(specialization.m_maxNodeDispatchGrid.x(), specialization.m_maxNodeDispatchGrid.y(),
-								  specialization.m_maxNodeDispatchGrid.z());
+			spec->MaxDispatchGrid(specialization.m_maxNodeDispatchGrid.x, specialization.m_maxNodeDispatchGrid.y,
+								  specialization.m_maxNodeDispatchGrid.z);
 		}
 
 		// Create state obj

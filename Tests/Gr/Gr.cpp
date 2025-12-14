@@ -266,9 +266,9 @@ void main()
 			Foo() = default;
 
 			Foo(Vec4 v)
-				: x(v.x())
-				, y(v.y())
-				, z(v.z())
+				: x(v.x)
+				, y(v.y)
+				, z(v.z)
 			{
 			}
 
@@ -418,7 +418,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 		void* mappedMem = uploadBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 		const Array<Vec4, 4> texelData = {Vec4(1.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 1.0f),
 										  Vec4(1.0f, 0.0f, 1.0f, 1.0f)};
-		memcpy(mappedMem, &texelData[0][0], sizeof(texelData));
+		memcpy(mappedMem, &texelData, sizeof(texelData));
 		uploadBuff->unmap();
 
 		CommandBufferInitInfo cmdbInit;
@@ -455,7 +455,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			cinit.m_flags = CommandBufferFlag::kGeneralWork;
 			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
-			cmdb->setViewport(U32(viewport.x()), U32(viewport.y()), U32(viewport.z()), U32(viewport.w()));
+			cmdb->setViewport(U32(viewport.x), U32(viewport.y), U32(viewport.z), U32(viewport.w));
 			cmdb->bindShaderProgram(prog.get());
 
 			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
@@ -2266,7 +2266,7 @@ ANKI_TEST(Gr, RayQuery)
 		// Position buffer (add some padding to complicate things a bit)
 		BufferPtr vertBuffer;
 		{
-			Array<Vec4, 3> verts = {{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
+			Array<Vec4, 3> verts = {{Vec4(-1.0f, 0.0f, 0.0f, 100.0f), Vec4(1.0f, 0.0f, 0.0f, 100.0f), Vec4(0.0f, 2.0f, 0.0f, 100.0f)}};
 
 			BufferInitInfo init("VertBuffer");
 			init.m_mapAccess = BufferMapAccessBit::kWrite;
@@ -2452,7 +2452,7 @@ float4 main(VertOut input) : SV_TARGET0
 			GrManager::getSingleton().beginFrame();
 
 			const Vec4 cameraPos(0.0f, 0.0f, 3.0f, 0.0f);
-			const Mat4 viewMat = Mat4(cameraPos.xyz(), Mat3::getIdentity(), Vec3(1.0f)).invert();
+			const Mat4 viewMat = Mat4(cameraPos.xyz, Mat3::getIdentity(), Vec3(1.0f)).invert();
 			const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
 
 			CommandBufferInitInfo cinit;
@@ -2469,7 +2469,7 @@ float4 main(VertOut input) : SV_TARGET0
 				Vec2 m_padding1;
 			} consts;
 			consts.m_invViewProj = (projMat * viewMat).invert().transpose();
-			consts.m_cameraPos = cameraPos.xyz();
+			consts.m_cameraPos = cameraPos.xyz;
 			consts.m_viewport = Vec2(kWidth, kHeight);
 			cmdb->setFastConstants(&consts, sizeof(consts));
 
@@ -2540,7 +2540,7 @@ ANKI_TEST(Gr, RayTracingPipeline)
 		// Position buffer (add some padding to complicate things a bit)
 		BufferPtr vertBuffer;
 		{
-			Array<Vec4, 3> verts = {{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
+			Array<Vec4, 3> verts = {{Vec4(-1.0f, 0.0f, 0.0f, 100.0f), Vec4(1.0f, 0.0f, 0.0f, 100.0f), Vec4(0.0f, 2.0f, 0.0f, 100.0f)}};
 
 			BufferInitInfo init("VertBuffer");
 			init.m_mapAccess = BufferMapAccessBit::kWrite;
@@ -2819,7 +2819,7 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 			GrManager::getSingleton().beginFrame();
 
 			const Vec4 cameraPos(0.0f, 0.0f, 3.0f, 0.0f);
-			const Mat4 viewMat = Mat4(cameraPos.xyz(), Mat3::getIdentity(), Vec3(1.0f)).invert();
+			const Mat4 viewMat = Mat4(cameraPos.xyz, Mat3::getIdentity(), Vec3(1.0f)).invert();
 			const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
 
 			CommandBufferInitInfo cinit;
@@ -2842,7 +2842,7 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 				Vec2 m_padding1;
 			} consts;
 			consts.m_invViewProj = (projMat * viewMat).invert().transpose();
-			consts.m_cameraPos = cameraPos.xyz();
+			consts.m_cameraPos = cameraPos.xyz;
 			consts.m_viewport = Vec2(kWidth, kHeight);
 			cmdb->setFastConstants(&consts, sizeof(consts));
 
@@ -2910,14 +2910,14 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 	// | 4 ---|-5
 	// |/     |/
 	// 0------1
-	positions[0] = Vec3(min.x(), min.y(), max.z());
-	positions[1] = Vec3(max.x(), min.y(), max.z());
-	positions[2] = Vec3(max.x(), max.y(), max.z());
-	positions[3] = Vec3(min.x(), max.y(), max.z());
-	positions[4] = Vec3(min.x(), min.y(), min.z());
-	positions[5] = Vec3(max.x(), min.y(), min.z());
-	positions[6] = Vec3(max.x(), max.y(), min.z());
-	positions[7] = Vec3(min.x(), max.y(), min.z());
+	positions[0] = Vec3(min.x, min.y, max.z);
+	positions[1] = Vec3(max.x, min.y, max.z);
+	positions[2] = Vec3(max.x, max.y, max.z);
+	positions[3] = Vec3(min.x, max.y, max.z);
+	positions[4] = Vec3(min.x, min.y, min.z);
+	positions[5] = Vec3(max.x, min.y, min.z);
+	positions[6] = Vec3(max.x, max.y, min.z);
+	positions[7] = Vec3(min.x, max.y, min.z);
 
 	vertBuffer->unmap();
 
@@ -3079,21 +3079,21 @@ void main()
 	geometries[GeomWhat::SMALL_BOX].m_aabb = Aabb(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
 	geometries[GeomWhat::SMALL_BOX].m_worldRotation = Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f)));
 	geometries[GeomWhat::SMALL_BOX].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::SMALL_BOX].m_aabb.getMin() + geometries[GeomWhat::SMALL_BOX].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::SMALL_BOX].m_aabb.getMin() + geometries[GeomWhat::SMALL_BOX].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::SMALL_BOX].m_worldRotation);
 	geometries[GeomWhat::SMALL_BOX].m_diffuseColor = Vec3(0.75f);
 
 	geometries[GeomWhat::BIG_BOX].m_aabb = Aabb(Vec3(265.0f, 0.0f, 295.0f), Vec3(430.0f, 330.0f, 460.0f));
 	geometries[GeomWhat::BIG_BOX].m_worldRotation = Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f)));
 	geometries[GeomWhat::BIG_BOX].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::BIG_BOX].m_aabb.getMin() + geometries[GeomWhat::BIG_BOX].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::BIG_BOX].m_aabb.getMin() + geometries[GeomWhat::BIG_BOX].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::BIG_BOX].m_worldRotation);
 	geometries[GeomWhat::BIG_BOX].m_diffuseColor = Vec3(0.75f);
 
 	geometries[GeomWhat::ROOM].m_aabb = Aabb(Vec3(0.0f), Vec3(555.0f));
 	geometries[GeomWhat::ROOM].m_worldRotation = Mat3::getIdentity();
 	geometries[GeomWhat::ROOM].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::ROOM].m_aabb.getMin() + geometries[GeomWhat::ROOM].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::ROOM].m_aabb.getMin() + geometries[GeomWhat::ROOM].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::ROOM].m_worldRotation);
 	geometries[GeomWhat::ROOM].m_insideOut = true;
 	geometries[GeomWhat::ROOM].m_indexCount = 30;
@@ -3101,7 +3101,7 @@ void main()
 	geometries[GeomWhat::LIGHT].m_aabb = Aabb(Vec3(213.0f + 1.0f, 554.0f, 227.0f + 1.0f), Vec3(343.0f - 1.0f, 554.0f + 0.001f, 332.0f - 1.0f));
 	geometries[GeomWhat::LIGHT].m_worldRotation = Mat3::getIdentity();
 	geometries[GeomWhat::LIGHT].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::LIGHT].m_aabb.getMin() + geometries[GeomWhat::LIGHT].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::LIGHT].m_aabb.getMin() + geometries[GeomWhat::LIGHT].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::LIGHT].m_worldRotation);
 	geometries[GeomWhat::LIGHT].m_asMask = 0b01;
 	geometries[GeomWhat::LIGHT].m_emissiveColor = Vec3(15.0f);
@@ -3109,8 +3109,8 @@ void main()
 	// Create Buffers
 	for(Geom& g : geometries)
 	{
-		createCubeBuffers(*g_gr, -(g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f,
-						  (g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f, g.m_indexBuffer, g.m_vertexBuffer, g.m_insideOut);
+		createCubeBuffers(*g_gr, -(g.m_aabb.getMax().xyz - g.m_aabb.getMin().xyz) / 2.0f,
+						  (g.m_aabb.getMax().xyz - g.m_aabb.getMin().xyz) / 2.0f, g.m_indexBuffer, g.m_vertexBuffer, g.m_insideOut);
 	}
 
 	// Create AS
@@ -3620,8 +3620,8 @@ void main()
 		lightBuffer = g_gr->newBuffer(inf);
 		WeakArray<Light, PtrSize> lights = lightBuffer->map<Light>(0, lightCount, BufferMapAccessBit::kWrite);
 
-		lights[0].m_min = geometries[GeomWhat::LIGHT].m_aabb.getMin().xyz();
-		lights[0].m_max = geometries[GeomWhat::LIGHT].m_aabb.getMax().xyz();
+		lights[0].m_min = geometries[GeomWhat::LIGHT].m_aabb.getMin().xyz;
+		lights[0].m_max = geometries[GeomWhat::LIGHT].m_aabb.getMax().xyz;
 		lights[0].m_intensity = Vec3(1.0f);
 
 		lightBuffer->unmap();

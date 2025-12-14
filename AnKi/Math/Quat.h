@@ -244,15 +244,15 @@ public:
 		{
 			// Non-SIMD version
 
-			const T lx = m_vec.x();
-			const T ly = m_vec.y();
-			const T lz = m_vec.z();
-			const T lw = m_vec.w();
+			const T lx = m_vec.x;
+			const T ly = m_vec.y;
+			const T lz = m_vec.z;
+			const T lw = m_vec.w;
 
-			const T rx = b.m_vec.x();
-			const T ry = b.m_vec.y();
-			const T rz = b.m_vec.z();
-			const T rw = b.m_vec.w();
+			const T rx = b.m_vec.x;
+			const T ry = b.m_vec.y;
+			const T rz = b.m_vec.z;
+			const T rw = b.m_vec.w;
 
 			const T x = lw * rx + lx * rw + ly * rz - lz * ry;
 			const T y = lw * ry - lx * rz + ly * rw + lz * rx;
@@ -286,7 +286,7 @@ public:
 	{
 		// Rotating a vector by a quaternion is done by: p' = q * p * q^-1 (q^-1 = conjugated(q) for a unit quaternion)
 		ANKI_ASSERT(isZero<T>(T(1) - m_vec.getLength()));
-		return TVec<T, 3>((*this * TQuat(TVec<T, 4>(inValue, T(0))) * conjugated()).m_vec.xyz());
+		return TVec<T, 3>((*this * TQuat(TVec<T, 4>(inValue, T(0))) * conjugated()).m_vec.xyz);
 	}
 
 	// Other //
@@ -300,19 +300,19 @@ public:
 	static TQuat fromPointToPoint(const TVec<T, 3>& from, const TVec<T, 3>& to)
 	{
 		const TVec<T, 3> axis(from.cross(to));
-		TVec<T, 4> quat = TVec4<T, 4>(axis.x(), axis.y(), axis.z(), from.dot(to));
+		TVec<T, 4> quat = TVec4<T, 4>(axis.x, axis.y, axis.z, from.dot(to));
 		quat = quat.normalize();
-		quat.w() += T(1);
+		quat.w += T(1);
 
-		if(quat.w() <= T(0.0001))
+		if(quat.w <= T(0.0001))
 		{
-			if(from.z() * from.z() > from.x() * from.x())
+			if(from.z * from.z > from.x * from.x)
 			{
-				quat = TVec<T, 4>(T(0), from.z(), -from.y(), T(0));
+				quat = TVec<T, 4>(T(0), from.z, -from.y, T(0));
 			}
 			else
 			{
-				quat = TVec<T, 4>(from.y(), -from.x(), T(0), T(0));
+				quat = TVec<T, 4>(from.y, -from.x, T(0), T(0));
 			}
 		}
 

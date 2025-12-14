@@ -39,7 +39,7 @@ public:
 
 	/// Constructor
 	Sphere(const Vec3& center, F32 radius)
-		: m_center(center.xyz0())
+		: m_center(center.xyz0)
 		, m_radius(radius)
 	{
 		check();
@@ -67,13 +67,13 @@ public:
 
 	void setCenter(const Vec4& x)
 	{
-		ANKI_ASSERT(x.w() == 0.0f);
+		ANKI_ASSERT(x.w == 0.0f);
 		m_center = x;
 	}
 
 	void setCenter(const Vec3& x)
 	{
-		m_center = x.xyz0();
+		m_center = x.xyz0;
 	}
 
 	F32 getRadius() const
@@ -97,7 +97,7 @@ public:
 		Sphere out;
 		out.m_center = transform.transform(m_center);
 		ANKI_ASSERT(transform.hasUniformScale());
-		out.m_radius = m_radius * transform.getScale().x();
+		out.m_radius = m_radius * transform.getScale().x;
 		return out;
 	}
 
@@ -126,7 +126,7 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_center.w() == 0.0f);
+		ANKI_ASSERT(m_center.w == 0.0f);
 		ANKI_ASSERT(m_radius > 0.0f);
 	}
 };

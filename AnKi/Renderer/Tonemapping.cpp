@@ -35,7 +35,7 @@ Error Tonemapping::init()
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Tonemap.ankiprogbin", m_tonemapping.m_prog, m_tonemapping.m_grProg));
 
 		m_tonemapping.m_rtDesc = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(),
+			getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
 			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 			"Tonemapped");
 		m_tonemapping.m_rtDesc.bake();
@@ -123,11 +123,11 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 			if(preferCompute)
 			{
 				rgraphCtx.bindUav(1, 0, outRt);
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});

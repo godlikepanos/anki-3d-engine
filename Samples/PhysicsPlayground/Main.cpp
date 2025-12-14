@@ -66,7 +66,7 @@ Error MyApp::sampleExtraInit()
 		monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
 
 		const Aabb aabb = monkey->getFirstComponentOfType<MeshComponent>().getMeshResource().getBoundingShape();
-		const F32 height = aabb.getMax().y() - aabb.getMin().y();
+		const F32 height = aabb.getMax().y - aabb.getMin().y;
 
 		bodyc = monkey->newComponent<BodyComponent>();
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
@@ -87,7 +87,7 @@ Error MyApp::sampleExtraInit()
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
 		bodyc->setBoxExtend(Vec3(0.1f));
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
-		base->setLocalOrigin(trf.getOrigin().xyz());
+		base->setLocalOrigin(trf.getOrigin().xyz);
 
 		trf.setOrigin(trf.getOrigin() - Vec4(0.0f, 0.5f, 0.0f, 0.0f));
 
@@ -98,14 +98,14 @@ Error MyApp::sampleExtraInit()
 			SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("joint_chain%u", i));
 			JointComponent* jointc = joint->newComponent<JointComponent>();
 			jointc->setJointType(JointComponentyType::kPoint);
-			joint->setLocalOrigin(trf.getOrigin().xyz());
+			joint->setLocalOrigin(trf.getOrigin().xyz);
 			joint->setParent(prevNode);
 
 			SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("monkey_chain%u", i).toCString());
 			const MeshComponent& meshc = monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
 			monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
 			const Aabb aabb = meshc.getMeshResource().getBoundingShape();
-			const F32 height = aabb.getMax().y() - aabb.getMin().y();
+			const F32 height = aabb.getMax().y - aabb.getMin().y;
 
 			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));
 
@@ -113,7 +113,7 @@ Error MyApp::sampleExtraInit()
 			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
 			bodyc->setMass(1.0f);
 			joint->addChild(monkey);
-			monkey->setLocalOrigin(trf.getOrigin().xyz());
+			monkey->setLocalOrigin(trf.getOrigin().xyz);
 			monkey->setLocalRotation(trf.getRotation().getRotationPart());
 
 			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));

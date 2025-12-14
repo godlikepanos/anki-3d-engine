@@ -45,7 +45,7 @@ public:
 
 	ANKI_INTERNAL Vec3 getWorldPosition() const
 	{
-		ANKI_ASSERT(m_worldPos.x() != kMaxF32);
+		ANKI_ASSERT(m_worldPos.x != kMaxF32);
 		return m_worldPos;
 	}
 

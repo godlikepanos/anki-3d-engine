@@ -40,7 +40,7 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, Ve
 	const IVec3 delta = IVec3((newClipmapMin - oldClipmapMin) / probeSize);
 	const IVec3 absDelta = delta.abs();
 
-	if(absDelta.x() >= probeCounts.x() || absDelta.y() >= probeCounts.y() || absDelta.z() >= probeCounts.z())
+	if(absDelta.x >= probeCounts.x || absDelta.y >= probeCounts.y || absDelta.z >= probeCounts.z)
 	{
 		// No overlap between the old and new clipmap positions, full update
 
@@ -54,73 +54,70 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, Ve
 
 		IVec3 fullUpdateProbeRangeBegin(0);
 		IVec3 fullUpdateProbeRangeEnd(0);
-		if(delta.x() > 0)
+		if(delta.x > 0)
 		{
 			// New AABB on the right of old
-			fullUpdateProbeRangeBegin =
-				IVec3(partialUpdateProbeRangeEnd.x() - delta.x(), partialUpdateProbeRangeBegin.y(), partialUpdateProbeRangeBegin.z());
+			fullUpdateProbeRangeBegin = IVec3(partialUpdateProbeRangeEnd.x - delta.x, partialUpdateProbeRangeBegin.y, partialUpdateProbeRangeBegin.z);
 			fullUpdateProbeRangeEnd = partialUpdateProbeRangeEnd;
 
-			partialUpdateProbeRangeEnd.x() -= delta.x();
+			partialUpdateProbeRangeEnd.x -= delta.x;
 		}
-		else if(delta.x() < 0)
+		else if(delta.x < 0)
 		{
 			// New AABB on the left of old
 			fullUpdateProbeRangeBegin = partialUpdateProbeRangeBegin;
-			fullUpdateProbeRangeEnd = IVec3(-delta.x(), partialUpdateProbeRangeEnd.y(), partialUpdateProbeRangeEnd.z());
+			fullUpdateProbeRangeEnd = IVec3(-delta.x, partialUpdateProbeRangeEnd.y, partialUpdateProbeRangeEnd.z);
 
-			partialUpdateProbeRangeBegin.x() += -delta.x();
+			partialUpdateProbeRangeBegin.x += -delta.x;
 		}
 
-		if(delta.x() != 0)
+		if(delta.x != 0)
 		{
 			fullUpdateProbeRanges[fullUpdateProbeRangeCount++] = {fullUpdateProbeRangeBegin, fullUpdateProbeRangeEnd};
 		}
 
 		fullUpdateProbeRangeBegin = fullUpdateProbeRangeEnd = IVec3(0);
-		if(delta.y() > 0)
+		if(delta.y > 0)
 		{
 			// New AABB on the top of old
-			fullUpdateProbeRangeBegin =
-				IVec3(partialUpdateProbeRangeBegin.x(), partialUpdateProbeRangeEnd.y() - delta.y(), partialUpdateProbeRangeBegin.z());
+			fullUpdateProbeRangeBegin = IVec3(partialUpdateProbeRangeBegin.x, partialUpdateProbeRangeEnd.y - delta.y, partialUpdateProbeRangeBegin.z);
 			fullUpdateProbeRangeEnd = partialUpdateProbeRangeEnd;
 
-			partialUpdateProbeRangeEnd.y() -= delta.y();
+			partialUpdateProbeRangeEnd.y -= delta.y;
 		}
-		else if(delta.y() < 0)
+		else if(delta.y < 0)
 		{
 			// New AABB at the bottom of old
 			fullUpdateProbeRangeBegin = partialUpdateProbeRangeBegin;
-			fullUpdateProbeRangeEnd = IVec3(partialUpdateProbeRangeEnd.x(), -delta.y(), partialUpdateProbeRangeEnd.z());
+			fullUpdateProbeRangeEnd = IVec3(partialUpdateProbeRangeEnd.x, -delta.y, partialUpdateProbeRangeEnd.z);
 
-			partialUpdateProbeRangeBegin.y() += -delta.y();
+			partialUpdateProbeRangeBegin.y += -delta.y;
 		}
 
-		if(delta.y() != 0)
+		if(delta.y != 0)
 		{
 			fullUpdateProbeRanges[fullUpdateProbeRangeCount++] = {fullUpdateProbeRangeBegin, fullUpdateProbeRangeEnd};
 		}
 
 		fullUpdateProbeRangeBegin = fullUpdateProbeRangeEnd = IVec3(0);
-		if(delta.z() > 0)
+		if(delta.z > 0)
 		{
 			// New AABB on the front of old
-			fullUpdateProbeRangeBegin =
-				IVec3(partialUpdateProbeRangeBegin.x(), partialUpdateProbeRangeBegin.y(), partialUpdateProbeRangeEnd.z() - delta.z());
+			fullUpdateProbeRangeBegin = IVec3(partialUpdateProbeRangeBegin.x, partialUpdateProbeRangeBegin.y, partialUpdateProbeRangeEnd.z - delta.z);
 			fullUpdateProbeRangeEnd = partialUpdateProbeRangeEnd;
 
-			partialUpdateProbeRangeEnd.z() -= delta.z();
+			partialUpdateProbeRangeEnd.z -= delta.z;
 		}
-		else if(delta.z() < 0)
+		else if(delta.z < 0)
 		{
 			// New AABB on the back of old
 			fullUpdateProbeRangeBegin = partialUpdateProbeRangeBegin;
-			fullUpdateProbeRangeEnd = IVec3(partialUpdateProbeRangeEnd.x(), partialUpdateProbeRangeEnd.y(), -delta.z());
+			fullUpdateProbeRangeEnd = IVec3(partialUpdateProbeRangeEnd.x, partialUpdateProbeRangeEnd.y, -delta.z);
 
-			partialUpdateProbeRangeBegin.z() += -delta.z();
+			partialUpdateProbeRangeBegin.z += -delta.z;
 		}
 
-		if(delta.z() != 0)
+		if(delta.z != 0)
 		{
 			fullUpdateProbeRanges[fullUpdateProbeRangeCount++] = {fullUpdateProbeRangeBegin, fullUpdateProbeRangeEnd};
 		}
@@ -134,18 +131,18 @@ static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, Ve
 			const IVec3 end = fullUpdateProbeRanges[i].m_end;
 			const IVec3 begin = fullUpdateProbeRanges[i].m_begin;
 			const IVec3 diff = end - begin;
-			ANKI_ASSERT(diff.x() * diff.y() * diff.z() > 0);
-			totalProbeCount += diff.x() * diff.y() * diff.z();
+			ANKI_ASSERT(diff.x * diff.y * diff.z > 0);
+			totalProbeCount += diff.x * diff.y * diff.z;
 		}
 
 		{
 			const IVec3 end = partialUpdateProbeRange.m_end;
 			const IVec3 begin = partialUpdateProbeRange.m_begin;
 			const IVec3 diff = end - begin;
-			ANKI_ASSERT(diff.x() * diff.y() * diff.z() > 0);
-			totalProbeCount += diff.x() * diff.y() * diff.z();
+			ANKI_ASSERT(diff.x * diff.y * diff.z > 0);
+			totalProbeCount += diff.x * diff.y * diff.z;
 		}
-		ANKI_ASSERT(totalProbeCount == probeCounts.x() * probeCounts.y() * probeCounts.z());
+		ANKI_ASSERT(totalProbeCount == probeCounts.x * probeCounts.y * probeCounts.z);
 	}
 }
 
@@ -154,12 +151,12 @@ static void computeClipmapBounds(Vec3 cameraPos, Vec3 lookDir, U32 clipmapIdx, I
 	const Vec3 offset = lookDir * kIndirectDiffuseClipmapForwardBias * F32(clipmapIdx + 1);
 	cameraPos += offset;
 
-	const Vec3 halfSize = consts.m_sizes[clipmapIdx].xyz() * 0.5;
-	const Vec3 probeSize = consts.m_sizes[clipmapIdx].xyz() / Vec3(consts.m_probeCounts);
+	const Vec3 halfSize = consts.m_sizes[clipmapIdx].xyz * 0.5f;
+	const Vec3 probeSize = consts.m_sizes[clipmapIdx].xyz / Vec3(consts.m_probeCounts);
 	const Vec3 roundedPos = (cameraPos / probeSize).round() * probeSize;
-	consts.m_aabbMins[clipmapIdx] = (roundedPos - halfSize).xyz0();
+	consts.m_aabbMins[clipmapIdx] = (roundedPos - halfSize).xyz0;
 	[[maybe_unused]] const Vec3 aabbMax = roundedPos + halfSize;
-	ANKI_ASSERT(aabbMax - consts.m_aabbMins[clipmapIdx].xyz() == consts.m_sizes[clipmapIdx].xyz());
+	ANKI_ASSERT(aabbMax - consts.m_aabbMins[clipmapIdx].xyz == consts.m_sizes[clipmapIdx].xyz);
 }
 
 Error IndirectDiffuseClipmaps::init()
@@ -168,12 +165,12 @@ Error IndirectDiffuseClipmaps::init()
 
 	const Bool firstBounceUsesRt = g_cvarRenderIdcFirstBounceRayDistance > 0.0f;
 
-	m_lowRezRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x() / 2,
-																   getRenderer().getInternalResolution().y() / (!g_cvarRenderIdcApplyHighQuality + 1),
+	m_lowRezRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x / 2,
+																   getRenderer().getInternalResolution().y / (!g_cvarRenderIdcApplyHighQuality + 1),
 																   getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Apply rez");
 	m_lowRezRtDesc.bake();
 
-	m_fullRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+	m_fullRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 																 getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Full");
 	m_fullRtDesc.bake();
 
@@ -182,7 +179,7 @@ Error IndirectDiffuseClipmaps::init()
 		for(U32 i = 0; i < 2; ++i)
 		{
 			const TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(
-				getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat,
+				getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat,
 				TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Final #%u", i));
 
 			m_irradianceRts[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
@@ -190,19 +187,19 @@ Error IndirectDiffuseClipmaps::init()
 	}
 
 	m_consts.m_probeCounts = UVec3(g_cvarRenderIdcProbesXZ, g_cvarRenderIdcProbesY, g_cvarRenderIdcProbesXZ);
-	m_consts.m_totalProbeCount = m_consts.m_probeCounts.x() * m_consts.m_probeCounts.y() * m_consts.m_probeCounts.z();
+	m_consts.m_totalProbeCount = m_consts.m_probeCounts.x * m_consts.m_probeCounts.y * m_consts.m_probeCounts.z;
 
-	m_consts.m_sizes[0] = Vec3(g_cvarRenderIdcClipmap0XZSize, g_cvarRenderIdcClipmap0YSize, g_cvarRenderIdcClipmap0XZSize).xyz0();
-	m_consts.m_sizes[1] = Vec3(g_cvarRenderIdcClipmap1XZSize, g_cvarRenderIdcClipmap1YSize, g_cvarRenderIdcClipmap1XZSize).xyz0();
-	m_consts.m_sizes[2] = Vec3(g_cvarRenderIdcClipmap2XZSize, g_cvarRenderIdcClipmap2YSize, g_cvarRenderIdcClipmap2XZSize).xyz0();
+	m_consts.m_sizes[0] = Vec3(g_cvarRenderIdcClipmap0XZSize, g_cvarRenderIdcClipmap0YSize, g_cvarRenderIdcClipmap0XZSize).xyz0;
+	m_consts.m_sizes[1] = Vec3(g_cvarRenderIdcClipmap1XZSize, g_cvarRenderIdcClipmap1YSize, g_cvarRenderIdcClipmap1XZSize).xyz0;
+	m_consts.m_sizes[2] = Vec3(g_cvarRenderIdcClipmap2XZSize, g_cvarRenderIdcClipmap2YSize, g_cvarRenderIdcClipmap2XZSize).xyz0;
 
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
-		TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(m_consts.m_probeCounts.x(), m_consts.m_probeCounts.z(), Format::kR8_Unorm,
+		TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(m_consts.m_probeCounts.x, m_consts.m_probeCounts.z, Format::kR8_Unorm,
 																		  TextureUsageBit::kUavCompute | TextureUsageBit::kAllSrv,
 																		  generateTempPassName("IndirectDiffuseClipmap: Probe validity #%u", i));
 
-		init.m_depth = m_consts.m_probeCounts.y();
+		init.m_depth = m_consts.m_probeCounts.y;
 		init.m_type = TextureType::k3D;
 
 		m_probeValidityVolumes[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
@@ -218,10 +215,10 @@ Error IndirectDiffuseClipmaps::init()
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-			m_consts.m_probeCounts.x() * (g_cvarRenderIdcRadianceOctMapSize + 2),
-			m_consts.m_probeCounts.z() * (g_cvarRenderIdcRadianceOctMapSize + 2), Format::kB10G11R11_Ufloat_Pack32,
-			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Radiance #%u", clipmap));
-		volumeInit.m_depth = m_consts.m_probeCounts.y();
+			m_consts.m_probeCounts.x * (g_cvarRenderIdcRadianceOctMapSize + 2), m_consts.m_probeCounts.z * (g_cvarRenderIdcRadianceOctMapSize + 2),
+			Format::kB10G11R11_Ufloat_Pack32, TextureUsageBit::kAllShaderResource,
+			generateTempPassName("IndirectDiffuseClipmap: Radiance #%u", clipmap));
+		volumeInit.m_depth = m_consts.m_probeCounts.y;
 		volumeInit.m_type = TextureType::k3D;
 
 		m_radianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
@@ -230,10 +227,10 @@ Error IndirectDiffuseClipmaps::init()
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-			m_consts.m_probeCounts.x() * (g_cvarRenderIdcIrradianceOctMapSize + 2),
-			m_consts.m_probeCounts.z() * (g_cvarRenderIdcIrradianceOctMapSize + 2), Format::kB10G11R11_Ufloat_Pack32,
+			m_consts.m_probeCounts.x * (g_cvarRenderIdcIrradianceOctMapSize + 2),
+			m_consts.m_probeCounts.z * (g_cvarRenderIdcIrradianceOctMapSize + 2), Format::kB10G11R11_Ufloat_Pack32,
 			TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Irradiance #%u", clipmap));
-		volumeInit.m_depth = m_consts.m_probeCounts.y();
+		volumeInit.m_depth = m_consts.m_probeCounts.y;
 		volumeInit.m_type = TextureType::k3D;
 
 		m_irradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
@@ -242,10 +239,9 @@ Error IndirectDiffuseClipmaps::init()
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-			m_consts.m_probeCounts.x() * (g_cvarRenderIdcRadianceOctMapSize + 2),
-			m_consts.m_probeCounts.z() * (g_cvarRenderIdcRadianceOctMapSize + 2), Format::kR16G16_Sfloat, TextureUsageBit::kAllShaderResource,
-			generateTempPassName("IndirectDiffuseClipmap: Dist moments #%u", clipmap));
-		volumeInit.m_depth = m_consts.m_probeCounts.y();
+			m_consts.m_probeCounts.x * (g_cvarRenderIdcRadianceOctMapSize + 2), m_consts.m_probeCounts.z * (g_cvarRenderIdcRadianceOctMapSize + 2),
+			Format::kR16G16_Sfloat, TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap: Dist moments #%u", clipmap));
+		volumeInit.m_depth = m_consts.m_probeCounts.y;
 		volumeInit.m_type = TextureType::k3D;
 
 		m_distanceMomentsVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
@@ -254,9 +250,9 @@ Error IndirectDiffuseClipmaps::init()
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
 		TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-			m_consts.m_probeCounts.x(), m_consts.m_probeCounts.z(), Format::kB10G11R11_Ufloat_Pack32, TextureUsageBit::kAllShaderResource,
+			m_consts.m_probeCounts.x, m_consts.m_probeCounts.z, Format::kB10G11R11_Ufloat_Pack32, TextureUsageBit::kAllShaderResource,
 			generateTempPassName("IndirectDiffuseClipmap: Avg light #%u", clipmap));
-		volumeInit.m_depth = m_consts.m_probeCounts.y();
+		volumeInit.m_depth = m_consts.m_probeCounts.y;
 		volumeInit.m_type = TextureType::k3D;
 
 		m_avgIrradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
@@ -324,9 +320,9 @@ Error IndirectDiffuseClipmaps::init()
 		m_consts.m_textures[i].m_probeValidityTexture = m_probeValidityVolumes[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 		m_consts.m_textures[i].m_averageIrradianceTexture = m_avgIrradianceVolumes[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 
-		m_consts.m_textures[i].m_distanceMomentsOctMapSize = (m_distanceMomentsVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
-		m_consts.m_textures[i].m_irradianceOctMapSize = (m_irradianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
-		m_consts.m_textures[i].m_radianceOctMapSize = (m_radianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x()) - 2;
+		m_consts.m_textures[i].m_distanceMomentsOctMapSize = (m_distanceMomentsVolumes[i]->getWidth() / m_consts.m_probeCounts.x) - 2;
+		m_consts.m_textures[i].m_irradianceOctMapSize = (m_irradianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x) - 2;
+		m_consts.m_textures[i].m_radianceOctMapSize = (m_radianceVolumes[i]->getWidth() / m_consts.m_probeCounts.x) - 2;
 
 		m_consts.m_previousFrameAabbMins[i] = 100000.0f * m_consts.m_sizes[i] / Vec4(Vec3(m_consts.m_probeCounts), 1.0f);
 		m_consts.m_aabbMins[i] = m_consts.m_previousFrameAabbMins[i];
@@ -413,15 +409,15 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		Array<ProbeRange, 3> fullUpdateRanges;
 		U32 fullUpdateRangeCount = 0;
 		ProbeRange partialUpdateRange;
-		const Vec3 probeSize = m_consts.m_sizes[clipmap].xyz() / Vec3(m_consts.m_probeCounts);
-		findClipmapInUpdateRanges(m_consts.m_aabbMins[clipmap].xyz(), m_consts.m_previousFrameAabbMins[clipmap].xyz(), probeSize,
+		const Vec3 probeSize = m_consts.m_sizes[clipmap].xyz / Vec3(m_consts.m_probeCounts);
+		findClipmapInUpdateRanges(m_consts.m_aabbMins[clipmap].xyz, m_consts.m_previousFrameAabbMins[clipmap].xyz, probeSize,
 								  UVec3(m_consts.m_probeCounts), fullUpdateRanges, fullUpdateRangeCount, partialUpdateRange);
 
 		U32 fullUpdateRayCount = 0;
 		for(U32 i = 0; i < fullUpdateRangeCount; ++i)
 		{
 			const UVec3 counts = UVec3(fullUpdateRanges[i].m_end - fullUpdateRanges[i].m_begin);
-			const U32 count = counts.x() * counts.y() * counts.z();
+			const U32 count = counts.x * counts.y * counts.z;
 			fullUpdateRayCount += square<U32>(g_cvarRenderIdcRadianceOctMapSize) * g_cvarRenderIdcRayCountPerTexelOfNewProbe * count;
 		}
 
@@ -431,8 +427,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 		const UVec3 partialUpdateProbeCounts = UVec3(partialUpdateRange.m_end - partialUpdateRange.m_begin);
 		U32 partialUpdateProbeCount = remainingRayCount / square<U32>(g_cvarRenderIdcRadianceOctMapSize);
-		partialUpdateProbeCount =
-			min(partialUpdateProbeCount, partialUpdateProbeCounts.x() * partialUpdateProbeCounts.y() * partialUpdateProbeCounts.z());
+		partialUpdateProbeCount = min(partialUpdateProbeCount, partialUpdateProbeCounts.x * partialUpdateProbeCounts.y * partialUpdateProbeCounts.z);
 
 		g_svarIdcRays.increment(fullUpdateRayCount + partialUpdateProbeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize));
 
@@ -508,8 +503,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 					consts.m_rayCountPerTexel = g_cvarRenderIdcRayCountPerTexelOfNewProbe;
 					consts.m_clipmapRegion.m_probesBegin = UVec3(fullUpdateRanges[i].m_begin);
 					consts.m_clipmapRegion.m_probeCounts = UVec3(fullUpdateRanges[i].m_end - fullUpdateRanges[i].m_begin);
-					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
-														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_clipmapRegion.m_probeCount =
+						consts.m_clipmapRegion.m_probeCounts.x * consts.m_clipmapRegion.m_probeCounts.y * consts.m_clipmapRegion.m_probeCounts.z;
 					consts.m_maxProbesToUpdate = consts.m_clipmapRegion.m_probeCount;
 					consts.m_clipmapRegion.m_partialUpdate = 0;
 
@@ -538,8 +533,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 					consts.m_rayCountPerTexel = 1;
 					consts.m_clipmapRegion.m_probesBegin = UVec3(partialUpdateRange.m_begin);
 					consts.m_clipmapRegion.m_probeCounts = UVec3(partialUpdateRange.m_end - partialUpdateRange.m_begin);
-					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
-														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_clipmapRegion.m_probeCount =
+						consts.m_clipmapRegion.m_probeCounts.x * consts.m_clipmapRegion.m_probeCounts.y * consts.m_clipmapRegion.m_probeCounts.z;
 					consts.m_maxProbesToUpdate = partialUpdateProbeCount;
 					consts.m_clipmapRegion.m_partialUpdate = 1;
 
@@ -598,8 +593,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 					consts.m_rayCountPerTexel = g_cvarRenderIdcRayCountPerTexelOfNewProbe;
 					consts.m_clipmapRegion.m_probesBegin = UVec3(fullUpdateRanges[i].m_begin);
 					consts.m_clipmapRegion.m_probeCounts = UVec3(fullUpdateRanges[i].m_end - fullUpdateRanges[i].m_begin);
-					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
-														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_clipmapRegion.m_probeCount =
+						consts.m_clipmapRegion.m_probeCounts.x * consts.m_clipmapRegion.m_probeCounts.y * consts.m_clipmapRegion.m_probeCounts.z;
 					consts.m_maxProbesToUpdate = consts.m_clipmapRegion.m_probeCount;
 					consts.m_clipmapRegion.m_partialUpdate = 0;
 
@@ -620,8 +615,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 					consts.m_rayCountPerTexel = 1;
 					consts.m_clipmapRegion.m_probesBegin = UVec3(partialUpdateRange.m_begin);
 					consts.m_clipmapRegion.m_probeCounts = UVec3(partialUpdateRange.m_end - partialUpdateRange.m_begin);
-					consts.m_clipmapRegion.m_probeCount = consts.m_clipmapRegion.m_probeCounts.x() * consts.m_clipmapRegion.m_probeCounts.y()
-														  * consts.m_clipmapRegion.m_probeCounts.z();
+					consts.m_clipmapRegion.m_probeCount =
+						consts.m_clipmapRegion.m_probeCounts.x * consts.m_clipmapRegion.m_probeCounts.y * consts.m_clipmapRegion.m_probeCounts.z;
 					consts.m_maxProbesToUpdate = partialUpdateProbeCount;
 					consts.m_clipmapRegion.m_partialUpdate = 1;
 
@@ -721,8 +716,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			const Array<Vec4, 3> consts = {Vec4(g_cvarRenderIdcFirstBounceRayDistance), {}, {}};
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			const U32 width = getRenderer().getInternalResolution().x() / 2;
-			const U32 height = getRenderer().getInternalResolution().y() / (!g_cvarRenderIdcApplyHighQuality + 1);
+			const U32 width = getRenderer().getInternalResolution().x / 2;
+			const U32 height = getRenderer().getInternalResolution().y / (!g_cvarRenderIdcApplyHighQuality + 1);
 
 			if(g_cvarRenderIdcInlineRt)
 			{
@@ -771,8 +766,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
-							  getRenderer().getInternalResolution().y() / (!g_cvarRenderIdcApplyHighQuality + 1));
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2,
+							  getRenderer().getInternalResolution().y / (!g_cvarRenderIdcApplyHighQuality + 1));
 		});
 	}
 
@@ -793,8 +788,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindUav(0, 0, fullRtTmp);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
-							  getRenderer().getInternalResolution().y() / (!g_cvarRenderIdcApplyHighQuality + 1));
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2,
+							  getRenderer().getInternalResolution().y / (!g_cvarRenderIdcApplyHighQuality + 1));
 		});
 	}
 
@@ -833,7 +828,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -854,7 +849,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindUav(0, 0, historyRt);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 

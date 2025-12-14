@@ -69,9 +69,9 @@ void LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 
 		LensFlareComponent* lfc = m_associatedNodes[0]->tryGetFirstComponentOfType<LensFlareComponent>();
 
-		if(lfc && lfc->getColorMultiplier().xyz() == lightc.getDiffuseColor().xyz())
+		if(lfc && lfc->getColorMultiplier().xyz == lightc.getDiffuseColor().xyz)
 		{
-			lfc->setColorMultiplier(Vec4(outCol.xyz(), lfc->getColorMultiplier().w()));
+			lfc->setColorMultiplier(Vec4(outCol.xyz, lfc->getColorMultiplier().w));
 		}
 
 		lightc.setDiffuseColor(outCol);

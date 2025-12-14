@@ -37,8 +37,8 @@ Error LightShading::init()
 
 		// Create RT descr
 		const UVec2 internalResolution = getRenderer().getInternalResolution();
-		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(internalResolution.x(), internalResolution.y(),
-																				 getRenderer().getHdrFormat(), "Light Shading");
+		m_lightShading.m_rtDescr =
+			getRenderer().create2DRenderTargetDescription(internalResolution.x, internalResolution.y, getRenderer().getHdrFormat(), "Light Shading");
 		m_lightShading.m_rtDescr.bake();
 	}
 
@@ -65,7 +65,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(enableVrs)
@@ -152,7 +152,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			} pc;
 
 			pc.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 			pc.m_scale = sky->getImageScale();
 			pc.m_bias = sky->getImageBias();
 

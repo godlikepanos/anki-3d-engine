@@ -15,7 +15,7 @@ namespace anki {
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 {
-	m_worldPos = node->getWorldTransform().getOrigin().xyz();
+	m_worldPos = node->getWorldTransform().getOrigin().xyz;
 	m_gpuSceneProbe.allocate();
 
 	TextureInitInfo texInit("ReflectionProbe");
@@ -49,8 +49,8 @@ void ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 
 	if(updated) [[unlikely]]
 	{
-		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
-		m_halfSize = info.m_node->getWorldTransform().getScale().xyz();
+		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz;
+		m_halfSize = info.m_node->getWorldTransform().getScale().xyz;
 
 		// Upload to the GPU scene
 		GpuSceneReflectionProbe gpuProbe;
@@ -58,8 +58,8 @@ void ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 		gpuProbe.m_cubeTexture = m_reflectionTexBindlessIndex;
 
 		const Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
-		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
-		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
+		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz;
+		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz;
 
 		gpuProbe.m_uuid = getUuid();
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
@@ -70,8 +70,8 @@ void ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 
 F32 ReflectionProbeComponent::getRenderRadius() const
 {
-	F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
-	effectiveDistance = max(effectiveDistance, m_halfSize.z());
+	F32 effectiveDistance = max(m_halfSize.x, m_halfSize.y);
+	effectiveDistance = max(effectiveDistance, m_halfSize.z);
 	effectiveDistance = max<F32>(effectiveDistance, g_cvarSceneProbeEffectiveDistance);
 	return effectiveDistance;
 }

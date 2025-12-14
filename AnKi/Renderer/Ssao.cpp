@@ -21,16 +21,14 @@ Error Ssao::init()
 	{
 		TextureUsageBit usage = TextureUsageBit::kAllSrv;
 		usage |= (preferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
-		TextureInitInfo texInit =
-			getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8G8B8A8_Snorm, usage, "Bent normals + SSAO #1");
+		TextureInitInfo texInit = getRenderer().create2DRenderTargetInitInfo(rez.x, rez.y, Format::kR8G8B8A8_Snorm, usage, "Bent normals + SSAO #1");
 		m_tex[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSrv);
 
 		texInit.setName("Bent normals + SSAO #2");
 		m_tex[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSrv);
 	}
 
-	m_bentNormalsAndSsaoRtDescr =
-		getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8G8B8A8_Snorm, "Bent normals + SSAO temp");
+	m_bentNormalsAndSsaoRtDescr = getRenderer().create2DRenderTargetDescription(rez.x, rez.y, Format::kR8G8B8A8_Snorm, "Bent normals + SSAO temp");
 	m_bentNormalsAndSsaoRtDescr.bake();
 
 	const Array<SubMutation, 2> mutation = {{{"SPATIAL_DENOISE_SAMPLE_COUNT", MutatorValue(g_cvarRenderSsaoSpatialDenoiseSampleCout)},
@@ -141,11 +139,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			{
 				rgraphCtx.bindUav(0, 0, finalRt);
 
-				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
+				dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, rez.x(), rez.y());
+				cmdb.setViewport(0, 0, rez.x, rez.y);
 
 				drawQuad(cmdb);
 			}
@@ -193,11 +191,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, bentNormalsAndSsaoTempRt);
-				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
+				dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, rez.x(), rez.y());
+				cmdb.setViewport(0, 0, rez.x, rez.y);
 				drawQuad(cmdb);
 			}
 		});
@@ -238,11 +236,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, historyRt);
-				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
+				dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, rez.x(), rez.y());
+				cmdb.setViewport(0, 0, rez.x, rez.y);
 				drawQuad(cmdb);
 			}
 		});
@@ -283,11 +281,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, finalRt);
-				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
+				dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, rez.x(), rez.y());
+				cmdb.setViewport(0, 0, rez.x, rez.y);
 				drawQuad(cmdb);
 			}
 		});

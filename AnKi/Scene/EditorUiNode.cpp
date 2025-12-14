@@ -102,9 +102,9 @@ void EditorUiNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 		{
 			const Second dt = crntTime - prevUpdateTime;
 			Euler angles(mover.getLocalRotation().getRotationPart());
-			angles.x += velocity.y() * toRad(360.0f) * F32(dt) * kMouseSensitivity;
+			angles.x += velocity.y * toRad(360.0f) * F32(dt) * kMouseSensitivity;
 			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y += -velocity.x() * toRad(360.0f) * F32(dt) * kMouseSensitivity;
+			angles.y += -velocity.x * toRad(360.0f) * F32(dt) * kMouseSensitivity;
 			angles.z = 0.0f;
 			mover.setLocalRotation(Mat3(angles));
 		}

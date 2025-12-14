@@ -88,7 +88,7 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 		out = (width / 4) * (height / 4) * 8;
 		break;
 	case ImageBinaryDataCompression::kAstc:
-		out = (width / astcBlockSize.x()) * (height / astcBlockSize.y()) * 16;
+		out = (width / astcBlockSize.x) * (height / astcBlockSize.y) * 16;
 		break;
 	default:
 		ANKI_ASSERT(0);

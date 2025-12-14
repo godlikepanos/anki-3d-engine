@@ -72,7 +72,7 @@ void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		switch(m_type)
 		{
 		case JointComponentyType::kPoint:
-			m_joint = PhysicsWorld::getSingleton().newPointJoint(body1, body2, node.getWorldTransform().getOrigin().xyz());
+			m_joint = PhysicsWorld::getSingleton().newPointJoint(body1, body2, node.getWorldTransform().getOrigin().xyz);
 			break;
 		case JointComponentyType::kHinge:
 			m_joint = PhysicsWorld::getSingleton().newHingeJoint(body1, body2, node.getWorldTransform());

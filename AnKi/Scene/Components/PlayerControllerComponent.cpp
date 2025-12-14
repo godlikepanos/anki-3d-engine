@@ -14,7 +14,7 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 {
 	PhysicsPlayerControllerInitInfo init;
-	init.m_initialPosition = node->getWorldTransform().getOrigin().xyz();
+	init.m_initialPosition = node->getWorldTransform().getOrigin().xyz;
 	m_player = PhysicsWorld::getSingleton().newPlayerController(init);
 	m_player->setUserData(this);
 

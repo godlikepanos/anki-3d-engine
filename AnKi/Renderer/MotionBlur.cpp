@@ -28,16 +28,15 @@ Error MotionBlur::init()
 		m_reconstructGrProg, "Reconstruct"));
 
 	const UVec2 tiledTexSize = (getRenderer().getPostProcessResolution() + g_cvarRenderMotionBlurTileSize - 1) / g_cvarRenderMotionBlurTileSize;
-	m_maxVelocityRtDesc =
-		getRenderer().create2DRenderTargetDescription(tiledTexSize.x(), tiledTexSize.y(), Format::kR16G16_Sfloat, "MaxTileVelocity");
+	m_maxVelocityRtDesc = getRenderer().create2DRenderTargetDescription(tiledTexSize.x, tiledTexSize.y, Format::kR16G16_Sfloat, "MaxTileVelocity");
 	m_maxVelocityRtDesc.bake();
 
 	m_maxNeighbourVelocityRtDesc =
-		getRenderer().create2DRenderTargetDescription(tiledTexSize.x(), tiledTexSize.y(), Format::kR16G16_Sfloat, "MaxNeighbourTileVelocity");
+		getRenderer().create2DRenderTargetDescription(tiledTexSize.x, tiledTexSize.y, Format::kR16G16_Sfloat, "MaxNeighbourTileVelocity");
 	m_maxNeighbourVelocityRtDesc.bake();
 
 	m_finalRtDesc = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(),
+		getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
 		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 		"MotionBlur");
 	m_finalRtDesc.bake();
@@ -79,7 +78,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 
 			const UVec2 tiledTexSize =
 				(getRenderer().getPostProcessResolution() + g_cvarRenderMotionBlurTileSize - 1) / g_cvarRenderMotionBlurTileSize;
-			cmdb.dispatchCompute(tiledTexSize.x(), tiledTexSize.y(), 1);
+			cmdb.dispatchCompute(tiledTexSize.x, tiledTexSize.y, 1);
 		});
 	}
 
@@ -102,7 +101,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 
 			const UVec2 tiledTexSize =
 				(getRenderer().getPostProcessResolution() + g_cvarRenderMotionBlurTileSize - 1) / g_cvarRenderMotionBlurTileSize;
-			cmdb.dispatchCompute(tiledTexSize.x(), tiledTexSize.y(), 1);
+			cmdb.dispatchCompute(tiledTexSize.x, tiledTexSize.y, 1);
 		});
 	}
 
@@ -154,8 +153,8 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 				U32 m_frame;
 				F32 m_far;
 			} consts;
-			consts.m_depthLinearizationParams.x() = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / ctx.m_matrices.m_near;
-			consts.m_depthLinearizationParams.y() = ctx.m_matrices.m_far / ctx.m_matrices.m_near;
+			consts.m_depthLinearizationParams.x = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / ctx.m_matrices.m_near;
+			consts.m_depthLinearizationParams.y = ctx.m_matrices.m_far / ctx.m_matrices.m_near;
 			consts.m_frame = getRenderer().getFrameCount() % 32;
 			consts.m_far = ctx.m_matrices.m_far;
 			cmdb.setFastConstants(&consts, sizeof(consts));
@@ -163,11 +162,11 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 				drawQuad(cmdb);
 			}
 		});

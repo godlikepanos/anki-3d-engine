@@ -43,7 +43,7 @@ void Sphere::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize po
 		while(pointCount-- != 0)
 		{
 			ANKI_ASSERT((ptrToNumber(ptr) + sizeof(Vec3) - ptrToNumber(pointBuffer)) <= buffSize);
-			const Vec4 pos = (*reinterpret_cast<const Vec3*>(ptr)).xyz0();
+			const Vec4 pos = (*reinterpret_cast<const Vec3*>(ptr)).xyz0;
 
 			max = max.max(pos);
 			min = min.min(pos);

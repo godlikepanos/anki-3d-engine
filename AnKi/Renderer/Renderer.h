@@ -128,7 +128,7 @@ public:
 
 	F32 getAspectRatio() const
 	{
-		return F32(m_internalResolution.x()) / F32(m_internalResolution.y());
+		return F32(m_internalResolution.x) / F32(m_internalResolution.y);
 	}
 
 	U64 getFrameCount() const

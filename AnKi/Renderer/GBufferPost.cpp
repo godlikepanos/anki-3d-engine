@@ -54,7 +54,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 	});
 }
 

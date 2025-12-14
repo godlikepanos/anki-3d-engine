@@ -25,7 +25,7 @@ static F32 computeLightRadius(const Vec3 color)
 {
 	// Based on the attenuation equation: att = 1 - fragLightDist^2 / lightRadius^2
 	const F32 minAtt = 0.01f;
-	const F32 maxIntensity = max(max(color.x(), color.y()), color.z());
+	const F32 maxIntensity = max(max(color.x, color.y), color.z);
 	return sqrt(maxIntensity / minAtt);
 }
 
@@ -34,9 +34,9 @@ static Error getUniformScale(const Mat4& m, F32& out)
 {
 	const F32 SCALE_THRESHOLD = 0.01f; // 1 cm
 
-	Vec3 xAxis = m.getColumn(0).xyz();
-	Vec3 yAxis = m.getColumn(1).xyz();
-	Vec3 zAxis = m.getColumn(2).xyz();
+	Vec3 xAxis = m.getColumn(0).xyz;
+	Vec3 yAxis = m.getColumn(1).xyz;
+	Vec3 zAxis = m.getColumn(2).xyz;
 
 	const F32 scale = xAxis.getLength();
 	if(absolute(scale - yAxis.getLength()) > SCALE_THRESHOLD || absolute(scale - zAxis.getLength()) > SCALE_THRESHOLD)
@@ -52,9 +52,9 @@ static Error getUniformScale(const Mat4& m, F32& out)
 
 static void removeScale(Mat4& m)
 {
-	Vec3 xAxis = m.getColumn(0).xyz();
-	Vec3 yAxis = m.getColumn(1).xyz();
-	Vec3 zAxis = m.getColumn(2).xyz();
+	Vec3 xAxis = m.getColumn(0).xyz;
+	Vec3 yAxis = m.getColumn(1).xyz;
+	Vec3 zAxis = m.getColumn(2).xyz;
 
 	xAxis = xAxis.normalize();
 	yAxis = yAxis.normalize();
@@ -71,15 +71,15 @@ static void getNodeTransform(const cgltf_node& node, Vec3& tsl, Mat3& rot, Vec3&
 	{
 		Mat4 trf = Mat4(node.matrix);
 
-		Vec3 xAxis = trf.getColumn(0).xyz();
-		Vec3 yAxis = trf.getColumn(1).xyz();
-		Vec3 zAxis = trf.getColumn(2).xyz();
+		Vec3 xAxis = trf.getColumn(0).xyz;
+		Vec3 yAxis = trf.getColumn(1).xyz;
+		Vec3 zAxis = trf.getColumn(2).xyz;
 
 		scale = Vec3(xAxis.length(), yAxis.length(), zAxis.length());
 
 		removeScale(trf);
 		rot = trf.getRotationPart();
-		tsl = trf.getTranslationPart().xyz();
+		tsl = trf.getTranslationPart().xyz;
 	}
 	else
 	{
@@ -122,7 +122,7 @@ static Error getNodeTransform(const cgltf_node& node, Transform& trf)
 	Vec3 scale;
 	getNodeTransform(node, tsl, rot, scale);
 
-	trf.setOrigin(tsl.xyz0());
+	trf.setOrigin(tsl.xyz0);
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	trf.setScale(scale);
 
@@ -690,7 +690,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			if(extraFound)
 			{
 				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x(), extraValueVec3.y(), extraValueVec3.z()));
+					m_sceneFile.writeTextf("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x, extraValueVec3.y, extraValueVec3.z));
 			}
 
 			ANKI_CHECK(getExtra(extras, "skybox_image", extraValueStr, extraFound));
@@ -703,7 +703,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			if(extraFound)
 			{
 				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:setImageScale(Vec3.new(%f, %f, %f))\n", extraValueVec3.x(), extraValueVec3.y(), extraValueVec3.z()));
+					m_sceneFile.writeTextf("comp:setImageScale(Vec3.new(%f, %f, %f))\n", extraValueVec3.x, extraValueVec3.y, extraValueVec3.z));
 			}
 
 			ANKI_CHECK(getExtra(extras, "fog_min_density", extraValuef, extraFound));
@@ -733,8 +733,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getExtra(extras, "fog_diffuse_color", extraValueVec3, extraFound));
 			if(extraFound)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setFogDiffuseColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x(), extraValueVec3.y(),
-												  extraValueVec3.z()));
+				ANKI_CHECK(
+					m_sceneFile.writeTextf("comp:setFogDiffuseColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x, extraValueVec3.y, extraValueVec3.z));
 			}
 
 			ANKI_CHECK(getExtra(extras, "skybox_generated", extraValueBool, extraFound));
@@ -891,7 +891,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		Mat3 rot;
 		Vec3 scale;
 		getNodeTransform(node, tsl, rot, scale);
-		nodeTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), scale.xyz0());
+		nodeTrf = Transform(tsl.xyz0, Mat3x4(Vec3(0.0f), rot), scale.xyz0);
 	}
 	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
 	{
@@ -904,7 +904,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 Error GltfImporter::writeTransform(const Transform& trf)
 {
 	ANKI_CHECK(m_sceneFile.writeText("trf = Transform.new()\n"));
-	ANKI_CHECK(m_sceneFile.writeTextf("trf:setOrigin(Vec3.new(%f, %f, %f))\n", trf.getOrigin().x(), trf.getOrigin().y(), trf.getOrigin().z()));
+	ANKI_CHECK(m_sceneFile.writeTextf("trf:setOrigin(Vec3.new(%f, %f, %f))\n", trf.getOrigin().x, trf.getOrigin().y, trf.getOrigin().z));
 
 	ANKI_CHECK(m_sceneFile.writeText("rot = Mat3.new()\n"));
 	ANKI_CHECK(m_sceneFile.writeText("rot:setAll("));
@@ -914,7 +914,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 	}
 	ANKI_CHECK(m_sceneFile.writeText("trf:setRotation(rot)\n"));
 
-	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(Vec3.new(%f, %f, %f))\n", trf.getScale().x(), trf.getScale().y(), trf.getScale().z()));
+	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(Vec3.new(%f, %f, %f))\n", trf.getScale().x, trf.getScale().y, trf.getScale().z));
 
 	ANKI_CHECK(m_sceneFile.writeText("node:setLocalTransform(trf)\n"));
 
@@ -1021,7 +1021,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 	Vec3 color(light.color[0], light.color[1], light.color[2]);
 	color *= light.intensity;
 	color *= m_lightIntensityScale;
-	ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x(), color.y(), color.z()));
+	ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x, color.y, color.z));
 
 	auto shadow = extras.find("shadow");
 	if(shadow != extras.getEnd())

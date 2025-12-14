@@ -924,11 +924,11 @@ void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, co
 	vkDlssEvalParams.pInDepth = &depthResVk;
 	vkDlssEvalParams.pInMotionVectors = &mvResVk;
 	vkDlssEvalParams.pInExposureTexture = &exposureResVk;
-	vkDlssEvalParams.InJitterOffsetX = jitterOffset.x();
-	vkDlssEvalParams.InJitterOffsetY = jitterOffset.y();
+	vkDlssEvalParams.InJitterOffsetX = jitterOffset.x;
+	vkDlssEvalParams.InJitterOffsetY = jitterOffset.y;
 	vkDlssEvalParams.InReset = resetAccumulation;
-	vkDlssEvalParams.InMVScaleX = motionVectorsScale.x();
-	vkDlssEvalParams.InMVScaleY = motionVectorsScale.y();
+	vkDlssEvalParams.InMVScaleX = motionVectorsScale.x;
+	vkDlssEvalParams.InMVScaleY = motionVectorsScale.y;
 	vkDlssEvalParams.InColorSubrectBase = renderingOffset;
 	vkDlssEvalParams.InDepthSubrectBase = renderingOffset;
 	vkDlssEvalParams.InTranslucencySubrectBase = renderingOffset;

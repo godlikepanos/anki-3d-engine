@@ -41,7 +41,7 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 
 	updated = true;
 
-	const Vec3 halfSize = info.m_node->getWorldTransform().getScale().xyz();
+	const Vec3 halfSize = info.m_node->getWorldTransform().getScale().xyz;
 	UVec3 newCellCounts = UVec3(2.0f * halfSize / m_cellSize);
 	newCellCounts = newCellCounts.max(UVec3(1));
 
@@ -51,12 +51,12 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 	{
 		m_volTex.reset(nullptr);
 		m_cellCounts = newCellCounts;
-		m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
+		m_totalCellCount = m_cellCounts.x * m_cellCounts.y * m_cellCounts.z;
 	}
 
 	if(moved)
 	{
-		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
+		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz;
 		m_halfSize = halfSize;
 	}
 
@@ -71,9 +71,9 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 		TextureInitInfo texInit("GiProbe");
 		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat
 																											: Format::kR16G16B16A16_Sfloat;
-		texInit.m_width = m_cellCounts.x() * 6;
-		texInit.m_height = m_cellCounts.y();
-		texInit.m_depth = m_cellCounts.z();
+		texInit.m_width = m_cellCounts.x * 6;
+		texInit.m_height = m_cellCounts.y;
+		texInit.m_depth = m_cellCounts.z;
 		texInit.m_type = TextureType::k3D;
 		texInit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kUavCompute;
 
@@ -104,10 +104,10 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 		cmdb->setFastConstants(&clearColor, sizeof(clearColor));
 
 		UVec3 wgSize;
-		wgSize.x() = (8 - 1 + m_volTex->getWidth()) / 8;
-		wgSize.y() = (8 - 1 + m_volTex->getHeight()) / 8;
-		wgSize.z() = (8 - 1 + m_volTex->getDepth()) / 8;
-		cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
+		wgSize.x = (8 - 1 + m_volTex->getWidth()) / 8;
+		wgSize.y = (8 - 1 + m_volTex->getHeight()) / 8;
+		wgSize.z = (8 - 1 + m_volTex->getDepth()) / 8;
+		cmdb->dispatchCompute(wgSize.x, wgSize.y, wgSize.z);
 
 		texBarrier.m_previousUsage = TextureUsageBit::kUavCompute;
 		texBarrier.m_nextUsage = TextureUsageBit::kAllSrv; // Put something random, the renderer will start from kNone
@@ -141,11 +141,11 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 		GpuSceneGlobalIlluminationProbe gpuProbe = {};
 
 		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
-		gpuProbe.m_aabbMin = aabb.getMin().xyz();
-		gpuProbe.m_aabbMax = aabb.getMax().xyz();
+		gpuProbe.m_aabbMin = aabb.getMin().xyz;
+		gpuProbe.m_aabbMax = aabb.getMax().xyz;
 
 		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
-		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
+		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
 		gpuProbe.m_uuid = getUuid();
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
@@ -158,8 +158,8 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 
 F32 GlobalIlluminationProbeComponent::getRenderRadius() const
 {
-	F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
-	effectiveDistance = max(effectiveDistance, m_halfSize.z());
+	F32 effectiveDistance = max(m_halfSize.x, m_halfSize.y);
+	effectiveDistance = max(effectiveDistance, m_halfSize.z);
 	effectiveDistance = max<F32>(effectiveDistance, g_cvarSceneProbeEffectiveDistance);
 	return effectiveDistance;
 }

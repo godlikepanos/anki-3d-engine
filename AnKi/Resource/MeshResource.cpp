@@ -320,7 +320,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				outMeshletBoundingVolume.m_aabbMin = inMeshlet.m_boundingVolume.m_aabbMin;
 				outMeshletBoundingVolume.m_aabbMax = inMeshlet.m_boundingVolume.m_aabbMax;
 				outMeshletBoundingVolume.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm =
-					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)));
+					Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)).packSnorm4x8();
 				outMeshletBoundingVolume.m_coneApex = inMeshlet.m_coneApex;
 				outMeshletBoundingVolume.m_sphereRadius =
 					((outMeshletBoundingVolume.m_aabbMin + outMeshletBoundingVolume.m_aabbMax) / 2.0f - outMeshletBoundingVolume.m_aabbMax).length();

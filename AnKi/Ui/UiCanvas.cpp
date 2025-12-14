@@ -363,13 +363,13 @@ void UiCanvas::handleInput()
 	ImGuiIO& io = ImGui::GetIO();
 
 	// Handle mouse
-	Array<U32, 4> viewport = {0, 0, m_size.x(), m_size.y()};
+	Array<U32, 4> viewport = {0, 0, m_size.x, m_size.y};
 	Vec2 mousePosf = in.getMousePositionNdc() / 2.0f + 0.5f;
-	mousePosf.y() = 1.0f - mousePosf.y();
-	const UVec2 mousePos(U32(mousePosf.x() * F32(viewport[2])), U32(mousePosf.y() * F32(viewport[3])));
+	mousePosf.y = 1.0f - mousePosf.y;
+	const UVec2 mousePos(U32(mousePosf.x * F32(viewport[2])), U32(mousePosf.y * F32(viewport[3])));
 
-	io.MousePos.x = F32(mousePos.x());
-	io.MousePos.y = F32(mousePos.y());
+	io.MousePos.x = F32(mousePos.x);
+	io.MousePos.y = F32(mousePos.y);
 
 	io.MouseClicked[0] = in.getMouseButton(MouseButton::kLeft) == 1;
 	io.MouseDown[0] = in.getMouseButton(MouseButton::kLeft) > 0;
@@ -624,25 +624,25 @@ void UiCanvas::appendGraphicsCommands(CommandBuffer& cmdb) const
 			{
 				// Project scissor/clipping rectangles into framebuffer space
 				Vec4 clipRect;
-				clipRect.x() = (pcmd.ClipRect.x - clipOff.x()) * clipScale.x();
-				clipRect.y() = (pcmd.ClipRect.y - clipOff.y()) * clipScale.y();
-				clipRect.z() = (pcmd.ClipRect.z - clipOff.x()) * clipScale.x();
-				clipRect.w() = (pcmd.ClipRect.w - clipOff.y()) * clipScale.y();
+				clipRect.x = (pcmd.ClipRect.x - clipOff.x) * clipScale.x;
+				clipRect.y = (pcmd.ClipRect.y - clipOff.y) * clipScale.y;
+				clipRect.z = (pcmd.ClipRect.z - clipOff.x) * clipScale.x;
+				clipRect.w = (pcmd.ClipRect.w - clipOff.y) * clipScale.y;
 
-				if(clipRect.x() < fbWidth && clipRect.y() < fbHeight && clipRect.z() >= 0.0f && clipRect.w() >= 0.0f)
+				if(clipRect.x < fbWidth && clipRect.y < fbHeight && clipRect.z >= 0.0f && clipRect.w >= 0.0f)
 				{
 					// Negative offsets are illegal for vkCmdSetScissor
-					if(clipRect.x() < 0.0f)
+					if(clipRect.x < 0.0f)
 					{
-						clipRect.x() = 0.0f;
+						clipRect.x = 0.0f;
 					}
-					if(clipRect.y() < 0.0f)
+					if(clipRect.y < 0.0f)
 					{
-						clipRect.y() = 0.0f;
+						clipRect.y = 0.0f;
 					}
 
 					// Apply scissor/clipping rectangle
-					cmdb.setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()), U32(clipRect.w() - clipRect.y()));
+					cmdb.setScissor(U32(clipRect.x), U32(clipRect.y), U32(clipRect.z - clipRect.x), U32(clipRect.w - clipRect.y));
 
 					const ImTextureID texid = pcmd.GetTexID();
 					const Bool hasTexture = texid.m_texture != nullptr;
@@ -675,10 +675,10 @@ void UiCanvas::appendGraphicsCommands(CommandBuffer& cmdb) const
 						Vec4 m_transform;
 						Array<U8, sizeof(AnKiImTextureID::m_extraFastConstants)> m_extra;
 					} pc;
-					pc.m_transform.x() = 2.0f / drawData.DisplaySize.x;
-					pc.m_transform.y() = -2.0f / drawData.DisplaySize.y;
-					pc.m_transform.z() = (drawData.DisplayPos.x / drawData.DisplaySize.x) * 2.0f - 1.0f;
-					pc.m_transform.w() = -((drawData.DisplayPos.y / drawData.DisplaySize.y) * 2.0f - 1.0f);
+					pc.m_transform.x = 2.0f / drawData.DisplaySize.x;
+					pc.m_transform.y = -2.0f / drawData.DisplaySize.y;
+					pc.m_transform.z = (drawData.DisplayPos.x / drawData.DisplaySize.x) * 2.0f - 1.0f;
+					pc.m_transform.w = -((drawData.DisplayPos.y / drawData.DisplaySize.y) * 2.0f - 1.0f);
 					U32 extraFastConstantsSize = 0;
 					if(hasTexture && texid.m_extraFastConstantsSize)
 					{

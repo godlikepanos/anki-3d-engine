@@ -79,7 +79,7 @@ Error RtShadows::init()
 	// Quarter rez shadow RT
 	{
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR8_Unorm,
+			getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kR8_Unorm,
 			TextureUsageBit::kAllSrv | TextureUsageBit::kUavDispatchRays | TextureUsageBit::kUavCompute, "RtShadows History");
 		m_historyRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 	}
@@ -87,14 +87,14 @@ Error RtShadows::init()
 	// Temp shadow RT
 	{
 		m_intermediateShadowsRtDescr = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR8_Unorm, "RtShadows Tmp");
+			getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kR8_Unorm, "RtShadows Tmp");
 		m_intermediateShadowsRtDescr.bake();
 	}
 
 	// Moments RT
 	{
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR32G32_Sfloat,
+			getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kR32G32_Sfloat,
 			TextureUsageBit::kAllSrv | TextureUsageBit::kUavDispatchRays | TextureUsageBit::kUavCompute, "RtShadows Moments #1");
 		m_momentsRts[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 
@@ -106,20 +106,20 @@ Error RtShadows::init()
 	if(m_useSvgf)
 	{
 		m_varianceRtDescr = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR32_Sfloat, "RtShadows Variance");
+			getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kR32_Sfloat, "RtShadows Variance");
 		m_varianceRtDescr.bake();
 	}
 
 	// Final RT
 	{
 		m_upscaledRtDescr = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR8_Unorm, "RtShadows Upscaled");
+			getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR8_Unorm, "RtShadows Upscaled");
 		m_upscaledRtDescr.bake();
 	}
 
 	{
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR32_Sfloat,
+			getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kR32_Sfloat,
 			TextureUsageBit::kAllSrv | TextureUsageBit::kUavDispatchRays | TextureUsageBit::kUavCompute, "RtShadows history len");
 		ClearValue clear;
 		clear.m_colorf[0] = 1.0f;
@@ -323,7 +323,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(7, 2, TextureView(&m_blueNoiseImage->getTexture(), TextureSubresourceDesc::all()));
 
 			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-							  getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, 1);
+							  getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, 1);
 		});
 	}
 
@@ -392,7 +392,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.invert();
 			cmdb.setFastConstants(&invProjMat, sizeof(invProjMat));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
 		});
 	}
 
@@ -457,7 +457,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 				const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.invert();
 				cmdb.setFastConstants(&invProjMat, sizeof(invProjMat));
 
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
 			});
 		}
 	}
@@ -485,7 +485,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 			rgraphCtx.bindSrv(2, 0, getGBuffer().getDepthRt());
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 }
@@ -513,7 +513,7 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 	consts.m_maxSampleCount = 32;
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
-	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
+	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
 }
 
 } // end namespace anki

@@ -55,7 +55,7 @@ void AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntT
 	m_anim->interpolate(m_channelIndex, crntTime, pos, rot, scale);
 
 	Transform trf;
-	trf.setOrigin(pos.xyz0());
+	trf.setOrigin(pos.xyz0);
 	// trf.setOrigin(Vec4(0.0f));
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	// trf.setRotation(Mat3x4::getIdentity());

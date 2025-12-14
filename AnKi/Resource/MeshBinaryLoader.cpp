@@ -405,7 +405,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U3
 
 		for(U32 i = 0; i < tempPositions.getSize(); ++i)
 		{
-			positions[i] = Vec3(tempPositions[i].xyz()) / F32(kMaxU16);
+			positions[i] = Vec3(U16Vec3(tempPositions[i].xyz)) / F32(kMaxU16);
 			positions[i] *= Vec3(&attrib.m_scale[0]);
 			positions[i] += Vec3(&attrib.m_translation[0]);
 		}

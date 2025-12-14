@@ -40,7 +40,7 @@ void LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		m_dirty = false;
 
-		m_worldPosition = info.m_node->getWorldTransform().getOrigin().xyz();
+		m_worldPosition = info.m_node->getWorldTransform().getOrigin().xyz;
 	}
 }
 

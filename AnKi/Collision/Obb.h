@@ -131,7 +131,7 @@ private:
 		ANKI_ASSERT(m_center != Vec4(kMaxF32));
 		ANKI_ASSERT(m_extend != Vec4(kMaxF32));
 		ANKI_ASSERT(m_rotation != Mat3x4(kMaxF32));
-		ANKI_ASSERT(m_center.w() == 0.0f && m_extend.w() == 0.0f);
+		ANKI_ASSERT(m_center.w == 0.0f && m_extend.w == 0.0f);
 	}
 };
 

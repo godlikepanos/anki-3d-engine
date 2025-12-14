@@ -34,8 +34,8 @@ DepthDownscale::~DepthDownscale()
 
 Error DepthDownscale::initInternal()
 {
-	const U32 width = getRenderer().getInternalResolution().x() / 2;
-	const U32 height = getRenderer().getInternalResolution().y() / 2;
+	const U32 width = getRenderer().getInternalResolution().x / 2;
+	const U32 height = getRenderer().getInternalResolution().y / 2;
 
 	m_mipCount = 2;
 
@@ -103,7 +103,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			varAU2(dispatchThreadGroupCountXY);
 			varAU2(workGroupOffset); // needed if Left and Top are not 0,0
 			varAU2(numWorkGroupsAndMips);
-			varAU4(rectInfo) = initAU4(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			varAU4(rectInfo) = initAU4(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
 
 			DepthDownscaleConstants pc;
@@ -178,7 +178,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;
-				cmdb.setViewport(0, 0, size.x(), size.y());
+				cmdb.setViewport(0, 0, size.x, size.y);
 				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			});
 		}

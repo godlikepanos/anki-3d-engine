@@ -99,9 +99,9 @@ public:
 	{
 		Cone out;
 		out.m_origin = transform.transform(m_origin);
-		out.m_dir = (transform.getRotation() * m_dir.xyz0()).xyz0();
+		out.m_dir = (transform.getRotation() * m_dir.xyz0).xyz0;
 		ANKI_ASSERT(transform.hasUniformScale());
-		out.m_length *= transform.getScale().x();
+		out.m_length *= transform.getScale().x;
 		return out;
 	}
 
@@ -132,8 +132,8 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_origin.w() == 0.0f);
-		ANKI_ASSERT(m_dir.w() == 0.0f);
+		ANKI_ASSERT(m_origin.w == 0.0f);
+		ANKI_ASSERT(m_dir.w == 0.0f);
 		ANKI_ASSERT(m_length > 0.0f);
 		ANKI_ASSERT(m_angle > 0.0f && m_angle < 2.0f * kPi);
 	}

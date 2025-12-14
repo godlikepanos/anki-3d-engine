@@ -184,7 +184,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			{
 				GltfAnimKey<Vec3> key;
 				key.m_time = keys[i];
-				key.m_value = Vec3(positions[i].x(), positions[i].y(), positions[i].z());
+				key.m_value = Vec3(positions[i].x, positions[i].y, positions[i].z);
 
 				tempChannels[channelCount].m_positions.emplaceBack(key);
 			}
@@ -238,7 +238,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 				if(!scaleErrorReported && (absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon))
 				{
-					ANKI_IMPORTER_LOGW("Expecting uniform scale (%f %f %f)", scales[i].x(), scales[i].y(), scales[i].z());
+					ANKI_IMPORTER_LOGW("Expecting uniform scale (%f %f %f)", scales[i].x, scales[i].y, scales[i].z);
 					scaleErrorReported = true;
 				}
 
@@ -317,8 +317,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
 			for(const GltfAnimKey<Vec3>& key : channel.m_positions)
 			{
-				ANKI_CHECK(
-					file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n", key.m_time, key.m_value.x(), key.m_value.y(), key.m_value.z()));
+				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n", key.m_time, key.m_value.x, key.m_value.y, key.m_value.z));
 			}
 			ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
 		}

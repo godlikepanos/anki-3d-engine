@@ -80,7 +80,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 	{
 		Mat3 camRot = m_cameraNode->getLocalRotation();
 
-		Mat3 newRot(Euler(g_cvarGameMouseLookPower * mousePos.y(), g_cvarGameMouseLookPower * -mousePos.x(), 0.0f));
+		Mat3 newRot(Euler(g_cvarGameMouseLookPower * mousePos.y, g_cvarGameMouseLookPower * -mousePos.x, 0.0f));
 		newRot = camRot * newRot;
 
 		const Vec3 newz = newRot.getColumn(2).normalize();
@@ -97,22 +97,22 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 		Vec3 moveVec(0.0);
 		if(inp.getKey(KeyCode::kW) > 0)
 		{
-			moveVec.z() += 1.0f;
+			moveVec.z += 1.0f;
 		}
 
 		if(inp.getKey(KeyCode::kA) > 0)
 		{
-			moveVec.x() += 1.0f;
+			moveVec.x += 1.0f;
 		}
 
 		if(inp.getKey(KeyCode::kS) > 0)
 		{
-			moveVec.z() -= 1.0f;
+			moveVec.z -= 1.0f;
 		}
 
 		if(inp.getKey(KeyCode::kD) > 0)
 		{
-			moveVec.x() -= 1.0f;
+			moveVec.x -= 1.0f;
 		}
 
 		F32 jumpSpeed = 0.0f;
@@ -134,7 +134,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 			if(moveVec != 0.0f)
 			{
 				dir = -(m_cameraNode->getLocalRotation() * moveVec);
-				dir.y() = 0.0f;
+				dir.y = 0.0f;
 				dir = dir.normalize();
 			}
 
@@ -206,7 +206,7 @@ void FpsCharacter::fireShotgun()
 		randDirection = randDirection * Mat3(Axisang(spreadAngle, Vec3(0.0f, 1.0f, 0.0f)));
 		randDirection = m_cameraNode->getLocalRotation().getRotationPart() * randDirection;
 
-		const Vec3 from = m_cameraNode->getWorldTransform().getOrigin().xyz();
+		const Vec3 from = m_cameraNode->getWorldTransform().getOrigin().xyz;
 		const Vec3 to = from + -randDirection.getZAxis() * m_shotgunMaxLength;
 
 		RayHitResult result;
@@ -266,12 +266,12 @@ void FpsCharacter::fireShotgun()
 void FpsCharacter::fireGrenade()
 {
 	Transform camTrf = m_cameraNode->getWorldTransform();
-	const Vec3 newPos = camTrf.getOrigin().xyz() + camTrf.getRotation().getZAxis() * -3.0f;
-	camTrf.setOrigin(newPos.xyz0());
+	const Vec3 newPos = camTrf.getOrigin().xyz + camTrf.getRotation().getZAxis() * -3.0f;
+	camTrf.setOrigin(newPos.xyz0);
 
 	SceneNode* grenade = SceneGraph::getSingleton().newSceneNode<GrenadeNode>("");
-	grenade->setLocalOrigin(camTrf.getOrigin().xyz());
+	grenade->setLocalOrigin(camTrf.getOrigin().xyz);
 	grenade->setLocalRotation(camTrf.getRotation().getRotationPart());
 	BodyComponent& bodyc = grenade->getFirstComponentOfType<BodyComponent>();
-	bodyc.applyForce(camTrf.getRotation().getZAxis().xyz() * -1200.0f, Vec3(0.0f, 0.0f, 0.0f));
+	bodyc.applyForce(camTrf.getRotation().getZAxis().xyz * -1200.0f, Vec3(0.0f, 0.0f, 0.0f));
 }

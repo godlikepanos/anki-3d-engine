@@ -66,15 +66,15 @@ void DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	m_dirty = false;
 
-	const Vec3 halfBoxSize = info.m_node->getWorldTransform().getScale().xyz();
+	const Vec3 halfBoxSize = info.m_node->getWorldTransform().getScale().xyz;
 
 	// Calculate the texture matrix
 	Transform trf = info.m_node->getWorldTransform();
 	trf.setScale(Vec3(1.0f));
 	const Mat4 viewMat = Mat4(trf).invert();
 
-	const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(), halfBoxSize.y(), -halfBoxSize.y(),
-																	 -halfBoxSize.z(), halfBoxSize.z());
+	const Mat4 projMat =
+		Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x, -halfBoxSize.x, halfBoxSize.y, -halfBoxSize.y, -halfBoxSize.z, halfBoxSize.z);
 
 	const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -87,7 +87,7 @@ void DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	gpuDecal.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
 	gpuDecal.m_roughnessMetalnessFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
 	gpuDecal.m_textureMatrix = biasedProjViewMat;
-	gpuDecal.m_sphereCenter = info.m_node->getWorldTransform().getOrigin().xyz();
+	gpuDecal.m_sphereCenter = info.m_node->getWorldTransform().getOrigin().xyz;
 	gpuDecal.m_sphereRadius = halfBoxSize.length();
 
 	m_gpuSceneDecal.uploadToGpuScene(gpuDecal);

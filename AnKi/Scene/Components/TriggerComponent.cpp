@@ -120,7 +120,7 @@ void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	else if(info.m_node->movedThisFrame())
 	{
 		updated = true;
-		m_trigger->setPositionAndRotation(info.m_node->getWorldTransform().getOrigin().xyz(),
+		m_trigger->setPositionAndRotation(info.m_node->getWorldTransform().getOrigin().xyz,
 										  info.m_node->getWorldTransform().getRotation().getRotationPart());
 	}
 

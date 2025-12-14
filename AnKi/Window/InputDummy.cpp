@@ -53,8 +53,8 @@ Error Input::handleEvents()
 void Input::moveCursor(const Vec2& posNdc)
 {
 	m_mousePosNdc = posNdc;
-	m_mousePosWin.x() = U32(F32(NativeWindow::getSingleton().getWidth()) * (posNdc.x() * 0.5f + 0.5f));
-	m_mousePosWin.y() = U32(F32(NativeWindow::getSingleton().getHeight()) * (-posNdc.y() * 0.5f + 0.5f));
+	m_mousePosWin.x = U32(F32(NativeWindow::getSingleton().getWidth()) * (posNdc.x * 0.5f + 0.5f));
+	m_mousePosWin.y = U32(F32(NativeWindow::getSingleton().getHeight()) * (-posNdc.y * 0.5f + 0.5f));
 }
 
 void Input::hideCursor([[maybe_unused]] Bool hide)

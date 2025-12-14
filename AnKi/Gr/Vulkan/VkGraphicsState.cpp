@@ -132,14 +132,14 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 	{
 		ANKI_ASSERT(dynState.m_viewport[2] != 0 && dynState.m_viewport[3] != 0);
 		dynState.m_viewportDirty = false;
-		const VkViewport vp = computeViewport(dynState.m_viewport.getBegin(), state.m_rtsSize.x(), state.m_rtsSize.y());
+		const VkViewport vp = computeViewport(dynState.m_viewport.getBegin(), state.m_rtsSize.x, state.m_rtsSize.y);
 		vkCmdSetViewport(cmdb, 0, 1, &vp);
 	}
 
 	if(dynState.m_scissorDirty)
 	{
 		dynState.m_scissorDirty = false;
-		const VkRect2D rect = computeScissor(dynState.m_scissor.getBegin(), state.m_rtsSize.x(), state.m_rtsSize.y());
+		const VkRect2D rect = computeScissor(dynState.m_scissor.getBegin(), state.m_rtsSize.x, state.m_rtsSize.y);
 		vkCmdSetScissor(cmdb, 0, 1, &rect);
 	}
 

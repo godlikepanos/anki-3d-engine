@@ -294,7 +294,7 @@ public:
 
 	Vec3 getLocalOrigin() const
 	{
-		return m_ltrf.getOrigin().xyz();
+		return m_ltrf.getOrigin().xyz;
 	}
 
 	void setLocalRotation(const Mat3& x)
@@ -316,7 +316,7 @@ public:
 
 	Vec3 getLocalScale() const
 	{
-		return m_ltrf.getScale().xyz();
+		return m_ltrf.getScale().xyz;
 	}
 
 	const Transform& getWorldTransform() const

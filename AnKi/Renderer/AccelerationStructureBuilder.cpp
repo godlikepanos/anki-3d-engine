@@ -23,7 +23,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 
 		GpuVisibilityAccelerationStructuresInput in;
 		in.m_passesName = "Main TLAS visiblity";
-		in.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+		in.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 		in.m_lodDistances = lodDistances;
 		in.m_pointOfTest = in.m_lodReferencePoint;
 		in.m_testRadius = g_cvarRenderRtExtendedFrustumDistance;
@@ -71,7 +71,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 		GpuVisibilityLocalLightsInput in;
 		in.m_cellCounts = UVec3(g_cvarRenderRtLightGridCellCountXZ, g_cvarRenderRtLightGridCellCountY, g_cvarRenderRtLightGridCellCountXZ);
 		in.m_cellSize = Vec3(g_cvarRenderRtLightGridSizeXZ, g_cvarRenderRtLightGridSizeY, g_cvarRenderRtLightGridSizeXZ) / Vec3(in.m_cellCounts);
-		in.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+		in.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 		in.m_lookDirection = -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis();
 		in.m_lightIndexListSize = g_cvarRenderRtLightIndexListSize;
 		in.m_rgraph = &ctx.m_renderGraphDescr;

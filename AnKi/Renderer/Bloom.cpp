@@ -16,13 +16,13 @@ Error Bloom::init()
 	// Pyramid
 	{
 		const UVec2 pyramidSize = getRenderer().getInternalResolution() / 2;
-		const U8 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x(), pyramidSize.y(), g_cvarRenderBloomPyramidLowLimit);
+		const U8 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x, pyramidSize.y, g_cvarRenderBloomPyramidLowLimit);
 
 		const Bool preferCompute = g_cvarRenderPreferCompute;
 
 		// Create the miped texture
 		TextureInitInfo texinit =
-			getRenderer().create2DRenderTargetDescription(pyramidSize.x(), pyramidSize.y(), getRenderer().getHdrFormat(), "Bloom pyramid");
+			getRenderer().create2DRenderTargetDescription(pyramidSize.x, pyramidSize.y, getRenderer().getHdrFormat(), "Bloom pyramid");
 		texinit.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute;
 		texinit.m_usage |= (preferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 		texinit.m_mipmapCount = pyramidMipCount;
@@ -39,7 +39,7 @@ Error Bloom::init()
 		const UVec2 expSize = pyramidSmallerMipSize * 2; // Upacale a bit
 
 		// Create RT info
-		m_exposureRtDesc = getRenderer().create2DRenderTargetDescription(expSize.x(), expSize.y(), getRenderer().getHdrFormat(), "Bloom exposure");
+		m_exposureRtDesc = getRenderer().create2DRenderTargetDescription(expSize.x, expSize.y, getRenderer().getHdrFormat(), "Bloom exposure");
 		m_exposureRtDesc.bake();
 
 		// init shaders
@@ -51,7 +51,7 @@ Error Bloom::init()
 		const UVec2 size = getRenderer().getPostProcessResolution() / g_cvarRenderBloomUpscaleDivisor;
 
 		// Create RT descr
-		m_finalRtDesc = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), getRenderer().getHdrFormat(), "Bloom final");
+		m_finalRtDesc = getRenderer().create2DRenderTargetDescription(size.x, size.y, getRenderer().getHdrFormat(), "Bloom final");
 		m_finalRtDesc.bake();
 
 		// init shaders

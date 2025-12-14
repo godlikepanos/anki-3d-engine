@@ -43,7 +43,7 @@ Error IndirectDiffuse::init()
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "IndirectDiffuse #1");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "IndirectDiffuse #1");
 	m_transientRtDesc1.bake();
 
 	return Error::kNone;
@@ -195,7 +195,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			cmdb.setFastConstants(&dummyConsts, sizeof(dummyConsts));
 
 			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-							  getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+							  getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, 1);
 		});
 	}
 

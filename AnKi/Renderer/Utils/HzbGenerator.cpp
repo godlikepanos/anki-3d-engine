@@ -118,15 +118,14 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 		{
 			const DispatchInput& in = dispatchInputsCopy[dispatch];
 
-			const U8 hzbMipCount =
-				min(kMaxMipsSinglePassDownsamplerCanProduce, computeMaxMipmapCount2d(in.m_dstHzbRtSize.x(), in.m_dstHzbRtSize.y()));
+			const U8 hzbMipCount = min(kMaxMipsSinglePassDownsamplerCanProduce, computeMaxMipmapCount2d(in.m_dstHzbRtSize.x, in.m_dstHzbRtSize.y));
 
 			const U8 mipsToCompute = hzbMipCount;
 
 			varAU2(dispatchThreadGroupCountXY);
 			varAU2(workGroupOffset); // needed if Left and Top are not 0,0
 			varAU2(numWorkGroupsAndMips);
-			varAU4(rectInfo) = initAU4(0, 0, in.m_dstHzbRtSize.x() * 2, in.m_dstHzbRtSize.y() * 2);
+			varAU4(rectInfo) = initAU4(0, 0, in.m_dstHzbRtSize.x * 2, in.m_dstHzbRtSize.y * 2);
 			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, mipsToCompute);
 
 			struct Constants
@@ -190,8 +189,8 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 	const UVec2 maxDepthRtSize = (in.m_depthBufferRtSize + kTileSize - 1) / kTileSize;
 	{
 		RenderTargetDesc maxDepthRtDescr("HZB max tile depth");
-		maxDepthRtDescr.m_width = maxDepthRtSize.x();
-		maxDepthRtDescr.m_height = maxDepthRtSize.y();
+		maxDepthRtDescr.m_width = maxDepthRtSize.x;
+		maxDepthRtDescr.m_height = maxDepthRtSize.y;
 		maxDepthRtDescr.m_format = Format::kR32_Sfloat;
 		maxDepthRtDescr.bake();
 		maxDepthRt = rgraph.newRenderTarget(maxDepthRtDescr);
@@ -211,7 +210,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			cmdb.bindShaderProgram(m_maxDepthGrProg.get());
 
-			cmdb.dispatchCompute(maxDepthRtSize.x(), maxDepthRtSize.y(), 1);
+			cmdb.dispatchCompute(maxDepthRtSize.x, maxDepthRtSize.y, 1);
 		});
 	}
 
@@ -236,7 +235,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 				ANKI_ASSERT(minDist < M);
 
 				Vec4 v4 = in.m_cameraProjectionMatrix * Vec4(0.0f, 0.0f, -minDist, 1.0f);
-				cascadeMinDepth = saturate(v4.z() / v4.w());
+				cascadeMinDepth = saturate(v4.z / v4.w);
 			}
 			else
 			{
@@ -245,14 +244,14 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			const F32 maxDist = cascade.m_cascadeMaxDistance;
 			const Vec4 v4 = in.m_cameraProjectionMatrix * Vec4(0.0f, 0.0f, -maxDist, 1.0f);
-			cascadeMaxDepth = saturate(v4.z() / v4.w());
+			cascadeMaxDepth = saturate(v4.z / v4.w);
 
 			ANKI_ASSERT(cascadeMinDepth <= cascadeMaxDepth);
 		}
 
 		RenderTargetDesc depthRtDescr(generateTempPassName("HZB boxes depth cascade:%u", i));
-		depthRtDescr.m_width = cascade.m_hzbRtSize.x() * 2;
-		depthRtDescr.m_height = cascade.m_hzbRtSize.y() * 2;
+		depthRtDescr.m_width = cascade.m_hzbRtSize.x * 2;
+		depthRtDescr.m_height = cascade.m_hzbRtSize.y * 2;
 		depthRtDescr.m_format = Format::kD16_Unorm;
 		depthRtDescr.bake();
 		depthRts[i] = rgraph.newRenderTarget(depthRtDescr);
@@ -276,7 +275,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			cmdb.setDepthCompareOperation(CompareOperation::kGreater);
 
-			cmdb.setViewport(0, 0, viewport.x(), viewport.y());
+			cmdb.setViewport(0, 0, viewport.x, viewport.y);
 
 			cmdb.bindShaderProgram(m_maxBoxGrProg.get());
 
@@ -300,7 +299,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			cmdb.bindIndexBuffer(BufferView(m_boxIndexBuffer.get()), IndexType::kU16);
 
-			cmdb.drawIndexed(PrimitiveTopology::kTriangles, sizeof(kBoxIndices) / sizeof(kBoxIndices[0]), maxDepthRtSize.x() * maxDepthRtSize.y());
+			cmdb.drawIndexed(PrimitiveTopology::kTriangles, sizeof(kBoxIndices) / sizeof(kBoxIndices[0]), maxDepthRtSize.x * maxDepthRtSize.y);
 
 			// Restore state
 			cmdb.setDepthCompareOperation(CompareOperation::kLess);

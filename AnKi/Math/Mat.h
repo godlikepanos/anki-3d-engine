@@ -17,7 +17,7 @@ namespace anki {
 /// @tparam T The scalar type. Eg float.
 /// @tparam kTRowCount The number of rows.
 /// @tparam kTColumnCount The number of columns.
-template<typename T, U kTRowCount, U kTColumnCount>
+template<typename T, U32 kTRowCount, U32 kTColumnCount>
 class alignas(MathSimd<T, kTColumnCount>::kAlignment) TMat
 {
 public:
@@ -36,9 +36,9 @@ public:
 	using RowVec = TVec<T, kTColumnCount>;
 	using ColumnVec = TVec<T, kTRowCount>;
 
-	static constexpr U kRowCount = kTRowCount; ///< Number of rows
-	static constexpr U kColumnCount = kTColumnCount; ///< Number of columns
-	static constexpr U kSize = kTRowCount * kTColumnCount; ///< Number of total elements
+	static constexpr U32 kRowCount = kTRowCount; ///< Number of rows
+	static constexpr U32 kColumnCount = kTColumnCount; ///< Number of columns
+	static constexpr U32 kSize = kTRowCount * kTColumnCount; ///< Number of total elements
 
 	static constexpr Bool kIsSquare = kTColumnCount == kTRowCount;
 	static constexpr Bool kHasSimd = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
@@ -55,7 +55,7 @@ public:
 	/// Copy.
 	constexpr TMat(const TMat& b)
 	{
-		for(U i = 0; i < kRowCount; i++)
+		for(U32 i = 0; i < kRowCount; i++)
 		{
 			m_rows[i] = b.m_rows[i];
 		}
@@ -63,7 +63,7 @@ public:
 
 	explicit constexpr TMat(const T f)
 	{
-		for(U i = 0; i < kRowCount; i++)
+		for(U32 i = 0; i < kRowCount; i++)
 		{
 			m_rows[i] = RowVec(f);
 		}
@@ -71,7 +71,7 @@ public:
 
 	explicit constexpr TMat(const T arr[])
 	{
-		for(U i = 0; i < N; i++)
+		for(U32 i = 0; i < N; i++)
 		{
 			m_arr1[i] = arr[i];
 		}
@@ -157,20 +157,20 @@ public:
 		T t = T(1) - c;
 
 		const TVec<T, 3>& axis = axisang.getAxis();
-		m(0, 0) = c + axis.x() * axis.x() * t;
-		m(1, 1) = c + axis.y() * axis.y() * t;
-		m(2, 2) = c + axis.z() * axis.z() * t;
+		m(0, 0) = c + axis.x * axis.x * t;
+		m(1, 1) = c + axis.y * axis.y * t;
+		m(2, 2) = c + axis.z * axis.z * t;
 
-		T tmp1 = axis.x() * axis.y() * t;
-		T tmp2 = axis.z() * s;
+		T tmp1 = axis.x * axis.y * t;
+		T tmp2 = axis.z * s;
 		m(1, 0) = tmp1 + tmp2;
 		m(0, 1) = tmp1 - tmp2;
-		tmp1 = axis.x() * axis.z() * t;
-		tmp2 = axis.y() * s;
+		tmp1 = axis.x * axis.z * t;
+		tmp2 = axis.y * s;
 		m(2, 0) = tmp1 - tmp2;
 		m(0, 2) = tmp1 + tmp2;
-		tmp1 = axis.y() * axis.z() * t;
-		tmp2 = axis.x() * s;
+		tmp1 = axis.y * axis.z * t;
+		tmp2 = axis.x * s;
 		m(2, 1) = tmp1 + tmp2;
 		m(1, 2) = tmp1 - tmp2;
 	}
@@ -207,9 +207,9 @@ public:
 		}
 		else
 		{
-			const auto a = rotation.getColumn(0) * scale.x();
-			const auto b = rotation.getColumn(1) * scale.y();
-			const auto c = rotation.getColumn(2) * scale.z();
+			const auto a = rotation.getColumn(0) * scale.x;
+			const auto b = rotation.getColumn(1) * scale.y;
+			const auto c = rotation.getColumn(2) * scale.z;
 			TMat<T, 3, 3> rot;
 			rot.setColumns(a, b, c);
 			setRotationPart(rot);
@@ -223,7 +223,7 @@ public:
 	}
 
 	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 16)
-		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale().xyz())
+		: TMat(t.getOrigin().xyz, t.getRotation().getRotationPart(), t.getScale().xyz)
 	{
 	}
 
@@ -272,9 +272,9 @@ public:
 		}
 		else
 		{
-			const auto a = rotation.getColumn(0) * scale.x();
-			const auto b = rotation.getColumn(1) * scale.y();
-			const auto c = rotation.getColumn(2) * scale.z();
+			const auto a = rotation.getColumn(0) * scale.x;
+			const auto b = rotation.getColumn(1) * scale.y;
+			const auto c = rotation.getColumn(2) * scale.z;
 			setColumns(a, b, c);
 		}
 
@@ -297,29 +297,29 @@ public:
 	}
 
 	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 12)
-		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale().xyz())
+		: TMat(t.getOrigin().xyz, t.getRotation().getRotationPart(), t.getScale().xyz)
 	{
 	}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	T& operator()(const U j, const U i)
+	T& operator()(const U32 j, const U32 i)
 	{
 		return m_arr2[j][i];
 	}
 
-	[[nodiscard]] T operator()(const U j, const U i) const
+	[[nodiscard]] T operator()(const U32 j, const U32 i) const
 	{
 		return m_arr2[j][i];
 	}
 
-	T& operator[](const U n)
+	T& operator[](const U32 n)
 	{
 		return m_arr1[n];
 	}
 
-	[[nodiscard]] T operator[](const U n) const
+	[[nodiscard]] T operator[](const U32 n) const
 	{
 		return m_arr1[n];
 	}
@@ -331,7 +331,7 @@ public:
 	/// Copy.
 	TMat& operator=(const TMat& b)
 	{
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			m_rows[i] = b.m_rows[i];
 		}
@@ -341,7 +341,7 @@ public:
 	[[nodiscard]] TMat operator+(const TMat& b) const
 	{
 		TMat c;
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			c.m_rows[i] = m_rows[i] + b.m_rows[i];
 		}
@@ -350,7 +350,7 @@ public:
 
 	TMat& operator+=(const TMat& b)
 	{
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			m_rows[i] += b.m_rows[i];
 		}
@@ -360,7 +360,7 @@ public:
 	[[nodiscard]] TMat operator-(const TMat& b) const
 	{
 		TMat c;
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			c.m_rows[i] = m_rows[i] - b.m_rows[i];
 		}
@@ -369,7 +369,7 @@ public:
 
 	TMat& operator-=(const TMat& b)
 	{
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			m_rows[i] -= b.m_rows[i];
 		}
@@ -380,12 +380,12 @@ public:
 	{
 		TMat out;
 		const TMat& a = *this;
-		for(U j = 0; j < kTRowCount; j++)
+		for(U32 j = 0; j < kTRowCount; j++)
 		{
-			for(U i = 0; i < kTColumnCount; i++)
+			for(U32 i = 0; i < kTColumnCount; i++)
 			{
 				out(j, i) = T(0);
-				for(U k = 0; k < kTColumnCount; k++)
+				for(U32 k = 0; k < kTColumnCount; k++)
 				{
 					out(j, i) += a(j, k) * b(k, i);
 				}
@@ -399,7 +399,7 @@ public:
 	{
 		TMat out;
 		const auto& m = *this;
-		for(U i = 0; i < 4; i++)
+		for(U32 i = 0; i < 4; i++)
 		{
 #	if ANKI_SIMD_SSE
 			__m128 t1, t2;
@@ -442,7 +442,7 @@ public:
 
 	[[nodiscard]] Bool operator==(const TMat& b) const
 	{
-		for(U i = 0; i < N; i++)
+		for(U32 i = 0; i < N; i++)
 		{
 			if(!isZero<T>(m_arr1[i] - b.m_arr1[i]))
 			{
@@ -454,7 +454,7 @@ public:
 
 	[[nodiscard]] Bool operator!=(const TMat& b) const
 	{
-		for(U i = 0; i < N; i++)
+		for(U32 i = 0; i < N; i++)
 		{
 			if(!isZero<T>(m_arr1[i] - b.m_arr1[i]))
 			{
@@ -470,7 +470,7 @@ public:
 	[[nodiscard]] TMat operator+(const T f) const
 	{
 		TMat out;
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			out.m_rows[i] = m_rows[i] + f;
 		}
@@ -479,7 +479,7 @@ public:
 
 	TMat& operator+=(const T f)
 	{
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			m_rows[i] += f;
 		}
@@ -489,7 +489,7 @@ public:
 	[[nodiscard]] TMat operator-(const T f) const
 	{
 		TMat out;
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			out.m_rows[i] = m_rows[i] - f;
 		}
@@ -498,7 +498,7 @@ public:
 
 	TMat& operator-=(const T f)
 	{
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			m_rows[i] -= f;
 		}
@@ -508,7 +508,7 @@ public:
 	[[nodiscard]] TMat operator*(const T f) const
 	{
 		TMat out;
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			out.m_rows[i] = m_rows[i] * f;
 		}
@@ -517,7 +517,7 @@ public:
 
 	TMat& operator*=(const T f)
 	{
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			m_rows[i] *= f;
 		}
@@ -528,7 +528,7 @@ public:
 	{
 		ANKI_ASSERT(f != T(0));
 		TMat out;
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			out.m_rows[i] = m_rows[i] / f;
 		}
@@ -538,7 +538,7 @@ public:
 	TMat& operator/=(const T f)
 	{
 		ANKI_ASSERT(f != T(0));
-		for(U i = 0; i < kRowCount; ++i)
+		for(U32 i = 0; i < kRowCount; ++i)
 		{
 			m_rows[i] /= f;
 		}
@@ -552,10 +552,10 @@ public:
 	{
 		const TMat& m = *this;
 		ColumnVec out;
-		for(U j = 0; j < kTRowCount; j++)
+		for(U32 j = 0; j < kTRowCount; j++)
 		{
 			T sum = T(0);
-			for(U i = 0; i < kTColumnCount; i++)
+			for(U32 i = 0; i < kTColumnCount; i++)
 			{
 				sum += m(j, i) * v[i];
 			}
@@ -567,10 +567,10 @@ public:
 #if ANKI_SIMD_SSE
 	[[nodiscard]] ColumnVec operator*(const RowVec& v) const requires(kIs4x4Simd)
 	{
-		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
-		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
-		__m128 c = _mm_mul_ps(m_simd[2], v.getSimd());
-		__m128 d = _mm_mul_ps(m_simd[3], v.getSimd());
+		__m128 a = _mm_mul_ps(m_simd[0], v.m_simd);
+		__m128 b = _mm_mul_ps(m_simd[1], v.m_simd);
+		__m128 c = _mm_mul_ps(m_simd[2], v.m_simd);
+		__m128 d = _mm_mul_ps(m_simd[3], v.m_simd);
 
 		a = _mm_hadd_ps(a, b);
 		c = _mm_hadd_ps(c, d);
@@ -580,9 +580,9 @@ public:
 
 	[[nodiscard]] ColumnVec operator*(const RowVec& v) const requires(kIs3x4Simd)
 	{
-		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
-		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
-		__m128 c = _mm_mul_ps(m_simd[2], v.getSimd());
+		__m128 a = _mm_mul_ps(m_simd[0], v.m_simd);
+		__m128 b = _mm_mul_ps(m_simd[1], v.m_simd);
+		__m128 c = _mm_mul_ps(m_simd[2], v.m_simd);
 
 		a = _mm_hadd_ps(a, b);
 		const RowVec d(_mm_hadd_ps(a, c));
@@ -594,7 +594,7 @@ public:
 	[[nodiscard]] ColumnVec operator*(const RowVec& v) const requires(kHasSimd)
 	{
 		ColumnVec out;
-		for(U i = 0; i < kTRowCount; i++)
+		for(U32 i = 0; i < kTRowCount; i++)
 		{
 			out[i] = RowVec(m_simd[i]).dot(v);
 		}
@@ -605,7 +605,7 @@ public:
 
 	/// @name Other
 	/// @{
-	void setRow(const U j, const RowVec& v)
+	void setRow(const U32 j, const RowVec& v)
 	{
 		m_rows[j] = v;
 	}
@@ -623,7 +623,7 @@ public:
 		setRow(3, d);
 	}
 
-	const RowVec& getRow(const U j) const
+	const RowVec& getRow(const U32 j) const
 	{
 		return m_rows[j];
 	}
@@ -641,9 +641,9 @@ public:
 		d = getRow(3);
 	}
 
-	void setColumn(const U i, const ColumnVec& v)
+	void setColumn(const U32 i, const ColumnVec& v)
 	{
-		for(U j = 0; j < kTRowCount; j++)
+		for(U32 j = 0; j < kTRowCount; j++)
 		{
 			m_arr2[j][i] = v[j];
 		}
@@ -662,10 +662,10 @@ public:
 		setColumn(3, d);
 	}
 
-	[[nodiscard]] ColumnVec getColumn(const U i) const
+	[[nodiscard]] ColumnVec getColumn(const U32 i) const
 	{
 		ColumnVec out;
-		for(U j = 0; j < kTRowCount; j++)
+		for(U32 j = 0; j < kTRowCount; j++)
 		{
 			out[j] = m_arr2[j][i];
 		}
@@ -855,9 +855,9 @@ public:
 	void setRotationPart(const TMat<T, 3, 3>& m3)
 	{
 		TMat& m = *this;
-		for(U j = 0; j < 3; j++)
+		for(U32 j = 0; j < 3; j++)
 		{
-			for(U i = 0; i < 3; i++)
+			for(U32 i = 0; i < 3; i++)
 			{
 				m(j, i) = m3(j, i);
 			}
@@ -883,9 +883,9 @@ public:
 	void setTranslationPart(const TVec<T, 3>& v)
 	{
 		auto c = getColumn(3);
-		c.x() = v.x();
-		c.y() = v.y();
-		c.z() = v.z();
+		c.x = v.x;
+		c.y = v.y;
+		c.z = v.z;
 		setColumn(3, c);
 	}
 
@@ -936,9 +936,9 @@ public:
 	[[nodiscard]] TMat transpose() const requires(kIsSquare && !kHasSimd)
 	{
 		TMat out;
-		for(U j = 0; j < kTRowCount; j++)
+		for(U32 j = 0; j < kTRowCount; j++)
 		{
-			for(U i = 0; i < kTColumnCount; i++)
+			for(U32 i = 0; i < kTColumnCount; i++)
 			{
 				out.m_arr2[i][j] = m_arr2[j][i];
 			}
@@ -975,9 +975,9 @@ public:
 
 	void transposeRotationPart()
 	{
-		for(U j = 0; j < 3; j++)
+		for(U32 j = 0; j < 3; j++)
 		{
-			for(U i = j + 1; i < 3; i++)
+			for(U32 i = j + 1; i < 3; i++)
 			{
 				const T tmp = m_arr2[j][i];
 				m_arr2[j][i] = m_arr2[i][j];
@@ -1176,7 +1176,7 @@ public:
 		TMat c;
 		const auto& a = *this;
 #	if ANKI_SIMD_SSE
-		for(U i = 0; i < 3; i++)
+		for(U32 i = 0; i < 3; i++)
 		{
 			__m128 t1, t2;
 
@@ -1188,12 +1188,12 @@ public:
 			t2 = _mm_add_ps(_mm_mul_ps(b.m_simd[2], t1), t2);
 
 			TVec<T, 4> v4(T(0), T(0), T(0), a(i, 3));
-			t2 = _mm_add_ps(v4.getSimd(), t2);
+			t2 = _mm_add_ps(v4.m_simd, t2);
 
 			c.m_simd[i] = t2;
 		}
 #	else
-		for(U i = 0; i < 3; i++)
+		for(U32 i = 0; i < 3; i++)
 		{
 			float32x4_t t1, t2;
 
@@ -1205,7 +1205,7 @@ public:
 			t2 = vaddq_f32(vmulq_f32(b.m_simd[2], t1), t2);
 
 			TVec<T, 4> v4(T(0), T(0), T(0), a(i, 3));
-			t2 = vaddq_f32(v4.getSimd(), t2);
+			t2 = vaddq_f32(v4.m_simd, t2);
 
 			c.m_simd[i] = t2;
 		}
@@ -1311,7 +1311,7 @@ public:
 	/// Given the parameters that construct a projection matrix extract 4 values that can be used to unproject a point from NDC to view space.
 	/// @code
 	/// Vec4 unprojParams = calculatePerspectiveUnprojectionParams(...);
-	/// F32 z = unprojParams.z() / (unprojParams.w() + depth);
+	/// F32 z = unprojParams.z / (unprojParams.w + depth);
 	/// Vec2 xy = ndc.xy() * unprojParams.xy() * z;
 	/// Vec3 posViewSpace(xy, z);
 	/// @endcode
@@ -1332,15 +1332,15 @@ public:
 		// Pv.z = A / (depth + B)
 		// where A = -m23 and B = m22
 		// so we save the A and B in the projection params vector
-		out.z() = -m23;
-		out.w() = m22;
+		out.z = -m23;
+		out.w = m22;
 
 		// Using the same logic the Pv.x = x' * w / m00
 		// so Pv.x = x' * Pv.z * (-1 / m00)
-		out.x() = -T(T(1)) / m00;
+		out.x = -T(T(1)) / m00;
 
 		// Same for y
-		out.y() = -T(T(1)) / m11;
+		out.y = -T(T(1)) / m11;
 
 		return out;
 	}
@@ -1350,10 +1350,10 @@ public:
 	{
 		TVec<T, 4> out;
 		const auto& m = *this;
-		out.z() = -m(2, 3);
-		out.w() = m(2, 2);
-		out.x() = -T(T(1)) / m(0, 0);
-		out.y() = -T(T(1)) / m(1, 1);
+		out.z = -m(2, 3);
+		out.w = m(2, 2);
+		out.x = -T(T(1)) / m(0, 0);
+		out.y = -T(T(1)) / m(1, 1);
 		return out;
 	}
 
@@ -1364,11 +1364,11 @@ public:
 		const TVec<T, 3> invScale = T(1) / scale;
 
 		TMat<T, 3, 3> rot;
-		rot.setRows(getRow(0).xyz() * invScale, getRow(1).xyz() * invScale, getRow(2).xyz() * invScale);
+		rot.setRows(getRow(0).xyz * invScale, getRow(1).xyz * invScale, getRow(2).xyz * invScale);
 
 		const TMat<T, 3, 3> invRot = rot.transpose();
 
-		const TVec<T, 3> invTsl = -(invRot * (getTranslationPart().xyz() * invScale));
+		const TVec<T, 3> invTsl = -(invRot * (getTranslationPart().xyz * invScale));
 
 		return TMat(invTsl, invRot, invScale);
 	}
@@ -1377,34 +1377,33 @@ public:
 	[[nodiscard]] TVec<T, 3> transform(const TVec<T, 3>& v) const requires(kSize == 16)
 	{
 		const auto& m = *this;
-		return TVec<T, 3>(m(0, 0) * v.x() + m(0, 1) * v.y() + m(0, 2) * v.z() + m(0, 3),
-						  m(1, 0) * v.x() + m(1, 1) * v.y() + m(1, 2) * v.z() + m(1, 3),
-						  m(2, 0) * v.x() + m(2, 1) * v.y() + m(2, 2) * v.z() + m(2, 3));
+		return TVec<T, 3>(m(0, 0) * v.x + m(0, 1) * v.y + m(0, 2) * v.z + m(0, 3), m(1, 0) * v.x + m(1, 1) * v.y + m(1, 2) * v.z + m(1, 3),
+						  m(2, 0) * v.x + m(2, 1) * v.y + m(2, 2) * v.z + m(2, 3));
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U kVecDimensions>
+	template<U32 kVecDimensions>
 	[[nodiscard]] static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
 									 const TVec<T, kVecDimensions>& up) requires(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)
 	{
-		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).normalize();
-		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).normalize();
+		const TVec<T, 3> vdir = (refPoint.xyz - eye.xyz).normalize();
+		const TVec<T, 3> vup = (up.xyz - vdir * up.xyz.dot(vdir)).normalize();
 		const TVec<T, 3> vside = vdir.cross(vup);
 		TMat out;
-		out.setColumns(vside, vup, -vdir, eye.xyz());
+		out.setColumns(vside, vup, -vdir, eye.xyz);
 		return out;
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U kVecDimensions>
+	template<U32 kVecDimensions>
 	[[nodiscard]] static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
 									 const TVec<T, kVecDimensions>& up) requires(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)
 	{
-		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).normalize();
-		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).normalize();
+		const TVec<T, 4> vdir = (refPoint.xyz0 - eye.xyz0).normalize();
+		const TVec<T, 4> vup = (up.xyz0 - vdir * up.xyz0.dot(vdir)).normalize();
 		const TVec<T, 4> vside = vdir.cross(vup);
 		TMat out;
-		out.setColumns(vside, vup, -vdir, eye.xyz1());
+		out.setColumns(vside, vup, -vdir, eye.xyz1);
 		return out;
 	}
 
@@ -1412,12 +1411,12 @@ public:
 	[[nodiscard]] static TMat rotationFromDirection(const TVec<T, 3>& zAxis) requires(kSize == 9)
 	{
 		const TVec<T, 3> z = zAxis;
-		const T sign = (z.z() >= T(0)) ? T(1) : -T(1);
-		const T a = -T(1) / (sign + z.z());
-		const T b = z.x() * z.y() * a;
+		const T sign = (z.z >= T(0)) ? T(1) : -T(1);
+		const T a = -T(1) / (sign + z.z);
+		const T b = z.x * z.y * a;
 
-		const TVec<T, 3> x = TVec<T, 3>(T(1) + sign * a * pow(z.x(), T(2)), sign * b, -sign * z.x());
-		const TVec<T, 3> y = TVec<T, 3>(b, sign + a * pow(z.y(), T(2)), -z.y());
+		const TVec<T, 3> x = TVec<T, 3>(T(1) + sign * a * pow(z.x, T(2)), sign * b, -sign * z.x);
+		const TVec<T, 3> y = TVec<T, 3>(b, sign + a * pow(z.y, T(2)), -z.y);
 
 		TMat out;
 		out.setColumns(x, y, z);
@@ -1432,7 +1431,7 @@ public:
 	// If we assume this is a transformation matrix then extract the scale
 	[[nodiscard]] TVec<T, 3> extractScale() const
 	{
-		return TVec<T, 3>(getColumn(0).xyz().length(), getColumn(1).xyz().length(), getColumn(2).xyz().length());
+		return TVec<T, 3>(getColumn(0).xyz.length(), getColumn(1).xyz.length(), getColumn(2).xyz.length());
 	}
 
 	static TMat getZero()
@@ -1473,9 +1472,9 @@ public:
 	[[nodiscard]] String toString() const requires(std::is_floating_point<T>::value)
 	{
 		String str;
-		for(U j = 0; j < kTRowCount; ++j)
+		for(U32 j = 0; j < kTRowCount; ++j)
 		{
-			for(U i = 0; i < kTColumnCount; ++i)
+			for(U32 i = 0; i < kTColumnCount; ++i)
 			{
 				CString fmt;
 				if(i == kTColumnCount - 1 && j == kTRowCount - 1)
@@ -1498,7 +1497,7 @@ public:
 	/// @}
 
 protected:
-	static constexpr U N = kTColumnCount * kTRowCount;
+	static constexpr U32 N = kTColumnCount * kTRowCount;
 
 	/// @name Data members
 	/// @{
@@ -1515,18 +1514,18 @@ protected:
 };
 
 /// @memberof TMat
-template<typename T, U kTRowCount, U kTColumnCount>
+template<typename T, U32 kTRowCount, U32 kTColumnCount>
 TMat<T, kTRowCount, kTColumnCount> operator+(const T f, const TMat<T, kTRowCount, kTColumnCount>& m)
 {
 	return m + f;
 }
 
 /// @memberof TMat
-template<typename T, U kTRowCount, U kTColumnCount>
+template<typename T, U32 kTRowCount, U32 kTColumnCount>
 TMat<T, kTRowCount, kTColumnCount> operator-(const T f, const TMat<T, kTRowCount, kTColumnCount>& m)
 {
 	TMat<T, kTRowCount, kTColumnCount> out;
-	for(U i = 0; i < kTRowCount * kTColumnCount; i++)
+	for(U32 i = 0; i < kTRowCount * kTColumnCount; i++)
 	{
 		out[i] = f - m[i];
 	}
@@ -1534,18 +1533,18 @@ TMat<T, kTRowCount, kTColumnCount> operator-(const T f, const TMat<T, kTRowCount
 }
 
 /// @memberof TMat
-template<typename T, U kTRowCount, U kTColumnCount>
+template<typename T, U32 kTRowCount, U32 kTColumnCount>
 TMat<T, kTRowCount, kTColumnCount> operator*(const T f, const TMat<T, kTRowCount, kTColumnCount>& m)
 {
 	return m * f;
 }
 
 /// @memberof TMat
-template<typename T, U kTRowCount, U kTColumnCount>
+template<typename T, U32 kTRowCount, U32 kTColumnCount>
 TMat<T, kTRowCount, kTColumnCount> operator/(const T f, const TMat<T, 3, 3>& m3)
 {
 	TMat<T, kTRowCount, kTColumnCount> out;
-	for(U i = 0; i < kTRowCount * kTColumnCount; i++)
+	for(U32 i = 0; i < kTRowCount * kTColumnCount; i++)
 	{
 		ANKI_ASSERT(m3[i] != T(0));
 		out[i] = f / m3[i];

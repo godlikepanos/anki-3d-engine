@@ -54,7 +54,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	RenderPassWorkContext& rgraphCtx = *info.m_renderpassContext;
 
 	// Set common state for all
-	cmdb.setViewport(info.m_viewport.x(), info.m_viewport.y(), info.m_viewport.z(), info.m_viewport.w());
+	cmdb.setViewport(info.m_viewport.x, info.m_viewport.y, info.m_viewport.z, info.m_viewport.w);
 
 	// Skybox first
 	const SkyboxComponent* skyc = SceneGraph::getSingleton().getSkybox();
@@ -68,7 +68,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		TraditionalDeferredSkyboxConstants consts = {};
 		consts.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
-		consts.m_cameraPos = info.m_cameraPosWSpace.xyz();
+		consts.m_cameraPos = info.m_cameraPosWSpace.xyz;
 		consts.m_scale = skyc->getImageScale();
 		consts.m_bias = skyc->getImageBias();
 
@@ -99,7 +99,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		TraditionalDeferredShadingConstants* consts = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
 
 		consts->m_invViewProjMat = info.m_invViewProjectionMatrix;
-		consts->m_cameraPos = info.m_cameraPosWSpace.xyz();
+		consts->m_cameraPos = info.m_cameraPosWSpace.xyz;
 
 		if(dirLightc)
 		{

@@ -52,15 +52,15 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 
 	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
-	const Vec3 pos = init.m_transform.getOrigin().xyz();
+	const Vec3 pos = init.m_transform.getOrigin().xyz;
 	const Quat rot = Quat(init.m_transform.getRotation());
 
 	// Create a scale shape
-	const Bool hasScale = (init.m_transform.getScale().xyz() - 1.0).lengthSquared() > kEpsilonf * 10.0;
+	const Bool hasScale = (init.m_transform.getScale().xyz - 1.0).lengthSquared() > kEpsilonf * 10.0;
 	PhysicsCollisionShapePtr scaledShape;
 	if(hasScale)
 	{
-		scaledShape = world.newScaleCollisionObject(init.m_transform.getScale().xyz(), init.m_shape);
+		scaledShape = world.newScaleCollisionObject(init.m_transform.getScale().xyz, init.m_shape);
 	}
 
 	// Create JPH body
@@ -114,7 +114,7 @@ void PhysicsBody::setPositionAndRotation(Vec3 position, const Mat3& rotation)
 
 	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().SetPositionAndRotation(m_jphBody->GetID(), pos, rot,
 																									 JPH::EActivation::Activate);
-	m_worldTrf.setOrigin(position.xyz0());
+	m_worldTrf.setOrigin(position.xyz0);
 	m_worldTrf.setRotation(rotation);
 	++m_worldTrfVersion;
 }

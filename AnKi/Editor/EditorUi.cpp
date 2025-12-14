@@ -53,11 +53,11 @@ static F32 projectNdcToRay(Vec2 ndc, Vec3 rayOrigin, Vec3 rayDir)
 	const Frustum& frustum = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>().getFrustum();
 	const Mat4 invMvp = frustum.getViewProjectionMatrix().invert();
 
-	Vec4 v4 = frustum.getViewProjectionMatrix() * rayOrigin.xyz1();
-	const Vec2 rayOriginNdc = v4.xy() / v4.w();
+	Vec4 v4 = frustum.getViewProjectionMatrix() * rayOrigin.xyz1;
+	const Vec2 rayOriginNdc = v4.xy / v4.w;
 
-	v4 = frustum.getViewProjectionMatrix() * (rayOrigin + rayDir).xyz1();
-	const Vec2 rayDirNdc = (v4.xy() / v4.w() - rayOriginNdc).normalize();
+	v4 = frustum.getViewProjectionMatrix() * (rayOrigin + rayDir).xyz1;
+	const Vec2 rayDirNdc = (v4.xy / v4.w - rayOriginNdc).normalize();
 
 	const Vec2 disiredPosNdc = ndc.projectTo(rayOriginNdc, rayDirNdc);
 	const Bool positiveSizeOfAxis = (disiredPosNdc - rayOriginNdc).dot(rayDirNdc) > 0.0f;
@@ -67,8 +67,8 @@ static F32 projectNdcToRay(Vec2 ndc, Vec3 rayOrigin, Vec3 rayDir)
 
 	// Create line 0 which is built from the camera origin and a far point that was unprojected from NDC
 	v4 = invMvp * Vec4(disiredPosNdc, 1.0f, 1.0f);
-	const Vec3 a0 = v4.xyz() / v4.w();
-	const Vec3 b0 = frustum.getWorldTransform().getOrigin().xyz() - a0;
+	const Vec3 a0 = v4.xyz / v4.w;
+	const Vec3 b0 = frustum.getWorldTransform().getOrigin().xyz - a0;
 
 	// Line 1 is built from the ray
 	const Vec3 a1 = rayOrigin;
@@ -98,17 +98,17 @@ static Bool projectNdcToPlane(Vec2 ndc, Plane plane, Vec3& point)
 	const Mat4 invMvp = frustum.getViewProjectionMatrix().invert();
 
 	Vec4 v4 = invMvp * Vec4(ndc, 1.0f, 1.0f);
-	v4 /= v4.w();
+	v4 /= v4.w;
 
-	const Vec3 rayOrigin = frustum.getWorldTransform().getOrigin().xyz();
-	const Vec3 rayDir = (v4.xyz() - rayOrigin).normalize();
+	const Vec3 rayOrigin = frustum.getWorldTransform().getOrigin().xyz;
+	const Vec3 rayDir = (v4.xyz - rayOrigin).normalize();
 
 	Vec4 collisionPoint;
 	const Bool collides = testCollision(plane, Ray(rayOrigin, rayDir), collisionPoint);
 
 	if(collides)
 	{
-		point = collisionPoint.xyz();
+		point = collisionPoint.xyz;
 	}
 
 	return collides;
@@ -257,7 +257,7 @@ void EditorUi::draw(UiCanvas& canvas)
 
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 initialSize = Vec2(viewportSize.y() * 0.75f);
+		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
 		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
 
 		m_imageViewer.drawWindow(canvas, initialPos, initialSize, 0);
@@ -403,7 +403,7 @@ void EditorUi::mainMenu()
 				const Vec2 textSize = ImGui::CalcTextSize(text);
 
 				const F32 menuBarWidth = ImGui::GetWindowWidth();
-				ImGui::SameLine(menuBarWidth - textSize.x() - ImGui::GetStyle().FramePadding.x * 2.0f - kMargin);
+				ImGui::SameLine(menuBarWidth - textSize.x - ImGui::GetStyle().FramePadding.x * 2.0f - kMargin);
 
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
@@ -538,7 +538,7 @@ void EditorUi::sceneHierarchyWindow()
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
 		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
 		ImGui::SetNextWindowPos(viewportPos, ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(Vec2(400.0f, viewportSize.y() - kConsoleHeight), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(Vec2(400.0f, viewportSize.y - kConsoleHeight), ImGuiCond_FirstUseEver);
 	}
 
 	if(ImGui::Begin("Scene Hierarchy", &m_showSceneHierarcyWindow, ImGuiWindowFlags_NoCollapse))
@@ -580,8 +580,8 @@ void EditorUi::sceneNodePropertiesWindow()
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
 		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
 		const F32 initialWidth = 500.0f;
-		ImGui::SetNextWindowPos(Vec2(viewportSize.x() - initialWidth, viewportPos.y()), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(Vec2(initialWidth, viewportSize.y() - kConsoleHeight), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(Vec2(viewportSize.x - initialWidth, viewportPos.y), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(Vec2(initialWidth, viewportSize.y - kConsoleHeight), ImGuiCond_FirstUseEver);
 	}
 
 	if(ImGui::Begin("SceneNode Props", &m_showSceneNodePropsWindow, ImGuiWindowFlags_NoCollapse) && m_sceneHierarchyWindow.m_selectedNode)
@@ -616,7 +616,7 @@ void EditorUi::sceneNodePropertiesWindow()
 		{
 			dummyButton(id++);
 
-			F32 localOrigin[3] = {node.getLocalOrigin().x(), node.getLocalOrigin().y(), node.getLocalOrigin().z()};
+			F32 localOrigin[3] = {node.getLocalOrigin().x, node.getLocalOrigin().y, node.getLocalOrigin().z};
 			if(ImGui::DragFloat3(ICON_MDI_AXIS_ARROW " Origin", localOrigin, 0.025f, -1000000.0f, 1000000.0f))
 			{
 				node.setLocalOrigin(Vec3(&localOrigin[0]));
@@ -634,7 +634,7 @@ void EditorUi::sceneNodePropertiesWindow()
 			ImGui::PopID();
 			ImGui::SameLine();
 
-			F32 localScale[3] = {node.getLocalScale().x(), node.getLocalScale().y(), node.getLocalScale().z()};
+			F32 localScale[3] = {node.getLocalScale().x, node.getLocalScale().y, node.getLocalScale().z};
 			if(ImGui::DragFloat3(ICON_MDI_ARROW_EXPAND_ALL " Scale", localScale, 0.0025f, 0.01f, 1000000.0f))
 			{
 				if(!state.m_uniformScale)
@@ -645,11 +645,11 @@ void EditorUi::sceneNodePropertiesWindow()
 				{
 					// The component that have changed wins
 					F32 scale = scale = localScale[2];
-					if(localScale[0] != node.getLocalScale().x())
+					if(localScale[0] != node.getLocalScale().x)
 					{
 						scale = localScale[0];
 					}
-					else if(localScale[1] != node.getLocalScale().y())
+					else if(localScale[1] != node.getLocalScale().y)
 					{
 						scale = localScale[1];
 					}
@@ -1286,7 +1286,7 @@ void EditorUi::cVarsWindow()
 	if(ImGui::GetFrameCount() > 1)
 	{
 		// Viewport is one frame delay so do that when frame >1
-		const Vec2 initialSize = Vec2(900.0f, m_canvas->getSizef().y() * 0.8f);
+		const Vec2 initialSize = Vec2(900.0f, m_canvas->getSizef().y * 0.8f);
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once, Vec2(0.5f));
 	}
@@ -1407,7 +1407,7 @@ void EditorUi::debugRtsWindow()
 	if(ImGui::GetFrameCount() > 1)
 	{
 		// Viewport is one frame delay so do that when frame >1
-		const Vec2 initialSize = Vec2(450.0f, m_canvas->getSizef().y() * 0.4f);
+		const Vec2 initialSize = Vec2(450.0f, m_canvas->getSizef().y * 0.4f);
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once, Vec2(0.5f));
 	}
@@ -1457,8 +1457,8 @@ void EditorUi::consoleWindow()
 		// Viewport is one frame delay so do that when frame >1
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
 		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
-		const Vec2 initialSize = Vec2(viewportSize.x() / 2.0f, kConsoleHeight);
-		const Vec2 initialPos = Vec2(0.0f, viewportPos.y() + viewportSize.y() - initialSize.y());
+		const Vec2 initialSize = Vec2(viewportSize.x / 2.0f, kConsoleHeight);
+		const Vec2 initialPos = Vec2(0.0f, viewportPos.y + viewportSize.y - initialSize.y);
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(initialPos, ImGuiCond_FirstUseEver);
 	}
@@ -1509,7 +1509,7 @@ void EditorUi::consoleWindow()
 							constexpr Array<Vec3, U(LoggerMessageType::kCount)> colors = {Vec3(0.074f, 0.631f, 0.054f), Vec3(0.074f, 0.354f, 0.631f),
 																						  Vec3(1.0f, 0.0f, 0.0f), Vec3(0.756f, 0.611f, 0.0f),
 																						  Vec3(1.0f, 0.0f, 0.0f)};
-							ImGui::PushStyleColor(ImGuiCol_Text, colors[logEntry.first].xyz1());
+							ImGui::PushStyleColor(ImGuiCol_Text, Vec4(colors[logEntry.first].xyz1));
 							ImGui::TextUnformatted(logEntry.second.cstr());
 							ImGui::PopStyleColor();
 						}
@@ -1593,8 +1593,8 @@ void EditorUi::assetsWindow()
 		// Viewport is one frame delay so do that when frame >1
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
 		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
-		const Vec2 initialSize = Vec2(viewportSize.x() / 2.0f, kConsoleHeight);
-		const Vec2 initialPos = Vec2(viewportSize.x() / 2.0f, viewportPos.y() + viewportSize.y() - initialSize.y());
+		const Vec2 initialSize = Vec2(viewportSize.x / 2.0f, kConsoleHeight);
+		const Vec2 initialPos = Vec2(viewportSize.x / 2.0f, viewportPos.y + viewportSize.y - initialSize.y);
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(initialPos, ImGuiCond_FirstUseEver);
 	}
@@ -1930,7 +1930,7 @@ void EditorUi::objectPicking()
 			// Clicked a gizmo
 
 			const Transform& nodeTrf = m_sceneHierarchyWindow.m_selectedNode->getLocalTransform();
-			const Vec3 nodeOrigin = nodeTrf.getOrigin().xyz();
+			const Vec3 nodeOrigin = nodeTrf.getOrigin().xyz;
 			Array<Vec3, 3> rotationAxis;
 			rotationAxis[0] = nodeTrf.getRotation().getXAxis();
 			rotationAxis[1] = nodeTrf.getRotation().getYAxis();
@@ -2007,7 +2007,7 @@ void EditorUi::objectPicking()
 			const U32 axis = m_objectPicking.m_translationAxisSelected;
 			const F32 moveDistance = projectNdcToRay(Input::getSingleton().getMousePositionNdc(), m_objectPicking.m_pivotPoint, rotationAxis[axis]);
 
-			const Vec3 oldPosition = nodeTrf.getOrigin().xyz();
+			const Vec3 oldPosition = nodeTrf.getOrigin().xyz;
 			Vec3 newPosition = oldPosition + rotationAxis[axis] * moveDistance;
 
 			// Snap position
@@ -2035,7 +2035,7 @@ void EditorUi::objectPicking()
 				newAxisScale = round(newAxisScale / m_toolbox.m_scaleTranslationSnapping) * m_toolbox.m_scaleTranslationSnapping;
 			}
 
-			Vec3 scale = nodeTrf.getScale().xyz();
+			Vec3 scale = nodeTrf.getScale().xyz;
 			scale[axis] = max(newAxisScale, m_toolbox.m_scaleTranslationSnapping);
 			m_sceneHierarchyWindow.m_selectedNode->setLocalScale(scale);
 
@@ -2046,7 +2046,7 @@ void EditorUi::objectPicking()
 		else if(m_objectPicking.m_rotationAxisSelected < 3)
 		{
 			const U32 axis = m_objectPicking.m_rotationAxisSelected;
-			const Vec3 nodeOrigin = nodeTrf.getOrigin().xyz();
+			const Vec3 nodeOrigin = nodeTrf.getOrigin().xyz;
 
 			// Compute the new pivot point
 			Plane axisPlane;

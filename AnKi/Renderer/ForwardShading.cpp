@@ -33,7 +33,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	visIn.m_passesName = "FW shading";
 	visIn.m_technique = RenderingTechnique::kForward;
 	visIn.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
-	visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+	visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 	visIn.m_lodDistances = lodDistances;
 	visIn.m_rgraph = &rgraph;
 	visIn.m_gatherAabbIndices = !!(getDbg().getOptions() & DbgOption::kGatherAabbs);

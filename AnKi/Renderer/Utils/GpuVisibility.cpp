@@ -180,7 +180,7 @@ Error GpuVisibility::init()
 
 void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out)
 {
-	ANKI_ASSERT(in.m_lodReferencePoint.x() != kMaxF32);
+	ANKI_ASSERT(in.m_lodReferencePoint.x != kMaxF32);
 
 	if(RenderStateBucketContainer::getSingleton().getBucketsActiveUserCount(in.m_technique) == 0) [[unlikely]]
 	{
@@ -685,7 +685,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 				extractClipPlanes(frustumTestData->m_viewProjMat, planes);
 				for(U32 i = 0; i < 6; ++i)
 				{
-					consts->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+					consts->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz, planes[i].getOffset());
 				}
 
 				ANKI_ASSERT(kMaxLodCount == 3);
@@ -756,8 +756,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 					allocateAndBindSrvStructuredBuffer<UVec2>(cmdb, 6, 0, out.m_legacy.m_bucketIndirectArgsRanges.getSize());
 				for(U32 ibucket = 0; ibucket < out.m_legacy.m_bucketIndirectArgsRanges.getSize(); ++ibucket)
 				{
-					firstDrawIndirectArgAndCount[ibucket].x() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_firstInstance;
-					firstDrawIndirectArgAndCount[ibucket].y() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_instanceCount;
+					firstDrawIndirectArgAndCount[ibucket].x = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_firstInstance;
+					firstDrawIndirectArgAndCount[ibucket].y = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_instanceCount;
 				}
 
 				cmdb.bindUav(0, 0, stage2Mem.m_legacy.m_perDraw);
@@ -1076,7 +1076,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		extractClipPlanes(viewProjectionMat, planes);
 		for(U32 i = 0; i < 6; ++i)
 		{
-			consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+			consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz, planes[i].getOffset());
 		}
 		consts.m_viewProjectionMat = viewProjectionMat;
 		cmdb.setFastConstants(&consts, sizeof(consts));
@@ -1176,7 +1176,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 			extractClipPlanes(viewProjMat, planes);
 			for(U32 i = 0; i < 6; ++i)
 			{
-				consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+				consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz, planes[i].getOffset());
 			}
 
 			consts.m_pointOfTest = pointOfTest;
@@ -1247,7 +1247,7 @@ void GpuVisibilityLocalLights::populateRenderGraph(GpuVisibilityLocalLightsInput
 	out.m_lightGridMin = newCamPos - gridSize / 2.0f;
 	out.m_lightGridMax = out.m_lightGridMin + gridSize;
 
-	const U32 cellCount = in.m_cellCounts.x() * in.m_cellCounts.y() * in.m_cellCounts.z();
+	const U32 cellCount = in.m_cellCounts.x * in.m_cellCounts.y * in.m_cellCounts.z;
 
 	const BufferView lightIndexCountsPerCellBuff = allocateStructuredBuffer<U32>(cellCount);
 	const BufferView lightIndexOffsetsPerCellBuff = allocateStructuredBuffer<U32>(cellCount);

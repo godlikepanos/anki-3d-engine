@@ -19,8 +19,8 @@
 #define IM_VEC2_CLASS_EXTRA \
 	ImVec2(const anki::Vec2& f) \
 	{ \
-		x = f.x(); \
-		y = f.y(); \
+		x = f.x; \
+		y = f.y; \
 	} \
 	operator anki::Vec2() const \
 	{ \
@@ -30,10 +30,10 @@
 #define IM_VEC4_CLASS_EXTRA \
 	ImVec4(const anki::Vec4& f) \
 	{ \
-		x = f.x(); \
-		y = f.y(); \
-		z = f.z(); \
-		w = f.w(); \
+		x = f.x; \
+		y = f.y; \
+		z = f.z; \
+		w = f.w; \
 	} \
 	operator anki::Vec4() const \
 	{ \

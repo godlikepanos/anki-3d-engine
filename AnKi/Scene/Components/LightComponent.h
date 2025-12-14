@@ -57,7 +57,7 @@ public:
 
 	F32 getLightPower() const
 	{
-		return m_diffColor.xyz().dot(Vec3(0.30f, 0.59f, 0.11f));
+		return m_diffColor.xyz.dot(Vec3(0.30f, 0.59f, 0.11f));
 	}
 
 	void setRadius(F32 x)
@@ -120,12 +120,12 @@ public:
 
 	Vec3 getDirection() const
 	{
-		return -m_worldTransform.getRotation().getZAxis().xyz();
+		return -m_worldTransform.getRotation().getZAxis().xyz;
 	}
 
 	Vec3 getWorldPosition() const
 	{
-		return m_worldTransform.getOrigin().xyz();
+		return m_worldTransform.getOrigin().xyz;
 	}
 
 	const Mat4& getSpotLightViewProjectionMatrix() const

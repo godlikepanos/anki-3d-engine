@@ -1004,7 +1004,7 @@ void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
 	if(self.m_debugMarkersEnabled)
 	{
 		const U8Vec3 coloru(color * 255.0f);
-		const U32 val = PIX_COLOR(coloru.x(), coloru.y(), coloru.z());
+		const U32 val = PIX_COLOR(coloru.x, coloru.y, coloru.z);
 
 		PIXBeginEvent(self.m_cmdList, val, "%s", name.cstr());
 	}

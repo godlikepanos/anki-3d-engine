@@ -42,8 +42,8 @@ Error TemporalUpscaler::init()
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Blit.ankiprogbin", m_blitProg, m_blitGrProg));
 	}
 
-	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getPostProcessResolution().x(),
-															 getRenderer().getPostProcessResolution().y(), getRenderer().getHdrFormat(), "Upscaled");
+	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
+															 getRenderer().getHdrFormat(), "Upscaled");
 	m_rtDesc.bake();
 
 	return Error::kNone;
@@ -78,7 +78,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 			const Bool reset = getRenderer().getFrameCount() == 0;
 			const Vec2 mvScale = srcRes; // UV space to Pixel space factor
 			// In [-texSize / 2, texSize / 2] -> sub-pixel space {-0.5, 0.5}
-			const Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy() * srcRes * 0.5f;
+			const Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy * srcRes * 0.5f;
 
 			const TextureView srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt(), TextureSubresourceDesc::firstSurface());
 			const TextureView motionVectorsView =
@@ -139,7 +139,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 			{
 				rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 			}
 			else
 			{

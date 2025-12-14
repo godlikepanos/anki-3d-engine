@@ -70,35 +70,35 @@ Error Reflections::init()
 	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #1");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "Reflections #1");
 	m_transientRtDesc1.bake();
 
 	m_transientRtDesc2 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #2");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "Reflections #2");
 	m_transientRtDesc2.bake();
 
 	m_hitPosAndDepthRtDesc = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x() / 2u, getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
+		getRenderer().getInternalResolution().x / 2u, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
 	m_hitPosAndDepthRtDesc.bake();
 
-	m_hitPosRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(),
-																   getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPos");
+	m_hitPosRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
+																   Format::kR16G16B16A16_Sfloat, "HitPos");
 	m_hitPosRtDesc.bake();
 
 	TextureInitInfo texInit = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), "ReflectionsMain");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, getRenderer().getHdrFormat(), "ReflectionsMain");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
 	m_tex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
-	texInit = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+	texInit = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 															Format::kR32G32_Sfloat, "ReflectionsMoments #1");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
 	m_momentsTextures[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 	texInit.setName("ReflectionsMoments #2");
 	m_momentsTextures[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
-	m_classTileMapRtDesc = getRenderer().create2DRenderTargetDescription((getRenderer().getInternalResolution().x() + kTileSize - 1) / kTileSize,
-																		 (getRenderer().getInternalResolution().y() + kTileSize - 1) / kTileSize,
+	m_classTileMapRtDesc = getRenderer().create2DRenderTargetDescription((getRenderer().getInternalResolution().x + kTileSize - 1) / kTileSize,
+																		 (getRenderer().getInternalResolution().y + kTileSize - 1) / kTileSize,
 																		 Format::kR8_Uint, "ReflClassTileMap");
 	m_classTileMapRtDesc.bake();
 
@@ -193,15 +193,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, kTileSize / 2, kTileSize, getRenderer().getInternalResolution().x() / 2,
-							  getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, kTileSize / 2, kTileSize, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y);
 		});
 	}
 
 	// SSR
 	BufferView pixelsFailedSsrBuff;
 	{
-		const U32 pixelCount = getRenderer().getInternalResolution().x() / 2 * getRenderer().getInternalResolution().y();
+		const U32 pixelCount = getRenderer().getInternalResolution().x / 2 * getRenderer().getInternalResolution().y;
 		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<PixelFailedSsr>(pixelCount);
 
 		// Create the pass
@@ -253,7 +252,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -433,7 +432,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -473,7 +472,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -504,7 +503,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -529,7 +528,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindUav(0, 0, mainRt);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 

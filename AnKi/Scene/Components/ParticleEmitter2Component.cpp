@@ -316,8 +316,8 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 		if(m_geomType == ParticleGeometryType::kMeshComponent)
 		{
 			const MeshResource& meshr = m_meshComponent->getMeshResource();
-			emitter.m_particleAabbMin = meshr.getBoundingShape().getMin().xyz();
-			emitter.m_particleAabbMax = meshr.getBoundingShape().getMax().xyz();
+			emitter.m_particleAabbMin = meshr.getBoundingShape().getMin().xyz;
+			emitter.m_particleAabbMax = meshr.getBoundingShape().getMax().xyz;
 		}
 		else
 		{

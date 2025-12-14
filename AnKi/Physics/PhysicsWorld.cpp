@@ -543,7 +543,7 @@ PhysicsCollisionShapePtr PhysicsWorld::newStaticMeshShape(ConstWeakArray<Vec3> p
 	verts.resize(positions.getSize());
 	for(U32 i = 0; i < positions.getSize(); ++i)
 	{
-		verts[i] = {positions[i].x(), positions[i].y(), positions[i].z()};
+		verts[i] = {positions[i].x, positions[i].y, positions[i].z};
 	}
 
 	JPH::IndexedTriangleList idx;
@@ -630,7 +630,7 @@ PhysicsJointPtr PhysicsWorld::newHingeJoint(PhysicsBody* body1, PhysicsBody* bod
 	JPH::HingeConstraintSettings settings;
 	settings.SetEmbedded();
 
-	settings.mPoint1 = settings.mPoint2 = toJPH(pivot.getOrigin().xyz());
+	settings.mPoint1 = settings.mPoint2 = toJPH(pivot.getOrigin().xyz);
 	settings.mHingeAxis1 = settings.mHingeAxis2 = toJPH(pivot.getRotation().getXAxis());
 
 	settings.mNormalAxis1 = settings.mNormalAxis2 = toJPH(pivot.getRotation().getYAxis());

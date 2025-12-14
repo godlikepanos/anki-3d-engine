@@ -17,7 +17,7 @@ Error MotionVectors::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/MotionVectors.ankiprogbin", m_prog, m_grProg));
 
 	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16_Sfloat, "MotionVectors");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16_Sfloat, "MotionVectors");
 	m_motionVectorsRtDescr.bake();
 
 	return Error::kNone;
@@ -81,11 +81,11 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 		if(g_cvarRenderPreferCompute)
 		{
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		}
 		else
 		{
-			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		}

@@ -11,9 +11,9 @@ namespace anki {
 
 class F16;
 
-template<typename T, U N>
+template<typename T, U32 N>
 class TVec;
-template<typename T, U J, U I>
+template<typename T, U32 J, U32 I>
 class TMat;
 template<typename T>
 class TQuat;

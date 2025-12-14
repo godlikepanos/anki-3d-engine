@@ -53,7 +53,7 @@ Error FinalComposite::initInternal()
 	if(getRenderer().getSwapchainResolution() != getRenderer().getPostProcessResolution())
 	{
 		m_rtDesc = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(),
+			getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
 			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_rtDesc.bake();
@@ -213,7 +213,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 			}
 		}
 
-		cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+		cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 		drawQuad(cmdb);
 
 		// Draw UI

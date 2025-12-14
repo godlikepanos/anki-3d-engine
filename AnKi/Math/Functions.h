@@ -10,13 +10,10 @@
 
 namespace anki {
 
-/// @addtogroup math
-/// @{
-
-/// Just PI.
+// Just PI.
 constexpr F32 kPi = 3.14159265358979323846f;
 
-/// Floating point epsilon.
+// Floating point epsilon.
 constexpr F32 kEpsilonf = 1.0e-6f;
 
 template<typename T>
@@ -95,35 +92,35 @@ inline T mod(const T x, const T y)
 	return x - y * std::floor(x / y);
 }
 
-/// Like GLSL's mix.
+// Like GLSL's mix.
 template<typename T, typename Y>
 inline T mix(T x, T y, Y factor)
 {
 	return x * (T(1) - factor) + y * factor;
 }
 
-/// Like GLSL's modf
+// Like GLSL's modf
 template<typename T>
 inline T modf(T x, T& intPart)
 {
 	return std::modf(x, &intPart);
 }
 
-/// The same as abs/fabs. For ints.
+// The same as abs/fabs. For ints.
 template<typename T>
 inline constexpr T absolute(const T f) requires(std::is_integral<T>::value&& std::is_signed<T>::value)
 {
 	return (f < T(0)) ? -f : f;
 }
 
-/// The same as abs/fabs. For floats.
+// The same as abs/fabs. For floats.
 template<typename T>
 inline constexpr T absolute(const T f) requires(std::is_floating_point<T>::value&& std::is_same_v<T, double>)
 {
 	return fabs(f);
 }
 
-/// The same as abs/fabs. For floats.
+// The same as abs/fabs. For floats.
 template<typename T>
 inline constexpr T absolute(const T f) requires(std::is_floating_point<T>::value&& std::is_same_v<T, float>)
 {
@@ -172,14 +169,14 @@ inline constexpr T saturate(T v)
 	return clamp<T>(v, T(0), T(1));
 }
 
-/// Returns 1 or -1 based on the sign
+// Returns 1 or -1 based on the sign
 template<typename T>
 inline constexpr T sign(T v)
 {
 	return (v > T(0)) ? T(1) : T(-1);
 }
 
-/// Same as smoothstep in glsl
+// Same as smoothstep in glsl
 template<typename T>
 inline constexpr T smoothstep(T edge0, T edge1, T value)
 {
@@ -187,20 +184,20 @@ inline constexpr T smoothstep(T edge0, T edge1, T value)
 	return value * value * (T(3) - T(2) * value);
 }
 
-/// Linear interpolation between values
-/// @param[in] from Starting value
-/// @param[in] to Ending value
-/// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
+// Linear interpolation between values
+// from: Starting value
+// to: Ending value
+// u: The percentage from the from "from" value. Values from [0.0, 1.0]
 template<typename T>
 inline constexpr T linearInterpolate(const T& from, const T& to, F32 u)
 {
 	return from * T(1.0f - u) + to * T(u);
 }
 
-/// Cosine interpolation
-/// @param[in] from Starting value
-/// @param[in] to Ending value
-/// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
+// Cosine interpolation
+// from: Starting value
+// to: Ending value
+// u: The percentage from the from "from" value. Values from [0.0, 1.0]
 template<typename T>
 inline T cosInterpolate(const T& from, const T& to, F32 u)
 {
@@ -208,12 +205,12 @@ inline T cosInterpolate(const T& from, const T& to, F32 u)
 	return from * T(1.0f - u2) + to * T(u2);
 }
 
-/// Cubic interpolation
-/// @param[in] a Point a
-/// @param[in] b Point b
-/// @param[in] c Point c
-/// @param[in] d Point d
-/// @param[in] u The percentage from the from b point to d point. Value from [0.0, 1.0]
+// Cubic interpolation
+// a: Point a
+// b: Point b
+// c: Point c
+// d: Point d
+// u: The percentage from the from b point to d point. Value from [0.0, 1.0]
 template<typename T>
 inline constexpr T cubicInterpolate(const T& a, const T& b, const T& c, const T& d, F32 u)
 {
@@ -226,7 +223,7 @@ inline constexpr T cubicInterpolate(const T& a, const T& b, const T& c, const T&
 	return (a0 * u * u2 + a1 * u2 + a2 * u + a3);
 }
 
-/// Pack 4 color components to R10G10B10A2 SNORM format.
+// Pack 4 color components to R10G10B10A2 SNORM format.
 inline U32 packColorToR10G10B10A2SNorm(F32 r, F32 g, F32 b, F32 a)
 {
 	union SignedR10G10B10A10
@@ -259,7 +256,7 @@ inline U32 packColorToR10G10B10A2SNorm(F32 r, F32 g, F32 b, F32 a)
 	return out.m_packed;
 }
 
-/// Compute the abs triangle area.
+// Compute the abs triangle area.
 template<typename TVec>
 inline F32 computeTriangleArea(const TVec& a, const TVec& b, const TVec& c)
 {
@@ -267,60 +264,6 @@ inline F32 computeTriangleArea(const TVec& a, const TVec& b, const TVec& c)
 	const TVec ac = c - a;
 	const F32 area = ab.cross(ac).length() / 2.0f;
 	return absolute(area);
-}
-/// @}
-
-} // end namespace anki
-
-// Now lay out functions that include other math headers
-
-#include <AnKi/Math/Vec.h>
-
-namespace anki {
-
-template<typename T>
-TVec<T, 3> sphericalToCartesian(T polar, T azimuth)
-{
-	TVec<T, 3> out;
-	out.x() = cos(polar) * sin(azimuth);
-	out.y() = cos(polar) * cos(azimuth);
-	out.z() = sin(polar);
-	return out;
-}
-
-template<typename T>
-inline U32 packUnorm4x8(TVec<T, 4> value)
-{
-	ANKI_ASSERT((value <= TVec<T, 4>(T(1)) && value >= TVec<T, 4>(T(0))));
-	const TVec<T, 4> packed(value * T(255));
-	return packed.x() | (U32(packed.y()) << 8u) | (U32(packed.z()) << 16u) | (U32(packed.w()) << 24u);
-}
-
-// Reverse of packUnorm4x8
-template<typename T>
-inline TVec<T, 4> unpackUnorm4x8(const U32 value)
-{
-	const TVec<T, 4> packed(value & 0xFF, (value >> 8u) & 0xFF, (value >> 16u) & 0xff, value >> 24u);
-	return packed / T(255);
-}
-
-template<typename TVec4>
-inline U32 packSnorm4x8(const TVec4& v)
-{
-	union
-	{
-		I8 in[4];
-		U32 out;
-	} u;
-
-	const TVec4 result = (v.clamp(-1.0f, 1.0f) * 127.0f).round();
-
-	u.in[0] = I8(result[0]);
-	u.in[1] = I8(result[1]);
-	u.in[2] = I8(result[2]);
-	u.in[3] = I8(result[3]);
-
-	return u.out;
 }
 
 } // end namespace anki

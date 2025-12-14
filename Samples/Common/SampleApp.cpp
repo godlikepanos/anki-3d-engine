@@ -245,9 +245,9 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(velocity != Vec2(0.0))
 		{
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x += velocity.y * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.y += -velocity.x * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
@@ -256,7 +256,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 rotateEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
+			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x > 0.1f)
 			{
 				rotateCameraTouch = touch;
 				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
@@ -275,9 +275,9 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x += velocity.y * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.y += -velocity.x * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
@@ -286,7 +286,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 moveEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
+			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x < -0.1f)
 			{
 				moveCameraTouch = touch;
 				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
@@ -304,8 +304,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			Vec2 velocity = in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - moveEventInitialPos;
 			velocity *= 2.0f;
 
-			mover->moveLocalX(moveDistance * velocity.x());
-			mover->moveLocalZ(moveDistance * -velocity.y());
+			mover->moveLocalX(moveDistance * velocity.x);
+			mover->moveLocalZ(moveDistance * -velocity.y);
 		}
 	}
 	else

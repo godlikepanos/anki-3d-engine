@@ -227,7 +227,7 @@ public:
 
 inline JPH::RVec3 toJPH(Vec3 ak)
 {
-	return JPH::RVec3(ak.x(), ak.y(), ak.z());
+	return JPH::RVec3(ak.x, ak.y, ak.z);
 }
 
 inline JPH::Quat toJPH(Quat ak)

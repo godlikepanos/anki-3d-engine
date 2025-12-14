@@ -105,8 +105,8 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 		Vec4 lfPos = Vec4(comp.getWorldPosition(), 1.0f);
 		Vec4 posClip = ctx.m_matrices.m_viewProjectionJitter * lfPos;
 
-		/*if(posClip.x() > posClip.w() || posClip.x() < -posClip.w() || posClip.y() > posClip.w()
-			|| posClip.y() < -posClip.w())
+		/*if(posClip.x > posClip.w || posClip.x < -posClip.w || posClip.y > posClip.w
+			|| posClip.y < -posClip.w)
 		{
 			// Outside clip
 			ANKI_ASSERT(0 && "Check that before");
@@ -119,14 +119,14 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 		WeakArray<LensFlareSprite> sprites = allocateAndBindSrvStructuredBuffer<LensFlareSprite>(cmdb, 0, 0, spritesCount);
 
 		// misc
-		Vec2 posNdc = posClip.xy() / posClip.w();
+		Vec2 posNdc = posClip.xy / posClip.w;
 
 		// First flare
 		sprites[c].m_posScale = Vec4(posNdc, comp.getFirstFlareSize() * Vec2(1.0f, getRenderer().getAspectRatio()));
 		sprites[c].m_depthPad3 = Vec4(0.0f);
-		const F32 alpha = comp.getColorMultiplier().w() * (1.0f - pow(absolute(posNdc.x()), 6.0f))
-						  * (1.0f - pow(absolute(posNdc.y()), 6.0f)); // Fade the flare on the edges
-		sprites[c].m_color = Vec4(comp.getColorMultiplier().xyz(), alpha);
+		const F32 alpha = comp.getColorMultiplier().w * (1.0f - pow(absolute(posNdc.x), 6.0f))
+						  * (1.0f - pow(absolute(posNdc.y), 6.0f)); // Fade the flare on the edges
+		sprites[c].m_color = Vec4(comp.getColorMultiplier().xyz, alpha);
 		++c;
 
 		// Render

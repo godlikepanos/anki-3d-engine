@@ -28,8 +28,8 @@ static Vec3 computeCellCenter(U32 cellIdx, const GlobalIlluminationProbeComponen
 	const Vec3 halfAabbSize = probe.getBoxVolumeSize() / 2.0f;
 	const Vec3 aabbMin = -halfAabbSize + probe.getWorldPosition();
 	U32 x, y, z;
-	unflatten3dArrayIndex(probe.getCellCountsPerDimension().x(), probe.getCellCountsPerDimension().y(), probe.getCellCountsPerDimension().z(),
-						  cellIdx, x, y, z);
+	unflatten3dArrayIndex(probe.getCellCountsPerDimension().x, probe.getCellCountsPerDimension().y, probe.getCellCountsPerDimension().z, cellIdx, x,
+						  y, z);
 	const Vec3 cellSize = probe.getBoxVolumeSize() / Vec3(probe.getCellCountsPerDimension());
 	const Vec3 halfCellSize = cellSize / 2.0f;
 	const Vec3 cellCenter = aabbMin + halfCellSize + cellSize * Vec3(UVec3(x, y, z));
@@ -195,8 +195,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			Frustum frustum;
 			{
 				frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
-				frustum.setWorldTransform(
-					Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+				frustum.setWorldTransform(Transform(cellCenter.xyz0, Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
@@ -393,7 +392,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					TraditionalDeferredLightShadingDrawInfo dsInfo;
 					dsInfo.m_viewProjectionMatrix = viewProjMat;
 					dsInfo.m_invViewProjectionMatrix = viewProjMat.invert();
-					dsInfo.m_cameraPosWSpace = cellCenter.xyz1();
+					dsInfo.m_cameraPosWSpace = cellCenter.xyz1;
 					dsInfo.m_viewport = UVec4(0, 0, m_tileSize, m_tileSize);
 					dsInfo.m_effectiveShadowDistance = (doShadows) ? probeToRefresh->getShadowsRenderRadius() : -1.0f;
 
@@ -464,11 +463,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				} consts;
 
 				U32 x, y, z;
-				unflatten3dArrayIndex(probeToRefresh->getCellCountsPerDimension().x(), probeToRefresh->getCellCountsPerDimension().y(),
-									  probeToRefresh->getCellCountsPerDimension().z(), cellIdx, x, y, z);
-				consts.m_volumeTexel = IVec3(x, probeToRefresh->getCellCountsPerDimension().y() - y - 1, z);
+				unflatten3dArrayIndex(probeToRefresh->getCellCountsPerDimension().x, probeToRefresh->getCellCountsPerDimension().y,
+									  probeToRefresh->getCellCountsPerDimension().z, cellIdx, x, y, z);
+				consts.m_volumeTexel = IVec3(x, probeToRefresh->getCellCountsPerDimension().y - y - 1, z);
 
-				consts.m_nextTexelOffsetInU = probeToRefresh->getCellCountsPerDimension().x();
+				consts.m_nextTexelOffsetInU = probeToRefresh->getCellCountsPerDimension().x;
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
 				// Dispatch

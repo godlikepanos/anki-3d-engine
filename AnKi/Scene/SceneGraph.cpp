@@ -276,7 +276,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 			sceneMax = sceneMax.max(thread.m_sceneMax);
 		}
 
-		if(sceneMin.x() != kMaxF32)
+		if(sceneMin.x != kMaxF32)
 		{
 			if(updateCtx.m_forceUpdateSceneBounds)
 			{

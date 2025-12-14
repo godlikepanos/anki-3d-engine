@@ -30,7 +30,7 @@ Error GBuffer::init()
 	{
 		const TextureUsageBit usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit =
-			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 													   getRenderer().getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
 		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
@@ -40,15 +40,15 @@ Error GBuffer::init()
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_colorRtDescrs[i] = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), kGBufferColorRenderTargetFormats[i], rtNames[i]);
+			getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, kGBufferColorRenderTargetFormats[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 
 	{
 		const TextureUsageBit usage = TextureUsageBit::kSrvCompute | TextureUsageBit::kUavCompute | TextureUsageBit::kSrvGeometry;
 
-		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(previousPowerOfTwo(getRenderer().getInternalResolution().x()),
-																			 previousPowerOfTwo(getRenderer().getInternalResolution().y()),
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(previousPowerOfTwo(getRenderer().getInternalResolution().x),
+																			 previousPowerOfTwo(getRenderer().getInternalResolution().y),
 																			 Format::kR32_Sfloat, usage, "GBuffer HZB");
 		texinit.m_mipmapCount = computeMaxMipmapCount2d(texinit.m_width, texinit.m_height);
 		ClearValue clear;
@@ -102,7 +102,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		visIn.m_passesName = "GBuffer";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
 		visIn.m_viewProjectionMatrix = matrices.m_viewProjection;
-		visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz();
+		visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz;
 		visIn.m_lodDistances = lodDistances;
 		visIn.m_rgraph = &rgraph;
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
@@ -171,7 +171,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			// Set some state, leave the rest to default
-			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 
 			RenderableDrawerArguments args;
 			args.m_viewMatrix = ctx.m_matrices.m_view;
@@ -216,7 +216,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 						consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
 						consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
 						consts->m_sphereRadius = 0.5f;
-						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 						consts->m_pixelShift = (getRenderer().getFrameCount() & 1) ? 1.0f : 0.0f;
 
 						cmdb.draw(PrimitiveTopology::kTriangles, 6, probe.getCellCount());
@@ -238,7 +238,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 						consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
 						consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
 						consts->m_sphereRadius = 0.5f;
-						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 						consts->m_pixelShift = (getRenderer().getFrameCount() & 1) ? 1.0f : 0.0f;
 
 						cmdb.draw(PrimitiveTopology::kTriangles, 6);

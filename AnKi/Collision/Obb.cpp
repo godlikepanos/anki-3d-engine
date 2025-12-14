@@ -92,8 +92,8 @@ void Obb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize point
 		ANKI_ASSERT((ptrToNumber(ptr) + sizeof(Vec3) - ptrToNumber(pointBuffer)) <= buffSize);
 		const Vec3* pos = reinterpret_cast<const Vec3*>(ptr);
 
-		max = max.max(pos->xyz0());
-		min = min.min(pos->xyz0());
+		max = max.max(pos->xyz0);
+		min = min.min(pos->xyz0);
 
 		ptr += pointStride;
 	}

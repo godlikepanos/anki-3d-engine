@@ -91,7 +91,7 @@ Error ShadowMapping::init()
 		UVec2 size(min(cascadeResolution, 1024u));
 		size /= 2;
 
-		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), Format::kR32_Sfloat, name);
+		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x, size.y, Format::kR32_Sfloat, name);
 		m_cascadeHzbRtDescrs[i].m_mipmapCount = computeMaxMipmapCount2d(m_cascadeHzbRtDescrs[i].m_width, m_cascadeHzbRtDescrs[i].m_height);
 		m_cascadeHzbRtDescrs[i].bake();
 	}
@@ -117,8 +117,7 @@ Mat4 ShadowMapping::createSpotLightTextureMatrix(const UVec4& viewport) const
 
 	const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
-	return Mat4(sizeTextureSpace, 0.0f, 0.0f, uv.x(), 0.0f, sizeTextureSpace, 0.0f, uv.y(), 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f)
-		   * biasMat4;
+	return Mat4(sizeTextureSpace, 0.0f, 0.0f, uv.x, 0.0f, sizeTextureSpace, 0.0f, uv.y, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f) * biasMat4;
 }
 
 void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
@@ -252,7 +251,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 	// passes and it will push the other types of lights further into the future. So do those first.
 
 	// Vars
-	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const CameraComponent& mainCam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
@@ -321,7 +320,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			for(U face = 0; face < 6; ++face)
 			{
 				// Add a half texel to the viewport's start to avoid bilinear filtering bleeding
-				const Vec2 uvViewportXY = (Vec2(atlasViewports[face].xy()) + texelsBorder) / atlasResolution;
+				const Vec2 uvViewportXY = (Vec2(atlasViewports[face].xy) + texelsBorder) / atlasResolution;
 
 				uvViewports[face] = Vec4(uvViewportXY, Vec2(superTileSize / atlasResolution));
 			}
@@ -336,7 +335,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			DistanceGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Shadows point light light UUID:%u", lightc->getUuid());
 			visIn.m_technique = RenderingTechnique::kDepth;
-			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
 			visIn.m_pointOfTest = lightc->getWorldPosition();
@@ -363,7 +362,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				frustum.init(FrustumType::kPerspective);
 				frustum.setPerspective(kClusterObjectFrustumNearPlane, lightc->getRadius(), kPi / 2.0f, kPi / 2.0f);
 				frustum.setWorldTransform(
-					Transform(lightc->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[face], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+					Transform(lightc->getWorldPosition().xyz0, Frustum::getOmnidirectionalFrustumRotations()[face], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
 				subpasses[face].m_clearTileIndirectArgs = clearTileIndirectArgs;
@@ -416,7 +415,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			visIn.m_rgraph = &rgraph;
 			visIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
 			visIn.m_hashVisibles = true;
-			visIn.m_viewportSize = atlasViewport.zw();
+			visIn.m_viewportSize = atlasViewport.zw;
 
 			GpuVisibilityOutput visOut;
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
@@ -492,11 +491,11 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			visIn.m_passesName = generateTempPassName("Shadows: Dir light cascade cascade:%u", cascade);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
-			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
 			visIn.m_rgraph = &rgraph;
-			visIn.m_viewportSize = dirLightAtlasViewports[cascade].zw();
+			visIn.m_viewportSize = dirLightAtlasViewports[cascade].zw;
 
 			GpuVisibilityOutput visOut;
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);

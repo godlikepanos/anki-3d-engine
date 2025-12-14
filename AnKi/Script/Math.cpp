@@ -26,7 +26,7 @@ static void deserializeVec2(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2 = {-539041634289944416, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2 = {-6244337268269259101, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
 												 deserializeVec2};
 
 template<>
@@ -150,14 +150,14 @@ static int wrapVec2Dtor(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec2::getX.
-static inline int wrapVec2getX(lua_State* l)
+// Wrap writing the member vars of Vec2
+static int wrapVec2__newindex(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
@@ -170,46 +170,42 @@ static inline int wrapVec2getX(lua_State* l)
 
 	Vec2* self = ud->getData<Vec2>();
 
-	// Call the method
-	F32 ret = (*self).x();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
-}
-
-// Wrap method Vec2::getY.
-static inline int wrapVec2getY(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	// Get the member variable name
+	const Char* ckey;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec2, ud)) [[unlikely]]
+	CString key = ckey;
+
+	// Try to find the member variable
+	if(key == "x")
 	{
-		return lua_error(l);
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->x = arg0;
+		return 0;
+	}
+	else if(key == "y")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->y = arg0;
+		return 0;
 	}
 
-	Vec2* self = ud->getData<Vec2>();
-
-	// Call the method
-	F32 ret = (*self).y();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
+	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
-// Wrap method Vec2::setX.
-static inline int wrapVec2setX(lua_State* l)
+// Wrap reading the member vars of Vec2
+static int wrapVec2__index(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -228,50 +224,42 @@ static inline int wrapVec2setX(lua_State* l)
 
 	Vec2* self = ud->getData<Vec2>();
 
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	// Get the member variable name
+	const Char* ckey;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	// Call the method
-	(*self).x() = arg0;
+	CString key = ckey;
 
-	return 0;
-}
-
-// Wrap method Vec2::setY.
-static inline int wrapVec2setY(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	// Try to find the member variable
+	if(key == "x")
 	{
-		return lua_error(l);
+		F32 ret = self->x;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
+	}
+	else if(key == "y")
+	{
+		F32 ret = self->y;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
 	}
 
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec2, ud)) [[unlikely]]
+	// Fallback to methods
+	luaL_getmetatable(l, "Vec2");
+	lua_getfield(l, -1, ckey);
+	if(!lua_isnil(l, -1))
 	{
-		return lua_error(l);
+		return 1;
 	}
 
-	Vec2* self = ud->getData<Vec2>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self).y() = arg0;
-
-	return 0;
+	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
 // Wrap method Vec2::setAll.
@@ -334,7 +322,7 @@ static inline int wrapVec2getAt(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -370,7 +358,7 @@ static inline int wrapVec2setAt(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -752,10 +740,6 @@ static inline void wrapVec2(lua_State* l)
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoVec2);
 	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoVec2.m_typeName, "new", wrapVec2Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec2Dtor);
-	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec2getX);
-	LuaBinder::pushLuaCFuncMethod(l, "getY", wrapVec2getY);
-	LuaBinder::pushLuaCFuncMethod(l, "setX", wrapVec2setX);
-	LuaBinder::pushLuaCFuncMethod(l, "setY", wrapVec2setY);
 	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapVec2setAll);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapVec2getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapVec2setAt);
@@ -768,6 +752,8 @@ static inline void wrapVec2(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "length", wrapVec2length);
 	LuaBinder::pushLuaCFuncMethod(l, "normalize", wrapVec2normalize);
 	LuaBinder::pushLuaCFuncMethod(l, "dot", wrapVec2dot);
+	LuaBinder::pushLuaCFuncMethod(l, "__newindex", wrapVec2__newindex);
+	LuaBinder::pushLuaCFuncMethod(l, "__index", wrapVec2__index);
 	lua_settop(l, 0);
 }
 
@@ -787,7 +773,7 @@ static void deserializeVec3(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3 = {-3450699866996774241, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3 = {-2740589931080892768, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
 												 deserializeVec3};
 
 template<>
@@ -951,14 +937,14 @@ static int wrapVec3Dtor(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec3::getX.
-static inline int wrapVec3getX(lua_State* l)
+// Wrap writing the member vars of Vec3
+static int wrapVec3__newindex(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
@@ -971,75 +957,52 @@ static inline int wrapVec3getX(lua_State* l)
 
 	Vec3* self = ud->getData<Vec3>();
 
-	// Call the method
-	F32 ret = (*self).x();
+	// Get the member variable name
+	const Char* ckey;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
 
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
+	CString key = ckey;
 
-	return 1;
+	// Try to find the member variable
+	if(key == "x")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->x = arg0;
+		return 0;
+	}
+	else if(key == "y")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->y = arg0;
+		return 0;
+	}
+	else if(key == "z")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->z = arg0;
+		return 0;
+	}
+
+	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
-// Wrap method Vec3::getY.
-static inline int wrapVec3getY(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec3* self = ud->getData<Vec3>();
-
-	// Call the method
-	F32 ret = (*self).y();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
-}
-
-// Wrap method Vec3::getZ.
-static inline int wrapVec3getZ(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec3* self = ud->getData<Vec3>();
-
-	// Call the method
-	F32 ret = (*self).z();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
-}
-
-// Wrap method Vec3::setX.
-static inline int wrapVec3setX(lua_State* l)
+// Wrap reading the member vars of Vec3
+static int wrapVec3__index(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1058,83 +1021,50 @@ static inline int wrapVec3setX(lua_State* l)
 
 	Vec3* self = ud->getData<Vec3>();
 
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	// Get the member variable name
+	const Char* ckey;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	// Call the method
-	(*self).x() = arg0;
+	CString key = ckey;
 
-	return 0;
-}
-
-// Wrap method Vec3::setY.
-static inline int wrapVec3setY(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	// Try to find the member variable
+	if(key == "x")
 	{
-		return lua_error(l);
+		F32 ret = self->x;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
+	}
+	else if(key == "y")
+	{
+		F32 ret = self->y;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
+	}
+	else if(key == "z")
+	{
+		F32 ret = self->z;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
 	}
 
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	// Fallback to methods
+	luaL_getmetatable(l, "Vec3");
+	lua_getfield(l, -1, ckey);
+	if(!lua_isnil(l, -1))
 	{
-		return lua_error(l);
+		return 1;
 	}
 
-	Vec3* self = ud->getData<Vec3>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self).y() = arg0;
-
-	return 0;
-}
-
-// Wrap method Vec3::setZ.
-static inline int wrapVec3setZ(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec3* self = ud->getData<Vec3>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self).z() = arg0;
-
-	return 0;
+	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
 // Wrap method Vec3::setAll.
@@ -1203,7 +1133,7 @@ static inline int wrapVec3getAt(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -1239,7 +1169,7 @@ static inline int wrapVec3setAt(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -1621,12 +1551,6 @@ static inline void wrapVec3(lua_State* l)
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoVec3);
 	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoVec3.m_typeName, "new", wrapVec3Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec3Dtor);
-	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec3getX);
-	LuaBinder::pushLuaCFuncMethod(l, "getY", wrapVec3getY);
-	LuaBinder::pushLuaCFuncMethod(l, "getZ", wrapVec3getZ);
-	LuaBinder::pushLuaCFuncMethod(l, "setX", wrapVec3setX);
-	LuaBinder::pushLuaCFuncMethod(l, "setY", wrapVec3setY);
-	LuaBinder::pushLuaCFuncMethod(l, "setZ", wrapVec3setZ);
 	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapVec3setAll);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapVec3getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapVec3setAt);
@@ -1639,6 +1563,8 @@ static inline void wrapVec3(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "length", wrapVec3length);
 	LuaBinder::pushLuaCFuncMethod(l, "normalize", wrapVec3normalize);
 	LuaBinder::pushLuaCFuncMethod(l, "dot", wrapVec3dot);
+	LuaBinder::pushLuaCFuncMethod(l, "__newindex", wrapVec3__newindex);
+	LuaBinder::pushLuaCFuncMethod(l, "__index", wrapVec3__index);
 	lua_settop(l, 0);
 }
 
@@ -1658,7 +1584,7 @@ static void deserializeVec4(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4 = {3460827963125892054, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4 = {8378982108621294078, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
 												 deserializeVec4};
 
 template<>
@@ -1828,14 +1754,14 @@ static int wrapVec4Dtor(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec4::getX.
-static inline int wrapVec4getX(lua_State* l)
+// Wrap writing the member vars of Vec4
+static int wrapVec4__newindex(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
@@ -1848,104 +1774,62 @@ static inline int wrapVec4getX(lua_State* l)
 
 	Vec4* self = ud->getData<Vec4>();
 
-	// Call the method
-	F32 ret = (*self).x();
+	// Get the member variable name
+	const Char* ckey;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
 
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
+	CString key = ckey;
 
-	return 1;
+	// Try to find the member variable
+	if(key == "x")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->x = arg0;
+		return 0;
+	}
+	else if(key == "y")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->y = arg0;
+		return 0;
+	}
+	else if(key == "z")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->z = arg0;
+		return 0;
+	}
+	else if(key == "w")
+	{
+		F32 arg0;
+		if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg0)) [[unlikely]]
+		{
+			return lua_error(l);
+		}
+		self->w = arg0;
+		return 0;
+	}
+
+	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
-// Wrap method Vec4::getY.
-static inline int wrapVec4getY(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec4* self = ud->getData<Vec4>();
-
-	// Call the method
-	F32 ret = (*self).y();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
-}
-
-// Wrap method Vec4::getZ.
-static inline int wrapVec4getZ(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec4* self = ud->getData<Vec4>();
-
-	// Call the method
-	F32 ret = (*self).z();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
-}
-
-// Wrap method Vec4::getW.
-static inline int wrapVec4getW(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec4* self = ud->getData<Vec4>();
-
-	// Call the method
-	F32 ret = (*self).w();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
-}
-
-// Wrap method Vec4::setX.
-static inline int wrapVec4setX(lua_State* l)
+// Wrap reading the member vars of Vec4
+static int wrapVec4__index(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1964,116 +1848,58 @@ static inline int wrapVec4setX(lua_State* l)
 
 	Vec4* self = ud->getData<Vec4>();
 
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	// Get the member variable name
+	const Char* ckey;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	// Call the method
-	(*self).x() = arg0;
+	CString key = ckey;
 
-	return 0;
-}
-
-// Wrap method Vec4::setY.
-static inline int wrapVec4setY(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	// Try to find the member variable
+	if(key == "x")
 	{
-		return lua_error(l);
+		F32 ret = self->x;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
+	}
+	else if(key == "y")
+	{
+		F32 ret = self->y;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
+	}
+	else if(key == "z")
+	{
+		F32 ret = self->z;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
+	}
+	else if(key == "w")
+	{
+		F32 ret = self->w;
+		// Push return value
+		lua_pushnumber(l, lua_Number(ret));
+
+		return 1;
 	}
 
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	// Fallback to methods
+	luaL_getmetatable(l, "Vec4");
+	lua_getfield(l, -1, ckey);
+	if(!lua_isnil(l, -1))
 	{
-		return lua_error(l);
+		return 1;
 	}
 
-	Vec4* self = ud->getData<Vec4>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self).y() = arg0;
-
-	return 0;
-}
-
-// Wrap method Vec4::setZ.
-static inline int wrapVec4setZ(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec4* self = ud->getData<Vec4>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self).z() = arg0;
-
-	return 0;
-}
-
-// Wrap method Vec4::setW.
-static inline int wrapVec4setW(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec4* self = ud->getData<Vec4>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self).w() = arg0;
-
-	return 0;
+	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
 // Wrap method Vec4::setAll.
@@ -2148,7 +1974,7 @@ static inline int wrapVec4getAt(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -2184,7 +2010,7 @@ static inline int wrapVec4setAt(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -2566,14 +2392,6 @@ static inline void wrapVec4(lua_State* l)
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoVec4);
 	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoVec4.m_typeName, "new", wrapVec4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec4Dtor);
-	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec4getX);
-	LuaBinder::pushLuaCFuncMethod(l, "getY", wrapVec4getY);
-	LuaBinder::pushLuaCFuncMethod(l, "getZ", wrapVec4getZ);
-	LuaBinder::pushLuaCFuncMethod(l, "getW", wrapVec4getW);
-	LuaBinder::pushLuaCFuncMethod(l, "setX", wrapVec4setX);
-	LuaBinder::pushLuaCFuncMethod(l, "setY", wrapVec4setY);
-	LuaBinder::pushLuaCFuncMethod(l, "setZ", wrapVec4setZ);
-	LuaBinder::pushLuaCFuncMethod(l, "setW", wrapVec4setW);
 	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapVec4setAll);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapVec4getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapVec4setAt);
@@ -2586,10 +2404,12 @@ static inline void wrapVec4(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "length", wrapVec4length);
 	LuaBinder::pushLuaCFuncMethod(l, "normalize", wrapVec4normalize);
 	LuaBinder::pushLuaCFuncMethod(l, "dot", wrapVec4dot);
+	LuaBinder::pushLuaCFuncMethod(l, "__newindex", wrapVec4__newindex);
+	LuaBinder::pushLuaCFuncMethod(l, "__index", wrapVec4__index);
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3 = {-3015332117692246311, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3 = {2771201786814769536, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
@@ -2763,13 +2583,13 @@ static inline int wrapMat3getAt(lua_State* l)
 	Mat3* self = ud->getData<Mat3>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	U arg1;
+	U32 arg1;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -2805,13 +2625,13 @@ static inline int wrapMat3setAt(lua_State* l)
 	Mat3* self = ud->getData<Mat3>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	U arg1;
+	U32 arg1;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -2923,7 +2743,7 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3x4 = {7430220506125212329, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3x4 = {6217558188558067156, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
 												   nullptr};
 
 template<>
@@ -3098,13 +2918,13 @@ static inline int wrapMat3x4getAt(lua_State* l)
 	Mat3x4* self = ud->getData<Mat3x4>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	U arg1;
+	U32 arg1;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -3140,13 +2960,13 @@ static inline int wrapMat3x4setAt(lua_State* l)
 	Mat3x4* self = ud->getData<Mat3x4>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	U arg1;
+	U32 arg1;
 	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
 	{
 		return lua_error(l);
@@ -3276,7 +3096,7 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoTransform = {7298076790649011476, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
+LuaUserDataTypeInfo g_luaUserDataTypeInfoTransform = {-5465408310055952111, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
 													  nullptr, nullptr};
 
 template<>
@@ -3472,7 +3292,7 @@ static inline int wrapTransformgetOrigin(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Call the method
-	Vec3 ret = self->getOrigin().xyz();
+	Vec3 ret = self->getOrigin().xyz;
 
 	// Push return value
 	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
@@ -3614,7 +3434,7 @@ static inline int wrapTransformgetScale(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Call the method
-	Vec3 ret = self->getScale().xyz();
+	Vec3 ret = self->getScale().xyz;
 
 	// Push return value
 	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();

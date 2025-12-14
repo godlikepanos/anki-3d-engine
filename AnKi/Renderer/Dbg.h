@@ -94,7 +94,7 @@ public:
 
 	void enableGizmos(const Transform& trf, Bool enableGizmos)
 	{
-		m_gizmos.m_trf = Mat3x4(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
+		m_gizmos.m_trf = Mat3x4(trf.getOrigin().xyz, trf.getRotation().getRotationPart());
 		m_gizmos.m_enabled = enableGizmos;
 	}
 

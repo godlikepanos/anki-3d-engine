@@ -178,7 +178,7 @@ void ImageViewerUi::drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSi
 			{
 				const Vec4 avgColor = (m_image) ? m_image->getAverageColor() : Vec4(0.0f);
 
-				ImGui::Text("Average Color %.2f %.2f %.2f %.2f", avgColor.x(), avgColor.y(), avgColor.z(), avgColor.w());
+				ImGui::Text("Average Color %.2f %.2f %.2f %.2f", avgColor.x, avgColor.y, avgColor.z, avgColor.w);
 				ImGui::SameLine();
 
 				ImGui::ColorButton("Average Color", avgColor);
@@ -211,10 +211,10 @@ void ImageViewerUi::drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSi
 					Vec4 m_colorScale;
 					Vec4 m_depth;
 				} pc;
-				pc.m_colorScale.x() = F32(m_colorChannel[0]) / m_maxColorValue;
-				pc.m_colorScale.y() = F32(m_colorChannel[1]) / m_maxColorValue;
-				pc.m_colorScale.z() = F32(m_colorChannel[2]) / m_maxColorValue;
-				pc.m_colorScale.w() = F32(m_colorChannel[3]);
+				pc.m_colorScale.x = F32(m_colorChannel[0]) / m_maxColorValue;
+				pc.m_colorScale.y = F32(m_colorChannel[1]) / m_maxColorValue;
+				pc.m_colorScale.z = F32(m_colorChannel[2]) / m_maxColorValue;
+				pc.m_colorScale.w = F32(m_colorChannel[3]);
 
 				pc.m_depth = Vec4((m_depth + 0.5f) / F32(tex.getDepth()));
 
@@ -247,7 +247,7 @@ void ImageViewerUi::drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSi
 						{
 							auto toWindow = [&](Vec2 in) {
 								in = in * 0.5f + 0.5f;
-								in.y() = 1.0f - in.y();
+								in.y = 1.0f - in.y;
 								in *= canvas.getSizef();
 								return in;
 							};
@@ -255,14 +255,14 @@ void ImageViewerUi::drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSi
 							const Vec2 delta =
 								toWindow(Input::getSingleton().getMousePositionNdc()) - toWindow(Input::getSingleton().getMousePreviousPositionNdc());
 
-							if(delta.x() != 0.0f)
+							if(delta.x != 0.0f)
 							{
-								ImGui::SetScrollX(ImGui::GetScrollX() - delta.x());
+								ImGui::SetScrollX(ImGui::GetScrollX() - delta.x);
 							}
 
-							if(delta.y() != 0.0f)
+							if(delta.y != 0.0f)
 							{
-								ImGui::SetScrollY(ImGui::GetScrollY() - delta.y());
+								ImGui::SetScrollY(ImGui::GetScrollY() - delta.y);
 							}
 						}
 					}

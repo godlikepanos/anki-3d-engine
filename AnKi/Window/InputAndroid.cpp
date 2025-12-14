@@ -147,8 +147,8 @@ int InputAndroid::handleAndroidInput([[maybe_unused]] android_app* app, AInputEv
 				const F32 y = AMotionEvent_getY(event, index);
 				const I32 id = AMotionEvent_getPointerId(event, index);
 
-				m_touchPointerPosNdc[id].x() = F32(x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
-				m_touchPointerPosNdc[id].y() = -(F32(y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
+				m_touchPointerPosNdc[id].x = F32(x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
+				m_touchPointerPosNdc[id].y = -(F32(y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 
 				if(pressValue == 0 || pressValue == 1)
 				{

@@ -41,7 +41,7 @@ F32 testPlane(const Plane& plane, const Ray& ray);
 /// @copydoc testPlane(const Plane&, const Aabb&)
 inline F32 testPlane(const Plane& plane, const Vec4& point)
 {
-	ANKI_ASSERT(isZero(point.w()));
+	ANKI_ASSERT(isZero(point.w));
 	return plane.getNormal().dot(point) - plane.getOffset();
 }
 
@@ -197,10 +197,10 @@ Bool testCollision(const Sphere& sphere, const Ray& ray, Array<Vec4, 2>& interse
 inline F32 testCollisionInside(const Aabb& aabb, const Ray& ray)
 {
 	const Vec4 reciprocal = ray.getDirection().reciprocal();
-	const Vec4 intersectMaxPointPlanes = ((aabb.getMax() - ray.getOrigin()) * reciprocal).xyz0();
-	const Vec4 intersectMinPointPlanes = ((aabb.getMin() - ray.getOrigin()) * reciprocal).xyz0();
+	const Vec4 intersectMaxPointPlanes = ((aabb.getMax() - ray.getOrigin()) * reciprocal).xyz0;
+	const Vec4 intersectMinPointPlanes = ((aabb.getMin() - ray.getOrigin()) * reciprocal).xyz0;
 	const Vec4 largestParams = intersectMaxPointPlanes.max(intersectMinPointPlanes);
-	const F32 distToIntersect = min(min(largestParams.x(), largestParams.y()), largestParams.z());
+	const F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
 	return distToIntersect;
 }
 

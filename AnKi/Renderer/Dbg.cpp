@@ -404,16 +404,16 @@ Dbg::~Dbg()
 Error Dbg::init()
 {
 	// RT descr
-	m_rtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+	m_rtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 															  Format::kR8G8B8A8_Unorm, "Dbg");
 	m_rtDescr.bake();
 
 	m_objectPickingRtDescr = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR32_Uint, "ObjectPicking");
+		getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kR32_Uint, "ObjectPicking");
 	m_objectPickingRtDescr.bake();
 
 	m_objectPickingDepthRtDescr = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kD32_Sfloat, "ObjectPickingDepth");
+		getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kD32_Sfloat, "ObjectPickingDepth");
 	m_objectPickingDepthRtDescr.bake();
 
 	ResourceManager& rsrcManager = ResourceManager::getSingleton();
@@ -633,7 +633,7 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		// Set common state
-		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		cmdb.setDepthWrite(false);
 
 		cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
@@ -727,7 +727,7 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 							break;
 						}
 
-						m_positions.emplaceBack(HVec4(pos.xyz0()));
+						m_positions.emplaceBack(HVec4(Vec4(pos.xyz0)));
 						m_colors.emplaceBack(color);
 					}
 				}
@@ -934,7 +934,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 				// Set common state
-				cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
+				cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
 				cmdb.setDepthCompareOperation(CompareOperation::kLess);
 
 				ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
@@ -1022,7 +1022,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 			cmdb.bindUav(0, 0, readbackBuff);
 
 			Vec2 mousePos = Input::getSingleton().getMousePositionNdc();
-			mousePos.y() = -mousePos.y();
+			mousePos.y = -mousePos.y;
 			mousePos = mousePos / 2.0f + 0.5f;
 			mousePos *= Vec2(getRenderer().getInternalResolution() / 2);
 

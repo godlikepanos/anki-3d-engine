@@ -103,7 +103,7 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		m_body = PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(this);
-		m_creationScale = init.m_transform.getScale().xyz();
+		m_creationScale = init.m_transform.getScale().xyz;
 	}
 
 	if(info.m_node->isLocalTransformDirty())

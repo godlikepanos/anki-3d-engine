@@ -123,9 +123,9 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
-		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
+		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
 		gpuLight.m_radius = m_point.m_radius;
-		gpuLight.m_diffuseColor = m_diffColor.xyz();
+		gpuLight.m_diffuseColor = m_diffColor.xyz;
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_isPointLight = 1;
 		gpuLight.m_isSpotLight = 0;
@@ -165,9 +165,9 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
-		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
+		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
 		gpuLight.m_radius = m_spot.m_distance;
-		gpuLight.m_diffuseColor = m_diffColor.xyz();
+		gpuLight.m_diffuseColor = m_diffColor.xyz;
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_isPointLight = 0;
 		gpuLight.m_isSpotLight = 1;
@@ -184,7 +184,7 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		for(U32 i = 0; i < 4; ++i)
 		{
 			points[i] = m_worldTransform.transform(points[i]);
-			gpuLight.m_edgePoints[i] = points[i].xyz0();
+			gpuLight.m_edgePoints[i] = points[i].xyz0;
 		}
 
 		if(reallyShadow)
@@ -192,8 +192,8 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 			const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle, kClusterObjectFrustumNearPlane,
 																		 m_spot.m_distance);
-			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z(), 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x(), 0.0f, m_shadowAtlasUvViewports[0].w(),
-								 0.0f, m_shadowAtlasUvViewports[0].y(), 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z, 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x, 0.0f, m_shadowAtlasUvViewports[0].w, 0.0f,
+								 m_shadowAtlasUvViewports[0].y, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 			m_spot.m_viewMat = Mat3x4(m_worldTransform.invert());
 			m_spot.m_viewProjMat = proj * Mat4(m_spot.m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -244,7 +244,9 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			elevation = max(elevation, toRad(10.0f)); // Don't have it negative cause the renderer can't handle it
 
 			const F32 polarAng = kPi / 2.0f - elevation;
-			const Vec3 newDir = -sphericalToCartesian(polarAng, azimuth);
+			Vec3 newDir;
+			newDir.setFromSphericalToCartesian(polarAng, azimuth);
+			newDir = -newDir;
 
 			const Vec3 zAxis = newDir;
 			Vec3 yAxis = Vec3(0.0f, 1.0f, 0.0f);
@@ -319,7 +321,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
 			const Sphere& sphere = boundingSpheres[cascade];
-			const Vec3 sphereCenter = sphere.getCenter().xyz();
+			const Vec3 sphereCenter = sphere.getCenter().xyz;
 			const F32 sphereRadius = sphere.getRadius();
 			const Vec3& lightDir = getDirection();
 			Array<Vec3, 2> sceneBounds = SceneGraph::getSingleton().getSceneBounds();
@@ -350,7 +352,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			rot.setZAxis(zAxis);
 			rot.setTranslationPart(Vec3(0.0f));
 
-			const Transform cascadeTransform(eye.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+			const Transform cascadeTransform(eye.xyz0, rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.invert());
 
 			// Projection
@@ -371,16 +373,16 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			// Now it's time to stabilize the shadows by aligning the projection matrix
 			{
 				// Project a random fixed point to the light matrix
-				const Vec4 randomPointAlmostLightSpace = (cascadeProjMat * cascadeViewMat) * Vec3(0.0f).xyz1();
+				const Vec4 randomPointAlmostLightSpace = (cascadeProjMat * cascadeViewMat) * Vec3(0.0f).xyz1;
 
 				// Chose a random low shadowmap size and align the random point
 				const F32 shadowmapSize = 128.0f;
 				const F32 shadowmapSize2 = shadowmapSize / 2.0f; // Div with 2 because the projected point is in NDC
-				const F32 alignedX = std::round(randomPointAlmostLightSpace.x() * shadowmapSize2) / shadowmapSize2;
-				const F32 alignedY = std::round(randomPointAlmostLightSpace.y() * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedX = std::round(randomPointAlmostLightSpace.x * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedY = std::round(randomPointAlmostLightSpace.y * shadowmapSize2) / shadowmapSize2;
 
-				const F32 dx = alignedX - randomPointAlmostLightSpace.x();
-				const F32 dy = alignedY - randomPointAlmostLightSpace.y();
+				const F32 dx = alignedX - randomPointAlmostLightSpace.x;
+				const F32 dy = alignedY - randomPointAlmostLightSpace.y;
 
 				// Fix the projection matrix by applying an offset
 				Mat4 correctionTranslationMat = Mat4::getIdentity();

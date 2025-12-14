@@ -17,7 +17,7 @@ Error HistoryLength::init()
 		texUsage |= (g_cvarRenderPreferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		const TextureInitInfo init =
-			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 													   Format::kR8_Unorm, texUsage, generateTempPassName("HistoryLen #%d", i));
 
 		m_historyLenTextures[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
@@ -92,11 +92,11 @@ void HistoryLength::populateRenderGraph(RenderingContext& ctx)
 		if(g_cvarRenderPreferCompute)
 		{
 			rgraphCtx.bindUav(0, 0, current);
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		}
 		else
 		{
-			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 			drawQuad(cmdb);
 		}
 	});

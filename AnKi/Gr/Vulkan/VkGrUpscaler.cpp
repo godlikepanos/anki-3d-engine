@@ -124,21 +124,20 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 {
 	NVSDK_NGX_PerfQuality_Value nvQuality = getDlssQualityModeToNVQualityMode(quality);
 	F32 sharpness; // Deprecared in newer DLSS
-	ANKI_NGX_CHECK(
-		NGX_DLSS_GET_OPTIMAL_SETTINGS(m_ngxParameters, dstRes.x(), dstRes.y(), nvQuality, &m_recommendedSettings.m_optimalRenderSize.x(),
-									  &m_recommendedSettings.m_optimalRenderSize.y(), &m_recommendedSettings.m_dynamicMaximumRenderSize.x(),
-									  &m_recommendedSettings.m_dynamicMaximumRenderSize.y(), &m_recommendedSettings.m_dynamicMinimumRenderSize.x(),
-									  &m_recommendedSettings.m_dynamicMinimumRenderSize.y(), &sharpness));
+	ANKI_NGX_CHECK(NGX_DLSS_GET_OPTIMAL_SETTINGS(
+		m_ngxParameters, dstRes.x, dstRes.y, nvQuality, &m_recommendedSettings.m_optimalRenderSize.x, &m_recommendedSettings.m_optimalRenderSize.y,
+		&m_recommendedSettings.m_dynamicMaximumRenderSize.x, &m_recommendedSettings.m_dynamicMaximumRenderSize.y,
+		&m_recommendedSettings.m_dynamicMinimumRenderSize.x, &m_recommendedSettings.m_dynamicMinimumRenderSize.y, &sharpness));
 
 	// Next create features	(See NVSDK_NGX_DLSS_Feature_Flags in nvsdk_ngx_defs.h)
 	const I32 dlssCreateFeatureFlags = NVSDK_NGX_DLSS_Feature_Flags_MVLowRes | NVSDK_NGX_DLSS_Feature_Flags_IsHDR; // TODO
 
 	NVSDK_NGX_DLSS_Create_Params dlssCreateParams;
 	memset(&dlssCreateParams, 0, sizeof(dlssCreateParams));
-	dlssCreateParams.Feature.InWidth = srcRes.x();
-	dlssCreateParams.Feature.InHeight = srcRes.y();
-	dlssCreateParams.Feature.InTargetWidth = dstRes.x();
-	dlssCreateParams.Feature.InTargetHeight = dstRes.y();
+	dlssCreateParams.Feature.InWidth = srcRes.x;
+	dlssCreateParams.Feature.InHeight = srcRes.y;
+	dlssCreateParams.Feature.InTargetWidth = dstRes.x;
+	dlssCreateParams.Feature.InTargetHeight = dstRes.y;
 	dlssCreateParams.Feature.InPerfQualityValue = nvQuality;
 	dlssCreateParams.InFeatureCreateFlags = dlssCreateFeatureFlags;
 

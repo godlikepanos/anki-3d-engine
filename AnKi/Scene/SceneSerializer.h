@@ -108,7 +108,7 @@ public:
 	}
 
 	// Mat
-	template<typename T, U kTRowCount, U kTColumnCount>
+	template<typename T, U32 kTRowCount, U32 kTColumnCount>
 	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TMat<T, kTRowCount, kTColumnCount>& varValue)
 	{
 		WeakArray<T> arr(&varValue[0], kTRowCount * kTColumnCount);

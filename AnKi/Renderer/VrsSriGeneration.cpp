@@ -24,11 +24,11 @@ Error VrsSriGeneration::init()
 
 	// Create textures
 	const TextureUsageBit texUsage = TextureUsageBit::kShadingRate | TextureUsageBit::kUavCompute | TextureUsageBit::kAllSrv;
-	TextureInitInfo sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
+	TextureInitInfo sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rez.x, rez.y, Format::kR8_Uint, texUsage, "VrsSri");
 	m_sriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kShadingRate);
 
 	const UVec2 rezDownscaled = (getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
-	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint, texUsage, "VrsSriDownscaled");
+	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x, rezDownscaled.y, Format::kR8_Uint, texUsage, "VrsSriDownscaled");
 	m_downscaledSriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kShadingRate);
 
 	// Load programs
@@ -116,8 +116,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
-			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, getRenderer().getInternalResolution().x(),
-							  getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, getRenderer().getInternalResolution().x,
+							  getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -142,7 +142,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
-			dispatchPPCompute(cmdb, 8, 8, rezDownscaled.x(), rezDownscaled.y());
+			dispatchPPCompute(cmdb, 8, 8, rezDownscaled.x, rezDownscaled.y);
 		});
 	}
 }

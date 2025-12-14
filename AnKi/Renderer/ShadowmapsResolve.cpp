@@ -18,8 +18,8 @@ namespace anki {
 Error ShadowmapsResolve::init()
 {
 	m_quarterRez = g_cvarRenderShadowmapResolveQuarterRez;
-	const U32 width = getRenderer().getInternalResolution().x() / (m_quarterRez + 1);
-	const U32 height = getRenderer().getInternalResolution().y() / (m_quarterRez + 1);
+	const U32 width = getRenderer().getInternalResolution().x / (m_quarterRez + 1);
+	const U32 height = getRenderer().getInternalResolution().y / (m_quarterRez + 1);
 
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR8G8B8A8_Unorm, "SM resolve");
 	m_rtDescr.bake();

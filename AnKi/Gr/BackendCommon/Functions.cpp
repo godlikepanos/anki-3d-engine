@@ -60,11 +60,11 @@ static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkIn
 	ANKI_ASSERT(varBlkInfo.m_matrixStride >= static_cast<I16>(sizeof(Vec)));
 
 	U8* buff = static_cast<U8*>(buffBegin) + varBlkInfo.m_offset;
-	for(U i = 0; i < elementsCount; i++)
+	for(U32 i = 0; i < elementsCount; i++)
 	{
 		U8* subbuff = buff;
 		const T& matrix = static_cast<const T*>(elements)[i];
-		for(U j = 0; j < sizeof(T) / sizeof(Vec); j++)
+		for(U32 j = 0; j < sizeof(T) / sizeof(Vec); j++)
 		{
 			ANKI_ASSERT((subbuff + sizeof(Vec)) <= static_cast<const U8*>(buffEnd));
 

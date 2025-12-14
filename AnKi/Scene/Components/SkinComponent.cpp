@@ -238,7 +238,7 @@ void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const 
 	if(bonesAnimated.get(bone.getIndex()))
 	{
 		const Trf& t = m_animationTrfs[bone.getIndex()];
-		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz(), Mat3(t.m_rotation), Vec3(t.m_scale)));
+		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz, Mat3(t.m_rotation), Vec3(t.m_scale)));
 	}
 	else
 	{
@@ -249,8 +249,8 @@ void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const 
 
 	// Update volume
 	const Vec3 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	minExtend = minExtend.min(bonePos.xyz0());
-	maxExtend = maxExtend.max(bonePos.xyz0());
+	minExtend = minExtend.min(bonePos.xyz0);
+	maxExtend = maxExtend.max(bonePos.xyz0);
 
 	for(const Bone* child : bone.getChildren())
 	{

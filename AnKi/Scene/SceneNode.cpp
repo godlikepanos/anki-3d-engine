@@ -171,7 +171,7 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer)
 	ANKI_SERIALIZE(m_uuid, 1);
 	ANKI_SERIALIZE(m_name, 1);
 
-	Vec3 origin = m_ltrf.getOrigin().xyz();
+	Vec3 origin = m_ltrf.getOrigin().xyz;
 	ANKI_SERIALIZE(origin, 1);
 	m_ltrf.setOrigin(origin);
 
@@ -179,7 +179,7 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer)
 	ANKI_SERIALIZE(rotation, 1);
 	m_ltrf.setRotation(rotation);
 
-	Vec3 scale = m_ltrf.getScale().xyz();
+	Vec3 scale = m_ltrf.getScale().xyz;
 	ANKI_SERIALIZE(scale, 1);
 	m_ltrf.setScale(scale);
 
