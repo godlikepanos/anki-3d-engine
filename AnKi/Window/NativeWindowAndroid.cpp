@@ -32,9 +32,9 @@ void MakeSingletonPtr<NativeWindow>::freeSingleton()
 	}
 }
 
-Error NativeWindow::init(const NativeWindowInitInfo& inf)
+Error NativeWindow::init(U32 targetFps, CString title)
 {
-	return static_cast<NativeWindowAndroid*>(this)->initInternal(inf);
+	return static_cast<NativeWindowAndroid*>(this)->initInternal(targetFps, title);
 }
 
 void NativeWindow::setWindowTitle([[maybe_unused]] CString title)
@@ -66,7 +66,7 @@ NativeWindowAndroid::~NativeWindowAndroid()
 	m_nativeWindowAndroid = nullptr;
 }
 
-Error NativeWindowAndroid::initInternal([[maybe_unused]] const NativeWindowInitInfo& init)
+Error NativeWindowAndroid::initInternal(U32 targetFps, [[maybe_unused]] CString title)
 {
 	ANKI_WIND_LOGI("Initializing Android window");
 
@@ -89,9 +89,9 @@ Error NativeWindowAndroid::initInternal([[maybe_unused]] const NativeWindowInitI
 
 	m_nativeWindowAndroid = g_androidApp->window;
 
-	if(init.m_targetFps)
+	if(targetFps)
 	{
-		ANativeWindow_setFrameRate(m_nativeWindowAndroid, F32(init.m_targetFps), ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT);
+		ANativeWindow_setFrameRate(m_nativeWindowAndroid, F32(targetFps), ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT);
 	}
 
 	// Set some stuff

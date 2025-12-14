@@ -23,7 +23,7 @@ GrUpscalerImpl::~GrUpscalerImpl()
 {
 }
 
-Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
+Error GrUpscalerImpl::initInternal([[maybe_unused]] const GrUpscalerInitInfo& initInfo)
 {
 	ANKI_ASSERT(!"TODO");
 	return Error::kNone;

@@ -182,21 +182,51 @@ Error ShaderParser::parsePragmaTechnique(const ShaderCompilerString* begin, cons
 
 		while(begin != end)
 		{
-			// Find mutator
-			U32 count = 0;
-			for(const Mutator& mutator : m_mutators)
+			if(*begin == "*")
 			{
-				if(mutator.m_name == *begin)
-				{
-					activeMutators |= 1_U64 << U64(count);
-					break;
-				}
-				++count;
-			}
+				// Enable all mutators
 
-			if(count == m_mutators.getSize())
+				activeMutators = kMaxU64;
+			}
+			else
 			{
-				ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
+				CString mutatorName = *begin;
+				Bool exclude = false;
+				if(mutatorName.find("!") == 0)
+				{
+					// Starts with !, exclude this mutator
+
+					if(mutatorName.getLength() < 2)
+					{
+						ANKI_PP_ERROR_MALFORMED_MSG("Found a ! alone");
+					}
+
+					mutatorName = &mutatorName[1];
+					exclude = true;
+				}
+
+				U32 count = 0;
+				for(const Mutator& mutator : m_mutators)
+				{
+					if(mutator.m_name == mutatorName)
+					{
+						if(!exclude)
+						{
+							activeMutators |= 1_U64 << U64(count);
+						}
+						else
+						{
+							activeMutators &= ~(1_U64 << U64(count));
+						}
+						break;
+					}
+					++count;
+				}
+
+				if(count == m_mutators.getSize())
+				{
+					ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
+				}
 			}
 
 			++begin;
@@ -502,10 +532,6 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 				ANKI_CHECK(checkActiveStruct());
 				ANKI_CHECK(parsePragmaMember(token + 1, end, line, fname));
 			}
-			else if(*token == "16bit")
-			{
-				ANKI_CHECK(parsePragma16bit(token + 1, end, line, fname));
-			}
 			else if(*token == "extra_compiler_args")
 			{
 				ANKI_CHECK(parseExtraCompilerArgs(token + 1, end, line, fname));
@@ -556,7 +582,7 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 {
 	ANKI_ASSERT(m_insideStruct);
 	const U tokenCount = U(end - begin);
-	if(tokenCount != 2)
+	if(tokenCount < 2)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
@@ -596,6 +622,45 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 	// Name
 	++begin;
 	member.m_name = *begin;
+
+	// Default values
+	++begin;
+	if(begin != end)
+	{
+		const ShaderVariableDataTypeInfo& typeInfo = getShaderVariableDataTypeInfo(member.m_type);
+		if(U32(end - begin) != typeInfo.m_size / sizeof(U32))
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Incorrect number of initial values");
+		}
+
+		U32 offset = 0;
+		while(begin != end)
+		{
+			F32 f;
+			U32 u;
+			if(typeInfo.m_isIntegral)
+			{
+				if(begin->toNumber(u))
+				{
+					ANKI_PP_ERROR_MALFORMED_MSG("Type conversion failed");
+				}
+				memcpy(member.m_defaultValues.getBegin() + offset, &u, sizeof(u));
+				offset += sizeof(u);
+			}
+			else
+			{
+				if(begin->toNumber(f))
+				{
+					ANKI_PP_ERROR_MALFORMED_MSG("Type conversion failed");
+				}
+				memcpy(member.m_defaultValues.getBegin() + offset, &f, sizeof(f));
+				offset += sizeof(f);
+			}
+
+			++begin;
+		}
+		ANKI_ASSERT(offset == typeInfo.m_size);
+	}
 
 	// Rest
 	member.m_offset = (structure.m_members.getSize())
@@ -650,21 +715,6 @@ Error ShaderParser::parsePragmaStructEnd(const ShaderCompilerString* begin, cons
 
 	// Done
 	m_insideStruct = false;
-	return Error::kNone;
-}
-
-Error ShaderParser::parsePragma16bit(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
-{
-	ANKI_ASSERT(begin && end);
-
-	// Check tokens
-	if(begin != end)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	m_16bitTypes = true;
-
 	return Error::kNone;
 }
 
@@ -835,16 +885,6 @@ void ShaderParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const 
 	ShaderCompilerString header;
 	generateAnkiShaderHeader(shaderType, header);
 	source += header;
-
-	if(m_16bitTypes)
-	{
-		source += "#define ANKI_SUPPORTS_16BIT_TYPES 1\n";
-	}
-	else
-	{
-		source += "#define ANKI_SUPPORTS_16BIT_TYPES 0\n";
-	}
-
 	source += m_source;
 }
 

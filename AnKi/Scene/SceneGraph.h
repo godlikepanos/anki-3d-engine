@@ -17,49 +17,41 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-inline NumericCVar<F32> g_probeEffectiveDistanceCVar("Scene", "ProbeEffectiveDistance", 256.0f, 1.0f, kMaxF32, "How far various probes can render");
-inline NumericCVar<F32> g_probeShadowEffectiveDistanceCVar("Scene", "ProbeShadowEffectiveDistance", 32.0f, 1.0f, kMaxF32,
-														   "How far to render shadows for the various probes");
+ANKI_CVAR(NumericCVar<F32>, Scene, ProbeEffectiveDistance, 256.0f, 1.0f, kMaxF32, "How far various probes can render")
+ANKI_CVAR(NumericCVar<F32>, Scene, ProbeShadowEffectiveDistance, 32.0f, 1.0f, kMaxF32, "How far to render shadows for the various probes")
 
 // Gpu scene arrays
-inline NumericCVar<U32> g_minGpuSceneTransformsCVar("Scene", "MinGpuSceneTransforms", 2 * 10 * 1024, 8, 100 * 1024,
-													"The min number of transforms stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneMeshesCVar("Scene", "MinGpuSceneMeshes", 8 * 1024, 8, 100 * 1024,
-												"The min number of meshes stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneParticleEmittersCVar("Scene", "MinGpuSceneParticleEmitters", 1 * 1024, 8, 100 * 1024,
-														  "The min number of particle emitters stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneLightsCVar("Scene", "MinGpuSceneLights", 2 * 1024, 8, 100 * 1024,
-												"The min number of lights stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneReflectionProbesCVar("Scene", "MinGpuSceneReflectionProbes", 128, 8, 100 * 1024,
-														  "The min number of reflection probes stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneGlobalIlluminationProbesCVar("Scene", "MinGpuSceneGlobalIlluminationProbes", 128, 8, 100 * 1024,
-																  "The min number of GI probes stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneDecalsCVar("Scene", "MinGpuSceneDecals", 2 * 1024, 8, 100 * 1024,
-												"The min number of decals stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneFogDensityVolumesCVar("Scene", "MinGpuSceneFogDensityVolumes", 512, 8, 100 * 1024,
-														   "The min number fog density volumes stored in the GPU scene");
-inline NumericCVar<U32> g_minGpuSceneRenderablesCVar("Scene", "MinGpuSceneRenderables", 10 * 1024, 8, 100 * 1024,
-													 "The min number of renderables stored in the GPU scene");
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneTransforms, 2 * 10 * 1024, 8, 100 * 1024, "The min number of transforms stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneMeshes, 8 * 1024, 8, 100 * 1024, "The min number of meshes stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneParticleEmitters, 1 * 1024, 8, 100 * 1024,
+		  "The min number of particle emitters stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneLights, 2 * 1024, 8, 100 * 1024, "The min number of lights stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneReflectionProbes, 128, 8, 100 * 1024, "The min number of reflection probes stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneGlobalIlluminationProbes, 128, 8, 100 * 1024, "The min number of GI probes stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneDecals, 2 * 1024, 8, 100 * 1024, "The min number of decals stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneFogDensityVolumes, 512, 8, 100 * 1024, "The min number fog density volumes stored in the GPU scene")
+ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneRenderables, 10 * 1024, 8, 100 * 1024, "The min number of renderables stored in the GPU scene")
 
 class SceneComponentArrays
 {
 public:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
 	SceneBlockArray<name##Component>& get##name##s() \
+	{ \
+		return m_##name##Array; \
+	} \
+	const SceneBlockArray<name##Component>& get##name##s() const \
 	{ \
 		return m_##name##Array; \
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 private:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) SceneBlockArray<name##Component> m_##name##Array;
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) SceneBlockArray<name##Component> m_##name##Array;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 
-/// The scene graph that  all the scene entities
+// The scene graph that  all the scene entities
 class SceneGraph : public MakeSingleton<SceneGraph>
 {
 	template<typename>
@@ -79,16 +71,18 @@ public:
 
 	SceneNode& getActiveCameraNode()
 	{
-		ANKI_ASSERT(m_mainCam != nullptr);
-		return *m_mainCam;
+		const SceneNode& cam = static_cast<const SceneGraph*>(this)->getActiveCameraNode();
+		return const_cast<SceneNode&>(cam);
 	}
-	const SceneNode& getActiveCameraNode() const
+
+	const SceneNode& getActiveCameraNode() const;
+
+	void setActiveCameraNode(SceneNode* cam);
+
+	SceneNode& getEditorUiNode()
 	{
-		return *m_mainCam;
-	}
-	void setActiveCameraNode(SceneNode* cam)
-	{
-		m_mainCam = cam;
+		ANKI_ASSERT(m_editorUi);
+		return *m_editorUi;
 	}
 
 	U32 getSceneNodesCount() const
@@ -107,28 +101,27 @@ public:
 
 	void update(Second prevUpdateTime, Second crntTime);
 
-	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	// Note: Thread-safe against itself. Can be called by SceneNode::update
 	SceneNode* tryFindSceneNode(const CString& name);
 
-	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	// Note: Thread-safe against itself. Can be called by SceneNode::update
 	SceneNode& findSceneNode(const CString& name);
 
-	/// Iterate the scene nodes using a lambda
+	// Iterate the scene nodes using a lambda
 	template<typename Func>
-	void iterateSceneNodes(Func func)
+	void visitNodes(Func func)
 	{
 		for(SceneNode& psn : m_nodes)
 		{
-			const Bool continue_ = func(psn);
-			if(!continue_)
+			if(func(psn) == FunctorContinue::kStop)
 			{
 				break;
 			}
 		}
 	}
 
-	/// Create a new SceneNode
-	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	// Create a new SceneNode
+	// Note: Thread-safe against itself. Can be called by SceneNode::update
 	template<typename TNode>
 	TNode* newSceneNode(CString name)
 	{
@@ -148,8 +141,8 @@ public:
 		return m_sceneMax;
 	}
 
-	/// Get a unique UUID.
-	/// @note It's thread-safe.
+	// Get a unique UUID.
+	// Note: It's thread-safe.
 	U32 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
@@ -160,62 +153,30 @@ public:
 		return m_componentArrays;
 	}
 
-	void addDirectionalLight(LightComponent* comp)
+	LightComponent* getDirectionalLight() const
 	{
-		ANKI_ASSERT(m_dirLights.find(comp) == m_dirLights.getEnd());
-		m_dirLights.emplaceBack(comp);
-		if(m_dirLights.getSize() > 1)
-		{
-			ANKI_SCENE_LOGW("More than one directional lights detected");
-		}
-	}
-
-	void removeDirectionalLight(LightComponent* comp)
-	{
-		auto it = m_dirLights.find(comp);
-		ANKI_ASSERT(it != m_dirLights.getEnd());
-		m_dirLights.erase(it);
-	}
-
-	LightComponent* getDirectionalLight() const;
-
-	void addSkybox(SkyboxComponent* comp)
-	{
-		ANKI_ASSERT(m_skyboxes.find(comp) == m_skyboxes.getEnd());
-		m_skyboxes.emplaceBack(comp);
-		if(m_skyboxes.getSize() > 1)
-		{
-			ANKI_SCENE_LOGW("More than one skyboxes detected");
-		}
-	}
-
-	void removeSkybox(SkyboxComponent* comp)
-	{
-		auto it = m_skyboxes.find(comp);
-		ANKI_ASSERT(it != m_skyboxes.getEnd());
-		m_skyboxes.erase(it);
+		return m_activeDirLight;
 	}
 
 	SkyboxComponent* getSkybox() const
 	{
-		return (m_skyboxes.getSize()) ? m_skyboxes[0] : nullptr;
+		return m_activeSkybox;
 	}
 
-	/// @note It's thread-safe.
-	void updateSceneBounds(const Vec3& min, const Vec3& max)
-	{
-		LockGuard lock(m_sceneBoundsMtx);
-		m_sceneMin = m_sceneMin.min(min);
-		m_sceneMax = m_sceneMax.max(max);
-	}
-
-	/// @note It's thread-safe.
 	Array<Vec3, 2> getSceneBounds() const
 	{
-		LockGuard lock(m_sceneBoundsMtx);
 		ANKI_ASSERT(m_sceneMin < m_sceneMax);
 		return {m_sceneMin, m_sceneMax};
 	}
+
+	// If enable is true the components will be checking for updates of resources. Useful for the editor resource updates. It has a perf hit so it
+	// should be enabled only by the editor
+	void setCheckForResourceUpdates(Bool enable)
+	{
+		m_checkForResourceUpdates = enable;
+	}
+
+	Error saveToTextFile(CString filename);
 
 private:
 	class UpdateSceneNodesCtx;
@@ -229,6 +190,8 @@ private:
 		}
 	} m_initMemPoolDummy;
 
+	static constexpr U32 kForceSetSceneBoundsFrameCount = 60 * 2; // Re-set the scene bounds after 2".
+
 	mutable StackMemoryPool m_framePool;
 
 	IntrusiveList<SceneNode> m_nodes;
@@ -237,30 +200,36 @@ private:
 
 	SceneNode* m_mainCam = nullptr;
 	SceneNode* m_defaultMainCam = nullptr;
+	SceneNode* m_editorUi = nullptr;
 
 	EventManager m_events;
 
-	Vec3 m_sceneMin = Vec3(kMaxF32);
-	Vec3 m_sceneMax = Vec3(kMinF32);
-	mutable SpinLock m_sceneBoundsMtx;
+	U64 m_frame = 0;
+
+	Vec3 m_sceneMin = Vec3(-0.1f);
+	Vec3 m_sceneMax = Vec3(+0.1f);
 
 	IntrusiveList<SceneNode> m_nodesForRegistration;
+	SceneDynamicArray<std::pair<SceneNode*, SceneString>> m_nodesRenamed;
 	SpinLock m_nodesForRegistrationMtx;
+
+	Bool m_checkForResourceUpdates = false;
 
 	Atomic<U32> m_nodesUuid = {1};
 
 	SceneComponentArrays m_componentArrays;
 
-	SceneDynamicArray<LightComponent*> m_dirLights;
-	SceneDynamicArray<SkyboxComponent*> m_skyboxes;
+	LightComponent* m_activeDirLight = nullptr;
+	SkyboxComponent* m_activeSkybox = nullptr;
 
 	SceneGraph();
 
 	~SceneGraph();
 
-	void updateNodes(UpdateSceneNodesCtx& ctx);
-	void updateNode(Second prevTime, Second crntTime, SceneNode& node);
+	void updateNodes(U32 tid, UpdateSceneNodesCtx& ctx);
+	void updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx);
+
+	void sceneNodeChangedName(SceneNode& node, CString oldName);
 };
-/// @}
 
 } // end namespace anki

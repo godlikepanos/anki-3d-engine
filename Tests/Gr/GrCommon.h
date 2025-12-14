@@ -7,6 +7,8 @@
 #include <AnKi/ShaderCompiler.h>
 #include <AnKi/ShaderCompiler/ShaderParser.h>
 #include <AnKi/ShaderCompiler/Dxc.h>
+#include <AnKi/Util/Filesystem.h>
+#include <AnKi/Core/CoreTracer.h>
 #include <Tests/Framework/Framework.h>
 
 namespace anki {
@@ -90,14 +92,24 @@ inline void commonInit(Bool validation = true)
 {
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
-	g_windowWidthCVar = kWidth;
-	g_windowHeightCVar = kHeight;
-	g_vsyncCVar = false;
-	g_debugMarkersCVar = true;
+	CoreMemoryPool::allocateSingleton(allocAligned, nullptr);
+	g_cvarWindowWidth = kWidth;
+	g_cvarWindowHeight = kHeight;
+	g_cvarGrVsync = false;
+	g_cvarGrDebugMarkers = true;
+	g_cvarWindowFullscreen = 0;
 	if(validation)
 	{
-		[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 4>{"Validation", "1", "DebugMarkers", "1"});
+		g_cvarGrValidation = true;
+		g_cvarGrDebugMarkers = true;
 	}
+#if ANKI_TRACING_ENABLED
+	{
+		String tmpDir;
+		[[maybe_unused]] Error err = getTempDirectory(tmpDir);
+		[[maybe_unused]] Error err2 = CoreTracer::allocateSingleton().init(tmpDir);
+	}
+#endif
 
 	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
@@ -111,6 +123,10 @@ inline void commonDestroy()
 	Input::freeSingleton();
 	NativeWindow::freeSingleton();
 	Input::freeSingleton();
+#if ANKI_TRACING_ENABLED
+	CoreTracer::freeSingleton();
+#endif
+	CoreMemoryPool::freeSingleton();
 	ShaderCompilerMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 }
@@ -134,7 +150,19 @@ inline BufferPtr createBuffer(BufferUsageBit usage, ConstWeakArray<T> data, CStr
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+	BufferBarrierInfo barr;
+	barr.m_bufferView = BufferView(buff.get());
+	barr.m_previousUsage = BufferUsageBit::kNone;
+	barr.m_nextUsage = BufferUsageBit::kCopyDestination;
+	cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+
 	cmdb->copyBufferToBuffer(BufferView(copyBuff.get()), BufferView(buff.get()));
+
+	barr.m_previousUsage = BufferUsageBit::kCopyDestination;
+	barr.m_nextUsage = usage;
+	cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+
 	cmdb->endRecording();
 
 	FencePtr fence;

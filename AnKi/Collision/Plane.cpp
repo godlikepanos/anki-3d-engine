@@ -9,7 +9,7 @@ namespace anki {
 
 void Plane::setFrom3Points(const Vec4& p0, const Vec4& p1, const Vec4& p2)
 {
-	ANKI_ASSERT(p0.w() == 0.0f && p1.w() == 0.0f && p2.w() == 0.0f);
+	ANKI_ASSERT(p0.w == 0.0f && p1.w == 0.0f && p2.w == 0.0f);
 
 	// get plane vectors
 	const Vec4 u = p1 - p0;
@@ -47,7 +47,7 @@ Plane Plane::getTransformed(const Transform& trf) const
 	rot.transposeRotationPart();
 	Vec4 newTrans(rot * trf.getOrigin(), 0.0f);
 	ANKI_ASSERT(trf.hasUniformScale());
-	plane.m_offset = m_offset * trf.getScale().x() + newTrans.dot(m_normal);
+	plane.m_offset = m_offset * trf.getScale().x + newTrans.dot(m_normal);
 
 	return plane;
 }

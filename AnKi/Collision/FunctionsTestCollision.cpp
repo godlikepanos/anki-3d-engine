@@ -28,8 +28,8 @@ static Bool testCollisionGjk(const T& a, const Y& b)
 Bool testCollision(const Aabb& a, const Aabb& b)
 {
 #if ANKI_SIMD_SSE
-	const __m128 gt0 = _mm_cmpgt_ps(a.getMin().getSimd(), b.getMax().getSimd());
-	const __m128 gt1 = _mm_cmpgt_ps(b.getMin().getSimd(), a.getMax().getSimd());
+	const __m128 gt0 = _mm_cmpgt_ps(a.getMin().m_simd, b.getMax().m_simd);
+	const __m128 gt1 = _mm_cmpgt_ps(b.getMin().m_simd, a.getMax().m_simd);
 
 	const __m128 combined = _mm_or_ps(gt0, gt1);
 
@@ -38,19 +38,19 @@ Bool testCollision(const Aabb& a, const Aabb& b)
 	return res == 0;
 #else
 	// if separated in x direction
-	if(a.getMin().x() > b.getMax().x() || b.getMin().x() > a.getMax().x())
+	if(a.getMin().x > b.getMax().x || b.getMin().x > a.getMax().x)
 	{
 		return false;
 	}
 
 	// if separated in y direction
-	if(a.getMin().y() > b.getMax().y() || b.getMin().y() > a.getMax().y())
+	if(a.getMin().y > b.getMax().y || b.getMin().y > a.getMax().y)
 	{
 		return false;
 	}
 
 	// if separated in z direction
-	if(a.getMin().z() > b.getMax().z() || b.getMin().z() > a.getMax().z())
+	if(a.getMin().z > b.getMax().z || b.getMin().z > a.getMax().z)
 	{
 		return false;
 	}
@@ -66,16 +66,16 @@ Bool testCollision(const Aabb& aabb, const Sphere& s)
 
 	// Find the box's closest point to the sphere
 #if ANKI_SIMD_SSE
-	__m128 gt = _mm_cmpgt_ps(c.getSimd(), aabb.getMax().getSimd());
-	__m128 lt = _mm_cmplt_ps(c.getSimd(), aabb.getMin().getSimd());
+	__m128 gt = _mm_cmpgt_ps(c.m_simd, aabb.getMax().m_simd);
+	__m128 lt = _mm_cmplt_ps(c.m_simd, aabb.getMin().m_simd);
 
-	__m128 m = _mm_or_ps(_mm_and_ps(gt, aabb.getMax().getSimd()), _mm_andnot_ps(gt, c.getSimd()));
-	__m128 n = _mm_or_ps(_mm_and_ps(lt, aabb.getMin().getSimd()), _mm_andnot_ps(lt, m));
+	__m128 m = _mm_or_ps(_mm_and_ps(gt, aabb.getMax().m_simd), _mm_andnot_ps(gt, c.m_simd));
+	__m128 n = _mm_or_ps(_mm_and_ps(lt, aabb.getMin().m_simd), _mm_andnot_ps(lt, m));
 
 	const Vec4 cp(n);
 #else
 	Vec4 cp(c); // Closest Point
-	for(U i = 0; i < 3; i++)
+	for(U32 i = 0; i < 3; i++)
 	{
 		// if the center is greater than the max then the closest point is the max
 		if(c[i] > aabb.getMax()[i])
@@ -116,7 +116,7 @@ Bool testCollision(const Aabb& aabb, const LineSegment& ls)
 	F32 minT = kMaxF32;
 
 	// do tests against three sets of planes
-	for(U i = 0; i < 3; ++i)
+	for(U32 i = 0; i < 3; ++i)
 	{
 		// segment is parallel to plane
 		if(isZero(ls.getDirection()[i]))
@@ -242,10 +242,10 @@ Bool testCollision(const Obb& obb, const LineSegment& ls)
 	const Vec4 diff = obb.getCenter() - ls.getOrigin();
 
 	// for each axis do
-	for(U i = 0; i < 3; ++i)
+	for(U32 i = 0; i < 3; ++i)
 	{
 		// get axis i
-		const Vec4 axis = obb.getRotation().getColumn(i).xyz0();
+		const Vec4 axis = obb.getRotation().getColumn(i).xyz0;
 
 		// project relative vector onto axis
 		const F32 e = axis.dot(diff);
@@ -352,7 +352,7 @@ Bool testCollision(const Plane& plane, const Ray& ray, Vec4& intersection)
 
 Bool testCollision(const Plane& plane, const Vec4& vector, Vec4& intersection)
 {
-	ANKI_ASSERT(vector.w() == 0.0f);
+	ANKI_ASSERT(vector.w == 0.0f);
 	const Vec4 pp = vector.normalize();
 	const F32 dot = pp.dot(plane.getNormal());
 

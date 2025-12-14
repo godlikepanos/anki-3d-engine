@@ -56,7 +56,7 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 			{
 				// Do an allocation
 				U32 addr;
-				const U32 size = max<U32>(getRandom() % 256_MB, 1);
+				const U32 size = U32(max<U64>(getRandom() % 256_MB, 1));
 				const U32 alignment = max<U32>(getRandom() % 24, 1);
 				const Bool success = buddy.allocate(size, alignment, addr);
 				// printf("al %u %u\n", size, alignment);

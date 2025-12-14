@@ -10,8 +10,8 @@
 
 namespace anki {
 
-static StatCounter g_descriptorSetsAllocatedStatVar(StatCategory::kMisc, "DescriptorSets allocated this frame", StatFlag::kZeroEveryFrame);
-static StatCounter g_descriptorSetsWrittenStatVar(StatCategory::kMisc, "DescriptorSets written this frame", StatFlag::kZeroEveryFrame);
+ANKI_SVAR(DescriptorSetsAllocated, StatCategory::kGr, "DescriptorSets allocated this frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(DescriptorSetsWritten, StatCategory::kGr, "DescriptorSets written this frame", StatFlag::kZeroEveryFrame)
 
 /// Contains some constants. It's a class to avoid bugs initializing arrays (m_descriptorCount).
 class DSAllocatorConstants
@@ -85,7 +85,7 @@ void DescriptorAllocator::createNewBlock()
 	block.m_pool = handle;
 	block.m_maxDsets = inf.maxSets;
 
-	g_descriptorSetsAllocatedStatVar.increment(1);
+	g_svarDescriptorSetsAllocated.increment(1);
 }
 
 void DescriptorAllocator::allocate(VkDescriptorSetLayout layout, VkDescriptorSet& set)
@@ -195,7 +195,7 @@ BindlessDescriptorSet::~BindlessDescriptorSet()
 
 Error BindlessDescriptorSet::init()
 {
-	const U32 bindlessTextureCount = g_maxBindlessSampledTextureCountCVar;
+	const U32 bindlessTextureCount = g_cvarGrMaxBindlessSampledTextureCount;
 
 	// Create the layout
 	{
@@ -586,7 +586,7 @@ void DescriptorState::flush(VkCommandBuffer cmdb, DescriptorAllocator& dalloc)
 			if(writeInfoCount > 0)
 			{
 				vkUpdateDescriptorSets(getVkDevice(), writeInfoCount, set.m_writeInfos.getBegin(), 0, nullptr);
-				g_descriptorSetsWrittenStatVar.increment(1);
+				g_svarDescriptorSetsWritten.increment(1);
 			}
 		}
 		else

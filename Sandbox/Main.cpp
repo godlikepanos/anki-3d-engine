@@ -4,8 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <cstdio>
-#include <iostream>
-#include <fstream>
 #include <AnKi/AnKi.h>
 
 using namespace anki;
@@ -17,41 +15,51 @@ class MyApp : public App
 {
 public:
 	Bool m_profile = false;
+	U32 m_argc = 0;
+	Char** m_argv = nullptr;
 
-	Error init(int argc, char* argv[]);
+	MyApp(U32 argc, Char** argv)
+		: App("Sandbox")
+		, m_argc(argc)
+		, m_argv(argv)
+	{
+	}
+
+	Error userPreInit() override;
+	Error userPostInit() override;
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 };
 
-MyApp* app = nullptr;
-
-Error MyApp::init(int argc, char* argv[])
+Error MyApp::userPreInit()
 {
 #if !ANKI_OS_ANDROID
-	if(argc < 2)
+	if(m_argc < 2)
 	{
-		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", argv[0]);
+		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", m_argv[0]);
 		return Error::kUserData;
 	}
 #endif
 
 	// Config
 #if ANKI_OS_ANDROID
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
 #else
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 2, m_argv + 2));
 #endif
 
-	// Init super class
-	ANKI_CHECK(App::init());
+	return Error::kNone;
+}
 
+Error MyApp::userPostInit()
+{
 	// Other init
 	ResourceManager& resources = ResourceManager::getSingleton();
 
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
-		g_targetFpsCVar = 240;
-		g_tracingEnabledCVar = true;
+		g_cvarCoreTargetFps = 240;
+		g_cvarCoreTracingEnabled = true;
 	}
 
 	// Load scene
@@ -59,7 +67,7 @@ Error MyApp::init(int argc, char* argv[])
 #if ANKI_OS_ANDROID
 	ANKI_CHECK(resources.loadResource("Assets/Scene.lua", script));
 #else
-	ANKI_CHECK(resources.loadResource(argv[1], script));
+	ANKI_CHECK(resources.loadResource(m_argv[1], script));
 #endif
 	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
@@ -90,7 +98,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	Input& in = Input::getSingleton();
 	Renderer& renderer = Renderer::getSingleton();
 
-	if(in.getKey(KeyCode::kEscape))
+	if(in.getKey(KeyCode::kEscape) > 0)
 	{
 		quit = true;
 		return Error::kNone;
@@ -99,73 +107,59 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	// move the camera
 	static SceneNode* mover = &scene.getActiveCameraNode();
 
-	if(in.getKey(KeyCode::k1))
+	if(in.getKey(KeyCode::k1) > 0)
 	{
 		mover = &scene.getActiveCameraNode();
 	}
-	if(in.getKey(KeyCode::k2))
+	if(in.getKey(KeyCode::k2) > 0)
 	{
 		mover = &scene.findSceneNode("Point.018_Orientation");
 	}
 
 	if(in.getKey(KeyCode::kL) == 1)
 	{
-		const Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
+		const Vec3 origin = mover->getWorldTransform().getOrigin().xyz;
 		mover->setLocalOrigin(origin + Vec3(0, 15, 0));
 	}
 
 	if(in.getKey(KeyCode::kF1) == 1)
 	{
+		DbgOption options = renderer.getDbg().getOptions();
+
 		static U mode = 0;
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgSceneCVar = false;
+			options &= ~DbgOption::kBoundingBoxes;
 		}
 		else if(mode == 1)
 		{
-			g_dbgSceneCVar = true;
-			renderer.getDbg().setDepthTestEnabled(true);
-			renderer.getDbg().setDitheredDepthTestEnabled(false);
+			options |= DbgOption::kBoundingBoxes;
+			options |= DbgOption::kDepthTest;
 		}
 		else
 		{
-			g_dbgSceneCVar = true;
-			renderer.getDbg().setDepthTestEnabled(false);
-			renderer.getDbg().setDitheredDepthTestEnabled(true);
+			options |= DbgOption::kBoundingBoxes;
+			options &= ~DbgOption::kDepthTest;
 		}
-	}
-	if(in.getKey(KeyCode::kF2) == 1)
-	{
-		// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
-	}
-	if(in.getKey(KeyCode::kF3) == 1)
-	{
-		// renderer.getDbg().flipFlags(DbgFlag::PHYSICS);
-	}
-	if(in.getKey(KeyCode::kF4) == 1)
-	{
-		// renderer.getDbg().flipFlags(DbgFlag::SECTOR_COMPONENT);
-	}
-	if(in.getKey(KeyCode::kF6) == 1)
-	{
-		renderer.getDbg().switchDepthTestEnabled();
+
+		renderer.getDbg().setOptions(options);
 	}
 
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
-		g_tracingEnabledCVar = !g_tracingEnabledCVar;
+		g_cvarCoreTracingEnabled = !g_cvarCoreTracingEnabled;
 	}
 
 #if !PLAYER
-	static Vec2 mousePosOn1stClick = in.getMousePosition();
+	static Vec2 mousePosOn1stClick = in.getMousePositionNdc();
 	if(in.getMouseButton(MouseButton::kRight) == 1)
 	{
 		// Re-init mouse pos
-		mousePosOn1stClick = in.getMousePosition();
+		mousePosOn1stClick = in.getMousePositionNdc();
 	}
 
-	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
+	if(in.getMouseButton(MouseButton::kRight) > 0 || in.hasTouchDevice())
 	{
 		constexpr F32 ROTATE_ANGLE = toRad(2.5f);
 		constexpr F32 MOUSE_SENSITIVITY = 5.0f;
@@ -179,42 +173,44 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::kF1) == 1)
 		{
+			DbgOption options = renderer.getDbg().getOptions();
+
 			static U mode = 0;
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				g_dbgSceneCVar = false;
+				options &= ~DbgOption::kBoundingBoxes;
 			}
 			else if(mode == 1)
 			{
-				g_dbgSceneCVar = true;
-				renderer.getDbg().setDepthTestEnabled(true);
-				renderer.getDbg().setDitheredDepthTestEnabled(false);
+				options |= DbgOption::kBoundingBoxes;
+				options |= DbgOption::kDepthTest;
 			}
 			else
 			{
-				g_dbgSceneCVar = true;
-				renderer.getDbg().setDepthTestEnabled(false);
-				renderer.getDbg().setDitheredDepthTestEnabled(true);
+				options |= DbgOption::kBoundingBoxes;
+				options &= ~DbgOption::kDepthTest;
 			}
+
+			renderer.getDbg().setOptions(options);
 		}
 
-		if(in.getKey(KeyCode::kUp))
+		if(in.getKey(KeyCode::kUp) > 0)
 		{
 			mover->rotateLocalX(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kDown))
+		if(in.getKey(KeyCode::kDown) > 0)
 		{
 			mover->rotateLocalX(-ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kLeft))
+		if(in.getKey(KeyCode::kLeft) > 0)
 		{
 			mover->rotateLocalY(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kRight))
+		if(in.getKey(KeyCode::kRight) > 0)
 		{
 			mover->rotateLocalY(-ROTATE_ANGLE);
 		}
@@ -232,45 +228,45 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			moveDistance = max(moveDistance, 0.1f);
 		}
 
-		if(in.getKey(KeyCode::kA))
+		if(in.getKey(KeyCode::kA) > 0)
 		{
 			mover->moveLocalX(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kD))
+		if(in.getKey(KeyCode::kD) > 0)
 		{
 			mover->moveLocalX(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kQ))
+		if(in.getKey(KeyCode::kQ) > 0)
 		{
 			mover->moveLocalY(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kE))
+		if(in.getKey(KeyCode::kE) > 0)
 		{
 			mover->moveLocalY(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kW))
+		if(in.getKey(KeyCode::kW) > 0)
 		{
 			mover->moveLocalZ(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kS))
+		if(in.getKey(KeyCode::kS) > 0)
 		{
 			mover->moveLocalZ(moveDistance);
 		}
 
-		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
-		in.moveCursor(mousePosOn1stClick);
+		const Vec2 velocity = in.getMousePositionNdc() - mousePosOn1stClick;
+		in.moveMouseNdc(mousePosOn1stClick);
 		if(velocity != Vec2(0.0))
 		{
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.z() = 0.0f;
+			angles.x += velocity.y * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -velocity.x * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
 
@@ -278,7 +274,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 rotateEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
+			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x > 0.1f)
 			{
 				rotateCameraTouch = touch;
 				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
@@ -297,10 +293,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.z() = 0.0f;
+			angles.x += velocity.y * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -velocity.x * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
 
@@ -308,7 +304,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 moveEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
+			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x < -0.1f)
 			{
 				moveCameraTouch = touch;
 				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
@@ -326,8 +322,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			Vec2 velocity = in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - moveEventInitialPos;
 			velocity *= 3.0f;
 
-			mover->moveLocalX(moveDistance * velocity.x());
-			mover->moveLocalZ(moveDistance * -velocity.y());
+			mover->moveLocalX(moveDistance * velocity.x);
+			mover->moveLocalZ(moveDistance * -velocity.y);
 		}
 	}
 	else
@@ -390,7 +386,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar = !g_vrsCVar;
+		g_cvarGrVrs = !g_cvarGrVrs;
 	}
 
 	if(in.getEvent(InputEvent::kWindowClosed))
@@ -410,16 +406,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	Error err = Error::kNone;
-
-	app = new MyApp;
-	err = app->init(argc, argv);
-	if(!err)
-	{
-		err = app->mainLoop();
-	}
-
+	MyApp* app = new MyApp(argc, argv);
+	const Error err = app->mainLoop();
 	delete app;
+
 	if(err)
 	{
 		ANKI_LOGE("Error reported. See previous messages");

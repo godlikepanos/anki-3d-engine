@@ -76,7 +76,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 	if(async)
 	{
-		task.reset(ResourceManager::getSingleton().getAsyncLoader().newTask<LoadTask>(this));
+		task.reset(AsyncLoader::getSingleton().newTask<LoadTask>(this));
 		ctx = &task->m_ctx;
 	}
 	else
@@ -142,7 +142,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		}
 
 		// Meshlet
-		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar)
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering)
 		{
 			const PtrSize meshletIndicesSize = header.m_meshletPrimitiveCounts[l] * sizeof(U8Vec4);
 			lod.m_meshletIndices = UnifiedGeometryBuffer::getSingleton().allocate(meshletIndicesSize, sizeof(U8Vec4));
@@ -182,53 +182,21 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 				inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
 				inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
 
+				const PtrSize requiredMemory = GrManager::getSingleton().getAccelerationStructureMemoryRequirement(inf);
+				subMesh.m_blasAllocationTokens[lodIdx] = UnifiedGeometryBuffer::getSingleton().allocate(requiredMemory, 1);
+				inf.m_accelerationStructureBuffer = subMesh.m_blasAllocationTokens[lodIdx];
+
 				subMesh.m_blas[lodIdx] = GrManager::getSingleton().newAccelerationStructure(inf);
 			}
 		}
 	}
 
-	// Clear the buffers
-	if(async)
-	{
-		CommandBufferInitInfo cmdbinit("MeshResourceClear");
-		cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
-
-		for(const Lod& lod : m_lods)
-		{
-			cmdb->zeroBuffer(lod.m_indexBufferAllocationToken.getCompleteBufferView());
-
-			for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
-			{
-				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
-				{
-					cmdb->zeroBuffer(lod.m_vertexBuffersAllocationToken[stream].getCompleteBufferView());
-				}
-			}
-
-			if(lod.m_meshletIndices.isValid())
-			{
-				cmdb->zeroBuffer(lod.m_meshletIndices);
-				cmdb->zeroBuffer(lod.m_meshletBoundingVolumes);
-				cmdb->zeroBuffer(lod.m_meshletGeometryDescriptors);
-			}
-		}
-
-		const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), BufferUsageBit::kCopyDestination,
-										   BufferUsageBit::kVertexOrIndex};
-
-		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
-
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get());
-	}
-
 	// Submit the loading task
 	if(async)
 	{
-		ResourceManager::getSingleton().getAsyncLoader().submitTask(task.get());
 		LoadTask* pTask;
 		task.moveAndReset(pTask);
+		AsyncLoader::getSingleton().submitTask(pTask, AsyncLoaderPriority::kMedium);
 	}
 	else
 	{
@@ -241,7 +209,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 {
 	GrManager& gr = GrManager::getSingleton();
-	TransferGpuAllocator& transferAlloc = ResourceManager::getSingleton().getTransferGpuAllocator();
+	TransferGpuAllocator& transferAlloc = TransferGpuAllocator::getSingleton();
 
 	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1 + 3)> handles;
 	U32 handleCount = 0;
@@ -344,14 +312,15 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 				outMeshletGeom.m_firstPrimitive =
 					lod.m_meshletIndices.getOffset() / getFormatInfo(kMeshletPrimitiveFormat).m_texelSize + inMeshlet.m_firstPrimitive;
-				outMeshletGeom.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) | inMeshlet.m_vertexCount;
+				outMeshletGeom.m_primitiveCount = inMeshlet.m_primitiveCount;
+				outMeshletGeom.m_vertexCount = inMeshlet.m_vertexCount;
 				outMeshletGeom.m_positionTranslation = m_positionsTranslation;
 				outMeshletGeom.m_positionScale = m_positionsScale;
 
 				outMeshletBoundingVolume.m_aabbMin = inMeshlet.m_boundingVolume.m_aabbMin;
 				outMeshletBoundingVolume.m_aabbMax = inMeshlet.m_boundingVolume.m_aabbMax;
 				outMeshletBoundingVolume.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm =
-					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)));
+					Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)).packSnorm4x8();
 				outMeshletBoundingVolume.m_coneApex = inMeshlet.m_coneApex;
 				outMeshletBoundingVolume.m_sphereRadius =
 					((outMeshletBoundingVolume.m_aabbMin + outMeshletBoundingVolume.m_aabbMax) / 2.0f - outMeshletBoundingVolume.m_aabbMax).length();
@@ -391,8 +360,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
 			{
 				Bool addBarrier;
-				const BufferView scratchBuff = ResourceManager::getSingleton().getAccelerationStructureScratchAllocator().allocate(
-					submesh.m_blas[lodIdx]->getBuildScratchBufferSize(), addBarrier);
+				const BufferView scratchBuff =
+					AccelerationStructureScratchAllocator::getSingleton().allocate(submesh.m_blas[lodIdx]->getBuildScratchBufferSize(), addBarrier);
 
 				if(addBarrier)
 				{
@@ -437,6 +406,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	{
 		transferAlloc.release(handles[i], fence);
 	}
+
+	m_loadedLodCount.store(m_lods.getSize());
 
 	return Error::kNone;
 }

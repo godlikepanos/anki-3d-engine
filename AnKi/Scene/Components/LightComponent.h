@@ -15,20 +15,19 @@ namespace anki {
 // Forward
 class Frustum;
 
-/// @addtogroup scene
-/// @{
-
 enum class LightComponentType : U8
 {
 	kPoint,
 	kSpot,
-	kDirectional, ///< Basically the sun.
+	kDirectional, // Basically the sun.
 
 	kCount,
 	kFirst = 0
 };
 
-/// Light component. Contains all the info of lights.
+inline constexpr Array<const Char*, U32(LightComponentType::kCount)> kLightComponentTypeNames = {"Point", "Spot", "Directional"};
+
+// Light component. Contains all the info of lights.
 class LightComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(LightComponent)
@@ -58,7 +57,7 @@ public:
 
 	F32 getLightPower() const
 	{
-		return m_diffColor.xyz().dot(Vec3(0.30f, 0.59f, 0.11f));
+		return m_diffColor.xyz.dot(Vec3(0.30f, 0.59f, 0.11f));
 	}
 
 	void setRadius(F32 x)
@@ -121,12 +120,12 @@ public:
 
 	Vec3 getDirection() const
 	{
-		return -m_worldTransform.getRotation().getZAxis().xyz();
+		return -m_worldTransform.getRotation().getZAxis().xyz;
 	}
 
 	Vec3 getWorldPosition() const
 	{
-		return m_worldTransform.getOrigin().xyz();
+		return m_worldTransform.getOrigin().xyz;
 	}
 
 	const Mat4& getSpotLightViewProjectionMatrix() const
@@ -141,29 +140,34 @@ public:
 		return m_spot.m_viewMat;
 	}
 
-	/// Set the direction of the directional light by setting the date and hour.
+	// Set the direction of the directional light by setting the date and hour.
 	void setDirectionFromTimeOfDay(I32 month, I32 day, F32 hour)
 	{
-		m_dir.m_month = month;
-		m_dir.m_day = day;
-		m_dir.m_hour = hour;
+		ANKI_EXPECT(month >= 0 && month < 12);
+		ANKI_EXPECT(day >= 0 && day < 31);
+		ANKI_EXPECT(hour >= 0.0f && hour <= 24.0f);
+		m_dir.m_month = clamp(month, 0, 11);
+		m_dir.m_day = clamp(day, 0, 30);
+		m_dir.m_hour = clamp(hour, 0.0f, 24.0f);
 		m_shapeDirty = true;
 	}
 
-	/// Calculate some matrices for each cascade. For dir lights.
-	/// @param cameraFrustum Who is looking at the light.
-	/// @param cascadeDistances The distances of the cascades.
-	/// @param cascadeProjMats View projection matrices for each cascade.
-	/// @param cascadeViewMats View matrices for each cascade. Optional.
+	// Get the fields which might or might not have come from the direction of the light
+	void getTimeOfDay(I32& month, I32& day, F32& hour) const
+	{
+		month = m_dir.m_month;
+		day = m_dir.m_day;
+		hour = m_dir.m_hour;
+	}
+
+	// Calculate some matrices for each cascade. For dir lights.
+	// cameraFrustum Who is looking at the light.
+	// cascadeDistances The distances of the cascades.
+	// cascadeProjMats View projection matrices for each cascade.
+	// cascadeViewMats View matrices for each cascade. Optional.
 	void computeCascadeFrustums(const Frustum& cameraFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeProjMats,
 								WeakArray<Mat3x4> cascadeViewMats = {},
 								WeakArray<Array<F32, U32(FrustumPlaneType::kCount)>> cascadePlanes = {}) const;
-
-	U32 getUuid() const
-	{
-		ANKI_ASSERT(m_uuid);
-		return m_uuid;
-	}
 
 	ANKI_INTERNAL void setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports);
 
@@ -209,8 +213,6 @@ private:
 
 	Array<Vec4, 6> m_shadowAtlasUvViewports;
 
-	U32 m_uuid = 0;
-
 	LightComponentType m_type;
 
 	U8 m_shadow : 1 = false;
@@ -219,7 +221,8 @@ private:
 	U8 m_shadowAtlasUvViewportCount : 3 = 0;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
-/// @}
 
 } // end namespace anki

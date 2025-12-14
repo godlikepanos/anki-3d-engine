@@ -24,14 +24,14 @@ Error TemporalUpscaler::init()
 		return Error::kNone;
 	}
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_dlss)
+	if(GrManager::getSingleton().getDeviceCapabilities().m_dlss && g_cvarRenderDlss)
 	{
 
 		GrUpscalerInitInfo inf;
 		inf.m_sourceTextureResolution = getRenderer().getInternalResolution();
 		inf.m_targetTextureResolution = getRenderer().getPostProcessResolution();
 		inf.m_upscalerType = GrUpscalerType::kDlss2;
-		inf.m_qualityMode = GrUpscalerQualityMode(g_dlssQualityCVar - 1);
+		inf.m_qualityMode = GrUpscalerQualityMode(U32(g_cvarRenderDlssQuality));
 
 		m_grUpscaler = GrManager::getSingleton().newGrUpscaler(inf);
 	}
@@ -42,8 +42,8 @@ Error TemporalUpscaler::init()
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Blit.ankiprogbin", m_blitProg, m_blitGrProg));
 	}
 
-	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getPostProcessResolution().x(),
-															 getRenderer().getPostProcessResolution().y(), getRenderer().getHdrFormat(), "Upscaled");
+	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
+															 getRenderer().getHdrFormat(), "Upscaled");
 	m_rtDesc.bake();
 
 	return Error::kNone;
@@ -78,7 +78,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 			const Bool reset = getRenderer().getFrameCount() == 0;
 			const Vec2 mvScale = srcRes; // UV space to Pixel space factor
 			// In [-texSize / 2, texSize / 2] -> sub-pixel space {-0.5, 0.5}
-			const Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy() * srcRes * 0.5f;
+			const Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy * srcRes * 0.5f;
 
 			const TextureView srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt(), TextureSubresourceDesc::firstSurface());
 			const TextureView motionVectorsView =
@@ -94,7 +94,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		const Bool preferCompute = g_preferComputeCVar;
+		const Bool preferCompute = g_cvarRenderPreferCompute;
 
 		TextureUsageBit readUsage;
 		TextureUsageBit writeUsage;
@@ -133,13 +133,13 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			const Bool preferCompute = g_preferComputeCVar;
+			const Bool preferCompute = g_cvarRenderPreferCompute;
 
 			if(preferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 			}
 			else
 			{

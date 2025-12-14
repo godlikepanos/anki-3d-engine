@@ -20,7 +20,7 @@
 constexpr U32 kThreadgroupSize = U32(THREDGROUP_SIZE_SQRT) * U32(THREDGROUP_SIZE_SQRT);
 
 SamplerState g_nearestAnyClampSampler : register(s0);
-TextureCube<RVec4> g_lightShadingTexCube : register(t0);
+TextureCube<Vec4> g_lightShadingTexCube : register(t0);
 
 #if SECOND_BOUNCE == 1
 TextureCube<Vec4> g_gbufferTex[3u] : register(t1);
@@ -39,7 +39,7 @@ ANKI_FAST_CONSTANTS(Constants, g_consts)
 #else
 struct BufferOut
 {
-	RVec4 m_val[6u];
+	Vec4 m_val[6u];
 };
 
 RWStructuredBuffer<BufferOut> g_irradianceDisceResults : register(u0);
@@ -49,7 +49,7 @@ constexpr U32 kMinWaveSize = 8u;
 groupshared Vec3 s_integrationResults[6u][kThreadgroupSize / kMinWaveSize]; // In cube coords
 groupshared U32 s_waveIndexInsideThreadGroup;
 
-RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
+Vec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 {
 	const Vec2 uv = (Vec2(svGroupThreadId.x, svGroupThreadId.y) + 0.5) / F32(THREDGROUP_SIZE_SQRT);
 	const Vec3 cubeUvw = getCubemapDirection(uv, face);
@@ -77,9 +77,9 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 		const Vec3 r = getCubemapDirection(faceUv, f) * Vec3(1.0, 1.0, -1.0);
 
 		// Compute integral part
-		const RF32 lambert = max(0.0, dot(r, diceDir));
-		const RVec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
-		const RVec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(uvToNdc(faceUv), threadgroupSizeSqrtf);
+		const F32 lambert = max(0.0, dot(r, diceDir));
+		const Vec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
+		const Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(uvToNdc(faceUv), threadgroupSizeSqrtf);
 
 		// Store
 		resultFaces[f] = irradiance;
@@ -125,7 +125,7 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 		const Vec3 r = getCubemapDirection(faceUv, f) * Vec3(1.0, 1.0, -1.0);
 
 		// Compute integral part
-		const RF32 lambert = max(0.0, dot(r, diceDir));
+		const F32 lambert = max(0.0, dot(r, diceDir));
 
 		// Read the gbuffer
 		const Vec3 gbufferUv = getCubemapDirection(faceUv, f);
@@ -135,14 +135,14 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 								g_gbufferTex[2u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0), gbuffer);
 
 		// Sample irradiance
-		RVec3 firstBounceIrradiance =
-			sampleAmbientDice<RF32>(s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0], s_integrationResults[3][0],
-									s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
+		Vec3 firstBounceIrradiance =
+			sampleAmbientDice<F32>(s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0], s_integrationResults[3][0],
+								   s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce
-		const RVec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
-		const RVec3 irradiance = (firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(uvToNdc(faceUv), threadgroupSizeSqrtf);
+		const Vec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
+		const Vec3 irradiance = (firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(uvToNdc(faceUv), threadgroupSizeSqrtf);
 
 		// Store
 		resultFaces[f] = irradiance;
@@ -185,10 +185,10 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 		const U32 f = svGroupIndex;
 
 #if DEBUG_MODE == 0
-		RVec3 irradiance = s_integrationResults[f][0];
-		const RVec3 toStoreValue = irradiance;
+		Vec3 irradiance = s_integrationResults[f][0];
+		const Vec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1
-		const RVec3 toStoreValue = colorPerCubeFace(f);
+		const Vec3 toStoreValue = colorPerCubeFace(f);
 #else
 		UVec3 volumeSize;
 		g_irradianceVolume.GetDimensions(volumeSize.x, volumeSize.y, volumeSize.z);
@@ -196,8 +196,8 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 		const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
 		const U32 cellIdx =
 			g_consts.m_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + g_consts.m_volumeTexel.y * subvolumeSize.x + g_consts.m_volumeTexel.x;
-		const RF32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
-		const RVec3 toStoreValue = heatmap(headmapFactor);
+		const F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
+		const Vec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
 #if STORE_LOCATION == 0

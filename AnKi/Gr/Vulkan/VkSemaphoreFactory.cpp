@@ -4,16 +4,14 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
+#include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
-MicroSemaphore::MicroSemaphore(MicroFencePtr fence, Bool isTimeline)
-	: m_fence(fence)
-	, m_isTimeline(isTimeline)
+MicroSemaphore::MicroSemaphore(Bool isTimeline)
+	: m_isTimeline(isTimeline)
 {
-	ANKI_ASSERT(fence.isCreated());
-
 	VkSemaphoreTypeCreateInfo typeCreateInfo = {};
 	typeCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
 	typeCreateInfo.semaphoreType = (m_isTimeline) ? VK_SEMAPHORE_TYPE_TIMELINE : VK_SEMAPHORE_TYPE_BINARY;
@@ -35,11 +33,23 @@ MicroSemaphore::~MicroSemaphore()
 	}
 }
 
+void MicroSemaphore::releaseInternal()
+{
+	if(m_isTimeline)
+	{
+		SemaphoreFactory::getSingleton().m_timelineRecycler.recycle(this);
+	}
+	else
+	{
+		SemaphoreFactory::getSingleton().m_binaryRecycler.recycle(this);
+	}
+}
+
 Bool MicroSemaphore::clientWait(Second seconds)
 {
 	ANKI_ASSERT(m_isTimeline);
 
-	seconds = min<Second>(seconds, g_gpuTimeoutCVar);
+	seconds = min<Second>(seconds, g_cvarGrGpuTimeout);
 
 	VkSemaphoreWaitInfo waitInfo = {};
 	waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
@@ -57,39 +67,25 @@ Bool MicroSemaphore::clientWait(Second seconds)
 	return res != VK_TIMEOUT;
 }
 
-void MicroSemaphorePtrDeleter::operator()(MicroSemaphore* s)
+MicroSemaphorePtr SemaphoreFactory::newInstance(Bool isTimeline, CString name)
 {
-	ANKI_ASSERT(s);
-	if(s->m_isTimeline)
-	{
-		SemaphoreFactory::getSingleton().m_timelineRecycler.recycle(s);
-	}
-	else
-	{
-		SemaphoreFactory::getSingleton().m_binaryRecycler.recycle(s);
-	}
-}
-
-MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool isTimeline)
-{
-	ANKI_ASSERT(fence);
-
 	MicroSemaphore* out = (isTimeline) ? m_timelineRecycler.findToReuse() : m_binaryRecycler.findToReuse();
 
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = anki::newInstance<MicroSemaphore>(GrMemoryPool::getSingleton(), fence, isTimeline);
+		out = anki::newInstance<MicroSemaphore>(GrMemoryPool::getSingleton(), isTimeline);
 	}
 	else
 	{
-		out->m_fence = fence;
 		ANKI_ASSERT(out->m_isTimeline == isTimeline);
 		if(out->m_isTimeline)
 		{
 			ANKI_ASSERT(out->m_timelineValue.getNonAtomically() > 0 && "Recycled without being signaled?");
 		}
 	}
+
+	getGrManagerImpl().trySetVulkanHandleName(name, VK_OBJECT_TYPE_SEMAPHORE, out->m_handle);
 
 	ANKI_ASSERT(out->m_refcount.getNonAtomically() == 0);
 	return MicroSemaphorePtr(out);

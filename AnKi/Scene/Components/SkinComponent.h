@@ -15,27 +15,27 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// @memberof SkinComponent
+// Passed to SkinComponent::playAnimation
 class AnimationPlayInfo
 {
 public:
-	/// The time the animation will start after being pushed in SkinComponent::playAnimation().
+	// The time the animation will start after being pushed in SkinComponent::playAnimation()
 	Second m_startTime = 0.0;
 
-	/// Negative means infinite.
+	// Negative means infinite
 	F32 m_repeatTimes = 1.0f;
 
-	/// The time from when the animation starts until it fully replaces the animations of previous tracks.
+	// The time from when the animation starts until it fully replaces the animations of previous tracks
 	Second m_blendInTime = 0.0f;
 
-	/// The time from when the animation ends until it until it has zero influence to the animations of previous tracks.
+	// The time from when the animation ends until it until it has zero influence to the animations of previous tracks
 	Second m_blendOutTime = 0.0f;
+
+	// For example a value of 2.0 will play the animation in double speed
+	F32 m_animationSpeedScale = 1.0f;
 };
 
-/// Skin component.
+// Skin component
 class SkinComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(SkinComponent)
@@ -47,39 +47,56 @@ public:
 
 	~SkinComponent();
 
-	/// Load the skeleton resource.
-	void loadSkeletonResource(CString filename);
+	SkinComponent& setSkeletonFilename(CString filename);
+
+	CString getSkeletonFilename() const;
+
+	Bool hasSkeletonResource() const
+	{
+		return !!m_resource;
+	}
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
-	ConstWeakArray<Mat3x4> getBoneTransforms() const
+	Bool isValid() const
 	{
+		return m_resource.isCreated();
+	}
+
+	ANKI_INTERNAL ConstWeakArray<Mat3x4> getBoneTransforms() const
+	{
+		ANKI_ASSERT(isValid());
 		return m_boneTrfs[m_crntBoneTrfs];
 	}
 
-	ConstWeakArray<Mat3x4> getPreviousFrameBoneTransforms() const
+	ANKI_INTERNAL ConstWeakArray<Mat3x4> getPreviousFrameBoneTransforms() const
 	{
+		ANKI_ASSERT(isValid());
 		return m_boneTrfs[m_prevBoneTrfs];
 	}
 
-	const SkeletonResourcePtr& getSkeleronResource() const
+	ANKI_INTERNAL const SkeletonResourcePtr& getSkeleronResource() const
 	{
-		return m_skeleton;
+		ANKI_ASSERT(isValid());
+		return m_resource;
 	}
 
-	const Aabb& getBoneBoundingVolumeLocalSpace() const
+	ANKI_INTERNAL const Aabb& getBoneBoundingVolumeLocalSpace() const
 	{
+		ANKI_ASSERT(isValid());
 		return m_boneBoundingVolume;
 	}
 
-	Bool isEnabled() const
+	ANKI_INTERNAL U32 getBoneTransformsGpuSceneOffset() const
 	{
-		return m_skeleton.isCreated();
+		ANKI_ASSERT(isValid());
+		return m_gpuSceneBoneTransforms.getOffset();
 	}
 
-	U32 getBoneTransformsGpuSceneOffset() const
+	ANKI_INTERNAL Bool gpuSceneReallocationsThisFrame() const
 	{
-		return m_gpuSceneBoneTransforms.getOffset();
+		ANKI_ASSERT(isValid());
+		return m_boneTransformsReallocatedThisFrame;
 	}
 
 private:
@@ -92,6 +109,7 @@ private:
 		Second m_blendInTime = 0.0;
 		Second m_blendOutTime = 0.0f;
 		F32 m_repeatTimes = 1.0f;
+		F32 m_animationSpeedScale = 1.0f;
 	};
 
 	class Trf
@@ -102,7 +120,7 @@ private:
 		F32 m_scale;
 	};
 
-	SkeletonResourcePtr m_skeleton;
+	SkeletonResourcePtr m_resource;
 	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
 	SceneDynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
@@ -111,14 +129,17 @@ private:
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
 
-	Bool m_forceFullUpdate = true;
+	Bool m_updatedLastFrame : 1 = true;
+	Bool m_resourceDirty : 1 = true;
+	Bool m_boneTransformsReallocatedThisFrame : 1 = false;
 
 	GpuSceneBufferAllocation m_gpuSceneBoneTransforms;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
+	Error serialize(SceneSerializer& serializer) override;
+
 	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend);
 };
-/// @}
 
 } // end namespace anki

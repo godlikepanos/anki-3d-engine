@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include <AnKi/Gr/Vulkan/VkFenceFactory.h>
+#include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
+#include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
 #include <AnKi/Util/Ptr.h>
 
 namespace anki {
@@ -23,7 +24,9 @@ class MicroSwapchain
 public:
 	VkSwapchainKHR m_swapchain = {};
 
-	GrDynamicArray<TexturePtr> m_textures;
+	GrDynamicArray<TextureInternalPtr> m_textures;
+	GrDynamicArray<MicroSemaphorePtr> m_acquireSemaphores;
+	GrDynamicArray<MicroSemaphorePtr> m_renderSemaphores; ///< Signaled by the operation that renders to a presentable image.
 
 	MicroSwapchain();
 
@@ -34,9 +37,12 @@ public:
 		m_refcount.fetchAdd(1);
 	}
 
-	I32 release() const
+	void release()
 	{
-		return m_refcount.fetchSub(1);
+		if(m_refcount.fetchSub(1) == 1)
+		{
+			releaseInternal();
+		}
 	}
 
 	I32 getRefcount() const
@@ -44,43 +50,20 @@ public:
 		return m_refcount.load();
 	}
 
-	void setFence(MicroFence* fence)
-	{
-		m_fence.reset(fence);
-	}
-
-	MicroFence* getFence() const
-	{
-		return m_fence.tryGet();
-	}
-
-	/// Interface method.
-	void onFenceDone()
-	{
-		// Do nothing
-	}
-
 private:
-	MicroFencePtr m_fence;
 	mutable Atomic<I32> m_refcount = {0};
 
 	Error initInternal();
-};
 
-/// Deleter for MicroSwapchainPtr smart pointer.
-class MicroSwapchainPtrDeleter
-{
-public:
-	void operator()(MicroSwapchain* x);
+	void releaseInternal();
 };
 
 /// MicroSwapchain smart pointer.
-using MicroSwapchainPtr = IntrusivePtr<MicroSwapchain, MicroSwapchainPtrDeleter>;
+using MicroSwapchainPtr = IntrusiveNoDelPtr<MicroSwapchain>;
 
 /// Swapchain factory.
 class SwapchainFactory : public MakeSingleton<SwapchainFactory>
 {
-	friend class MicroSwapchainPtrDeleter;
 	friend class MicroSwapchain;
 
 public:
@@ -101,11 +84,5 @@ private:
 	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };
 /// @}
-
-inline void MicroSwapchainPtrDeleter::operator()(MicroSwapchain* s)
-{
-	ANKI_ASSERT(s);
-	SwapchainFactory::getSingleton().m_recycler.recycle(s);
-}
 
 } // end namespace anki

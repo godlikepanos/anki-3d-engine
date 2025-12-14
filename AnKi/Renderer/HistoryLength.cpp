@@ -14,10 +14,10 @@ Error HistoryLength::init()
 	for(U32 i = 0; i < 2; ++i)
 	{
 		TextureUsageBit texUsage = TextureUsageBit::kAllSrv;
-		texUsage |= (g_preferComputeCVar) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
+		texUsage |= (g_cvarRenderPreferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		const TextureInitInfo init =
-			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 													   Format::kR8_Unorm, texUsage, generateTempPassName("HistoryLen #%d", i));
 
 		m_historyLenTextures[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
@@ -53,7 +53,7 @@ void HistoryLength::populateRenderGraph(RenderingContext& ctx)
 	RenderPassBase* pass;
 	TextureUsageBit readTexUsage;
 	TextureUsageBit writeTexUsage;
-	if(g_preferComputeCVar)
+	if(g_cvarRenderPreferCompute)
 	{
 		pass = &rgraph.newNonGraphicsRenderPass("History length");
 		readTexUsage = TextureUsageBit::kSrvCompute;
@@ -89,14 +89,14 @@ void HistoryLength::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-		if(g_preferComputeCVar)
+		if(g_cvarRenderPreferCompute)
 		{
 			rgraphCtx.bindUav(0, 0, current);
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		}
 		else
 		{
-			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 			drawQuad(cmdb);
 		}
 	});

@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki mutator SSR_SAMPLE_GBUFFER 0 1
 #pragma anki mutator INDIRECT_DIFFUSE_CLIPMAPS 0 1
 
@@ -12,12 +10,12 @@
 #pragma anki technique Ssr comp
 #pragma anki technique ReflectionProbeFallback comp mutators
 #pragma anki technique RtMaterialFetch rgen mutators INDIRECT_DIFFUSE_CLIPMAPS
+#pragma anki technique RtMaterialFetchInlineRt comp mutators INDIRECT_DIFFUSE_CLIPMAPS
 #pragma anki technique SpatialDenoise comp mutators
 #pragma anki technique TemporalDenoise comp mutators
 #pragma anki technique BilateralDenoiseVertical comp mutators
 #pragma anki technique BilateralDenoiseHorizontal comp mutators
 
-#include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
@@ -27,6 +25,7 @@
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
 #include <AnKi/Shaders/TemporalAA.hlsl>
+#include <AnKi/Shaders/Sky.hlsl>
 
 // Config & debug
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
@@ -108,8 +107,8 @@ groupshared U32 g_minRoughness;
 groupshared U32 g_maxRoughness;
 groupshared U32 g_allSky;
 
-[NumThreads(TILE_SIZE / 2, TILE_SIZE, 1)] void main(U32 svGroupIndex : SV_GroupIndex, UVec2 svDispatchThreadId : SV_DispatchThreadID,
-													UVec2 svGroupId : SV_GroupID)
+[numthreads(TILE_SIZE / 2, TILE_SIZE, 1)] void main(U32 svGroupIndex : SV_GROUPINDEX, UVec2 svDispatchThreadId : SV_DISPATCHTHREADID,
+													UVec2 svGroupId : SV_GROUPID)
 {
 	if(svDispatchThreadId.x == 0 && svDispatchThreadId.y == 0)
 	{
@@ -194,6 +193,8 @@ StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t6);
 StructuredBuffer<Cluster> g_clusters : register(t7);
 Texture2D<Vec4> g_shadowAtlasTex : register(t8);
 Texture2D<UVec4> g_classTileMap : register(t9);
+StructuredBuffer<PointLight> g_pointLights : register(t10);
+StructuredBuffer<SpotLight> g_spotLights : register(t11);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
@@ -220,22 +221,25 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 
 	Vec3 outColor = gbuffer.m_emission;
 
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
+
+	// GI
 #	if INDIRECT_DIFFUSE_CLIPMAPS
 	const Vec3 irradiance =
 		sampleClipmapIrradiance(worldPos, gbuffer.m_normal, g_globalRendererConstants.m_cameraPosition,
 								g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
 	outColor += irradiance * gbuffer.m_diffuse;
 #	else
-	// GI
-	const Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
 	outColor += sampleGiProbes<F32>(cluster, g_giProbes, gbuffer.m_normal, worldPos.xyz, g_trilinearClampSampler) * gbuffer.m_diffuse;
 #	endif
 
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+
 	// Dir light
 	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
-	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
+	if(dirLight.m_active)
 	{
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 		F32 shadowFactor;
 		if(shadowCascadeCount >> 1u)
 		{
@@ -252,8 +256,33 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 
 		const Vec3 l = -dirLight.m_direction;
 		const F32 lambert = max(0.0, dot(l, gbuffer.m_normal));
-		const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
 		outColor += diffC * dirLight.m_diffuseColor * lambert * shadowFactor;
+	}
+
+	// Point lights
+	U32 idx;
+	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
+	{
+		const PointLight light = g_pointLights[idx];
+
+		const Vec3 frag2Light = light.m_position - worldPos;
+		const F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
+
+		outColor += diffC * light.m_diffuseColor * (attenuation * lambert);
+	}
+
+	// Spot lights
+	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
+	{
+		const SpotLight light = g_spotLights[idx];
+
+		const Vec3 frag2Light = light.m_position - worldPos;
+		F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+		attenuation *= computeSpotFactor(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction);
+		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
+
+		outColor += diffC * light.m_diffuseColor * (attenuation * lambert);
 	}
 
 	return outColor;
@@ -281,7 +310,7 @@ Bool doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 
 	F32 hitDepth;
 	{
 		RayMarchingConfig config = (RayMarchingConfig)0;
-		config.m_maxIterations = g_consts.m_ssrStepIncrement;
+		config.m_maxIterations = g_consts.m_ssrMaxIterations;
 		config.m_depthTextureLod = 8.0; // Use the max LOD for ray marching
 		config.m_stepIncrement = g_consts.m_ssrStepIncrement;
 
@@ -353,8 +382,8 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 }
 
 // All calculations in view space
-[NumThreads(NUM_THREADS_SQRT, NUM_THREADS_SQRT, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID,
-															  UVec2 svGroupThreadId : SV_GroupThreadID, U32 svGroupIndex : SV_GroupIndex)
+[numthreads(NUM_THREADS_SQRT, NUM_THREADS_SQRT, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID,
+															  UVec2 svGroupThreadId : SV_GROUPTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	UVec2 halfViewportSize;
 	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
@@ -577,7 +606,7 @@ SamplerState g_trilinearClampSampler : register(s0);
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 
-[NumThreads(64, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(64, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	if(svDispatchThreadId.x >= g_pixelsFailedSsrCount[0])
 	{
@@ -608,15 +637,7 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 	if(probeColor.x < 0.0)
 	{
 		// No probe, sample sky
-		if(g_globalRendererConstants.m_sky.m_type == 0)
-		{
-			probeColor = g_globalRendererConstants.m_sky.m_solidColor;
-		}
-		else
-		{
-			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(reflDir) : octahedronEncode(reflDir);
-			probeColor = g_envMap.SampleLevel(g_trilinearClampSampler, uv, 0.0).xyz;
-		}
+		probeColor = sampleSkyCheap<F32>(g_globalRendererConstants.m_sky, reflDir, g_trilinearClampSampler);
 	}
 
 	// Write out
@@ -630,9 +651,12 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 #endif
 
 // ===========================================================================
-// RayGen                                                                    =
+// RtMaterialFetch                                                           =
 // ===========================================================================
-#if ANKI_RAY_GEN_SHADER
+#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) || NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetchInlineRt)
+
+#	define INCLUDE_ALL
+#	include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 struct Consts
 {
@@ -640,6 +664,8 @@ struct Consts
 	U32 m_giProbeCount;
 	F32 m_padding1;
 	F32 m_padding2;
+
+	Vec4 m_padding[2];
 };
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
@@ -672,12 +698,26 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	}
 }
 
+#	if ANKI_COMPUTE_SHADER
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+#	else
 [shader("raygeneration")] void main()
+#	endif
 {
+#	if ANKI_COMPUTE_SHADER
+	const U32 gtid = svDispatchThreadId.x;
+	if(gtid >= getStructuredBufferElementCount(g_pixelsFailedSsr))
+	{
+		return;
+	}
+#	else
+	const U32 gtid = DispatchRaysIndex().x;
+#	endif
+
 	UVec2 halfViewportSize;
 	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
 
-	const PixelFailedSsr pixelFailedSsr = g_pixelsFailedSsr[DispatchRaysIndex().x];
+	const PixelFailedSsr pixelFailedSsr = SBUFF(g_pixelsFailedSsr, gtid);
 	const UVec2 realCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
 	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
 	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
@@ -704,12 +744,17 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	GBufferLight<F16> gbuffer;
 	F32 rayT;
 	Bool unused;
+#	if ANKI_COMPUTE_SHADER
+	const Bool hasHitSky =
+		!materialRayTraceInlineRt(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT, unused);
+#	else
 	const Bool hasHitSky = !materialRayTrace(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT, unused);
+#	endif
 
 	const Vec3 hitPos = worldPos + reflDir * rayT;
 
 	// Do simple light shading
-	HVec3 radiance = directLighting(gbuffer, hitPos, hasHitSky, kTryShadowmapFirst, g_consts.m_maxRayT);
+	HVec3 radiance = directLighting(gbuffer, hitPos, hasHitSky, kTryShadowmapFirst, g_consts.m_maxRayT, false);
 
 	if(!hasHitSky)
 	{
@@ -734,7 +779,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	// Store depth in reverse for better precision
 	g_hitPosAndDepthTex[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
 }
-#endif // ANKI_RAY_GEN_SHADER
+#endif
 
 // ===========================================================================
 // SpatialDenoise                                                            =
@@ -779,7 +824,7 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 	sumWeight += weight;
 }
 
-[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID, UVec2 svGroupThreadId : SV_GROUPTHREADID,
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID, UVec2 svGroupThreadId : SV_GROUPTHREADID,
 								U32 svGroupIndex : SV_GROUPINDEX)
 {
 	UVec2 viewportSize;
@@ -1057,7 +1102,7 @@ F16 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 #	endif
 }
 
-[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 outSize;
 	g_outTex.GetDimensions(outSize.x, outSize.y);
@@ -1130,7 +1175,7 @@ Texture2D<UVec4> g_classTileMap : register(t1);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
-[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 outSize;
 	g_outTex.GetDimensions(outSize.x, outSize.y);

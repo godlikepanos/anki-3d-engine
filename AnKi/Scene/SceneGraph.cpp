@@ -14,6 +14,7 @@
 #include <AnKi/Core/App.h>
 #include <AnKi/Scene/StatsUiNode.h>
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
+#include <AnKi/Scene/EditorUiNode.h>
 
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
@@ -23,9 +24,8 @@
 #include <AnKi/Scene/Components/JointComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
-#include <AnKi/Scene/Components/ModelComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
-#include <AnKi/Scene/Components/ParticleEmitterComponent.h>
+#include <AnKi/Scene/Components/ParticleEmitter2Component.h>
 #include <AnKi/Scene/Components/PlayerControllerComponent.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 #include <AnKi/Scene/Components/ScriptComponent.h>
@@ -33,28 +33,54 @@
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Scene/Components/TriggerComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Scene/Components/MeshComponent.h>
+#include <AnKi/Scene/Components/MaterialComponent.h>
 
 namespace anki {
 
-static StatCounter g_sceneUpdateTimeStatVar(StatCategory::kTime, "All scene update",
-											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(SceneUpdateTime, StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(SceneComponentsUpdated, StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(SceneNodesUpdated, StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame)
 
 constexpr U32 kUpdateNodeBatchSize = 10;
 
 class SceneGraph::UpdateSceneNodesCtx
 {
 public:
+	class PerThread
+	{
+	public:
+		DynamicArray<SceneNode*, MemoryPoolPtrWrapper<StackMemoryPool>> m_nodesForDeletion;
+
+		LightComponent* m_dirLightComponent = nullptr;
+		SkyboxComponent* m_skyboxComponent = nullptr;
+
+		Vec3 m_sceneMin = Vec3(kMaxF32);
+		Vec3 m_sceneMax = Vec3(kMinF32);
+
+		Bool m_multipleDirLights = false;
+		Bool m_multipleSkyboxes = false;
+
+		PerThread()
+			: m_nodesForDeletion(&SceneGraph::getSingleton().m_framePool)
+		{
+		}
+	};
+
 	IntrusiveList<SceneNode>::Iterator m_crntNode;
 	SpinLock m_crntNodeLock;
 
-	Second m_prevUpdateTime;
-	Second m_crntTime;
+	Second m_prevUpdateTime = 0.0;
+	Second m_crntTime = 0.0;
 
-	DynamicArray<SceneNode*, MemoryPoolPtrWrapper<StackMemoryPool>> m_nodesForDeletion;
+	DynamicArray<PerThread, MemoryPoolPtrWrapper<StackMemoryPool>> m_perThread;
 
-	UpdateSceneNodesCtx()
-		: m_nodesForDeletion(&SceneGraph::getSingleton().m_framePool)
+	Bool m_forceUpdateSceneBounds = false;
+
+	UpdateSceneNodesCtx(U32 threadCount)
+		: m_perThread(&SceneGraph::getSingleton().m_framePool)
 	{
+		m_perThread.resize(threadCount);
 	}
 };
 
@@ -86,25 +112,29 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 
 	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, "SceneGraphFramePool");
 
+#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
+#include <AnKi/Scene/GpuSceneArrays.def.h>
+
 	// Init the default main camera
-	m_defaultMainCam = newSceneNode<SceneNode>("mainCamera");
+	m_defaultMainCam = newSceneNode<SceneNode>("_MainCamera");
 	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
-#include <AnKi/Scene/GpuSceneArrays.def.h>
-
 	RenderStateBucketContainer::allocateSingleton();
 
-	// Construct a few common nodex
-	if(g_displayStatsCVar > 0)
+	// Construct a few common nodes
+	if(g_cvarCoreDisplayStats > 0)
 	{
 		StatsUiNode* statsNode = newSceneNode<StatsUiNode>("_StatsUi");
-		statsNode->setFpsOnly(g_displayStatsCVar == 1);
+		statsNode->setFpsOnly(g_cvarCoreDisplayStats == 1);
 	}
 
 	newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
+
+	EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
+	editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
+	m_editorUi = editorNode;
 
 	return Error::kNone;
 }
@@ -154,9 +184,9 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		SceneNode* node = m_nodesForRegistration.popFront();
 
 		// Add to dict if it has a name
-		if(node->getName())
+		if(node->getName() != "Unnamed")
 		{
-			if(tryFindSceneNode(node->getName()))
+			if(m_nodesDict.find(node->getName()) != m_nodesDict.getEnd())
 			{
 				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node->getName().cstr());
 			}
@@ -171,6 +201,36 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		++m_nodesCount;
 	}
 
+	// Re-index renamed nodes
+	for(auto& pair : m_nodesRenamed)
+	{
+		SceneNode& node = *pair.first;
+		CString oldName = pair.second;
+
+		auto it = m_nodesDict.find(oldName);
+		if(it != m_nodesDict.getEnd())
+		{
+			m_nodesDict.erase(it);
+		}
+		else
+		{
+			ANKI_ASSERT(oldName == "Unnamed" && "Didn't found the SceneNode and its name wasn't unnamed");
+		}
+
+		if(node.getName() != "Unnamed")
+		{
+			if(m_nodesDict.find(node.getName()) != m_nodesDict.getEnd())
+			{
+				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node.getName().cstr());
+			}
+			else
+			{
+				m_nodesDict.emplace(node.getName(), &node);
+			}
+		}
+	}
+	m_nodesRenamed.destroy();
+
 	// Update physics
 	PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
 
@@ -180,69 +240,163 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		CoreThreadJobManager::getSingleton().dispatchTask([]([[maybe_unused]] U32 tid) {});
 	}
 
+	// Update events
+	{
+		ANKI_TRACE_SCOPED_EVENT(EventsUpdate);
+		m_events.updateAllEvents(prevUpdateTime, crntTime);
+	}
+
 	// Update events and scene nodes
-	UpdateSceneNodesCtx updateCtx;
+	UpdateSceneNodesCtx updateCtx(CoreThreadJobManager::getSingleton().getThreadCount());
 	{
 		ANKI_TRACE_SCOPED_EVENT(SceneNodesUpdate);
-		m_events.updateAllEvents(prevUpdateTime, crntTime);
-
 		updateCtx.m_crntNode = m_nodes.getBegin();
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
+		updateCtx.m_forceUpdateSceneBounds = (m_frame % kForceSetSceneBoundsFrameCount) == 0;
 
 		for(U i = 0; i < CoreThreadJobManager::getSingleton().getThreadCount(); i++)
 		{
-			CoreThreadJobManager::getSingleton().dispatchTask([this, &updateCtx]([[maybe_unused]] U32 tid) {
-				updateNodes(updateCtx);
+			CoreThreadJobManager::getSingleton().dispatchTask([this, &updateCtx](U32 tid) {
+				updateNodes(tid, updateCtx);
 			});
 		}
 
 		CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
 	}
 
-	// Cleanup
-	for(SceneNode* node : updateCtx.m_nodesForDeletion)
+	// Update scene bounds
 	{
-		// Remove from the graph
-		m_nodes.erase(node);
-		ANKI_ASSERT(m_nodesCount > 0);
-		--m_nodesCount;
-
-		if(m_mainCam != m_defaultMainCam && m_mainCam == node)
+		Vec3 sceneMin = Vec3(kMaxF32);
+		Vec3 sceneMax = Vec3(kMinF32);
+		for(U32 tid = 0; tid < updateCtx.m_perThread.getSize(); ++tid)
 		{
-			m_mainCam = m_defaultMainCam;
+			const UpdateSceneNodesCtx::PerThread& thread = updateCtx.m_perThread[tid];
+			sceneMin = sceneMin.min(thread.m_sceneMin);
+			sceneMax = sceneMax.max(thread.m_sceneMax);
 		}
 
-		// Remove from dict
-		if(node->getName())
+		if(sceneMin.x != kMaxF32)
 		{
-			auto it = m_nodesDict.find(node->getName());
-			ANKI_ASSERT(it != m_nodesDict.getEnd());
-			if(*it == node)
+			if(updateCtx.m_forceUpdateSceneBounds)
 			{
-				m_nodesDict.erase(it);
+				m_sceneMin = sceneMin;
+				m_sceneMax = sceneMax;
+			}
+			else
+			{
+				m_sceneMin = m_sceneMin.min(sceneMin);
+				m_sceneMax = m_sceneMax.max(sceneMax);
+			}
+		}
+	}
+
+	// Set some unique components
+	{
+		m_activeDirLight = nullptr;
+		m_activeSkybox = nullptr;
+		Bool bMultipleDirLights = false;
+		Bool bMultipleSkyboxes = false;
+		for(U32 tid = 0; tid < updateCtx.m_perThread.getSize(); ++tid)
+		{
+			const UpdateSceneNodesCtx::PerThread& thread = updateCtx.m_perThread[tid];
+			bMultipleDirLights = bMultipleDirLights || thread.m_multipleDirLights;
+			bMultipleSkyboxes = bMultipleSkyboxes || thread.m_multipleSkyboxes;
+
+			if(thread.m_dirLightComponent)
+			{
+				if(m_activeDirLight)
+				{
+					bMultipleDirLights = true;
+					if(thread.m_dirLightComponent->getUuid() < m_activeDirLight->getUuid())
+					{
+						m_activeDirLight = thread.m_dirLightComponent;
+					}
+				}
+				else
+				{
+					m_activeDirLight = thread.m_dirLightComponent;
+				}
+			}
+
+			if(thread.m_skyboxComponent)
+			{
+				if(m_activeSkybox)
+				{
+					bMultipleSkyboxes = true;
+					if(thread.m_skyboxComponent->getUuid() < m_activeSkybox->getUuid())
+					{
+						m_activeSkybox = thread.m_skyboxComponent;
+					}
+				}
+				else
+				{
+					m_activeSkybox = thread.m_skyboxComponent;
+				}
 			}
 		}
 
-		deleteInstance(SceneMemoryPool::getSingleton(), node);
-	}
-	updateCtx.m_nodesForDeletion.destroy();
+		if(bMultipleDirLights)
+		{
+			ANKI_SCENE_LOGW("There are multiple dir lights in the scene. Choosing one to be active");
+		}
 
+		if(bMultipleSkyboxes)
+		{
+			ANKI_SCENE_LOGW("There are multiple skyboxes in the scene. Choosing one to be active");
+		}
+	}
+
+	// Cleanup
+	for(U32 tid = 0; tid < updateCtx.m_perThread.getSize(); ++tid)
+	{
+		const auto& thread = updateCtx.m_perThread[tid];
+
+		for(SceneNode* node : thread.m_nodesForDeletion)
+		{
+			// Remove from the graph
+			m_nodes.erase(node);
+			ANKI_ASSERT(m_nodesCount > 0);
+			--m_nodesCount;
+
+			if(m_mainCam != m_defaultMainCam && m_mainCam == node)
+			{
+				m_mainCam = m_defaultMainCam;
+			}
+
+			// Remove from dict
+			if(node->getName() != "Unnamed")
+			{
+				auto it = m_nodesDict.find(node->getName());
+				ANKI_ASSERT(it != m_nodesDict.getEnd());
+				if(*it == node)
+				{
+					m_nodesDict.erase(it);
+				}
+			}
+
+			deleteInstance(SceneMemoryPool::getSingleton(), node);
+		}
+	}
+
+	// Misc
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::getSingleton().flush();
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
-	g_sceneUpdateTimeStatVar.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
+	g_svarSceneUpdateTime.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
+	++m_frame;
 }
 
-void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
+void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 {
 	ANKI_TRACE_INC_COUNTER(SceneNodeUpdated, 1);
 
-	// Components update
-	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
-	componentUpdateInfo.m_framePool = &m_framePool;
+	UpdateSceneNodesCtx::PerThread& thread = ctx.m_perThread[tid];
 
-	Bool atLeastOneComponentUpdated = false;
+	// Components update
+	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds, m_checkForResourceUpdates);
+	componentUpdateInfo.m_framePool = &m_framePool;
+	U32 sceneComponentUpdatedCount = 0;
 	node.iterateComponents([&](SceneComponent& comp) {
 		componentUpdateInfo.m_node = &node;
 		Bool updated = false;
@@ -252,32 +406,75 @@ void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 		{
 			ANKI_TRACE_INC_COUNTER(SceneComponentUpdated, 1);
 			comp.setTimestamp(GlobalFrameIndex::getSingleton().m_value);
-			atLeastOneComponentUpdated = true;
+			++sceneComponentUpdatedCount;
 		}
-	});
 
-	// Update children
-	node.visitChildrenMaxDepth(0, [&](SceneNode& child) {
-		updateNode(prevTime, crntTime, child);
-		return true;
+		if(comp.getType() == SceneComponentType::kLight)
+		{
+			LightComponent& lc = static_cast<LightComponent&>(comp);
+			if(lc.getLightComponentType() == LightComponentType::kDirectional)
+			{
+				if(thread.m_dirLightComponent)
+				{
+					thread.m_multipleDirLights = true;
+					// Try to choose the same dir light in a deterministic way
+					if(lc.getUuid() < thread.m_dirLightComponent->getUuid())
+					{
+						ctx.m_perThread[tid].m_dirLightComponent = &lc;
+					}
+				}
+				else
+				{
+					ctx.m_perThread[tid].m_dirLightComponent = &lc;
+				}
+			}
+		}
+		else if(comp.getType() == SceneComponentType::kSkybox)
+		{
+			SkyboxComponent& skyc = static_cast<SkyboxComponent&>(comp);
+			if(thread.m_skyboxComponent)
+			{
+				thread.m_multipleSkyboxes = true;
+				// Try to choose the same skybox in a deterministic way
+				if(skyc.getUuid() < thread.m_skyboxComponent->getUuid())
+				{
+					ctx.m_perThread[tid].m_skyboxComponent = &skyc;
+				}
+			}
+			else
+			{
+				ctx.m_perThread[tid].m_skyboxComponent = &skyc;
+			}
+		}
 	});
 
 	// Frame update
 	{
-		if(atLeastOneComponentUpdated)
+		if(sceneComponentUpdatedCount)
 		{
 			node.setComponentMaxTimestamp(GlobalFrameIndex::getSingleton().m_value);
+			g_svarSceneComponentsUpdated.increment(sceneComponentUpdatedCount);
+			g_svarSceneNodesUpdated.increment(1);
 		}
 		else
 		{
 			// No components or nothing updated, don't change the timestamp
 		}
 
-		node.frameUpdate(prevTime, crntTime);
+		node.frameUpdate(ctx.m_prevUpdateTime, ctx.m_crntTime);
 	}
+
+	// Update children
+	node.visitChildrenMaxDepth(0, [&](SceneNode& child) {
+		updateNode(tid, child, ctx);
+		return FunctorContinue::kContinue;
+	});
+
+	ctx.m_perThread[tid].m_sceneMin = ctx.m_perThread[tid].m_sceneMin.min(componentUpdateInfo.m_sceneMin);
+	ctx.m_perThread[tid].m_sceneMax = ctx.m_perThread[tid].m_sceneMax.max(componentUpdateInfo.m_sceneMax);
 }
 
-void SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
+void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(SceneNodeUpdate);
 
@@ -310,7 +507,7 @@ void SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 
 				if(node.isMarkedForDeletion())
 				{
-					ctx.m_nodesForDeletion.emplaceBack(&node);
+					ctx.m_perThread[tid].m_nodesForDeletion.emplaceBack(&node);
 				}
 				else if(node.getParent() == nullptr)
 				{
@@ -328,19 +525,100 @@ void SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 		// Process nodes
 		for(U i = 0; i < batchSize; ++i)
 		{
-			updateNode(ctx.m_prevUpdateTime, ctx.m_crntTime, *batch[i]);
+			updateNode(tid, *batch[i], ctx);
 		}
 	}
 }
 
-LightComponent* SceneGraph::getDirectionalLight() const
+const SceneNode& SceneGraph::getActiveCameraNode() const
 {
-	LightComponent* out = (m_dirLights.getSize()) ? m_dirLights[0] : nullptr;
-	if(out)
+	ANKI_ASSERT(m_mainCam);
+	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()))
 	{
-		ANKI_ASSERT(out->getLightComponentType() == LightComponentType::kDirectional);
+		return *m_mainCam;
 	}
-	return out;
+	else
+	{
+		return *m_defaultMainCam;
+	}
+}
+
+void SceneGraph::setActiveCameraNode(SceneNode* cam)
+{
+	if(cam)
+	{
+		m_mainCam = cam;
+	}
+	else
+	{
+		m_mainCam = m_defaultMainCam;
+	}
+}
+
+void SceneGraph::sceneNodeChangedName(SceneNode& node, CString oldName)
+{
+	LockGuard lock(m_nodesForRegistrationMtx);
+	m_nodesRenamed.emplaceBack(std::pair(&node, oldName));
+}
+
+Error SceneGraph::saveToTextFile(CString filename)
+{
+	File file;
+	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
+
+	TextSceneSerializer serializer(&file, true);
+
+	U32 version = kSceneBinaryVersion;
+	ANKI_SERIALIZE(version, 1);
+
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+	if(serializable) \
+	{ \
+		U32 name##Count = m_componentArrays.get##name##s().getSize(); \
+		ANKI_SERIALIZE(name##Count, 1); \
+		for(SceneComponent & comp : m_componentArrays.get##name##s()) \
+		{ \
+			U32 uuid = comp.getUuid(); \
+			ANKI_SERIALIZE(uuid, 1); \
+			ANKI_CHECK(comp.serialize(serializer)); \
+		} \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
+	// Scene nodes
+	Error err = Error::kNone;
+
+	visitNodes([&](SceneNode& node) {
+		if(node.getParent() != nullptr)
+		{
+			// Skip non-root nodes
+			return FunctorContinue::kContinue;
+		}
+
+		node.visitThisAndChildren([&](SceneNode& node) {
+			err = node.serializeCommon(serializer);
+			if(err)
+			{
+				return FunctorContinue::kStop;
+			}
+
+			return FunctorContinue::kContinue;
+		});
+
+		if(err)
+		{
+			return FunctorContinue::kStop;
+		}
+
+		return FunctorContinue::kContinue;
+	});
+
+	if(err)
+	{
+		return err;
+	}
+
+	return Error::kNone;
 }
 
 } // end namespace anki

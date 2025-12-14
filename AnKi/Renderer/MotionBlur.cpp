@@ -14,27 +14,29 @@ namespace anki {
 
 Error MotionBlur::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/MotionBlur.ankiprogbin",
-								 {{"TILE_SIZE", MutatorValue(g_motionBlurTileSizeCVar)}, {"SAMPLE_COUNT", MutatorValue(g_motionBlurSampleCountCVar)}},
-								 m_prog, m_maxVelocityGrProg, "MaxTileVelocity"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/MotionBlur.ankiprogbin",
-								 {{"TILE_SIZE", MutatorValue(g_motionBlurTileSizeCVar)}, {"SAMPLE_COUNT", MutatorValue(g_motionBlurSampleCountCVar)}},
-								 m_prog, m_maxNeightbourVelocityGrProg, "MaxNeighbourTileVelocity"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/MotionBlur.ankiprogbin",
-								 {{"TILE_SIZE", MutatorValue(g_motionBlurTileSizeCVar)}, {"SAMPLE_COUNT", MutatorValue(g_motionBlurSampleCountCVar)}},
-								 m_prog, m_reconstructGrProg, "Reconstruct"));
+	ANKI_CHECK(loadShaderProgram(
+		"ShaderBinaries/MotionBlur.ankiprogbin",
+		{{"TILE_SIZE", MutatorValue(g_cvarRenderMotionBlurTileSize)}, {"SAMPLE_COUNT", MutatorValue(g_cvarRenderMotionBlurSampleCount)}}, m_prog,
+		m_maxVelocityGrProg, "MaxTileVelocity"));
+	ANKI_CHECK(loadShaderProgram(
+		"ShaderBinaries/MotionBlur.ankiprogbin",
+		{{"TILE_SIZE", MutatorValue(g_cvarRenderMotionBlurTileSize)}, {"SAMPLE_COUNT", MutatorValue(g_cvarRenderMotionBlurSampleCount)}}, m_prog,
+		m_maxNeightbourVelocityGrProg, "MaxNeighbourTileVelocity"));
+	ANKI_CHECK(loadShaderProgram(
+		"ShaderBinaries/MotionBlur.ankiprogbin",
+		{{"TILE_SIZE", MutatorValue(g_cvarRenderMotionBlurTileSize)}, {"SAMPLE_COUNT", MutatorValue(g_cvarRenderMotionBlurSampleCount)}}, m_prog,
+		m_reconstructGrProg, "Reconstruct"));
 
-	const UVec2 tiledTexSize = (getRenderer().getPostProcessResolution() + g_motionBlurTileSizeCVar - 1) / g_motionBlurTileSizeCVar;
-	m_maxVelocityRtDesc =
-		getRenderer().create2DRenderTargetDescription(tiledTexSize.x(), tiledTexSize.y(), Format::kR16G16_Sfloat, "MaxTileVelocity");
+	const UVec2 tiledTexSize = (getRenderer().getPostProcessResolution() + g_cvarRenderMotionBlurTileSize - 1) / g_cvarRenderMotionBlurTileSize;
+	m_maxVelocityRtDesc = getRenderer().create2DRenderTargetDescription(tiledTexSize.x, tiledTexSize.y, Format::kR16G16_Sfloat, "MaxTileVelocity");
 	m_maxVelocityRtDesc.bake();
 
 	m_maxNeighbourVelocityRtDesc =
-		getRenderer().create2DRenderTargetDescription(tiledTexSize.x(), tiledTexSize.y(), Format::kR16G16_Sfloat, "MaxNeighbourTileVelocity");
+		getRenderer().create2DRenderTargetDescription(tiledTexSize.x, tiledTexSize.y, Format::kR16G16_Sfloat, "MaxNeighbourTileVelocity");
 	m_maxNeighbourVelocityRtDesc.bake();
 
 	m_finalRtDesc = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(),
+		getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
 		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 		"MotionBlur");
 	m_finalRtDesc.bake();
@@ -45,7 +47,7 @@ Error MotionBlur::init()
 void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(MotionBlur);
-	if(g_motionBlurSampleCountCVar == 0)
+	if(g_cvarRenderMotionBlurSampleCount == 0)
 	{
 		m_runCtx.m_rt = {};
 		return;
@@ -74,8 +76,9 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 consts(Vec2(getRenderer().getPostProcessResolution()), 0.0f, 0.0f);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			const UVec2 tiledTexSize = (getRenderer().getPostProcessResolution() + g_motionBlurTileSizeCVar - 1) / g_motionBlurTileSizeCVar;
-			cmdb.dispatchCompute(tiledTexSize.x(), tiledTexSize.y(), 1);
+			const UVec2 tiledTexSize =
+				(getRenderer().getPostProcessResolution() + g_cvarRenderMotionBlurTileSize - 1) / g_cvarRenderMotionBlurTileSize;
+			cmdb.dispatchCompute(tiledTexSize.x, tiledTexSize.y, 1);
 		});
 	}
 
@@ -96,8 +99,9 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, maxVelRt);
 			rgraphCtx.bindUav(0, 0, maxNeighbourVelRt);
 
-			const UVec2 tiledTexSize = (getRenderer().getPostProcessResolution() + g_motionBlurTileSizeCVar - 1) / g_motionBlurTileSizeCVar;
-			cmdb.dispatchCompute(tiledTexSize.x(), tiledTexSize.y(), 1);
+			const UVec2 tiledTexSize =
+				(getRenderer().getPostProcessResolution() + g_cvarRenderMotionBlurTileSize - 1) / g_cvarRenderMotionBlurTileSize;
+			cmdb.dispatchCompute(tiledTexSize.x, tiledTexSize.y, 1);
 		});
 	}
 
@@ -107,7 +111,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 
 		TextureUsageBit readUsage, writeUsage;
 		RenderPassBase* ppass;
-		if(g_preferComputeCVar)
+		if(g_cvarRenderPreferCompute)
 		{
 			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Motion blur reconstruct");
 			ppass = &pass;
@@ -149,20 +153,20 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 				U32 m_frame;
 				F32 m_far;
 			} consts;
-			consts.m_depthLinearizationParams.x() = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / ctx.m_matrices.m_near;
-			consts.m_depthLinearizationParams.y() = ctx.m_matrices.m_far / ctx.m_matrices.m_near;
+			consts.m_depthLinearizationParams.x = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / ctx.m_matrices.m_near;
+			consts.m_depthLinearizationParams.y = ctx.m_matrices.m_far / ctx.m_matrices.m_near;
 			consts.m_frame = getRenderer().getFrameCount() % 32;
 			consts.m_far = ctx.m_matrices.m_far;
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 				drawQuad(cmdb);
 			}
 		});

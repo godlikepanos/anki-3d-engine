@@ -250,7 +250,8 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	CD3DX12_PIPELINE_STATE_STREAM5 desc = {};
 	desc.Flags = D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS;
 	desc.pRootSignature = &prog.m_rootSignature->getD3DRootSignature();
-	desc.InputLayout = D3D12_INPUT_LAYOUT_DESC{.pInputElementDescs = inputElementDescs.getBegin(), .NumElements = inputElementDescCount};
+	desc.InputLayout = D3D12_INPUT_LAYOUT_DESC{.pInputElementDescs = (inputElementDescCount) ? inputElementDescs.getBegin() : nullptr,
+											   .NumElements = inputElementDescCount};
 	desc.PrimitiveTopologyType = convertPrimitiveTopology(staticState.m_ia.m_topology);
 	ANKI_SET_IR(VS, kVertex)
 	ANKI_SET_IR(GS, kGeometry)

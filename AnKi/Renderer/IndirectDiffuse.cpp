@@ -18,7 +18,7 @@ namespace anki {
 
 Error IndirectDiffuse::init()
 {
-	[[maybe_unused]] const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar;
+	[[maybe_unused]] const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderRtIndirectDiffuse;
 	ANKI_ASSERT(bRt);
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IndirectDiffuse.ankiprogbin", m_mainProg));
@@ -43,7 +43,7 @@ Error IndirectDiffuse::init()
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "IndirectDiffuse #1");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "IndirectDiffuse #1");
 	m_transientRtDesc1.bake();
 
 	return Error::kNone;
@@ -53,7 +53,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
 
-	const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar;
+	const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderRtIndirectDiffuse;
 
 	if(!bRt)
 	{
@@ -68,9 +68,9 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
 	{
-		BufferHandle visibilityDep;
-		BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
-		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
+		AccelerationStructureVisibilityInfo asVis;
+		GpuVisibilityLocalLightsOutput localLightsVis;
+		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(asVis, localLightsVis);
 
 		// Allocate SBT
 		U32 sbtAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
@@ -91,10 +91,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtIndirectDiffuse build SBT");
 
-		rpass.newBufferDependency(visibilityDep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
+		rpass.newBufferDependency(asVis.m_depedency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, buildSbtIndirectArgsBuff = asVis.m_buildSbtIndirectArgsBuffer, sbtBuffer,
+					   visibleRenderableIndicesBuff = asVis.m_visibleRenderablesBuffer](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseSbtBuild);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -123,17 +124,17 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtIndirectDiffuse");
 
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavTraceRays);
-		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavDispatchRays);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvDispatchRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvDispatchRays);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvDispatchRays);
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
-			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvDispatchRays);
 		}
-		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvDispatchRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												 AccelerationStructureUsageBit::kTraceRaysSrv);
+												 AccelerationStructureUsageBit::kSrvDispatchRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseRayGen);
@@ -147,6 +148,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
 		reg, 0, \
@@ -192,8 +194,8 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			UVec4 dummyConsts;
 			cmdb.setFastConstants(&dummyConsts, sizeof(dummyConsts));
 
-			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+							  getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, 1);
 		});
 	}
 

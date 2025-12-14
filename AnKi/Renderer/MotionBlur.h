@@ -12,8 +12,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<U32> g_motionBlurTileSizeCVar("R", "MotionBlurTileSize", 32, 8, 64, "Motion blur tile size");
-inline NumericCVar<U32> g_motionBlurSampleCountCVar("R", "MotionBlurSampleCount", 16, 0, 64, "Motion blur sample count");
+ANKI_CVAR2(NumericCVar<U32>, Render, MotionBlur, TileSize, 32, 8, 64, "Motion blur tile size")
+ANKI_CVAR2(NumericCVar<U32>, Render, MotionBlur, SampleCount, 16, 0, 64, "Motion blur sample count")
 
 /// Motion blur.
 class MotionBlur : public RendererObject
@@ -28,8 +28,8 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		ANKI_ASSERT(rtName == "MotionBlur");
 		handles[0] = m_runCtx.m_rt;

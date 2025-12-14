@@ -256,10 +256,15 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 
 	CComPtr<IDxcBlob> pShader = nullptr;
 	ANKI_DXC_CHECK(pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr));
-	if(pShader != nullptr)
+	if(pShader != nullptr && pShader->GetBufferSize() > 0)
 	{
 		bin.resize(U32(pShader->GetBufferSize()));
 		memcpy(bin.getBegin(), pShader->GetBufferPointer(), pShader->GetBufferSize());
+	}
+	else
+	{
+		ANKI_SHADER_COMPILER_LOGE("DXC returned an empty binary blob");
+		return Error::kFunctionFailed;
 	}
 
 	return Error::kNone;
@@ -380,7 +385,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			{
 				// ConstantBuffer
 
-				if(bindDesc.Space == 3000 && bindDesc.BindPoint == 0)
+				if(bindDesc.Space == ANKI_D3D_FAST_CONSTANTS_SPACE && bindDesc.BindPoint == 0)
 				{
 					// It's push/root constants
 
@@ -389,6 +394,31 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 					D3D12_SHADER_BUFFER_DESC desc;
 					ANKI_DXC_CHECK(cbuffer->GetDesc(&desc));
 					refl.m_descriptor.m_fastConstantsSize = desc.Size;
+
+					continue;
+				}
+				else if(bindDesc.Space == ANKI_D3D_SHADER_RECORD_CONSTANTS_SPACE && bindDesc.BindPoint == 0)
+				{
+					// It's SBT consts
+
+					if(!isLib)
+					{
+						// Ignore
+						continue;
+					}
+
+					ID3D12ShaderReflectionConstantBuffer* cbuffer = funcReflections[ifunc]->GetConstantBufferByName(bindDesc.Name);
+					D3D12_SHADER_BUFFER_DESC desc;
+					ANKI_DXC_CHECK(cbuffer->GetDesc(&desc));
+					refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize = desc.Size;
+
+					continue;
+				}
+				else if(bindDesc.Space == ANKI_D3D_DRAW_ID_CONSTANT_SPACE && bindDesc.BindPoint == 0)
+				{
+					// It's DrawID
+
+					refl.m_descriptor.m_d3dHasDrawId = true;
 
 					continue;
 				}

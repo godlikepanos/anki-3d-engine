@@ -19,8 +19,8 @@ RWStructuredBuffer<float4> g_result : register(u1);
 
 groupshared float4 g_tileMax[TILE_SIZE_X * TILE_SIZE_Y];
 
-[numthreads(TILE_SIZE_X, TILE_SIZE_Y, 1)] void main(uint2 svDispatchThreadId : SV_DispatchThreadID, uint svGroupIndex : SV_GroupIndex,
-													uint2 svGroupId : SV_GroupID)
+[numthreads(TILE_SIZE_X, TILE_SIZE_Y, 1)] void main(uint2 svDispatchThreadId : SV_DISPATCHTHREADID, uint svGroupIndex : SV_GROUPINDEX,
+													uint2 svGroupId : SV_GROUPID)
 {
 	g_tileMax[svGroupIndex] = g_inputTex[svDispatchThreadId];
 
@@ -44,7 +44,7 @@ groupshared float4 g_tileMax[TILE_SIZE_X * TILE_SIZE_Y];
 
 groupshared float4 g_maxColor[64];
 
-[numthreads(64, 1, 1)] void main(uint svGroupIndex : SV_GroupIndex)
+[numthreads(64, 1, 1)] void main(uint svGroupIndex : SV_GROUPINDEX)
 {
 	const uint tilesPerThread = TILE_COUNT / 64;
 

@@ -16,6 +16,8 @@ class ShaderDumpOptions
 public:
 	Bool m_writeGlsl = true;
 	Bool m_writeSpirv = false;
+	Bool m_maliStats = false;
+	Bool m_amdStats = false;
 };
 
 /// Create a human readable representation of the shader binary.

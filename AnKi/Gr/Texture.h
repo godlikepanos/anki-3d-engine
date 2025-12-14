@@ -16,7 +16,7 @@ class TextureSubresourceDesc;
 /// @{
 
 /// Texture initializer.
-class alignas(4) TextureInitInfo : public GrBaseInitInfo
+class TextureInitInfo : public GrBaseInitInfo
 {
 public:
 	U32 m_width = 0;
@@ -33,8 +33,6 @@ public:
 
 	U8 m_samples = 1;
 
-	U8 _m_padding[1] = {0};
-
 	TextureInitInfo() = default;
 
 	TextureInitInfo(CString name)
@@ -44,13 +42,18 @@ public:
 
 	U64 computeHash() const
 	{
-		const U8* first = reinterpret_cast<const U8*>(&m_width);
-		const U8* last = reinterpret_cast<const U8*>(&m_samples) + sizeof(m_samples);
-		const U size = U(last - first);
-		ANKI_ASSERT(size
-					== sizeof(m_width) + sizeof(m_height) + sizeof(m_depth) + sizeof(m_layerCount) + sizeof(m_format) + sizeof(m_usage)
-						   + sizeof(m_type) + sizeof(m_mipmapCount) + sizeof(m_samples));
-		return anki::computeHash(first, size);
+		Array<U64, 9> arr;
+		U32 count = 0;
+		arr[count++] = m_width;
+		arr[count++] = m_height;
+		arr[count++] = m_depth;
+		arr[count++] = m_layerCount;
+		arr[count++] = U64(m_format);
+		arr[count++] = U64(m_usage);
+		arr[count++] = U64(m_type);
+		arr[count++] = m_mipmapCount;
+		arr[count++] = m_samples;
+		return computeObjectHash(arr);
 	}
 
 	Bool isValid() const
@@ -294,7 +297,7 @@ public:
 	{
 	}
 
-	explicit TextureView(const Texture* tex, const TextureSubresourceDesc& subresource)
+	explicit TextureView(const Texture* tex, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
 		: m_tex(tex)
 		, m_subresource(subresource)
 	{

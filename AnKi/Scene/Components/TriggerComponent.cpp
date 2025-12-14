@@ -120,7 +120,7 @@ void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	else if(info.m_node->movedThisFrame())
 	{
 		updated = true;
-		m_trigger->setPositionAndRotation(info.m_node->getWorldTransform().getOrigin().xyz(),
+		m_trigger->setPositionAndRotation(info.m_node->getWorldTransform().getOrigin().xyz,
 										  info.m_node->getWorldTransform().getRotation().getRotationPart());
 	}
 
@@ -144,6 +144,12 @@ void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	// Prepare them for the next frame
 	m_resetEnter = true;
 	m_resetExit = true;
+}
+
+Error TriggerComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_type, 1);
+	return Error::kNone;
 }
 
 } // end namespace anki

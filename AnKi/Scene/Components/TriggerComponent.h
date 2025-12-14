@@ -10,10 +10,6 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// @memberof TriggerComponent
 enum class TriggerComponentShapeType
 {
 	kSphere,
@@ -21,7 +17,7 @@ enum class TriggerComponentShapeType
 	kCount
 };
 
-/// Trigger component.
+// Trigger component
 class TriggerComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(TriggerComponent)
@@ -60,7 +56,8 @@ private:
 	static MyPhysicsTriggerCallbacks m_callbacks;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
-/// @}
 
 } // end namespace anki

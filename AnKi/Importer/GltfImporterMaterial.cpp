@@ -20,21 +20,18 @@ inline constexpr const Char* kMaterialTemplate = R"(<!-- This file is auto gener
 			<mutator name="SPECULAR_TEX" value="%specTexMutator%"/>
 			<mutator name="ROUGHNESS_METALNESS_TEX" value="%roughnessMetalnessTexMutator%"/>
 			<mutator name="NORMAL_TEX" value="%normalTexMutator%"/>
-			<mutator name="PARALLAX" value="%parallaxMutator%"/>
 			<mutator name="EMISSIVE_TEX" value="%emissiveTexMutator%"/>
 			<mutator name="ALPHA_TEST" value="%alphaTestMutator%"/>
 		</mutation>
 	</shaderProgram>
 
 	<inputs>
-		%parallaxInput%
 		%diff%
 		%spec%
 		%roughnessMetalness%
 		%normal%
 		%emission%
 		%subsurface%
-		%height%
 	</inputs>
 </material>
 )";
@@ -188,7 +185,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		Vec4 constantColor;
 		ANKI_CHECK(findConstantColorsInImage(fname, constantColor));
 
-		const Bool constantAlpha = constantColor.w() >= 0.0f;
+		const Bool constantAlpha = constantColor.w >= 0.0f;
 		xml.replaceAll("%alphaTestMutator%", (constantAlpha) ? "0" : "1");
 
 		if(m_importTextures)
@@ -225,11 +222,11 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			}
 
 			auto token = tokens.getBegin();
-			ANKI_CHECK(token->toNumber(specular.x()));
+			ANKI_CHECK(token->toNumber(specular.x));
 			++token;
-			ANKI_CHECK(token->toNumber(specular.y()));
+			ANKI_CHECK(token->toNumber(specular.y));
 			++token;
-			ANKI_CHECK(token->toNumber(specular.z()));
+			ANKI_CHECK(token->toNumber(specular.z));
 		}
 		else
 		{
@@ -237,7 +234,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		}
 
 		xml.replaceAll("%spec%",
-					   ImporterString().sprintf("<input name=\"m_specularScale\" value=\"%f %f %f\"/>", specular.x(), specular.y(), specular.z()));
+					   ImporterString().sprintf("<input name=\"m_specularScale\" value=\"%f %f %f\"/>", specular.x, specular.y, specular.z));
 
 		xml.replaceAll("%specTexMutator%", "0");
 	}
@@ -275,8 +272,8 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 
 		Vec4 constantColor;
 		ANKI_CHECK(findConstantColorsInImage(fname, constantColor));
-		constantRoughness = constantColor.y();
-		constantMetaliness = constantColor.z();
+		constantRoughness = constantColor.y;
+		constantMetaliness = constantColor.z;
 	}
 
 	// Roughness/metallic
@@ -323,7 +320,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	{
 		Vec4 constantColor;
 		ANKI_CHECK(findConstantColorsInImage(getTextureUri(mtl.normal_texture).cstr(), constantColor));
-		if(constantColor.xyz() == -1.0f)
+		if(constantColor.xyz == -1.0f)
 		{
 			ImporterString uri;
 			uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.normal_texture).cstr());
@@ -399,26 +396,6 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		}
 
 		xml.replaceAll("%subsurface%", ImporterString().sprintf("<input name=\"m_subsurface\" value=\"%f\"/>", subsurface));
-	}
-
-	// Height texture
-	auto it = extras.find("height_map");
-	if(it != extras.getEnd())
-	{
-		ImporterString uri;
-		uri.sprintf("%s%s", m_texrpath.cstr(), it->cstr());
-
-		xml.replaceAll("%height%", ImporterString().sprintf("<input name=\"m_heightTex\" value=\"%s\" \"/>\n"
-															"\t\t<input name=\"m_heightmapScale\" value=\"0.05\"/>",
-															uri.cstr()));
-
-		xml.replaceAll("%parallaxMutator%", "1");
-	}
-	else
-	{
-		xml.replaceAll("%height%", "");
-		xml.replaceAll("%parallaxInput%", "");
-		xml.replaceAll("%parallaxMutator%", "0");
 	}
 
 	// Replace texture extensions with .anki

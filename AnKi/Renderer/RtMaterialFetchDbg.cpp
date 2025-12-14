@@ -43,7 +43,7 @@ Error RtMaterialFetchDbg::init()
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
-	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 															 Format::kR8G8B8A8_Unorm, "RtMaterialFetch");
 	m_rtDesc.bake();
 
@@ -53,10 +53,6 @@ Error RtMaterialFetchDbg::init()
 void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
-
-	BufferHandle visibilityDep;
-	BufferView visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff;
-	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff);
 
 	// SBT build
 	BufferHandle sbtHandle;
@@ -71,9 +67,12 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch");
 
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavTraceRays);
+		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavDispatchRays);
+
+		setRgenSpace2Dependencies(rpass);
+
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												 AccelerationStructureUsageBit::kTraceRaysSrv);
+												 AccelerationStructureUsageBit::kSrvDispatchRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetchRayGen);
@@ -87,6 +86,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
 		reg, 0, \
@@ -95,39 +95,14 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
-
-			U32 srv = 0;
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-
-			cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(GpuSceneGlobalIlluminationProbe)));
-			cmdb.bindSrv(srv++, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
-
-			for(U32 i = 0; i < kIndirectDiffuseClipmapCount * 3; ++i)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture3DSrv.get(), TextureSubresourceDesc::all()));
-			}
-
-			for(U32 i = 0; i < 3; ++i)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			}
-
+			bindRgenSpace2Resources(ctx, rgraphCtx);
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
-			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
-			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
-
-			Vec4 dummy;
+			Vec4 dummy[3];
 			cmdb.setFastConstants(&dummy, sizeof(dummy));
 
-			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+			cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+							  getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, 1);
 		});
 	}
 }

@@ -35,13 +35,13 @@ ConstantBuffer<Consts> g_consts : register(b0);
 
 struct VertIn
 {
-	U32 m_svInstanceId : SV_InstanceID;
-	U32 m_svVertexId : SV_VertexID;
+	U32 m_svInstanceId : SV_INSTANCEID;
+	U32 m_svVertexId : SV_VERTEXID;
 };
 
 struct VertOut
 {
-	Vec4 m_svPosition : SV_Position;
+	Vec4 m_svPosition : SV_POSITION;
 	Vec3 m_sphereCenter : SpherePosition;
 };
 

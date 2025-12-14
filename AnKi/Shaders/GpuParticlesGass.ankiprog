@@ -1,0 +1,131 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader does a particle simulation for gasses
+
+#pragma anki mutator ANKI_WAVE_SIZE 16 32 64
+
+#pragma anki technique comp
+
+#include <AnKi/Shaders/GpuParticlesCommon.hlsl>
+
+// clang-format off
+#pragma anki struct AnKiParticleEmitterProperties
+#	pragma anki member F32 m_minParticleLife 1.0
+#	pragma anki member F32 m_maxParticleLife 1.0
+
+#	pragma anki member Vec3 m_minGravityDirection 0.0 -1.0 0.0
+#	pragma anki member Vec3 m_maxGravityDirection 0.0 -1.0 0.0
+
+#	pragma anki member F32 m_minGravityMagnitude 9.8
+#	pragma anki member F32 m_maxGravityMagnitude 9.8
+
+#	pragma anki member F32 m_minMass 1.0
+#	pragma anki member F32 m_maxMass 1.0
+
+#	pragma anki member F32 m_minInitialSize 1.0
+#	pragma anki member F32 m_maxInitialSize 1.0
+#	pragma anki member F32 m_minFinalSize 1.0
+#	pragma anki member F32 m_maxFinalSize 1.0
+
+#	pragma anki member F32 m_minInitialAlpha 1.0
+#	pragma anki member F32 m_maxInitialAlpha 1.0
+#	pragma anki member F32 m_minFinalAlpha 1.0
+#	pragma anki member F32 m_maxFinalAlpha 1.0
+
+#	pragma anki member Vec3 m_minStartingPosition 0.0 0.0 0.0
+#	pragma anki member Vec3 m_maxStartingPosition 0.0 0.0 0.0
+#pragma anki struct_end
+// clang-format on
+
+#define GRAVITY_PROP ParticleProperty::kUserDefined0
+#define ALPHA_PROP ParticleProperty::kUserDefined1 // Initial alpha, final alpha, current alpha
+#define SIZE_PROP ParticleProperty::kUserDefined2 // Initial size, final size
+
+struct ParticleInterface
+{
+	AnKiParticleEmitterProperties m_props;
+
+	void initAnKiParticleEmitterProperties(GpuSceneParticleEmitter2 emitter)
+	{
+		const AnKiParticleEmitterProperties props = loadAnKiParticleEmitterProperties(g_gpuScene, emitter.m_particleEmitterPropertiesOffset);
+		m_props = props;
+	}
+
+	void initializeParticle(GpuSceneParticleEmitter2 emitter, Mat3x4 emitterTrf, Bool makeAlive, out Vec3 particlePosition, out F32 particleScale)
+	{
+		const F32 m = getRandomRange(m_props.m_minMass, m_props.m_maxMass);
+
+		Vec3 g = normalize(getRandomRange(m_props.m_minGravityDirection, m_props.m_maxGravityDirection));
+		g = mul(emitterTrf, Vec4(g, 0.0));
+		g = normalize(g); // Because the emitter's trf might have scale
+		g *= getRandomRange(m_props.m_minGravityMagnitude, m_props.m_maxGravityMagnitude);
+
+		const F32 dt = 1.0 / 60;
+		const Vec3 v = g * dt;
+		const Vec3 x = getRandomRange(m_props.m_minStartingPosition, m_props.m_maxStartingPosition) + emitterTrf.getTranslationPart().xyz;
+
+		// Store
+		writeProp(emitter, ParticleProperty::kVelocity, v);
+		writeProp(emitter, ParticleProperty::kLifeFactor, makeAlive ? 0.0 : 1.0);
+		writeProp(emitter, ParticleProperty::kMaxLife, getRandomRange(m_props.m_minParticleLife, m_props.m_maxParticleLife));
+		writeProp(emitter, ParticleProperty::kPosition, x);
+		writeProp(emitter, ParticleProperty::kPreviousPosition, x);
+		writeProp(emitter, ParticleProperty::kMass, m);
+		writeProp(emitter, GRAVITY_PROP, Vec4(g, 0.0));
+
+		const F32 initialAlpha = getRandomRange(m_props.m_minInitialAlpha, m_props.m_maxInitialAlpha);
+		const F32 finalAlpha = getRandomRange(m_props.m_minFinalAlpha, m_props.m_maxFinalAlpha);
+		writeProp(emitter, ALPHA_PROP, Vec4(initialAlpha, finalAlpha, initialAlpha, 0.0));
+
+		const F32 initialSize = getRandomRange(m_props.m_minInitialSize, m_props.m_maxInitialSize);
+		const F32 finalSize = getRandomRange(m_props.m_minFinalSize, m_props.m_maxFinalSize);
+		writeProp(emitter, SIZE_PROP, Vec4(initialSize, finalSize, 0.0, 0.0));
+
+		writeProp(emitter, ParticleProperty::kScale, Vec3(initialSize, initialSize, initialSize));
+
+		particlePosition = x;
+		particleScale = initialSize;
+	}
+
+	void simulateParticle(GpuSceneParticleEmitter2 emitter, F32 lifeFactor, out Vec3 particlePosition, out F32 particleScale)
+	{
+		const F32 m = readProp<F32>(emitter, ParticleProperty::kMass);
+		const Vec3 g = readProp<Vec4>(emitter, GRAVITY_PROP).xyz;
+		const Vec3 F = m * g;
+		Vec3 v = readProp<Vec3>(emitter, ParticleProperty::kVelocity);
+		Vec3 x = readProp<Vec3>(emitter, ParticleProperty::kPosition);
+		const Vec3 prevX = x;
+
+		SimulationArgs args;
+		args.init();
+		args.m_checkCollision = false;
+		simulatePhysics(F, m, g_consts.m_dt, v, x, args);
+
+		// Write
+		writeProp(emitter, ParticleProperty::kVelocity, v);
+		const F32 maxLife = readProp<F32>(emitter, ParticleProperty::kMaxLife);
+		writeProp(emitter, ParticleProperty::kLifeFactor, lifeFactor + g_consts.m_dt / maxLife);
+		writeProp(emitter, ParticleProperty::kPosition, x);
+		writeProp(emitter, ParticleProperty::kPreviousPosition, prevX);
+
+		const Vec4 sizeProp = readProp<Vec4>(emitter, SIZE_PROP);
+		const F32 scale = lerp(sizeProp.x, sizeProp.y, lifeFactor);
+		writeProp(emitter, ParticleProperty::kScale, Vec3(scale, scale, scale));
+
+		const Vec4 alphaProp = readProp<Vec4>(emitter, ALPHA_PROP);
+		const F32 alpha = lerp(alphaProp.x, alphaProp.y, lifeFactor);
+		writeProp(emitter, ALPHA_PROP, Vec4(alphaProp.x, alphaProp.y, alpha, 0.0));
+
+		particlePosition = x;
+		particleScale = scale;
+	}
+};
+
+[numthreads(ANKI_WAVE_SIZE, 1, 1)] void main(COMPUTE_ARGS)
+{
+	ParticleInterface iface;
+	particleMain(svDispatchThreadId.x, svGroupIndex, iface);
+}

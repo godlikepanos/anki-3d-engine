@@ -5,8 +5,6 @@
 
 // Calculates the disocclusion length. The longer the length the better the pixel is for temporal accumulation
 
-#pragma anki 16bit
-
 #pragma anki technique comp vert pixel
 
 #include <AnKi/Shaders/Functions.hlsl>
@@ -81,7 +79,7 @@ F32 computeLength(Vec2 coord)
 }
 
 #if ANKI_COMPUTE_SHADER
-[NumThreads(64, 1, 1)] void main(COMPUTE_ARGS)
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 

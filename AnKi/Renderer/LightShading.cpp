@@ -37,12 +37,9 @@ Error LightShading::init()
 
 		// Create RT descr
 		const UVec2 internalResolution = getRenderer().getInternalResolution();
-		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(internalResolution.x(), internalResolution.y(),
-																				 getRenderer().getHdrFormat(), "Light Shading");
+		m_lightShading.m_rtDescr =
+			getRenderer().create2DRenderTargetDescription(internalResolution.x, internalResolution.y, getRenderer().getHdrFormat(), "Light Shading");
 		m_lightShading.m_rtDescr.bake();
-
-		// Debug visualization
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg, m_visualizeRtGrProg));
 	}
 
 	{
@@ -68,9 +65,9 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -79,6 +76,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	// Do light shading first
 	{
+		cmdb.pushDebugMarker("LightShading", Vec3(0.0f, 1.0f, 1.0f));
+
 		cmdb.bindShaderProgram(m_lightShading.m_grProg.get());
 		cmdb.setDepthWrite(false);
 
@@ -110,10 +109,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Draw
 		drawQuad(cmdb);
+
+		cmdb.popDebugMarker();
 	}
 
 	// Skybox
 	{
+		cmdb.pushDebugMarker("Skybox", Vec3(0.0f, 1.0f, 1.0f));
+
 		cmdb.setDepthCompareOperation(CompareOperation::kEqual);
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
@@ -149,7 +152,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			} pc;
 
 			pc.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 			pc.m_scale = sky->getImageScale();
 			pc.m_bias = sky->getImageBias();
 
@@ -171,10 +174,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Restore state
 		cmdb.setDepthCompareOperation(CompareOperation::kLess);
+
+		cmdb.popDebugMarker();
 	}
 
 	// Apply the fog
 	{
+		cmdb.pushDebugMarker("LightApplyFog", Vec3(0.0f, 1.0f, 1.0f));
+
 		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
 
 		// Bind all
@@ -206,16 +213,20 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Reset state
 		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+
+		cmdb.popDebugMarker();
 	}
 
 	// Debug stuff
-	if(g_visualizeGiProbesCVar && getRenderer().isIndirectDiffuseClipmapsEnabled())
+	if(g_cvarRenderVisualizeGiProbes && getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
 		getIndirectDiffuseClipmaps().drawDebugProbes(ctx, rgraphCtx);
 	}
 
 	// Forward shading last
 	{
+		cmdb.pushDebugMarker("ForwardShading", Vec3(0.0f, 1.0f, 1.0f));
+
 		if(enableVrs)
 		{
 			cmdb.setVrsRate(VrsRate::k2x2);
@@ -228,6 +239,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			// Restore
 			cmdb.setVrsRate(VrsRate::k1x1);
 		}
+
+		cmdb.popDebugMarker();
 	}
 }
 
@@ -236,7 +249,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(LightShading);
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 
 	// Create RT
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);
@@ -297,14 +310,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// For forward shading
 	getRenderer().getForwardShading().setDependencies(pass);
-}
-
-void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-										ShaderProgramPtr& optionalShaderProgram) const
-{
-	ANKI_ASSERT(rtName == "LightShading");
-	handles[0] = m_runCtx.m_rt;
-	optionalShaderProgram = m_visualizeRtGrProg;
 }
 
 } // end namespace anki

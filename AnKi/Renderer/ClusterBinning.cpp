@@ -49,7 +49,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 	// Allocate the clusters buffer
 	{
-		const U32 clusterCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y() + getRenderer().getZSplitCount();
+		const U32 clusterCount = getRenderer().getTileCounts().x * getRenderer().getTileCounts().y + getRenderer().getZSplitCount();
 		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<Cluster>(clusterCount);
 		m_runCtx.m_dep = rgraph.importBuffer(m_runCtx.m_clustersBuffer, BufferUsageBit::kNone);
 	}
@@ -78,7 +78,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_jobSetupGrProg.get());
 
-			const UVec4 consts(getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y());
+			const UVec4 consts(getRenderer().getTileCounts().x * getRenderer().getTileCounts().y);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
@@ -178,15 +178,15 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					Mat4 m_invertedViewProjMat;
 				} consts;
 
-				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
 				consts.m_renderingSize = Vec2(getRenderer().getInternalResolution());
-				consts.m_tileCountX = getRenderer().getTileCounts().x();
-				consts.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
+				consts.m_tileCountX = getRenderer().getTileCounts().x;
+				consts.m_tileCount = getRenderer().getTileCounts().x * getRenderer().getTileCounts().y;
 
 				Plane nearPlane;
 				extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-				consts.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+				consts.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz, nearPlane.getOffset());
 
 				consts.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
 

@@ -195,13 +195,13 @@ static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool deb
 				ShaderCompilerDynamicArray<U8> il;
 				if(ctx.m_spirv)
 				{
-					err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo, ctx.m_sm,
-											 ctx.m_parser->getExtraCompilerArgs(), il, compilerErrorLog);
+					err = compileHlslToSpirv(source, shaderType, true, ctx.m_debugInfo, ctx.m_sm, ctx.m_parser->getExtraCompilerArgs(), il,
+											 compilerErrorLog);
 				}
 				else
 				{
-					err = compileHlslToDxil(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo, ctx.m_sm,
-											ctx.m_parser->getExtraCompilerArgs(), il, compilerErrorLog);
+					err = compileHlslToDxil(source, shaderType, true, ctx.m_debugInfo, ctx.m_sm, ctx.m_parser->getExtraCompilerArgs(), il,
+											compilerErrorLog);
 				}
 
 				if(err)
@@ -526,6 +526,8 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, Bool debugI
 			memcpy(outm.m_name.getBegin(), inm.m_name.cstr(), inm.m_name.getLength() + 1);
 			outm.m_offset = inm.m_offset;
 			outm.m_type = inm.m_type;
+			static_assert(sizeof(outm.m_defaultValues) == sizeof(inm.m_defaultValues));
+			memcpy(outm.m_defaultValues.getBegin(), inm.m_defaultValues.getBegin(), sizeof(inm.m_defaultValues));
 		}
 
 		out.m_size = in.m_members.getBack().m_offset + getShaderVariableDataTypeInfo(in.m_members.getBack().m_type).m_size;

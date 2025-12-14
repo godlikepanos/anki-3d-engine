@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/Sphere_b335c223b7f61071.ankimesh</mesh>
-			<material>Assets/MTL_sphere_f75b7f396643f2d.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Ui/UiManager.h>
+#include <AnKi/Ui/UiCanvas.h>
 
 namespace anki {
 
@@ -36,6 +37,20 @@ Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackDat
 
 	ImGui::SetAllocatorFunctions(imguiAllocCallback, imguiFreeCallback, nullptr);
 
+	return Error::kNone;
+}
+
+Error UiManager::newCanvas(U32 width, U32 height, UiCanvasPtr& canvas)
+{
+	UiCanvas* pCanvas = newInstance<UiCanvas>(UiMemoryPool::getSingleton());
+	if(pCanvas->init(UVec2(width, height)))
+	{
+		ANKI_UI_LOGE("Unable to create canvas");
+		deleteInstance(UiMemoryPool::getSingleton(), pCanvas);
+		return Error::kFunctionFailed;
+	}
+
+	canvas.reset(pCanvas);
 	return Error::kNone;
 }
 

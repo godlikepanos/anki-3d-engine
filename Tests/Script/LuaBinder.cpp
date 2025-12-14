@@ -106,3 +106,24 @@ print(vec:getX(), vec:getY(), vec:getZ())
 
 	ScriptManager::freeSingleton();
 }
+
+ANKI_TEST(Script, Fields)
+{
+	ScriptManager::allocateSingleton(allocAligned, nullptr);
+
+	{
+		ScriptEnvironment env;
+
+		static const char* script = R"(
+vec = Vec3.new(1, 2, 3)
+vec:setX(6)
+logi(string.format("%f %f %f", vec:getX(), vec:getY(), vec:getZ()))
+vec.blah = 0
+x = vec.x
+)";
+
+		ANKI_TEST_EXPECT_NO_ERR(env.evalString(script));
+	}
+
+	ScriptManager::freeSingleton();
+}

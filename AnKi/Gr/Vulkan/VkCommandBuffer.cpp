@@ -254,7 +254,6 @@ void CommandBuffer::bindSampler(U32 reg, U32 space, Sampler* sampler)
 
 	const VkSampler handle = static_cast<const SamplerImpl&>(*sampler).m_sampler->getHandle();
 	self.m_descriptorState.bindSampler(space, reg, handle);
-	self.m_microCmdb->pushObjectRef(sampler);
 }
 
 void CommandBuffer::bindConstantBuffer(U32 reg, U32 space, const BufferView& buff)
@@ -319,7 +318,6 @@ void CommandBuffer::bindSrv(U32 reg, U32 space, AccelerationStructure* as)
 
 	const VkAccelerationStructureKHR& handle = static_cast<const AccelerationStructureImpl&>(*as).getHandle();
 	self.m_descriptorState.bindAccelerationStructure(space, reg, &handle);
-	self.m_microCmdb->pushObjectRef(as);
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
@@ -364,9 +362,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 		bindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;
 	}
 
-	self.m_descriptorState.setPipelineLayout(&impl.getPipelineLayout(), bindPoint);
-
-	self.m_microCmdb->pushObjectRef(prog);
+	self.m_descriptorState.setShaderProgram(&impl.getPipelineLayout(), impl.getUuid(), bindPoint);
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, const TextureView& vrsRt, U8 vrsRtTexelSizeX,
@@ -706,16 +702,16 @@ void CommandBuffer::dispatchGraph([[maybe_unused]] const BufferView& scratchBuff
 	ANKI_ASSERT(!"Not supported");
 }
 
-void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
-							  U32 depth)
+void CommandBuffer::dispatchRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
+								 U32 height, U32 depth)
 {
 	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.traceRaysInternal(sbtBuffer, sbtRecordSize32, hitGroupSbtRecordCount, rayTypeCount, width, height, depth, {});
 }
 
-void CommandBuffer::traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
-									  BufferView argsBuffer)
+void CommandBuffer::dispatchRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+										 BufferView argsBuffer)
 {
 	ANKI_TRACE_FUNCTION();
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -749,7 +745,7 @@ void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& c
 	}
 }
 
-void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView)
+void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView, const TextureRect& rect)
 {
 	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(buff.isValid());
@@ -764,10 +760,10 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	const VkImageSubresourceRange range = tex.computeVkImageSubresourceRange(texView.getSubresource());
 
 	// Compute the sizes of the mip
-	const U32 width = tex.getWidth() >> range.baseMipLevel;
-	const U32 height = tex.getHeight() >> range.baseMipLevel;
-	ANKI_ASSERT(width && height);
-	const U32 depth = (tex.getTextureType() == TextureType::k3D) ? (tex.getDepth() >> range.baseMipLevel) : 1u;
+	const U32 width = (rect.m_width != kMaxU32) ? rect.m_width : tex.getWidth() >> range.baseMipLevel;
+	const U32 height = (rect.m_height != kMaxU32) ? rect.m_height : tex.getHeight() >> range.baseMipLevel;
+	const U32 depth =
+		(tex.getTextureType() == TextureType::k3D) ? ((rect.m_depth != kMaxU32) ? rect.m_depth : tex.getDepth() >> range.baseMipLevel) : 1u;
 
 	if(tex.getTextureType() != TextureType::k3D)
 	{
@@ -784,7 +780,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
 	region.imageSubresource.layerCount = 1;
 	region.imageSubresource.mipLevel = range.baseMipLevel;
-	region.imageOffset = {0, 0, 0};
+	region.imageOffset = {I32(rect.m_offsetX), I32(rect.m_offsetY), I32(rect.m_offsetZ)};
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
 	region.imageExtent.depth = depth;
@@ -836,8 +832,6 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<Occlusion
 
 		vkCmdCopyQueryPoolResults(self.m_handle, q->m_handle.getQueryPool(), q->m_handle.getQueryIndex(), 1, impl.getHandle(),
 								  buff.getOffset() * sizeof(U32) * i, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
-
-		self.m_microCmdb->pushObjectRef(q);
 	}
 }
 
@@ -930,11 +924,11 @@ void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, co
 	vkDlssEvalParams.pInDepth = &depthResVk;
 	vkDlssEvalParams.pInMotionVectors = &mvResVk;
 	vkDlssEvalParams.pInExposureTexture = &exposureResVk;
-	vkDlssEvalParams.InJitterOffsetX = jitterOffset.x();
-	vkDlssEvalParams.InJitterOffsetY = jitterOffset.y();
+	vkDlssEvalParams.InJitterOffsetX = jitterOffset.x;
+	vkDlssEvalParams.InJitterOffsetY = jitterOffset.y;
 	vkDlssEvalParams.InReset = resetAccumulation;
-	vkDlssEvalParams.InMVScaleX = motionVectorsScale.x();
-	vkDlssEvalParams.InMVScaleY = motionVectorsScale.y();
+	vkDlssEvalParams.InMVScaleX = motionVectorsScale.x;
+	vkDlssEvalParams.InMVScaleY = motionVectorsScale.y;
 	vkDlssEvalParams.InColorSubrectBase = renderingOffset;
 	vkDlssEvalParams.InDepthSubrectBase = renderingOffset;
 	vkDlssEvalParams.InTranslucencySubrectBase = renderingOffset;
@@ -970,7 +964,7 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
-	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(self.m_pool);
+	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(&self.m_pool);
 	VkMemoryBarrier genericBarrier = {};
 	genericBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 	VkPipelineStageFlags srcStageMask = 0;
@@ -1003,8 +997,6 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 
 		genericBarrier.srcAccessMask |= memBarrier.srcAccessMask;
 		genericBarrier.dstAccessMask |= memBarrier.dstAccessMask;
-
-		self.m_microCmdb->pushObjectRef(barrier.m_as);
 	}
 
 	const Bool genericBarrierSet = genericBarrier.srcAccessMask != 0 && genericBarrier.dstAccessMask != 0;
@@ -1026,8 +1018,6 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQuery* query)
 	ANKI_ASSERT(handle);
 
 	vkCmdBeginQuery(self.m_handle, handle, idx, 0);
-
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
@@ -1041,8 +1031,6 @@ void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
 	ANKI_ASSERT(handle);
 
 	vkCmdEndQuery(self.m_handle, handle, idx);
-
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
@@ -1054,7 +1042,6 @@ void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
 	const U32 idx = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryIndex();
 	ANKI_ASSERT(handle);
 	vkCmdBeginQuery(self.m_handle, handle, idx, 0);
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::endPipelineQuery(PipelineQuery* query)
@@ -1066,7 +1053,6 @@ void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 	const U32 idx = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryIndex();
 	ANKI_ASSERT(handle);
 	vkCmdEndQuery(self.m_handle, handle, idx);
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 void CommandBuffer::writeTimestamp(TimestampQuery* query)
@@ -1079,8 +1065,6 @@ void CommandBuffer::writeTimestamp(TimestampQuery* query)
 	const U32 idx = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryIndex();
 
 	vkCmdWriteTimestamp(self.m_handle, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, handle, idx);
-
-	self.m_microCmdb->pushObjectRef(query);
 }
 
 Bool CommandBuffer::isEmpty() const
@@ -1178,9 +1162,9 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	ANKI_CHECK(CommandBufferFactory::getSingleton().newCommandBuffer(m_tid, m_flags, m_microCmdb));
 	m_handle = m_microCmdb->getHandle();
 
-	m_pool = &m_microCmdb->getFastMemoryPool();
+	m_pool.init(GrMemoryPool::getSingleton().getAllocationCallback(), GrMemoryPool::getSingleton().getAllocationCallbackUserData(), 256_KB, 2.0f);
 
-	m_descriptorState.init(m_pool);
+	m_descriptorState.init(&m_pool);
 
 	m_debugMarkers = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_debug_utils);
 
@@ -1309,11 +1293,10 @@ void CommandBufferImpl::traceRaysInternal(const BufferView& sbtBuffer, U32 sbtRe
 										  U32 height, U32 depth, BufferView argsBuff)
 {
 	ANKI_ASSERT(sbtBuffer.isValid());
+	ANKI_ASSERT(rayTypeCount > 0);
 
 	const PtrSize sbtRecordSize = sbtRecordSize32;
-	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
 	ANKI_ASSERT(m_rtProg);
-	[[maybe_unused]] const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*m_rtProg);
 
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
 	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;

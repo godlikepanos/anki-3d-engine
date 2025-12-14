@@ -1,0 +1,30 @@
+<particleEmitter>
+	<shaderProgram name="GpuParticlesGass" />
+
+	<particleCount value="128"/>
+	<emissionPeriod value="0.5"/>
+	<particlesPerEmission value="1"/>
+
+	<inputs>
+		<input name="m_minParticleLife" value="6"/>
+		<input name="m_maxParticleLife" value="8"/>
+
+		<input name="m_minGravityDirection" value="0 1 0"/>
+		<input name="m_maxGravityDirection" value="0 1 0"/>
+		<input name="m_minGravityMagnitude" value="0.095"/>
+		<input name="m_maxGravityMagnitude" value="0.095"/>
+
+		<input name="m_minInitialSize" value="0.4"/>
+		<input name="m_maxInitialSize" value="1.2"/>
+		<input name="m_minFinalSize" value="0.7"/>
+		<input name="m_maxFinalSize" value="1.9"/>
+
+		<input name="m_minInitialAlpha" value="0.2"/>
+		<input name="m_maxInitialAlpha" value="0.3"/>
+		<input name="m_minFinalAlpha" value="0"/>
+		<input name="m_maxFinalAlpha" value="0"/>
+
+		<input name="m_minStartingPosition" value="0 -0.2 0"/>
+		<input name="m_maxStartingPosition" value="0 0.2 0"/>
+	</inputs>
+</particleEmitter>

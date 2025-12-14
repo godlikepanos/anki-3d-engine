@@ -43,7 +43,7 @@ void MipmapGenerator::populateRenderGraph(const MipmapGeneratorTargetArguments& 
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 					cmdb.bindShaderProgram(m_genMipsGrProg.get());
-					cmdb.setViewport(0, 0, viewport.x(), viewport.y());
+					cmdb.setViewport(0, 0, viewport.x, viewport.y);
 
 					rgraphCtx.bindSrv(0, 0, rt, TextureSubresourceDesc::surface(readMip, face, layer));
 					cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());

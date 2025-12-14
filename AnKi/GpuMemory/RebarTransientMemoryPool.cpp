@@ -10,7 +10,7 @@
 
 namespace anki {
 
-inline StatCounter g_rebarUserMemoryStatVar(StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(RebarUserMemory, StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 RebarTransientMemoryPool::~RebarTransientMemoryPool()
 {
@@ -24,9 +24,10 @@ void RebarTransientMemoryPool::init()
 {
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	buffInit.m_size = g_rebarGpuMemorySizeCvar;
+	buffInit.m_size = g_cvarCoreRebarGpuMemorySize;
 	buffInit.m_usage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kVertexOrIndex
-					   | BufferUsageBit::kShaderBindingTable | BufferUsageBit::kAllIndirect | BufferUsageBit::kCopySource;
+					   | BufferUsageBit::kShaderBindingTable | BufferUsageBit::kAllIndirect | BufferUsageBit::kCopySource
+					   | BufferUsageBit::kAccelerationStructureBuild;
 	m_buffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	m_bufferSize = buffInit.m_size;
@@ -76,7 +77,7 @@ void RebarTransientMemoryPool::endFrame()
 	}
 
 	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);
-	g_rebarUserMemoryStatVar.set(usedMemory);
+	g_svarRebarUserMemory.set(usedMemory);
 }
 
 } // end namespace anki

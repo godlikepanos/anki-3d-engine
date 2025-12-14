@@ -9,15 +9,15 @@
 
 namespace anki {
 
-static StatCounter g_deviceMemoryAllocatedStatVar(StatCategory::kGpuMem, "Device mem", StatFlag::kBytes);
-static StatCounter g_deviceMemoryInUseStatVar(StatCategory::kGpuMem, "Device mem in use", StatFlag::kBytes);
-static StatCounter g_deviceMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Device mem allocations", StatFlag::kNone);
-static StatCounter g_hostMemoryAllocatedStatVar(StatCategory::kGpuMem, "Host mem", StatFlag::kBytes);
-static StatCounter g_hostMemoryInUseStatVar(StatCategory::kGpuMem, "Host mem in use", StatFlag::kBytes);
-static StatCounter g_hostMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Host mem allocations", StatFlag::kNone);
+ANKI_SVAR(DeviceMemoryAllocated, StatCategory::kGpuMem, "Device mem", StatFlag::kBytes)
+ANKI_SVAR(DeviceMemoryInUse, StatCategory::kGpuMem, "Device mem in use", StatFlag::kBytes)
+ANKI_SVAR(DeviceMemoryAllocationCount, StatCategory::kGpuMem, "Device mem allocations", StatFlag::kNone)
+ANKI_SVAR(HostMemoryAllocated, StatCategory::kGpuMem, "Host mem", StatFlag::kBytes)
+ANKI_SVAR(HostMemoryInUse, StatCategory::kGpuMem, "Host mem in use", StatFlag::kBytes)
+ANKI_SVAR(HostMemoryAllocationCount, StatCategory::kGpuMem, "Host mem allocations", StatFlag::kNone)
 
-static constexpr Array<GpuMemoryManagerClassInfo, 7> kClasses{
-	{{4_KB, 256_KB}, {128_KB, 8_MB}, {1_MB, 64_MB}, {16_MB, 128_MB}, {64_MB, 128_MB}, {128_MB, 128_MB}, {256_MB, 256_MB}}};
+static constexpr Array<GpuMemoryManagerClassInfo, 8> kClasses{
+	{{4_KB, 256_KB}, {128_KB, 8_MB}, {1_MB, 64_MB}, {16_MB, 128_MB}, {64_MB, 128_MB}, {128_MB, 128_MB}, {256_MB, 256_MB}, {512_MB, 512_MB}}};
 
 /// Special classes for the ReBAR memory. Have that as a special case because it's so limited and needs special care.
 static constexpr Array<GpuMemoryManagerClassInfo, 3> kRebarClasses{{{1_MB, 1_MB}, {12_MB, 12_MB}, {24_MB, 24_MB}}};
@@ -269,12 +269,12 @@ U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFl
 
 void GpuMemoryManager::updateStats() const
 {
-	g_deviceMemoryAllocatedStatVar.set(0);
-	g_deviceMemoryAllocationCountStatVar.set(0);
-	g_deviceMemoryInUseStatVar.set(0);
-	g_hostMemoryAllocatedStatVar.set(0);
-	g_hostMemoryAllocationCountStatVar.set(0);
-	g_hostMemoryInUseStatVar.set(0);
+	g_svarDeviceMemoryAllocated.set(0);
+	g_svarDeviceMemoryAllocationCount.set(0);
+	g_svarDeviceMemoryInUse.set(0);
+	g_svarHostMemoryAllocated.set(0);
+	g_svarHostMemoryAllocationCount.set(0);
+	g_svarHostMemoryInUse.set(0);
 
 	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
@@ -284,23 +284,23 @@ void GpuMemoryManager::updateStats() const
 
 		if(iface.m_isDeviceMemory)
 		{
-			g_deviceMemoryAllocatedStatVar.increment(cstats.m_allocatedSize);
-			g_deviceMemoryInUseStatVar.increment(cstats.m_inUseSize);
-			g_deviceMemoryAllocationCountStatVar.increment(cstats.m_chunkCount);
+			g_svarDeviceMemoryAllocated.increment(cstats.m_allocatedSize);
+			g_svarDeviceMemoryInUse.increment(cstats.m_inUseSize);
+			g_svarDeviceMemoryAllocationCount.increment(cstats.m_chunkCount);
 		}
 		else
 		{
-			g_hostMemoryAllocatedStatVar.increment(cstats.m_allocatedSize);
-			g_hostMemoryInUseStatVar.increment(cstats.m_inUseSize);
-			g_hostMemoryAllocationCountStatVar.increment(cstats.m_chunkCount);
+			g_svarHostMemoryAllocated.increment(cstats.m_allocatedSize);
+			g_svarHostMemoryInUse.increment(cstats.m_inUseSize);
+			g_svarHostMemoryAllocationCount.increment(cstats.m_chunkCount);
 		}
 	}
 
 	// Add dedicated stats
 	const PtrSize dedicatedAllocatedMemory = m_dedicatedAllocatedMemory.load();
-	g_deviceMemoryAllocatedStatVar.increment(dedicatedAllocatedMemory);
-	g_deviceMemoryInUseStatVar.increment(dedicatedAllocatedMemory);
-	g_deviceMemoryAllocationCountStatVar.increment(m_dedicatedAllocationCount.load());
+	g_svarDeviceMemoryAllocated.increment(dedicatedAllocatedMemory);
+	g_svarDeviceMemoryInUse.increment(dedicatedAllocatedMemory);
+	g_svarDeviceMemoryAllocationCount.increment(m_dedicatedAllocationCount.load());
 }
 
 void GpuMemoryManager::getImageMemoryRequirements(VkImage image, VkMemoryDedicatedRequirementsKHR& dedicatedRequirements,

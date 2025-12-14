@@ -31,7 +31,6 @@ set(backend_headers
 	GrUpscaler.h
 	Utils/StackGpuMemoryPool.h
 	BackendCommon/Functions.h
-	BackendCommon/InstantiationMacros.def.h
 	BackendCommon/Format.def.h
 	Utils/SegregatedListsGpuMemoryPool.h)
 
@@ -79,7 +78,7 @@ add_library(AnKiGr ${backend_sources} ${backend_headers})
 
 set(COMPILE_DEFS "-DANKI_SOURCE_FILE")
 if(DIRECTX)
-	set(COMPILE_DEFS ${COMPILE_DEFS} "-DUSE_PIX")	
+	set(COMPILE_DEFS ${COMPILE_DEFS} "-DUSE_PIX")
 endif()
 target_compile_definitions(AnKiGr PRIVATE ${COMPILE_DEFS})
 

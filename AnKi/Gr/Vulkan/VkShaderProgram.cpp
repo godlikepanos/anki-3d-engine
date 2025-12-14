@@ -160,7 +160,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the shader references
 	//
-	GrHashMap<U64, U32> shaderUuidToMShadersIdx; // Shader UUID to m_shaders idx
+	GrHashMap<U32, U32> shaderUuidToMShadersIdx; // Shader UUID to m_shaders idx
 	if(inf.m_computeShader)
 	{
 		m_shaders.emplaceBack(inf.m_computeShader);
@@ -223,7 +223,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	// Link reflection
 	//
 	Bool firstLink = true;
-	for(ShaderPtr& shader : m_shaders)
+	for(ShaderInternalPtr& shader : m_shaders)
 	{
 		m_shaderTypes |= ShaderTypeBit(1 << shader->getShaderType());
 
@@ -410,7 +410,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		}
 
 		// Get RT handles
-		const U32 handleArraySize = getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
+		const U32 handleArraySize = getGrManagerImpl().getDeviceCapabilities().m_shaderGroupHandleSize * groupCount;
 		m_rt.m_allHandles.resize(handleArraySize, 0_U8);
 		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getVkDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize, &m_rt.m_allHandles[0]));
 
@@ -430,7 +430,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Get shader sizes and a few other things
 	//
-	for(const ShaderPtr& s : m_shaders)
+	for(const ShaderInternalPtr& s : m_shaders)
 	{
 		if(!s.isCreated())
 		{
@@ -541,7 +541,8 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 					++vkBindingCount[set];
 				}
 			}
-			else if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet && instructions[2] == kDxcVkBindlessRegisterSpace)
+			else if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet
+					&& instructions[2] == ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)
 			{
 				// Bindless set, rewrite its set
 				instructions[2] = refl.m_vkBindlessDescriptorSet;

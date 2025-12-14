@@ -15,7 +15,7 @@ namespace anki {
 /// @{
 
 /// Ring buffer used for AS scratch memory.
-class AccelerationStructureScratchAllocator
+class AccelerationStructureScratchAllocator : public MakeSingleton<AccelerationStructureScratchAllocator>
 {
 public:
 	static constexpr PtrSize kBufferSize = 64_MB;
@@ -57,7 +57,7 @@ public:
 		}
 
 		const BufferView view(m_buffer.get(), m_offset, size);
-		m_offset += getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment, size);
+		m_offset += size;
 
 		return view;
 	}

@@ -10,7 +10,7 @@ namespace anki {
 Aabb Aabb::getTransformed(const Transform& trf) const
 {
 	Mat3x4 absM;
-	for(U i = 0; i < 12; ++i)
+	for(U32 i = 0; i < 12; ++i)
 	{
 		absM[i] = absolute(trf.getRotation()[i]);
 	}
@@ -31,9 +31,9 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 Aabb Aabb::getCompoundShape(const Aabb& b) const
 {
 	Aabb out;
-	out.m_min.w() = out.m_max.w() = 0.0f;
+	out.m_min.w = out.m_max.w = 0.0f;
 
-	for(U i = 0; i < 3; i++)
+	for(U32 i = 0; i < 3; i++)
 	{
 		out.m_min[i] = (m_min[i] < b.m_min[i]) ? m_min[i] : b.m_min[i];
 		out.m_max[i] = (m_max[i] > b.m_max[i]) ? m_max[i] : b.m_max[i];
@@ -61,7 +61,7 @@ void Aabb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize poin
 		ANKI_ASSERT((ptrToNumber(ptr) + sizeof(Vec3) - ptrToNumber(pointBuffer)) <= buffSize);
 		const Vec3& pos = *reinterpret_cast<const Vec3*>(ptr);
 
-		for(U j = 0; j < 3; j++)
+		for(U32 j = 0; j < 3; j++)
 		{
 			if(pos[j] > m_max[j])
 			{
@@ -81,9 +81,9 @@ Vec4 Aabb::computeSupport(const Vec4& dir) const
 {
 	Vec4 ret(0.0f);
 
-	ret.x() = (dir.x() >= 0.0f) ? m_max.x() : m_min.x();
-	ret.y() = (dir.y() >= 0.0f) ? m_max.y() : m_min.y();
-	ret.z() = (dir.z() >= 0.0f) ? m_max.z() : m_min.z();
+	ret.x = (dir.x >= 0.0f) ? m_max.x : m_min.x;
+	ret.y = (dir.y >= 0.0f) ? m_max.y : m_min.y;
+	ret.z = (dir.z >= 0.0f) ? m_max.z : m_min.z;
 
 	return ret;
 }

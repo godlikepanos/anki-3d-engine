@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/AccelerationStructure.h>
+#include <AnKi/Gr/D3D/D3DCommon.h>
 
 namespace anki {
 
@@ -15,6 +16,8 @@ namespace anki {
 /// AccelerationStructure implementation.
 class AccelerationStructureImpl final : public AccelerationStructure
 {
+	friend class AccelerationStructure;
+
 public:
 	AccelerationStructureImpl(CString name)
 		: AccelerationStructure(name)
@@ -23,11 +26,47 @@ public:
 
 	~AccelerationStructureImpl();
 
-	Error init(const AccelerationStructureInitInfo& inf)
+	Error init(const AccelerationStructureInitInfo& inf);
+
+	void fillBuildInfo(BufferView scratchBuff, D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& buildDesc) const;
+
+	D3D12_GLOBAL_BARRIER computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after) const;
+
+	const Buffer& getAsBuffer() const
 	{
-		ANKI_ASSERT(!"TODO");
-		return Error::kNone;
+		return *m_asBuffer;
 	}
+
+	static void getMemoryRequirement(const AccelerationStructureInitInfo& init, PtrSize& asBufferSize, PtrSize& buildScratchBufferSize,
+									 Bool alignSizes = true);
+
+private:
+	/// Spec doesn't say anything about scratch buffer alignment but validation complains.
+	static constexpr U32 kScratchBufferAlignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+
+	BufferInternalPtr m_asBuffer;
+	PtrSize m_asBufferOffset = kMaxPtrSize;
+
+	class
+	{
+	public:
+		BufferInternalPtr m_instancesBuff;
+		PtrSize m_instancesBuffOffset = 0;
+		U32 m_instanceCount = 0;
+	} m_tlas;
+
+	class
+	{
+	public:
+		D3D12_RAYTRACING_GEOMETRY_DESC m_geometryDesc;
+
+		BufferInternalPtr m_positionsBuff;
+		BufferInternalPtr m_indexBuff;
+	} m_blas;
+
+	static D3D12_BARRIER_SYNC computeBarrierSync(AccelerationStructureUsageBit usage);
+
+	static D3D12_BARRIER_ACCESS computeBarrierAccess(AccelerationStructureUsageBit usage);
 };
 /// @}
 

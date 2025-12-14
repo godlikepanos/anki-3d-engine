@@ -16,13 +16,13 @@ Error Bloom::init()
 	// Pyramid
 	{
 		const UVec2 pyramidSize = getRenderer().getInternalResolution() / 2;
-		const U8 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x(), pyramidSize.y(), g_bloomPyramidLowLimit);
+		const U8 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x, pyramidSize.y, g_cvarRenderBloomPyramidLowLimit);
 
-		const Bool preferCompute = g_preferComputeCVar;
+		const Bool preferCompute = g_cvarRenderPreferCompute;
 
 		// Create the miped texture
 		TextureInitInfo texinit =
-			getRenderer().create2DRenderTargetDescription(pyramidSize.x(), pyramidSize.y(), getRenderer().getHdrFormat(), "Bloom pyramid");
+			getRenderer().create2DRenderTargetDescription(pyramidSize.x, pyramidSize.y, getRenderer().getHdrFormat(), "Bloom pyramid");
 		texinit.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute;
 		texinit.m_usage |= (preferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 		texinit.m_mipmapCount = pyramidMipCount;
@@ -39,7 +39,7 @@ Error Bloom::init()
 		const UVec2 expSize = pyramidSmallerMipSize * 2; // Upacale a bit
 
 		// Create RT info
-		m_exposureRtDesc = getRenderer().create2DRenderTargetDescription(expSize.x(), expSize.y(), getRenderer().getHdrFormat(), "Bloom exposure");
+		m_exposureRtDesc = getRenderer().create2DRenderTargetDescription(expSize.x, expSize.y, getRenderer().getHdrFormat(), "Bloom exposure");
 		m_exposureRtDesc.bake();
 
 		// init shaders
@@ -48,17 +48,17 @@ Error Bloom::init()
 
 	// Upscale
 	{
-		const UVec2 size = getRenderer().getPostProcessResolution() / g_bloomUpscaleDivisor;
+		const UVec2 size = getRenderer().getPostProcessResolution() / g_cvarRenderBloomUpscaleDivisor;
 
 		// Create RT descr
-		m_finalRtDesc = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), getRenderer().getHdrFormat(), "Bloom final");
+		m_finalRtDesc = getRenderer().create2DRenderTargetDescription(size.x, size.y, getRenderer().getHdrFormat(), "Bloom final");
 		m_finalRtDesc.bake();
 
 		// init shaders
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom.ankiprogbin", {}, m_prog, m_upscaleGrProg, "Upscale"));
 
 		// Textures
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_lensDirtImg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_lensDirtImg, false));
 	}
 
 	return Error::kNone;
@@ -73,7 +73,7 @@ void Bloom::importRenderTargets(RenderingContext& ctx)
 void Bloom::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = g_preferComputeCVar;
+	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	// Pyramid generation
 	{
@@ -136,7 +136,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 					rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 				}
 
-				if(g_preferComputeCVar)
+				if(g_cvarRenderPreferCompute)
 				{
 					const Vec4 fbSize(F32(vpWidth), F32(vpHeight), 0.0f, 0.0f);
 					cmdb.setFastConstants(&fbSize, sizeof(fbSize));
@@ -198,10 +198,10 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, m_runCtx.m_pyramidRt, inputTexSubresource);
 			rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getExposureAndAvgLuminanceRt());
 
-			const Vec4 consts(g_bloomThresholdCVar, g_bloomScaleCVar, 0.0f, 0.0f);
+			const Vec4 consts(g_cvarRenderBloomThreshold, g_cvarRenderBloomScale, 0.0f, 0.0f);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(1, 0, exposureRt);
 
@@ -256,7 +256,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, exposureRt);
 			cmdb.bindSrv(1, 0, TextureView(&m_lensDirtImg->getTexture(), TextureSubresourceDesc::all()));
 
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				rgraphCtx.bindUav(0, 0, upscaledRt);
 

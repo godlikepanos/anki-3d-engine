@@ -18,7 +18,6 @@ class GBufferPost : public RendererObject
 public:
 	Error init();
 
-	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
 private:

@@ -14,14 +14,7 @@ inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) {ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
-#undef ANKI_SVDT_MACRO_OPAQUE
 };
-
-void GrObjectDeleter::operator()(GrObject* ptr)
-{
-	deleteInstance(GrMemoryPool::getSingleton(), ptr);
-}
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {
@@ -167,10 +160,21 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 	if(a.m_descriptor.m_fastConstantsSize != 0 && b.m_descriptor.m_fastConstantsSize != 0
 	   && a.m_descriptor.m_fastConstantsSize != b.m_descriptor.m_fastConstantsSize)
 	{
-		ANKI_GR_LOGE("Can't link shader reflection because fast constant size doesn't match");
+		ANKI_GR_LOGE("Can't link shader reflection because fast constants size doesn't match");
 		return Error::kFunctionFailed;
 	}
 	c.m_descriptor.m_fastConstantsSize = max(a.m_descriptor.m_fastConstantsSize, b.m_descriptor.m_fastConstantsSize);
+
+	if(a.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize != 0 && b.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize != 0
+	   && a.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize != b.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize)
+	{
+		ANKI_GR_LOGE("Can't link shader reflection because SBT constants size is not correct");
+		return Error::kFunctionFailed;
+	}
+	c.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize =
+		max(a.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize, b.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize);
+
+	c.m_descriptor.m_d3dHasDrawId = a.m_descriptor.m_d3dHasDrawId || b.m_descriptor.m_d3dHasDrawId;
 
 	c.m_descriptor.m_hasVkBindlessDescriptorSet = a.m_descriptor.m_hasVkBindlessDescriptorSet || b.m_descriptor.m_hasVkBindlessDescriptorSet;
 
@@ -198,6 +202,7 @@ StringList ShaderReflectionDescriptorRelated::toString() const
 
 	list.pushBackSprintf("Fast constants: %u", m_fastConstantsSize);
 	list.pushBackSprintf("Has VK bindless sets: %u", m_hasVkBindlessDescriptorSet);
+	list.pushBackSprintf("Has D3D DrawID: %u", m_d3dHasDrawId);
 
 	return list;
 }
@@ -208,7 +213,7 @@ StringList ShaderReflection::toString() const
 
 	for(VertexAttributeSemantic attrib : EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(m_vertex.m_vertexAttributeMask))
 	{
-		list.pushBackSprintf("Vert attrib: %u", U32(attrib));
+		list.pushBackSprintf("Vert attrib: %s", g_vertexAttributeSemanticNames[attrib].cstr());
 	}
 
 	list.pushBackSprintf("Color RT mask: %u", m_pixel.m_colorRenderTargetWritemask.getData()[0]);

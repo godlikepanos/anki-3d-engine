@@ -41,7 +41,7 @@ struct Consts
 
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
-[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID, U32 svGroupIndex : SV_GroupIndex, UVec2 svGroupId : SV_GroupID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX, UVec2 svGroupId : SV_GROUPID)
 {
 	// Gather the thread result
 	const F32 pixelsPerThread = TILE_SIZE / 8;
@@ -87,7 +87,7 @@ void sample(IVec2 svDispatchThreadId, IVec2 offset, inout Vec2 maxVel)
 	maxVel = computeMaxVelocity(maxVel, v);
 }
 
-[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	Vec2 maxv = 0.0;
 	for(I32 i = -1; i <= 1; ++i)
@@ -151,14 +151,14 @@ F32 readDepth(Vec2 uv)
 }
 
 #	if ANKI_COMPUTE_SHADER
-[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	Vec2 colorTexSize;
 	g_colorTex.GetDimensions(colorTexSize.x, colorTexSize.y);
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / colorTexSize;
 	const Vec2 x = Vec2(svDispatchThreadId) + 0.5;
 #	else
-Vec3 main(Vec2 uv : TEXCOORDS, Vec4 svPosition : SV_Position) : SV_Target0
+Vec3 main(Vec2 uv : TEXCOORDS, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 {
 	Vec2 colorTexSize;
 	g_colorTex.GetDimensions(colorTexSize.x, colorTexSize.y);

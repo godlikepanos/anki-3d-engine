@@ -12,16 +12,16 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtReflectionsCVar("R", "RtReflections", true, "Enable RT reflections");
-inline NumericCVar<F32> g_rtReflectionsMaxRayDistanceCVar("R", "RtReflectionsMaxRayDistance", 100.0f, 1.0f, 10000.0f,
-														  "Max RT reflections ray distance");
-inline NumericCVar<U32> g_ssrStepIncrementCVar("R", "SsrStepIncrement", 32, 1, 256, "The number of steps for each loop");
-inline NumericCVar<U32> g_ssrMaxIterationsCVar("R", "SsrMaxIterations", 64, 1, 256, "Max SSR raymarching loop iterations");
+ANKI_CVAR2(BoolCVar, Render, Reflections, Rt, true, "Enable RT reflections")
+ANKI_CVAR2(BoolCVar, Render, Reflections, InlineRt, false, "Enable a cheap inline RT alternative path")
+ANKI_CVAR2(NumericCVar<F32>, Render, Reflections, RtMaxRayDistance, 100.0f, 1.0f, 10000.0f, "Max RT reflections ray distance")
+ANKI_CVAR2(NumericCVar<U32>, Render, Reflections, SsrStepIncrement, 32, 1, 256, "The number of steps for each loop")
+ANKI_CVAR2(NumericCVar<U32>, Render, Reflections, SsrMaxIterations, ANKI_PLATFORM_MOBILE ? 16 : 64, 1, 256, "Max SSR raymarching loop iterations")
 
-inline NumericCVar<F32> g_roughnessCutoffToGiEdge0("R", "RoughnessCutoffToGiEdge0", 0.7f, 0.0f, 1.0f,
-												   "Before this roughness the reflections will never sample the GI probes");
-inline NumericCVar<F32> g_roughnessCutoffToGiEdge1("R", "RoughnessCutoffToGiEdge1", 0.9f, 0.0f, 1.0f,
-												   "After this roughness the reflections will sample the GI probes");
+ANKI_CVAR2(NumericCVar<F32>, Render, Reflections, RoughnessCutoffToGiEdge0, 0.7f, 0.0f, 1.0f,
+		   "Before this roughness the reflections will never sample the GI probes")
+ANKI_CVAR2(NumericCVar<F32>, Render, Reflections, RoughnessCutoffToGiEdge1, 0.9f, 0.0f, 1.0f,
+		   "After this roughness the reflections will sample the GI probes")
 
 class Reflections : public RtMaterialFetchRendererObject
 {
@@ -35,10 +35,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		handles[0] = m_runCtx.m_rt;
+		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
 	}
 
 	RenderTargetHandle getRt() const
@@ -51,6 +52,7 @@ public:
 	ShaderProgramResourcePtr m_missProg;
 	ShaderProgramPtr m_ssrGrProg;
 	ShaderProgramPtr m_libraryGrProg;
+	ShaderProgramPtr m_rtMaterialFetchInlineRtGrProg;
 	ShaderProgramPtr m_spatialDenoisingGrProg;
 	ShaderProgramPtr m_temporalDenoisingGrProg;
 	ShaderProgramPtr m_verticalBilateralDenoisingGrProg;

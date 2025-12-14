@@ -36,19 +36,30 @@ void FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		GpuSceneFogDensityVolume gpuVolume;
 		if(m_type == FogDensityComponentShape::kBox)
 		{
-			gpuVolume.m_aabbMinOrSphereCenter = Vec3(-1.0f) * trf.getScale().xyz() + trf.getOrigin().xyz();
-			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(+1.0f) * trf.getScale().xyz() + trf.getOrigin().xyz();
+			gpuVolume.m_aabbMinOrSphereCenter = Vec3(-1.0f) * trf.getScale().xyz + trf.getOrigin().xyz;
+			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(+1.0f) * trf.getScale().xyz + trf.getOrigin().xyz;
 		}
 		else
 		{
-			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(1.0f * max(max(trf.getScale().x(), trf.getScale().y()), trf.getScale().z()));
-			gpuVolume.m_aabbMinOrSphereCenter = trf.getOrigin().xyz();
+			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(1.0f * max(max(trf.getScale().x, trf.getScale().y), trf.getScale().z));
+			gpuVolume.m_aabbMinOrSphereCenter = trf.getOrigin().xyz;
 		}
 		gpuVolume.m_isBox = m_type == FogDensityComponentShape::kBox;
 		gpuVolume.m_density = m_density;
 
 		m_gpuSceneVolume.uploadToGpuScene(gpuVolume);
 	}
+}
+
+Error FogDensityComponent::serialize(SceneSerializer& serializer)
+{
+	U32 type = U32(m_type);
+	ANKI_SERIALIZE(type, 1);
+	m_type = FogDensityComponentShape(type);
+
+	ANKI_SERIALIZE(m_density, 1);
+
+	return Error::kNone;
 }
 
 } // end namespace anki

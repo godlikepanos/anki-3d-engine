@@ -4,21 +4,20 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DCommandBufferFactory.h>
+#include <AnKi/Gr/D3D/D3DDescriptor.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
-static StatCounter g_commandBufferCountStatVar(StatCategory::kMisc, "CommandBufferCount", StatFlag::kNone);
+ANKI_SVAR(CommandBufferCount, StatCategory::kGr, "CommandBufferCount", StatFlag::kNone)
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {
-	m_fastPool.destroy();
-
 	safeRelease(m_cmdList);
 	safeRelease(m_cmdAllocator);
 
-	g_commandBufferCountStatVar.decrement(1);
+	g_svarCommandBufferCount.decrement(1);
 }
 
 Error MicroCommandBuffer::init(CommandBufferFlag flags)
@@ -32,37 +31,14 @@ Error MicroCommandBuffer::init(CommandBufferFlag flags)
 	ANKI_D3D_CHECK(getDevice().CreateCommandList(0, cmdListType, m_cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList)));
 	ANKI_D3D_CHECK(cmdList->QueryInterface(IID_PPV_ARGS(&m_cmdList)));
 
-	g_commandBufferCountStatVar.increment(1);
+	g_svarCommandBufferCount.increment(1);
 
 	return Error::kNone;
 }
 
-void MicroCommandBuffer::reset()
+void MicroCommandBuffer::releaseInternal()
 {
-	ANKI_TRACE_SCOPED_EVENT(D3DCommandBufferReset);
-
-	ANKI_ASSERT(m_refcount.load() == 0);
-	ANKI_ASSERT(!m_fence.isCreated());
-
-	for(GrObjectType type : EnumIterable<GrObjectType>())
-	{
-		m_objectRefs[type].destroy();
-	}
-
-	m_fastPool.reset();
-
-	// Command list should already be reset on submit
-
-	m_cmdAllocator->Reset();
-	m_cmdList->Reset(m_cmdAllocator, nullptr);
-}
-
-void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* cmdb)
-{
-	if(cmdb)
-	{
-		CommandBufferFactory::getSingleton().deleteCommandBuffer(cmdb);
-	}
+	CommandBufferFactory::getSingleton().recycleCommandBuffer(this);
 }
 
 CommandBufferFactory::~CommandBufferFactory()
@@ -73,7 +49,7 @@ CommandBufferFactory::~CommandBufferFactory()
 	}
 }
 
-void CommandBufferFactory::deleteCommandBuffer(MicroCommandBuffer* cmdb)
+void CommandBufferFactory::recycleCommandBuffer(MicroCommandBuffer* cmdb)
 {
 	ANKI_ASSERT(cmdb);
 
@@ -99,6 +75,10 @@ Error CommandBufferFactory::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroC
 			return err;
 		}
 	}
+	else
+	{
+		cmdb->reset();
+	}
 
 	ptr.reset(cmdb);
 	return Error::kNone;
@@ -121,24 +101,27 @@ Error IndirectCommandSignatureFactory::init()
 	for(IndirectCommandSignatureType i : EnumIterable<IndirectCommandSignatureType>())
 	{
 		ID3D12CommandSignature* sig;
-		ANKI_CHECK(getOrCreateSignatureInternal(false, kAnkiToD3D[i], kCommonStrides[i], sig));
+		ANKI_CHECK(getOrCreateSignatureInternal(false, kAnkiToD3D[i], kCommonStrides[i], nullptr, sig));
 	}
 	return Error::kNone;
 }
 
-Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFastPath, D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride,
-																	ID3D12CommandSignature*& signature)
+Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool tryThePreCreatedRootSignaturesFirst, D3D12_INDIRECT_ARGUMENT_TYPE type,
+																	U32 stride, RootSignature* rootSignature, ID3D12CommandSignature*& signature)
 {
 	signature = nullptr;
 
+	Bool hasVertexShader = false;
 	IndirectCommandSignatureType akType = IndirectCommandSignatureType::kCount;
 	switch(type)
 	{
 	case D3D12_INDIRECT_ARGUMENT_TYPE_DRAW:
 		akType = IndirectCommandSignatureType::kDraw;
+		hasVertexShader = true;
 		break;
 	case D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED:
 		akType = IndirectCommandSignatureType::kDrawIndexed;
+		hasVertexShader = true;
 		break;
 	case D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH:
 		akType = IndirectCommandSignatureType::kDispatch;
@@ -146,12 +129,29 @@ Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFas
 	case D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH:
 		akType = IndirectCommandSignatureType::kDispatchMesh;
 		break;
+	case D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS:
+		akType = IndirectCommandSignatureType::kDispatchRays;
+		break;
 	default:
 		ANKI_ASSERT(!"Unsupported");
 	}
 
-	// Check if it's a common stride
-	if(takeFastPath && stride == kCommonStrides[akType])
+	if(tryThePreCreatedRootSignaturesFirst)
+	{
+		ANKI_ASSERT((!rootSignature || hasVertexShader)
+					&& "If signature will be used with a vert shader we need the root signature to determin the DrawID");
+	}
+	else
+	{
+		ANKI_ASSERT(rootSignature == nullptr);
+	}
+
+	const Bool needsDrawId = rootSignature && rootSignature->getDrawIdRootParamIdx() != kMaxU32;
+	ID3D12RootSignature* d3dRootSignature = needsDrawId ? &rootSignature->getD3DRootSignature() : nullptr;
+	const U32 drawIdParameterIdx = needsDrawId ? rootSignature->getDrawIdRootParamIdx() : kMaxU32;
+
+	// Check if it's one of the pre-created
+	if(tryThePreCreatedRootSignaturesFirst && stride == kCommonStrides[akType] && d3dRootSignature == nullptr)
 	{
 		signature = m_arrays[akType][0].m_d3dSignature;
 		return Error::kNone;
@@ -162,7 +162,7 @@ Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFas
 
 		for(const Signature& sig : m_arrays[akType])
 		{
-			if(sig.m_stride == stride)
+			if(sig.m_stride == stride && sig.m_d3dRootSignature == d3dRootSignature)
 			{
 				signature = sig.m_d3dSignature;
 				break;
@@ -174,10 +174,17 @@ Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFas
 	{
 		// Proactively create it without locking
 
-		const D3D12_INDIRECT_ARGUMENT_DESC arg = {.Type = type};
-		const D3D12_COMMAND_SIGNATURE_DESC desc = {.ByteStride = stride, .NumArgumentDescs = 1, .pArgumentDescs = &arg, .NodeMask = 0};
+		Array<D3D12_INDIRECT_ARGUMENT_DESC, 2> args = {};
+		args[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_INCREMENTING_CONSTANT;
+		args[0].IncrementingConstant.RootParameterIndex = drawIdParameterIdx;
+		args[0].IncrementingConstant.DestOffsetIn32BitValues = 0;
+		args[1].Type = type;
+		const D3D12_COMMAND_SIGNATURE_DESC desc = {.ByteStride = stride,
+												   .NumArgumentDescs = needsDrawId ? 2u : 1u,
+												   .pArgumentDescs = args.getBegin() + (needsDrawId ? 0 : 1),
+												   .NodeMask = 0};
 
-		ANKI_D3D_CHECK(getDevice().CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&signature)));
+		ANKI_D3D_CHECK(getDevice().CreateCommandSignature(&desc, d3dRootSignature, IID_PPV_ARGS(&signature)));
 
 		// Try to do bookkeeping
 
@@ -187,7 +194,7 @@ Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFas
 			ID3D12CommandSignature* oldSignature = nullptr;
 			for(const Signature& sig : m_arrays[akType])
 			{
-				if(sig.m_stride == stride)
+				if(sig.m_stride == stride && sig.m_d3dRootSignature == d3dRootSignature)
 				{
 					oldSignature = sig.m_d3dSignature;
 					break;
@@ -203,7 +210,7 @@ Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFas
 			else
 			{
 				// New signature, do bookkeeping
-				const Signature sig = {.m_d3dSignature = signature, .m_stride = stride};
+				const Signature sig = {.m_d3dSignature = signature, .m_d3dRootSignature = d3dRootSignature, .m_stride = stride};
 				m_arrays[akType].emplaceBack(sig);
 			}
 		}

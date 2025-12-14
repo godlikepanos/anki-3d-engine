@@ -45,6 +45,7 @@ public:
 	U32 m_channelCount = 0;
 	U32 m_pixelSize = 0; ///< Texel size of an uncompressed image.
 	Bool m_hdr = false;
+	Vec4 m_averageColor = Vec4(0.0f);
 };
 
 class DdsPixelFormat
@@ -293,9 +294,9 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 static Vec3 linearToSRgb(Vec3 p)
 {
 	Vec3 cutoff;
-	cutoff.x() = (p.x() < 0.0031308f) ? 1.0f : 0.0f;
-	cutoff.y() = (p.y() < 0.0031308f) ? 1.0f : 0.0f;
-	cutoff.z() = (p.z() < 0.0031308f) ? 1.0f : 0.0f;
+	cutoff.x = (p.x < 0.0031308f) ? 1.0f : 0.0f;
+	cutoff.y = (p.y < 0.0031308f) ? 1.0f : 0.0f;
+	cutoff.z = (p.z < 0.0031308f) ? 1.0f : 0.0f;
 
 	const Vec3 higher = 1.055f * p.pow(1.0f / 2.4f) - 0.055f;
 	const Vec3 lower = p * 12.92f;
@@ -307,9 +308,9 @@ static Vec3 linearToSRgb(Vec3 p)
 static Vec3 sRgbToLinear(Vec3 p)
 {
 	Vec3 cutoff;
-	cutoff.x() = (p.x() < 0.04045f) ? 1.0f : 0.0f;
-	cutoff.y() = (p.y() < 0.04045f) ? 1.0f : 0.0f;
-	cutoff.z() = (p.z() < 0.04045f) ? 1.0f : 0.0f;
+	cutoff.x = (p.x < 0.04045f) ? 1.0f : 0.0f;
+	cutoff.y = (p.y < 0.04045f) ? 1.0f : 0.0f;
+	cutoff.z = (p.z < 0.04045f) ? 1.0f : 0.0f;
 
 	const Vec3 higher = ((p + 0.055f) / 1.055f).pow(2.4f);
 	const Vec3 lower = p / 12.92f;
@@ -327,33 +328,70 @@ static void linearToSRgbBatch(WeakArray<TVec> pixels, TFunc func)
 		Vec3 p;
 		if(std::is_same<S, U8>::value)
 		{
-			p.x() = F32(pixel.x()) / 255.0f;
-			p.y() = F32(pixel.y()) / 255.0f;
-			p.z() = F32(pixel.z()) / 255.0f;
+			p.x = F32(pixel.x) / 255.0f;
+			p.y = F32(pixel.y) / 255.0f;
+			p.z = F32(pixel.z) / 255.0f;
 		}
 		else
 		{
 			ANKI_ASSERT((std::is_same<S, F32>::value));
-			p.x() = F32(pixel.x());
-			p.y() = F32(pixel.y());
-			p.z() = F32(pixel.z());
+			p.x = F32(pixel.x);
+			p.y = F32(pixel.y);
+			p.z = F32(pixel.z);
 		}
 
 		p = func(p);
 
 		if(std::is_same<S, U8>::value)
 		{
-			pixel.x() = S(p.x() * 255.0f);
-			pixel.y() = S(p.y() * 255.0f);
-			pixel.z() = S(p.z() * 255.0f);
+			pixel.x = S(p.x * 255.0f);
+			pixel.y = S(p.y * 255.0f);
+			pixel.z = S(p.z * 255.0f);
 		}
 		else
 		{
-			pixel.x() = S(p.x());
-			pixel.y() = S(p.y());
-			pixel.z() = S(p.z());
+			pixel.x = S(p.x);
+			pixel.y = S(p.y);
+			pixel.z = S(p.z);
 		}
 	}
+}
+
+template<typename TVec>
+static Vec4 computeAverageColor(WeakArray<TVec> pixels)
+{
+	Vec4 average(0.0f);
+	const F32 weight = 1.0f / F32(pixels.getSize());
+	constexpr Bool unorm = sizeof(pixels[0][0]) == 1;
+	constexpr U32 componentCount = TVec::kComponentCount;
+	static_assert(componentCount == 3 || componentCount == 4);
+
+	for(const TVec& color : pixels)
+	{
+		Vec4 v;
+		if constexpr(componentCount == 3)
+		{
+			v = Vec4(Vec3(color), 0.0f);
+		}
+		else
+		{
+			ANKI_ASSERT(componentCount == 4);
+			v = Vec4(color);
+		}
+
+		if(unorm)
+		{
+			v /= 255.0f;
+		}
+		else
+		{
+			ANKI_ASSERT(sizeof(color[0]) == 4);
+		}
+
+		average += v * weight;
+	}
+
+	return (componentCount == 3) ? average.xyz1 : average;
 }
 
 static void applyScaleAndBias(WeakArray<Vec3> pixels, Vec3 scale, Vec3 bias)
@@ -482,6 +520,32 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 		{
 			memcpy(mip0.m_surfacesOrVolume[i].m_pixels.getBegin(), data, dataSize);
 		}
+
+		Vec4 averageColor(0.0f);
+		if(ctx.m_channelCount == 3)
+		{
+			if(!ctx.m_hdr)
+			{
+				averageColor = computeAverageColor(WeakArray<U8Vec3>(static_cast<U8Vec3*>(data), ctx.m_width * ctx.m_height));
+			}
+			else
+			{
+				averageColor = computeAverageColor(WeakArray<Vec3>(static_cast<Vec3*>(data), ctx.m_width * ctx.m_height));
+			}
+		}
+		else
+		{
+			ANKI_ASSERT(ctx.m_channelCount == 4);
+			if(!ctx.m_hdr)
+			{
+				averageColor = computeAverageColor(WeakArray<U8Vec4>(static_cast<U8Vec4*>(data), ctx.m_width * ctx.m_height));
+			}
+			else
+			{
+				averageColor = computeAverageColor(WeakArray<Vec4>(static_cast<Vec4*>(data), ctx.m_width * ctx.m_height));
+			}
+		}
+		ctx.m_averageColor += averageColor / F32(config.m_inputFilenames.getSize());
 
 		stbi_image_free(data);
 	}
@@ -648,7 +712,7 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 	[[maybe_unused]] const PtrSize blockBytes = 16;
 	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * inChannelCount * ((hdr) ? sizeof(F32) : sizeof(U8)));
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
-	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
+	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x) * (inHeight / blockSize.y));
 
 	// Create a BMP image to feed to the astcebc
 	ImporterString tmpFilename;
@@ -677,7 +741,7 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 	ImporterString astcFilename;
 	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
 	ImporterString blockStr;
-	blockStr.sprintf("%ux%u", blockSize.x(), blockSize.y());
+	blockStr.sprintf("%ux%u", blockSize.x, blockSize.y);
 	Process proc;
 	Array<CString, 5> args;
 	U32 argCount = 0;
@@ -733,7 +797,7 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 	const U32 blockx = max<U32>(header.m_blockX, 1u);
 	const U32 blocky = max<U32>(header.m_blockY, 1u);
 	const U32 blockz = max<U32>(header.m_blockZ, 1u);
-	if(blockx != blockSize.x() || blocky != blockSize.y() || blockz != 1)
+	if(blockx != blockSize.x || blocky != blockSize.y || blockz != 1)
 	{
 		ANKI_IMPORTER_LOGE("astcenc-avx2 with wrong block size");
 		return Error::kFunctionFailed;
@@ -778,8 +842,9 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	header.m_compressionMask = config.m_compressions;
 	header.m_isNormal = false;
 	header.m_mipmapCount = U8(ctx.m_mipmaps.getSize());
-	header.m_astcBlockSizeX = config.m_astcBlockSize.x();
-	header.m_astcBlockSizeY = config.m_astcBlockSize.y();
+	header.m_astcBlockSizeX = config.m_astcBlockSize.x;
+	header.m_astcBlockSizeY = config.m_astcBlockSize.y;
+	header.m_averageColor = {ctx.m_averageColor.x, ctx.m_averageColor.y, ctx.m_averageColor.z, ctx.m_averageColor.w};
 	ANKI_CHECK(outFile.write(&header, sizeof(header)));
 
 	// Write RAW
@@ -852,8 +917,8 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	config.m_minMipmapDimension = max(config.m_minMipmapDimension, 4u);
 	if(!!(config.m_compressions & ImageBinaryDataCompression::kAstc))
 	{
-		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.x());
-		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.y());
+		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.x);
+		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.y);
 	}
 
 	// Checks
@@ -1044,7 +1109,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 					const U32 width = ctx.m_width >> mip;
 					const U32 height = ctx.m_height >> mip;
 					const PtrSize blockSize = 16;
-					const PtrSize astcImageSize = blockSize * (width / config.m_astcBlockSize.x()) * (height / config.m_astcBlockSize.y());
+					const PtrSize astcImageSize = blockSize * (width / config.m_astcBlockSize.x) * (height / config.m_astcBlockSize.y);
 
 					surface.m_astcPixels.resize(astcImageSize);
 

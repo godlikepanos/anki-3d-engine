@@ -28,6 +28,12 @@ namespace anki {]]></head>
 				<arg>const char*</arg>
 			</args>
 		</function>
+		<function name="logv">
+			<overrideCall>ANKI_SCRIPT_LOGV("%s", arg0);</overrideCall>
+			<args>
+				<arg>const char*</arg>
+			</args>
+		</function>
 	</functions>
 	<tail><![CDATA[} // end namespace anki]]></tail>
 </glue>

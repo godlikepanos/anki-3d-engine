@@ -15,10 +15,10 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtShadowsSvgfCVar("R", "RtShadowsSvgf", false, "Enable or not RT shadows SVGF");
-inline NumericCVar<U8> g_rtShadowsSvgfAtrousPassCountCVar("R", "RtShadowsSvgfAtrousPassCount", 3, 1, 20, "Number of atrous passes of SVGF");
-inline NumericCVar<U32> g_rtShadowsRaysPerPixelCVar("R", "RtShadowsRaysPerPixel", 1, 1, 8, "Number of shadow rays per pixel");
-inline BoolCVar g_rayTracedShadowsCVar("R", "RayTracedShadows", false, "Enable or not ray traced shadows. Ignored if RT is not supported");
+ANKI_CVAR(BoolCVar, Render, RtShadows, false, "Enable or not ray traced shadows. Ignored if RT is not supported")
+ANKI_CVAR2(BoolCVar, Render, RtShadows, Svgf, false, "Enable or not RT shadows SVGF")
+ANKI_CVAR2(NumericCVar<U8>, Render, RtShadows, SvgfAtrousPassCount, 3, 1, 20, "Number of atrous passes of SVGF")
+ANKI_CVAR2(NumericCVar<U32>, Render, RtShadows, RaysPerPixel, 1, 1, 8, "Number of shadow rays per pixel")
 
 /// Similar to ShadowmapsResolve but it's using ray tracing.
 class RtShadows : public RendererObject
@@ -33,8 +33,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  ShaderProgramPtr& optionalShaderProgram) const override;
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
+	{
+		handles[0] = m_runCtx.m_upscaledRt;
+	}
 
 	RenderTargetHandle getRt() const
 	{

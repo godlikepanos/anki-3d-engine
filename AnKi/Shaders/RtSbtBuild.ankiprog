@@ -23,7 +23,7 @@ StructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(t1); // 
 
 StructuredBuffer<U32> g_shaderHandles : register(t2);
 
-RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
+RWByteAddressBuffer g_sbtBuffer : register(u0);
 
 ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 
@@ -39,10 +39,10 @@ ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 		if(dword < g_consts.m_shaderHandleDwordSize)
 		{
 			const U32 raygenHandleDwordOffset = g_consts.m_raygenHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
-			SBUFF(g_sbtBuffer, dword) = SBUFF(g_shaderHandles, raygenHandleDwordOffset);
+			BAB_STORE(g_sbtBuffer, U32, dword * 4, SBUFF(g_shaderHandles, raygenHandleDwordOffset));
 
 			const U32 missHandleDwordOffset = g_consts.m_missHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
-			SBUFF(g_sbtBuffer, dword + g_consts.m_sbtRecordDwordSize) = SBUFF(g_shaderHandles, missHandleDwordOffset);
+			BAB_STORE(g_sbtBuffer, U32, (dword + g_consts.m_sbtRecordDwordSize) * 4, SBUFF(g_shaderHandles, missHandleDwordOffset));
 		}
 	}
 
@@ -65,40 +65,44 @@ ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 	{
 		const U32 shaderHandleIdx = (TECHNIQUE == 0) ? renderable.m_rtShadowsShaderHandleIndex : renderable.m_rtMaterialFetchShaderHandleIndex;
 		const U32 offset = shaderHandleIdx * g_consts.m_shaderHandleDwordSize + i;
-		SBUFF(g_sbtBuffer, sbtDwordOffset) = SBUFF(g_shaderHandles, offset);
+		BAB_STORE(g_sbtBuffer, U32, sbtDwordOffset * 4, SBUFF(g_shaderHandles, offset));
 		++sbtDwordOffset;
 	}
 
-	// Copy the GpuSceneRenderableInstance
-	SBUFF(g_sbtBuffer, sbtDwordOffset++) = renderable.m_worldTransformsIndex;
-	SBUFF(g_sbtBuffer, sbtDwordOffset++) = renderable.m_constantsOffset;
-	SBUFF(g_sbtBuffer, sbtDwordOffset++) = renderable.m_meshLodsIndex + lod;
-	SBUFF(g_sbtBuffer, sbtDwordOffset) = 0;
+	// Copy the GpuScenePerDraw
+	GpuScenePerDraw perDraw;
+	perDraw.m_worldTransformsIndex = renderable.m_worldTransformsIndex;
+	perDraw.m_particleEmitterIndex = renderable.m_particleEmitterIndex2;
+	perDraw.m_isParticleEmitter = renderable.m_particleEmitterIndex2 != kMaxU32;
+	perDraw.m_constantsOffset = renderable.m_constantsOffset;
+	perDraw.m_meshLodIndex = renderable.m_meshLodsIndex + lod;
+	perDraw.m_boneTransformsOffset = 0;
+	BAB_STORE(g_sbtBuffer, GpuScenePerDraw, sbtDwordOffset * 4, perDraw);
 }
 #endif
 
 // ===========================================================================
 // PatchRaygenAndMiss                                                        =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_PatchRaygenAndMiss)
+#if ANKI_TECHNIQUE_PatchRaygenAndMiss
 
 StructuredBuffer<U32> g_shaderHandles : register(t0);
 
-RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
+RWByteAddressBuffer g_sbtBuffer : register(u0);
 
 ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 
 // Patches only raygen and miss handles to the SBT
-[NumThreads(32, 1, 1)] void main(COMPUTE_ARGS)
+[numthreads(32, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const U32 dword = svGroupIndex;
 	if(dword < g_consts.m_shaderHandleDwordSize)
 	{
 		const U32 raygenHandleDwordOffset = g_consts.m_raygenHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
-		SBUFF(g_sbtBuffer, dword) = SBUFF(g_shaderHandles, raygenHandleDwordOffset);
+		BAB_STORE(g_sbtBuffer, U32, dword * 4, SBUFF(g_shaderHandles, raygenHandleDwordOffset));
 
 		const U32 missHandleDwordOffset = g_consts.m_missHandleIndex * g_consts.m_shaderHandleDwordSize + dword;
-		SBUFF(g_sbtBuffer, dword + g_consts.m_sbtRecordDwordSize) = SBUFF(g_shaderHandles, missHandleDwordOffset);
+		BAB_STORE(g_sbtBuffer, U32, (dword + g_consts.m_sbtRecordDwordSize) * 4, SBUFF(g_shaderHandles, missHandleDwordOffset));
 	}
 }
 #endif

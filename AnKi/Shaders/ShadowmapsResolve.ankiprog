@@ -32,7 +32,7 @@ Texture2D<Vec4> g_dirLightResolvedShadowsTex : register(t6);
 #	endif
 
 #	if ANKI_COMPUTE_SHADER
-RWTexture2D<RVec4> g_storageTex : register(u0);
+RWTexture2D<Vec4> g_storageTex : register(u0);
 #	endif
 
 struct Constants
@@ -67,7 +67,7 @@ Vec3 computeDebugShadowCascadeColor(U32 cascade)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec4 main(VertOut input) : SV_TARGET0
+Vec4 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -86,12 +86,12 @@ RVec4 main(VertOut input) : SV_TARGET0
 	g_noiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
 
 	const Vec2 noiseUv = g_consts.m_framebufferSize / noiseTexSize * uv;
-	RVec3 noise = g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb;
+	Vec3 noise = g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb;
 	noise = animateBlueNoise(noise, g_globalConstants.m_frame % 16u);
-	const RF32 randFactor = noise.x;
+	const F32 randFactor = noise.x;
 #		else
-	const RVec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_globalConstants.m_frame);
-	const RF32 randFactor = noise2.x;
+	const Vec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_globalConstants.m_frame);
+	const F32 randFactor = noise2.x;
 #		endif
 #	endif
 
@@ -108,7 +108,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;
 	const U32 kMaxShadowCastersPerFragment = 4u;
-	RVec4 shadowFactors = 0.0f;
+	Vec4 shadowFactors = 0.0f;
 
 	// Dir light
 #	if DIRECTIONAL_LIGHT_SHADOW_RESOLVED
@@ -116,18 +116,18 @@ RVec4 main(VertOut input) : SV_TARGET0
 	++shadowCasterCountPerFragment;
 #	else
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
-	if(dirLight.m_shadowCascadeCount_31bit_active_1bit != 0u)
+	if(dirLight.m_active && dirLight.m_shadowCascadeCount)
 	{
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 
-		const RF32 positiveZViewSpace = testPlanePoint(g_globalConstants.m_nearPlaneWSpace.xyz, g_globalConstants.m_nearPlaneWSpace.w, worldPos)
-										+ g_globalConstants.m_matrices.m_near;
+		const F32 positiveZViewSpace = testPlanePoint(g_globalConstants.m_nearPlaneWSpace.xyz, g_globalConstants.m_nearPlaneWSpace.w, worldPos)
+									   + g_globalConstants.m_matrices.m_near;
 
 		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[shadowCascadeCount - 1u];
-		RF32 shadowFactor;
+		F32 shadowFactor;
 		if(positiveZViewSpace < lastCascadeDistance)
 		{
-			RF32 cascadeBlendFactor;
+			F32 cascadeBlendFactor;
 			const UVec2 cascadeIndices =
 				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount, cascadeBlendFactor);
 
@@ -144,14 +144,14 @@ RVec4 main(VertOut input) : SV_TARGET0
 #		endif
 
 #		if QUALITY == 2
-			const RF32 shadowFactorCascadeA = computeShadowFactorDirLightPcss<RF32>(
-				dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor, g_linearAnyClampSampler);
+			const F32 shadowFactorCascadeA = computeShadowFactorDirLightPcss<F32>(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex,
+																				  g_linearAnyClampShadowSampler, randFactor, g_linearAnyClampSampler);
 #		elif QUALITY == 1
-			const RF32 shadowFactorCascadeA = computeShadowFactorDirLightPcf<RF32>(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex,
-																				   g_linearAnyClampShadowSampler, randFactor);
+			const F32 shadowFactorCascadeA = computeShadowFactorDirLightPcf<F32>(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex,
+																				 g_linearAnyClampShadowSampler, randFactor);
 #		else
-			const RF32 shadowFactorCascadeA =
-				computeShadowFactorDirLight<RF32>(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			const F32 shadowFactorCascadeA =
+				computeShadowFactorDirLight<F32>(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 #		endif
 
 			if(cascadeBlendFactor < 0.01 || cascadeIndices.x == cascadeIndices.y)
@@ -163,21 +163,21 @@ RVec4 main(VertOut input) : SV_TARGET0
 			{
 #		if QUALITY == 2
 				// Blend cascades
-				const RF32 shadowFactorCascadeB = computeShadowFactorDirLightPcss<RF32>(
+				const F32 shadowFactorCascadeB = computeShadowFactorDirLightPcss<F32>(
 					dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor, g_linearAnyClampSampler);
 #		elif QUALITY == 1
 				// Blend cascades
-				const RF32 shadowFactorCascadeB = computeShadowFactorDirLightPcf<RF32>(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex,
-																					   g_linearAnyClampShadowSampler, randFactor);
+				const F32 shadowFactorCascadeB = computeShadowFactorDirLightPcf<F32>(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex,
+																					 g_linearAnyClampShadowSampler, randFactor);
 #		else
 				// Blend cascades
-				const RF32 shadowFactorCascadeB =
-					computeShadowFactorDirLight<RF32>(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+				const F32 shadowFactorCascadeB =
+					computeShadowFactorDirLight<F32>(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 #		endif
 				shadowFactor = lerp(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
 			}
 
-			RF32 distanceFadeFactor = saturate(positiveZViewSpace / lastCascadeDistance);
+			F32 distanceFadeFactor = saturate(positiveZViewSpace / lastCascadeDistance);
 			distanceFadeFactor = pow(distanceFadeFactor, 8.0);
 			shadowFactor += distanceFadeFactor;
 		}
@@ -202,10 +202,9 @@ RVec4 main(VertOut input) : SV_TARGET0
 			const Vec3 frag2Light = light.m_position - worldPos;
 
 #	if QUALITY > 0
-			const RF32 shadowFactor =
-				computeShadowFactorPointLightPcf(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
+			const F32 shadowFactor = computeShadowFactorPointLightPcf(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
 #	else
-			const RF32 shadowFactor = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			const F32 shadowFactor = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 #	endif
 			shadowFactors[min(kMaxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}
@@ -219,13 +218,13 @@ RVec4 main(VertOut input) : SV_TARGET0
 		[branch] if(light.m_shadow)
 		{
 #	if QUALITY == 2
-			const RF32 shadowFactor = computeShadowFactorSpotLightPcss<RF32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler,
-																			 randFactor, g_linearAnyClampSampler);
+			const F32 shadowFactor = computeShadowFactorSpotLightPcss<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler,
+																		   randFactor, g_linearAnyClampSampler);
 #	elif QUALITY == 1
-			const RF32 shadowFactor =
-				computeShadowFactorSpotLightPcf<RF32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
+			const F32 shadowFactor =
+				computeShadowFactorSpotLightPcf<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
 #	else
-			const RF32 shadowFactor = computeShadowFactorSpotLight<RF32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			const F32 shadowFactor = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 #	endif
 			shadowFactors[min(kMaxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}

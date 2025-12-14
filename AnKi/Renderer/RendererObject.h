@@ -28,8 +28,9 @@ public:
 
 	virtual ~RendererObject() = default;
 
-	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName, [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-									  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
+	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName,
+									  [[maybe_unused]] Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+									  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const
 	{
 		ANKI_ASSERT(!"Object doesn't support that");
 	}
@@ -145,6 +146,7 @@ protected:
 #include <AnKi/Renderer/RendererObject.def.h>
 };
 
+/// Contains common functionality of all passes that use RtMaterialFetch.
 class RtMaterialFetchRendererObject : protected RendererObject
 {
 protected:
@@ -156,6 +158,12 @@ protected:
 
 	void patchShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
 									 RenderGraphBuilder& rgraph, BufferHandle sbtHandle, BufferView sbtBuffer);
+
+	/// Sets the the resources of space 2 in RtMaterialFetch.hlsl as dependencies on the given pass.
+	void setRgenSpace2Dependencies(RenderPassBase& pass, Bool isComputeDispatch = false);
+
+	/// Bind the the resources of space 2 in RtMaterialFetch.hlsl.
+	void bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 private:
 	ShaderProgramResourcePtr m_sbtBuildProg;

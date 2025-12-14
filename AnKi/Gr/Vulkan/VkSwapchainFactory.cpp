@@ -211,6 +211,8 @@ Error MicroSwapchain::initInternal()
 		}
 
 		m_textures.resize(count);
+		m_acquireSemaphores.resize(count);
+		m_renderSemaphores.resize(count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count, presentMode, surfaceWidth,
 					 surfaceHeight, U32(SwapchainFactory::getSingleton().m_vsync));
@@ -220,21 +222,29 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, &images[0]));
 		for(U32 i = 0; i < count; ++i)
 		{
-			TextureInitInfo init("SwapchainImg");
+			TextureInitInfo init(GrString().sprintf("SwapchainImage #%u", i));
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
 			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
-			init.m_usage = TextureUsageBit::kUavCompute | TextureUsageBit::kUavTraceRays | TextureUsageBit::kRtvDsvRead
+			init.m_usage = TextureUsageBit::kUavCompute | TextureUsageBit::kUavDispatchRays | TextureUsageBit::kRtvDsvRead
 						   | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
 			init.m_type = TextureType::k2D;
 
 			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
 			m_textures[i].reset(tex);
 			ANKI_CHECK(tex->initExternal(images[i], init));
+
+			m_acquireSemaphores[i] = SemaphoreFactory::getSingleton().newInstance(false, GrString().sprintf("Acquire #%u", i));
+			m_renderSemaphores[i] = SemaphoreFactory::getSingleton().newInstance(false, GrString().sprintf("Present #%u", i));
 		}
 	}
 
 	return Error::kNone;
+}
+
+void MicroSwapchain::releaseInternal()
+{
+	SwapchainFactory::getSingleton().m_recycler.recycle(this);
 }
 
 MicroSwapchainPtr SwapchainFactory::newInstance()

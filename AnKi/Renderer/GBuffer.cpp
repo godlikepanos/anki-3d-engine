@@ -30,7 +30,7 @@ Error GBuffer::init()
 	{
 		const TextureUsageBit usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit =
-			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 													   getRenderer().getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
 		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
@@ -40,15 +40,15 @@ Error GBuffer::init()
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_colorRtDescrs[i] = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), kGBufferColorRenderTargetFormats[i], rtNames[i]);
+			getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, kGBufferColorRenderTargetFormats[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 
 	{
 		const TextureUsageBit usage = TextureUsageBit::kSrvCompute | TextureUsageBit::kUavCompute | TextureUsageBit::kSrvGeometry;
 
-		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(previousPowerOfTwo(getRenderer().getInternalResolution().x()),
-																			 previousPowerOfTwo(getRenderer().getInternalResolution().y()),
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(previousPowerOfTwo(getRenderer().getInternalResolution().x),
+																			 previousPowerOfTwo(getRenderer().getInternalResolution().y),
 																			 Format::kR32_Sfloat, usage, "GBuffer HZB");
 		texinit.m_mipmapCount = computeMaxMipmapCount2d(texinit.m_width, texinit.m_height);
 		ClearValue clear;
@@ -56,7 +56,6 @@ Error GBuffer::init()
 		m_hzbRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvCompute, clear);
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeGBufferNormal.ankiprogbin", m_visNormalProg, m_visNormalGrProg));
 	ANKI_CHECK(
 		loadShaderProgram("ShaderBinaries/GBufferVisualizeProbe.ankiprogbin", {{"PROBE_TYPE", 0}}, m_visualizeProbeProg, m_visualizeGiProbeGrProg));
 	ANKI_CHECK(
@@ -94,27 +93,24 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Visibility
-	GpuVisibilityOutput visOut;
+	GpuVisibilityOutput& visOut = m_runCtx.m_visOut;
 	FrustumGpuVisibilityInput visIn;
 	{
 		const CommonMatrices& matrices = ctx.m_matrices;
-		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
+		const Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 		visIn.m_passesName = "GBuffer";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
 		visIn.m_viewProjectionMatrix = matrices.m_viewProjection;
-		visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz();
+		visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz;
 		visIn.m_lodDistances = lodDistances;
 		visIn.m_rgraph = &rgraph;
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
-		visIn.m_gatherAabbIndices = g_dbgSceneCVar;
+		visIn.m_gatherAabbIndices = !!(getDbg().getOptions() & DbgOption::kGatherAabbs);
 		visIn.m_viewportSize = getRenderer().getInternalResolution();
 		visIn.m_twoPhaseOcclusionCulling = getRenderer().getMeshletRenderingType() != MeshletRenderingType::kNone;
 
 		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
-
-		m_runCtx.m_visibleAaabbIndicesBuffer = visOut.m_visibleAaabbIndicesBuffer;
-		m_runCtx.m_visibleAaabbIndicesBufferDepedency = visOut.m_dependency;
 	}
 
 	// Create RTs
@@ -167,10 +163,15 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		pass.setWork([&ctx, visOut, this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
+			if(!visOut.containsDrawcalls()) [[unlikely]]
+			{
+				return;
+			}
+
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			// Set some state, leave the rest to default
-			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 
 			RenderableDrawerArguments args;
 			args.m_viewMatrix = ctx.m_matrices.m_view;
@@ -201,7 +202,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				};
 
 				// Visualize GI probes
-				if(g_visualizeGiProbesCVar && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
+				if(g_cvarRenderVisualizeGiProbes && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
@@ -215,7 +216,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 						consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
 						consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
 						consts->m_sphereRadius = 0.5f;
-						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 						consts->m_pixelShift = (getRenderer().getFrameCount() & 1) ? 1.0f : 0.0f;
 
 						cmdb.draw(PrimitiveTopology::kTriangles, 6, probe.getCellCount());
@@ -223,7 +224,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				// Visualize refl probes
-				if(g_visualizeReflectionProbesCVar && GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
+				if(g_cvarRenderVisualizeReflectionProbes && GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());
@@ -237,7 +238,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 						consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
 						consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
 						consts->m_sphereRadius = 0.5f;
-						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 						consts->m_pixelShift = (getRenderer().getFrameCount() & 1) ? 1.0f : 0.0f;
 
 						cmdb.draw(PrimitiveTopology::kTriangles, 6);
@@ -268,8 +269,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-								   ShaderProgramPtr& optionalShaderProgram) const
+void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+								   DebugRenderTargetDrawStyle& drawStyle) const
 {
 	if(rtName == "GBufferAlbedo")
 	{
@@ -278,15 +279,32 @@ void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMa
 	else if(rtName == "GBufferNormals")
 	{
 		handles[0] = m_runCtx.m_colorRts[2];
-		optionalShaderProgram = m_visNormalGrProg;
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferNormal;
 	}
 	else if(rtName == "GBufferVelocity")
 	{
 		handles[0] = m_runCtx.m_colorRts[3];
 	}
-	else
+	else if(rtName == "GBufferRoughness")
 	{
-		ANKI_ASSERT(!"See file");
+		handles[0] = m_runCtx.m_colorRts[1];
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferRoughness;
+	}
+	else if(rtName == "GBufferMetallic")
+	{
+		handles[0] = m_runCtx.m_colorRts[0];
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferMetallic;
+	}
+	else if(rtName == "GBufferSubsurface")
+	{
+		handles[0] = m_runCtx.m_colorRts[0];
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferSubsurface;
+	}
+	else if(rtName == "GBufferEmission")
+	{
+		handles[0] = m_runCtx.m_colorRts[1];
+		handles[1] = m_runCtx.m_colorRts[2];
+		drawStyle = DebugRenderTargetDrawStyle::kGBufferEmission;
 	}
 }
 

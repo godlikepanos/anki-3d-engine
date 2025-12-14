@@ -85,6 +85,13 @@ public:
 	/// Set from plane equation is ax+by+cz+d
 	void setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d);
 
+	// Set the plane from a point in plane and a direction
+	void setFromRay(Vec3 rayOrigin, Vec3 rayDir)
+	{
+		m_normal = rayDir.xyz0;
+		m_offset = rayDir.dot(rayOrigin);
+	}
+
 	/// Return the transformed
 	Plane getTransformed(const Transform& trf) const;
 
@@ -103,7 +110,7 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_normal.w() == 0.0f);
+		ANKI_ASSERT(m_normal.w == 0.0f);
 		ANKI_ASSERT(m_offset != kMaxF32);
 	}
 };

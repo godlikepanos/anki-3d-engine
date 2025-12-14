@@ -51,6 +51,7 @@
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Renderer/HistoryLength.h>
+#include <AnKi/Renderer/GpuParticles.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -59,9 +60,8 @@
 
 namespace anki {
 
-static StatCounter g_primitivesDrawnStatVar(StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
-static StatCounter g_rendererCpuTimeStatVar(StatCategory::kTime, "Renderer",
-											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(RendererCpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -75,7 +75,7 @@ static Vec2 generateJitter(U32 frame)
 	F32 fraction = invBase;
 	while(index > 0)
 	{
-		result.x() += F32(index % baseX) * fraction;
+		result.x += F32(index % baseX) * fraction;
 		index /= baseX;
 		fraction *= invBase;
 	}
@@ -86,13 +86,13 @@ static Vec2 generateJitter(U32 frame)
 	fraction = invBase;
 	while(index > 0)
 	{
-		result.y() += F32(index % baseY) * fraction;
+		result.y += F32(index % baseY) * fraction;
 		index /= baseY;
 		fraction *= invBase;
 	}
 
-	result.x() -= 0.5f;
-	result.y() -= 0.5f;
+	result.x -= 0.5f;
+	result.y -= 0.5f;
 	return result;
 }
 
@@ -129,22 +129,48 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_rgraph = GrManager::getSingleton().newRenderGraph();
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(m_swapchainResolution) * g_renderScalingCVar);
-	alignRoundDown(2, m_postProcessResolution.x());
-	alignRoundDown(2, m_postProcessResolution.y());
+	auto setResolution = [&](UVec2 baseResolution, F32 scale) {
+		UVec2 out;
+		if(scale == 540.0f)
+		{
+			out = UVec2(960, 540);
+		}
+		else if(scale == 720.0f)
+		{
+			out = UVec2(1280, 720);
+		}
+		else if(scale == 1080.0f)
+		{
+			out = UVec2(1920, 1080);
+		}
+		else if(scale == 1440.0f)
+		{
+			out = UVec2(2560, 1440);
+		}
+		else if(scale == 2160.0f)
+		{
+			out = UVec2(3840, 2160);
+		}
+		else
+		{
+			out = UVec2(Vec2(baseResolution) * scale);
+			alignRoundDown(2, out.x);
+			alignRoundDown(2, out.y);
+		}
+		return out;
+	};
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_internalRenderScalingCVar);
-	alignRoundDown(2, m_internalResolution.x());
-	alignRoundDown(2, m_internalResolution.y());
+	m_postProcessResolution = setResolution(m_swapchainResolution, g_cvarRenderRenderScaling);
+	m_internalResolution = setResolution(m_postProcessResolution, g_cvarRenderInternalRenderScaling);
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x(),
-				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x, m_postProcessResolution.y,
+				m_internalResolution.x, m_internalResolution.y);
 
-	m_tileCounts.x() = (m_internalResolution.x() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
-	m_tileCounts.y() = (m_internalResolution.y() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
-	m_zSplitCount = g_zSplitCountCVar;
+	m_tileCounts.x = (m_internalResolution.x + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+	m_tileCounts.y = (m_internalResolution.y + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+	m_zSplitCount = g_cvarRenderZSplitCount;
 
-	if(g_meshletRenderingCVar && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	if(g_cvarCoreMeshletRendering && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 	{
 		m_meshletRenderingType = MeshletRenderingType::kSoftware;
 	}
@@ -158,7 +184,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	}
 
 	// A few sanity checks
-	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
+	if(m_internalResolution.x < 64 || m_internalResolution.y < 64)
 	{
 		ANKI_R_LOGE("Incorrect sizes");
 		return Error::kUserData;
@@ -174,9 +200,13 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		m_dummyResources.m_texture2DSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
 
+		texinit.m_format = Format::kR32G32B32A32_Uint;
+		m_dummyResources.m_texture2DUintSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
+
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
 		texinit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllUav;
+		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		m_dummyResources.m_texture3DSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
 
 		texinit.m_type = TextureType::k2D;
@@ -244,19 +274,19 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		sinit.m_addressing = SamplingAddressing::kRepeat;
 		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
-		if(g_textureAnisotropyCVar <= 1u)
+		if(g_cvarRenderTextureAnisotropy <= 1u)
 		{
 			m_samplers.m_trilinearRepeatAniso = m_samplers.m_trilinearRepeat;
 		}
 		else
 		{
 			sinit.setName("TrilinearRepeatAniso");
-			sinit.m_anisotropyLevel = g_textureAnisotropyCVar;
+			sinit.m_anisotropyLevel = g_cvarRenderTextureAnisotropy;
 			m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 		}
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
-		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
+		F32 scalingMipBias = log2(F32(m_internalResolution.x) / F32(m_postProcessResolution.x));
 		if(getTemporalUpscaler().getEnabled())
 		{
 			// DLSS wants more bias
@@ -310,6 +340,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_gbuffer->populateRenderGraph(ctx);
+	m_gpuParticles->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);
 	m_historyLength->populateRenderGraph(ctx);
 	m_depthDownscale->populateRenderGraph(ctx);
@@ -356,6 +387,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_motionBlur->populateRenderGraph(ctx);
 	m_bloom2->populateRenderGraph(ctx);
 	m_dbg->populateRenderGraph(ctx);
+	m_uiStage->populateRenderGraph(ctx);
 
 	m_finalComposite->populateRenderGraph(ctx);
 
@@ -369,22 +401,22 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	GlobalRendererConstants consts;
 	memset(&consts, 0, sizeof(consts));
 
-	consts.m_renderingSize = Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()));
+	consts.m_renderingSize = Vec2(F32(m_internalResolution.x), F32(m_internalResolution.y));
 
 	consts.m_time = F32(HighRezTimer::getCurrentTime());
 	consts.m_frame = m_frameCount & kMaxU32;
 
 	Plane nearPlane;
 	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-	consts.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
-	consts.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+	consts.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz, nearPlane.getOffset());
+	consts.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 
 	consts.m_tileCounts = m_tileCounts;
 	consts.m_zSplitCount = m_zSplitCount;
 	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
-	consts.m_zSplitMagic.x() = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / (ctx.m_matrices.m_near * F32(m_zSplitCount));
-	consts.m_zSplitMagic.y() = ctx.m_matrices.m_far / (ctx.m_matrices.m_near * F32(m_zSplitCount));
-	consts.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar - 1, m_zSplitCount);
+	consts.m_zSplitMagic.x = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / (ctx.m_matrices.m_near * F32(m_zSplitCount));
+	consts.m_zSplitMagic.y = ctx.m_matrices.m_far / (ctx.m_matrices.m_near * F32(m_zSplitCount));
+	consts.m_lightVolumeLastZSplit = min(g_cvarRenderVolumetricLightingAccumulationFinalZSplit - 1, m_zSplitCount);
 
 	consts.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
 
@@ -396,17 +428,17 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	if(dirLight)
 	{
 		DirectionalLight& out = consts.m_directionalLight;
-		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_shadowCascadeCountCVar : 0;
+		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_cvarRenderShadowCascadeCount : 0;
 
-		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
+		out.m_diffuseColor = dirLight->getDiffuseColor().xyz;
 		out.m_power = dirLight->getLightPower();
-		out.m_shadowCascadeCount_31bit_active_1bit = shadowCascadeCount << 1u;
-		out.m_shadowCascadeCount_31bit_active_1bit |= 1;
+		out.m_shadowCascadeCount = shadowCascadeCount;
+		out.m_active = 1;
 		out.m_direction = dirLight->getDirection();
-		out.m_shadowCascadeDistances =
-			Vec4(g_shadowCascade0DistanceCVar, g_shadowCascade1DistanceCVar, g_shadowCascade2DistanceCVar, g_shadowCascade3DistanceCVar);
+		out.m_shadowCascadeDistances = Vec4(g_cvarRenderShadowCascade0Distance, g_cvarRenderShadowCascade1Distance,
+											g_cvarRenderShadowCascade2Distance, g_cvarRenderShadowCascade3Distance);
 
-		for(U cascade = 0; cascade < shadowCascadeCount; ++cascade)
+		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
 			ANKI_ASSERT(ctx.m_dirLightTextureMatrices[cascade] != Mat4::getZero());
 			out.m_textureMatrices[cascade] = ctx.m_dirLightTextureMatrices[cascade];
@@ -416,7 +448,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	}
 	else
 	{
-		consts.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
+		zeroMemory(consts.m_directionalLight);
 	}
 
 	// Sky
@@ -427,20 +459,29 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	if(isSolidColor)
 	{
 		consts.m_sky.m_solidColor = (sky) ? sky->getSolidColor() : Vec3(0.0);
-		consts.m_sky.m_type = 0;
+		consts.m_sky.m_type = U32(SkyType::kSolidColor);
 	}
 	else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 	{
-		consts.m_sky.m_type = 1;
+		consts.m_sky.m_type = U32(SkyType::kTextureWithEquirectangularMapping);
+		consts.m_sky.m_texture =
+			sky->getImageResource().getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
 	}
 	else
 	{
-		consts.m_sky.m_type = 2;
+		consts.m_sky.m_type = U32(SkyType::kTextureWithEctahedronMapping);
+		consts.m_sky.m_texture =
+			m_generatedSky->getEnvironmentMapTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
 	}
 
 	if(m_indirectDiffuseClipmaps)
 	{
 		memcpy(&consts.m_indirectDiffuseClipmaps, &m_indirectDiffuseClipmaps->getClipmapConsts(), sizeof(consts.m_indirectDiffuseClipmaps));
+	}
+
+	if(m_accelerationStructureBuilder)
+	{
+		memcpy(&consts.m_localLightsGrid, &m_accelerationStructureBuilder->getLocalLightsGridConstants(), sizeof(consts.m_localLightsGrid));
 	}
 
 	outConsts = consts;
@@ -601,11 +642,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
-					wgSize.x() = (8 - 1 + (tex->getWidth() >> mip)) / 8;
-					wgSize.y() = (8 - 1 + (tex->getHeight() >> mip)) / 8;
-					wgSize.z() = (inf.m_type == TextureType::k3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
+					wgSize.x = (8 - 1 + (tex->getWidth() >> mip)) / 8;
+					wgSize.y = (8 - 1 + (tex->getHeight() >> mip)) / 8;
+					wgSize.z = (inf.m_type == TextureType::k3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
 
-					cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
+					cmdb->dispatchCompute(wgSize.x, wgSize.y, wgSize.z);
 
 					if(!!initialUsage)
 					{
@@ -632,11 +673,11 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 #if ANKI_ASSERTIONS_ENABLED
 	for(const DebugRtInfo& inf : m_debugRts)
 	{
-		ANKI_ASSERT(inf.m_rtName != rtName && "Choose different name");
+		ANKI_ASSERT(inf.m_rtName != rtName && "Choose a different name");
 	}
 #endif
-
 	ANKI_ASSERT(obj);
+
 	DebugRtInfo inf;
 	inf.m_obj = obj;
 	inf.m_rtName = rtName;
@@ -644,8 +685,12 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(std::move(inf));
 }
 
-Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram)
+Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+										   DebugRenderTargetDrawStyle& drawStyle)
 {
+	handles = {};
+	drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
+
 	if(m_currentDebugRtName.isEmpty()) [[likely]]
 	{
 		return false;
@@ -662,7 +707,27 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 
 	if(obj)
 	{
-		obj->getDebugRenderTarget(m_currentDebugRtName, handles, optionalShaderProgram);
+		obj->getDebugRenderTarget(m_currentDebugRtName, handles, drawStyle);
+
+		Bool valid = false;
+		for(const RenderTargetHandle& handle : handles)
+		{
+			if(handle.isValid())
+			{
+				valid = true;
+			}
+		}
+
+		if(!valid)
+		{
+			return false;
+		}
+
+		if(m_disableDebugRtTonemapping && drawStyle == DebugRenderTargetDrawStyle::kTonemap)
+		{
+			drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
+		}
+
 		return true;
 	}
 	else
@@ -673,7 +738,7 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 	}
 }
 
-void Renderer::setCurrentDebugRenderTarget(CString rtName)
+void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping)
 {
 	m_currentDebugRtName.destroy();
 
@@ -681,12 +746,14 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 	{
 		m_currentDebugRtName = rtName;
 	}
+
+	m_disableDebugRtTonemapping = disableTonemapping;
 }
 
 Format Renderer::getHdrFormat() const
 {
 	Format out;
-	if(!g_highQualityHdrCVar)
+	if(!g_cvarRenderHighQualityHdr)
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}
@@ -754,11 +821,11 @@ void Renderer::updatePipelineStats()
 
 	arr.destroy();
 
-	g_primitivesDrawnStatVar.set(sum);
+	g_svarPrimitivesDrawn.set(sum);
 }
 #endif
 
-Error Renderer::render(Texture* presentTex)
+Error Renderer::render()
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
@@ -767,9 +834,10 @@ Error Renderer::render(Texture* presentTex)
 	// First thing, reset the temp mem pool
 	m_framePool.reset();
 
+	m_uiStage->buildUi();
+
 	RenderingContext ctx(&m_framePool);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
-	ctx.m_swapchainRenderTarget = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::kNone);
 
 #if ANKI_STATS_ENABLED
 	updatePipelineStats();
@@ -821,19 +889,28 @@ Error Renderer::render(Texture* presentTex)
 	ANKI_CHECK(populateRenderGraph(ctx));
 
 	// Blit renderer's result to swapchain
+	if(!ctx.m_swapchainRenderTarget.isValid())
+	{
+		TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
+		ctx.m_swapchainRenderTarget = ctx.m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
+	}
+
 	const Bool bNeedsBlit = m_postProcessResolution != m_swapchainResolution;
 	if(bNeedsBlit)
 	{
 		GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(ctx.m_swapchainRenderTarget)});
+		pass.setWritesToSwapchain();
 
 		pass.newTextureDependency(ctx.m_swapchainRenderTarget, TextureUsageBit::kRtvDsvWrite);
 		pass.newTextureDependency(m_finalComposite->getRenderTarget(), TextureUsageBit::kSrvPixel);
 
+		m_uiStage->setDependencies(pass);
+
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(BlitAndUi);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
+			cmdb.setViewport(0, 0, m_swapchainResolution.x, m_swapchainResolution.y);
 
 			cmdb.bindShaderProgram(m_blitGrProg.get());
 			cmdb.bindSampler(0, 0, m_samplers.m_trilinearClamp.get());
@@ -842,7 +919,7 @@ Error Renderer::render(Texture* presentTex)
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 
 			// Draw the UI
-			m_uiStage->draw(m_swapchainResolution.x(), m_swapchainResolution.y(), cmdb);
+			m_uiStage->drawUi(cmdb);
 		});
 	}
 
@@ -874,11 +951,11 @@ Error Renderer::render(Texture* presentTex)
 	// Stats
 	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
 	{
-		g_rendererCpuTimeStatVar.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+		g_svarRendererCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
-		g_rendererGpuTimeStatVar.set(rgraphStats.m_gpuTime * 1000.0);
+		g_svarRendererGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
 
 		if(rgraphStats.m_gpuTime > 0.0)
 		{

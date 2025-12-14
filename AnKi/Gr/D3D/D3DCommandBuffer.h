@@ -37,7 +37,7 @@ public:
 		return *m_mcmdb;
 	}
 
-	void postSubmitWork(MicroFence* fence);
+	void postSubmitWork(D3DMicroFence* fence);
 
 private:
 	D3D12GraphicsCommandListX* m_cmdList = nullptr; // Cache it.
@@ -48,12 +48,21 @@ private:
 	DescriptorState m_descriptors;
 	GraphicsStateTracker m_graphicsState;
 
-	StackMemoryPool* m_fastPool = nullptr; // Cache it.
+	StackMemoryPool m_fastPool; // Cache it.
 
-	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_timestampQueries;
-	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_pipelineQueries;
+	DynamicArray<TimestampQueryInternalPtr, MemoryPoolPtrWrapper<StackMemoryPool>> m_timestampQueries;
+	DynamicArray<PipelineQueryInternalPtr, MemoryPoolPtrWrapper<StackMemoryPool>> m_pipelineQueries;
 
 	const ShaderProgramImpl* m_wgProg = nullptr;
+
+	class
+	{
+	public:
+		ID3D12Resource* m_indirectBuff = nullptr;
+		static constexpr U32 kMaxDescriptorCount = 8;
+		WeakArray<D3D12_DISPATCH_RAYS_DESC> m_mappedMem;
+		U8 m_crntDescriptor = 0;
+	} m_indirectDispatchRays;
 
 	Bool m_descriptorHeapsBound = false;
 	Bool m_debugMarkersEnabled = false;

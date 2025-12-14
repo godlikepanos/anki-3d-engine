@@ -35,15 +35,15 @@ Error Tonemapping::init()
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Tonemap.ankiprogbin", m_tonemapping.m_prog, m_tonemapping.m_grProg));
 
 		m_tonemapping.m_rtDesc = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(),
+			getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
 			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 			"Tonemapped");
 		m_tonemapping.m_rtDesc.bake();
 
 		m_tonemapping.m_lut.reset(nullptr);
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/DefaultLut.ankitex", m_tonemapping.m_lut));
-		ANKI_ASSERT(m_tonemapping.m_lut->getWidth() == m_tonemapping.m_lut->getHeight());
-		ANKI_ASSERT(m_tonemapping.m_lut->getWidth() == m_tonemapping.m_lut->getDepth());
+		ANKI_ASSERT(m_tonemapping.m_lut->getTexture().getWidth() == m_tonemapping.m_lut->getTexture().getHeight());
+		ANKI_ASSERT(m_tonemapping.m_lut->getTexture().getWidth() == m_tonemapping.m_lut->getTexture().getDepth());
 	}
 
 	return Error::kNone;
@@ -88,7 +88,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		const RenderTargetHandle outRt = m_runCtx.m_rt;
 
 		RenderPassBase* ppass;
-		if(g_preferComputeCVar)
+		if(g_cvarRenderPreferCompute)
 		{
 			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Tonemap");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSrvCompute);
@@ -107,7 +107,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		ppass->setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Tonemapping);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-			const Bool preferCompute = g_preferComputeCVar;
+			const Bool preferCompute = g_cvarRenderPreferCompute;
 			const RenderTargetHandle inRt = (getRenderer().getTemporalUpscaler().getEnabled()) ? getRenderer().getTemporalUpscaler().getRt()
 																							   : getRenderer().getTemporalAA().getRt();
 			const RenderTargetHandle outRt = m_runCtx.m_rt;
@@ -123,11 +123,11 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 			if(preferCompute)
 			{
 				rgraphCtx.bindUav(1, 0, outRt);
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+				cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y);
 				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});

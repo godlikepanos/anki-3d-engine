@@ -34,4 +34,32 @@ void CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	updated = m_frustum.update();
 }
 
+Error CameraComponent::serialize(SceneSerializer& serializer)
+{
+	Frustum frustum;
+
+	F32 near = m_frustum.getNear();
+	ANKI_SERIALIZE(near, 1);
+	frustum.setNear(near);
+
+	F32 far = m_frustum.getFar();
+	ANKI_SERIALIZE(far, 1);
+	frustum.setFar(far);
+
+	F32 fovX = m_frustum.getFovX();
+	ANKI_SERIALIZE(fovX, 1);
+	frustum.setFovX(fovX);
+
+	F32 fovY = m_frustum.getFovY();
+	ANKI_SERIALIZE(fovY, 1);
+	frustum.setFovY(fovY);
+
+	if(serializer.isInReadMode())
+	{
+		m_frustum = frustum;
+	}
+
+	return Error::kNone;
+}
+
 } // end namespace anki

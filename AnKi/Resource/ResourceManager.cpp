@@ -14,10 +14,9 @@
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/CpuMeshResource.h>
-#include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Resource/DummyResource.h>
-#include <AnKi/Resource/ParticleEmitterResource.h>
+#include <AnKi/Resource/ParticleEmitterResource2.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/GenericResource.h>
 #include <AnKi/Resource/ImageAtlasResource.h>
@@ -34,17 +33,17 @@ ResourceManager::~ResourceManager()
 {
 	ANKI_RESOURCE_LOGI("Destroying resource manager");
 
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_asyncLoader);
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_shaderProgramSystem);
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_transferGpuAlloc);
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_fs);
+	AsyncLoader::freeSingleton();
+	ShaderProgramResourceSystem::freeSingleton();
+	TransferGpuAllocator::freeSingleton();
+	ResourceFilesystem::freeSingleton();
 
 #define ANKI_INSTANTIATE_RESOURCE(className) \
 	static_cast<TypeData<className>&>(m_allTypes).m_entries.destroy(); \
 	static_cast<TypeData<className>&>(m_allTypes).m_map.destroy();
 #include <AnKi/Resource/Resources.def.h>
 
-	deleteInstance(ResourceMemoryPool::getSingleton(), m_asScratchAlloc);
+	AccelerationStructureScratchAllocator::freeSingleton();
 
 	ResourceMemoryPool::freeSingleton();
 }
@@ -55,29 +54,31 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 
 	ResourceMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_fs = newInstance<ResourceFilesystem>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_fs->init());
+	ResourceFilesystem::allocateSingleton();
+	ANKI_CHECK(ResourceFilesystem::getSingleton().init());
 
 	// Init the thread
-	m_asyncLoader = newInstance<AsyncLoader>(ResourceMemoryPool::getSingleton());
+	AsyncLoader::allocateSingleton();
 
-	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_transferGpuAlloc->init(g_transferScratchMemorySizeCVar));
+	TransferGpuAllocator::allocateSingleton();
+	ANKI_CHECK(TransferGpuAllocator::getSingleton().init(g_cvarRsrcTransferScratchMemorySize));
 
 	// Init the programs
-	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_shaderProgramSystem->init());
+	ShaderProgramResourceSystem::allocateSingleton();
+	ANKI_CHECK(ShaderProgramResourceSystem::getSingleton().init());
 
 	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		m_asScratchAlloc = newInstance<AccelerationStructureScratchAllocator>(ResourceMemoryPool::getSingleton());
+		AccelerationStructureScratchAllocator::allocateSingleton();
 	}
+
+	m_trackFileUpdateTimes = g_cvarRsrcTrackFileUpdates;
 
 	return Error::kNone;
 }
 
 template<typename T>
-Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out, Bool async)
+Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool async)
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
@@ -113,16 +114,17 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 
 	ANKI_ASSERT(entry);
 
-	// Try loading the resource
+	// Try to load the resource
 	Error err = Error::kNone;
+	T* rsrc = nullptr;
 	{
 		LockGuard lock(entry->m_mtx);
 
-		if(entry->m_resource == nullptr)
+		if(entry->m_resources.getSize() == 0 || entry->m_resources.getBack()->isObsolete())
 		{
-			// Resource hasn't been loaded, load it
+			// Resource hasn't been loaded or it needs update, load it
 
-			T* rsrc = newInstance<T>(ResourceMemoryPool::getSingleton(), filename, m_uuid.fetchAdd(1));
+			rsrc = newInstance<T>(ResourceMemoryPool::getSingleton(), filename, m_uuid.fetchAdd(1));
 
 			// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
 			rsrc->retain();
@@ -136,17 +138,28 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 			{
 				ANKI_RESOURCE_LOGE("Failed to load resource: %s", filename.cstr());
 				deleteInstance(ResourceMemoryPool::getSingleton(), rsrc);
+				rsrc = nullptr;
 			}
 			else
 			{
-				entry->m_resource = rsrc;
+				entry->m_resources.emplaceBack(rsrc);
+			}
+
+			if(m_trackFileUpdateTimes)
+			{
+				entry->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
 			}
 		}
-	}
+		else
+		{
+			rsrc = entry->m_resources.getBack();
+		}
 
-	if(!err)
-	{
-		out.reset(entry->m_resource);
+		if(!err)
+		{
+			ANKI_ASSERT(rsrc);
+			out.reset(rsrc);
+		}
 	}
 
 	return err;
@@ -170,16 +183,66 @@ void ResourceManager::freeResource(T* ptr)
 
 	{
 		LockGuard lock(entry->m_mtx);
-		ANKI_ASSERT(entry->m_resource);
-		deleteInstance(ResourceMemoryPool::getSingleton(), entry->m_resource);
-		entry->m_resource = nullptr;
+
+		auto it = entry->m_resources.getBegin();
+		for(; it != entry->m_resources.getEnd(); ++it)
+		{
+			if(*it == ptr)
+			{
+				break;
+			}
+		}
+		ANKI_ASSERT(it != entry->m_resources.getEnd());
+		deleteInstance(ResourceMemoryPool::getSingleton(), *it);
+		entry->m_resources.erase(it);
 	}
 }
 
 // Instansiate
 #define ANKI_INSTANTIATE_RESOURCE(className) \
-	template Error ResourceManager::loadResource<className>(const CString& filename, ResourcePtr<className>& out, Bool async); \
+	template Error ResourceManager::loadResource<className>(CString filename, ResourcePtr<className> & out, Bool async); \
 	template void ResourceManager::freeResource<className>(className * ptr);
 #include <AnKi/Resource/Resources.def.h>
+
+template<typename T>
+void ResourceManager::refreshFileUpdateTimesInternal()
+{
+	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
+
+	WLockGuard lock(type.m_mtx);
+
+	for(auto& entry : type.m_entries)
+	{
+		LockGuard lock(entry.m_mtx);
+
+		if(entry.m_resources.getSize() == 0)
+		{
+			continue;
+		}
+
+		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_resources[0]->getFilename());
+		if(newTime != entry.m_fileUpdateTime)
+		{
+			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: %s", entry.m_resources[0]->getFilename().cstr());
+			entry.m_fileUpdateTime = newTime;
+
+			for(T* rsrc : entry.m_resources)
+			{
+				rsrc->m_isObsolete.store(1);
+			}
+		}
+	}
+}
+
+void ResourceManager::refreshFileUpdateTimes()
+{
+	if(!m_trackFileUpdateTimes)
+	{
+		return;
+	}
+
+#define ANKI_INSTANTIATE_RESOURCE(className) refreshFileUpdateTimesInternal<className>();
+#include <AnKi/Resource/Resources.def.h>
+}
 
 } // end namespace anki

@@ -63,7 +63,7 @@ Error TimestampQueryImpl::init()
 {
 	ANKI_CHECK(TimestampQueryFactory::getSingleton().newQuery(m_handle));
 
-	m_timestampPeriod = U64(getGrManagerImpl().getPhysicalDeviceProperties().limits.timestampPeriod);
+	m_timestampPeriod = U64(getGrManagerImpl().getVulkanCapabilities().m_timestampPeriod);
 
 	return Error::kNone;
 }

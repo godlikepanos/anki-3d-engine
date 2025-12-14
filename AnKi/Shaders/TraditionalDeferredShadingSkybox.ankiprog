@@ -23,7 +23,7 @@ Texture2D g_depthTex : register(t0);
 
 #	if METHOD == 1
 SamplerState g_trilinearAnySampler : register(s1);
-Texture2D<RVec4> g_envMapTex : register(t1);
+Texture2D<Vec4> g_envMapTex : register(t1);
 #	elif METHOD == 2
 SamplerState g_linearAnyClampSampler : register(s1);
 Texture2D<Vec4> g_skyLut : register(t1);

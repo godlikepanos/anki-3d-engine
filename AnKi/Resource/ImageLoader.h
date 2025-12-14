@@ -108,6 +108,11 @@ public:
 		return m_astcBlockSize;
 	}
 
+	Vec4 getAverageColor() const
+	{
+		return m_avgColor;
+	}
+
 	const ImageLoaderSurface& getSurface(U32 level, U32 face, U32 layer) const;
 
 	const ImageLoaderVolume& getVolume(U32 level) const;
@@ -129,6 +134,8 @@ private:
 
 	DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>> m_volumes;
 
+	Vec4 m_avgColor = Vec4(0.0f);
+
 	U32 m_mipmapCount = 0;
 	U32 m_width = 0;
 	U32 m_height = 0;
@@ -147,7 +154,8 @@ private:
 	static Error loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
 							   DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>>& surfaces,
 							   DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes, U32& width, U32& height, U32& depth,
-							   U32& layerCount, U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
+							   U32& layerCount, U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize,
+							   Vec4& avgColor);
 
 	Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
 };

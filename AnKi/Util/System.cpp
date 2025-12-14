@@ -217,7 +217,7 @@ void preMain()
 {
 	Logger::allocateSingleton();
 	ANKI_UTIL_LOGV("Pre main executed. This should be the 1st message");
-	Thread::setCurrentThreadName("Main");
+	Thread::setCurrentThreadName("AnKiMain");
 }
 
 // The last thing that executes after main

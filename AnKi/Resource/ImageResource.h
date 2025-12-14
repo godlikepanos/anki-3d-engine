@@ -13,7 +13,7 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-inline NumericCVar<U32> g_maxImageSizeCVar("Rsrc", "MaxImageSize", 1024u * 1024u, 4u, kMaxU32, "Max image size to load");
+ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageSize, 1024u * 1024u, 4u, kMaxU32, "Max image size to load")
 
 /// Image resource class. It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs, PNGs, JPEG and
 /// AnKi's image format.
@@ -36,28 +36,14 @@ public:
 		return *m_tex;
 	}
 
-	U32 getWidth() const
+	Vec4 getAverageColor() const
 	{
-		ANKI_ASSERT(m_size.x());
-		return m_size.x();
+		return m_avgColor;
 	}
 
-	U32 getHeight() const
+	Bool isLoaded() const
 	{
-		ANKI_ASSERT(m_size.y());
-		return m_size.y();
-	}
-
-	U32 getDepth() const
-	{
-		ANKI_ASSERT(m_size.z());
-		return m_size.z();
-	}
-
-	U32 getLayerCount() const
-	{
-		ANKI_ASSERT(m_layerCount);
-		return m_layerCount;
+		return m_pendingLoadedMips.load() == 0;
 	}
 
 private:
@@ -67,10 +53,12 @@ private:
 	class LoadingContext;
 
 	TexturePtr m_tex;
-	UVec3 m_size = UVec3(0u);
-	U32 m_layerCount = 0;
 
-	[[nodiscard]] static Error load(LoadingContext& ctx);
+	Vec4 m_avgColor = Vec4(0.0f);
+
+	mutable Atomic<U32> m_pendingLoadedMips = {0};
+
+	Error loadAsync(LoadingContext& ctx) const;
 };
 /// @}
 

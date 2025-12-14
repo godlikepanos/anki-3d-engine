@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Ui/Canvas.h>
+#include <AnKi/Ui/UiCanvas.h>
 
 namespace anki {
 
@@ -31,13 +31,13 @@ private:
 
 	static constexpr U32 kBufferedFrames = 30;
 
-	FontPtr m_font;
+	ImFont* m_font = nullptr;
 	Bool m_fpsOnly = false;
 
 	SceneDynamicArray<Value> m_averageValues;
 	U32 m_bufferedFrames = 0;
 
-	void draw(CanvasPtr& canvas);
+	void draw(UiCanvas& canvas);
 };
 /// @}
 

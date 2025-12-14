@@ -57,10 +57,11 @@ private:
 
 		BufferUsageBit buffUsage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kIndirectDraw
 								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertexOrIndex | BufferUsageBit::kAllCopy
-								   | BufferUsageBit::kIndirectTraceRays | BufferUsageBit::kShaderBindingTable;
+								   | BufferUsageBit::kIndirectDispatchRays | BufferUsageBit::kShaderBindingTable;
 		if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 		{
-			buffUsage |= (BufferUsageBit::kAccelerationStructureBuildScratch | BufferUsageBit::kAccelerationStructureBuild);
+			buffUsage |= (BufferUsageBit::kAccelerationStructureBuildScratch | BufferUsageBit::kAccelerationStructureBuild
+						  | BufferUsageBit::kAccelerationStructure);
 		}
 		m_pool.init(10_MB, 2.0, 0, buffUsage, BufferMapAccessBit::kNone, true, "GpuVisibleTransientMemoryPool");
 	}

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Resource/ParticleEmitterResource.h>
+#include <AnKi/Resource/ParticleEmitterResource2.h>
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Resource/MeshResource.h>
@@ -17,7 +17,6 @@
 #include <AnKi/Resource/GenericResource.h>
 #include <AnKi/Resource/SkeletonResource.h>
 #include <AnKi/Resource/DummyResource.h>
-#include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 
 #include <AnKi/Resource/MeshBinaryLoader.h>

@@ -14,11 +14,16 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<U32> g_ssaoSampleCountCVar("R", "SsaoSampleCount", 4, 1, 1024, "SSAO sample count");
-inline NumericCVar<F32> g_ssaoRadiusCVar("R", "SsaoRadius", 2.0f, 0.1f, 100.0f, "SSAO radius in meters");
-inline BoolCVar g_ssaoQuarterRezCVar("R", "SsaoQuarterResolution", ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez");
-inline NumericCVar<F32> g_ssaoPowerCVar("R", "SsaoPower", 1.5f, 0.1f, 100.0f, "SSAO power");
-inline NumericCVar<U8> g_ssaoSpatialQualityCVar("R", "SsaoSpatialQuality", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1, "SSAO spatial denoise quality");
+ANKI_CVAR2(NumericCVar<U32>, Render, Ssao, SampleCount, 4, 1, 1024, "SSAO sample count")
+ANKI_CVAR2(NumericCVar<F32>, Render, Ssao, Radius, 2.0f, 0.1f, 100.0f, "SSAO radius in meters")
+ANKI_CVAR2(BoolCVar, Render, Ssao, QuarterRez, ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez")
+ANKI_CVAR2(NumericCVar<F32>, Render, Ssao, Power, 1.5f, 0.1f, 100.0f, "SSAO power")
+ANKI_CVAR2(
+	NumericCVar<U8>, Render, Ssao, SpatialDenoiseSampleCout, (ANKI_PLATFORM_MOBILE) ? 3 : 9,
+	[](U8 val) {
+		return val == 3 || val == 5 || val == 7 || val == 9;
+	},
+	"SSAO spatial denoise quality")
 
 /// Screen space ambient occlusion.
 class Ssao : public RendererObject
@@ -26,6 +31,7 @@ class Ssao : public RendererObject
 public:
 	Ssao()
 	{
+		registerDebugRenderTarget("BentNormals");
 		registerDebugRenderTarget("Ssao");
 	}
 
@@ -33,11 +39,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
-		ANKI_ASSERT(rtName == "Ssao");
 		handles[0] = m_runCtx.m_finalRt;
+		drawStyle = (rtName == "Ssao") ? DebugRenderTargetDrawStyle::kAlphaOnly : DebugRenderTargetDrawStyle::kPassthrough;
 	}
 
 	RenderTargetHandle getRt() const
@@ -48,7 +54,8 @@ public:
 public:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	ShaderProgramPtr m_spatialDenoiseGrProg;
+	ShaderProgramPtr m_spatialDenoiseVerticalGrProg;
+	ShaderProgramPtr m_spatialDenoiseHorizontalGrProg;
 	ShaderProgramPtr m_tempralDenoiseGrProg;
 
 	RenderTargetDesc m_bentNormalsAndSsaoRtDescr;

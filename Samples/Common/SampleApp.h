@@ -12,9 +12,23 @@ namespace anki {
 class SampleApp : public App
 {
 public:
-	using App::App;
+	U32 m_argc = 0;
+	Char** m_argv = nullptr;
 
-	Error init(int argc, char** argv, CString sampleName);
+	SampleApp(U32 argc, Char** argv, CString appName)
+		: App(appName)
+		, m_argc(argc)
+		, m_argv(argv)
+	{
+	}
+
+	Error userPreInit() override;
+
+	Error userPostInit() override
+	{
+		return sampleExtraInit();
+	}
+
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 
 	virtual Error sampleExtraInit() = 0;

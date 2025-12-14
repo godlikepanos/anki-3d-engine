@@ -160,21 +160,28 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 
 	ResourceDynamicArray<Lib> libs;
 
-	const Error err = ResourceManager::getSingleton().getFilesystem().iterateAllFilenames([&](CString filename) -> Error {
+	Error err = Error::kNone;
+	ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString filename) {
 		// Check file extension
 		String extension;
 		getFilepathExtension(filename, extension);
 		const Char binExtension[] = "ankiprogbin";
 		if(extension.getLength() != sizeof(binExtension) - 1 || extension != binExtension)
 		{
-			return Error::kNone;
+			return FunctorContinue::kContinue;
 		}
 
 		// Get the binary
 		ResourceFilePtr file;
-		ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
+		if((err = ResourceFilesystem::getSingleton().openFile(filename, file)))
+		{
+			return FunctorContinue::kStop;
+		}
 		ShaderBinary* binary;
-		ANKI_CHECK(deserializeShaderBinaryFromAnyFile(*file, binary, ResourceMemoryPool::getSingleton()));
+		if((err = deserializeShaderBinaryFromAnyFile(*file, binary, ResourceMemoryPool::getSingleton())))
+		{
+			return FunctorContinue::kStop;
+		}
 
 		class Dummy
 		{
@@ -189,7 +196,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 
 		if(!(binary->m_shaderTypes & ShaderTypeBit::kAllRayTracing))
 		{
-			return Error::kNone;
+			return FunctorContinue::kContinue;
 		}
 
 		// Create the program name
@@ -323,7 +330,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			}
 		} // iterate techniques
 
-		return Error::kNone;
+		return FunctorContinue::kContinue;
 	}); // For all RT filenames
 	ANKI_CHECK(err);
 

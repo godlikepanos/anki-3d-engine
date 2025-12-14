@@ -16,9 +16,8 @@
 #include <AnKi/Scene/Components/JointComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
-#include <AnKi/Scene/Components/ModelComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
-#include <AnKi/Scene/Components/ParticleEmitterComponent.h>
+#include <AnKi/Scene/Components/ParticleEmitter2Component.h>
 #include <AnKi/Scene/Components/PlayerControllerComponent.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 #include <AnKi/Scene/Components/ScriptComponent.h>
@@ -26,14 +25,22 @@
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Scene/Components/TriggerComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Scene/Components/MeshComponent.h>
+#include <AnKi/Scene/Components/MaterialComponent.h>
 
 namespace anki {
 
 // Specialize newComponent(). Do that first
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
 	template<> \
 	name##Component* SceneNode::newComponent<name##Component>() \
 	{ \
+		if(hasComponent<name##Component>() && !kSceneComponentSceneNodeCanHaveMany[SceneComponentType::k##name]) \
+		{ \
+			ANKI_SCENE_LOGE("Can't have many %s components in scene node %s", kSceneComponentTypeName[SceneComponentType::k##name], \
+							getName().cstr()); \
+			return nullptr; \
+		} \
 		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(this); \
 		it->setArrayIndex(it.getArrayIndex()); \
 		newComponentInternal(&(*it)); \
@@ -61,7 +68,7 @@ SceneNode::~SceneNode()
 
 		switch(comp->getType())
 		{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
 	case SceneComponentType::k##name: \
 		SceneGraph::getSingleton().getComponentArrays().get##name##s().erase(comp->getArrayIndex()); \
 		break;
@@ -76,7 +83,7 @@ void SceneNode::markForDeletion()
 {
 	visitThisAndChildren([](SceneNode& obj) {
 		obj.m_markedForDeletion = true;
-		return true;
+		return FunctorContinue::kContinue;
 	});
 }
 
@@ -145,11 +152,66 @@ Bool SceneNode::updateTransform()
 			{
 				childNode.m_localTransformDirty = true;
 			}
-			return true;
+			return FunctorContinue::kContinue;
 		});
 	}
 
 	return needsUpdate;
+}
+
+void SceneNode::setName(CString name)
+{
+	const SceneString oldName = getName();
+	m_name = name;
+	SceneGraph::getSingleton().sceneNodeChangedName(*this, oldName);
+}
+
+Error SceneNode::serializeCommon(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_uuid, 1);
+	ANKI_SERIALIZE(m_name, 1);
+
+	Vec3 origin = m_ltrf.getOrigin().xyz;
+	ANKI_SERIALIZE(origin, 1);
+	m_ltrf.setOrigin(origin);
+
+	Mat3 rotation = m_ltrf.getRotation().getRotationPart();
+	ANKI_SERIALIZE(rotation, 1);
+	m_ltrf.setRotation(rotation);
+
+	Vec3 scale = m_ltrf.getScale().xyz;
+	ANKI_SERIALIZE(scale, 1);
+	m_ltrf.setScale(scale);
+
+	U32 componentCount = m_components.getSize();
+	ANKI_SERIALIZE(componentCount, 1);
+
+	SceneDynamicArray<U32> componentUuids;
+	if(serializer.isInWriteMode())
+	{
+		for(SceneComponent* comp : m_components)
+		{
+			componentUuids.emplaceBack(comp->getUuid());
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
+
+	ANKI_SERIALIZE(componentUuids, 1);
+
+	// Parent
+	SceneNode* parent = getParent();
+	U32 parentUuid = (parent) ? parent->getUuid() : 0;
+	ANKI_SERIALIZE(parentUuid, 1);
+
+	if(serializer.isInReadMode())
+	{
+		ANKI_ASSERT(!"TODO");
+	}
+
+	return Error::kNone;
 }
 
 } // end namespace anki

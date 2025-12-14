@@ -189,13 +189,13 @@ Error DescriptorFactory::init()
 		return Error::kNone;
 	};
 
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxCpuCbvSrvUavDescriptorsCVar,
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxCpuCbvSrvUavDescriptors,
 									  "CPU CBV/SRV/UAV", m_cpuPersistent.m_cbvSrvUav));
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxCpuSamplerDescriptorsCVar,
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxCpuSamplerDescriptors,
 									  "CPU samplers", m_cpuPersistent.m_sampler));
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxRtvDescriptorsCVar, "CPU RTV",
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxRtvDescriptors, "CPU RTV",
 									  m_cpuPersistent.m_rtv));
-	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxDsvDescriptorsCVar, "CPU DSV",
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_cvarGrMaxDsvDescriptors, "CPU DSV",
 									  m_cpuPersistent.m_dsv));
 
 	// Init GPU visible heaps
@@ -204,20 +204,20 @@ Error DescriptorFactory::init()
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart;
 	U32 descriptorSize;
 	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-									g_maxGpuCbvSrvUavDescriptorsCVar + g_maxBindlessSampledTextureCountCVar, "GPU CBV/SRV/UAV", heap, cpuHeapStart,
-									gpuHeapStart, descriptorSize));
+									g_cvarGrMaxGpuCbvSrvUavDescriptors + g_cvarGrMaxBindlessSampledTextureCount, "GPU CBV/SRV/UAV", heap,
+									cpuHeapStart, gpuHeapStart, descriptorSize));
 	m_descriptorHeaps.emplaceBack(heap);
 
-	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, U16(g_maxBindlessSampledTextureCountCVar));
+	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, U16(g_cvarGrMaxBindlessSampledTextureCount));
 
-	cpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
-	gpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
-	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuCbvSrvUavDescriptorsCVar, "CBV/SRV/UAV");
+	cpuHeapStart.ptr += descriptorSize * g_cvarGrMaxBindlessSampledTextureCount;
+	gpuHeapStart.ptr += descriptorSize * g_cvarGrMaxBindlessSampledTextureCount;
+	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_cvarGrMaxGpuCbvSrvUavDescriptors, "CBV/SRV/UAV");
 
-	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, g_maxGpuSamplerDescriptorsCVar,
+	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, g_cvarGrMaxGpuSamplerDescriptors,
 									"GPU samplers", heap, cpuHeapStart, gpuHeapStart, descriptorSize));
 	m_descriptorHeaps.emplaceBack(heap);
-	m_gpuRing.m_sampler.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuSamplerDescriptorsCVar, "Samplers");
+	m_gpuRing.m_sampler.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_cvarGrMaxGpuSamplerDescriptors, "Samplers");
 
 	// Misc
 	for(D3D12_DESCRIPTOR_HEAP_TYPE type = D3D12_DESCRIPTOR_HEAP_TYPE(0); type < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
@@ -343,9 +343,24 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 		ANKI_ASSERT((refl.m_descriptor.m_fastConstantsSize % 4) == 0);
 		rootParam.Constants.Num32BitValues = refl.m_descriptor.m_fastConstantsSize / 4;
-		rootParam.Constants.RegisterSpace = 3000;
+		rootParam.Constants.RegisterSpace = ANKI_D3D_FAST_CONSTANTS_SPACE;
 		rootParam.Constants.ShaderRegister = 0;
 		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
+
+	// DrawID
+	U32 drawIdRootParam = kMaxU32;
+	if(refl.m_descriptor.m_d3dHasDrawId)
+	{
+		drawIdRootParam = rootParameters.getSize();
+
+		D3D12_ROOT_PARAMETER1& rootParam = *rootParameters.emplaceBack();
+		rootParam = {};
+		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+		rootParam.Constants.Num32BitValues = 1;
+		rootParam.Constants.RegisterSpace = ANKI_D3D_DRAW_ID_CONSTANT_SPACE;
+		rootParam.Constants.ShaderRegister = 0;
+		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 	}
 
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC verSigDesc = {};
@@ -372,6 +387,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	signature = newInstance<RootSignature>(GrMemoryPool::getSingleton());
 	signature->m_hash = hash;
 	signature->m_rootSignature = dxRootSig;
+	signature->m_drawIdRootParamIdx = drawIdRootParam;
 
 	U8 rootParameterIdx = 0;
 	for(U32 spaceIdx = 0; spaceIdx < kMaxRegisterSpaces; ++spaceIdx)
@@ -438,6 +454,65 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	{
 		signature->m_rootConstantsParameterIdx = rootParameterIdx++;
 	}
+
+	m_signatures.emplaceBack(signature);
+
+	return Error::kNone;
+}
+
+Error RootSignatureFactory::getOrCreateLocalRootSignature(const ShaderReflection& refl, RootSignature*& signature)
+{
+	ANKI_ASSERT(refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize > 0
+				&& (refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize % 4) == 0);
+
+	// Compute the hash
+	const U64 hash = computeHash(&refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize,
+								 sizeof(refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize));
+
+	// Search if exists
+	LockGuard lock(m_mtx);
+
+	for(RootSignature* s : m_signatures)
+	{
+		if(s->m_hash == hash)
+		{
+			signature = s;
+			return Error::kNone;
+		}
+	}
+
+	// Not found, create one
+
+	D3D12_ROOT_PARAMETER1 rootParam = {};
+	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam.Constants.Num32BitValues = refl.m_descriptor.m_d3dShaderBindingTableRecordConstantsSize / 4;
+	rootParam.Constants.RegisterSpace = ANKI_D3D_SHADER_RECORD_CONSTANTS_SPACE;
+	rootParam.Constants.ShaderRegister = 0;
+
+	D3D12_VERSIONED_ROOT_SIGNATURE_DESC verSigDesc = {};
+	verSigDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+	D3D12_ROOT_SIGNATURE_DESC1& sigDesc = verSigDesc.Desc_1_1;
+	sigDesc.NumParameters = 1;
+	sigDesc.pParameters = &rootParam;
+	sigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
+	ComPtr<ID3DBlob> signatureBlob;
+	ComPtr<ID3DBlob> errorBlob;
+	const HRESULT ret = D3D12SerializeVersionedRootSignature(&verSigDesc, &signatureBlob, &errorBlob);
+	if(ret != S_OK)
+	{
+		const Char* errc = reinterpret_cast<const Char*>(errorBlob->GetBufferPointer());
+		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: %s", errc);
+	}
+
+	ID3D12RootSignature* dxRootSig;
+	ANKI_D3D_CHECK(getDevice().CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&dxRootSig)));
+
+	// Create the signature
+	signature = newInstance<RootSignature>(GrMemoryPool::getSingleton());
+	signature->m_hash = hash;
+	signature->m_rootSignature = dxRootSig;
 
 	m_signatures.emplaceBack(signature);
 
@@ -716,6 +791,19 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					srvDesc.Buffer.NumElements = U32(view.m_range / texelSize);
 
 					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else if(inDescriptor.m_type == DescriptorType::kAccelerationStructure)
+				{
+					// AS
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+
+					srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+					srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+					srvDesc.RaytracingAccelerationStructure.Location = outDescriptor.m_asAddress;
+
+					getDevice().CreateShaderResourceView(nullptr, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
 				else
 				{

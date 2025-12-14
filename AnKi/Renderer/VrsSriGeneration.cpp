@@ -24,11 +24,11 @@ Error VrsSriGeneration::init()
 
 	// Create textures
 	const TextureUsageBit texUsage = TextureUsageBit::kShadingRate | TextureUsageBit::kUavCompute | TextureUsageBit::kAllSrv;
-	TextureInitInfo sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
+	TextureInitInfo sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rez.x, rez.y, Format::kR8_Uint, texUsage, "VrsSri");
 	m_sriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kShadingRate);
 
 	const UVec2 rezDownscaled = (getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
-	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint, texUsage, "VrsSriDownscaled");
+	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x, rezDownscaled.y, Format::kR8_Uint, texUsage, "VrsSriDownscaled");
 	m_downscaledSriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kShadingRate);
 
 	// Load programs
@@ -51,7 +51,7 @@ Error VrsSriGeneration::init()
 		variantInit.addMutation("SHARED_MEMORY", 1);
 	}
 
-	variantInit.addMutation("LIMIT_RATE_TO_2X2", g_vrsLimitTo2x2CVar);
+	variantInit.addMutation("LIMIT_RATE_TO_2X2", g_cvarRenderVrsLimitTo2x2);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
@@ -63,25 +63,9 @@ Error VrsSriGeneration::init()
 	return Error::kNone;
 }
 
-void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-											ShaderProgramPtr& optionalShaderProgram) const
-{
-	if(rtName == "VrsSri")
-	{
-		handles[0] = m_runCtx.m_rt;
-	}
-	else
-	{
-		ANKI_ASSERT(rtName == "VrsSriDownscaled");
-		handles[0] = m_runCtx.m_downscaledRt;
-	}
-
-	optionalShaderProgram = m_visualizeGrProg;
-}
-
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(!enableVrs)
 	{
 		return;
@@ -102,7 +86,7 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(!enableVrs)
 	{
 		return;
@@ -128,12 +112,12 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
-			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar, 0.0f);
+			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_cvarRenderVrsThreshold, 0.0f);
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
-			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, getRenderer().getInternalResolution().x(),
-							  getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, getRenderer().getInternalResolution().x,
+							  getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -158,7 +142,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
-			dispatchPPCompute(cmdb, 8, 8, rezDownscaled.x(), rezDownscaled.y());
+			dispatchPPCompute(cmdb, 8, 8, rezDownscaled.x, rezDownscaled.y);
 		});
 	}
 }

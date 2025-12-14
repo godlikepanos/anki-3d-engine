@@ -147,7 +147,7 @@ public:
 	void setFillMode(FillMode mode);
 
 	/// Set cull mode.
-	/// By default it's FaceSelectionBit::BACK.
+	/// By default it's FaceSelectionBit::kBack.
 	void setCullMode(FaceSelectionBit mode);
 
 	/// Set depth offset and units. Set zeros to both to disable it.
@@ -304,10 +304,10 @@ public:
 	/// @param width Width.
 	/// @param height Height.
 	/// @param depth Depth.
-	void traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
+	void dispatchRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
-	/// Same as traceRays but indirect.
-	void traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, BufferView argsBuffer);
+	/// Same as dispatchRays but indirect.
+	void dispatchRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, BufferView argsBuffer);
 
 	/// Blit from surface to surface.
 	void blitTexture(const TextureView& srcView, const TextureView& destView);
@@ -316,7 +316,7 @@ public:
 	void clearTexture(const TextureView& texView, const ClearValue& clearValue);
 
 	/// Copy a buffer to a texture surface or volume.
-	void copyBufferToTexture(const BufferView& buff, const TextureView& texView);
+	void copyBufferToTexture(const BufferView& buff, const TextureView& texView, const TextureRect& rect = TextureRect());
 
 	/// Fill a buffer with zeros. It's a copy operation.
 	void zeroBuffer(const BufferView& buff);

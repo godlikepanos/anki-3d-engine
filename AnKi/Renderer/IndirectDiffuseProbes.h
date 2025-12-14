@@ -14,10 +14,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<U32> g_indirectDiffuseProbeTileResolutionCVar("R", "IndirectDiffuseProbeTileResolution", (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32,
-																 "GI tile resolution");
-inline NumericCVar<U32> g_indirectDiffuseProbeShadowMapResolutionCVar("R", "IndirectDiffuseProbeShadowMapResolution", 128, 4, 2048,
-																	  "GI shadowmap resolution");
+ANKI_CVAR2(NumericCVar<U32>, Render, Idp, TileResolution, (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32, "GI tile resolution")
+ANKI_CVAR2(NumericCVar<U32>, Render, Idp, ShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
 
 /// Ambient global illumination passes.
 ///

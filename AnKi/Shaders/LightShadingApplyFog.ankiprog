@@ -13,7 +13,7 @@
 SamplerState g_nearestAnyClampSampler : register(s0);
 SamplerState g_linearAnyClampSampler : register(s1);
 Texture2D g_depthRt : register(t0);
-Texture3D<RVec4> g_fogVolume : register(t1);
+Texture3D<Vec4> g_fogVolume : register(t1);
 
 struct Constants
 {
@@ -24,14 +24,7 @@ struct Constants
 };
 ANKI_FAST_CONSTANTS(Constants, g_consts)
 
-// Workaround validation errors
-#	if ANKI_GR_BACKEND_DIRECT3D
-#		define OUT_TYPE Vec4
-#	else
-#		define OUT_TYPE RVec4
-#	endif
-
-OUT_TYPE main(VertOut input) : SV_TARGET0
+Vec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
 	Vec3 uvw;
@@ -45,11 +38,11 @@ OUT_TYPE main(VertOut input) : SV_TARGET0
 	uvw.xy = uv;
 
 	// Read the volume
-	const RVec4 fogVals = g_fogVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
-	const RVec3 inScattering = fogVals.rgb;
-	const RF32 transmittance = fogVals.a;
+	const Vec4 fogVals = g_fogVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
+	const Vec3 inScattering = fogVals.rgb;
+	const F32 transmittance = fogVals.a;
 
 	// Apply the fog
-	return OUT_TYPE(inScattering, transmittance);
+	return Vec4(inScattering, transmittance);
 }
 #endif // ANKI_PIXEL_SHADER

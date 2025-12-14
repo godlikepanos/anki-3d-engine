@@ -77,17 +77,15 @@ TextureImpl::~TextureImpl()
 	}
 #endif
 
-	TextureGarbage* garbage = anki::newInstance<TextureGarbage>(GrMemoryPool::getSingleton());
-
 	auto destroyTextureView = [&](TextureViewEntry& entry) {
-		if(entry.m_handle)
-		{
-			garbage->m_viewHandles.emplaceBack(entry.m_handle);
-		}
-
 		if(entry.m_bindlessIndex != kMaxU32)
 		{
-			garbage->m_bindlessIndices.emplaceBack(entry.m_bindlessIndex);
+			BindlessDescriptorSet::getSingleton().unbindTexture(entry.m_bindlessIndex);
+		}
+
+		if(entry.m_handle)
+		{
+			vkDestroyImageView(getVkDevice(), entry.m_handle, nullptr);
 		}
 	};
 
@@ -103,12 +101,13 @@ TextureImpl::~TextureImpl()
 
 	if(m_imageHandle && !(m_usage & TextureUsageBit::kPresent))
 	{
-		garbage->m_imageHandle = m_imageHandle;
+		vkDestroyImage(getVkDevice(), m_imageHandle, nullptr);
 	}
 
-	garbage->m_memoryHandle = m_memHandle;
-
-	getGrManagerImpl().getFrameGarbageCollector().newTextureGarbage(garbage);
+	if(m_memHandle)
+	{
+		GpuMemoryManager::getSingleton().freeMemory(m_memHandle);
+	}
 }
 
 Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& init_)
@@ -335,13 +334,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
+	if(!!(usage & TextureUsageBit::kSrvDispatchRays) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavTraceRays) && rt)
+	if(!!(usage & TextureUsageBit::kUavDispatchRays) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;

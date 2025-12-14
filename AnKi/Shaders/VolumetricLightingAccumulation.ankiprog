@@ -5,8 +5,6 @@
 
 // This shader accumulates the lighting for every cluster fraction
 
-#pragma anki 16bit
-
 #pragma anki mutator ENABLE_SHADOWS 0 1
 #pragma anki mutator CLIPMAP_DIFFUSE_INDIRECT 0 1
 
@@ -94,12 +92,12 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
-	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
+	if(dirLight.m_active)
 	{
 		F32 factor = phaseFunction(viewDir, dirLight.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 
 		if(shadowCascadeCount > 0u && negativeZViewSpace < dirLight.m_shadowCascadeDistances[shadowCascadeCount - 1u])
 		{
@@ -196,9 +194,10 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			else
 			{
 				const Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
-				F32 distSq = dot(diff, diff) / (vol.m_aabbMaxOrSphereRadius.x * vol.m_aabbMaxOrSphereRadius.x);
-				distSq = min(1.0, distSq);
-				factor = 1.0 - distSq;
+				factor = dot(diff, diff) / (vol.m_aabbMaxOrSphereRadius.x * vol.m_aabbMaxOrSphereRadius.x);
+				factor = 1.0 - factor;
+				factor = max(0.0, factor);
+				factor *= factor;
 			}
 
 			fogDensity += vol.m_density * factor;

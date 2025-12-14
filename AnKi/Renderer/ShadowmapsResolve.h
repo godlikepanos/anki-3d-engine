@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_smResolveQuarterRezCVar("R", "SmResolveQuarterRez", ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality");
+ANKI_CVAR(BoolCVar, Render, ShadowmapResolveQuarterRez, ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality")
 
 /// Resolves shadowmaps into a single texture.
 class ShadowmapsResolve : public RendererObject
@@ -29,8 +29,8 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		ANKI_ASSERT(rtName == "ResolvedShadows");
 		handles[0] = m_runCtx.m_rt;

@@ -154,6 +154,11 @@ public:
 
 	BufferView& operator=(const BufferView&) = default;
 
+	explicit operator Bool() const
+	{
+		return isValid();
+	}
+
 	[[nodiscard]] Buffer& getBuffer() const
 	{
 		validate();

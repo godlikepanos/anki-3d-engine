@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DBuffer.h>
-#include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 
 namespace anki {
@@ -74,10 +73,7 @@ void Buffer::invalidate([[maybe_unused]] PtrSize offset, [[maybe_unused]] PtrSiz
 BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
-
-	BufferGarbage* garbage = anki::newInstance<BufferGarbage>(GrMemoryPool::getSingleton());
-	garbage->m_resource = m_resource;
-	FrameGarbageCollector::getSingleton().newBufferGarbage(garbage);
+	safeRelease(m_resource);
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
@@ -146,17 +142,25 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	resourceDesc.SampleDesc.Quality = 0;
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	resourceDesc.Flags = {};
-	if(!!(m_usage & BufferUsageBit::kAllUav))
+	if(!!(m_usage & BufferUsageBit::kAllUav) || !!(m_usage & BufferUsageBit::kAccelerationStructure))
 	{
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	}
-	if(!(m_usage & BufferUsageBit::kAllShaderResource))
+	if(!(m_usage & BufferUsageBit::kAllShaderResource) && !(m_usage & BufferUsageBit::kAccelerationStructure))
 	{
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 	}
 
 	// Create resource
-	const D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+	D3D12_RESOURCE_STATES initialState;
+	if(!!(m_usage & BufferUsageBit::kAccelerationStructure))
+	{
+		initialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+	}
+	else
+	{
+		initialState = D3D12_RESOURCE_STATE_COMMON;
+	}
 	ANKI_D3D_CHECK(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &resourceDesc, initialState, nullptr, IID_PPV_ARGS(&m_resource)));
 
 	GrDynamicArray<WChar> wstr;
@@ -225,7 +229,7 @@ D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
 		sync |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
 	}
 
-	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)) && rt)
+	if(!!(usage & (BufferUsageBit::kAllDispatchRays & ~BufferUsageBit::kIndirectDispatchRays)) && rt)
 	{
 		sync |= D3D12_BARRIER_SYNC_RAYTRACING;
 	}
@@ -290,10 +294,9 @@ D3D12_BARRIER_ACCESS BufferImpl::computeAccess(BufferUsageBit usage) const
 
 	if(!!(usage & BufferUsageBit::kShaderBindingTable))
 	{
-		out |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
+		out |= D3D12_BARRIER_ACCESS_COMMON;
 	}
 
-	ANKI_ASSERT(out);
 	return out;
 }
 

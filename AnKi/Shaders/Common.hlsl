@@ -15,11 +15,7 @@
 
 // Common constants
 constexpr F32 kEpsilonF32 = 0.000001f;
-#if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kEpsilonF16 = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee
-#else
-constexpr RF32 kEpsilonRF32 = 0.0001f;
-#endif
 
 template<typename T>
 T getEpsilon();
@@ -30,31 +26,18 @@ F32 getEpsilon()
 	return kEpsilonF32;
 }
 
-#if ANKI_SUPPORTS_16BIT_TYPES
 template<>
 F16 getEpsilon()
 {
 	return kEpsilonF16;
 }
-#endif
-
-#if !ANKI_FORCE_FULL_FP_PRECISION && !ANKI_SUPPORTS_16BIT_TYPES
-template<>
-RF32 getEpsilon()
-{
-	return kEpsilonRF32;
-}
-#endif
 
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
+constexpr I32 kMinI32 = -2147483648;
+constexpr I32 kMaxI32 = 2147483647;
 constexpr F32 kMaxF32 = 3.402823e+38;
 constexpr F32 kMinF32 = -3.402823e+38;
-#if !ANKI_SUPPORTS_16BIT_TYPES
-constexpr RF32 kMaxRF32 = 65504.0f; // Max half float value according to wikipedia
-#endif
-#if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kMaxF16 = (F16)65504.0;
-#endif
 
 template<typename T>
 T getMaxNumericLimit();
@@ -65,21 +48,11 @@ F32 getMaxNumericLimit()
 	return kMaxF32;
 }
 
-#if !ANKI_FORCE_FULL_FP_PRECISION && !ANKI_SUPPORTS_16BIT_TYPES
-template<>
-RF32 getMaxNumericLimit()
-{
-	return kMaxRF32;
-}
-#endif
-
-#if ANKI_SUPPORTS_16BIT_TYPES
 template<>
 F16 getMaxNumericLimit()
 {
 	return kMaxF16;
 }
-#endif
 
 template<>
 U32 getMaxNumericLimit()
@@ -102,12 +75,34 @@ struct Barycentrics
 #if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_FAST_CONSTANTS(type, var) [[vk::push_constant]] ConstantBuffer<type> var;
 #else
-#	define ANKI_FAST_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3000);
+#	define ANKI_FAST_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, ANKI_CONCATENATE(space, ANKI_D3D_FAST_CONSTANTS_SPACE));
+#endif
+
+#if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_SHADER_RECORD_CONSTANTS(type, var) [[vk::shader_record_ext]] ConstantBuffer<type> var : register(b0, space3001);
+#else
+#	define ANKI_SHADER_RECORD_CONSTANTS(type, var) \
+		ConstantBuffer<type> var : register(b0, ANKI_CONCATENATE(space, ANKI_D3D_SHADER_RECORD_CONSTANTS_SPACE));
+#endif
+
+// This is the implementation of gl_DrawID for both D3D anv VK
+#if ANKI_VERTEX_SHADER
+#	if ANKI_GR_BACKEND_VULKAN
+#		define SpvDrawIndex 4426
+[[vk::ext_builtin_input(SpvDrawIndex)]] const static U32 gl_DrawID;
+#	else
+struct U32Struct
+{
+	U32 m_data;
+};
+ConstantBuffer<U32Struct> g_drawIdConstant : register(b0, ANKI_CONCATENATE(space, ANKI_D3D_DRAW_ID_CONSTANT_SPACE));
+#		define gl_DrawID g_drawIdConstant.m_data
+#	endif
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_BINDLESS(texType, compType) \
-		[[vk::binding(0, 1000000)]] Texture##texType<compType> g_bindlessTextures##texType##compType[]; \
+		[[vk::binding(0, ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)]] Texture##texType<compType> g_bindlessTextures##texType##compType[]; \
 		Texture##texType<compType> getBindlessTexture##texType##compType(U32 idx) \
 		{ \
 			return g_bindlessTextures##texType##compType[idx]; \
@@ -160,6 +155,19 @@ U32 checkStructuredBuffer(T buff, U32 idx)
 
 // Safely access a structured buffer. Throw an assertion if it's out of bounds
 #define SBUFF(buff, idx) buff[checkStructuredBuffer(buff, idx)]
+
+template<typename TStruct, typename TBab>
+U32 checkBab(TBab bab, U32 offset)
+{
+	U32 babSize;
+	bab.GetDimensions(babSize);
+	ANKI_ASSERT(offset + sizeof(TStruct) <= babSize);
+	return offset;
+}
+
+// Savely access a ByteAddressBuffer
+#define BAB_LOAD(bab, type, offset) bab.Load<type>(checkBab<type>(bab, offset))
+#define BAB_STORE(bab, type, offset, data) bab.Store<type>(checkBab<type>(bab, offset), data)
 
 #define CHECK_TEXTURE_3D(textureType) \
 	UVec3 checkTexture(textureType tex, UVec3 coords) \
@@ -232,6 +240,17 @@ CHECK_TEXTURE_3()
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN
+#	define SpvRayQueryPositionFetchKHR 5391
+#	define SpvOpRayQueryGetIntersectionTriangleVertexPositionsKHR 5340
+#	define SpvRayQueryCandidateIntersectionKHR 0
+#	define SpvRayQueryCommittedIntersectionKHR 1
+
+[[vk::ext_capability(SpvRayQueryPositionFetchKHR)]] [[vk::ext_extension("SPV_KHR_ray_tracing_position_fetch")]] [[vk::ext_instruction(
+	SpvOpRayQueryGetIntersectionTriangleVertexPositionsKHR)]] float3
+spvRayQueryGetIntersectionTriangleVertexPositionsKHR([[vk::ext_reference]] RayQuery<RAY_FLAG_FORCE_OPAQUE> query, int committed)[3];
+#endif
+
+#if ANKI_GR_BACKEND_VULKAN
 #	define SpvDecorationRelaxedPrecision 0
 #	define ANKI_RELAXED_PRECISION [[vk::ext_decorate(SpvDecorationRelaxedPrecision)]]
 #else
@@ -243,16 +262,16 @@ CHECK_TEXTURE_3()
 template<typename T>
 T uvToNdc(T uv)
 {
-	T ndc = uv * 2.0f - 1.0f;
-	ndc.y *= -1.0f;
+	T ndc = uv * 2.0 - 1.0;
+	ndc.y *= -1.0;
 	return ndc;
 }
 
 template<typename T>
 T ndcToUv(T ndc)
 {
-	T uv = ndc * 0.5f + 0.5f;
-	uv.y = 1.0f - uv.y;
+	T uv = ndc * 0.5 + 0.5;
+	uv.y = 1.0 - uv.y;
 	return uv;
 }
 
@@ -306,9 +325,9 @@ T square(T x)
 
 #define COMPUTE_ARGS \
 	U32 svGroupIndex : \
-		SV_GroupIndex, \
+		SV_GROUPINDEX, \
 		UVec3 svGroupId : \
-		SV_GroupID, \
+		SV_GROUPID, \
 		UVec3 svDispatchThreadId : \
-		SV_DispatchThreadID, \
-		UVec3 svGroupThreadId : SV_GroupThreadID
+		SV_DISPATCHTHREADID, \
+		UVec3 svGroupThreadId : SV_GROUPTHREADID

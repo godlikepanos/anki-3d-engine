@@ -94,6 +94,8 @@ private:
 	Frustum m_frustum;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 /// @}
 

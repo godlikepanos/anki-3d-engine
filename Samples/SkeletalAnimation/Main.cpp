@@ -30,7 +30,7 @@ public:
 		animInfo.m_repeatTimes = -1.0;
 		SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>().playAnimation(0, m_floatAnim, animInfo);
 
-		g_bloomThresholdCVar = 5.0f;
+		g_cvarRenderBloomThreshold = 5.0f;
 		return Error::kNone;
 	}
 
@@ -53,16 +53,10 @@ public:
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	Error err = Error::kNone;
-
-	MyApp* app = new MyApp(allocAligned, nullptr);
-	err = app->init(argc, argv, "SkeletalAnimation");
-	if(!err)
-	{
-		err = app->mainLoop();
-	}
-
+	MyApp* app = new MyApp(argc, argv, "SkeletalAnimation");
+	const Error err = app->mainLoop();
 	delete app;
+
 	if(err)
 	{
 		ANKI_LOGE("Error reported. Bye!");

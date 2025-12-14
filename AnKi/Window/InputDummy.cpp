@@ -44,17 +44,15 @@ Error Input::handleEvents()
 {
 	if(m_lockCurs)
 	{
-		moveCursor(Vec2(0.0f));
+		moveMouseNdc(Vec2(0.0f));
 	}
 
 	return Error::kNone;
 }
 
-void Input::moveCursor(const Vec2& posNdc)
+void Input::moveMouseNdc(const Vec2& posNdc)
 {
 	m_mousePosNdc = posNdc;
-	m_mousePosWin.x() = U32(F32(NativeWindow::getSingleton().getWidth()) * (posNdc.x() * 0.5f + 0.5f));
-	m_mousePosWin.y() = U32(F32(NativeWindow::getSingleton().getHeight()) * (-posNdc.y() * 0.5f + 0.5f));
 }
 
 void Input::hideCursor([[maybe_unused]] Bool hide)
@@ -65,6 +63,11 @@ void Input::hideCursor([[maybe_unused]] Bool hide)
 Bool Input::hasTouchDevice() const
 {
 	return false;
+}
+
+void Input::setMouseCursor([[maybe_unused]] MouseCursor cursor)
+{
+	// Nothing
 }
 
 } // end namespace anki

@@ -11,8 +11,8 @@ namespace anki {
 
 /// @addtogroup renderer
 /// @{
-
-inline NumericCVar<U8> g_dlssQualityCVar("R", "DlssQuality", 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality");
+ANKI_CVAR(BoolCVar, Render, Dlss, true, "Enable or disable DLSS")
+ANKI_CVAR(NumericCVar<U8>, Render, DlssQuality, 1, 0, 3, "0: Performance, 1: Balanced, 2: Quality")
 
 /// Upscales.
 class TemporalUpscaler : public RendererObject

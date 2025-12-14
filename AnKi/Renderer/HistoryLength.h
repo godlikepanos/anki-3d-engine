@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "AnKi/Gr/RenderGraph.h"
 #include <AnKi/Renderer/RendererObject.h>
 
 namespace anki {
@@ -13,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// XXX
+/// Compute the history length (aka disocclusion length)
 class HistoryLength : public RendererObject
 {
 public:
@@ -26,10 +25,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		handles[0] = m_runCtx.m_rt;
+		drawStyle = DebugRenderTargetDrawStyle::kRedOnly;
 	}
 
 	RenderTargetHandle getRt() const

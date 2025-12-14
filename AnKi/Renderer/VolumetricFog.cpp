@@ -18,12 +18,12 @@ namespace anki {
 Error VolumetricFog::init()
 {
 	// Misc
-	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar;
-	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar;
-	m_finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar);
+	const F32 qualityXY = g_cvarRenderVolumetricLightingAccumulationQualityXY;
+	const F32 qualityZ = g_cvarRenderVolumetricLightingAccumulationQualityZ;
+	m_finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_cvarRenderVolumetricLightingAccumulationFinalZSplit);
 
-	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
-	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);
+	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x) * qualityXY);
+	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y) * qualityXY);
 	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
 
 	// Shaders

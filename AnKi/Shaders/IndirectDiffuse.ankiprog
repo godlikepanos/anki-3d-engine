@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki technique RtMaterialFetch rgen
 
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
@@ -54,15 +52,7 @@ Vec3 lightShading(Vec3 rayOrigin, Vec3 rayDir, Vec3 hitPos, Vec3 hitNormal, Vec3
 
 	if(isSky)
 	{
-		if(g_globalRendererConstants.m_sky.m_type == 0)
-		{
-			color = g_globalRendererConstants.m_sky.m_solidColor;
-		}
-		else
-		{
-			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
-			color = g_envMap.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
-		}
+		color = sampleSkyCheap<F32>(g_globalRendererConstants.m_sky, rayDir, g_linearAnyClampSampler);
 	}
 	else
 	{
@@ -77,7 +67,7 @@ Vec3 lightShading(Vec3 rayOrigin, Vec3 rayDir, Vec3 hitPos, Vec3 hitNormal, Vec3
 		if(bInsideFrustum && kTryShadowmapFirst)
 		{
 			const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
-			const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+			const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 
 			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
 

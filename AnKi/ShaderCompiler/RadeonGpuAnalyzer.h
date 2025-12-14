@@ -17,11 +17,14 @@ namespace anki {
 class RgaOutput
 {
 public:
-	U32 m_vgprCount;
-	U32 m_sgprCount;
-	U32 m_isaSize;
+	U32 m_vgprCount = 0;
+	U32 m_sgprCount = 0;
+	U32 m_isaSize = 0;
 
-	void toString(String& str) const;
+	String toString() const
+	{
+		return String().sprintf("VGPRs %u SGPRs %u ISA size %u", m_vgprCount, m_sgprCount, m_isaSize);
+	}
 };
 
 /// Run the mali offline compiler and get some info back.

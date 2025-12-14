@@ -92,14 +92,14 @@ ANKI_TEST(Util, WalkDir)
 	}
 
 	// Walk crnt dir
-	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data", [&](const CString& fname, Bool isDir) -> Error {
+	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data", [&](WalkDirectoryArgs& args) -> Error {
 		for(U32 i = 0; i < ctx.m_paths.getSize(); ++i)
 		{
 			String p;
-			p.sprintf("./data/%s", fname.cstr());
+			p.sprintf("./data/%s", args.m_path.cstr());
 			if(ctx.m_paths[i].m_path == p)
 			{
-				ANKI_TEST_EXPECT_EQ(ctx.m_paths[i].m_isDir, isDir);
+				ANKI_TEST_EXPECT_EQ(ctx.m_paths[i].m_isDir, args.m_isDirectory);
 				ctx.m_foundMask |= 1 << i;
 			}
 		}
@@ -112,7 +112,7 @@ ANKI_TEST(Util, WalkDir)
 	// Test error
 	U32 count = 0;
 	ANKI_TEST_EXPECT_ERR(walkDirectoryTree("./data///dir////",
-										   [&count]([[maybe_unused]] const CString& fname, [[maybe_unused]] Bool isDir) -> Error {
+										   [&count]([[maybe_unused]] WalkDirectoryArgs& args) -> Error {
 											   ++count;
 											   return Error::kFunctionFailed;
 										   }),

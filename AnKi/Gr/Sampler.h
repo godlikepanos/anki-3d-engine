@@ -9,11 +9,8 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// Sampler initializer.
-class alignas(4) SamplerInitInfo : public GrBaseInitInfo
+// Sampler initializer
+class SamplerInitInfo : public GrBaseInitInfo
 {
 public:
 	F32 m_minLod = -1000.0f;
@@ -24,7 +21,6 @@ public:
 	CompareOperation m_compareOperation = CompareOperation::kAlways;
 	U8 m_anisotropyLevel = 0;
 	SamplingAddressing m_addressing = SamplingAddressing::kRepeat;
-	U8 _m_padding[3] = {0, 0, 0};
 
 	SamplerInitInfo() = default;
 
@@ -35,15 +31,21 @@ public:
 
 	U64 computeHash() const
 	{
-		const U8* first = reinterpret_cast<const U8*>(&m_minLod);
-		const U8* last = reinterpret_cast<const U8*>(&m_addressing) + sizeof(m_addressing);
-		const U32 size = U32(last - first);
-		ANKI_ASSERT(size == sizeof(F32) * 3 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8) + sizeof(SamplingAddressing));
-		return anki::computeHash(first, size);
+		Array<U32, 8> arr;
+		U32 count = 0;
+		arr[count++] = asU32(m_minLod);
+		arr[count++] = asU32(m_maxLod);
+		arr[count++] = asU32(m_lodBias);
+		arr[count++] = U32(m_minMagFilter);
+		arr[count++] = U32(m_mipmapFilter);
+		arr[count++] = U32(m_compareOperation);
+		arr[count++] = m_anisotropyLevel;
+		arr[count++] = U32(m_addressing);
+		return computeObjectHash(arr);
 	}
 };
 
-/// GPU sampler.
+// GPU sampler
 class Sampler : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -52,21 +54,17 @@ public:
 	static constexpr GrObjectType kClassType = GrObjectType::kSampler;
 
 protected:
-	/// Construct.
 	Sampler(CString name)
 		: GrObject(kClassType, name)
 	{
 	}
 
-	/// Destroy.
 	~Sampler()
 	{
 	}
 
 private:
-	/// Allocate and initialize a new instance.
 	[[nodiscard]] static Sampler* newInstance(const SamplerInitInfo& init);
 };
-/// @}
 
 } // end namespace anki

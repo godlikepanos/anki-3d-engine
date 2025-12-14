@@ -12,15 +12,20 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<F32> g_bloomThresholdCVar("R", "BloomThreshold", 2.5f, 0.0f, 256.0f, "Bloom threshold");
-inline NumericCVar<F32> g_bloomScaleCVar("R", "BloomScale", 2.5f, 0.0f, 256.0f, "Bloom scale");
-inline NumericCVar<U32> g_bloomPyramidLowLimit("R", "BloomPyramidLowLimit", 32, 8, 1024, "Downscale the boom pyramid up to that size");
-inline NumericCVar<U32> g_bloomUpscaleDivisor("R", "BloomUpscaleDivisor", 4, 1, 1024, "Defines the resolution of the final bloom result");
+ANKI_CVAR2(NumericCVar<F32>, Render, Bloom, Threshold, 2.5f, 0.0f, 256.0f, "Bloom threshold")
+ANKI_CVAR2(NumericCVar<F32>, Render, Bloom, Scale, 2.5f, 0.0f, 256.0f, "Bloom scale")
+ANKI_CVAR2(NumericCVar<U32>, Render, Bloom, PyramidLowLimit, 32, 8, 1024, "Downscale the boom pyramid up to that size")
+ANKI_CVAR2(NumericCVar<U32>, Render, Bloom, UpscaleDivisor, 4, 1, 1024, "Defines the resolution of the final bloom result")
 
 /// Contains multiple post-process passes that operate on the HDR output.
 class Bloom : public RendererObject
 {
 public:
+	Bloom()
+	{
+		registerDebugRenderTarget("Bloom");
+	}
+
 	Error init();
 
 	void importRenderTargets(RenderingContext& ctx);
@@ -45,6 +50,13 @@ public:
 	RenderTargetHandle getBloomRt() const
 	{
 		return m_runCtx.m_finalRt;
+	}
+
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
+	{
+		handles[0] = m_runCtx.m_finalRt;
+		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
 	}
 
 private:

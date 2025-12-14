@@ -14,6 +14,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/ProbeReflections.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -27,16 +28,16 @@ Error Reflections::init()
 {
 	ANKI_CHECK(RtMaterialFetchRendererObject::init());
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
 	const Bool bSsrSamplesGBuffer = bRtReflections;
 
 	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer},
 												   {"INDIRECT_DIFFUSE_CLIPMAPS", isIndirectDiffuseClipmapsEnabled()}};
-
+	constexpr CString kProgFname = "ShaderBinaries/Reflections.ankiprogbin";
 	// Ray gen and miss
 	if(bRtReflections)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Reflections.ankiprogbin", m_mainProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(kProgFname, m_mainProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_mainProg);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
@@ -56,48 +57,48 @@ Error Reflections::init()
 
 		m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 											GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
+
+		ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_verticalBilateralDenoisingGrProg,
-								 "BilateralDenoiseVertical"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_horizontalBilateralDenoisingGrProg,
-								 "BilateralDenoiseHorizontal"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_ssrGrProg, "Ssr"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_verticalBilateralDenoisingGrProg, "BilateralDenoiseVertical"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_horizontalBilateralDenoisingGrProg, "BilateralDenoiseHorizontal"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_ssrGrProg, "Ssr"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
+	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #1");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "Reflections #1");
 	m_transientRtDesc1.bake();
 
 	m_transientRtDesc2 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #2");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "Reflections #2");
 	m_transientRtDesc2.bake();
 
 	m_hitPosAndDepthRtDesc = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x() / 2u, getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
+		getRenderer().getInternalResolution().x / 2u, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
 	m_hitPosAndDepthRtDesc.bake();
 
-	m_hitPosRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(),
-																   getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPos");
+	m_hitPosRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
+																   Format::kR16G16B16A16_Sfloat, "HitPos");
 	m_hitPosRtDesc.bake();
 
 	TextureInitInfo texInit = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), "ReflectionsMain");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, getRenderer().getHdrFormat(), "ReflectionsMain");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
 	m_tex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
-	texInit = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+	texInit = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 															Format::kR32G32_Sfloat, "ReflectionsMoments #1");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
 	m_momentsTextures[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 	texInit.setName("ReflectionsMoments #2");
 	m_momentsTextures[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
-	m_classTileMapRtDesc = getRenderer().create2DRenderTargetDescription((getRenderer().getInternalResolution().x() + kTileSize - 1) / kTileSize,
-																		 (getRenderer().getInternalResolution().y() + kTileSize - 1) / kTileSize,
+	m_classTileMapRtDesc = getRenderer().create2DRenderTargetDescription((getRenderer().getInternalResolution().x + kTileSize - 1) / kTileSize,
+																		 (getRenderer().getInternalResolution().y + kTileSize - 1) / kTileSize,
 																		 Format::kR8_Uint, "ReflClassTileMap");
 	m_classTileMapRtDesc.bake();
 
@@ -135,7 +136,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
 
 	// Create or import render targets
 	RenderTargetHandle mainRt;
@@ -164,9 +165,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	const BufferHandle indirectArgsHandle = rgraph.importBuffer(BufferView(m_indirectArgsBuffer.get()), BufferUsageBit::kNone);
 
 	ReflectionConstants consts;
-	consts.m_ssrStepIncrement = g_ssrStepIncrementCVar;
-	consts.m_ssrMaxIterations = g_ssrMaxIterationsCVar;
-	consts.m_roughnessCutoffToGiEdges = Vec2(g_roughnessCutoffToGiEdge0, g_roughnessCutoffToGiEdge1);
+	consts.m_ssrStepIncrement = g_cvarRenderReflectionsSsrStepIncrement;
+	consts.m_ssrMaxIterations = g_cvarRenderReflectionsSsrMaxIterations;
+	consts.m_roughnessCutoffToGiEdges = Vec2(g_cvarRenderReflectionsRoughnessCutoffToGiEdge0, g_cvarRenderReflectionsRoughnessCutoffToGiEdge1);
 
 	// Classification
 	{
@@ -192,15 +193,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, kTileSize / 2, kTileSize, getRenderer().getInternalResolution().x() / 2,
-							  getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, kTileSize / 2, kTileSize, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y);
 		});
 	}
 
 	// SSR
 	BufferView pixelsFailedSsrBuff;
 	{
-		const U32 pixelCount = getRenderer().getInternalResolution().x() / 2 * getRenderer().getInternalResolution().y();
+		const U32 pixelCount = getRenderer().getInternalResolution().x / 2 * getRenderer().getInternalResolution().y;
 		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<PixelFailedSsr>(pixelCount);
 
 		// Create the pass
@@ -240,6 +240,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(7, 0, getClusterBinning().getClustersBuffer());
 			rgraphCtx.bindSrv(8, 0, getShadowMapping().getShadowmapRt());
 			rgraphCtx.bindSrv(9, 0, classTileMapRt);
+			cmdb.bindSrv(10, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+			cmdb.bindSrv(11, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
 			rgraphCtx.bindUav(0, 0, transientRt1);
 			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
@@ -250,14 +252,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y);
 		});
 	}
 
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
-	if(bRtReflections)
+	if(bRtReflections && !g_cvarRenderReflectionsInlineRt)
 	{
 		buildShaderBindingTablePass("RtReflections: Build SBT", m_libraryGrProg.get(), m_rayGenShaderGroupIdx, m_missShaderGroupIdx, m_sbtRecordSize,
 									rgraph, sbtHandle, sbtBuffer);
@@ -268,26 +270,30 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections");
 
-		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavTraceRays);
-		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavTraceRays);
-		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
-		if(getRenderer().getGeneratedSky().isEnabled())
+		const TextureUsageBit uavTexUsage = (g_cvarRenderReflectionsInlineRt) ? TextureUsageBit::kUavCompute : TextureUsageBit::kUavDispatchRays;
+		const BufferUsageBit indirectBuffUsage =
+			(g_cvarRenderReflectionsInlineRt) ? BufferUsageBit::kIndirectCompute : BufferUsageBit::kIndirectDispatchRays;
+		const TextureUsageBit srvTexUsage = (g_cvarRenderReflectionsInlineRt) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvDispatchRays;
+
+		if(!g_cvarRenderReflectionsInlineRt)
 		{
-			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+			rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		}
-		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
-		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												 AccelerationStructureUsageBit::kTraceRaysSrv);
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
+		rpass.newTextureDependency(transientRt1, uavTexUsage);
+		rpass.newTextureDependency(hitPosAndDepthRt, uavTexUsage);
+		rpass.newBufferDependency(indirectArgsHandle, indirectBuffUsage);
+		setRgenSpace2Dependencies(rpass, g_cvarRenderReflectionsInlineRt);
+
+		if(isIndirectDiffuseClipmapsEnabled())
+		{
+			getIndirectDiffuseClipmaps().setDependencies(rpass, srvTexUsage);
+		}
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_libraryGrProg.get());
+			cmdb.bindShaderProgram((g_cvarRenderReflectionsInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get() : m_libraryGrProg.get());
 
 			// More globals
 			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
@@ -295,6 +301,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
 		reg, 0, \
@@ -303,45 +310,10 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
-
-			U32 srv = 0;
-			rgraphCtx.bindSrv(srv++, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-
-			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-			const Bool bSkySolidColor =
-				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-			if(bSkySolidColor)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
-			}
-			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
-			{
-				cmdb.bindSrv(srv++, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
-			}
-			else
-			{
-				rgraphCtx.bindSrv(srv++, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
-			}
-
-			rgraphCtx.bindSrv(srv++, 2, getShadowMapping().getShadowmapRt());
-
-			const auto& arr = GpuSceneArrays::GlobalIlluminationProbe::getSingleton();
-			cmdb.bindSrv(srv++, 2,
-						 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
-			cmdb.bindSrv(srv++, 2, pixelsFailedSsrBuff);
-
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(srv++, 2, getGBuffer().getColorRt(2));
-
+			bindRgenSpace2Resources(ctx, rgraphCtx);
+			cmdb.bindSrv(7, 2, pixelsFailedSsrBuff);
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
-
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
-			cmdb.bindSampler(2, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 			struct Consts
 			{
@@ -349,12 +321,21 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				U32 m_giProbeCount;
 				F32 m_padding1;
 				F32 m_padding2;
-			} consts = {g_rtReflectionsMaxRayDistanceCVar, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), 0, 0};
+
+				Vec4 m_padding[2];
+			} consts = {g_cvarRenderReflectionsRtMaxRayDistance, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), 0, 0, {}};
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.traceRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-								   BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(DispatchIndirectArgs)));
+			if(g_cvarRenderReflectionsInlineRt)
+			{
+				cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer.get()).incrementOffset(sizeof(DispatchIndirectArgs)));
+			}
+			else
+			{
+				cmdb.dispatchRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+										  BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(DispatchIndirectArgs)));
+			}
 		});
 	}
 	else
@@ -451,7 +432,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -491,7 +472,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -522,7 +503,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 
@@ -547,7 +528,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindUav(0, 0, mainRt);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
 	}
 

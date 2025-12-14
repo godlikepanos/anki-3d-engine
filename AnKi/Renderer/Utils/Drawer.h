@@ -34,7 +34,8 @@ public:
 	{
 	public:
 		BufferView m_mdiDrawCountsBuffer;
-		BufferView m_renderableInstancesBuffer;
+		BufferView m_perDrawBuffer;
+		BufferView m_firstPerDrawBuffer;
 		BufferView m_drawIndexedIndirectArgsBuffer;
 
 		ConstWeakArray<InstanceRange> m_bucketRenderableInstanceRanges;
@@ -54,7 +55,8 @@ public:
 	void fill(const GpuVisibilityOutput& visOut)
 	{
 		m_legacy.m_mdiDrawCountsBuffer = visOut.m_legacy.m_mdiDrawCountsBuffer;
-		m_legacy.m_renderableInstancesBuffer = visOut.m_legacy.m_renderableInstancesBuffer;
+		m_legacy.m_perDrawBuffer = visOut.m_legacy.m_perDrawDataBuffer;
+		m_legacy.m_firstPerDrawBuffer = visOut.m_legacy.m_firstPerDrawBuffer;
 		m_legacy.m_drawIndexedIndirectArgsBuffer = visOut.m_legacy.m_drawIndexedIndirectArgsBuffer;
 		m_legacy.m_bucketRenderableInstanceRanges = visOut.m_legacy.m_bucketIndirectArgsRanges;
 		m_mesh.m_dispatchMeshIndirectArgsBuffer = visOut.m_mesh.m_dispatchMeshIndirectArgsBuffer;

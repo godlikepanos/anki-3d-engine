@@ -19,12 +19,12 @@ JitterMoveEvent::JitterMoveEvent(Second startTime, Second duration, SceneNode* n
 	}
 
 	m_associatedNodes.emplaceBack(node);
-	m_originalPos = node->getWorldTransform().getOrigin().xyz();
+	m_originalPos = node->getWorldTransform().getOrigin().xyz;
 }
 
 void JitterMoveEvent::setPositionLimits(Vec3 posMin, Vec3 posMax)
 {
-	for(U i = 0; i < 3; i++)
+	for(U32 i = 0; i < 3; i++)
 	{
 		m_newPos[i] = getRandomRange(posMin[i], posMax[i]);
 	}

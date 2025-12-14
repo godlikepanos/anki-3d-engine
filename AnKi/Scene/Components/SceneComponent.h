@@ -6,19 +6,17 @@
 #pragma once
 
 #include <AnKi/Scene/Common.h>
+#include <AnKi/Scene/SceneSerializer.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/BitMask.h>
 #include <AnKi/Util/Enum.h>
+#include <AnKi/Core/Common.h>
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// @memberof SceneComponent
 enum class SceneComponentType : U8
 {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) k##name,
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) k##name,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 	kCount,
@@ -26,12 +24,11 @@ enum class SceneComponentType : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentType)
 
-/// @memberof SceneComponent
 enum class SceneComponentTypeMask : U32
 {
 	kNone = 0,
 
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) k##name = 1 << U32(SceneComponentType::k##name),
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) k##name = 1 << U32(SceneComponentType::k##name),
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentTypeMask)
@@ -39,7 +36,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentTypeMask)
 class SceneComponentType2
 {
 public:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) static constexpr SceneComponentType k##name##Component = SceneComponentType::k##name;
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+	static constexpr SceneComponentType k##name##Component = SceneComponentType::k##name;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 
@@ -49,30 +47,59 @@ public: \
 \
 private:
 
-/// Passed to SceneComponent::update.
-/// @memberof SceneComponent
+// Component names
+inline Array<const Char*, U32(SceneComponentType::kCount)> kSceneComponentTypeName = {
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) ANKI_STRINGIZE(name)
+#define ANKI_SCENE_COMPONENT_SEPARATOR ,
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+};
+
+// Just a flag per component
+inline Array<Bool, U32(SceneComponentType::kCount)> kSceneComponentSceneNodeCanHaveMany = {
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) sceneNodeCanHaveMany
+#define ANKI_SCENE_COMPONENT_SEPARATOR ,
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+};
+
+// Passed to SceneComponent::update.
 class SceneComponentUpdateInfo
 {
+	friend class SceneGraph;
+
 public:
 	SceneNode* m_node = nullptr;
 	const Second m_previousTime;
 	const Second m_currentTime;
 	const Second m_dt;
+	const Bool m_forceUpdateSceneBounds;
+	const Bool m_checkForResourceUpdates;
 	StackMemoryPool* m_framePool = nullptr;
 
-	SceneComponentUpdateInfo(Second prevTime, Second crntTime)
+	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds, Bool checkForResourceUpdates)
 		: m_previousTime(prevTime)
 		, m_currentTime(crntTime)
 		, m_dt(crntTime - prevTime)
+		, m_forceUpdateSceneBounds(forceUpdateSceneBounds)
+		, m_checkForResourceUpdates(checkForResourceUpdates)
 	{
 	}
+
+	void updateSceneBounds(Vec3 aabbMin, Vec3 aabbMax)
+	{
+		ANKI_ASSERT(aabbMin <= aabbMax);
+		m_sceneMin = m_sceneMin.min(aabbMin);
+		m_sceneMax = m_sceneMax.max(aabbMax);
+	}
+
+private:
+	Vec3 m_sceneMin = Vec3(kMaxF32);
+	Vec3 m_sceneMax = Vec3(kMinF32);
 };
 
-/// Scene node component.
+// Scene node component.
 class SceneComponent
 {
 public:
-	/// Construct the scene component.
 	SceneComponent(SceneNode* node, SceneComponentType type);
 
 	virtual ~SceneComponent() = default;
@@ -114,7 +141,7 @@ public:
 	{
 	}
 
-	/// Don't call it directly.
+	// Don't call it directly.
 	ANKI_INTERNAL void setTimestamp(Timestamp timestamp)
 	{
 		ANKI_ASSERT(timestamp > 0);
@@ -127,8 +154,69 @@ public:
 		return m_updateOrderWeights[type];
 	}
 
+	Bool updatedThisFrame() const
+	{
+		return m_timestamp == GlobalFrameIndex::getSingleton().m_value;
+	}
+
+	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
+	{
+		return Error::kNone;
+	}
+
 protected:
 	U32 regenerateUuid();
+
+	// A convenience function for components to keep tabs on other components of a SceneNode
+	template<typename TComponent>
+	static void bookkeepComponent(SceneDynamicArray<TComponent*>& arr, SceneComponent* other, Bool added, Bool& firstDirty)
+	{
+		ANKI_ASSERT(other);
+		ANKI_ASSERT(other->getType() == TComponent::kClassType);
+		if(added)
+		{
+			for(auto it = arr.getBegin(); it != arr.getEnd(); ++it)
+			{
+				ANKI_ASSERT(*it != other);
+			}
+
+			arr.emplaceBack(static_cast<TComponent*>(other));
+			firstDirty = arr.getSize() == 1;
+		}
+		else
+		{
+			[[maybe_unused]] Bool found = false;
+			for(auto it = arr.getBegin(); it != arr.getEnd(); ++it)
+			{
+				if(*it == other)
+				{
+					firstDirty = it == arr.getBegin();
+					arr.erase(it);
+					found = true;
+					break;
+				}
+			}
+			ANKI_ASSERT(found);
+		}
+	}
+
+	// A convenience function for components to keep tabs on other components of a SceneNode
+	template<typename TComponent>
+	static void bookkeepComponent(TComponent*& ptr, SceneComponent* other, Bool added)
+	{
+		ANKI_ASSERT(other);
+		ANKI_ASSERT(other->getType() == TComponent::kClassType);
+		if(added)
+		{
+			ANKI_ASSERT(ptr == nullptr);
+			ptr = static_cast<TComponent*>(other);
+		}
+		else
+		{
+			ANKI_ASSERT(ptr == other);
+			ptr = nullptr;
+		}
+	}
 
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
@@ -138,11 +226,10 @@ private:
 	U32 m_type : 8 = 0; ///< Cache the type ID.
 
 	static constexpr Array<F32, U32(SceneComponentType::kCount)> m_updateOrderWeights = {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) weight
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) weight
 #define ANKI_SCENE_COMPONENT_SEPARATOR ,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 	};
 };
-/// @}
 
 } // end namespace anki

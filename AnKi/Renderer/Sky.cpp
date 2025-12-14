@@ -24,19 +24,19 @@ Error GeneratedSky::init()
 	const Format formatB = getRenderer().getHdrFormat();
 
 	m_transmittanceLut = getRenderer().createAndClearRenderTarget(
-		getRenderer().create2DRenderTargetInitInfo(kTransmittanceLutSize.x(), kTransmittanceLutSize.y(), formatB, usage, "SkyTransmittanceLut"),
+		getRenderer().create2DRenderTargetInitInfo(kTransmittanceLutSize.x, kTransmittanceLutSize.y, formatB, usage, "SkyTransmittanceLut"),
 		initialUsage);
 
 	m_multipleScatteringLut = getRenderer().createAndClearRenderTarget(
-		getRenderer().create2DRenderTargetInitInfo(kMultipleScatteringLutSize.x(), kMultipleScatteringLutSize.y(), formatB, usage,
+		getRenderer().create2DRenderTargetInitInfo(kMultipleScatteringLutSize.x, kMultipleScatteringLutSize.y, formatB, usage,
 												   "SkyMultipleScatteringLut"),
 		initialUsage);
 
 	m_skyLut = getRenderer().createAndClearRenderTarget(
-		getRenderer().create2DRenderTargetInitInfo(kSkyLutSize.x(), kSkyLutSize.y(), formatB, usage | TextureUsageBit::kSrvPixel, "SkyLut"),
+		getRenderer().create2DRenderTargetInitInfo(kSkyLutSize.x, kSkyLutSize.y, formatB, usage | TextureUsageBit::kSrvPixel, "SkyLut"),
 		initialUsage);
 
-	m_envMap = getRenderer().createAndClearRenderTarget(getRenderer().create2DRenderTargetInitInfo(kEnvMapSize.x(), kEnvMapSize.y(),
+	m_envMap = getRenderer().createAndClearRenderTarget(getRenderer().create2DRenderTargetInitInfo(kEnvMapSize.x, kEnvMapSize.y,
 																								   getRenderer().getHdrFormat(),
 																								   usage | TextureUsageBit::kAllSrv, "SkyEnvMap"),
 														initialUsage);
@@ -108,7 +108,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindUav(0, 0, transmittanceLutRt);
 
-			dispatchPPCompute(cmdb, 8, 8, kTransmittanceLutSize.x(), kTransmittanceLutSize.y());
+			dispatchPPCompute(cmdb, 8, 8, kTransmittanceLutSize.x, kTransmittanceLutSize.y);
 		});
 	}
 
@@ -131,7 +131,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindUav(0, 0, multipleScatteringLutRt);
 
-			dispatchPPCompute(cmdb, 8, 8, kMultipleScatteringLutSize.x(), kMultipleScatteringLutSize.y());
+			dispatchPPCompute(cmdb, 8, 8, kMultipleScatteringLutSize.x, kMultipleScatteringLutSize.y);
 		});
 	}
 
@@ -157,7 +157,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_skyLutRt);
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x(), kSkyLutSize.y());
+			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x, kSkyLutSize.y);
 		});
 	}
 
@@ -181,7 +181,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_envMapRt);
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			dispatchPPCompute(cmdb, 8, 8, kEnvMapSize.x(), kEnvMapSize.y());
+			dispatchPPCompute(cmdb, 8, 8, kEnvMapSize.x, kEnvMapSize.y);
 		});
 	}
 

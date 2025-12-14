@@ -88,7 +88,7 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 		out = (width / 4) * (height / 4) * 8;
 		break;
 	case ImageBinaryDataCompression::kAstc:
-		out = (width / astcBlockSize.x()) * (height / astcBlockSize.y()) * 16;
+		out = (width / astcBlockSize.x) * (height / astcBlockSize.y) * 16;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -235,7 +235,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBin
 								 DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>>& surfaces,
 								 DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes, U32& width, U32& height, U32& depth,
 								 U32& layerCount, U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat,
-								 UVec2& astcBlockSize)
+								 UVec2& astcBlockSize, Vec4& avgColor)
 {
 	//
 	// Read and check the header
@@ -299,6 +299,8 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBin
 		ANKI_RESOURCE_LOGE("Incorrect header: normal");
 		return Error::kUserData;
 	}
+
+	avgColor = Vec4(header.m_averageColor);
 
 	// Set a few things
 	colorFormat = header.m_colorFormat;
@@ -569,7 +571,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 #endif
 
 		ANKI_CHECK(loadAnkiImage(file, maxImageSize, m_compression, m_surfaces, m_volumes, m_width, m_height, m_depth, m_layerCount, m_mipmapCount,
-								 m_imageType, m_colorFormat, m_astcBlockSize));
+								 m_imageType, m_colorFormat, m_astcBlockSize, m_avgColor));
 	}
 	else if(ext == "png" || ext == "jpg" || ext == "tga")
 	{

@@ -86,12 +86,12 @@ Error Input::handleEvents()
 	return self->handleEventsInternal();
 }
 
-void Input::moveCursor(const Vec2& pos)
+void Input::moveMouseNdc(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
 	{
-		const F32 x = F32(NativeWindow::getSingleton().getWidth()) * (pos.x() * 0.5f + 0.5f);
-		const F32 y = F32(NativeWindow::getSingleton().getHeight()) * (-pos.y() * 0.5f + 0.5f);
+		const F32 x = F32(NativeWindow::getSingleton().getWidth()) * (pos.x * 0.5f + 0.5f);
+		const F32 y = F32(NativeWindow::getSingleton().getHeight()) * (-pos.y * 0.5f + 0.5f);
 
 		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, x, y);
 
@@ -107,20 +107,8 @@ void Input::moveCursor(const Vec2& pos)
 
 void Input::hideCursor(Bool hide)
 {
-	if(hide)
-	{
-		if(!SDL_HideCursor())
-		{
-			ANKI_WIND_LOGE("SDL_HideCursor() failed: %s", SDL_GetError());
-		}
-	}
-	else
-	{
-		if(!SDL_ShowCursor())
-		{
-			ANKI_WIND_LOGE("SDL_ShowCursor() failed: %s", SDL_GetError());
-		}
-	}
+	InputSdl* self = static_cast<InputSdl*>(this);
+	self->m_crntHideCursor = hide;
 }
 
 Bool Input::hasTouchDevice() const
@@ -128,8 +116,47 @@ Bool Input::hasTouchDevice() const
 	return false;
 }
 
+void Input::setMouseCursor(MouseCursor cursor)
+{
+	ANKI_ASSERT(cursor < MouseCursor::kCount);
+	InputSdl* self = static_cast<InputSdl*>(this);
+	self->m_crntMouseCursor = cursor;
+}
+
+InputSdl::~InputSdl()
+{
+	for(MouseCursor cursor : EnumIterable<MouseCursor>())
+	{
+		if(m_cursors[cursor])
+		{
+			SDL_DestroyCursor(m_cursors[cursor]);
+		}
+	}
+}
+
 Error InputSdl::initInternal()
 {
+	m_cursors[MouseCursor::kArrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
+	m_cursors[MouseCursor::kTextInput] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT);
+	m_cursors[MouseCursor::kResizeAll] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_MOVE);
+	m_cursors[MouseCursor::kResizeNS] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NS_RESIZE);
+	m_cursors[MouseCursor::kResizeEW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_EW_RESIZE);
+	m_cursors[MouseCursor::kResizeNESW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NESW_RESIZE);
+	m_cursors[MouseCursor::kResizeNWSE] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NWSE_RESIZE);
+	m_cursors[MouseCursor::kHand] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER);
+	m_cursors[MouseCursor::kWait] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
+	m_cursors[MouseCursor::kProgress] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_PROGRESS);
+	m_cursors[MouseCursor::kNotAllowed] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NOT_ALLOWED);
+
+	for(MouseCursor cursor : EnumIterable<MouseCursor>())
+	{
+		if(!m_cursors[cursor])
+		{
+			ANKI_WIND_LOGE("Failed to create cursor: %u", U32(cursor));
+			return Error::kFunctionFailed;
+		}
+	}
+
 	// Call once to clear first events
 	return handleEvents();
 }
@@ -139,39 +166,54 @@ Error InputSdl::handleEventsInternal()
 	m_textInput[0] = '\0';
 
 	// add the times a key is being pressed
-	for(auto& k : m_keys)
+	for(I32& k : m_keys)
 	{
-		if(k)
+		if(k > 0)
 		{
 			++k;
 		}
+		else if(k < 0)
+		{
+			k = 0;
+		}
 	}
-	for(auto& k : m_mouseBtns)
+	for(I32& k : m_mouseBtns)
 	{
-		if(k)
+		if(k > 0)
 		{
 			++k;
+		}
+		else if(k < 0)
+		{
+			k = 0;
 		}
 	}
 
-	SDL_Event event;
-	KeyCode akkey;
+	m_prevMousePosNdc = m_mousePosNdc;
+
+	SDL_Event event = {};
+	KeyCode akkey = KeyCode::kCount;
 	if(!SDL_StartTextInput(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow))
 	{
 		ANKI_WIND_LOGE("SDL_StartTextInput() failed: %s", SDL_GetError());
 	}
 
+	MouseButton scrollKeyEvent = MouseButton::kCount;
 	while(SDL_PollEvent(&event))
 	{
 		switch(event.type)
 		{
 		case SDL_EVENT_KEY_DOWN:
-			akkey = sdlKeytoAnKi(event.key.key);
-			m_keys[akkey] = 1;
+			// key.repeat adds a delay but we only want the 1st time the key is pressed
+			if(!event.key.repeat)
+			{
+				akkey = sdlKeytoAnKi(event.key.key);
+				m_keys[akkey] = 1;
+			}
 			break;
 		case SDL_EVENT_KEY_UP:
 			akkey = sdlKeytoAnKi(event.key.key);
-			m_keys[akkey] = 0;
+			m_keys[akkey] = -1;
 			break;
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		{
@@ -187,21 +229,23 @@ Error InputSdl::handleEventsInternal()
 			MouseButton mb = sdlMouseButtonToAnKi(event.button.button);
 			if(mb != MouseButton::kCount)
 			{
-				m_mouseBtns[mb] = 0;
+				m_mouseBtns[mb] = -1;
 			}
 			break;
 		}
 		case SDL_EVENT_MOUSE_WHEEL:
-			m_mouseBtns[MouseButton::kScrollUp] = event.wheel.y > 0.0f;
-			m_mouseBtns[MouseButton::kScrollDown] = event.wheel.y < 0.0f;
+		{
+			const MouseButton btn = (event.wheel.y > 0.0f) ? MouseButton::kScrollUp : MouseButton::kScrollDown;
+			m_mouseBtns[btn] = max(m_mouseBtns[btn] + 1, 1);
+			scrollKeyEvent = btn;
 			break;
+		}
 		case SDL_EVENT_MOUSE_MOTION:
-			m_mousePosWin.x() = U32(event.button.x);
-			m_mousePosWin.y() = U32(event.button.y);
-			m_mousePosNdc.x() = F32(event.button.x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
-			m_mousePosNdc.y() = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
+			m_mousePosNdc.x = F32(event.button.x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
+			m_mousePosNdc.y = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 			break;
 		case SDL_EVENT_QUIT:
+			ANKI_WIND_LOGI("Recieved SDL_EVENT_QUIT");
 			addEvent(InputEvent::kWindowClosed);
 			break;
 		case SDL_EVENT_TEXT_INPUT:
@@ -210,10 +254,56 @@ Error InputSdl::handleEventsInternal()
 		}
 	} // end while events
 
+	if(scrollKeyEvent != MouseButton::kScrollDown)
+	{
+		m_mouseBtns[MouseButton::kScrollDown] = (m_mouseBtns[MouseButton::kScrollDown] > 0) ? -1 : 0;
+	}
+
+	if(scrollKeyEvent != MouseButton::kScrollUp)
+	{
+		m_mouseBtns[MouseButton::kScrollUp] = (m_mouseBtns[MouseButton::kScrollUp] > 0) ? -1 : 0;
+	}
+
 	// Lock mouse
 	if(m_lockCurs)
 	{
-		moveCursor(Vec2(0.0));
+		moveMouseNdc(Vec2(0.0f));
+	}
+
+	if(m_crntMouseCursor != m_prevMouseCursor)
+	{
+		SDL_SetCursor(m_cursors[m_crntMouseCursor]);
+		m_prevMouseCursor = m_crntMouseCursor;
+	}
+
+	if(m_crntHideCursor != m_prevHideCursor)
+	{
+		m_prevHideCursor = m_crntHideCursor;
+
+		if(m_crntHideCursor)
+		{
+			if(!SDL_HideCursor())
+			{
+				ANKI_WIND_LOGE("SDL_HideCursor() failed: %s", SDL_GetError());
+			}
+
+			if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, true))
+			{
+				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
+			}
+		}
+		else
+		{
+			if(!SDL_ShowCursor())
+			{
+				ANKI_WIND_LOGE("SDL_ShowCursor() failed: %s", SDL_GetError());
+			}
+
+			if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, false))
+			{
+				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
+			}
+		}
 	}
 
 	return Error::kNone;

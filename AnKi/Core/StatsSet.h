@@ -16,6 +16,9 @@ namespace anki {
 /// @addtogroup core
 /// @{
 
+/// Define a global stat variable.
+#define ANKI_SVAR(name, category, descr, ...) inline StatCounter g_svar##name(category, descr, StatFlag::kNone | __VA_ARGS__);
+
 enum class StatFlag : U16
 {
 	kNone = 0,
@@ -39,12 +42,15 @@ enum class StatCategory : U8
 	kGpuMem,
 	kGpuMisc,
 	kRenderer,
+	kGr,
+	kScene,
 	kMisc,
 
 	kCount,
 };
 
-inline constexpr Array<CString, U32(StatCategory::kCount)> kStatCategoryTexts = {"Time", "CPU memory", "GPU memory", "GPU misc", "Renderer", "Misc"};
+inline constexpr Array<CString, U32(StatCategory::kCount)> kStatCategoryTexts = {"Time",     "CPU memory", "GPU memory", "GPU misc",
+																				 "Renderer", "GFX API",    "Scene",      "Misc"};
 
 /// A stats counter.
 class StatCounter
@@ -54,7 +60,7 @@ class StatCounter
 public:
 	/// Construct.
 	/// @param name Name of the counter. The object will share ownership of the pointer.
-	StatCounter(StatCategory category, const Char* name, StatFlag flags);
+	StatCounter(StatCategory category, const Char* name, StatFlag flags = StatFlag::kNone);
 
 	template<std::integral T>
 	U64 increment(T value)

@@ -8,27 +8,15 @@
 #include <AnKi/Window/Common.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/CVarSet.h>
 
 namespace anki {
 
-/// Window initializer
-class NativeWindowInitInfo
-{
-public:
-	U32 m_width = 1920;
-	U32 m_height = 1080;
-	Array<U32, 4> m_rgbaBits = {8, 8, 8, 0};
-	U32 m_depthBits = 0;
-	U32 m_stencilBits = 0;
-	U32 m_samplesCount = 0;
-	U32 m_targetFps = 0;
-	static constexpr Bool m_doubleBuffer = true;
-	/// Create a fullscreen window with the desktop's resolution
-	Bool m_fullscreenDesktopRez = false;
-	Bool m_exclusiveFullscreen = false;
-
-	CString m_title = "AnKi";
-};
+ANKI_CVAR(NumericCVar<U32>, Window, Width, 1920, 16, 16 * 1024, "Width")
+ANKI_CVAR(NumericCVar<U32>, Window, Height, 1080, 16, 16 * 1024, "Height")
+ANKI_CVAR(NumericCVar<U32>, Window, Fullscreen, 1, 0, 2, "0: windowed, 1: borderless fullscreen, 2: exclusive fullscreen")
+ANKI_CVAR(BoolCVar, Window, Maximized, false, "Maximize")
+ANKI_CVAR(BoolCVar, Window, Borderless, false, "Borderless")
 
 /// Native window.
 class NativeWindow : public MakeSingletonPtr<NativeWindow>
@@ -37,7 +25,7 @@ class NativeWindow : public MakeSingletonPtr<NativeWindow>
 	friend class MakeSingletonPtr;
 
 public:
-	Error init(const NativeWindowInitInfo& inf);
+	Error init(U32 targetFps, CString title);
 
 	U32 getWidth() const
 	{

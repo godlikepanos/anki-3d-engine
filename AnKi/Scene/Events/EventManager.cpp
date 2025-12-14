@@ -35,13 +35,16 @@ void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 		m_events.pushBack(e);
 	}
 
-	DynamicArray<Event*, MemoryPoolPtrWrapper<StackMemoryPool>> eventsForDeletion(&SceneGraph::getSingleton().getFrameMemoryPool());
 	for(Event& event : m_events)
 	{
-		// If event or the event's nodes are marked for deletion, destoy it
-		if(event.isMarkedForDeletion() || assosiatedNodesMarkedForDeletion(event))
+		if(event.isMarkedForDeletion())
 		{
-			eventsForDeletion.emplaceBack(&event);
+			continue;
+		}
+
+		if(assosiatedNodesMarkedForDeletion(event))
+		{
+			event.markForDeletion();
 			continue;
 		}
 
@@ -60,6 +63,12 @@ void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 			{
 				event.update(prevUpdateTime, crntTime);
 			}
+
+			if(assosiatedNodesMarkedForDeletion(event))
+			{
+				// Maybe the event marked the node for deletion, delete the event
+				event.markForDeletion();
+			}
 		}
 		else
 		{
@@ -75,9 +84,19 @@ void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 				event.onKilled(prevUpdateTime, crntTime);
 				if(!event.getReanimate())
 				{
-					eventsForDeletion.emplaceBack(&event);
+					event.markForDeletion();
 				}
 			}
+		}
+	}
+
+	// Delete events
+	DynamicArray<Event*, MemoryPoolPtrWrapper<StackMemoryPool>> eventsForDeletion(&SceneGraph::getSingleton().getFrameMemoryPool());
+	for(Event& event : m_events)
+	{
+		if(event.isMarkedForDeletion() || assosiatedNodesMarkedForDeletion(event))
+		{
+			eventsForDeletion.emplaceBack(&event);
 		}
 	}
 

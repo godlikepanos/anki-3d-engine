@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
-/// The base of all resource objects.
+// The base of all resource objects.
 class ResourceObject
 {
 	friend class ResourceManager;
@@ -49,7 +46,7 @@ public:
 		return m_fname.toCString();
 	}
 
-	/// To check if 2 resource pointers are actually the same resource.
+	// To check if 2 resource pointers are actually the same resource.
 	U32 getUuid() const
 	{
 		ANKI_ASSERT(m_uuid > 0);
@@ -61,6 +58,12 @@ public:
 		return m_refcount.load();
 	}
 
+	// If true the resource has changed in the filesystem and this one is an obsolete version
+	Bool isObsolete() const
+	{
+		return m_isObsolete.load() != 0;
+	}
+
 protected:
 	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
@@ -70,9 +73,9 @@ protected:
 
 private:
 	mutable Atomic<I32> m_refcount = {0};
+	mutable Atomic<U32> m_isObsolete = {0}; // If the file of the resource changed in the filesystem then this flag is 1
 	U32 m_uuid = 0;
-	ResourceString m_fname; ///< Unique resource name.
+	ResourceString m_fname; // Unique resource name
 };
-/// @}
 
 } // end namespace anki

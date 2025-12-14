@@ -65,7 +65,7 @@ public:
 
 	void setMin(const Vec4& x)
 	{
-		ANKI_ASSERT(x.w() == 0.0f);
+		ANKI_ASSERT(x.w == 0.0f);
 		m_min = x;
 	}
 
@@ -82,7 +82,7 @@ public:
 
 	void setMax(const Vec4& x)
 	{
-		ANKI_ASSERT(x.w() == 0.0f);
+		ANKI_ASSERT(x.w == 0.0f);
 		m_max = x;
 	}
 
@@ -118,9 +118,9 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
-		ANKI_ASSERT(m_min.w() == 0.0f);
-		ANKI_ASSERT(m_max.w() == 0.0f);
+		ANKI_ASSERT(m_min.xyz < m_max.xyz);
+		ANKI_ASSERT(m_min.w == 0.0f);
+		ANKI_ASSERT(m_max.w == 0.0f);
 	}
 };
 /// @}

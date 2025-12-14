@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki mutator VARIANCE_CLIPPING 0 1
 #pragma anki mutator YCBCR 0 1
 
@@ -53,7 +51,7 @@ Vec3 computeTaa(Vec2 coord)
 	TEX(g_outTex, coord) = Vec4(computeTaa(coord), 0.0);
 }
 #elif ANKI_PIXEL_SHADER
-Vec3 main(VertOut input) : SV_Target0
+Vec3 main(VertOut input) : SV_TARGET0
 {
 	return computeTaa(floor(input.m_svPosition));
 }

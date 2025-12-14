@@ -62,13 +62,14 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Run context.
 
-	ShaderProgramResourcePtr m_visualizeRtProg;
-	ShaderProgramPtr m_visualizeRtGrProg;
-
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
-	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  ShaderProgramPtr& optionalShaderProgram) const override;
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
+	{
+		handles[0] = m_runCtx.m_rt;
+		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
+	}
 };
 /// @}
 

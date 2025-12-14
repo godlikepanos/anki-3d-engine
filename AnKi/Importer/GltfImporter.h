@@ -103,7 +103,6 @@ private:
 	ImporterDynamicArray<ImportRequest<const cgltf_mesh*>> m_meshImportRequests;
 	ImporterDynamicArray<ImportRequest<MaterialImportRequest>> m_materialImportRequests;
 	ImporterDynamicArray<ImportRequest<const cgltf_skin*>> m_skinImportRequests;
-	ImporterDynamicArray<ImportRequest<const cgltf_mesh*>> m_modelImportRequests;
 
 	// Misc
 	template<typename T>
@@ -166,7 +165,6 @@ private:
 	static U32 getMeshTotalVertexCount(const cgltf_mesh& mesh);
 
 	// Compute filenames for various resources. Use a hash to solve the casing issue and remove unwanted special chars
-	ImporterString computeModelResourceFilename(const cgltf_mesh& mesh) const;
 	ImporterString computeMeshResourceFilename(const cgltf_mesh& mesh) const;
 	ImporterString computeMaterialResourceFilename(const cgltf_material& mtl) const;
 	ImporterString computeAnimationResourceFilename(const cgltf_animation& anim) const;
@@ -177,7 +175,6 @@ private:
 	Error writeMeshInternal(const cgltf_mesh& mesh) const;
 	Error writeMaterial(const cgltf_material& mtl, Bool writeRayTracing) const;
 	Error writeMaterialInternal(const cgltf_material& mtl, Bool writeRayTracing) const;
-	Error writeModel(const cgltf_mesh& mesh) const;
 	Error writeAnimation(const cgltf_animation& anim);
 	Error writeSkeleton(const cgltf_skin& skin) const;
 
@@ -186,7 +183,7 @@ private:
 	Error visitNode(const cgltf_node& node, const Transform& parentTrf, const ImporterHashMap<CString, ImporterString>& parentExtras);
 	Error writeLight(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
 	Error writeCamera(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
-	Error writeModelNode(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
+	Error writeMeshMaterialNode(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
 };
 /// @}
 

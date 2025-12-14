@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtIndirectDiffuseCVar("R", "RtIndirectDiffuse", false, "Enable RT GI");
+ANKI_CVAR2(BoolCVar, Render, Rt, IndirectDiffuse, false, "Enable RT GI")
 
 class IndirectDiffuse : public RendererObject
 {
@@ -26,10 +26,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		handles[0] = m_runCtx.m_rt;
+		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
 	}
 
 	RenderTargetHandle getRt() const

@@ -302,8 +302,7 @@ TForwardIterator binarySearch(TForwardIterator first, TForwardIterator last, con
 	return (first != last && !comp(value, *first)) ? first : last;
 }
 
-/// Individual classes should specialize that function if they are packed. If a class is packed it can be used as
-/// whole in hashing.
+/// Individual classes should specialize that function if they are packed. If a class is packed it can be used as whole in hashing.
 template<typename T>
 constexpr Bool isPacked()
 {
@@ -311,8 +310,7 @@ constexpr Bool isPacked()
 }
 
 /// Unflatten 3D array index.
-/// Imagine an array [sizeA][sizeB][sizeC] and a flat index in that array. Then this function will compute the unflatten
-/// indices.
+/// Imagine an array [sizeA][sizeB][sizeC] and a flat index in that array. Then this function will compute the unflatten indices.
 template<typename T, typename TI, typename TOut>
 inline void unflatten3dArrayIndex(const T sizeA, const T sizeB, const T sizeC, const TI flatIdx, TOut& a, TOut& b, TOut& c)
 {

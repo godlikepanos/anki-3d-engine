@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki technique RtMaterialFetch rgen
 
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
+
+#define CHEAP 0
 
 [shader("raygeneration")] void main()
 {
@@ -23,17 +23,19 @@
 	const Vec3 rayDir = normalize(worldPos - rayOrigin);
 	const F32 tMax = 1000.0;
 	const F32 tMin = 0.1;
-	const F32 texLod = 1000.0;
 	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
+	Vec3 col;
+
+#if !CHEAP
+	const F32 texLod = 0.0;
 	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
 	F32 rayT = 0.0;
 	Bool backfacing = false;
 	const Bool hit = materialRayTrace<F16>(rayOrigin, rayDir, tMin, tMax, texLod, gbuffer, rayT, backfacing, traceFlags);
 
-	Vec3 col;
 	if(!hit)
 	{
-		col = Vec3(1.0, 0.0, 1.0);
+		col = Vec3(0.0, 0.0, 1.0);
 	}
 	else if(backfacing)
 	{
@@ -41,8 +43,65 @@
 	}
 	else
 	{
-		col = gbuffer.m_diffuse * 1.0 + (gbuffer.m_worldNormal / 2.0 + 0.5) * 0.0 + rayT * 0.0 + gbuffer.m_emission * 0.0;
+		// col = gbuffer.m_diffuse * 1.0 + (gbuffer.m_worldNormal / 2.0 + 0.5) * 0.0 + rayT * 0.0 + gbuffer.m_emission * 0.0;
+		col = directLighting(gbuffer, rayOrigin + rayDir * rayT, false, true, 100.0, true);
+		col += gbuffer.m_diffuse * 0.3;
+
+		// col = gbuffer.m_worldNormal / 2.0 + 0.5;
 	}
+#else
+	RayQuery<RAY_FLAG_FORCE_OPAQUE> q;
+	const U32 cullMask = 0xFFu;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = tMin;
+	ray.Direction = rayDir;
+	ray.TMax = tMax;
+	q.TraceRayInline(g_tlas, RAY_FLAG_FORCE_OPAQUE, cullMask, ray);
+	while(q.Proceed())
+	{
+	}
+	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+
+	Bool backfacing = false;
+	if(hit)
+	{
+		backfacing = q.CommittedTriangleFrontFace();
+	}
+
+	if(!hit)
+	{
+		col = Vec3(0.0, 0.0, 1.0);
+	}
+	else if(backfacing)
+	{
+		col = Vec3(1.0, 0.0, 1.0);
+	}
+	else
+	{
+		UVec3 coloru = q.CommittedInstanceID();
+		coloru >>= UVec3(16, 8, 0);
+		coloru &= 0xFF;
+		const Vec3 color = Vec3(coloru) / 255.0;
+
+		const Vec3 positions[3] = spvRayQueryGetIntersectionTriangleVertexPositionsKHR(q, SpvRayQueryCommittedIntersectionKHR);
+		const Vec3 vertNormal = normalize(cross(positions[1] - positions[0], positions[2] - positions[1]));
+
+		const Vec3 worldNormal = normalize(mul(q.CommittedObjectToWorld3x4(), Vec4(vertNormal, 0.0)));
+
+		GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
+		gbuffer.m_diffuse = color;
+		gbuffer.m_worldNormal = worldNormal;
+
+		const F32 rayT = q.CommittedRayT();
+
+		col = directLighting(gbuffer, rayOrigin + rayDir * rayT, false, true, 100.0, true);
+		col += gbuffer.m_diffuse * 0.3;
+
+		// col = worldNormal / 2.0 + 0.5;
+		// col = frac(positions[0]);
+	}
+#endif
 
 	g_colorAndPdfTex[DispatchRaysIndex().xy] = Vec4(col, 0.0);
 }

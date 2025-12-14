@@ -10,7 +10,6 @@
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
 #include <AnKi/Gr/Vulkan/VkFenceFactory.h>
 #include <AnKi/Gr/Vulkan/VkSwapchainFactory.h>
-#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 #include <AnKi/Util/File.h>
 
 namespace anki {
@@ -30,6 +29,17 @@ enum class AsyncComputeType
 	kProper,
 	kLowPriorityQueue,
 	kDisabled
+};
+
+/// A small struct with all the caps we need.
+class VulkanCapabilities
+{
+public:
+	VkDeviceAddress m_nonCoherentAtomSize = 0;
+	U64 m_maxTexelBufferElements = 0;
+	F32 m_timestampPeriod = 0.0f;
+	U32 m_asBuildScratchAlignment = 0;
+	U32 m_asBufferAlignment = 256; // Spec says 256
 };
 
 /// Vulkan implementation of GrManager.
@@ -68,21 +78,20 @@ public:
 		}
 	}
 
-	const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const
+	const VulkanCapabilities& getVulkanCapabilities() const
 	{
-		return m_devProps.properties;
-	}
-
-	const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& getPhysicalDeviceRayTracingProperties() const
-	{
-		return m_rtPipelineProps;
+		return m_caps;
 	}
 
 	TexturePtr acquireNextPresentableTexture();
 
-	void endFrame();
+	void beginFrameInternal();
 
-	void finish();
+	void endFrameInternal();
+
+	void submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence);
+
+	void finishInternal();
 
 	VkDevice getDevice() const
 	{
@@ -143,12 +152,39 @@ public:
 	/// @note It's thread-safe.
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash = 0) const;
 
-	FrameGarbageCollector& getFrameGarbageCollector()
+	/// @note It's thread-safe.
+	void releaseObject(GrObject* object)
 	{
-		return m_frameGarbageCollector;
+		ANKI_ASSERT(object);
+		LockGuard lock(m_globalMtx);
+		m_perFrame[m_frame % m_perFrame.getSize()].m_objectsMarkedForDeletion.emplaceBack(object);
+	}
+
+	void releaseObjectDeleteLoop(GrObject* object)
+	{
+		ANKI_ASSERT(object);
+		m_perFrame[m_frame % m_perFrame.getSize()].m_objectsMarkedForDeletion.emplaceBack(object);
 	}
 
 private:
+	enum FrameState : U8
+	{
+		kFrameStarted,
+		kPresentableAcquired,
+		kPresentableDrawn,
+		kFrameEnded,
+	};
+
+	class PerFrame
+	{
+	public:
+		GrDynamicArray<MicroFencePtr> m_fences;
+
+		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+
+		GrDynamicArray<GrObject*> m_objectsMarkedForDeletion;
+	};
+
 	U64 m_frame = 0;
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
@@ -171,39 +207,22 @@ private:
 	Array<VkQueue, U32(GpuQueueType::kCount)> m_queues = {nullptr, nullptr};
 	Mutex m_globalMtx;
 
-	VkPhysicalDeviceProperties2 m_devProps = {};
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR m_rtPipelineProps = {};
-
 	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;
 
 	mutable SpinLock m_shaderStatsMtx;
-
-	/// @name Surface_related
-	/// @{
-	class PerFrame
-	{
-	public:
-		MicroFencePtr m_presentFence;
-		MicroSemaphorePtr m_acquireSemaphore;
-
-		/// Signaled by the submit that renders to the default FB. Present waits for it.
-		MicroSemaphorePtr m_renderSemaphore;
-
-		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
-	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 	U32 m_nativeWindowWidth = 0;
 	U32 m_nativeWindowHeight = 0;
 	MicroSwapchainPtr m_crntSwapchain;
 	U8 m_acquiredImageIdx = kMaxU8;
+	FrameState m_frameState = kFrameEnded;
+
+	VulkanCapabilities m_caps;
 
 	Array<PerFrame, kMaxFramesInFlight> m_perFrame;
-	/// @}
 
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
-
-	FrameGarbageCollector m_frameGarbageCollector;
 
 	Error initInternal(const GrManagerInitInfo& init);
 	Error initInstance();
@@ -218,8 +237,6 @@ private:
 
 	static void freeCallback(void* userData, void* ptr);
 #endif
-
-	void resetFrame(PerFrame& frame);
 
 	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
@@ -242,6 +259,21 @@ private:
 		features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		features2.pNext = &features;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features2);
+	}
+
+	void deleteObjectsMarkedForDeletion()
+	{
+		ANKI_TRACE_FUNCTION();
+		PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+		while(!frame.m_objectsMarkedForDeletion.isEmpty())
+		{
+			GrDynamicArray<GrObject*> objects = std::move(frame.m_objectsMarkedForDeletion);
+
+			for(GrObject* obj : objects)
+			{
+				deleteInstance(GrMemoryPool::getSingleton(), obj);
+			}
+		}
 	}
 };
 /// @}

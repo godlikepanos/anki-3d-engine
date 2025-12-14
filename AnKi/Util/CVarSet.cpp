@@ -5,26 +5,26 @@
 
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/Thread.h>
 
 namespace anki {
 
-void CVar::getFullNameInternal(Array<Char, 256>& arr) const
+#if ANKI_ASSERTIONS_ENABLED
+void CVar::validateSetValue() const
 {
-	snprintf(arr.getBegin(), arr.getSize(), "%s.%s", m_subsystem.cstr(), m_name.cstr());
+	ANKI_ASSERT(Thread::getCurrentThreadId() == CVarSet::getSingleton().m_mainThreadHandle && "CVars can only be set by the main thread");
 }
-
-String CVar::getFullName() const
-{
-	String out;
-	out.sprintf("%s.%s", m_subsystem.cstr(), m_name.cstr());
-	return out;
-}
+#endif
 
 void CVarSet::registerCVar(CVar* cvar)
 {
+#if ANKI_ASSERTIONS_ENABLED
+	m_mainThreadHandle = Thread::getCurrentThreadId();
+#endif
+
 	for([[maybe_unused]] CVar& it : m_cvars)
 	{
-		ANKI_ASSERT(it.m_name != cvar->m_name || it.m_subsystem != cvar->m_subsystem);
+		ANKI_ASSERT(it.m_name != cvar->m_name);
 	}
 
 	m_cvars.pushBack(cvar);
@@ -41,7 +41,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 		++i;
 		if(i >= arr.getSize())
 		{
-			ANKI_UTIL_LOGE("Expecting a command line argument after %s", varName.cstr());
+			ANKI_UTIL_LOGE("Expecting a value after %s", varName.cstr());
 			return Error::kUserData;
 		}
 		ANKI_ASSERT(arr[i]);
@@ -49,29 +49,18 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 
 		// Find the CVar
 		CVar* foundCVar = nullptr;
-		Array<Char, 256> fullnameArr;
 		for(CVar& it : m_cvars)
 		{
-			it.getFullNameInternal(fullnameArr);
-			CString fullname = &fullnameArr[0];
-
-			if(fullname == varName || it.m_name == varName)
+			if(it.m_name == varName)
 			{
-				if(foundCVar)
-				{
-					ANKI_UTIL_LOGE("Command line arg %s has ambiguous name. Skipping", varName.cstr());
-				}
-				else
-				{
-					foundCVar = &it;
-				}
+				foundCVar = &it;
 			}
 		}
 
 		if(foundCVar)
 		{
 #define ANKI_CVAR_NUMERIC_SET(type) \
-	case CVar::Type::kNumeric##type: \
+	case CVarValueType::kNumeric##type: \
 	{ \
 		type v; \
 		err = value.toNumber(v); \
@@ -85,10 +74,10 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 			Error err = Error::kNone;
 			switch(foundCVar->m_type)
 			{
-			case CVar::Type::kString:
+			case CVarValueType::kString:
 				static_cast<StringCVar&>(*foundCVar) = value;
 				break;
-			case CVar::Type::kBool:
+			case CVarValueType::kBool:
 			{
 				U32 v;
 				err = value.toNumber(v);
@@ -110,8 +99,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 
 			if(err)
 			{
-				foundCVar->getFullNameInternal(fullnameArr);
-				ANKI_UTIL_LOGE("Wrong value for %s. Value will not be set", &fullnameArr[0]);
+				ANKI_UTIL_LOGE("Wrong value for %s. Value will not be set", foundCVar->m_name.cstr());
 			}
 		}
 		else

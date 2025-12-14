@@ -7,15 +7,14 @@
 
 using namespace anki;
 
-Error SampleApp::init(int argc, char** argv, CString sampleName)
+Error SampleApp::userPreInit()
 {
 	// Init the super class
-	g_windowFullscreenCVar = 1;
+	g_cvarWindowFullscreen = 1;
 
 #if !ANKI_OS_ANDROID
-	HeapMemoryPool tmpPool(allocAligned, nullptr);
-	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> assetsDataPath(&tmpPool);
-	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
+	String assetsDataPath;
+	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, getApplicationName().cstr());
 
 	if(!directoryExists(assetsDataPath))
 	{
@@ -23,14 +22,11 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		g_dataPathsCVar = BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s|.anki,lua", assetsDataPath.cstr());
+		g_cvarRsrcDataPaths = String().sprintf("%s|.anki,lua", assetsDataPath.cstr());
 	}
 #endif
 
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
-	ANKI_CHECK(App::init());
-
-	ANKI_CHECK(sampleExtraInit());
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
 
 	return Error::kNone;
 }
@@ -45,7 +41,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	Renderer& renderer = Renderer::getSingleton();
 	Input& in = Input::getSingleton();
 
-	if(in.getKey(KeyCode::kEscape))
+	if(in.getKey(KeyCode::kEscape) > 0)
 	{
 		quit = true;
 		return Error::kNone;
@@ -63,8 +59,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmapsTest") ? "" : "IndirectDiffuseClipmapsTest");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmaps") ? "" : "IndirectDiffuseClipmaps");
 		// g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
 	}
 
@@ -75,7 +70,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kI) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtMaterialFetchDbg") ? "" : "RtMaterialFetchDbg");
 	}
 
 	if(in.getKey(KeyCode::kO) == 1)
@@ -126,44 +121,46 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar = !g_vrsCVar;
+		g_cvarGrVrs = !g_cvarGrVrs;
 	}
 
-	static Vec2 mousePosOn1stClick = in.getMousePosition();
+	static Vec2 mousePosOn1stClick = in.getMousePositionNdc();
 	if(in.getMouseButton(MouseButton::kRight) == 1)
 	{
 		// Re-init mouse pos
-		mousePosOn1stClick = in.getMousePosition();
+		mousePosOn1stClick = in.getMousePositionNdc();
 	}
 
 	if(in.getKey(KeyCode::kF1) == 1)
 	{
+		DbgOption options = renderer.getDbg().getOptions();
+
 		static U mode = 0;
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgSceneCVar = false;
+			options &= ~DbgOption::kBoundingBoxes;
 		}
 		else if(mode == 1)
 		{
-			g_dbgSceneCVar = true;
-			renderer.getDbg().setDepthTestEnabled(true);
-			renderer.getDbg().setDitheredDepthTestEnabled(false);
+			options |= DbgOption::kBoundingBoxes;
+			options |= DbgOption::kDepthTest;
 		}
 		else
 		{
-			g_dbgSceneCVar = true;
-			renderer.getDbg().setDepthTestEnabled(false);
-			renderer.getDbg().setDitheredDepthTestEnabled(true);
+			options |= DbgOption::kBoundingBoxes;
+			options &= ~DbgOption::kDepthTest;
 		}
+
+		renderer.getDbg().setOptions(options);
 	}
 
 	if(in.getKey(KeyCode::kF11) == 1 && ANKI_TRACING_ENABLED)
 	{
-		g_tracingEnabledCVar = !g_tracingEnabledCVar;
+		g_cvarCoreTracingEnabled = !g_cvarCoreTracingEnabled;
 	}
 
-	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
+	if(in.getMouseButton(MouseButton::kRight) > 0 || in.hasTouchDevice())
 	{
 		in.hideCursor(true);
 
@@ -180,22 +177,22 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover = &scene.findSceneNode("Spot");
 		}
 
-		if(in.getKey(KeyCode::kUp))
+		if(in.getKey(KeyCode::kUp) > 0)
 		{
 			mover->rotateLocalX(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kDown))
+		if(in.getKey(KeyCode::kDown) > 0)
 		{
 			mover->rotateLocalX(-ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kLeft))
+		if(in.getKey(KeyCode::kLeft) > 0)
 		{
 			mover->rotateLocalY(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::kRight))
+		if(in.getKey(KeyCode::kRight) > 0)
 		{
 			mover->rotateLocalY(-ROTATE_ANGLE);
 		}
@@ -213,45 +210,45 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			moveDistance = max(moveDistance, 0.1f);
 		}
 
-		if(in.getKey(KeyCode::kA))
+		if(in.getKey(KeyCode::kA) > 0)
 		{
 			mover->moveLocalX(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kD))
+		if(in.getKey(KeyCode::kD) > 0)
 		{
 			mover->moveLocalX(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kQ))
+		if(in.getKey(KeyCode::kQ) > 0)
 		{
 			mover->moveLocalY(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kE))
+		if(in.getKey(KeyCode::kE) > 0)
 		{
 			mover->moveLocalY(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kW))
+		if(in.getKey(KeyCode::kW) > 0)
 		{
 			mover->moveLocalZ(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kS))
+		if(in.getKey(KeyCode::kS) > 0)
 		{
 			mover->moveLocalZ(moveDistance);
 		}
 
-		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
-		in.moveCursor(mousePosOn1stClick);
+		const Vec2 velocity = in.getMousePositionNdc() - mousePosOn1stClick;
+		in.moveMouseNdc(mousePosOn1stClick);
 		if(velocity != Vec2(0.0))
 		{
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.z() = 0.0f;
+			angles.x += velocity.y * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -velocity.x * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
 
@@ -259,7 +256,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 rotateEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
+			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x > 0.1f)
 			{
 				rotateCameraTouch = touch;
 				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
@@ -278,10 +275,10 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
-			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
-			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
-			angles.z() = 0.0f;
+			angles.x += velocity.y * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -velocity.x * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z = 0.0f;
 			mover->setLocalRotation(Mat3(angles));
 		}
 
@@ -289,7 +286,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 moveEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
+			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x < -0.1f)
 			{
 				moveCameraTouch = touch;
 				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
@@ -307,8 +304,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			Vec2 velocity = in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - moveEventInitialPos;
 			velocity *= 2.0f;
 
-			mover->moveLocalX(moveDistance * velocity.x());
-			mover->moveLocalZ(moveDistance * -velocity.y());
+			mover->moveLocalX(moveDistance * velocity.x);
+			mover->moveLocalZ(moveDistance * -velocity.y);
 		}
 	}
 	else

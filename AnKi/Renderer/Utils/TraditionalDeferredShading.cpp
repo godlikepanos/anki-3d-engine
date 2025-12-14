@@ -20,11 +20,11 @@ Error TraditionalDeferredLightShading::init()
 	// Init progs
 	for(MutatorValue specular = 0; specular <= 1; ++specular)
 	{
-		for(MutatorValue applyIndirectDiffuse = 0; applyIndirectDiffuse <= 1; ++applyIndirectDiffuse)
+		for(MutatorValue indirectDiffuseType = 0; indirectDiffuseType <= 2; ++indirectDiffuseType)
 		{
 			ANKI_CHECK(loadShaderProgram("ShaderBinaries/TraditionalDeferredShading.ankiprogbin",
-										 {{"SPECULAR", specular}, {"INDIRECT_DIFFUSE", applyIndirectDiffuse}}, m_lightProg,
-										 m_lightGrProg[specular][applyIndirectDiffuse]));
+										 {{"SPECULAR", specular}, {"INDIRECT_DIFFUSE", indirectDiffuseType}}, m_lightProg,
+										 m_lightGrProg[specular][indirectDiffuseType]));
 		}
 	}
 
@@ -54,7 +54,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	RenderPassWorkContext& rgraphCtx = *info.m_renderpassContext;
 
 	// Set common state for all
-	cmdb.setViewport(info.m_viewport.x(), info.m_viewport.y(), info.m_viewport.z(), info.m_viewport.w());
+	cmdb.setViewport(info.m_viewport.x, info.m_viewport.y, info.m_viewport.z, info.m_viewport.w);
 
 	// Skybox first
 	const SkyboxComponent* skyc = SceneGraph::getSingleton().getSkybox();
@@ -68,7 +68,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		TraditionalDeferredSkyboxConstants consts = {};
 		consts.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
-		consts.m_cameraPos = info.m_cameraPosWSpace.xyz();
+		consts.m_cameraPos = info.m_cameraPosWSpace.xyz;
 		consts.m_scale = skyc->getImageScale();
 		consts.m_bias = skyc->getImageBias();
 
@@ -99,7 +99,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		TraditionalDeferredShadingConstants* consts = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
 
 		consts->m_invViewProjMat = info.m_invViewProjectionMatrix;
-		consts->m_cameraPos = info.m_cameraPosWSpace.xyz();
+		consts->m_cameraPos = info.m_cameraPosWSpace.xyz;
 
 		if(dirLightc)
 		{
@@ -139,15 +139,18 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		}
 
 		const Bool indirectDiffuse = info.m_applyIndirectDiffuse && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount();
+		Bool useIndirectDiffuseClipmaps = false;
 		if(indirectDiffuse)
 		{
 			cmdb.bindSrv(7, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 			cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+
+			useIndirectDiffuseClipmaps = info.m_useIndirectDiffuseClipmaps;
 		}
 
 		cmdb.bindConstantBuffer(1, 0, info.m_globalRendererConsts);
 
-		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular][indirectDiffuse].get());
+		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular][indirectDiffuse + useIndirectDiffuseClipmaps].get());
 
 		drawQuad(cmdb);
 	}

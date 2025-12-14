@@ -15,31 +15,33 @@ namespace anki {
 
 /// @addtogroup renderer
 /// @{
+ANKI_CVAR(
+	NumericCVar<F32>, Render, InternalRenderScaling, 1.0f,
+	[](F32 value) {
+		return (value > 0.1f && value <= 8.0f) || value == 540.0f || value == 720.0f || value == 1080.0f || value == 1440.0f || value == 2160.0f;
+	},
+	"A factor over the requested swapchain resolution or some common resolution values (eg 1080, 720 etc). Applies to all passes up to TAA")
+ANKI_CVAR(
+	NumericCVar<F32>, Render, RenderScaling, 1.0f,
+	[](F32 value) {
+		return (value > 0.1f && value <= 8.0f) || value == 540.0f || value == 720.0f || value == 1080.0f || value == 1440.0f || value == 2160.0f;
+	},
+	"A factor over the requested swapchain resolution. Applies to post-processing and UI")
+ANKI_CVAR(NumericCVar<U32>, Render, ZSplitCount, 64, 8, kMaxZsplitCount, "Clusterer number of Z splits")
+ANKI_CVAR(NumericCVar<U8>, Render, TextureAnisotropy, (ANKI_PLATFORM_MOBILE) ? 1 : 16, 1, 16, "Texture anisotropy for the main passes")
+ANKI_CVAR(BoolCVar, Render, PreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")
+ANKI_CVAR(BoolCVar, Render, HighQualityHdr, !ANKI_PLATFORM_MOBILE, "If true use R16G16B16 for HDR images. Alternatively use B10G11R11")
+ANKI_CVAR(BoolCVar, Render, VrsLimitTo2x2, false, "If true the max rate will be 2x2")
+ANKI_CVAR(NumericCVar<U8>, Render, ShadowCascadeCount, (ANKI_PLATFORM_MOBILE) ? 3 : kMaxShadowCascades, 1, kMaxShadowCascades,
+		  "Max number of shadow cascades for directional lights")
+ANKI_CVAR(NumericCVar<F32>, Render, ShadowCascade0Distance, 18.0, 1.0, kMaxF32, "The distance of the 1st cascade")
+ANKI_CVAR(NumericCVar<F32>, Render, ShadowCascade1Distance, (ANKI_PLATFORM_MOBILE) ? 80.0f : 40.0, 1.0, kMaxF32, "The distance of the 2nd cascade")
+ANKI_CVAR(NumericCVar<F32>, Render, ShadowCascade2Distance, (ANKI_PLATFORM_MOBILE) ? 150.0f : 80.0, 1.0, kMaxF32, "The distance of the 3rd cascade")
+ANKI_CVAR(NumericCVar<F32>, Render, ShadowCascade3Distance, 200.0, 1.0, kMaxF32, "The distance of the 4th cascade")
+ANKI_CVAR(NumericCVar<F32>, Render, Lod0MaxDistance, 20.0f, 1.0f, kMaxF32, "Distance that will be used to calculate the LOD 0")
+ANKI_CVAR(NumericCVar<F32>, Render, Lod1MaxDistance, 40.0f, 2.0f, kMaxF32, "Distance that will be used to calculate the LOD 1")
 
-inline NumericCVar<F32> g_internalRenderScalingCVar("R", "InternalRenderScaling", 1.0f, 0.5f, 1.0f,
-													"A factor over the requested swapchain resolution. Applies to all passes up to TAA");
-inline NumericCVar<F32> g_renderScalingCVar("R", "RenderScaling", 1.0f, 0.5f, 8.0f,
-											"A factor over the requested swapchain resolution. Applies to post-processing and UI");
-inline NumericCVar<U32> g_zSplitCountCVar("R", "ZSplitCount", 64, 8, kMaxZsplitCount, "Clusterer number of Z splits");
-inline NumericCVar<U8> g_textureAnisotropyCVar("R", "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 16, 1, 16,
-											   "Texture anisotropy for the main passes");
-inline BoolCVar g_preferComputeCVar("R", "PreferCompute", !ANKI_PLATFORM_MOBILE, "Prefer compute shaders");
-inline BoolCVar g_highQualityHdrCVar("R", "HighQualityHdr", !ANKI_PLATFORM_MOBILE,
-									 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11");
-inline BoolCVar g_vrsLimitTo2x2CVar("R", "VrsLimitTo2x2", false, "If true the max rate will be 2x2");
-inline NumericCVar<U8> g_shadowCascadeCountCVar("R", "ShadowCascadeCount", (ANKI_PLATFORM_MOBILE) ? 3 : kMaxShadowCascades, 1, kMaxShadowCascades,
-												"Max number of shadow cascades for directional lights");
-inline NumericCVar<F32> g_shadowCascade0DistanceCVar("R", "ShadowCascade0Distance", 18.0, 1.0, kMaxF32, "The distance of the 1st cascade");
-inline NumericCVar<F32> g_shadowCascade1DistanceCVar("R", "ShadowCascade1Distance", (ANKI_PLATFORM_MOBILE) ? 80.0f : 40.0, 1.0, kMaxF32,
-													 "The distance of the 2nd cascade");
-inline NumericCVar<F32> g_shadowCascade2DistanceCVar("R", "ShadowCascade2Distance", (ANKI_PLATFORM_MOBILE) ? 150.0f : 80.0, 1.0, kMaxF32,
-													 "The distance of the 3rd cascade");
-inline NumericCVar<F32> g_shadowCascade3DistanceCVar("R", "ShadowCascade3Distance", 200.0, 1.0, kMaxF32, "The distance of the 4th cascade");
-inline NumericCVar<F32> g_lod0MaxDistanceCVar("R", "Lod0MaxDistance", 20.0f, 1.0f, kMaxF32, "Distance that will be used to calculate the LOD 0");
-inline NumericCVar<F32> g_lod1MaxDistanceCVar("R", "Lod1MaxDistance", 40.0f, 2.0f, kMaxF32, "Distance that will be used to calculate the LOD 1");
-
-inline StatCounter g_rendererGpuTimeStatVar(StatCategory::kTime, "GPU frame",
-											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(RendererGpuTime, StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 /// Renderer statistics.
 class RendererPrecreatedSamplers
@@ -59,6 +61,7 @@ class DummyGpuResources
 {
 public:
 	TexturePtr m_texture2DSrv;
+	TexturePtr m_texture2DUintSrv;
 	TexturePtr m_texture3DSrv;
 	TexturePtr m_texture2DUav;
 	TexturePtr m_texture3DUav;
@@ -93,7 +96,7 @@ public:
 
 	Error init(const RendererInitInfo& inf);
 
-	Error render(Texture* presentTex);
+	Error render();
 
 #define ANKI_RENDERER_OBJECT_DEF(type, name, initCondition) \
 	type& get##type() \
@@ -125,7 +128,7 @@ public:
 
 	F32 getAspectRatio() const
 	{
-		return F32(m_internalResolution.x()) / F32(m_internalResolution.y());
+		return F32(m_internalResolution.x) / F32(m_internalResolution.y);
 	}
 
 	U64 getFrameCount() const
@@ -177,7 +180,7 @@ public:
 	void registerDebugRenderTarget(RendererObject* obj, CString rtName);
 
 	/// Set the render target you want to show.
-	void setCurrentDebugRenderTarget(CString rtName);
+	void setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping = false);
 
 	/// Get the render target currently showing.
 	CString getCurrentDebugRenderTarget() const
@@ -186,7 +189,8 @@ public:
 	}
 
 	// Need to call it after the handle is set by the RenderGraph.
-	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram);
+	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+									 DebugRenderTargetDrawStyle& drawStyle);
 	/// @}
 
 	StackMemoryPool& getFrameMemoryPool()
@@ -207,6 +211,18 @@ public:
 		m_pipelineQueries[m_frameCount % kMaxFramesInFlight].emplaceBack(q);
 	}
 #endif
+
+	template<typename TFunc>
+	void iterateDebugRenderTargetNames(TFunc func) const
+	{
+		for(const auto& x : m_debugRts)
+		{
+			if(func(x.m_rtName) == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+	}
 
 private:
 	class Cleanup
@@ -250,6 +266,7 @@ private:
 	};
 	RendererDynamicArray<DebugRtInfo> m_debugRts;
 	RendererString m_currentDebugRtName;
+	Bool m_disableDebugRtTonemapping = false;
 
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;

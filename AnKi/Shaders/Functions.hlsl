@@ -405,9 +405,16 @@ Vec3 colorPerCubeFace(const U32 dir)
 	return color;
 }
 
-Bool incorrectColor(const Vec3 c)
+template<I32 kVecSize>
+Bool isInfOrNan(const vector<F32, kVecSize> c)
 {
-	return isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y) || isinf(c.z);
+	Bool incorrect = false;
+	[unroll] for(I32 i = 0; i < kVecSize; ++i)
+	{
+		incorrect = incorrect || (isnan(c[i]) || isinf(c[i]));
+	}
+
+	return incorrect;
 }
 
 F32 areaElement(const F32 x, const F32 y)

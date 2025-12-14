@@ -81,22 +81,28 @@ Error GrManager::init(GrManagerInitInfo& inf)
 	return self.init(inf);
 }
 
+void GrManager::beginFrame()
+{
+	ANKI_VK_SELF(GrManagerImpl);
+	self.beginFrameInternal();
+}
+
 TexturePtr GrManager::acquireNextPresentableTexture()
 {
 	ANKI_VK_SELF(GrManagerImpl);
 	return self.acquireNextPresentableTexture();
 }
 
-void GrManager::swapBuffers()
+void GrManager::endFrame()
 {
 	ANKI_VK_SELF(GrManagerImpl);
-	self.endFrame();
+	self.endFrameInternal();
 }
 
 void GrManager::finish()
 {
 	ANKI_VK_SELF(GrManagerImpl);
-	self.finish();
+	self.finishInternal();
 }
 
 #define ANKI_NEW_GR_OBJECT(type) \
@@ -140,188 +146,41 @@ ANKI_NEW_GR_OBJECT(GrUpscaler)
 void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
 {
 	ANKI_VK_SELF(GrManagerImpl);
+	self.submitInternal(cmdbs, waitFences, signalFence);
+}
 
-	// First thing, create a fence
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-
-	// Gather command buffers
-	GrDynamicArray<VkCommandBuffer> vkCmdbs;
-	vkCmdbs.resizeStorage(cmdbs.getSize());
-	Bool renderedToDefaultFb = false;
-	GpuQueueType queueType = GpuQueueType::kCount;
-	for(U32 i = 0; i < cmdbs.getSize(); ++i)
-	{
-		CommandBufferImpl& cmdb = *static_cast<CommandBufferImpl*>(cmdbs[i]);
-		ANKI_ASSERT(cmdb.isFinalized());
-		renderedToDefaultFb = renderedToDefaultFb || cmdb.renderedToDefaultFramebuffer();
-#if ANKI_ASSERTIONS_ENABLED
-		cmdb.setSubmitted();
-#endif
-
-		MicroCommandBuffer& mcmdb = *cmdb.getMicroCommandBuffer();
-		mcmdb.setFence(fence.get());
-
-		if(i == 0)
-		{
-			queueType = mcmdb.getVulkanQueueType();
-		}
-		else
-		{
-			ANKI_ASSERT(queueType == mcmdb.getVulkanQueueType() && "All cmdbs should be for the same queue");
-		}
-
-		vkCmdbs.emplaceBack(cmdb.getHandle());
-	}
-
-	// Gather wait semaphores
-	GrDynamicArray<VkSemaphore> waitSemaphores;
-	GrDynamicArray<VkPipelineStageFlags> waitStages;
-	GrDynamicArray<U64> waitTimelineValues;
-	waitSemaphores.resizeStorage(waitFences.getSize());
-	waitStages.resizeStorage(waitFences.getSize());
-	waitTimelineValues.resizeStorage(waitFences.getSize());
-	for(U32 i = 0; i < waitFences.getSize(); ++i)
-	{
-		FenceImpl& impl = static_cast<FenceImpl&>(*waitFences[i]);
-		MicroSemaphore& msem = *impl.m_semaphore;
-		ANKI_ASSERT(msem.isTimeline());
-
-		waitSemaphores.emplaceBack(msem.getHandle());
-		waitStages.emplaceBack(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-		waitTimelineValues.emplaceBack(msem.getSemaphoreValue());
-
-		// Refresh the fence because the semaphore can't be recycled until the current submission is done
-		msem.setFence(fence.get());
-	}
-
-	// Signal semaphore
-	GrDynamicArray<VkSemaphore> signalSemaphores;
-	GrDynamicArray<U64> signalTimelineValues;
-	if(signalFence)
-	{
-		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
-		fenceImpl->m_semaphore = SemaphoreFactory::getSingleton().newInstance(fence, true);
-
-		signalFence->reset(fenceImpl);
-
-		signalSemaphores.emplaceBack(fenceImpl->m_semaphore->getHandle());
-		signalTimelineValues.emplaceBack(fenceImpl->m_semaphore->getNextSemaphoreValue());
-	}
-
-	// Submit
-	{
-		// Protect the class, the queue and other stuff
-		LockGuard<Mutex> lock(self.m_globalMtx);
-
-		// Do some special stuff for the last command buffer
-		GrManagerImpl::PerFrame& frame = self.m_perFrame[self.m_frame % kMaxFramesInFlight];
-		if(renderedToDefaultFb)
-		{
-			// Wait semaphore
-			waitSemaphores.emplaceBack(frame.m_acquireSemaphore->getHandle());
-
-			// That depends on how we use the swapchain img. Be a bit conservative
-			waitStages.emplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-
-			// Set something
-			waitTimelineValues.emplaceBack(0);
-
-			// Refresh the fence because the semaphore can't be recycled until the current submission is done
-			frame.m_acquireSemaphore->setFence(fence.get());
-
-			// Create the semaphore to signal and then wait on present
-			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
-			frame.m_renderSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false);
-
-			signalSemaphores.emplaceBack(frame.m_renderSemaphore->getHandle());
-
-			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
-			signalTimelineValues.emplaceBack(0);
-
-			// Update the frame fence
-			frame.m_presentFence = fence;
-
-			// Update the swapchain's fence
-			self.m_crntSwapchain->setFence(fence.get());
-
-			frame.m_queueWroteToSwapchainImage = queueType;
-		}
-
-		// Submit
-		VkSubmitInfo submit = {};
-		submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit.waitSemaphoreCount = waitSemaphores.getSize();
-		submit.pWaitSemaphores = (waitSemaphores.getSize()) ? waitSemaphores.getBegin() : nullptr;
-		submit.signalSemaphoreCount = signalSemaphores.getSize();
-		submit.pSignalSemaphores = (signalSemaphores.getSize()) ? signalSemaphores.getBegin() : nullptr;
-		submit.pWaitDstStageMask = (waitStages.getSize()) ? waitStages.getBegin() : nullptr;
-		submit.commandBufferCount = vkCmdbs.getSize();
-		submit.pCommandBuffers = (vkCmdbs.getSize()) ? vkCmdbs.getBegin() : nullptr;
-
-		VkTimelineSemaphoreSubmitInfo timelineInfo = {};
-		timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
-		timelineInfo.waitSemaphoreValueCount = waitSemaphores.getSize();
-		timelineInfo.pWaitSemaphoreValues = (waitSemaphores.getSize()) ? waitTimelineValues.getBegin() : nullptr;
-		timelineInfo.signalSemaphoreValueCount = signalTimelineValues.getSize();
-		timelineInfo.pSignalSemaphoreValues = (signalTimelineValues.getSize()) ? signalTimelineValues.getBegin() : nullptr;
-		appendPNextList(submit, &timelineInfo);
-
-		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
-		ANKI_VK_CHECKF(vkQueueSubmit(self.m_queues[queueType], 1, &submit, fence->getHandle()));
-	}
-
-	// Garbage work
-	if(renderedToDefaultFb)
-	{
-		self.m_frameGarbageCollector.setNewFrame(fence);
-	}
+PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const
+{
+	ANKI_VK_SELF_CONST(GrManagerImpl);
+	PtrSize asSize, unused;
+	AccelerationStructureImpl::getMemoryRequirement(init, asSize, unused);
+	return asSize + self.m_caps.m_asBufferAlignment;
 }
 
 GrManagerImpl::~GrManagerImpl()
 {
 	ANKI_VK_LOGI("Destroying Vulkan backend");
 
-	// 1st THING: wait for the present fences because I don't know if waiting on queue will cover this
-	for(PerFrame& frame : m_perFrame)
-	{
-		if(frame.m_presentFence.isCreated())
-		{
-			frame.m_presentFence->wait();
-		}
-	}
+	// 1st THING: wait for the GPU
+	finishInternal();
 
-	// 2nd THING: wait for the GPU
-	for(VkQueue& queue : m_queues)
-	{
-		LockGuard<Mutex> lock(m_globalMtx);
-		if(queue)
-		{
-			vkQueueWaitIdle(queue);
-			queue = VK_NULL_HANDLE;
-		}
-	}
-
-	// 3rd THING: The destroy everything that has a reference to GrObjects.
-	CommandBufferFactory::freeSingleton();
-
-	for(PerFrame& frame : m_perFrame)
-	{
-		frame.m_presentFence.reset(nullptr);
-		frame.m_acquireSemaphore.reset(nullptr);
-		frame.m_renderSemaphore.reset(nullptr);
-	}
-
+	// 2nd THING: Destroy everything that has a reference to GrObjects.
 	m_crntSwapchain.reset(nullptr);
+	SwapchainFactory::freeSingleton();
 
-	// 4th THING: Continue with the rest
+	for(U32 frame = 0; frame < m_perFrame.getSize(); ++frame)
+	{
+		m_frame = frame;
+		deleteObjectsMarkedForDeletion();
+	}
 
+	// 3rd THING: Continue with the rest
+	CommandBufferFactory::freeSingleton();
 	OcclusionQueryFactory::freeSingleton();
 	TimestampQueryFactory::freeSingleton();
 	PrimitivesPassedClippingFactory::freeSingleton();
-	SemaphoreFactory::freeSingleton(); // Destroy before fences
+	SemaphoreFactory::freeSingleton();
 	SamplerFactory::freeSingleton();
-	SwapchainFactory::freeSingleton(); // Destroy before fences
-	m_frameGarbageCollector.destroy();
 
 	GpuMemoryManager::freeSingleton();
 	PipelineLayoutFactory2::freeSingleton();
@@ -384,9 +243,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initSurface());
 	ANKI_CHECK(initDevice());
 
-	SwapchainFactory::allocateSingleton(U32(g_vsyncCVar));
-	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
-
 	PipelineCache::allocateSingleton();
 	ANKI_CHECK(PipelineCache::getSingleton().init(init.m_cacheDirectory));
 
@@ -400,10 +256,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	PrimitivesPassedClippingFactory::allocateSingleton();
 	SamplerFactory::allocateSingleton();
 
-	for(PerFrame& f : m_perFrame)
-	{
-		resetFrame(f);
-	}
+	SwapchainFactory::allocateSingleton(U32(g_cvarGrVsync));
+	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
 	// See if unaligned formats are supported
 	{
@@ -434,8 +288,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(BindlessDescriptorSet::getSingleton().init());
 
 	PipelineLayoutFactory2::allocateSingleton();
-
-	m_frameGarbageCollector.init();
 
 	return Error::kNone;
 }
@@ -482,8 +334,8 @@ Error GrManagerImpl::initInstance()
 				ANKI_VK_LOGV("\t%s", layer.layerName);
 				CString layerName = layer.layerName;
 
-				Bool enableLayer = (g_validationCVar || g_debugPrintfCVar) && layerName == "VK_LAYER_KHRONOS_validation";
-				enableLayer = enableLayer || (!CString(g_vkLayersCVar).isEmpty() && CString(g_vkLayersCVar).find(layerName) != CString::kNpos);
+				Bool enableLayer = (g_cvarGrValidation || g_cvarGrDebugPrintf) && layerName == "VK_LAYER_KHRONOS_validation";
+				enableLayer = enableLayer || (!CString(g_cvarGrVkLayers).isEmpty() && CString(g_cvarGrVkLayers).find(layerName) != CString::kNpos);
 
 				if(enableLayer)
 				{
@@ -509,17 +361,17 @@ Error GrManagerImpl::initInstance()
 	// Validation features
 	GrDynamicArray<VkValidationFeatureEnableEXT> enabledValidationFeatures;
 	GrDynamicArray<VkValidationFeatureDisableEXT> disabledValidationFeatures;
-	if(g_debugPrintfCVar)
+	if(g_cvarGrDebugPrintf)
 	{
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
 	}
 
-	if(g_debugPrintfCVar && !g_validationCVar)
+	if(g_cvarGrDebugPrintf && !g_cvarGrValidation)
 	{
 		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
 	}
 
-	if(g_validationCVar && g_gpuValidationCVar)
+	if(g_cvarGrValidation && g_cvarGrGpuValidation)
 	{
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
 	}
@@ -603,7 +455,7 @@ Error GrManagerImpl::initInstance()
 				m_extensions |= VulkanExtensions::kKHR_surface;
 				instExtensions[instExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
 			}
-			else if(extensionName == VK_EXT_DEBUG_UTILS_EXTENSION_NAME && (g_debugMarkersCVar || g_validationCVar || g_debugPrintfCVar))
+			else if(extensionName == VK_EXT_DEBUG_UTILS_EXTENSION_NAME && (g_cvarGrDebugMarkers || g_cvarGrValidation || g_cvarGrDebugPrintf))
 			{
 				m_extensions |= VulkanExtensions::kEXT_debug_utils;
 				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
@@ -720,7 +572,7 @@ Error GrManagerImpl::initInstance()
 			}
 		});
 
-		const U32 chosenPhysDevIdx = min<U32>(g_deviceCVar, devs.getSize() - 1);
+		const U32 chosenPhysDevIdx = min<U32>(g_cvarGrDevice, devs.getSize() - 1);
 
 		ANKI_VK_LOGI("Physical devices:");
 		for(U32 devIdx = 0; devIdx < count; ++devIdx)
@@ -732,11 +584,9 @@ Error GrManagerImpl::initInstance()
 		m_physicalDevice = devs[chosenPhysDevIdx].m_pdev;
 	}
 
-	m_rtPipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
-	getPhysicalDeviceProperties2(m_rtPipelineProps);
-
-	m_devProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	vkGetPhysicalDeviceProperties2(m_physicalDevice, &m_devProps);
+	VkPhysicalDeviceProperties2 props2 = {};
+	props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	vkGetPhysicalDeviceProperties2(m_physicalDevice, &props2);
 
 	VkPhysicalDeviceVulkan12Properties props12 = {};
 	props12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
@@ -748,8 +598,20 @@ Error GrManagerImpl::initInstance()
 	m_capabilities.m_minWaveSize = props13.minSubgroupSize;
 	m_capabilities.m_maxWaveSize = props13.maxSubgroupSize;
 
+	if(props2.properties.limits.maxComputeWorkGroupInvocations < 1024)
+	{
+		ANKI_VK_LOGE("GPU doesn't support at least 1024 workgroup invocations");
+		return Error::kFunctionFailed;
+	}
+
+	if(props2.properties.limits.maxPushConstantsSize < kMaxFastConstantsSize)
+	{
+		ANKI_VK_LOGE("GPU doesn't support at least %u push constants size", kMaxFastConstantsSize);
+		return Error::kFunctionFailed;
+	}
+
 	// Find vendor
-	switch(m_devProps.properties.vendorID)
+	switch(props2.properties.vendorID)
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::kArm;
@@ -770,24 +632,25 @@ Error GrManagerImpl::initInstance()
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 	}
-	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s, Driver %s", m_devProps.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0],
+	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s, Driver %s", props2.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0],
 				 props12.driverInfo);
 
 	// Set limits
 	m_capabilities.m_constantBufferBindOffsetAlignment =
-		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minUniformBufferOffsetAlignment));
+		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(props2.properties.limits.minUniformBufferOffsetAlignment));
 	m_capabilities.m_structuredBufferBindOffsetAlignment =
-		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minStorageBufferOffsetAlignment));
+		computeCompoundAlignment<U32>(ANKI_SAFE_ALIGNMENT, U32(props2.properties.limits.minStorageBufferOffsetAlignment));
 	m_capabilities.m_structuredBufferNaturalAlignment = false;
-	m_capabilities.m_texelBufferBindOffsetAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
-	m_capabilities.m_computeSharedMemorySize = m_devProps.properties.limits.maxComputeSharedMemorySize;
-	m_capabilities.m_maxDrawIndirectCount = m_devProps.properties.limits.maxDrawIndirectCount;
+	m_capabilities.m_texelBufferBindOffsetAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, U32(props2.properties.limits.minTexelBufferOffsetAlignment));
+	m_capabilities.m_computeSharedMemorySize = props2.properties.limits.maxComputeSharedMemorySize;
+	m_capabilities.m_maxDrawIndirectCount = props2.properties.limits.maxDrawIndirectCount;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
 	m_capabilities.m_minorApiVersion = vulkanMinor;
 
-	m_capabilities.m_shaderGroupHandleSize = m_rtPipelineProps.shaderGroupHandleSize;
-	m_capabilities.m_sbtRecordAlignment = m_rtPipelineProps.shaderGroupBaseAlignment;
+	m_caps.m_nonCoherentAtomSize = props2.properties.limits.nonCoherentAtomSize;
+	m_caps.m_maxTexelBufferElements = props2.properties.limits.maxTexelBufferElements;
+	m_caps.m_timestampPeriod = props2.properties.limits.timestampPeriod;
 
 	// DLSS checks
 	m_capabilities.m_dlss = ANKI_DLSS && m_capabilities.m_gpuVendor == GpuVendor::kNvidia;
@@ -840,8 +703,8 @@ Error GrManagerImpl::initDevice()
 		return Error::kFunctionFailed;
 	}
 
-	const Bool pureAsyncCompute = m_queueFamilyIndices[GpuQueueType::kCompute] != kMaxU32 && g_asyncComputeCVar == 0;
-	const Bool lowPriorityQueueAsyncCompute = !pureAsyncCompute && generalQueueFamilySupportsMultipleQueues && g_asyncComputeCVar <= 1;
+	const Bool pureAsyncCompute = m_queueFamilyIndices[GpuQueueType::kCompute] != kMaxU32 && g_cvarGrAsyncCompute == 0;
+	const Bool lowPriorityQueueAsyncCompute = !pureAsyncCompute && generalQueueFamilySupportsMultipleQueues && g_cvarGrAsyncCompute <= 1;
 
 	Array<F32, U32(GpuQueueType::kCount)> priorities = {1.0f, 0.5f};
 	Array<VkDeviceQueueCreateInfo, U32(GpuQueueType::kCount)> q = {};
@@ -923,38 +786,38 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_swapchain;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME && g_rayTracingCVar)
+			else if(extensionName == VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME && g_cvarGrRayTracing)
 			{
 				m_extensions |= VulkanExtensions::kKHR_ray_tracing;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 				m_capabilities.m_rayTracingEnabled = true;
 			}
-			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && g_rayTracingCVar)
+			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && g_cvarGrRayTracing)
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME && g_rayTracingCVar)
+			else if(extensionName == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME && g_cvarGrRayTracing)
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME && g_rayTracingCVar)
+			else if(extensionName == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME && g_cvarGrRayTracing)
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME && g_rayTracingCVar)
+			else if(extensionName == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME && g_cvarGrRayTracing)
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME && g_displayStatsCVar > 1)
+			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME && g_cvarCoreDisplayStats > 1)
 			{
 				m_extensions |= VulkanExtensions::kKHR_pipeline_executable_properties;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME && g_debugPrintfCVar)
+			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME && g_cvarGrDebugPrintf)
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME && g_vrsCVar)
+			else if(extensionName == VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME && g_cvarGrVrs)
 			{
 				m_extensions |= VulkanExtensions::kKHR_fragment_shading_rate;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -984,7 +847,7 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kNVX_image_view_handle;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_EXT_MESH_SHADER_EXTENSION_NAME && g_meshShadersCVar)
+			else if(extensionName == VK_EXT_MESH_SHADER_EXTENSION_NAME && g_cvarGrMeshShaders)
 			{
 				m_extensions |= VulkanExtensions::kEXT_mesh_shader;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -994,7 +857,7 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_fragment_shader_barycentric;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME && g_rayTracingCVar)
+			else if(extensionName == VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME && g_cvarGrRayTracing)
 			{
 				m_extensions |= VulkanExtensions::kKHR_ray_tracing_position_fetch;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -1016,7 +879,7 @@ Error GrManagerImpl::initDevice()
 	{
 		devFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures);
-		devFeatures.features.robustBufferAccess = (g_validationCVar && devFeatures.features.robustBufferAccess) ? true : false;
+		devFeatures.features.robustBufferAccess = (g_cvarGrValidation && devFeatures.features.robustBufferAccess) ? true : false;
 		ANKI_VK_LOGI("Robust buffer access is %s", (devFeatures.features.robustBufferAccess) ? "enabled" : "disabled");
 
 		if(devFeatures.features.pipelineStatisticsQuery)
@@ -1063,7 +926,7 @@ Error GrManagerImpl::initDevice()
 		ANKI_ASSERT_SUPPORTED(features12, drawIndirectCount)
 
 		ANKI_ASSERT_SUPPORTED(features12, bufferDeviceAddress)
-		features12.bufferDeviceAddressCaptureReplay = !!features12.bufferDeviceAddressCaptureReplay && g_debugMarkersCVar;
+		features12.bufferDeviceAddressCaptureReplay = !!features12.bufferDeviceAddressCaptureReplay && g_cvarGrDebugMarkers;
 		features12.bufferDeviceAddressMultiDevice = false;
 
 		ANKI_ASSERT_SUPPORTED(features12, shaderFloat16)
@@ -1144,7 +1007,13 @@ Error GrManagerImpl::initDevice()
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};
 		props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
 		getPhysicalDeviceProperties2(props);
-		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = props.minAccelerationStructureScratchOffsetAlignment;
+		m_caps.m_asBuildScratchAlignment = props.minAccelerationStructureScratchOffsetAlignment;
+
+		VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtprops = {};
+		rtprops.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+		getPhysicalDeviceProperties2(rtprops);
+		m_capabilities.m_shaderGroupHandleSize = rtprops.shaderGroupHandleSize;
+		m_capabilities.m_sbtRecordAlignment = rtprops.shaderGroupBaseAlignment;
 	}
 
 	// Pipeline features
@@ -1361,23 +1230,63 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 }
 #endif
 
-TexturePtr GrManagerImpl::acquireNextPresentableTexture()
+void GrManagerImpl::beginFrameInternal()
 {
-	ANKI_TRACE_SCOPED_EVENT(VkAcquireImage);
+	ANKI_TRACE_FUNCTION();
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	PerFrame& frame = m_perFrame[m_frame % kMaxFramesInFlight];
+	// Do that at begin frame, ALWAYS
+	++m_frame;
+	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+	ANKI_ASSERT(m_frameState == kFrameEnded);
+	m_frameState = kFrameStarted;
 
-	// Create sync objects
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-	frame.m_acquireSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false);
+	// Wait for the oldest frame because we don't want to start the new one too early
+	{
+		ANKI_TRACE_SCOPED_EVENT(WaitFences);
+		for(MicroFencePtr& fence : frame.m_fences)
+		{
+			if(fence)
+			{
+				const Bool signaled = fence->clientWait(kMaxSecond);
+				if(!signaled)
+				{
+					ANKI_VK_LOGF("Timeout detected");
+				}
+			}
+		}
+	}
+
+	frame.m_fences.destroy();
+	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+
+	// Clear garbage
+	deleteObjectsMarkedForDeletion();
+}
+
+TexturePtr GrManagerImpl::acquireNextPresentableTexture()
+{
+	ANKI_TRACE_FUNCTION();
+
+	// Create some objets outside the lock
+	Array<Char, 16> name;
+	snprintf(name.getBegin(), name.getSize(), "Acquire %" PRIu64, m_frame);
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance(name.getBegin());
+
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	ANKI_ASSERT(m_frameState == kFrameStarted);
+	m_frameState = kPresentableAcquired;
+
+	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+	frame.m_fences.emplaceBack(fence);
 
 	// Get new image
+	const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 	uint32_t imageIdx;
-
-	VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
-										 fence->getHandle(), &imageIdx);
+	const VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore.getHandle(),
+											   fence->getImplementation().m_handle, &imageIdx);
 
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -1391,90 +1300,226 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		}
 		m_crntSwapchain.reset(nullptr);
 		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
+		const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 
 		// Can't fail a second time
-		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
-											 fence->getHandle(), &imageIdx));
+		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore.getHandle(),
+											 fence->getImplementation().m_handle, &imageIdx));
 	}
 	else
 	{
 		ANKI_VK_CHECKF(res);
 	}
 
+	ANKI_ASSERT(m_acquiredImageIdx == kMaxU8 && "Tried to acquire multiple times in a frame?");
 	m_acquiredImageIdx = U8(imageIdx);
-	return m_crntSwapchain->m_textures[imageIdx];
+	return TexturePtr(m_crntSwapchain->m_textures[imageIdx].get());
 }
 
-void GrManagerImpl::endFrame()
+void GrManagerImpl::endFrameInternal()
 {
-	ANKI_TRACE_SCOPED_EVENT(VkPresent);
+	ANKI_TRACE_FUNCTION();
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	PerFrame& frame = m_perFrame[m_frame % kMaxFramesInFlight];
-
-	// Wait for the fence of N-2 frame
-	const U waitFrameIdx = (m_frame + 1) % kMaxFramesInFlight;
-	PerFrame& waitFrame = m_perFrame[waitFrameIdx];
-	if(waitFrame.m_presentFence)
-	{
-		waitFrame.m_presentFence->wait();
-	}
-
-	resetFrame(waitFrame);
-
-	if(!frame.m_renderSemaphore)
-	{
-		ANKI_VK_LOGW("Nobody draw to the default framebuffer");
-	}
+	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+	const Bool imageAcquired = m_acquiredImageIdx < kMaxU8;
 
 	// Present
-	VkResult res;
-	VkPresentInfoKHR present = {};
-	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	present.waitSemaphoreCount = (frame.m_renderSemaphore) ? 1 : 0;
-	present.pWaitSemaphores = (frame.m_renderSemaphore) ? &frame.m_renderSemaphore->getHandle() : nullptr;
-	present.swapchainCount = 1;
-	present.pSwapchains = &m_crntSwapchain->m_swapchain;
-	const U32 idx = m_acquiredImageIdx;
-	present.pImageIndices = &idx;
-	present.pResults = &res;
-
-	const VkResult res1 = vkQueuePresentKHR(m_queues[frame.m_queueWroteToSwapchainImage], &present);
-	if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
+	if(imageAcquired)
 	{
-		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queues and create a new one");
-		for(VkQueue queue : m_queues)
+		ANKI_ASSERT(m_frameState == kPresentableDrawn && "Acquired an image but didn't draw to it?");
+		ANKI_ASSERT(m_acquiredImageIdx < kMaxU8);
+
+		VkResult res;
+		VkPresentInfoKHR present = {};
+		present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present.waitSemaphoreCount = 1;
+		present.pWaitSemaphores = &m_crntSwapchain->m_renderSemaphores[m_acquiredImageIdx]->getHandle();
+		present.swapchainCount = 1;
+		present.pSwapchains = &m_crntSwapchain->m_swapchain;
+		const U32 idx = m_acquiredImageIdx;
+		present.pImageIndices = &idx;
+		present.pResults = &res;
+
+		const VkResult res1 = vkQueuePresentKHR(m_queues[frame.m_queueWroteToSwapchainImage], &present);
+		if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
 		{
-			if(queue)
+			ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queues and create a new one");
+			for(VkQueue queue : m_queues)
 			{
-				vkQueueWaitIdle(queue);
+				if(queue)
+				{
+					vkQueueWaitIdle(queue);
+				}
 			}
+			vkDeviceWaitIdle(m_device);
+			m_crntSwapchain.reset(nullptr);
+			m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 		}
-		vkDeviceWaitIdle(m_device);
-		m_crntSwapchain.reset(nullptr);
-		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
+		else
+		{
+			ANKI_VK_CHECKF(res1);
+			ANKI_VK_CHECKF(res);
+		}
+
+		m_acquiredImageIdx = kMaxU8;
 	}
 	else
 	{
-		ANKI_VK_CHECKF(res1);
-		ANKI_VK_CHECKF(res);
+		ANKI_ASSERT(m_frameState == kFrameStarted);
 	}
 
+	m_frameState = kFrameEnded;
 	GpuMemoryManager::getSingleton().updateStats();
-
-	// Finalize
-	++m_frame;
 }
 
-void GrManagerImpl::resetFrame(PerFrame& frame)
+void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
 {
-	frame.m_presentFence.reset(nullptr);
-	frame.m_acquireSemaphore.reset(nullptr);
-	frame.m_renderSemaphore.reset(nullptr);
+	// First thing, create a fence
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Submit");
+
+	// Gather command buffers
+	GrDynamicArray<VkCommandBuffer> vkCmdbs;
+	vkCmdbs.resizeStorage(cmdbs.getSize());
+	Bool renderedToDefaultFb = false;
+	GpuQueueType queueType = GpuQueueType::kCount;
+	for(U32 i = 0; i < cmdbs.getSize(); ++i)
+	{
+		CommandBufferImpl& cmdb = *static_cast<CommandBufferImpl*>(cmdbs[i]);
+		ANKI_ASSERT(cmdb.isFinalized());
+		renderedToDefaultFb = renderedToDefaultFb || cmdb.renderedToDefaultFramebuffer();
+#if ANKI_ASSERTIONS_ENABLED
+		cmdb.setSubmitted();
+#endif
+
+		const MicroCommandBuffer& mcmdb = *cmdb.getMicroCommandBuffer();
+
+		if(i == 0)
+		{
+			queueType = mcmdb.getVulkanQueueType();
+		}
+		else
+		{
+			ANKI_ASSERT(queueType == mcmdb.getVulkanQueueType() && "All cmdbs should be for the same queue");
+		}
+
+		vkCmdbs.emplaceBack(cmdb.getHandle());
+	}
+
+	// Gather wait semaphores
+	GrDynamicArray<VkSemaphore> waitSemaphores;
+	GrDynamicArray<VkPipelineStageFlags> waitStages;
+	GrDynamicArray<U64> waitTimelineValues;
+	waitSemaphores.resizeStorage(waitFences.getSize());
+	waitStages.resizeStorage(waitFences.getSize());
+	waitTimelineValues.resizeStorage(waitFences.getSize());
+	for(U32 i = 0; i < waitFences.getSize(); ++i)
+	{
+		FenceImpl& impl = static_cast<FenceImpl&>(*waitFences[i]);
+		MicroSemaphore& msem = *impl.m_semaphore;
+		ANKI_ASSERT(msem.isTimeline());
+
+		waitSemaphores.emplaceBack(msem.getHandle());
+		waitStages.emplaceBack(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		waitTimelineValues.emplaceBack(msem.getSemaphoreValue());
+	}
+
+	// Signal semaphore
+	GrDynamicArray<VkSemaphore> signalSemaphores;
+	GrDynamicArray<U64> signalTimelineValues;
+	if(signalFence)
+	{
+		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
+		fenceImpl->m_semaphore = SemaphoreFactory::getSingleton().newInstance(true, "SubmitSignal");
+
+		signalFence->reset(fenceImpl);
+
+		signalSemaphores.emplaceBack(fenceImpl->m_semaphore->getHandle());
+		signalTimelineValues.emplaceBack(fenceImpl->m_semaphore->getNextSemaphoreValue());
+	}
+
+	// Submit
+	{
+		// Protect the class, the queue and other stuff
+		LockGuard<Mutex> lock(m_globalMtx);
+
+		// Do some special stuff for the last command buffer
+		GrManagerImpl::PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+		if(renderedToDefaultFb)
+		{
+			ANKI_ASSERT(m_frameState == kPresentableAcquired);
+			m_frameState = kPresentableDrawn;
+
+			const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
+
+			// Wait semaphore
+			waitSemaphores.emplaceBack(acquireSemaphore.getHandle());
+
+			// That depends on how we use the swapchain img. Be a bit conservative
+			waitStages.emplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
+			// Set something
+			waitTimelineValues.emplaceBack(0);
+
+			// Get the semaphore to signal and then wait on present
+			const MicroSemaphore& renderSemaphore = *m_crntSwapchain->m_renderSemaphores[m_acquiredImageIdx];
+			signalSemaphores.emplaceBack(renderSemaphore.getHandle());
+
+			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
+			signalTimelineValues.emplaceBack(0);
+
+			frame.m_queueWroteToSwapchainImage = queueType;
+		}
+
+		frame.m_fences.emplaceBack(fence);
+
+		// Submit
+		VkSubmitInfo submit = {};
+		submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit.waitSemaphoreCount = waitSemaphores.getSize();
+		submit.pWaitSemaphores = (waitSemaphores.getSize()) ? waitSemaphores.getBegin() : nullptr;
+		submit.signalSemaphoreCount = signalSemaphores.getSize();
+		submit.pSignalSemaphores = (signalSemaphores.getSize()) ? signalSemaphores.getBegin() : nullptr;
+		submit.pWaitDstStageMask = (waitStages.getSize()) ? waitStages.getBegin() : nullptr;
+		submit.commandBufferCount = vkCmdbs.getSize();
+		submit.pCommandBuffers = (vkCmdbs.getSize()) ? vkCmdbs.getBegin() : nullptr;
+
+		VkTimelineSemaphoreSubmitInfo timelineInfo = {};
+		timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+		timelineInfo.waitSemaphoreValueCount = waitSemaphores.getSize();
+		timelineInfo.pWaitSemaphoreValues = (waitSemaphores.getSize()) ? waitTimelineValues.getBegin() : nullptr;
+		timelineInfo.signalSemaphoreValueCount = signalTimelineValues.getSize();
+		timelineInfo.pSignalSemaphoreValues = (signalTimelineValues.getSize()) ? signalTimelineValues.getBegin() : nullptr;
+		appendPNextList(submit, &timelineInfo);
+
+		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
+		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[queueType], 1, &submit, fence->getImplementation().m_handle));
+
+		// Throttle the number of fences
+		Bool fencesThrottled = false;
+		while(frame.m_fences.getSize() > 64)
+		{
+			fencesThrottled = true;
+			auto it = frame.m_fences.getBegin();
+			for(; it != frame.m_fences.getEnd(); ++it)
+			{
+				if((*it)->signaled())
+				{
+					frame.m_fences.erase(it);
+					break;
+				}
+			}
+		}
+
+		if(fencesThrottled)
+		{
+			ANKI_VK_LOGV("Had to throttle the number of fences");
+		}
+	}
 }
 
-void GrManagerImpl::finish()
+void GrManagerImpl::finishInternal()
 {
 	LockGuard<Mutex> lock(m_globalMtx);
 	for(VkQueue queue : m_queues)
@@ -1484,6 +1529,29 @@ void GrManagerImpl::finish()
 			vkQueueWaitIdle(queue);
 		}
 	}
+
+	for(PerFrame& frame : m_perFrame)
+	{
+		for(MicroFencePtr& fence : frame.m_fences)
+		{
+			const Bool signaled = fence->clientWait(kMaxSecond);
+			if(!signaled)
+			{
+				ANKI_VK_LOGF("Timeout detected");
+			}
+		}
+
+		frame.m_fences.destroy();
+	}
+
+	// Since we waited for the GPU do a cleanup as well
+	const U64 oldFrame = m_frame;
+	for(U32 frame = 0; frame < m_perFrame.getSize(); ++frame)
+	{
+		m_frame = frame;
+		deleteObjectsMarkedForDeletion();
+	}
+	m_frame = oldFrame;
 }
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const
@@ -1644,6 +1712,12 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 		return false;
 	}
 
+	if(pCallbackData->messageIdNumber == -1094381206)
+	{
+		// Complains that CullPrimitiveEXT is not a bool array, which is wrong
+		return false;
+	}
+
 	// Get all names of affected objects
 	GrString objectNames;
 	if(pCallbackData->objectCount)
@@ -1661,6 +1735,11 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 	else
 	{
 		objectNames = "N/A";
+	}
+
+	if(CString(pCallbackData->pMessage).find("Assertion failed") != CString::kNpos)
+	{
+		messageSeverity = VkDebugUtilsMessageSeverityFlagBitsEXT(messageSeverity | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
 	}
 
 	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)

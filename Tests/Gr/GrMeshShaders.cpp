@@ -14,10 +14,10 @@ ANKI_TEST(Gr, MeshShaders)
 	constexpr U32 kTileCount = 4;
 	constexpr U32 kVertCount = 4;
 
-	g_validationCVar = true;
-	g_windowWidthCVar = 64 * kTileCount;
-	g_windowHeightCVar = 64;
-	g_meshShadersCVar = true;
+	g_cvarGrValidation = true;
+	g_cvarWindowWidth = 64 * kTileCount;
+	g_cvarWindowHeight = 64;
+	g_cvarGrMeshShaders = true;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
@@ -222,12 +222,14 @@ float3 main(VertOut input) : SV_TARGET0
 
 		for(U32 i = 0; i < 100; ++i)
 		{
+			GrManager::getSingleton().beginFrame();
+
 			TexturePtr swapchainTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cmdbinit;
 			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
-			cmdb->setViewport(0, 0, g_windowWidthCVar, g_windowHeightCVar);
+			cmdb->setViewport(0, 0, g_cvarWindowWidth, g_cvarWindowHeight);
 
 			TextureBarrierInfo barrier;
 			barrier.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDesc::all());
@@ -258,7 +260,7 @@ float3 main(VertOut input) : SV_TARGET0
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 
 			HighRezTimer::sleep(1.0_sec / 60.0);
 		}

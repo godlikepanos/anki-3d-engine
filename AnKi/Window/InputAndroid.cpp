@@ -43,11 +43,15 @@ Error Input::init()
 
 Error Input::handleEvents()
 {
-	for(U32& k : m_touchPointers)
+	for(I32& k : m_touchPointers)
 	{
-		if(k)
+		if(k > 0)
 		{
 			++k;
+		}
+		else if(k < 0)
+		{
+			k = 0;
 		}
 	}
 
@@ -66,10 +70,9 @@ Error Input::handleEvents()
 	return Error::kNone;
 }
 
-void Input::moveCursor(const Vec2& posNdc)
+void Input::moveMouseNdc(const Vec2& posNdc)
 {
 	m_mousePosNdc = posNdc;
-	m_mousePosWin = UVec2((posNdc * 0.5f + 0.5f) * Vec2(F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight())));
 }
 
 void Input::hideCursor([[maybe_unused]] Bool hide)
@@ -80,6 +83,11 @@ void Input::hideCursor([[maybe_unused]] Bool hide)
 Bool Input::hasTouchDevice() const
 {
 	return true;
+}
+
+void Input::setMouseCursor([[maybe_unused]] MouseCursor cursor)
+{
+	// nothing
 }
 
 Error InputAndroid::initInternal()
@@ -139,10 +147,8 @@ int InputAndroid::handleAndroidInput([[maybe_unused]] android_app* app, AInputEv
 				const F32 y = AMotionEvent_getY(event, index);
 				const I32 id = AMotionEvent_getPointerId(event, index);
 
-				m_touchPointerPosWin[id] = UVec2(U32(x), U32(y));
-
-				m_touchPointerPosNdc[id].x() = F32(x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
-				m_touchPointerPosNdc[id].y() = -(F32(y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
+				m_touchPointerPosNdc[id].x = F32(x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
+				m_touchPointerPosNdc[id].y = -(F32(y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 
 				if(pressValue == 0 || pressValue == 1)
 				{

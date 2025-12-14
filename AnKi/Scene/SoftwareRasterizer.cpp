@@ -43,7 +43,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 	U vertInsideCount = 0;
 	for(U i = 0; i < 3; ++i)
 	{
-		vertInside[i] = inVerts[i].z() < clipZ;
+		vertInside[i] = inVerts[i].z < clipZ;
 		vertInsideCount += (vertInside[i]) ? 1 : 0;
 	}
 
@@ -83,15 +83,15 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		}
 
 		// Find first intersection
-		Vec4 rayOrigin = inVerts[i].xyz0();
-		Vec4 rayDir = (inVerts[next].xyz0() - rayOrigin).normalize();
+		Vec4 rayOrigin = inVerts[i].xyz0;
+		Vec4 rayDir = (inVerts[next].xyz0 - rayOrigin).normalize();
 
 		Vec4 intersection0;
 		[[maybe_unused]] Bool intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection0);
 		ANKI_ASSERT(intersects);
 
 		// Find second intersection
-		rayDir = (inVerts[prev].xyz0() - rayOrigin).normalize();
+		rayDir = (inVerts[prev].xyz0 - rayOrigin).normalize();
 
 		Vec4 intersection1;
 		intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection1);
@@ -99,8 +99,8 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 
 		// Finalize
 		outVerts[0] = inVerts[i];
-		outVerts[1] = intersection0.xyz1();
-		outVerts[2] = intersection1.xyz1();
+		outVerts[1] = intersection0.xyz1;
+		outVerts[2] = intersection1.xyz1;
 		outVertCount = 3;
 
 		break;
@@ -129,16 +129,16 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		}
 
 		// Find first intersection
-		Vec4 rayOrigin = inVerts[in1].xyz0();
-		Vec4 rayDir = (inVerts[out].xyz0() - rayOrigin).normalize();
+		Vec4 rayOrigin = inVerts[in1].xyz0;
+		Vec4 rayDir = (inVerts[out].xyz0 - rayOrigin).normalize();
 
 		Vec4 intersection0;
 		[[maybe_unused]] Bool intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection0);
 		ANKI_ASSERT(intersects);
 
 		// Find second intersection
-		rayOrigin = inVerts[in0].xyz0();
-		rayDir = (inVerts[out].xyz0() - rayOrigin).normalize();
+		rayOrigin = inVerts[in0].xyz0;
+		rayDir = (inVerts[out].xyz0 - rayOrigin).normalize();
 
 		Vec4 intersection1;
 		intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection1);
@@ -179,9 +179,9 @@ void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride, Bool back
 		if(backfaceCulling)
 		{
 			Vec4 norm = (triVspace[1] - triVspace[0]).cross(triVspace[2] - triVspace[1]);
-			ANKI_ASSERT(norm.w() == 0.0f);
+			ANKI_ASSERT(norm.w == 0.0f);
 
-			Vec4 eye = triVspace[0].xyz0();
+			Vec4 eye = triVspace[0].xyz0;
 			if(norm.dot(eye) >= 0.0f)
 			{
 				continue;
@@ -204,8 +204,8 @@ void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride, Bool back
 		{
 			for(U k = 0; k < 3; k++)
 			{
-				clip[k] = m_p * clippedTrisVspace[j + k].xyz1();
-				ANKI_ASSERT(clip[k].w() > 0.0f);
+				clip[k] = m_p * clippedTrisVspace[j + k].xyz1;
+				ANKI_ASSERT(clip[k].w > 0.0f);
 			}
 
 			rasterizeTriangle(&clip[0]);
@@ -219,17 +219,17 @@ Bool SoftwareRasterizer::computeBarycetrinc(const Vec2& a, const Vec2& b, const 
 	Vec2 dba = b - a;
 	Vec2 dap = a - p;
 
-	Vec3 n(dca.x(), dba.x(), dap.x());
-	Vec3 m(dca.y(), dba.y(), dap.y());
+	Vec3 n(dca.x, dba.x, dap.x);
+	Vec3 m(dca.y, dba.y, dap.y);
 
 	Vec3 k = n.cross(m);
 
 	Bool skip = false;
-	if(!isZero(k.z()))
+	if(!isZero(k.z))
 	{
-		uvw = Vec3(1.0f - (k.x() + k.y()) / k.z(), k.y() / k.z(), k.x() / k.z());
+		uvw = Vec3(1.0f - (k.x + k.y) / k.z, k.y / k.z, k.x / k.z);
 
-		if(uvw.x() < 0.0f || uvw.y() < 0.0f || uvw.z() < 0.0f)
+		if(uvw.x < 0.0f || uvw.y < 0.0f || uvw.z < 0.0f)
 		{
 			skip = true;
 		}
@@ -252,10 +252,10 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 	Vec2 bboxMin(kMaxF32), bboxMax(kMinF32);
 	for(U i = 0; i < 3; i++)
 	{
-		ndc[i] = tri[i].xyz() / tri[i].w();
-		window[i] = (ndc[i].xy() / 2.0f + 0.5f) * windowSize;
+		ndc[i] = tri[i].xyz / tri[i].w;
+		window[i] = (ndc[i].xy / 2.0f + 0.5f) * windowSize;
 
-		for(U j = 0; j < 2; j++)
+		for(U32 j = 0; j < 2; j++)
 		{
 			bboxMin[j] = std::floor(min(bboxMin[j], window[i][j]));
 			bboxMin[j] = clamp(bboxMin[j], 0.0f, windowSize[j]);
@@ -265,17 +265,17 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 		}
 	}
 
-	for(F32 y = bboxMin.y() + 0.5f; y < bboxMax.y() + 0.5f; y += 1.0f)
+	for(F32 y = bboxMin.y + 0.5f; y < bboxMax.y + 0.5f; y += 1.0f)
 	{
-		for(F32 x = bboxMin.x() + 0.5f; x < bboxMax.x() + 0.5f; x += 1.0f)
+		for(F32 x = bboxMin.x + 0.5f; x < bboxMax.x + 0.5f; x += 1.0f)
 		{
 			Vec2 p(x, y);
 			Vec3 bc;
 			if(!computeBarycetrinc(window[0], window[1], window[2], p, bc))
 			{
-				const F32 z0 = ndc[0].z();
-				const F32 z1 = ndc[1].z();
-				const F32 z2 = ndc[2].z();
+				const F32 z0 = ndc[0].z;
+				const F32 z1 = ndc[1].z;
+				const F32 z2 = ndc[2].z;
 
 				F32 depth = z0 * bc[0] + z1 * bc[1] + z2 * bc[2];
 				ANKI_ASSERT(depth >= 0.0 && depth <= 1.0);
@@ -305,14 +305,14 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 	const Vec4& minv = aabb.getMin();
 	const Vec4& maxv = aabb.getMax();
 	Array<Vec4, 8> boxPoints;
-	boxPoints[0] = minv.xyz1();
-	boxPoints[1] = Vec4(minv.x(), maxv.y(), minv.z(), 1.0f);
-	boxPoints[2] = Vec4(minv.x(), maxv.y(), maxv.z(), 1.0f);
-	boxPoints[3] = Vec4(minv.x(), minv.y(), maxv.z(), 1.0f);
-	boxPoints[4] = maxv.xyz1();
-	boxPoints[5] = Vec4(maxv.x(), minv.y(), maxv.z(), 1.0f);
-	boxPoints[6] = Vec4(maxv.x(), minv.y(), minv.z(), 1.0f);
-	boxPoints[7] = Vec4(maxv.x(), maxv.y(), minv.z(), 1.0f);
+	boxPoints[0] = minv.xyz1;
+	boxPoints[1] = Vec4(minv.x, maxv.y, minv.z, 1.0f);
+	boxPoints[2] = Vec4(minv.x, maxv.y, maxv.z, 1.0f);
+	boxPoints[3] = Vec4(minv.x, minv.y, maxv.z, 1.0f);
+	boxPoints[4] = maxv.xyz1;
+	boxPoints[5] = Vec4(maxv.x, minv.y, maxv.z, 1.0f);
+	boxPoints[6] = Vec4(maxv.x, minv.y, minv.z, 1.0f);
+	boxPoints[7] = Vec4(maxv.x, maxv.y, minv.z, 1.0f);
 
 	// Transform points
 	for(Vec4& p : boxPoints)
@@ -323,7 +323,7 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 	// Check of a point touches the near plane
 	for(const Vec4& p : boxPoints)
 	{
-		if(p.w() <= 0.0f)
+		if(p.w <= 0.0f)
 		{
 			// Don't bother clipping. Just mark it as visible.
 			return true;
@@ -336,7 +336,7 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 	for(Vec4& p : boxPoints)
 	{
 		// Perspecrive divide
-		p /= p.w();
+		p /= p.w;
 
 		// To [0, 1]
 		p *= Vec4(0.5f, 0.5f, 1.0f, 1.0f);
@@ -353,23 +353,23 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 	}
 
 	// Fix the bounds
-	bboxMin.x() = floorf(bboxMin.x());
-	bboxMin.x() = clamp(bboxMin.x(), 0.0f, F32(m_width));
+	bboxMin.x = floorf(bboxMin.x);
+	bboxMin.x = clamp(bboxMin.x, 0.0f, F32(m_width));
 
-	bboxMax.x() = ceilf(bboxMax.x());
-	bboxMax.x() = clamp(bboxMax.x(), 0.0f, F32(m_width));
+	bboxMax.x = ceilf(bboxMax.x);
+	bboxMax.x = clamp(bboxMax.x, 0.0f, F32(m_width));
 
-	bboxMin.y() = floorf(bboxMin.y());
-	bboxMin.y() = clamp(bboxMin.y(), 0.0f, F32(m_height));
+	bboxMin.y = floorf(bboxMin.y);
+	bboxMin.y = clamp(bboxMin.y, 0.0f, F32(m_height));
 
-	bboxMax.y() = ceilf(bboxMax.y());
-	bboxMax.y() = clamp(bboxMax.y(), 0.0f, F32(m_height));
+	bboxMax.y = ceilf(bboxMax.y);
+	bboxMax.y = clamp(bboxMax.y, 0.0f, F32(m_height));
 
 	// Loop the tiles
-	F32 minZ = bboxMin.z();
-	for(F32 y = bboxMin.y(); y < bboxMax.y(); y += 1.0f)
+	F32 minZ = bboxMin.z;
+	for(F32 y = bboxMin.y; y < bboxMax.y; y += 1.0f)
 	{
-		for(F32 x = bboxMin.x(); x < bboxMax.x(); x += 1.0f)
+		for(F32 x = bboxMin.x; x < bboxMax.x; x += 1.0f)
 		{
 			const U32 idx = U32(y) * m_width + U32(x);
 			const U32 depthi = m_zbuffer[idx].getNonAtomically();

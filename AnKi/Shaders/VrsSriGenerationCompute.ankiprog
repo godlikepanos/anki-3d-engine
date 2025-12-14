@@ -15,7 +15,7 @@
 // Find the maximum luma derivative in x and y, relative to the average luma of the block.
 // Each thread handles a 2x2 region when using 8x8 VRS tiles and a 2x4 region when using 16x16 VRS tiles.
 
-Texture2D<RVec4> g_inputTex : register(t0);
+Texture2D<Vec4> g_inputTex : register(t0);
 SamplerState g_nearestClampSampler : register(s0);
 
 #if SRI_TEXEL_DIMENSION == 8
@@ -45,14 +45,14 @@ ANKI_FAST_CONSTANTS(Constants, g_consts)
 // subgroupSize is large enough so we need shared memory as a fallback. We need gl_NumSubgroups entries, but it is not a
 // constant, so estimate it assuming a subgroupSize of at least 8.
 constexpr U32 kSharedMemoryEntries = THREADGROUP_SIZE_X * THREADGROUP_SIZE_Y / 8u;
-groupshared RF32 s_averageLuma[kSharedMemoryEntries];
-groupshared RVec2 s_maxDerivative[kSharedMemoryEntries];
+groupshared F32 s_averageLuma[kSharedMemoryEntries];
+groupshared Vec2 s_maxDerivative[kSharedMemoryEntries];
 groupshared U32 s_waveIndexInsideThreadGroup;
 #endif
 
-RF32 computeLuma(RVec3 color)
+F32 computeLuma(Vec3 color)
 {
-	const RF32 l = computeLuminance(color);
+	const F32 l = computeLuminance(color);
 	return l / (1.0f + l);
 }
 
@@ -74,30 +74,30 @@ RF32 computeLuma(RVec3 color)
 	//       l1.y
 	// l0.z  l0.w  l1.x
 	// l0.x  l0.y
-	RVec4 l0;
+	Vec4 l0;
 	l0.x = sampleLuma(0, 0);
 	l0.y = sampleLuma(1, 0);
 	l0.z = sampleLuma(0, 1);
 	l0.w = sampleLuma(1, 1);
 
-	RVec2 l1;
+	Vec2 l1;
 	l1.x = sampleLuma(2, 1);
 	l1.y = sampleLuma(1, 2);
 
 	// Calculate derivatives.
-	RVec2 a = RVec2(l0.y, l1.x);
-	RVec2 b = RVec2(l0.x, l0.w);
-	const RVec2 dx = abs(a - b);
+	Vec2 a = Vec2(l0.y, l1.x);
+	Vec2 b = Vec2(l0.x, l0.w);
+	const Vec2 dx = abs(a - b);
 
-	a = RVec2(l0.z, l1.y);
-	b = RVec2(l0.x, l0.w);
-	const RVec2 dy = abs(a - b);
+	a = Vec2(l0.z, l1.y);
+	b = Vec2(l0.x, l0.w);
+	const Vec2 dy = abs(a - b);
 
-	RF32 maxDerivativeX = max(dx.x, dx.y);
-	RF32 maxDerivativeY = max(dy.x, dy.y);
+	F32 maxDerivativeX = max(dx.x, dx.y);
+	F32 maxDerivativeY = max(dy.x, dy.y);
 
 	// Calculate average luma.
-	RF32 averageLuma = (l0.x + l0.y + l0.z + l0.w) / 4.0;
+	F32 averageLuma = (l0.x + l0.y + l0.z + l0.w) / 4.0;
 #else
 	// Get luminance.
 	//             l2.z
@@ -105,38 +105,38 @@ RF32 computeLuma(RVec3 color)
 	//       l1.x  l1.y
 	//       l0.z  l0.w  l2.x
 	//       l0.x  l0.y
-	RVec4 l0;
+	Vec4 l0;
 	l0.x = sampleLuma(0, 0);
 	l0.y = sampleLuma(1, 0);
 	l0.z = sampleLuma(0, 1);
 	l0.w = sampleLuma(1, 1);
 
-	RVec4 l1;
+	Vec4 l1;
 	l1.x = sampleLuma(0, 2);
 	l1.y = sampleLuma(1, 2);
 	l1.z = sampleLuma(0, 3);
 	l1.w = sampleLuma(1, 3);
 
-	RVec3 l2;
+	Vec3 l2;
 	l2.x = sampleLuma(2, 1);
 	l2.y = sampleLuma(-1, 3);
 	l2.z = sampleLuma(1, 4);
 
 	// Calculate derivatives.
-	RVec4 a = RVec4(l0.y, l2.x, l1.y, l2.y);
-	RVec4 b = RVec4(l0.x, l0.w, l1.x, l1.z);
-	const RVec4 dx = abs(a - b);
+	Vec4 a = Vec4(l0.y, l2.x, l1.y, l2.y);
+	Vec4 b = Vec4(l0.x, l0.w, l1.x, l1.z);
+	const Vec4 dx = abs(a - b);
 
-	a = RVec4(l0.z, l0.w, l1.z, l2.z);
-	b = RVec4(l0.x, l0.y, l1.x, l1.w);
-	const RVec4 dy = abs(a - b);
+	a = Vec4(l0.z, l0.w, l1.z, l2.z);
+	b = Vec4(l0.x, l0.y, l1.x, l1.w);
+	const Vec4 dy = abs(a - b);
 
-	RF32 maxDerivativeX = max(max(dx.x, dx.y), max(dx.z, dx.w));
-	RF32 maxDerivativeY = max(max(dy.x, dy.y), max(dy.z, dy.w));
+	F32 maxDerivativeX = max(max(dx.x, dx.y), max(dx.z, dx.w));
+	F32 maxDerivativeY = max(max(dy.x, dy.y), max(dy.z, dy.w));
 
 	// Calculate average luma.
-	const RVec4 sumL0L1 = l0 + l1;
-	RF32 averageLuma = (sumL0L1.x + sumL0L1.y + sumL0L1.z + sumL0L1.w) / 8.0;
+	const Vec4 sumL0L1 = l0 + l1;
+	F32 averageLuma = (sumL0L1.x + sumL0L1.y + sumL0L1.z + sumL0L1.w) / 8.0;
 #endif
 
 	// Share values in subgroup.
@@ -149,7 +149,7 @@ RF32 computeLuma(RVec3 color)
 	[branch] if(WaveIsFirstLane())
 	{
 		s_averageLuma[waveIndexInsideThreadGroup] = averageLuma;
-		s_maxDerivative[waveIndexInsideThreadGroup] = RVec2(maxDerivativeX, maxDerivativeY);
+		s_maxDerivative[waveIndexInsideThreadGroup] = Vec2(maxDerivativeX, maxDerivativeY);
 	}
 
 	GroupMemoryBarrierWithGroupSync();
@@ -161,7 +161,7 @@ RF32 computeLuma(RVec3 color)
 		// Get max across all subgroups.
 #if SHARED_MEMORY
 		averageLuma = s_averageLuma[0];
-		RVec2 maxDerivative = s_maxDerivative[0];
+		Vec2 maxDerivative = s_maxDerivative[0];
 
 		for(U32 i = 1u; i < wavesPerThreadGroup; ++i)
 		{
@@ -169,14 +169,14 @@ RF32 computeLuma(RVec3 color)
 			maxDerivative = max(maxDerivative, s_maxDerivative[i]);
 		}
 #else
-		const RVec2 maxDerivative = RVec2(maxDerivativeX, maxDerivativeY);
+		const Vec2 maxDerivative = Vec2(maxDerivativeX, maxDerivativeY);
 #endif
 
 		// Determine shading rate.
-		const RF32 avgLuma = averageLuma / RF32(THREADGROUP_SIZE_X * THREADGROUP_SIZE_Y);
-		const RVec2 lumaDiff = maxDerivative / avgLuma;
-		const RF32 threshold1 = g_consts.m_threshold;
-		const RF32 threshold2 = threshold1 * 0.4;
+		const F32 avgLuma = averageLuma / F32(THREADGROUP_SIZE_X * THREADGROUP_SIZE_Y);
+		const Vec2 lumaDiff = maxDerivative / avgLuma;
+		const F32 threshold1 = g_consts.m_threshold;
+		const F32 threshold2 = threshold1 * 0.4;
 
 		UVec2 rate;
 		rate.x = (lumaDiff.x > threshold1) ? 1u : ((lumaDiff.x > threshold2) ? 2u : 4u);

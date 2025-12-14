@@ -48,14 +48,17 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kSpot"/>
 			<enumerant name="kDirectional"/>
 		</enum>
-	</enums>
 
-	<enums>
 		<enum name="BodyComponentCollisionShapeType">
-			<enumerant name="kFromModelComponent"/>
+			<enumerant name="kFromMeshComponent"/>
 			<enumerant name="kAabb"/>
 			<enumerant name="kSphere"/>
 			<enumerant name="kCount"/>
+		</enum>
+
+		<enum name="ParticleGeometryType">
+			<enumerant name="kQuad"/>
+			<enumerant name="kMeshComponent"/>
 		</enum>
 	</enums>
 
@@ -135,17 +138,41 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="DecalComponent">
 			<methods>
-				<method name="loadDiffuseImageResource">
+				<method name="setDiffuseImageFilename">
 					<args>
 						<arg>CString</arg>
-						<arg>F32</arg>
 					</args>
+					<return>DecalComponent&amp;</return>
 				</method>
-				<method name="loadMetalRoughnessImageResource">
+				<method name="getDiffuseImageFilename">
+					<return>CString</return>
+				</method>
+				<method name="setDiffuseBlendFactor">
 					<args>
-						<arg>CString</arg>
 						<arg>F32</arg>
 					</args>
+					<return>DecalComponent&amp;</return>
+				</method>
+				<method name="getDiffuseBlendFactor">
+					<return>F32</return>
+				</method>
+				<method name="setRoughnessMetalnessImageFilename">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>DecalComponent&amp;</return>
+				</method>
+				<method name="getRoughnessMetalnessImageFilename">
+					<return>CString</return>
+				</method>
+				<method name="setRoughnessMetalnessBlendFactor">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>DecalComponent&amp;</return>
+				</method>
+				<method name="getRoughnessMetalnessBlendFactor">
+					<return>F32</return>
 				</method>
 			</methods>
 		</class>
@@ -192,12 +219,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="getSphereRadius">
 					<return>F32</return>
-				</method>
-				<method name="teleportTo">
-					<args>
-						<arg>Vec3</arg>
-						<arg>const Mat3&amp;</arg>
-					</args>
 				</method>
 			</methods>
 		</class>
@@ -264,32 +285,64 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<methods></methods>
 		</class>
 
-		<class name="ParticleEmitterComponent">
+		<class name="ParticleEmitter2Component">
 			<methods>
-				<method name="loadParticleEmitterResource">
+				<method name="setParticleEmitterFilename">
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>ParticleEmitter2Component&amp;</return>
+				</method>
+				<method name="getParticleEmitterFilename">
+					<return>CString</return>
+				</method>
+				<method name="setParticleGeometryType">
+					<args>
+						<arg>ParticleGeometryType</arg>
+					</args>
+					<return>ParticleEmitter2Component&amp;</return>
+				</method>
+				<method name="getParticleGeometryType">
+					<return>ParticleGeometryType</return>
 				</method>
 			</methods>
 		</class>
 
-		<class name="ModelComponent">
+		<class name="MeshComponent">
 			<methods>
-				<method name="loadModelResource">
+				<method name="setMeshFilename">
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>MeshComponent&amp;</return>
+				</method>
+			</methods>
+		</class>
+
+		<class name="MaterialComponent">
+			<methods>
+				<method name="setMaterialFilename">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>MaterialComponent&amp;</return>
+				</method>
+				<method name="setSubmeshIndex">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>MaterialComponent&amp;</return>
 				</method>
 			</methods>
 		</class>
 
 		<class name="SkinComponent">
 			<methods>
-				<method name="loadSkeletonResource">
+				<method name="setSkeletonFilename">
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>SkinComponent&amp;</return>
 				</method>
 			</methods>
 		</class>
@@ -392,43 +445,46 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 
 				<method name="newComponent&lt;LightComponent&gt;" alias="newLightComponent">
-					<return>LightComponent*</return>
+					<return canBeNullptr="1">LightComponent*</return>
 				</method>
 				<method name="newComponent&lt;LensFlareComponent&gt;" alias="newLensFlareComponent">
-					<return>LensFlareComponent*</return>
+					<return canBeNullptr="1">LensFlareComponent*</return>
 				</method>
 				<method name="newComponent&lt;DecalComponent&gt;" alias="newDecalComponent">
-					<return>DecalComponent*</return>
+					<return canBeNullptr="1">DecalComponent*</return>
 				</method>
 				<method name="newComponent&lt;TriggerComponent&gt;" alias="newTriggerComponent">
-					<return>TriggerComponent*</return>
+					<return canBeNullptr="1">TriggerComponent*</return>
 				</method>
 				<method name="newComponent&lt;FogDensityComponent&gt;" alias="newFogDensityComponent">
-					<return>FogDensityComponent*</return>
+					<return canBeNullptr="1">FogDensityComponent*</return>
 				</method>
 				<method name="newComponent&lt;CameraComponent&gt;" alias="newCameraComponent">
-					<return>CameraComponent*</return>
+					<return canBeNullptr="1">CameraComponent*</return>
 				</method>
 				<method name="newComponent&lt;GlobalIlluminationProbeComponent&gt;" alias="newGlobalIlluminationProbeComponent">
-					<return>GlobalIlluminationProbeComponent*</return>
+					<return canBeNullptr="1">GlobalIlluminationProbeComponent*</return>
 				</method>
 				<method name="newComponent&lt;ReflectionProbeComponent&gt;" alias="newReflectionProbeComponent">
-					<return>ReflectionProbeComponent*</return>
+					<return canBeNullptr="1">ReflectionProbeComponent*</return>
 				</method>
 				<method name="newComponent&lt;BodyComponent&gt;" alias="newBodyComponent">
-					<return>BodyComponent*</return>
+					<return canBeNullptr="1">BodyComponent*</return>
 				</method>
-				<method name="newComponent&lt;ParticleEmitterComponent&gt;" alias="newParticleEmitterComponent">
-					<return>ParticleEmitterComponent*</return>
+				<method name="newComponent&lt;ParticleEmitter2Component&gt;" alias="newParticleEmitter2Component">
+					<return canBeNullptr="1">ParticleEmitter2Component*</return>
 				</method>
-				<method name="newComponent&lt;ModelComponent&gt;" alias="newModelComponent">
-					<return>ModelComponent*</return>
+				<method name="newComponent&lt;MeshComponent&gt;" alias="newMeshComponent">
+					<return canBeNullptr="1">MeshComponent*</return>
+				</method>
+				<method name="newComponent&lt;MaterialComponent&gt;" alias="newMaterialComponent">
+					<return canBeNullptr="1">MaterialComponent*</return>
 				</method>
 				<method name="newComponent&lt;SkinComponent&gt;" alias="newSkinComponent">
-					<return>SkinComponent*</return>
+					<return canBeNullptr="1">SkinComponent*</return>
 				</method>
 				<method name="newComponent&lt;SkyboxComponent&gt;" alias="newSkyboxComponent">
-					<return>SkyboxComponent*</return>
+					<return canBeNullptr="1">SkyboxComponent*</return>
 				</method>
 
 				<method name="getFirstComponentOfType&lt;LightComponent&gt;" alias="getFirstLightComponent">
@@ -458,11 +514,11 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getFirstComponentOfType&lt;BodyComponent&gt;" alias="getFirstBodyComponent">
 					<return>BodyComponent&amp;</return>
 				</method>
-				<method name="getFirstComponentOfType&lt;ParticleEmitterComponent&gt;" alias="getFirstParticleEmitterComponent">
-					<return>ParticleEmitterComponent&amp;</return>
+				<method name="getFirstComponentOfType&lt;MeshComponent&gt;" alias="getFirstMeshComponent">
+					<return>MeshComponent&amp;</return>
 				</method>
-				<method name="getFirstComponentOfType&lt;ModelComponent&gt;" alias="getFirstModelComponent">
-					<return>ModelComponent&amp;</return>
+				<method name="getFirstComponentOfType&lt;MaterialComponent&gt;" alias="getFirstMaterialComponent">
+					<return>MaterialComponent&amp;</return>
 				</method>
 				<method name="getFirstComponentOfType&lt;SkinComponent&gt;" alias="getFirstSkinComponent">
 					<return>SkinComponent&amp;</return>
@@ -490,7 +546,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>SceneNode*</return>
+					<return canBeNullptr="1">SceneNode*</return>
 				</method>
 			</methods>
 		</class>

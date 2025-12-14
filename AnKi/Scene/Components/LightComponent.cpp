@@ -77,36 +77,18 @@ LightComponent::LightComponent(SceneNode* node)
 
 LightComponent::~LightComponent()
 {
-	if(m_type == LightComponentType::kDirectional)
-	{
-		SceneGraph::getSingleton().removeDirectionalLight(this);
-	}
 }
 
 void LightComponent::setLightComponentType(LightComponentType newType)
 {
 	ANKI_ASSERT(newType >= LightComponentType::kFirst && newType < LightComponentType::kCount);
-	const LightComponentType oldType = m_type;
-	const Bool typeChanged = newType != oldType;
-
+	const Bool typeChanged = newType != m_type;
 	if(typeChanged)
 	{
 		m_type = newType;
 		m_shadowAtlasUvViewportCount = 0;
 		m_shapeDirty = true;
 		m_otherDirty = true;
-		m_uuid = 0;
-
-		if(newType == LightComponentType::kDirectional)
-		{
-			// Now it's directional, inform the scene
-			SceneGraph::getSingleton().addDirectionalLight(this);
-		}
-		else if(oldType == LightComponentType::kDirectional)
-		{
-			// It was directional, inform the scene
-			SceneGraph::getSingleton().removeDirectionalLight(this);
-		}
 	}
 }
 
@@ -122,15 +104,6 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	if(updated && m_type == LightComponentType::kPoint)
 	{
-		if(!m_shadow)
-		{
-			m_uuid = 0;
-		}
-		else if(m_uuid == 0)
-		{
-			m_uuid = SceneGraph::getSingleton().getNewUuid();
-		}
-
 		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 6;
 
 		// Upload the hash
@@ -150,14 +123,16 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
-		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
+		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
 		gpuLight.m_radius = m_point.m_radius;
-		gpuLight.m_diffuseColor = m_diffColor.xyz();
+		gpuLight.m_diffuseColor = m_diffColor.xyz;
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
-		gpuLight.m_flags = GpuSceneLightFlag::kPointLight;
-		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
+		gpuLight.m_isPointLight = 1;
+		gpuLight.m_isSpotLight = 0;
+		gpuLight.m_shadow = reallyShadow;
+		gpuLight.m_cpuFeedback = m_shadow;
 		gpuLight.m_componentArrayIndex = getArrayIndex();
-		gpuLight.m_uuid = m_uuid;
+		gpuLight.m_uuid = getUuid();
 		for(U32 f = 0; f < m_shadowAtlasUvViewportCount; ++f)
 		{
 			gpuLight.m_spotLightMatrixOrPointLightUvViewports[f] = m_shadowAtlasUvViewports[f];
@@ -171,15 +146,6 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
-		if(!m_shadow)
-		{
-			m_uuid = 0;
-		}
-		else if(m_uuid == 0)
-		{
-			m_uuid = SceneGraph::getSingleton().getNewUuid();
-		}
-
 		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 1;
 
 		// Upload the hash
@@ -199,14 +165,16 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
-		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
+		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
 		gpuLight.m_radius = m_spot.m_distance;
-		gpuLight.m_diffuseColor = m_diffColor.xyz();
+		gpuLight.m_diffuseColor = m_diffColor.xyz;
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
-		gpuLight.m_flags = GpuSceneLightFlag::kSpotLight;
-		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
+		gpuLight.m_isPointLight = 0;
+		gpuLight.m_isSpotLight = 1;
+		gpuLight.m_shadow = reallyShadow;
+		gpuLight.m_cpuFeedback = m_shadow;
 		gpuLight.m_componentArrayIndex = getArrayIndex();
-		gpuLight.m_uuid = m_uuid;
+		gpuLight.m_uuid = getUuid();
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
@@ -216,7 +184,7 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		for(U32 i = 0; i < 4; ++i)
 		{
 			points[i] = m_worldTransform.transform(points[i]);
-			gpuLight.m_edgePoints[i] = points[i].xyz0();
+			gpuLight.m_edgePoints[i] = points[i].xyz0;
 		}
 
 		if(reallyShadow)
@@ -224,8 +192,8 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 			const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle, kClusterObjectFrustumNearPlane,
 																		 m_spot.m_distance);
-			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z(), 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x(), 0.0f, m_shadowAtlasUvViewports[0].w(),
-								 0.0f, m_shadowAtlasUvViewports[0].y(), 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z, 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x, 0.0f, m_shadowAtlasUvViewports[0].w, 0.0f,
+								 m_shadowAtlasUvViewports[0].y, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 			m_spot.m_viewMat = Mat3x4(m_worldTransform.invert());
 			m_spot.m_viewProjMat = proj * Mat4(m_spot.m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -276,7 +244,9 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			elevation = max(elevation, toRad(10.0f)); // Don't have it negative cause the renderer can't handle it
 
 			const F32 polarAng = kPi / 2.0f - elevation;
-			const Vec3 newDir = -sphericalToCartesian(polarAng, azimuth);
+			Vec3 newDir;
+			newDir.setFromSphericalToCartesian(polarAng, azimuth);
+			newDir = -newDir;
 
 			const Vec3 zAxis = newDir;
 			Vec3 yAxis = Vec3(0.0f, 1.0f, 0.0f);
@@ -351,7 +321,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
 			const Sphere& sphere = boundingSpheres[cascade];
-			const Vec3 sphereCenter = sphere.getCenter().xyz();
+			const Vec3 sphereCenter = sphere.getCenter().xyz;
 			const F32 sphereRadius = sphere.getRadius();
 			const Vec3& lightDir = getDirection();
 			Array<Vec3, 2> sceneBounds = SceneGraph::getSingleton().getSceneBounds();
@@ -382,7 +352,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			rot.setZAxis(zAxis);
 			rot.setTranslationPart(Vec3(0.0f));
 
-			const Transform cascadeTransform(eye.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+			const Transform cascadeTransform(eye.xyz0, rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.invert());
 
 			// Projection
@@ -403,16 +373,16 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			// Now it's time to stabilize the shadows by aligning the projection matrix
 			{
 				// Project a random fixed point to the light matrix
-				const Vec4 randomPointAlmostLightSpace = (cascadeProjMat * cascadeViewMat) * Vec3(0.0f).xyz1();
+				const Vec4 randomPointAlmostLightSpace = (cascadeProjMat * cascadeViewMat) * Vec3(0.0f).xyz1;
 
 				// Chose a random low shadowmap size and align the random point
 				const F32 shadowmapSize = 128.0f;
 				const F32 shadowmapSize2 = shadowmapSize / 2.0f; // Div with 2 because the projected point is in NDC
-				const F32 alignedX = std::round(randomPointAlmostLightSpace.x() * shadowmapSize2) / shadowmapSize2;
-				const F32 alignedY = std::round(randomPointAlmostLightSpace.y() * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedX = std::round(randomPointAlmostLightSpace.x * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedY = std::round(randomPointAlmostLightSpace.y * shadowmapSize2) / shadowmapSize2;
 
-				const F32 dx = alignedX - randomPointAlmostLightSpace.x();
-				const F32 dy = alignedY - randomPointAlmostLightSpace.y();
+				const F32 dx = alignedX - randomPointAlmostLightSpace.x;
+				const F32 dy = alignedY - randomPointAlmostLightSpace.y;
 
 				// Fix the projection matrix by applying an offset
 				Mat4 correctionTranslationMat = Mat4::getIdentity();
@@ -461,6 +431,25 @@ void LightComponent::setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports)
 
 		m_shapeDirty = true;
 	}
+}
+
+Error LightComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_type, 1);
+	ANKI_SERIALIZE(m_diffColor, 1);
+	ANKI_SERIALIZE(m_point.m_radius, 1);
+	ANKI_SERIALIZE(m_spot.m_distance, 1);
+	ANKI_SERIALIZE(m_spot.m_outerAngle, 1);
+	ANKI_SERIALIZE(m_spot.m_innerAngle, 1);
+	ANKI_SERIALIZE(m_dir.m_month, 1);
+	ANKI_SERIALIZE(m_dir.m_day, 1);
+	ANKI_SERIALIZE(m_dir.m_hour, 1);
+
+	U32 shadow = m_shadow;
+	ANKI_SERIALIZE(shadow, 1);
+	m_shadow = Bool(shadow);
+
+	return Error::kNone;
 }
 
 } // end namespace anki

@@ -34,7 +34,7 @@ static Error checkBoundingVolume(const MeshBinaryBoundingVolume& vol)
 Error MeshBinaryLoader::load(const ResourceFilename& filename)
 {
 	// Load header + submeshes
-	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, m_file));
+	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, m_file));
 	ANKI_CHECK(m_file->read(&m_header, sizeof(m_header)));
 	ANKI_CHECK(checkHeader());
 	ANKI_CHECK(loadSubmeshes());
@@ -405,7 +405,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U3
 
 		for(U32 i = 0; i < tempPositions.getSize(); ++i)
 		{
-			positions[i] = Vec3(tempPositions[i].xyz()) / F32(kMaxU16);
+			positions[i] = Vec3(U16Vec3(tempPositions[i].xyz)) / F32(kMaxU16);
 			positions[i] *= Vec3(&attrib.m_scale[0]);
 			positions[i] += Vec3(&attrib.m_translation[0]);
 		}

@@ -22,61 +22,87 @@ SkinComponent::~SkinComponent()
 {
 }
 
-void SkinComponent::loadSkeletonResource(CString fname)
+SkinComponent& SkinComponent::setSkeletonFilename(CString fname)
 {
-	SkeletonResourcePtr rsrc;
-	const Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
-	if(err)
+	SkeletonResourcePtr newRsrc;
+	if(ResourceManager::getSingleton().loadResource(fname, newRsrc))
 	{
 		ANKI_SCENE_LOGE("Failed to load skeleton");
-		return;
-	}
-
-	m_forceFullUpdate = true;
-
-	m_skeleton = std::move(rsrc);
-
-	// Cleanup
-	m_boneTrfs[0].destroy();
-	m_boneTrfs[1].destroy();
-	m_animationTrfs.destroy();
-	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneBoneTransforms);
-
-	// Create
-	const U32 boneCount = m_skeleton->getBones().getSize();
-	m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
-	m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
-	m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
-
-	m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
-}
-
-void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
-{
-	const Second animDuration = anim->getDuration();
-
-	m_tracks[track].m_anim = anim;
-	m_tracks[track].m_absoluteStartTime = m_absoluteTime + info.m_startTime;
-	m_tracks[track].m_relativeTimePassed = 0.0;
-	if(info.m_repeatTimes > 0.0)
-	{
-		m_tracks[track].m_blendInTime = min(animDuration * info.m_repeatTimes, info.m_blendInTime);
-		m_tracks[track].m_blendOutTime = min(animDuration * info.m_repeatTimes, info.m_blendOutTime);
 	}
 	else
 	{
-		m_tracks[track].m_blendInTime = info.m_blendInTime;
-		m_tracks[track].m_blendOutTime = 0.0; // Irrelevant
+		m_resourceDirty = !m_resource || (m_resource->getUuid() != newRsrc->getUuid());
+		m_resource = std::move(newRsrc);
 	}
-	m_tracks[track].m_repeatTimes = info.m_repeatTimes;
+
+	return *this;
+}
+
+CString SkinComponent::getSkeletonFilename() const
+{
+	return (m_resource) ? m_resource->getFilename() : "*Error*";
+}
+
+void SkinComponent::playAnimation(U32 trackIdx, AnimationResourcePtr anim, const AnimationPlayInfo& info)
+{
+	const Second animDuration = anim->getDuration();
+
+	Track& track = m_tracks[trackIdx];
+
+	track.m_anim = anim;
+	track.m_absoluteStartTime = m_absoluteTime + info.m_startTime;
+	track.m_relativeTimePassed = 0.0;
+	if(info.m_repeatTimes > 0.0)
+	{
+		track.m_blendInTime = min(animDuration * info.m_repeatTimes, info.m_blendInTime);
+		track.m_blendOutTime = min(animDuration * info.m_repeatTimes, info.m_blendOutTime);
+	}
+	else
+	{
+		track.m_blendInTime = info.m_blendInTime;
+		track.m_blendOutTime = 0.0; // Irrelevant
+	}
+	track.m_repeatTimes = info.m_repeatTimes;
+	track.m_animationSpeedScale = max(0.1f, info.m_animationSpeedScale);
 }
 
 void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = false;
-	if(!m_skeleton.isCreated())
+	m_boneTransformsReallocatedThisFrame = false;
+
+	if(m_resourceDirty || !isValid()) [[unlikely]]
+	{
+		// Cleanup
+		m_boneTrfs[0].destroy();
+		m_boneTrfs[1].destroy();
+		m_animationTrfs.destroy();
+		GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneBoneTransforms);
+
+		m_boneTransformsReallocatedThisFrame = true;
+	}
+
+	if(!isValid()) [[unlikely]]
 	{
 		return;
+	}
+
+	// Always update two frames because of the bone transforms buffer
+	const Bool updatedLastFrame = m_updatedLastFrame;
+	const Bool resourceDirty = m_resourceDirty;
+	m_resourceDirty = false;
+	Bool animationRun = false;
+
+	if(resourceDirty) [[unlikely]]
+	{
+		// Create
+		const U32 boneCount = m_resource->getBones().getSize();
+		m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
+		m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
+		m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
+
+		m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
+
+		m_boneTransformsReallocatedThisFrame = true;
 	}
 
 	const Second dt = info.m_dt;
@@ -108,16 +134,16 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			continue;
 		}
 
-		updated = true;
+		animationRun = true;
 
 		const Second animTime = track.m_relativeTimePassed;
-		track.m_relativeTimePassed += dt;
+		track.m_relativeTimePassed += dt * Second(track.m_animationSpeedScale);
 
 		// Iterate the animation channels and interpolate
 		for(U32 i = 0; i < track.m_anim->getChannels().getSize(); ++i)
 		{
 			const AnimationChannel& channel = track.m_anim->getChannels()[i];
-			const Bone* bone = m_skeleton->tryFindBone(channel.m_name.toCString());
+			const Bone* bone = m_resource->tryFindBone(channel.m_name.toCString());
 			if(!bone)
 			{
 				ANKI_SCENE_LOGW("Animation is referencing unknown bone \"%s\"", &channel.m_name[0]);
@@ -172,24 +198,20 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 	}
 
-	// Always update the 1st time
-	updated = updated || m_forceFullUpdate;
-	m_forceFullUpdate = false;
-
-	if(updated)
+	if(updatedLastFrame || resourceDirty || animationRun)
 	{
 		m_prevBoneTrfs = m_crntBoneTrfs;
 		m_crntBoneTrfs = m_crntBoneTrfs ^ 1;
 
 		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_skeleton->getRootBone(), Mat3x4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+		visitBones(m_resource->getRootBone(), Mat3x4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
 		const Vec4 e(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - e);
 		m_boneBoundingVolume.setMax(maxExtend + e);
 
 		// Update the GPU scene
-		const U32 boneCount = m_skeleton->getBones().getSize();
+		const U32 boneCount = m_resource->getBones().getSize();
 		DynamicArray<Mat3x4, MemoryPoolPtrWrapper<StackMemoryPool>> trfs(info.m_framePool);
 		trfs.resize(boneCount * 2);
 		for(U32 i = 0; i < boneCount; ++i)
@@ -197,7 +219,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			trfs[i * 2 + 0] = getBoneTransforms()[i];
 			trfs[i * 2 + 1] = getPreviousFrameBoneTransforms()[i];
 		}
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneBoneTransforms, trfs.getSizeInBytes(), trfs.getBegin());
+		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuSceneBoneTransforms, trfs.getSizeInBytes(), trfs.getBegin());
 	}
 	else
 	{
@@ -205,6 +227,8 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	m_absoluteTime += dt;
+	updated = updatedLastFrame || resourceDirty || animationRun;
+	m_updatedLastFrame = resourceDirty || animationRun;
 }
 
 void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)
@@ -214,7 +238,7 @@ void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const 
 	if(bonesAnimated.get(bone.getIndex()))
 	{
 		const Trf& t = m_animationTrfs[bone.getIndex()];
-		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz(), Mat3(t.m_rotation), Vec3(t.m_scale)));
+		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz, Mat3(t.m_rotation), Vec3(t.m_scale)));
 	}
 	else
 	{
@@ -225,13 +249,31 @@ void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const 
 
 	// Update volume
 	const Vec3 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	minExtend = minExtend.min(bonePos.xyz0());
-	maxExtend = maxExtend.max(bonePos.xyz0());
+	minExtend = minExtend.min(bonePos.xyz0);
+	maxExtend = maxExtend.max(bonePos.xyz0);
 
 	for(const Bone* child : bone.getChildren())
 	{
 		visitBones(*child, outMat, bonesAnimated, minExtend, maxExtend);
 	}
+}
+
+Error SkinComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_resource, 1);
+
+	for(Track& track : m_tracks)
+	{
+		ANKI_SERIALIZE(track.m_anim, 1);
+		ANKI_SERIALIZE(track.m_absoluteStartTime, 1);
+		ANKI_SERIALIZE(track.m_relativeTimePassed, 1);
+		ANKI_SERIALIZE(track.m_blendInTime, 1);
+		ANKI_SERIALIZE(track.m_blendOutTime, 1);
+		ANKI_SERIALIZE(track.m_repeatTimes, 1);
+		ANKI_SERIALIZE(track.m_animationSpeedScale, 1);
+	}
+
+	return Error::kNone;
 }
 
 } // end namespace anki

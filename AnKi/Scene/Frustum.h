@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// A helper class that represents a frustum.
+// A helper class that represents a frustum.
 class Frustum
 {
 public:
@@ -184,7 +181,7 @@ public:
 
 	Bool update();
 
-	/// Get the precalculated rotations of each of the 6 frustums of an omnidirectional source (eg a point light).
+	// Get the precalculated rotations of each of the 6 frustums of an omnidirectional source (eg a point light).
 	static const Array<Mat3x4, 6>& getOmnidirectionalFrustumRotations()
 	{
 		return m_omnidirectionalRotations;
@@ -243,6 +240,5 @@ private:
 		return m_shapeDirty || m_worldTransformDirty;
 	}
 };
-/// @}
 
 } // end namespace anki

@@ -31,7 +31,6 @@ public:
 		static constexpr Bool kValue = rowCount * columnCount > 1; \
 	};
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
 
 template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::kValue>
 class GetAttribute
@@ -477,7 +476,6 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
 		default:
 			ANKI_ASSERT(0);
 			break;
@@ -507,7 +505,6 @@ void MaterialResource::prefillLocalConstants()
 		memcpy(static_cast<U8*>(m_prefilledLocalConstants) + var.m_offsetInLocalConstants, &var.m_##type, sizeof(type)); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
 		default:
 			ANKI_ASSERT(0);
 			break;
@@ -533,7 +530,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	}
 
 	const Bool meshShadersSupported = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
-	ANKI_ASSERT(!(key.getMeshletRendering() && (!meshShadersSupported && !g_meshletRenderingCVar))
+	ANKI_ASSERT(!(key.getMeshletRendering() && (!meshShadersSupported && !g_cvarCoreMeshletRendering))
 				&& "Can't be asking for meshlet rendering if mesh shaders or SW meshlet rendering are not supported/enabled");
 	if(key.getMeshletRendering() && !(m_shaderTechniques & (ShaderTechniqueBit::kMeshSaders | ShaderTechniqueBit::kSwMeshletRendering)))
 	{
@@ -650,6 +647,33 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	}
 
 	return variant;
+}
+
+Bool MaterialResource::isLoaded() const
+{
+	// Check the atomic first
+	U32 loaded = m_loaded.load();
+	if(loaded) [[likely]]
+	{
+		return true;
+	}
+
+	// Do expensive check after
+	loaded = 1;
+	for(const MaterialVariable& var : m_vars)
+	{
+		if(var.m_image)
+		{
+			loaded = loaded && var.m_image->isLoaded();
+		}
+	}
+
+	if(loaded)
+	{
+		m_loaded.store(1);
+	}
+
+	return loaded;
 }
 
 } // end namespace anki

@@ -83,6 +83,11 @@ public:
 		return m_offsetInLocalConstants;
 	}
 
+	ImageResource* tryGetImageResource() const
+	{
+		return (m_image) ? m_image.get() : nullptr;
+	}
+
 protected:
 	ResourceString m_name;
 	U32 m_offsetInLocalConstants = kMaxU32;
@@ -94,7 +99,6 @@ protected:
 	{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) type ANKI_CONCATENATE(m_, type);
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
 	};
 
 	ImageResourcePtr m_image;
@@ -109,11 +113,8 @@ protected:
 		ANKI_ASSERT(m_dataType == ShaderVariableDataType::k##type); \
 		return member; \
 	}
-
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type))
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
-
 #undef ANKI_SPECIALIZE_GET_VALUE
 
 template<>
@@ -222,6 +223,8 @@ public:
 		return ConstWeakArray<U8>(static_cast<const U8*>(m_prefilledLocalConstants), m_localConstantsSize);
 	}
 
+	Bool isLoaded() const;
+
 private:
 	class PartialMutation
 	{
@@ -256,6 +259,8 @@ private:
 	Bool m_supportsSkinning = false;
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
 	ShaderTechniqueBit m_shaderTechniques = ShaderTechniqueBit::kNone;
+
+	mutable Atomic<U32> m_loaded = {0};
 
 	Error parseMutators(XmlElement mutatorsEl);
 	Error parseShaderProgram(XmlElement techniqueEl, Bool async);

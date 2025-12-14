@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Gr.h>
 
 namespace anki {
@@ -13,9 +14,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_gbufferVrsCVar("R", "GBufferVrs", false, "Enable VRS in GBuffer");
-inline BoolCVar g_visualizeGiProbesCVar("R", "VisualizeGiProbes", false, "Visualize GI probes");
-inline BoolCVar g_visualizeReflectionProbesCVar("R", "VisualizeReflProbes", false, "Visualize reflection probes");
+ANKI_CVAR(BoolCVar, Render, VisualizeGiProbes, false, "Visualize GI probes")
+ANKI_CVAR(BoolCVar, Render, VisualizeReflectionProbes, false, "Visualize reflection probes")
 
 /// G buffer stage. It populates the G buffer
 class GBuffer : public RendererObject
@@ -26,6 +26,10 @@ public:
 		registerDebugRenderTarget("GBufferNormals");
 		registerDebugRenderTarget("GBufferAlbedo");
 		registerDebugRenderTarget("GBufferVelocity");
+		registerDebugRenderTarget("GBufferRoughness");
+		registerDebugRenderTarget("GBufferMetallic");
+		registerDebugRenderTarget("GBufferSubsurface");
+		registerDebugRenderTarget("GBufferEmission");
 	}
 
 	~GBuffer();
@@ -57,24 +61,19 @@ public:
 		return m_runCtx.m_hzbRt;
 	}
 
-	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
+							  DebugRenderTargetDrawStyle& drawStyle) const override;
 
 	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
-	void getVisibleAabbsBuffer(BufferView& visibleAaabbIndicesBuffer, BufferHandle& dep) const
+	const GpuVisibilityOutput& getVisibilityOutput() const
 	{
-		visibleAaabbIndicesBuffer = m_runCtx.m_visibleAaabbIndicesBuffer;
-		dep = m_runCtx.m_visibleAaabbIndicesBufferDepedency;
-		ANKI_ASSERT(visibleAaabbIndicesBuffer.isValid() && dep.isValid());
+		return m_runCtx.m_visOut;
 	}
 
 private:
 	Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	TexturePtr m_hzbRt;
-
-	ShaderProgramResourcePtr m_visNormalProg;
-	ShaderProgramPtr m_visNormalGrProg;
 
 	ShaderProgramResourcePtr m_visualizeProbeProg;
 	ShaderProgramPtr m_visualizeGiProbeGrProg;
@@ -88,8 +87,7 @@ private:
 		RenderTargetHandle m_prevFrameDepthRt;
 		RenderTargetHandle m_hzbRt;
 
-		BufferView m_visibleAaabbIndicesBuffer; ///< Optional
-		BufferHandle m_visibleAaabbIndicesBufferDepedency;
+		GpuVisibilityOutput m_visOut;
 	} m_runCtx;
 };
 /// @}

@@ -68,22 +68,18 @@ vector<T, 3> signedOctDecode(vector<T, 3> n)
 
 // Vectorized version. Assumes that v is in [0.0, 1.0]
 template<typename T>
-U32 newPackUnorm4x8(const vector<T, 4> v)
+U32 packUnorm4x8(const vector<T, 4> value)
 {
-	const vector<T, 4> a = v * 255.0;
-	const UVec4 b = UVec4(a) << UVec4(0u, 8u, 16u, 24u);
-	const UVec2 c = b.xy | b.zw;
-	return c.x | c.y;
+	const UVec4 packed = UVec4(value * T(255));
+	return packed.x | (packed.y << 8u) | (packed.z << 16u) | (packed.w << 24u);
 }
 
-// Vectorized version
+// Reverse of packUnorm4x8
 template<typename T>
-vector<T, 4> newUnpackUnorm4x8(const U32 u)
+vector<T, 4> unpackUnorm4x8(const U32 value)
 {
-	const UVec4 a = ((UVec4)u) >> UVec4(0u, 8u, 16u, 24u);
-	const UVec4 b = a & ((UVec4)0xFFu);
-	const Vec4 c = Vec4(b);
-	return c * T(1.0 / 255.0);
+	const UVec4 packed = UVec4(value & 0xFF, (value >> 8u) & 0xFF, (value >> 16u) & 0xff, value >> 24u);
+	return vector<T, 4>(packed) / T(255);
 }
 
 template<typename T>
@@ -166,10 +162,10 @@ struct GbufferInfo
 
 struct GBufferPixelOut
 {
-	ANKI_RELAXED_PRECISION Vec4 m_rt0 : SV_Target0;
-	ANKI_RELAXED_PRECISION Vec4 m_rt1 : SV_Target1;
-	ANKI_RELAXED_PRECISION Vec4 m_rt2 : SV_Target2;
-	Vec2 m_rt3 : SV_Target3;
+	ANKI_RELAXED_PRECISION Vec4 m_rt0 : SV_TARGET0;
+	ANKI_RELAXED_PRECISION Vec4 m_rt1 : SV_TARGET1;
+	ANKI_RELAXED_PRECISION Vec4 m_rt2 : SV_TARGET2;
+	Vec2 m_rt3 : SV_TARGET3;
 };
 
 // Populate the G buffer
@@ -220,6 +216,13 @@ template<typename T>
 T unpackRoughnessFromGBuffer(vector<T, 4> rt1)
 {
 	return unpackRoughnessFromGBuffer<T>(rt1, kMinRoughness);
+}
+
+template<typename T>
+vector<T, 2> unpackSubsurfaceAndMetallicFromGBuffer(vector<T, 4> rt0)
+{
+	const vector<T, 2> unpackedSubsurfaceMetallic = unpackUnorm1ToUnorm2(rt0.w);
+	return unpackedSubsurfaceMetallic;
 }
 
 // Read part of the G-buffer

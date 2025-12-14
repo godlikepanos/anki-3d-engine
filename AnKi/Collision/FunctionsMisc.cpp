@@ -17,9 +17,9 @@ void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane)
 	case i: \
 	{ \
 		const Vec4 planeEqationCoefs = mvp.getRow(a) op mvp.getRow(b); \
-		const Vec4 n = planeEqationCoefs.xyz0(); \
+		const Vec4 n = planeEqationCoefs.xyz0; \
 		const F32 len = n.length(); \
-		plane = Plane(n / len, -planeEqationCoefs.w() / len); \
+		plane = Plane(n / len, -planeEqationCoefs.w / len); \
 		break; \
 	}
 
@@ -28,9 +28,9 @@ void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane)
 	case FrustumPlaneType::kNear:
 	{
 		const Vec4 planeEqationCoefs = mvp.getRow(2);
-		const Vec4 n = planeEqationCoefs.xyz0();
+		const Vec4 n = planeEqationCoefs.xyz0;
 		const F32 len = n.length();
-		plane = Plane(n / len, -planeEqationCoefs.w() / len);
+		plane = Plane(n / len, -planeEqationCoefs.w / len);
 		break;
 	}
 		ANKI_CASE(FrustumPlaneType::kFar, 3, -, 2)
@@ -146,7 +146,7 @@ Vec4 computeBoundingSphereRecursive(WeakArray<const Vec3*> pPoints, U32 begin, U
 			return m11 * (m22 * m33 - m32 * m23) - m21 * (m12 * m33 - m32 * m13) + m31 * (m12 * m23 - m22 * m13);
 		};
 
-		const F32 denominator = 2.0f * compDet(a.x(), a.y(), a.z(), b.x(), b.y(), b.z(), c.x(), c.y(), c.z());
+		const F32 denominator = 2.0f * compDet(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
 
 		Vec3 o = c.dot(c) * a.cross(b);
 		o += b.dot(b) * c.cross(a);
@@ -167,8 +167,8 @@ Vec4 computeBoundingSphereRecursive(WeakArray<const Vec3*> pPoints, U32 begin, U
 
 	for(U32 i = 0; i < p; i++)
 	{
-		const F32 distSq = (sphere.xyz() - *pPoints[begin + i]).lengthSquared();
-		const F32 radiusSq = sphere.w() * sphere.w();
+		const F32 distSq = (sphere.xyz - *pPoints[begin + i]).lengthSquared();
+		const F32 radiusSq = sphere.w * sphere.w;
 
 		if(distSq > radiusSq)
 		{
@@ -213,7 +213,7 @@ Sphere computeBoundingSphere(const Vec3* firstPoint, U32 pointCount, PtrSize str
 
 	const Vec4 sphere = computeBoundingSphereRecursive(pPoints, 0, pPoints.getSize(), 0);
 
-	return Sphere(sphere.xyz(), sphere.w());
+	return Sphere(sphere.xyz, sphere.w);
 }
 
 Aabb computeBoundingAabb(const Vec3* firstPoint, U32 pointCount, PtrSize stride)

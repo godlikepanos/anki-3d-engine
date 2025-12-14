@@ -18,12 +18,12 @@
 namespace anki {
 
 /// Template class that holds SIMD info for the math classes.
-template<typename T, U N>
+template<typename T, U32 N>
 class MathSimd
 {
 public:
 	using Type = T[N];
-	static constexpr U kAlignment = alignof(T);
+	static constexpr U32 kAlignment = alignof(T);
 };
 
 #if ANKI_SIMD_SSE
@@ -33,7 +33,7 @@ class MathSimd<F32, 4>
 {
 public:
 	using Type = __m128;
-	static constexpr U kAlignment = 16;
+	static constexpr U32 kAlignment = 16;
 };
 #elif ANKI_SIMD_NEON
 // Specialize for F32
@@ -42,7 +42,7 @@ class MathSimd<F32, 4>
 {
 public:
 	using Type = float32x4_t;
-	static constexpr U kAlignment = 16;
+	static constexpr U32 kAlignment = 16;
 };
 #endif
 

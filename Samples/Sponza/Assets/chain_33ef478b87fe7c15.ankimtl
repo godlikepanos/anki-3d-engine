@@ -7,15 +7,13 @@
 			<mutator name="SPECULAR_TEX" value="0"/>
 			<mutator name="ROUGHNESS_METALNESS_TEX" value="0"/>
 			<mutator name="NORMAL_TEX" value="0"/>
-			<mutator name="PARALLAX" value="0"/>
 			<mutator name="EMISSIVE_TEX" value="0"/>
 			<mutator name="ALPHA_TEST" value="0"/>
 		</mutation>
 	</shaderProgram>
 
 	<inputs>
-		
-		<input name="m_diffuseTex" value="Assets/chain_texture_tga.ankitex"/>
+		<input name="m_diffuseTex" value="Assets/chain_texture.ankitex.ankitex"/>
 		<input name="m_diffuseScale" value="1.000000 1.000000 1.000000 1.000000"/>
 		<input name="m_specularScale" value="0.040000 0.040000 0.040000"/>
 		<input name="m_roughnessScale" value="0.500000"/>
@@ -23,6 +21,5 @@
 		
 		<input name="m_emissionScale" value="0.000000 0.000000 0.000000"/>
 		<input name="m_subsurface" value="0.000000"/>
-		
 	</inputs>
 </material>

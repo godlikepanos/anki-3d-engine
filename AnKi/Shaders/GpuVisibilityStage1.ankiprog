@@ -27,7 +27,6 @@ StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes :
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
 StructuredBuffer<Mat3x4> g_transforms : register(t3);
-StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t4);
 
 // 1st counter is the visible renderable count, 2nd the visible meshlet count and 3rd the number of threadgroups having been executed
 RWStructuredBuffer<U32> g_counters : register(u0);
@@ -52,7 +51,8 @@ RWStructuredBuffer<DispatchIndirectArgs> g_gpuVisIndirectDispatchArgs : register
 RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u6);
 
 #if GATHER_AABBS
-RWStructuredBuffer<U32> g_visibleAabbIndices : register(u7); // Indices of the visible AABBs. The 1st element is the count.
+// Indices of the visible AABBs. The 1st element is the count.
+RWStructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleAabbIndices : register(u7);
 #endif
 
 #if HASH_VISIBLES
@@ -66,7 +66,7 @@ ANKI_FAST_CONSTANTS(DistanceGpuVisibilityConstants, g_consts)
 #endif
 
 #if HZB_TEST
-Texture2D<Vec4> g_hzbTex : register(t5);
+Texture2D<Vec4> g_hzbTex : register(t4);
 SamplerState g_nearestAnyClampSampler : register(s0);
 #endif
 
@@ -176,13 +176,13 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 
 		// Add the object
 		//
-		const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
+		const U32 renderableIdx = bvolume.m_renderableIndex;
 		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
-		const U32 renderStateBucket = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit & ((1u << 12u) - 1u);
+		const U32 renderStateBucket = bvolume.m_renderStateBucket;
 		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
 		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
 
-		const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32;
+		const Bool isParticleEmitter = renderable.m_particleEmitterIndex2 < kMaxU32;
 		ANKI_MAYBE_UNUSED(isParticleEmitter);
 
 		const Bool hasMeshlets = meshLod.m_meshletCount != 0u;
@@ -190,8 +190,10 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		{
 #if GATHER_MESHLETS
 			GpuVisibilityVisibleMeshletDesc desc;
-			desc.m_renderableIndex_30bit_renderStageBucket_12bit = (renderableIdx << 12u) | renderStateBucket;
-			desc.m_lod_2bit_meshletIndex_30bit = lod << 30u;
+			desc.m_renderableIndex = renderableIdx;
+			desc.m_renderStateBucket = renderStateBucket;
+			desc.m_lod = lod;
+			desc.m_meshletIndex = 0;
 
 			// X dimension will be fixed later
 			U32 firstMeshletIndex;
@@ -209,7 +211,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 				for(U32 i = 0; i < meshLod.m_meshletCount; ++i)
 				{
 					SBUFF(g_visibleMeshlets, firstMeshletIndex + i) = desc;
-					++desc.m_lod_2bit_meshletIndex_30bit;
+					++desc.m_meshletIndex;
 				}
 
 				// Add to the next bucket
@@ -237,9 +239,9 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 
 				// Store the renderable
 				GpuVisibilityVisibleRenderableDesc visRenderable;
-				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit = lod << 30u;
-				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit |= renderableIdx << 10u;
-				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit |= renderStateBucket;
+				visRenderable.m_lod = lod;
+				visRenderable.m_renderableIndex = renderableIdx;
+				visRenderable.m_renderStateBucket = renderStateBucket;
 				SBUFF(g_visibleRenderables, firstInstance) = visRenderable;
 
 				// Add to the next bucket
@@ -277,7 +279,12 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 #if GATHER_AABBS
 		U32 index;
 		InterlockedAdd(SBUFF(g_visibleAabbIndices, 0), 1, index);
-		SBUFF(g_visibleAabbIndices, index + 1) = bvolumeIdx;
+		const U32 maxCount = getStructuredBufferElementCount(g_visibleAabbIndices) - 1;
+		if(index < maxCount)
+		{
+			const LodAndGpuSceneRenderableBoundingVolumeIndex pack = (lod << 29u) | bvolumeIdx;
+			SBUFF(g_visibleAabbIndices, index + 1) = pack;
+		}
 #endif
 	}
 
@@ -356,6 +363,16 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 
 			// Reset it for the next job
 			SBUFF(g_counters, (U32)GpuVisibilityCounter::kThreadgroupCount) = 0;
+
+#if GATHER_AABBS
+			// Fix the count if needed
+			const U32 count = SBUFF(g_visibleAabbIndices, 0);
+			const U32 maxCount = getStructuredBufferElementCount(g_visibleAabbIndices) - 1;
+			if(count > maxCount)
+			{
+				SBUFF(g_visibleAabbIndices, 0) = maxCount;
+			}
+#endif
 		}
 	}
 }

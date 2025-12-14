@@ -9,18 +9,26 @@
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
+#include <AnKi/Shaders/Sky.hlsl>
 
-struct [raypayload] RtMaterialFetchRayPayload // TODO make it FP16 when you change the GBufferGeneric.ankiprog
+struct [raypayload] RtMaterialFetchRayPayload
 {
-	HVec3 m_diffuseColor : write(closesthit, miss): read(caller);
-	HVec3 m_worldNormal : write(closesthit, miss): read(caller);
-	HVec3 m_emission : write(closesthit, miss): read(caller);
-	F16 m_textureLod : write(caller): read(closesthit);
+	// Use FP32 on D3D because FP16 crashes at least on nVidia
+#if ANKI_GR_BACKEND_VULKAN
+#	define PAYLOAD_SCALAR F16
+#else
+#	define PAYLOAD_SCALAR F32
+#endif
+	vector<PAYLOAD_SCALAR, 3> m_diffuseColor : write(closesthit, miss): read(caller);
+	vector<PAYLOAD_SCALAR, 3> m_worldNormal : write(closesthit, miss): read(caller);
+	vector<PAYLOAD_SCALAR, 3> m_emission : write(closesthit, miss): read(caller);
+	PAYLOAD_SCALAR m_textureLod : write(caller): read(closesthit);
 	F32 m_rayT : write(closesthit, miss): read(caller);
+#undef PAYLOAD_SCALAR
 };
 
 // Have a common resouce interface for all shaders. It should be compatible between all ray shaders in DX and VK
-#if ANKI_RAY_GEN_SHADER
+#if ANKI_RAY_GEN_SHADER || defined(INCLUDE_ALL)
 #	define SPACE space2
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0, SPACE);
@@ -31,21 +39,21 @@ RaytracingAccelerationStructure g_tlas : register(t0, SPACE);
 Texture2D<Vec4> g_envMap : register(t1, SPACE);
 Texture2D<Vec4> g_shadowAtlasTex : register(t2, SPACE);
 
-#	if defined(CLIPMAP_VOLUME)
-StructuredBuffer<U32> g_dummyBuff1 : register(t3, SPACE);
-StructuredBuffer<U32> g_dummyBuff2 : register(t4, SPACE);
-#	else
+#	if !defined(CLIPMAP_VOLUME)
 StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t3, SPACE);
-StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t4, SPACE);
+
+Texture2D<Vec4> g_depthTex : register(t4, SPACE);
+Texture2D<Vec4> g_gbufferRt1 : register(t5, SPACE);
+Texture2D<Vec4> g_gbufferRt2 : register(t6, SPACE);
+
+StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t7, SPACE);
 #	endif
 
-#	if defined(CLIPMAP_VOLUME)
-Texture2D<Vec4> g_dummyTex[3] : register(t5, SPACE);
-#	else
-Texture2D<Vec4> g_depthTex : register(t5, SPACE);
-Texture2D<Vec4> g_gbufferRt1 : register(t6, SPACE);
-Texture2D<Vec4> g_gbufferRt2 : register(t7, SPACE);
-#	endif
+// Output of GpuVisibilityLocalLights:
+StructuredBuffer<GpuSceneLight> g_lights : register(t8, SPACE);
+StructuredBuffer<U32> g_lightIndexCountsPerCell : register(t9, SPACE);
+StructuredBuffer<U32> g_lightIndexOffsetsPerCell : register(t10, SPACE);
+StructuredBuffer<U32> g_lightIndexList : register(t11, SPACE);
 
 // UAVs
 #	if defined(CLIPMAP_VOLUME)
@@ -93,16 +101,7 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	if(hasHitSky)
 	{
 		gbuffer = (GBufferLight<T>)0;
-
-		if(g_globalRendererConstants.m_sky.m_type == 0)
-		{
-			gbuffer.m_emission = g_globalRendererConstants.m_sky.m_solidColor;
-		}
-		else
-		{
-			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
-			gbuffer.m_emission = g_envMap.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
-		}
+		gbuffer.m_emission = sampleSkyCheap<T>(g_globalRendererConstants.m_sky, rayDir, g_linearAnyClampSampler);
 	}
 	else
 	{
@@ -115,50 +114,164 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 }
 
 template<typename T>
-vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bool tryShadowmapFirst, F32 shadowTMax,
+Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT,
+							  out Bool backfacing)
+{
+	gbuffer = (GBufferLight<T>)0;
+	Bool hit = false;
+	rayT = -1.0;
+	backfacing = false;
+
+#	if ANKI_GR_BACKEND_VULKAN
+	RayQuery<RAY_FLAG_FORCE_OPAQUE> q;
+	const U32 cullMask = 0xFFu;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = tMin;
+	ray.Direction = rayDir;
+	ray.TMax = tMax;
+	q.TraceRayInline(g_tlas, RAY_FLAG_FORCE_OPAQUE, cullMask, ray);
+	while(q.Proceed())
+	{
+	}
+	hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+
+	if(!hit)
+	{
+		backfacing = false;
+		gbuffer.m_emission = sampleSkyCheap<T>(g_globalRendererConstants.m_sky, rayDir, g_linearAnyClampSampler);
+		rayT = -1.0;
+	}
+	else
+	{
+		backfacing = q.CommittedTriangleFrontFace();
+
+		// Read the diff color from the AS instance
+		UVec3 diffColoru = q.CommittedInstanceID();
+		diffColoru >>= UVec3(16, 8, 0);
+		diffColoru &= 0xFF;
+		gbuffer.m_diffuse = Vec3(diffColoru) / 255.0;
+
+		// Compute the normal
+		const Vec3 positions[3] = spvRayQueryGetIntersectionTriangleVertexPositionsKHR(q, SpvRayQueryCommittedIntersectionKHR);
+		const Vec3 vertNormal = normalize(cross(positions[1] - positions[0], positions[2] - positions[1]));
+		gbuffer.m_worldNormal = normalize(mul(q.CommittedObjectToWorld3x4(), Vec4(vertNormal, 0.0)));
+
+		rayT = q.CommittedRayT();
+	}
+#	endif
+
+	return hit;
+}
+
+Bool rayVisibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax, U32 traceFlags)
+{
+	RayQuery<RAY_FLAG_NONE> q;
+	const U32 cullMask = 0xFFu;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = 0.01;
+	ray.Direction = rayDir;
+	ray.TMax = tMax;
+	q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
+	while(q.Proceed())
+	{
+	}
+	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+
+	return hit;
+}
+
+template<typename T>
+vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bool tryShadowmapFirst, F32 shadowTMax, Bool doLocalLightShadow,
 							U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH)
 {
 	vector<T, 3> color = gbuffer.m_emission;
 
-	if(!isSky)
+	if(isSky)
 	{
-		const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
+		return color;
+	}
 
-		// Trace shadow
-		Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
-		vv4.xy /= vv4.w;
-		const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
-
-		F32 shadow;
-		if(bInsideFrustum && tryShadowmapFirst)
-		{
-			const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
-			const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
-
-			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
-
-			shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
-		}
-		else
-		{
-			RayQuery<RAY_FLAG_NONE> q;
-			const U32 cullMask = 0xFFu;
-			RayDesc ray;
-			ray.Origin = hitPos;
-			ray.TMin = 0.01;
-			ray.Direction = -dirLight.m_direction;
-			ray.TMax = shadowTMax;
-			q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
-			q.Proceed();
-			shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
-		}
-
-		// Do simple light shading
-
+	// Sun
+	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
+	if(dirLight.m_active)
+	{
 		const vector<T, 3> l = -dirLight.m_direction;
-		const T lambert = max(T(0), dot(l, gbuffer.m_worldNormal));
-		const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
-		color += diffC * dirLight.m_diffuseColor * lambert * shadow;
+		const T lambert = dot(l, gbuffer.m_worldNormal);
+
+		if(lambert > T(0))
+		{
+			F32 shadow = 1.0;
+			if(dirLight.m_shadowCascadeCount)
+			{
+				// Trace shadow
+				Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
+				vv4.xy /= vv4.w;
+				const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
+
+				if(bInsideFrustum && tryShadowmapFirst)
+				{
+					const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
+					const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
+
+					const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
+
+					shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
+				}
+				else
+				{
+					shadow = rayVisibility(hitPos, -dirLight.m_direction, shadowTMax, traceFlags) ? 0.0 : 1.0;
+				}
+			}
+
+			// Simple light shading
+			const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
+			color += diffC * dirLight.m_diffuseColor * lambert * shadow;
+		}
+	}
+
+	// Local lights
+	const LocalLightsGridConstants lightGrid = g_globalRendererConstants.m_localLightsGrid;
+	if(all(hitPos < lightGrid.m_volumeMax) && all(hitPos > lightGrid.m_volumeMin))
+	{
+		const UVec3 cellId = (hitPos - lightGrid.m_volumeMin) / lightGrid.m_cellSize;
+		const U32 cellIdx = cellId.z * lightGrid.m_cellCounts.x * lightGrid.m_cellCounts.y + cellId.y * lightGrid.m_cellCounts.x + cellId.x;
+
+		// Compute an attenuation factor that will fade out the resulting color at the edges of the grid
+		Vec3 a = (hitPos - lightGrid.m_volumeMin) / (lightGrid.m_volumeMax - lightGrid.m_volumeMin);
+		a = abs(a * 2.0 - 1.0);
+		a = 1.0 - a;
+		const F32 gridEdgesAttenuation = sqrt(a.x * a.y * a.z);
+
+		const U32 lightCount = SBUFF(g_lightIndexCountsPerCell, cellIdx);
+		const U32 listOffset = SBUFF(g_lightIndexOffsetsPerCell, cellIdx);
+
+		for(U32 i = 0; i < lightCount; ++i)
+		{
+			const U32 lightIdx = SBUFF(g_lightIndexList, listOffset + i);
+			const GpuSceneLight light = SBUFF(g_lights, lightIdx);
+
+			const Vec3 frag2Light = light.m_position - hitPos;
+			const Vec3 nFrag2Light = normalize(frag2Light);
+			const T lambert = max(T(0), dot(nFrag2Light, gbuffer.m_worldNormal));
+
+			F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+			if(light.m_isSpotLight)
+			{
+				attenuation *= computeSpotFactor(nFrag2Light, light.m_outerCos, light.m_innerCos, light.m_direction);
+			}
+
+			if(attenuation > kEpsilonF32 && lambert > kEpsilonF32 && doLocalLightShadow)
+			{
+				const F32 shadowFactor = rayVisibility(hitPos, nFrag2Light, length(frag2Light) - 0.1, traceFlags) ? 0.0 : 1.0;
+				attenuation *= shadowFactor;
+			}
+
+			const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
+			color += diffC * light.m_diffuseColor * lambert * attenuation * gridEdgesAttenuation;
+			// color += Vec3(0.5, 0, 0);
+		}
 	}
 
 	return color;

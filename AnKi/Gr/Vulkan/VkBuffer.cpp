@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/VkBuffer.h>
-#include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 
 namespace anki {
@@ -92,24 +91,6 @@ BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
 
-	BufferGarbage* garbage = anki::newInstance<BufferGarbage>(GrMemoryPool::getSingleton());
-	garbage->m_bufferHandle = m_handle;
-	garbage->m_memoryHandle = m_memHandle;
-
-	if(m_views.getSize())
-	{
-		garbage->m_viewHandles.resize(U32(m_views.getSize()));
-
-		U32 count = 0;
-		for(auto it : m_views)
-		{
-			const VkBufferView view = it;
-			garbage->m_viewHandles[count++] = view;
-		}
-	}
-
-	getGrManagerImpl().getFrameGarbageCollector().newBufferGarbage(garbage);
-
 #if ANKI_ASSERTIONS_ENABLED
 	if(m_needsFlush && m_flushCount.load() == 0)
 	{
@@ -121,6 +102,21 @@ BufferImpl::~BufferImpl()
 		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
 	}
 #endif
+
+	for(VkBufferView view : m_views)
+	{
+		vkDestroyBufferView(getVkDevice(), view, nullptr);
+	}
+
+	if(m_handle)
+	{
+		vkDestroyBuffer(getVkDevice(), m_handle, nullptr);
+	}
+
+	if(m_memHandle)
+	{
+		GpuMemoryManager::getSingleton().freeMemory(m_memHandle);
+	}
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
@@ -135,7 +131,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(usage != BufferUsageBit::kNone);
 
-	m_mappedMemoryRangeAlignment = getGrManagerImpl().getPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+	m_mappedMemoryRangeAlignment = getGrManagerImpl().getVulkanCapabilities().m_nonCoherentAtomSize;
 
 	// Align the size to satisfy fill buffer
 	alignRoundUp(4, size);
@@ -337,7 +333,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 	}
 
-	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)) && rt)
+	if(!!(usage & (BufferUsageBit::kAllDispatchRays & ~BufferUsageBit::kIndirectDispatchRays)) && rt)
 	{
 		stageMask |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 	}
@@ -450,7 +446,7 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0 && "Range doesn't align with the number of texel elements");
 
 	[[maybe_unused]] const PtrSize elementCount = range / getFormatInfo(fmt).m_texelSize;
-	ANKI_ASSERT(elementCount <= getGrManagerImpl().getPhysicalDeviceProperties().limits.maxTexelBufferElements);
+	ANKI_ASSERT(elementCount <= getGrManagerImpl().getVulkanCapabilities().m_maxTexelBufferElements);
 
 	// Hash
 	ANKI_BEGIN_PACKED_STRUCT

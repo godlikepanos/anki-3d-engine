@@ -189,7 +189,7 @@ static void optimizeSubmesh(SubMesh& submesh)
 		ImporterDynamicArray<U32> newIdxArray;
 		newIdxArray.resize(submesh.m_indices.getSize(), 0);
 
-		meshopt_optimizeOverdraw(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(),
+		meshopt_optimizeOverdraw(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x,
 								 submesh.m_verts.getSize(), vertSize, 1.05f);
 
 		submesh.m_indices = std::move(newIdxArray);
@@ -228,7 +228,7 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh)
 	// Decimate
 	ImporterDynamicArray<U32> newIndices;
 	newIndices.resize(submesh.m_indices.getSize());
-	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(),
+	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x,
 										   submesh.m_verts.getSize(), sizeof(TempVertex), targetIndexCount, 1e-2f)));
 
 	// Re-pack
@@ -317,13 +317,13 @@ static Bool isConvex(const ImporterList<SubMesh>& submeshes)
 			}
 
 			// Check that all positions are behind the plane
-			const Plane plane(v0.xyz0(), v1.xyz0(), v2.xyz0());
+			const Plane plane(v0.xyz0, v1.xyz0, v2.xyz0);
 
 			for(const SubMesh& submeshB : submeshes)
 			{
 				for(const TempVertex& vertB : submeshB.m_verts)
 				{
-					const F32 test = testPlane(plane, vertB.m_position.xyz0());
+					const F32 test = testPlane(plane, vertB.m_position.xyz0);
 					if(test > kEpsilonf)
 					{
 						convex = false;
@@ -365,7 +365,7 @@ static void generateMeshlets(SubMesh& submesh)
 	constexpr F32 coneWeight = 0.0f;
 	const U32 meshletCount =
 		U32(meshopt_buildMeshlets(meshlets.getBegin(), indicesToVertexBuffer.getBegin(), localIndices.getBegin(), submesh.m_indices.getBegin(),
-								  submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), sizeof(TempVertex),
+								  submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x, submesh.m_verts.getSize(), sizeof(TempVertex),
 								  kMaxVerticesPerMeshlet, kMaxPrimitivesPerMeshlet, coneWeight));
 
 	// Trim the arrays
@@ -436,7 +436,7 @@ static void generateMeshlets(SubMesh& submesh)
 		// Compute bounds
 		const meshopt_Bounds bounds =
 			meshopt_computeMeshletBounds(&indicesToVertexBuffer[inMeshlet.vertex_offset], &localIndices[inMeshlet.triangle_offset],
-										 inMeshlet.triangle_count, &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), sizeof(TempVertex));
+										 inMeshlet.triangle_count, &submesh.m_verts[0].m_position.x, submesh.m_verts.getSize(), sizeof(TempVertex));
 		outMeshlet.m_coneApex = Vec3(&bounds.cone_apex[0]);
 		outMeshlet.m_coneDir = Vec3(&bounds.cone_axis[0]);
 		outMeshlet.m_coneAngle = acos(bounds.cone_cutoff) * 2.0f;
@@ -614,7 +614,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
 		const Sphere s = computeBoundingSphere(&submesh.m_verts[0].m_position, submesh.m_verts.getSize(), sizeof(submesh.m_verts[0]));
-		submesh.m_sphereCenter = s.getCenter().xyz();
+		submesh.m_sphereCenter = s.getCenter().xyz;
 		submesh.m_sphereRadius = max(kEpsilonf * 10.0f, s.getRadius());
 
 		// Fix normals
@@ -726,7 +726,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 	header.m_boundingVolume.m_aabbMin = aabbMin;
 	header.m_boundingVolume.m_aabbMax = aabbMax;
 	const Sphere s = computeBoundingSphere(&allPositions[0], allPositions.getSize(), sizeof(allPositions[0]));
-	header.m_boundingVolume.m_sphereCenter = s.getCenter().xyz();
+	header.m_boundingVolume.m_sphereCenter = s.getCenter().xyz;
 	header.m_boundingVolume.m_sphereRadius = s.getRadius();
 
 	// Compute the pos scale and transform. The scale is uniform because it's applied to the model matrix of the object
@@ -738,7 +738,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 	posScale = (posScale < 1.0f) ? 1.0f : (1.0f / posScale);
 	const Vec3 posTranslation = -aabbMin;
 
-	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header, Vec4(1.0f / posScale), (-posTranslation).xyz1());
+	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header, Vec4(1.0f / posScale), (-posTranslation).xyz1);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kNormal, header);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kUv, header);
 	if(hasBoneWeights)
@@ -819,7 +819,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 				localPos = localPos.clamp(0.0f, 1.0f);
 				localPos *= F32(kMaxU16);
 				localPos = localPos.round();
-				positions[v] = U16Vec4(localPos.xyz0());
+				positions[v] = U16Vec4(localPos.xyz0);
 			}
 
 			ANKI_CHECK(file.write(&positions[0], positions.getSizeInBytes()));
@@ -832,7 +832,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 			normals.resize(submesh.m_verts.getSize());
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
-				normals[v] = packSnorm4x8(submesh.m_verts[v].m_normal.xyz0());
+				normals[v] = submesh.m_verts[v].m_normal.xyz0.packSnorm4x8();
 			}
 
 			ANKI_CHECK(file.write(&normals[0], normals.getSizeInBytes()));
@@ -873,7 +873,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 				boneWeights.resize(submesh.m_verts.getSize());
 				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 				{
-					boneWeights[v] = packSnorm4x8(submesh.m_verts[v].m_boneWeights);
+					boneWeights[v] = submesh.m_verts[v].m_boneWeights.packSnorm4x8();
 				}
 
 				ANKI_CHECK(file.write(&boneWeights[0], boneWeights.getSizeInBytes()));
@@ -901,10 +901,10 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 				out.m_vertexCount = in.m_vertexCount;
 				vertCount2 += in.m_vertexCount;
 
-				out.m_boundingVolume.m_sphereCenter = in.m_sphere.getCenter().xyz();
+				out.m_boundingVolume.m_sphereCenter = in.m_sphere.getCenter().xyz;
 				out.m_boundingVolume.m_sphereRadius = in.m_sphere.getRadius();
-				out.m_boundingVolume.m_aabbMin = in.m_aabb.getMin().xyz();
-				out.m_boundingVolume.m_aabbMax = in.m_aabb.getMax().xyz();
+				out.m_boundingVolume.m_aabbMin = in.m_aabb.getMin().xyz;
+				out.m_boundingVolume.m_aabbMax = in.m_aabb.getMax().xyz;
 
 				out.m_coneApex = in.m_coneApex;
 				out.m_coneDirection = in.m_coneDir;

@@ -10,15 +10,12 @@
 #include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Gr/GrManager.h>
+#include <AnKi/Util/Assert.h>
 
 namespace anki {
 
-/// @addtogroup gpu_memory
-/// @{
+ANKI_CVAR(NumericCVar<PtrSize>, Core, GpuSceneInitialSize, 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene")
 
-inline NumericCVar<PtrSize> g_gpuSceneInitialSizeCVar("Core", "GpuSceneInitialSize", 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene");
-
-/// @memberof GpuSceneBuffer
 class GpuSceneBufferAllocation
 {
 	friend class GpuSceneBuffer;
@@ -45,12 +42,17 @@ public:
 		return *this;
 	}
 
+	explicit operator Bool() const
+	{
+		return isValid();
+	}
+
 	Bool isValid() const
 	{
 		return m_token.m_offset != kMaxPtrSize;
 	}
 
-	/// Get offset in the Unified Geometry Buffer buffer.
+	// Get offset in the Unified Geometry Buffer buffer.
 	U32 getOffset() const
 	{
 		ANKI_ASSERT(isValid());
@@ -67,7 +69,7 @@ private:
 	SegregatedListsGpuMemoryPoolToken m_token;
 };
 
-/// Memory pool for the GPU scene.
+// Memory pool for the GPU scene.
 class GpuSceneBuffer : public MakeSingleton<GpuSceneBuffer>
 {
 	template<typename>
@@ -136,7 +138,7 @@ inline GpuSceneBufferAllocation::~GpuSceneBufferAllocation()
 	GpuSceneBuffer::getSingleton().deferredFree(*this);
 }
 
-/// Creates the copy jobs that will patch the GPU Scene.
+// Creates the copy jobs that will patch the GPU Scene.
 class GpuSceneMicroPatcher : public MakeSingleton<GpuSceneMicroPatcher>
 {
 	template<typename>
@@ -149,44 +151,59 @@ public:
 
 	Error init();
 
-	/// Copy data for the GPU scene to a staging buffer.
-	/// @note It's thread-safe.
-	void newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, PtrSize dataSize, const void* data);
+	// 1st thing to call before any calls to newCopy
+	// Note: Not thread-safe
+	void beginPatching();
 
+	// 2nd thing to call
+	// Copy data for the GPU scene to a staging buffer.
+	// Note: It's thread-safe against other newCopy()
+	void newCopy(PtrSize gpuSceneDestOffset, PtrSize dataSize, const void* data);
+
+	// See newCopy
 	template<typename T>
-	void newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, const T& value)
+	void newCopy(PtrSize gpuSceneDestOffset, const T& value)
 	{
-		newCopy(frameCpuPool, gpuSceneDestOffset, sizeof(value), &value);
+		newCopy(gpuSceneDestOffset, sizeof(value), &value);
 	}
 
-	/// @see newCopy
-	void newCopy(StackMemoryPool& frameCpuPool, const GpuSceneBufferAllocation& dest, PtrSize dataSize, const void* data)
+	// See newCopy
+	void newCopy(const GpuSceneBufferAllocation& dest, PtrSize dataSize, const void* data)
 	{
 		ANKI_ASSERT(dataSize <= dest.getAllocatedSize());
-		newCopy(frameCpuPool, dest.getOffset(), dataSize, data);
+		newCopy(dest.getOffset(), dataSize, data);
 	}
 
-	/// @see newCopy
+	// See newCopy
 	template<typename T>
-	void newCopy(StackMemoryPool& frameCpuPool, const GpuSceneBufferAllocation& dest, const T& value)
+	void newCopy(const GpuSceneBufferAllocation& dest, const T& value)
 	{
 		ANKI_ASSERT(sizeof(value) <= dest.getAllocatedSize());
-		newCopy(frameCpuPool, dest.getOffset(), sizeof(value), &value);
+		newCopy(dest.getOffset(), sizeof(value), &value);
 	}
 
-	/// Check if there is a need to call patchGpuScene or if no copies are needed.
-	/// @note Not thread-safe. Nothing else should be happening before calling it.
+	// 3rd thing to call after all newCopy() calls have be done
+	// Note: Not thread-safe
+	void endPatching()
+	{
+		ANKI_ASSERT(m_bPatchingMode.fetchSub(1) == 1);
+	}
+
+	// 4th optional thing to call. Check if there is a need to call patchGpuScene or if no copies are needed
+	// Note: Not thread-safe
 	Bool patchingIsNeeded() const
 	{
+		ANKI_ASSERT(m_bPatchingMode.load() == 0);
 		return m_crntFramePatchHeaders.getSize() > 0;
 	}
 
-	/// Copy the data to the GPU scene buffer.
-	/// @note Not thread-safe. Nothing else should be happening before calling it.
+	// 5th thing to call to copy all scratch data to the GPU scene buffer
+	// Note: Not thread-safe
 	void patchGpuScene(CommandBuffer& cmdb);
 
 private:
-	static constexpr U32 kDwordsPerPatch = 64;
+	static constexpr U32 kDwordsPerPatch = 64; // If you change this change the bellow as well
+	static constexpr U32 kDwordsPerPatchBitCount = 6;
 
 	class PatchHeader;
 
@@ -197,10 +214,15 @@ private:
 	ShaderProgramResourcePtr m_copyProgram;
 	ShaderProgramPtr m_grProgram;
 
+	StackMemoryPool m_stackMemPool;
+
+#if ANKI_ASSERTIONS_ENABLED
+	Atomic<U32> m_bPatchingMode = {0};
+#endif
+
 	GpuSceneMicroPatcher();
 
 	~GpuSceneMicroPatcher();
 };
-/// @}
 
 } // end namespace anki

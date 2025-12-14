@@ -20,7 +20,6 @@ class RenderStateInfo
 public:
 	ShaderProgramPtr m_program;
 	PrimitiveTopology m_primitiveTopology = PrimitiveTopology::kTriangles;
-	Bool m_indexedDrawcall = true;
 };
 
 class RenderStateBucketIndex

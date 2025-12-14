@@ -90,7 +90,7 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_origin.w() != 0.0f && m_dir.w() != 0.0f);
+		ANKI_ASSERT(m_origin.w != 0.0f && m_dir.w != 0.0f);
 	}
 };
 /// @}

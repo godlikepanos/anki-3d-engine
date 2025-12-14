@@ -15,8 +15,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-inline NumericCVar<U32> g_reflectionProbeResolutionCVar("Scene", "ReflectionProbeResolution", 128, 8, 2048,
-														"The resolution of the reflection probe's reflection");
+ANKI_CVAR2(NumericCVar<U32>, Render, ProbeReflections, Resolution, 128, 8, 2048, "The resolution of the reflection probe's reflection")
 
 /// Reflection probe component.
 class ReflectionProbeComponent : public SceneComponent
@@ -46,7 +45,7 @@ public:
 
 	ANKI_INTERNAL Vec3 getWorldPosition() const
 	{
-		ANKI_ASSERT(m_worldPos.x() != kMaxF32);
+		ANKI_ASSERT(m_worldPos.x != kMaxF32);
 		return m_worldPos;
 	}
 
@@ -78,6 +77,8 @@ private:
 	Bool m_reflectionNeedsRefresh = true;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 /// @}
 

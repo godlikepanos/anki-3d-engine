@@ -92,8 +92,8 @@ Error getTempDirectory(String& out)
 	return Error::kNone;
 }
 
-static Error walkDirectoryTreeRecursive(const CString& dir,
-										const Function<Error(const CString&, Bool), SingletonMemoryPoolWrapper<DefaultMemoryPool>>& callback,
+static Error walkDirectoryTreeRecursive(CString dir,
+										const Function<Error(WalkDirectoryArgs&), SingletonMemoryPoolWrapper<DefaultMemoryPool>>& callback,
 										U baseDirLen)
 {
 	// Append something to the path
@@ -148,8 +148,13 @@ static Error walkDirectoryTreeRecursive(const CString& dir,
 			}
 
 			strcat(&dir2[0], &filename[0]);
-			const Error err = callback(&dir2[0] + baseDirLen, isDir);
-			if(err)
+
+			WalkDirectoryArgs args;
+			args.m_path = &dir2[0] + baseDirLen;
+			args.m_isDirectory = isDir;
+			args.m_stopSearch = false;
+			const Error err = callback(args);
+			if(err || args.m_stopSearch)
 			{
 				FindClose(handle);
 				return err;
@@ -181,7 +186,7 @@ static Error walkDirectoryTreeRecursive(const CString& dir,
 	return Error::kNone;
 }
 
-Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback)
+Error walkDirectoryTreeInternal(CString dir, const Function<Error(WalkDirectoryArgs&)>& callback)
 {
 	U baseDirLen = 0;
 	const U len = dir.getLength();

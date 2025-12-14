@@ -17,9 +17,13 @@
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 #define NUMTHREADS 64u
 
+// ===========================================================================
+// Legacy                                                                    =
+// ===========================================================================
 #if ANKI_TECHNIQUE_Legacy
 struct DrawIndirectArgsWithPadding
 {
@@ -32,7 +36,7 @@ struct DrawIndirectArgsWithPadding
 
 // GPU scene
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
-StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t1);
+StructuredBuffer<GpuSceneParticleEmitter2> g_particleEmitters2 : register(t1);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
 
 StructuredBuffer<GpuVisibilityVisibleRenderableDesc> g_visibleRenderables : register(t3);
@@ -43,14 +47,13 @@ StructuredBuffer<U32> g_renderablePrefixSums : register(t5);
 StructuredBuffer<UVec2> g_firstDrawIndirectArgAndCount : register(t6);
 
 // These 3 have the same size
-RWStructuredBuffer<UVec4> g_instanceRateRenderables : register(u0);
+RWStructuredBuffer<GpuScenePerDraw> g_perDraw : register(u0);
 RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs : register(u1);
-RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs : register(u2); // This points to the same buffer as the above
 
 // The MDI counts. One for each render state bucket
-RWStructuredBuffer<U32> g_mdiDrawCounts : register(u3);
+RWStructuredBuffer<U32> g_mdiDrawCounts : register(u2);
 
-RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
+RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u3);
 
 [numthreads(NUMTHREADS, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -61,15 +64,15 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
 
 	const GpuVisibilityVisibleRenderableDesc desc = SBUFF(g_visibleRenderables, svDispatchThreadId.x);
 
-	const U32 renderStateBucket = desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit & ((1u << 10u) - 1u);
-	const U32 renderableIdx = (desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit >> 10u) & ((1u << 20u) - 1u);
-	const U32 lod = desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit >> 30u;
+	const U32 renderStateBucket = desc.m_renderStateBucket;
+	const U32 renderableIdx = desc.m_renderableIndex;
+	const U32 lod = desc.m_lod;
 
 	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
 	const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
 	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
 
-	const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32;
+	const Bool isParticleEmitter = renderable.m_particleEmitterIndex2 < kMaxU32;
 
 	U32 bucketLocalIndex;
 	InterlockedAdd(SBUFF(g_mdiDrawCounts, renderStateBucket), 1u, bucketLocalIndex);
@@ -84,51 +87,45 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
 		InterlockedExchange(SBUFF(g_mdiDrawCounts, renderStateBucket), SBUFF(g_firstDrawIndirectArgAndCount, renderStateBucket).y, orig);
 		InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 2);
 	}
-	else if(!isParticleEmitter)
-	{
-		// Regular renderables are always indexed
-
-		DrawIndexedIndirectArgs indirect;
-		indirect.m_indexCount = meshLod.m_indexCount;
-		indirect.m_instanceCount = 1;
-		indirect.m_firstIndex = meshLod.m_firstIndex;
-		indirect.m_vertexOffset = 0;
-		indirect.m_firstInstance = instanceIndex;
-		SBUFF(g_drawIndexedIndirectArgs, indirectArgsIndex) = indirect;
-
-		UVec4 instanceVertex;
-		instanceVertex.x = renderable.m_worldTransformsIndex;
-		instanceVertex.y = renderable.m_constantsOffset;
-		instanceVertex.z = meshLodIndex;
-		instanceVertex.w = renderable.m_boneTransformsOffset;
-		SBUFF(g_instanceRateRenderables, instanceIndex) = instanceVertex;
-	}
 	else
 	{
-		const GpuSceneParticleEmitter emitter = SBUFF(g_particleEmitters, renderable.m_particleEmitterIndex);
+		DrawIndexedIndirectArgs indirect;
+		indirect.m_indexCount = meshLod.m_indexCount;
+		indirect.m_firstIndex = meshLod.m_firstIndex;
+		indirect.m_vertexOffset = 0;
+		indirect.m_firstInstance = 0;
 
-		DrawIndirectArgsWithPadding indirect;
-		indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
-		indirect.m_instanceCount = 1;
-		indirect.m_firstVertex = 0;
-		indirect.m_firstInstance = instanceIndex;
-		indirect.m_padding = 0;
-		SBUFF(g_drawIndirectArgs, indirectArgsIndex) = indirect;
+		if(isParticleEmitter)
+		{
+			const GpuSceneParticleEmitter2 emitter = SBUFF(g_particleEmitters2, renderable.m_particleEmitterIndex2);
+			indirect.m_instanceCount = emitter.m_aliveParticleCount;
+		}
+		else
+		{
+			indirect.m_instanceCount = 1;
+		}
 
-		UVec4 instanceVertex;
-		instanceVertex.x = renderable.m_worldTransformsIndex;
-		instanceVertex.y = renderable.m_constantsOffset;
-		instanceVertex.z = meshLodIndex;
-		instanceVertex.w = renderable.m_particleEmitterIndex;
-		SBUFF(g_instanceRateRenderables, instanceIndex) = instanceVertex;
+		SBUFF(g_drawIndexedIndirectArgs, indirectArgsIndex) = indirect;
+
+		GpuScenePerDraw perDraw;
+		perDraw.m_worldTransformsIndex = renderable.m_worldTransformsIndex;
+		perDraw.m_isParticleEmitter = isParticleEmitter;
+		perDraw.m_particleEmitterIndex = renderable.m_particleEmitterIndex2;
+		perDraw.m_constantsOffset = renderable.m_constantsOffset;
+		perDraw.m_meshLodIndex = meshLodIndex;
+		perDraw.m_boneTransformsOffset = renderable.m_boneTransformsOffset;
+		SBUFF(g_perDraw, instanceIndex) = perDraw;
 	}
 }
 
 #endif // ANKI_TECHNIQUE_Legacy
 
+// ===========================================================================
+// Meshlets                                                                  =
+// ===========================================================================
 #if ANKI_TECHNIQUE_Meshlets
 
-#	define MESHLET_BACKFACE_CULLING 0 // Doesn't work correctly for some reason
+#	define MESHLET_BACKFACE_CULLING 1 // Doesn't cull much geometry
 #	define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
 #	define MESHLET_NO_SAMPLING_POINT_CULLING 1
 #	define MESHLET_HZB_CULLING HZB_TEST
@@ -173,16 +170,13 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 {
 	meshletCulledByHzb = false;
 
-#	if !PASSTHROUGH
-	const Mat3x4 worldTransform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
-
-#		if MESHLET_BACKFACE_CULLING
-	const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
-	if(cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_consts.m_cameraPos))
+	const Bool bSkin = renderable.m_boneTransformsOffset != 0u;
+	if(PASSTHROUGH || bSkin)
 	{
-		return true;
+		return false;
 	}
-#		endif
+
+	const Mat3x4 worldTransform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
 
 	const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
 	const Mat4 mvp = mul(g_consts.m_viewProjectionMatrix, wordTransform4);
@@ -191,15 +185,15 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 	F32 aabbMinDepth;
 	projectAabb(meshletBoundingVol.m_aabbMin, meshletBoundingVol.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
 
-#		if MESHLET_OUTSIDE_OF_SCREEN_CULLING
+#	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
 	// Outside of the screen
 	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
 	{
 		return true;
 	}
-#		endif
+#	endif
 
-#		if MESHLET_NO_SAMPLING_POINT_CULLING
+#	if MESHLET_NO_SAMPLING_POINT_CULLING
 	// Sampling points test
 	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_viewportSizef;
 	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_viewportSizef;
@@ -207,14 +201,34 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 	{
 		return true;
 	}
-#		endif
+#	endif
 
-#		if MESHLET_HZB_CULLING
-	meshletCulledByHzb = (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+#	if MESHLET_BACKFACE_CULLING
+	{
+		Vec3 center = (meshletBoundingVol.m_aabbMin + meshletBoundingVol.m_aabbMax) * 0.5;
+		center = mul(worldTransform, Vec4(center, 1.0));
+
+		const Vec4 coneDirAndAng = unpackSnorm4x8<F32>(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
+		Vec3 coneDir = coneDirAndAng.xyz;
+		coneDir = mul(worldTransform, Vec4(coneDir, 0.0));
+
+		const Vec3 scale = extractScale(worldTransform);
+		const F32 radius = meshletBoundingVol.m_sphereRadius * max3(scale);
+
+		// Using from meshoptimizer: dot(center - camera_position, cone_axis) >= cone_cutoff * length(center - camera_position) + radius
+		const Vec3 camPos = g_consts.m_cameraPos;
+		const Vec3 cam2center = center - camPos;
+		if(dot(cam2center, coneDir) >= coneDirAndAng.w * length(cam2center) + radius)
+		{
+			return true;
+		}
+	}
+#	endif
+
+#	if MESHLET_HZB_CULLING
+	meshletCulledByHzb = cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler);
 	return meshletCulledByHzb;
-#		endif
-
-#	endif // !PASSTHROUGH
+#	endif
 
 	return false;
 }
@@ -226,10 +240,10 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 	{
 		const GpuVisibilityVisibleMeshletDesc desc = SBUFF(g_visibleMeshlets, svDispatchThreadId);
 
-		const U32 renderableIdx = desc.m_renderableIndex_30bit_renderStageBucket_12bit >> 12u;
-		const U32 renderStateBucket = desc.m_renderableIndex_30bit_renderStageBucket_12bit & ((1u << 12u) - 1u);
-		const U32 lod = desc.m_lod_2bit_meshletIndex_30bit >> 30u;
-		const U32 meshletIdx = desc.m_lod_2bit_meshletIndex_30bit & ((1u << 30u) - 1u);
+		const U32 renderableIdx = desc.m_renderableIndex;
+		const U32 renderStateBucket = desc.m_renderStateBucket;
+		const U32 lod = desc.m_lod;
+		const U32 meshletIdx = desc.m_meshletIndex;
 
 		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
 		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);

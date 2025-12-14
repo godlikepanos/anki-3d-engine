@@ -32,8 +32,8 @@ public:
 	}
 
 	Ray(const Vec3& origin, const Vec3& dir)
-		: m_origin(origin.xyz0())
-		, m_dir(dir.xyz0())
+		: m_origin(origin.xyz0)
+		, m_dir(dir.xyz0)
 	{
 		check();
 	}
@@ -59,7 +59,7 @@ public:
 
 	void setOrigin(const Vec3& origin)
 	{
-		m_origin = origin.xyz0();
+		m_origin = origin.xyz0;
 	}
 
 	[[nodiscard]] const Vec4& getOrigin() const
@@ -75,7 +75,7 @@ public:
 
 	void setDirection(const Vec3& dir)
 	{
-		m_dir = dir.xyz0();
+		m_dir = dir.xyz0;
 	}
 
 	[[nodiscard]] const Vec4& getDirection() const
@@ -108,7 +108,7 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_origin.w() == 0.0f && m_dir.w() == 0.0f && isZero(m_dir.lengthSquared() - 1.0f, kEpsilonf * 100.0f));
+		ANKI_ASSERT(m_origin.w == 0.0f && m_dir.w == 0.0f && isZero(m_dir.lengthSquared() - 1.0f, kEpsilonf * 100.0f));
 	}
 };
 /// @}

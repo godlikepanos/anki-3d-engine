@@ -5,8 +5,6 @@
 
 // Does tonemapping
 
-#pragma anki 16bit
-
 #pragma anki technique vert pixel comp
 
 #include <AnKi/Shaders/QuadVert.hlsl>

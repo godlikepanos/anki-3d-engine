@@ -22,7 +22,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 
 			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
-			if(set >= kMaxRegisterSpaces && set != kDxcVkBindlessRegisterSpace)
+			if(set >= kMaxRegisterSpaces && set != ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)
 			{
 				errorStr.sprintf("Exceeded set for: %s", r.name.c_str());
 				return Error::kUserData;
@@ -38,7 +38,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 					return Error::kUserData;
 				}
 
-				if(set == kDxcVkBindlessRegisterSpace && typeInfo.array[0] != 0)
+				if(set == ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET && typeInfo.array[0] != 0)
 				{
 					errorStr.sprintf("Only the bindless descriptor set can be an unbound array: %s", r.name.c_str());
 					return Error::kUserData;
@@ -62,7 +62,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 				}
 			}
 
-			if(set == kDxcVkBindlessRegisterSpace)
+			if(set == ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)
 			{
 				// Bindless dset
 

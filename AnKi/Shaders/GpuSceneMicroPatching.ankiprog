@@ -7,22 +7,30 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-StructuredBuffer<UVec2> g_patchHeaders : register(t0);
+// Needs to match the C++. See C++ for comments
+struct PatchHeader
+{
+	U32 m_dwordSizeMinusOne : 6;
+	U32 m_srcDwordOffset : 26;
+	U32 m_dstDwordOffset;
+};
+
+StructuredBuffer<PatchHeader> g_patchHeaders : register(t0);
 StructuredBuffer<U32> g_srcBuffer : register(t1);
 RWStructuredBuffer<U32> g_dstBuffer : register(u0);
 
 [numthreads(64, 1, 1)] void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
-	const UVec2 header = g_patchHeaders[svGroupId.x];
-	const U32 dwordCount = (header.x >> 26u) + 1u;
+	const PatchHeader header = SBUFF(g_patchHeaders, svGroupId.x);
+	const U32 dwordCount = header.m_dwordSizeMinusOne + 1u;
 
 	if(svGroupIndex >= dwordCount)
 	{
 		return;
 	}
 
-	const U32 srcDwordOffset = header.x & 0x3FFFFFFu;
-	const U32 dstDwordOffset = header.y;
+	const U32 srcDwordOffset = header.m_srcDwordOffset;
+	const U32 dstDwordOffset = header.m_dstDwordOffset;
 
-	g_dstBuffer[dstDwordOffset + svGroupIndex] = g_srcBuffer[srcDwordOffset + svGroupIndex];
+	SBUFF(g_dstBuffer, dstDwordOffset + svGroupIndex) = SBUFF(g_srcBuffer, srcDwordOffset + svGroupIndex);
 }

@@ -16,7 +16,8 @@ struct DirectionalLight
 	F32 m_power;
 
 	Vec3 m_direction;
-	U32 m_shadowCascadeCount_31bit_active_1bit; ///< If shadowCascadeCount is zero then it doesn't cast shadow.
+	U32 m_shadowCascadeCount : 31; ///< If shadowCascadeCount is zero then it doesn't cast shadow.
+	U32 m_active : 1;
 
 	Vec4 m_shadowCascadeDistances;
 
@@ -65,10 +66,18 @@ struct CommonMatrices
 	F32 m_far;
 };
 
+enum class SkyType
+{
+	kSolidColor,
+	kTextureWithEquirectangularMapping,
+	kTextureWithEctahedronMapping,
+};
+
 struct Sky
 {
 	Vec3 m_solidColor;
-	U32 m_type;
+	U32 m_type : 2; // One of SkyType
+	U32 m_texture : 30;
 };
 
 struct IndirectDiffuseClipmapTextures
@@ -100,6 +109,21 @@ struct IndirectDiffuseClipmapConstants
 	IndirectDiffuseClipmapTextures m_textures[kIndirectDiffuseClipmapCount];
 };
 
+struct LocalLightsGridConstants
+{
+	Vec3 m_volumeMin;
+	F32 m_padding1;
+
+	Vec3 m_volumeMax;
+	F32 m_padding2;
+
+	Vec3 m_cellSize;
+	F32 m_padding3;
+
+	UVec3 m_cellCounts;
+	F32 m_padding4;
+};
+
 /// Common constants for all passes.
 struct GlobalRendererConstants
 {
@@ -128,6 +152,8 @@ struct GlobalRendererConstants
 	Sky m_sky;
 
 	IndirectDiffuseClipmapConstants m_indirectDiffuseClipmaps;
+
+	LocalLightsGridConstants m_localLightsGrid;
 };
 
 // RT shadows
@@ -225,19 +251,41 @@ struct SsaoConstants
 	U32 m_frameCount;
 
 	Mat3x4 m_viewMat;
-};
 
-struct SsaoSpatialDenoiseConstants
-{
 	Mat3x4 m_viewToWorldMat;
-
-	Vec2 m_linearizeDepthParams;
-	Vec2 m_padding;
 };
 
 struct LodAndRenderableIndex
 {
 	U32 m_lod_2bit_renderableIndex_30bit;
 };
+
+enum class DebugRenderTargetDrawStyle
+{
+	kPassthrough,
+	kTonemap,
+	kGBufferNormal,
+	kGBufferRoughness,
+	kGBufferMetallic,
+	kGBufferSubsurface,
+	kGBufferEmission,
+	kAlphaOnly,
+	kRedOnly,
+	kIntegerTexture,
+
+	kCount,
+	kFirst = 0
+};
+
+enum class DebugRenderTargetRegister
+{
+	kTex1,
+	kTex2,
+	kUintTex,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DebugRenderTargetRegister)
 
 ANKI_END_NAMESPACE

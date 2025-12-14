@@ -10,14 +10,14 @@ namespace anki {
 F32 testPlane(const Plane& plane, const Aabb& aabb)
 {
 #if ANKI_SIMD_SSE
-	__m128 gezero = _mm_cmpge_ps(plane.getNormal().getSimd(), _mm_setzero_ps());
+	__m128 gezero = _mm_cmpge_ps(plane.getNormal().m_simd, _mm_setzero_ps());
 
 	Vec4 diagMin;
-	diagMin.getSimd() = _mm_or_ps(_mm_and_ps(gezero, aabb.getMin().getSimd()), _mm_andnot_ps(gezero, aabb.getMax().getSimd()));
+	diagMin.m_simd = _mm_or_ps(_mm_and_ps(gezero, aabb.getMin().m_simd), _mm_andnot_ps(gezero, aabb.getMax().m_simd));
 #else
 	Vec4 diagMin(0.0f), diagMax(0.0f);
 	// set min/max values for x,y,z direction
-	for(U i = 0; i < 3; i++)
+	for(U32 i = 0; i < 3; i++)
 	{
 		if(plane.getNormal()[i] >= 0.0f)
 		{
@@ -33,7 +33,7 @@ F32 testPlane(const Plane& plane, const Aabb& aabb)
 #endif
 
 	// minimum on positive side of plane, box on positive side
-	ANKI_ASSERT(diagMin.w() == 0.0f);
+	ANKI_ASSERT(diagMin.w == 0.0f);
 	F32 test = testPlane(plane, diagMin);
 	if(test > 0.0f)
 	{
@@ -42,10 +42,10 @@ F32 testPlane(const Plane& plane, const Aabb& aabb)
 
 #if ANKI_SIMD_SSE
 	Vec4 diagMax;
-	diagMax.getSimd() = _mm_or_ps(_mm_and_ps(gezero, aabb.getMax().getSimd()), _mm_andnot_ps(gezero, aabb.getMin().getSimd()));
+	diagMax.m_simd = _mm_or_ps(_mm_and_ps(gezero, aabb.getMax().m_simd), _mm_andnot_ps(gezero, aabb.getMin().m_simd));
 #endif
 
-	ANKI_ASSERT(diagMax.w() == 0.0f);
+	ANKI_ASSERT(diagMax.w == 0.0f);
 	test = testPlane(plane, diagMax);
 	if(test >= 0.0f)
 	{
@@ -87,12 +87,12 @@ F32 testPlane(const Plane& plane, const Obb& obb)
 {
 	Mat3x4 transposedRotation = obb.getRotation();
 	transposedRotation.transposeRotationPart();
-	const Vec4 xNormal = (transposedRotation * plane.getNormal()).xyz0();
+	const Vec4 xNormal = (transposedRotation * plane.getNormal()).xyz0;
 
 	// maximum extent in direction of plane normal
 	const Vec4 rv = obb.getExtend() * xNormal;
 	const Vec4 rvabs = rv.abs();
-	const F32 r = rvabs.x() + rvabs.y() + rvabs.z();
+	const F32 r = rvabs.x + rvabs.y + rvabs.z;
 
 	// signed distance between box center and plane
 	const F32 d = testPlane(plane, obb.getCenter());

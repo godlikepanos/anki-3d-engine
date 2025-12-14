@@ -21,7 +21,6 @@ class GrObject;
 class GrManager;
 class GrManagerImpl;
 class TextureInitInfo;
-class TextureViewInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
 class FramebufferInitInfo;
@@ -36,37 +35,35 @@ class PipelineQueryInitInfo;
 /// @addtogroup graphics
 /// @{
 
-inline BoolCVar g_validationCVar("Gr", "Validation", false, "Enable or not validation");
-inline BoolCVar g_gpuValidationCVar("Gr", "GpuValidation", false, "Enable or not GPU validation");
-inline BoolCVar g_vsyncCVar("Gr", "Vsync", false, "Enable or not vsync");
-inline BoolCVar g_debugMarkersCVar("Gr", "DebugMarkers", false, "Enable or not debug markers");
-inline BoolCVar g_meshShadersCVar("Gr", "MeshShaders", false, "Enable or not mesh shaders");
-inline NumericCVar<U8> g_deviceCVar("Gr", "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
-inline BoolCVar g_rayTracingCVar("Gr", "RayTracing", false, "Try enabling ray tracing");
-inline BoolCVar g_vrsCVar("Gr", "Vrs", false, "Enable or not VRS");
-inline BoolCVar g_workGraphcsCVar("Gr", "WorkGraphs", false, "Enable or not WorkGraphs");
-inline NumericCVar<U32> g_maxBindlessSampledTextureCountCVar("Gr", "MaxBindlessSampledTextureCountCVar", 512, 16, kMaxU16);
-inline NumericCVar<Second> g_gpuTimeoutCVar("Gr", "GpuTimeout", 120.0, 0.0, 24.0 * 60.0,
-											"Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout");
-inline NumericCVar<U8> g_asyncComputeCVar("Gr", "AsyncCompute", 0, 0, 2,
-										  "Control the async compute behaviour: 0: Try use separate queue family, 1: Use lower priority queue in the "
-										  "general's queue family, 2: Use the general queue");
+ANKI_CVAR(BoolCVar, Gr, Validation, false, "Enable or not validation")
+ANKI_CVAR(BoolCVar, Gr, GpuValidation, false, "Enable or not GPU validation")
+ANKI_CVAR(BoolCVar, Gr, Vsync, false, "Enable or not vsync")
+ANKI_CVAR(BoolCVar, Gr, DebugMarkers, false, "Enable or not debug markers");
+ANKI_CVAR(BoolCVar, Gr, MeshShaders, false, "Enable or not mesh shaders");
+ANKI_CVAR(NumericCVar<U8>, Gr, Device, 0, 0, 16, "Choose an available device. Devices are sorted by performance")
+ANKI_CVAR(BoolCVar, Gr, RayTracing, false, "Try enabling ray tracing")
+ANKI_CVAR(BoolCVar, Gr, Vrs, false, "Enable or not VRS")
+ANKI_CVAR(BoolCVar, Gr, WorkGraphcs, false, "Enable or not WorkGraphs")
+ANKI_CVAR(NumericCVar<U32>, Gr, MaxBindlessSampledTextureCount, 512, 16, kMaxU16)
+ANKI_CVAR(NumericCVar<Second>, Gr, GpuTimeout, 120.0, 0.0, 24.0 * 60.0,
+		  "Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout")
+ANKI_CVAR(NumericCVar<U8>, Gr, AsyncCompute, 0, 0, 2,
+		  "Control the async compute behaviour: 0: Try use separate queue family, 1: Use lower priority queue in the general's queue family, 2: Use "
+		  "the general queue")
 #if ANKI_GR_BACKEND_DIRECT3D
-inline NumericCVar<U16> g_maxRtvDescriptorsCVar("Gr", "MaxRvtDescriptors", 1024, 8, kMaxU16, "Max number of RTVs");
-inline NumericCVar<U16> g_maxDsvDescriptorsCVar("Gr", "MaxDsvDescriptors", 512, 8, kMaxU16, "Max number of DSVs");
-inline NumericCVar<U16> g_maxCpuCbvSrvUavDescriptorsCVar("Gr", "MaxCpuCbvSrvUavDescriptors", 16 * 1024, 8, kMaxU16,
-														 "Max number of CBV/SRV/UAV descriptors");
-inline NumericCVar<U16> g_maxCpuSamplerDescriptorsCVar("Gr", "MaxCpuSamplerDescriptors", 512, 8, kMaxU16, "Max number of sampler descriptors");
-inline NumericCVar<U16> g_maxGpuCbvSrvUavDescriptorsCVar("Gr", "MaxGpuCbvSrvUavDescriptors", 16 * 1024, 8, kMaxU16,
-														 "Max number of CBV/SRV/UAV descriptors");
-inline NumericCVar<U16> g_maxGpuSamplerDescriptorsCVar("Gr", "MaxGpuSamplerDescriptors", 2 * 1024, 8, kMaxU16, "Max number of sampler descriptors");
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxRtvDescriptors, 1024, 8, kMaxU16, "Max number of RTVs")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxDsvDescriptors, 512, 8, kMaxU16, "Max number of DSVs");
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxCpuCbvSrvUavDescriptors, 16 * 1024, 8, kMaxU16, "Max number of CBV/SRV/UAV descriptors")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxCpuSamplerDescriptors, 512, 8, kMaxU16, "Max number of sampler descriptors")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxGpuCbvSrvUavDescriptors, 16 * 1024, 8, kMaxU16, "Max number of CBV/SRV/UAV descriptors")
+ANKI_CVAR(NumericCVar<U16>, Gr, MaxGpuSamplerDescriptors, 2 * 1024, 8, kMaxU16, "Max number of sampler descriptors")
 
-inline BoolCVar g_dredCVar("Gr", "Dred", false, "Enable DRED");
+ANKI_CVAR(BoolCVar, Gr, Dred, false, "Enable DRED")
 #else
-inline NumericCVar<PtrSize> g_diskShaderCacheMaxSizeCVar("Gr", "DiskShaderCacheMaxSize", 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file");
-inline BoolCVar g_debugPrintfCVar("Gr", "DebugPrintf", false, "Enable or not debug printf");
-inline BoolCVar g_samplerFilterMinMaxCVar("Gr", "SamplerFilterMinMax", true, "Enable or not min/max sample filtering");
-inline StringCVar g_vkLayersCVar("Gr", "VkLayers", "", "VK layers to enable. Seperated by :");
+ANKI_CVAR(NumericCVar<PtrSize>, Gr, DiskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file")
+ANKI_CVAR(BoolCVar, Gr, DebugPrintf, false, "Enable or not debug printf")
+ANKI_CVAR(BoolCVar, Gr, SamplerFilterMinMax, true, "Enable or not min/max sample filtering")
+ANKI_CVAR(StringCVar, Gr, VkLayers, "", "VK layers to enable. Seperated by :")
 #endif
 
 #define ANKI_GR_LOGI(...) ANKI_LOG("GR", kNormal, __VA_ARGS__)
@@ -97,43 +94,33 @@ constexpr U32 kMaxRegisterSpaces = 3; ///< Groups that can be bound at the same 
 constexpr U32 kMaxBindingsPerRegisterSpace = 32;
 constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
-constexpr U32 kMaxFastConstantsSize = 128; ///< Push/root constants size. Thanks AMD!!
+constexpr U32 kMaxFastConstantsSize = 256; ///< Push/root constants size.
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
 
+// Smart pointers
 class GrObjectDeleter
 {
 public:
 	void operator()(GrObject* ptr);
 };
 
-/// Smart pointer for resources.
-template<typename T>
-using GrObjectPtrT = IntrusivePtr<T, GrObjectDeleter>;
+class GrObjectDeleterInternal
+{
+public:
+	void operator()(GrObject* ptr);
+};
 
-using GrObjectPtr = GrObjectPtrT<GrObject>;
+using GrObjectPtr = IntrusivePtr<GrObject, GrObjectDeleter>;
+using GrObjectInternalPtr = IntrusivePtr<GrObject, GrObjectDeleterInternal>;
 
-#define ANKI_GR_CLASS(x_) \
+#define ANKI_INSTANTIATE_GR_OBJECT(x_) \
 	class x_##Impl; \
 	class x_; \
-	using x_##Ptr = GrObjectPtrT<x_>;
-
-ANKI_GR_CLASS(Buffer)
-ANKI_GR_CLASS(Texture)
-ANKI_GR_CLASS(Sampler)
-ANKI_GR_CLASS(CommandBuffer)
-ANKI_GR_CLASS(Shader)
-ANKI_GR_CLASS(OcclusionQuery)
-ANKI_GR_CLASS(TimestampQuery)
-ANKI_GR_CLASS(PipelineQuery)
-ANKI_GR_CLASS(ShaderProgram)
-ANKI_GR_CLASS(Fence)
-ANKI_GR_CLASS(RenderGraph)
-ANKI_GR_CLASS(AccelerationStructure)
-ANKI_GR_CLASS(GrUpscaler)
-
-#undef ANKI_GR_CLASS
+	using x_##Ptr = IntrusivePtr<x_, GrObjectDeleter>; \
+	using x_##InternalPtr = IntrusivePtr<x_, GrObjectDeleterInternal>;
+#include <AnKi/Gr/BackendCommon/InstantiationMacros.def.h>
 
 #define ANKI_GR_OBJECT \
 	friend class GrManager; \
@@ -190,9 +177,6 @@ public:
 
 	/// The max combined size of shared variables (with paddings) in compute shaders.
 	PtrSize m_computeSharedMemorySize = 16_KB;
-
-	/// Alignment of the scratch buffer used in AS building.
-	U32 m_accelerationStructureBuildScratchOffsetAlignment = 0;
 
 	/// Each SBT record should be a multiple of this.
 	U32 m_sbtRecordAlignment = kMaxU32;
@@ -261,14 +245,13 @@ using GrAllocator = HeapAllocator<T>;
 class GrBaseInitInfo
 {
 public:
-	/// @name The name of the object.
+	// The name of the object
 	GrBaseInitInfo(CString name)
 	{
 		setName(name);
 	}
 
 	GrBaseInitInfo()
-		: GrBaseInitInfo(CString())
 	{
 	}
 
@@ -285,24 +268,16 @@ public:
 
 	CString getName() const
 	{
-		return (m_name[0] != '\0') ? CString(&m_name[0]) : CString();
+		return m_name;
 	}
 
 	void setName(CString name)
 	{
-		// Zero it because the derived classes may be hashed.
-		zeroMemory(m_name);
-
-		U32 len;
-		if(name && (len = name.getLength()) > 0)
-		{
-			len = min(len, kMaxGrObjectNameLength);
-			memcpy(&m_name[0], &name[0], len);
-		}
+		m_name = (name.getLength()) ? name : "N/A";
 	}
 
 private:
-	Array<char, kMaxGrObjectNameLength + 1> m_name;
+	GrString m_name;
 };
 
 enum class ColorBit : U8
@@ -323,7 +298,9 @@ enum class PrimitiveTopology : U8
 	kLineStip,
 	kTriangles,
 	kTriangleStrip,
-	kPatches
+	kPatches,
+	kCount,
+	kFirst = 0
 };
 
 enum class FillMode : U8
@@ -331,7 +308,8 @@ enum class FillMode : U8
 	kPoints,
 	kWireframe,
 	kSolid,
-	kCount
+	kCount,
+	kFirst = 0
 };
 
 enum class FaceSelectionBit : U8
@@ -500,12 +478,12 @@ enum class TextureUsageBit : U32
 	kSrvGeometry = 1 << 0,
 	kSrvPixel = 1 << 1,
 	kSrvCompute = 1 << 2,
-	kSrvTraceRays = 1 << 3,
+	kSrvDispatchRays = 1 << 3,
 
 	kUavGeometry = 1 << 4,
 	kUavPixel = 1 << 5,
 	kUavCompute = 1 << 6,
-	kUavTraceRays = 1 << 7,
+	kUavDispatchRays = 1 << 7,
 
 	kRtvDsvRead = 1 << 8,
 	kRtvDsvWrite = 1 << 9,
@@ -516,8 +494,8 @@ enum class TextureUsageBit : U32
 	kPresent = 1 << 12,
 
 	// Derived
-	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvTraceRays,
-	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavTraceRays,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
+	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavDispatchRays,
 	kAllRtvDsv = kRtvDsvRead | kRtvDsvWrite,
 
 	kAllGeometry = kSrvGeometry | kUavGeometry,
@@ -581,6 +559,10 @@ enum class ShaderType : U16
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType)
 
+inline Array<CString, U32(ShaderType::kCount)> g_shaderTypeNames = {{"Vertex", "Hull", "Domain", "Geometry", "Amplification", "Mesh", "Pixel",
+																	 "Compute", "RayGen", "AnyHit", "ClosestHit", "Miss", "Intersection", "Callable",
+																	 "WorkGraph"}};
+
 enum class ShaderTypeBit : U16
 {
 	kVertex = 1 << 0,
@@ -616,8 +598,6 @@ enum class ShaderVariableDataType : U8
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) k##type,
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) k##constant,
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-#undef ANKI_SVDT_MACRO
-#undef ANKI_SVDT_MACRO_OPAQUE
 
 	// Derived
 	kCount,
@@ -720,47 +700,49 @@ enum class BufferUsageBit : U64
 	kConstantGeometry = 1ull << 0ull,
 	kConstantPixel = 1ull << 1ull,
 	kConstantCompute = 1ull << 2ull,
-	kConstantTraceRays = 1ull << 3ull,
+	kConstantDispatchRays = 1ull << 3ull,
 
 	kSrvGeometry = 1ull << 4ull,
 	kSrvPixel = 1ull << 5ull,
 	kSrvCompute = 1ull << 6ull,
-	kSrvTraceRays = 1ull << 7ull,
+	kSrvDispatchRays = 1ull << 7ull,
 
 	kUavGeometry = 1ull << 8ull,
 	kUavPixel = 1ull << 9ull,
 	kUavCompute = 1ull << 10ull,
-	kUavTraceRays = 1ull << 11ull,
+	kUavDispatchRays = 1ull << 11ull,
 
 	kVertexOrIndex = 1ull << 12ull,
 
 	kIndirectCompute = 1ull << 14ll,
 	kIndirectDraw = 1ull << 15ull,
-	kIndirectTraceRays = 1ull << 16ull,
+	kIndirectDispatchRays = 1ull << 16ull,
 
 	kCopySource = 1ull << 17ull,
 	kCopyDestination = 1ull << 18ull,
 
-	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build.
-	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a traceRays() command.
+	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build or instances buffer in a TLAS build.
+	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a dispatchRays() command.
 	kAccelerationStructureBuildScratch = 1ull << 21ull, ///< Used in buildAccelerationStructureXXX commands.
+	kAccelerationStructure = 1ull << 22ull, ///< Will be used as AS.
 
 	// Derived
-	kAllConstant = kConstantGeometry | kConstantPixel | kConstantCompute | kConstantTraceRays,
-	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvTraceRays,
-	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavTraceRays,
-	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
+	kAllConstant = kConstantGeometry | kConstantPixel | kConstantCompute | kConstantDispatchRays,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
+	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavDispatchRays,
+	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectDispatchRays,
 	kAllCopy = kCopySource | kCopyDestination,
 
 	kAllGeometry = kConstantGeometry | kSrvGeometry | kUavGeometry | kVertexOrIndex,
 	kAllPixel = kConstantPixel | kSrvPixel | kUavPixel,
 	kAllGraphics = kAllGeometry | kAllPixel | kIndirectDraw,
 	kAllCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute,
-	kAllTraceRays = kConstantTraceRays | kSrvTraceRays | kUavTraceRays | kIndirectTraceRays | kShaderBindingTable,
+	kAllDispatchRays = kConstantDispatchRays | kSrvDispatchRays | kUavDispatchRays | kIndirectDispatchRays | kShaderBindingTable,
 
-	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch,
-	kAllRead = kAllConstant | kAllSrv | kAllUav | kVertexOrIndex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable,
-	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch,
+	kAllRayTracing = kAllDispatchRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch | kAccelerationStructure,
+	kAllRead = kAllConstant | kAllSrv | kAllUav | kVertexOrIndex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable
+			   | kAccelerationStructure,
+	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch | kAccelerationStructure,
 
 	kAllShaderResource = kAllConstant | kAllSrv | kAllUav,
 
@@ -805,14 +787,15 @@ enum class AccelerationStructureUsageBit : U8
 	kNone = 0,
 	kBuild = 1 << 0,
 	kAttach = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
-	kGeometrySrv = 1 << 2,
-	kPixelSrv = 1 << 3,
-	kComputeSrv = 1 << 4,
-	kTraceRaysSrv = 1 << 5,
+	kSrvGeometry = 1 << 2,
+	kSrvPixel = 1 << 3,
+	kSrvCompute = 1 << 4,
+	kSrvDispatchRays = 1 << 5,
 
 	// Derived
-	kAllGraphics = kGeometrySrv | kPixelSrv,
-	kAllRead = kAttach | kGeometrySrv | kPixelSrv | kComputeSrv | kTraceRaysSrv,
+	kAllGraphics = kSrvGeometry | kSrvPixel,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
+	kAllRead = kAttach | kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
 	kAllWrite = kBuild
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
@@ -858,6 +841,9 @@ enum class VertexAttributeSemantic : U8
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemantic)
+
+inline Array<CString, U32(VertexAttributeSemantic::kCount)> g_vertexAttributeSemanticNames = {
+	{"Position", "Normal", "TexCoord", "Color", "Misc0", "Misc1", "Misc2", "Misc3"}};
 
 enum class VertexAttributeSemanticBit : U8
 {
@@ -998,9 +984,11 @@ public:
 	Array<U8, kMaxRegisterSpaces> m_bindingCounts = {};
 
 	U32 m_fastConstantsSize = 0;
+	U32 m_d3dShaderBindingTableRecordConstantsSize = 0;
 
 	Bool m_hasVkBindlessDescriptorSet = false; ///< Filled by the shader compiler.
 	U8 m_vkBindlessDescriptorSet = kMaxU8; ///< Filled by the VK backend.
+	Bool m_d3dHasDrawId = false;
 
 	void validate() const
 	{
@@ -1109,6 +1097,17 @@ public:
 		memcpy(this, &b, sizeof(*this));
 		return *this;
 	}
+};
+
+class TextureRect
+{
+public:
+	U32 m_offsetX = 0;
+	U32 m_offsetY = 0;
+	U32 m_offsetZ = 0;
+	U32 m_width = kMaxU32;
+	U32 m_height = kMaxU32;
+	U32 m_depth = kMaxU32;
 };
 
 /// Compute max number of mipmaps for a 2D texture.

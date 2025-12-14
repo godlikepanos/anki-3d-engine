@@ -4,6 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/ShaderCompiler/ShaderDump.h>
+#include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
+#include <AnKi/ShaderCompiler/Dxc.h>
+#include <AnKi/ShaderCompiler/RadeonGpuAnalyzer.h>
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/StringList.h>
 #include <SpirvCross/spirv_glsl.hpp>
@@ -13,24 +16,333 @@ namespace anki {
 
 #define ANKI_TAB "    "
 
+class MaliOfflineCompilerStats
+{
+public:
+	F64 m_fma = 0.0;
+	F64 m_cvt = 0.0;
+	F64 m_sfu = 0.0;
+	F64 m_loadStore = 0.0;
+	F64 m_varying = 0.0;
+	F64 m_texture = 0.0;
+
+	F64 m_workRegisters = 0.0;
+	F64 m_spilling = 0.0;
+	F64 m_fp16ArithmeticPercentage = 0.0;
+
+	MaliOfflineCompilerStats() = default;
+
+	MaliOfflineCompilerStats(const MaliOfflineCompilerOut& in)
+	{
+		*this = in;
+	}
+
+	MaliOfflineCompilerStats& operator=(const MaliOfflineCompilerOut& in)
+	{
+		m_fma = F64(in.m_fma);
+		m_cvt = F64(in.m_cvt);
+		m_sfu = F64(in.m_sfu);
+		m_loadStore = F64(in.m_loadStore);
+		m_varying = F64(in.m_varying);
+		m_texture = F64(in.m_texture);
+		m_workRegisters = F64(in.m_workRegisters);
+		m_spilling = F64(in.m_spilling);
+		m_fp16ArithmeticPercentage = F64(in.m_fp16ArithmeticPercentage);
+		return *this;
+	}
+
+	MaliOfflineCompilerStats operator+(const MaliOfflineCompilerStats& b) const
+	{
+		MaliOfflineCompilerStats out;
+		out.m_fma = m_fma + b.m_fma;
+		out.m_cvt = m_cvt + b.m_cvt;
+		out.m_sfu = m_sfu + b.m_sfu;
+		out.m_loadStore = m_loadStore + b.m_loadStore;
+		out.m_varying = m_varying + b.m_varying;
+		out.m_texture = m_texture + b.m_texture;
+		out.m_workRegisters = m_workRegisters + b.m_workRegisters;
+		out.m_spilling = m_spilling + b.m_spilling;
+		out.m_fp16ArithmeticPercentage = m_fp16ArithmeticPercentage + b.m_fp16ArithmeticPercentage;
+		return out;
+	}
+
+	MaliOfflineCompilerStats operator*(F64 val) const
+	{
+		MaliOfflineCompilerStats out;
+		out.m_fma = m_fma * val;
+		out.m_cvt = m_cvt * val;
+		out.m_sfu = m_sfu * val;
+		out.m_loadStore = m_loadStore * val;
+		out.m_varying = m_varying * val;
+		out.m_texture = m_texture * val;
+		out.m_workRegisters = m_workRegisters * val;
+		out.m_spilling = m_spilling * val;
+		out.m_fp16ArithmeticPercentage = m_fp16ArithmeticPercentage * val;
+		return out;
+	}
+
+	MaliOfflineCompilerStats max(const MaliOfflineCompilerStats& b) const
+	{
+		MaliOfflineCompilerStats out;
+		out.m_fma = anki::max(m_fma, b.m_fma);
+		out.m_cvt = anki::max(m_cvt, b.m_cvt);
+		out.m_sfu = anki::max(m_sfu, b.m_sfu);
+		out.m_loadStore = anki::max(m_loadStore, b.m_loadStore);
+		out.m_varying = anki::max(m_varying, b.m_varying);
+		out.m_texture = anki::max(m_texture, b.m_texture);
+		out.m_workRegisters = anki::max(m_workRegisters, b.m_workRegisters);
+		out.m_spilling = anki::max(m_spilling, b.m_spilling);
+		out.m_fp16ArithmeticPercentage = anki::max(m_fp16ArithmeticPercentage, b.m_fp16ArithmeticPercentage);
+		return out;
+	}
+
+	String toString() const
+	{
+		String str;
+		str.sprintf("Regs %f Spilling %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%", m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu,
+					m_loadStore, m_varying, m_texture, m_fp16ArithmeticPercentage);
+		return str;
+	}
+};
+
+class RgaStats
+{
+public:
+	F64 m_vgprCount = 0.0;
+	F64 m_sgprCount = 0.0;
+	F64 m_isaSize = 0.0;
+
+	RgaStats() = default;
+
+	RgaStats(const RgaOutput& b)
+	{
+		*this = b;
+	}
+
+	RgaStats& operator=(const RgaOutput& b)
+	{
+		m_vgprCount = F64(b.m_vgprCount);
+		m_sgprCount = F64(b.m_sgprCount);
+		m_isaSize = F64(b.m_isaSize);
+		return *this;
+	}
+
+	RgaStats operator+(const RgaStats& b) const
+	{
+		RgaStats out;
+		out.m_vgprCount = m_vgprCount + b.m_vgprCount;
+		out.m_sgprCount = m_sgprCount + b.m_sgprCount;
+		out.m_isaSize = m_isaSize + b.m_isaSize;
+		return out;
+	}
+
+	RgaStats operator*(F64 val) const
+	{
+		RgaStats out;
+		out.m_vgprCount = m_vgprCount * val;
+		out.m_sgprCount = m_sgprCount * val;
+		out.m_isaSize = m_isaSize * val;
+		return out;
+	}
+
+	RgaStats max(const RgaStats& b) const
+	{
+		RgaStats out;
+		out.m_vgprCount = anki::max(m_vgprCount, b.m_vgprCount);
+		out.m_sgprCount = anki::max(m_sgprCount, b.m_sgprCount);
+		out.m_isaSize = anki::max(m_isaSize, b.m_isaSize);
+		return out;
+	}
+
+	String toString() const
+	{
+		return String().sprintf("VGPRs %f SGPRs %f ISA size %f", m_vgprCount, m_sgprCount, m_isaSize);
+	}
+};
+
+class PerStageDumpStats
+{
+public:
+	class
+	{
+	public:
+		MaliOfflineCompilerStats m_mali;
+		RgaStats m_amd;
+	} m_average;
+
+	class
+	{
+	public:
+		MaliOfflineCompilerStats m_mali;
+		RgaStats m_amd;
+	} m_max;
+};
+
+class DumpStats
+{
+public:
+	Array<PerStageDumpStats, U32(ShaderType::kCount)> m_stages;
+};
+
 void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& binary, ShaderCompilerString& humanReadable)
 {
 	ShaderCompilerStringList lines;
 
-	lines.pushBackSprintf("\n**BINARIES (%u)**\n", binary.m_codeBlocks.getSize());
+	lines.pushBackSprintf("# BINARIES (%u)\n\n", binary.m_codeBlocks.getSize());
+	Array<MaliOfflineCompilerStats, U32(ShaderType::kCount)> maliAverages;
+	Array<MaliOfflineCompilerStats, U32(ShaderType::kCount)> maliMaxes;
+	Array<RgaStats, U32(ShaderType::kCount)> rgaAverages;
+	Array<RgaStats, U32(ShaderType::kCount)> rgaMaxes;
+	Array<U32, U32(ShaderType::kCount)> shadersPerStage = {};
 	U32 count = 0;
+	ShaderTypeBit stagesInUse = ShaderTypeBit::kNone;
 	for(const ShaderBinaryCodeBlock& code : binary.m_codeBlocks)
 	{
-		lines.pushBackSprintf(ANKI_TAB "bin%05u \n", count++);
+		// Rewrite spir-v because of the decorations we ask DXC to put
+		Bool bRequiresMeshShaders = false;
+		DynamicArray<U8> newSpirv;
+		newSpirv.resize(code.m_binary.getSize());
+		memcpy(newSpirv.getBegin(), code.m_binary.getBegin(), code.m_binary.getSizeInBytes());
+		ShaderType shaderType = ShaderType::kCount;
+		Error visitErr = Error::kNone;
+		visitSpirv(WeakArray<U32>(reinterpret_cast<U32*>(newSpirv.getBegin()), U32(newSpirv.getSizeInBytes() / sizeof(U32))),
+				   [&](U32 cmd, WeakArray<U32> instructions) {
+					   if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet
+						  && instructions[2] == ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)
+					   {
+						   // Bindless set, rewrite its set
+						   instructions[2] = kMaxRegisterSpaces;
+					   }
+					   else if(cmd == spv::OpCapability && instructions[0] == spv::CapabilityMeshShadingEXT)
+					   {
+						   bRequiresMeshShaders = true;
+					   }
+					   else if(cmd == spv::OpEntryPoint)
+					   {
+						   switch(instructions[0])
+						   {
+						   case spv::ExecutionModelVertex:
+							   shaderType = ShaderType::kVertex;
+							   break;
+						   case spv::ExecutionModelTessellationControl:
+							   shaderType = ShaderType::kHull;
+							   break;
+						   case spv::ExecutionModelTessellationEvaluation:
+							   shaderType = ShaderType::kDomain;
+							   break;
+						   case spv::ExecutionModelGeometry:
+							   shaderType = ShaderType::kGeometry;
+							   break;
+						   case spv::ExecutionModelTaskEXT:
+						   case spv::ExecutionModelTaskNV:
+							   shaderType = ShaderType::kAmplification;
+							   break;
+						   case spv::ExecutionModelMeshEXT:
+						   case spv::ExecutionModelMeshNV:
+							   shaderType = ShaderType::kMesh;
+							   break;
+						   case spv::ExecutionModelFragment:
+							   shaderType = ShaderType::kPixel;
+							   break;
+						   case spv::ExecutionModelGLCompute:
+							   shaderType = ShaderType::kCompute;
+							   break;
+						   case spv::ExecutionModelRayGenerationKHR:
+							   shaderType = ShaderType::kRayGen;
+							   break;
+						   case spv::ExecutionModelAnyHitKHR:
+							   shaderType = ShaderType::kAnyHit;
+							   break;
+						   case spv::ExecutionModelClosestHitKHR:
+							   shaderType = ShaderType::kClosestHit;
+							   break;
+						   case spv::ExecutionModelMissKHR:
+							   shaderType = ShaderType::kMiss;
+							   break;
+						   case spv::ExecutionModelIntersectionKHR:
+							   shaderType = ShaderType::kIntersection;
+							   break;
+						   case spv::ExecutionModelCallableKHR:
+							   shaderType = ShaderType::kCallable;
+							   break;
+						   default:
+							   ANKI_SHADER_COMPILER_LOGE("Unrecognized SPIRV execution model: %u", instructions[0]);
+							   visitErr = Error::kFunctionFailed;
+						   }
+					   }
+				   });
+
+		stagesInUse |= ShaderTypeBit(1 << shaderType);
+		++shadersPerStage[shaderType];
+
+		lines.pushBackSprintf("## bin%05u (%s)\n", count, g_shaderTypeNames[shaderType].cstr());
+
+		if(options.m_maliStats || options.m_amdStats)
+		{
+			lines.pushBack("### Stats\n");
+		}
+
+		if(options.m_maliStats && !visitErr)
+		{
+			lines.pushBack("```\n");
+		}
+
+		if(options.m_maliStats && !visitErr)
+		{
+			if((shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute
+				|| (shaderType >= ShaderType::kFirstRayTracing && shaderType <= ShaderType::kLastRayTracing))
+			   && !bRequiresMeshShaders)
+			{
+				MaliOfflineCompilerOut maliocOut;
+				const Error err = runMaliOfflineCompiler(newSpirv, shaderType, maliocOut);
+				if(err)
+				{
+					ANKI_LOGE("Mali offline compiler failed");
+					lines.pushBackSprintf("Mali: *malioc failed*  \n");
+				}
+				else
+				{
+					lines.pushBackSprintf("Mali: %s  \n", maliocOut.toString().cstr());
+					maliAverages[shaderType] = maliAverages[shaderType] + maliocOut;
+					maliMaxes[shaderType] = maliMaxes[shaderType].max(maliocOut);
+				}
+			}
+		}
+
+		if(options.m_amdStats && !visitErr)
+		{
+			if(shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute
+			   || shaderType == ShaderType::kMesh)
+			{
+				RgaOutput rgaOut = {};
+				const Error err = runRadeonGpuAnalyzer(newSpirv, shaderType, rgaOut);
+				if(err)
+				{
+					ANKI_LOGE("RGA failed");
+					lines.pushBackSprintf("AMD: *RGA failed*  \n");
+				}
+				else
+				{
+					lines.pushBackSprintf("AMD: %s  \n", rgaOut.toString().cstr());
+					rgaAverages[shaderType] = rgaAverages[shaderType] + rgaOut;
+					rgaMaxes[shaderType] = rgaMaxes[shaderType].max(rgaOut);
+				}
+			}
+		}
+
+		if(options.m_maliStats && !visitErr)
+		{
+			lines.pushBack("```\n");
+		}
 
 		String reflectionStr;
-		code.m_reflection.toString().join("\n" ANKI_TAB ANKI_TAB, reflectionStr);
-
-		lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", reflectionStr.cstr());
+		code.m_reflection.toString().join("\n", reflectionStr);
+		lines.pushBack("### Reflection\n");
+		lines.pushBackSprintf("```\n%s\n```\n", reflectionStr.cstr());
 
 		if(options.m_writeGlsl)
 		{
-			lines.pushBack(ANKI_TAB ANKI_TAB "----\n");
+			lines.pushBack("### GLSL\n");
 
 			spirv_cross::CompilerGLSL::Options options;
 			options.vulkan_semantics = true;
@@ -47,14 +359,14 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 			StringList sourceLines;
 			sourceLines.splitString(glsl.c_str(), '\n');
 			String newGlsl;
-			sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
+			sourceLines.join("\n", newGlsl);
 
-			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", newGlsl.cstr());
+			lines.pushBackSprintf("```GLSL\n%s\n```\n", newGlsl.cstr());
 		}
 
 		if(options.m_writeSpirv)
 		{
-			lines.pushBack(ANKI_TAB ANKI_TAB "----\n");
+			lines.pushBack("### SPIR-V\n");
 
 			spv_context context = spvContextCreate(SPV_ENV_UNIVERSAL_1_5);
 
@@ -72,40 +384,50 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 				spvlines.splitString(text->str, '\n');
 
 				String final;
-				spvlines.join("\n" ANKI_TAB ANKI_TAB, final);
+				spvlines.join("\n", final);
 
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", final.cstr());
+				lines.pushBackSprintf("```\n%s\n```\n", final.cstr());
 			}
 			else
 			{
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "*error in spiv-dis*\n");
+				lines.pushBackSprintf("*error in spiv-dis*\n");
 			}
 
 			spvTextDestroy(text);
 		}
+
+		++count;
 	}
 
 	// Mutators
-	lines.pushBackSprintf("\n**MUTATORS (%u)**\n", binary.m_mutators.getSize());
+	lines.pushBackSprintf("\n# MUTATORS (%u)\n\n", binary.m_mutators.getSize());
 	if(binary.m_mutators.getSize() > 0)
 	{
+		lines.pushBackSprintf("| %-32s | %-18s |\n", "Name", "Values");
+		lines.pushBackSprintf("| -------------------------------- | ------------------ |\n");
+
 		for(const ShaderBinaryMutator& mutator : binary.m_mutators)
 		{
-			lines.pushBackSprintf(ANKI_TAB "%-32s values (", &mutator.m_name[0]);
+			ShaderCompilerStringList valuesStrl;
 			for(U32 i = 0; i < mutator.m_values.getSize(); ++i)
 			{
-				lines.pushBackSprintf((i < mutator.m_values.getSize() - 1) ? "%d," : "%d)", mutator.m_values[i]);
+				valuesStrl.pushBackSprintf("%d", mutator.m_values[i]);
 			}
-			lines.pushBack("\n");
+			ShaderCompilerString valuesStr;
+			valuesStrl.join(", ", valuesStr);
+
+			lines.pushBackSprintf("| %-32s | %-18s |\n", &mutator.m_name[0], valuesStr.cstr());
 		}
 	}
 
 	// Techniques
-	lines.pushBackSprintf("\n**TECHNIQUES (%u)**\n", binary.m_techniques.getSize());
+	lines.pushBackSprintf("\n# TECHNIQUES (%u)\n\n", binary.m_techniques.getSize());
+	lines.pushBackSprintf("| %-32s | %-12s |\n", "Name", "Shader Types");
+	lines.pushBackSprintf("| -------------------------------- | ------------ |\n");
 	count = 0;
 	for(const ShaderBinaryTechnique& t : binary.m_techniques)
 	{
-		lines.pushBackSprintf(ANKI_TAB "%-32s shaderTypes 0x%02x\n", t.m_name.getBegin(), U32(t.m_shaderTypes));
+		lines.pushBackSprintf("| %-32s | 0x%010x |\n", t.m_name.getBegin(), U32(t.m_shaderTypes));
 	}
 
 	// Mutations
@@ -115,79 +437,144 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 		skippedMutations += mutation.m_variantIndex == kMaxU32;
 	}
 
-	lines.pushBackSprintf("\n**MUTATIONS (%u skipped %u)**\n", binary.m_mutations.getSize(), skippedMutations);
+	lines.pushBackSprintf("\n# MUTATIONS (total %u, skipped %u)\n\n", binary.m_mutations.getSize(), skippedMutations);
+	lines.pushBackSprintf("| %-8s | %-8s | %-18s |", "Mutation", "Variant", "Hash");
+
+	if(binary.m_mutators.getSize() > 0)
+	{
+		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
+		{
+			lines.pushBackSprintf(" %-32s |", binary.m_mutators[i].m_name.getBegin());
+		}
+	}
+	lines.pushBack("\n");
+
+	lines.pushBackSprintf("| -------- | -------- | ------------------ |");
+	if(binary.m_mutators.getSize() > 0)
+	{
+		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
+		{
+			lines.pushBackSprintf(" -------------------------------- |");
+		}
+	}
+	lines.pushBack("\n");
+
 	count = 0;
 	for(const ShaderBinaryMutation& mutation : binary.m_mutations)
 	{
 		if(mutation.m_variantIndex != kMaxU32)
 		{
-			lines.pushBackSprintf(ANKI_TAB "mut%05u variantIndex var%05u hash 0x%016" PRIX64 " values (", count++, mutation.m_variantIndex,
-								  mutation.m_hash);
+			lines.pushBackSprintf("| mut%05u | var%05u | 0x%016" PRIX64 " | ", count++, mutation.m_variantIndex, mutation.m_hash);
 		}
 		else
 		{
-			lines.pushBackSprintf(ANKI_TAB "mut%05u variantIndex N/A      hash 0x%016" PRIX64 " values (", count++, mutation.m_hash);
+			lines.pushBackSprintf("| mut%05u | -        | 0x%016" PRIX64 " | ", count++, mutation.m_hash);
 		}
 
 		if(mutation.m_values.getSize() > 0)
 		{
 			for(U32 i = 0; i < mutation.m_values.getSize(); ++i)
 			{
-				lines.pushBackSprintf((i < mutation.m_values.getSize() - 1) ? "%s %4d, " : "%s %4d", binary.m_mutators[i].m_name.getBegin(),
-									  I32(mutation.m_values[i]));
+				lines.pushBackSprintf("%-32d | ", I32(mutation.m_values[i]));
 			}
-
-			lines.pushBack(")");
-		}
-		else
-		{
-			lines.pushBack("N/A)");
 		}
 
 		lines.pushBack("\n");
 	}
 
 	// Variants
-	lines.pushBackSprintf("\n**SHADER VARIANTS (%u)**\n", binary.m_variants.getSize());
+	lines.pushBackSprintf("\n# SHADER VARIANTS (%u)\n\n", binary.m_variants.getSize());
+	lines.pushBackSprintf("| Variant  | %-32s | ", "Technique");
+	for(ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
+	{
+		lines.pushBackSprintf("%-13s | ", g_shaderTypeNames[s].cstr());
+	}
+	lines.pushBack("\n");
+	lines.pushBackSprintf("| -------- | %s |", ShaderCompilerString('-', 32).cstr());
+	for([[maybe_unused]] ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
+	{
+		lines.pushBackSprintf(" %s |", ShaderCompilerString('-', 13).cstr());
+	}
+	lines.pushBack("\n");
+
 	count = 0;
 	for(const ShaderBinaryVariant& variant : binary.m_variants)
 	{
-		lines.pushBackSprintf(ANKI_TAB "var%05u\n", count++);
-
 		// Binary indices
 		for(U32 t = 0; t < binary.m_techniques.getSize(); ++t)
 		{
-			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-32s binaries (", binary.m_techniques[t].m_name.getBegin());
+			if(t == 0)
+			{
+				lines.pushBackSprintf("| var%05u | ", count);
+			}
+			else
+			{
+				lines.pushBack("|          | ");
+			}
+			lines.pushBackSprintf("%-32s | ", binary.m_techniques[t].m_name.getBegin());
 
-			for(ShaderType s : EnumIterable<ShaderType>())
+			for(ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
 			{
 				if(variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[s] < kMaxU32)
 				{
-					lines.pushBackSprintf("bin%05u", variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[s]);
+					lines.pushBackSprintf("bin%05u      | ", variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[s]);
 				}
 				else
 				{
-					lines.pushBack("--------");
+					lines.pushBackSprintf("-%s | ", ShaderCompilerString(' ', 12).cstr());
 				}
-
-				lines.pushBack((s == ShaderType::kCount - 1) ? ")\n" : ", ");
 			}
+
+			lines.pushBack("\n");
 		}
+
+		++count;
 	}
 
 	// Structs
-	lines.pushBackSprintf("\n**STRUCTS (%u)**\n", binary.m_structs.getSize());
+	lines.pushBackSprintf("\n# STRUCTS (%u)\n\n", binary.m_structs.getSize());
 	if(binary.m_structs.getSize() > 0)
 	{
 		for(const ShaderBinaryStruct& s : binary.m_structs)
 		{
-			lines.pushBackSprintf(ANKI_TAB "%-32s size %4u\n", s.m_name.getBegin(), s.m_size);
+			lines.pushBack("```C++\n");
+			lines.pushBackSprintf("struct %s // size: %u\n", s.m_name.getBegin(), s.m_size);
+			lines.pushBack("{\n");
 
 			for(const ShaderBinaryStructMember& member : s.m_members)
 			{
 				const CString typeStr = getShaderVariableDataTypeInfo(member.m_type).m_name;
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-32s type %5s offset %4d\n", member.m_name.getBegin(), typeStr.cstr(), member.m_offset);
+				lines.pushBackSprintf(ANKI_TAB "%5s %s; // offset: %u\n", typeStr.cstr(), member.m_name.getBegin(), member.m_offset);
 			}
+			lines.pushBack("};\n");
+			lines.pushBack("```\n");
+		}
+	}
+
+	// Stats
+	if(options.m_maliStats || options.m_amdStats)
+	{
+		lines.pushBackSprintf("\n# COMPILER STATS\n\n");
+
+		for(ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
+		{
+			lines.pushBackSprintf("%s\n```\n", g_shaderTypeNames[s].cstr());
+
+			if(options.m_maliStats)
+			{
+				maliAverages[s] = maliAverages[s] * (1.0 / F64(shadersPerStage[s]));
+				lines.pushBackSprintf("Mali avg: %s  \n", maliAverages[s].toString().cstr());
+				lines.pushBackSprintf("Mali max: %s  \n", maliMaxes[s].toString().cstr());
+			}
+
+			if(options.m_amdStats)
+			{
+				rgaAverages[s] = rgaAverages[s] * (1.0 / F64(shadersPerStage[s]));
+				lines.pushBackSprintf("AMD avg: %s  \n", rgaAverages[s].toString().cstr());
+				lines.pushBackSprintf("AMD max: %s  \n", rgaMaxes[s].toString().cstr());
+			}
+
+			lines.pushBack("```\n");
 		}
 	}
 

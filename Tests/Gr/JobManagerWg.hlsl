@@ -34,9 +34,9 @@ struct SecondNodeInput
 
 groupshared uint g_newWorkItemCount;
 
-[Shader("node")][NodeLaunch("broadcasting")][NodeIsProgramEntry][NodeMaxDispatchGrid(1, 1, 1)][NumThreads(NUMTHREADS, 1, 1)] void
+[Shader("node")][NodeLaunch("broadcasting")][NodeIsProgramEntry][NodeMaxDispatchGrid(1, 1, 1)][numthreads(NUMTHREADS, 1, 1)] void
 main(DispatchNodeInputRecord<FirstNodeInput> input, uint svDispatchThreadId
-	 : SV_DispatchThreadId, uint svGroupIndex : SV_GroupIndex, [MaxRecords(MAX_CHILDREN)] NodeOutput<SecondNodeInput> secondNode)
+	 : SV_DispatchThreadId, uint svGroupIndex : SV_GROUPINDEX, [MaxRecords(MAX_CHILDREN)] NodeOutput<SecondNodeInput> secondNode)
 {
 	if(svGroupIndex == 0)
 	{
@@ -105,9 +105,9 @@ main(DispatchNodeInputRecord<FirstNodeInput> input, uint svDispatchThreadId
 
 static const int x = 0; // For formatting
 
-[Shader("node")][NodeLaunch("broadcasting")][NumThreads(NUMTHREADS, 1, 1)][NodeDispatchGrid(1, 1, 1)][NodeMaxRecursionDepth(16)] void
+[Shader("node")][NodeLaunch("broadcasting")][numthreads(NUMTHREADS, 1, 1)][NodeDispatchGrid(1, 1, 1)][NodeMaxRecursionDepth(16)] void
 secondNode(DispatchNodeInputRecord<SecondNodeInput> input, [MaxRecords(MAX_CHILDREN)] NodeOutput<SecondNodeInput> secondNode,
-		   uint svGroupIndex : SV_GroupIndex)
+		   uint svGroupIndex : SV_GROUPINDEX)
 {
 	if(svGroupIndex == 0)
 	{

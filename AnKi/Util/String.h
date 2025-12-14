@@ -490,6 +490,7 @@ public:
 	/// Append using a range. Copies the range of [first, oneAfterLast)
 	BaseString& append(ConstIterator first, ConstIterator oneAfterLast)
 	{
+		ANKI_ASSERT(oneAfterLast >= first);
 		const PtrSize len = oneAfterLast - first;
 		appendInternal(first, len);
 		return *this;
@@ -690,7 +691,7 @@ public:
 	U64 computeHash() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return anki::computeHash(&m_data[0], m_data.getSize());
+		return toCString().computeHash();
 	}
 
 	/// Replace all occurrences of "from" with "to".

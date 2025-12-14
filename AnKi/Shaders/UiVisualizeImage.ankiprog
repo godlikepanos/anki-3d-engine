@@ -21,14 +21,14 @@ ANKI_FAST_CONSTANTS(Constants, g_consts)
 struct VertIn
 {
 	Vec2 m_position : POSITION;
-	RVec4 m_color : COLOR;
+	Vec4 m_color : COLOR;
 	Vec2 m_uv : TEXCOORD;
 };
 
 struct VertOut
 {
 	Vec2 m_uv : TEXCOORD;
-	RVec4 m_color : COLOR;
+	Vec4 m_color : COLOR;
 	Vec4 m_svPosition : SV_POSITION;
 };
 
@@ -51,19 +51,19 @@ VertOut main(VertIn input)
 #if ANKI_PIXEL_SHADER
 SamplerState g_trilinearRepeatSampler : register(s0);
 #	if TEXTURE_TYPE == 0
-Texture2D<RVec4> g_tex2d : register(t0);
+Texture2D<Vec4> g_tex2d : register(t0);
 #	else
-Texture3D<RVec4> g_tex3d : register(t0);
+Texture3D<Vec4> g_tex3d : register(t0);
 #	endif
 
-RVec4 main(VertOut input) : SV_TARGET0
+Vec4 main(VertOut input) : SV_TARGET0
 {
 #	if TEXTURE_TYPE == 0
-	const RVec4 rgba = g_tex2d.Sample(g_trilinearRepeatSampler, input.m_uv);
+	const Vec4 rgba = g_tex2d.Sample(g_trilinearRepeatSampler, input.m_uv);
 #	else
-	const RVec4 rgba = g_tex3d.Sample(g_trilinearRepeatSampler, Vec3(input.m_uv, g_consts.m_depth.x));
+	const Vec4 rgba = g_tex3d.Sample(g_trilinearRepeatSampler, Vec3(input.m_uv, g_consts.m_depth.x));
 #	endif
-	RVec3 outColor = input.m_color.rgb * rgba.rgb * g_consts.m_colorScale.rgb;
+	Vec3 outColor = input.m_color.rgb * rgba.rgb * g_consts.m_colorScale.rgb;
 
 	if(g_consts.m_colorScale.a == 1.0)
 	{
@@ -74,6 +74,6 @@ RVec4 main(VertOut input) : SV_TARGET0
 		outColor = lerp(Vec3(alphaPattern, alphaPattern, alphaPattern), outColor, rgba.a);
 	}
 
-	return RVec4(outColor, 1.0);
+	return Vec4(outColor, 1.0);
 }
 #endif // ANKI_PIXEL_SHADER

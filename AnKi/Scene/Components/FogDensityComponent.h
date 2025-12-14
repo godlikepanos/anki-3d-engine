@@ -73,6 +73,8 @@ private:
 	Bool m_dirty = true;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 
 } // end namespace anki

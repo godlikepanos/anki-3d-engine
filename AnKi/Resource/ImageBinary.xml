@@ -5,7 +5,8 @@
 
 	<doxygen_group name="resource"/>
 
-	<prefix_code><![CDATA[
+	<prefix_code>
+		<![CDATA[
 inline constexpr const Char* kImageMagic = "ANKITEX1";
 
 /// Image type.
@@ -58,7 +59,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 				<member name="m_mipmapCount" type="U32"/>
 				<member name="m_astcBlockSizeX" type="U32"/>
 				<member name="m_astcBlockSizeY" type="U32"/>
-				<member name="m_padding" type="U8" array_size="80"/>
+				<member name="m_averageColor" type="F32" array_size="4" comment="For U8 formats from 0.0 to 1.0"/>
+				<member name="m_padding" type="U8" array_size="64"/>
 			</members>
 		</class>
 	</classes>

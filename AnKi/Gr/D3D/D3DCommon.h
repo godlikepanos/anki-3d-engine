@@ -476,7 +476,7 @@ inline [[nodiscard]] D3D12_FILL_MODE convertFillMode(FillMode f)
 	return out;
 }
 
-inline [[nodiscard]] D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
+[[nodiscard]] inline D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
 {
 	ANKI_ASSERT(c != FaceSelectionBit::kFrontAndBack);
 	D3D12_CULL_MODE out = {};
@@ -498,6 +498,25 @@ inline [[nodiscard]] D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
 }
 
 [[nodiscard]] DXGI_FORMAT convertFormat(Format fmt);
+
+[[nodiscard]] inline DXGI_FORMAT convertIndexType(IndexType ak)
+{
+	DXGI_FORMAT out;
+	switch(ak)
+	{
+	case IndexType::kU16:
+		out = DXGI_FORMAT_R16_UINT;
+		break;
+	case IndexType::kU32:
+		out = DXGI_FORMAT_R32_UINT;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = DXGI_FORMAT_UNKNOWN;
+	}
+
+	return out;
+}
 /// @}
 
 } // end namespace anki

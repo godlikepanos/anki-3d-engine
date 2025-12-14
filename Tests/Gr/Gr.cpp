@@ -1,4 +1,3 @@
-
 // Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
@@ -22,7 +21,7 @@ using namespace anki;
 
 ANKI_TEST(Gr, GrManager)
 {
-	g_validationCVar = true;
+	g_cvarGrValidation = true;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	initWindow();
@@ -89,6 +88,8 @@ ANKI_TEST(Gr, ClearScreen)
 		HighRezTimer timer;
 		timer.start();
 
+		GrManager::getSingleton().beginFrame();
+
 		TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 		CommandBufferInitInfo cinit;
@@ -113,7 +114,7 @@ ANKI_TEST(Gr, ClearScreen)
 		cmdb->endRecording();
 		GrManager::getSingleton().submit(cmdb.get());
 
-		GrManager::getSingleton().swapBuffers();
+		GrManager::getSingleton().endFrame();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -265,9 +266,9 @@ void main()
 			Foo() = default;
 
 			Foo(Vec4 v)
-				: x(v.x())
-				, y(v.y())
-				, z(v.z())
+				: x(v.x)
+				, y(v.y)
+				, z(v.z)
 			{
 			}
 
@@ -417,7 +418,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 		void* mappedMem = uploadBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 		const Array<Vec4, 4> texelData = {Vec4(1.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 1.0f),
 										  Vec4(1.0f, 0.0f, 1.0f, 1.0f)};
-		memcpy(mappedMem, &texelData[0][0], sizeof(texelData));
+		memcpy(mappedMem, &texelData, sizeof(texelData));
 		uploadBuff->unmap();
 
 		CommandBufferInitInfo cmdbInit;
@@ -446,13 +447,15 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			HighRezTimer timer;
 			timer.start();
 
+			GrManager::getSingleton().beginFrame();
+
 			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::kGeneralWork;
 			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
-			cmdb->setViewport(U32(viewport.x()), U32(viewport.y()), U32(viewport.z()), U32(viewport.w()));
+			cmdb->setViewport(U32(viewport.x), U32(viewport.y), U32(viewport.z), U32(viewport.w));
 			cmdb->bindShaderProgram(prog.get());
 
 			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
@@ -476,7 +479,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 
 			timer.stop();
 			const Second kTick = 1.0f / 30.0f;
@@ -803,6 +806,8 @@ float4 main(VertOut i) : SV_TARGET0
 			HighRezTimer timer;
 			timer.start();
 
+			GrManager::getSingleton().beginFrame();
+
 			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cinit;
@@ -852,7 +857,7 @@ float4 main(VertOut i) : SV_TARGET0
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			GrManager::getSingleton().swapBuffers();
+			GrManager::getSingleton().endFrame();
 
 			timer.stop();
 			const Second kTick = 1.0f / 30.0f;
@@ -1215,7 +1220,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 }
 #endif
 
-static void drawOffscreen(GrManager& gr)
+[[maybe_unused]] static void drawOffscreen([[maybe_unused]] GrManager& gr)
 {
 #if 0
 	//
@@ -1567,7 +1572,7 @@ ANKI_TEST(Gr, 3DTextures)
 #endif
 }
 
-static RenderTargetDesc newRTDescr(CString name)
+[[maybe_unused]] static RenderTargetDesc newRTDescr(CString name)
 {
 	RenderTargetDesc texInf(name);
 	texInf.m_width = texInf.m_height = 16;
@@ -2234,284 +2239,666 @@ void main()
 
 ANKI_TEST(Gr, RayQuery)
 {
-#if 0
-	COMMON_BEGIN();
+	g_cvarGrRayTracing = true;
+	commonInit();
 
-	const Bool useRayTracing = g_gr->getDeviceCapabilities().m_rayTracingEnabled;
-	if(!useRayTracing)
 	{
-		ANKI_TEST_LOGW("Test will run without using ray tracing");
-	}
+		if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+		{
+			ANKI_TEST_LOGF("Test can't run without ray tracing");
+		}
 
-	// Index buffer
-	BufferPtr idxBuffer;
-	if(useRayTracing)
-	{
-		Array<U16, 3> indices = {0, 1, 2};
-		BufferInitInfo init;
-		init.m_mapAccess = BufferMapAccessBit::kWrite;
-		init.m_usage = BufferUsageBit::kIndex;
-		init.m_size = sizeof(indices);
-		idxBuffer = g_gr->newBuffer(init);
+		// Index buffer
+		BufferPtr idxBuffer;
+		{
+			Array<U16, 3> indices = {0, 1, 2};
+			BufferInitInfo init("IdxBuffer");
+			init.m_mapAccess = BufferMapAccessBit::kWrite;
+			init.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kAccelerationStructureBuild;
+			init.m_size = sizeof(indices);
+			idxBuffer = GrManager::getSingleton().newBuffer(init);
 
-		void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
-		memcpy(addr, &indices[0], sizeof(indices));
-		idxBuffer->unmap();
-	}
+			void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			memcpy(addr, &indices[0], sizeof(indices));
+			idxBuffer->unmap();
+		}
 
-	// Position buffer (add some padding to complicate things a bit)
-	BufferPtr vertBuffer;
-	if(useRayTracing)
-	{
-		Array<Vec4, 3> verts = {{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
+		// Position buffer (add some padding to complicate things a bit)
+		BufferPtr vertBuffer;
+		{
+			Array<Vec4, 3> verts = {{Vec4(-1.0f, 0.0f, 0.0f, 100.0f), Vec4(1.0f, 0.0f, 0.0f, 100.0f), Vec4(0.0f, 2.0f, 0.0f, 100.0f)}};
 
-		BufferInitInfo init;
-		init.m_mapAccess = BufferMapAccessBit::kWrite;
-		init.m_usage = BufferUsageBit::kVertex;
-		init.m_size = sizeof(verts);
-		vertBuffer = g_gr->newBuffer(init);
+			BufferInitInfo init("VertBuffer");
+			init.m_mapAccess = BufferMapAccessBit::kWrite;
+			init.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kAccelerationStructureBuild;
+			init.m_size = sizeof(verts);
+			vertBuffer = GrManager::getSingleton().newBuffer(init);
 
-		void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
-		memcpy(addr, &verts[0], sizeof(verts));
-		vertBuffer->unmap();
-	}
+			void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			memcpy(addr, &verts[0], sizeof(verts));
+			vertBuffer->unmap();
+		}
 
-	// BLAS
-	AccelerationStructurePtr blas;
-	if(useRayTracing)
-	{
-		AccelerationStructureInitInfo init;
-		init.m_type = AccelerationStructureType::kBottomLevel;
-		init.m_bottomLevel.m_indexBuffer = idxBuffer.get();
-		init.m_bottomLevel.m_indexCount = 3;
-		init.m_bottomLevel.m_indexType = IndexType::kU16;
-		init.m_bottomLevel.m_positionBuffer = vertBuffer.get();
-		init.m_bottomLevel.m_positionCount = 3;
-		init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
-		init.m_bottomLevel.m_positionStride = 4 * 4;
+		// BLAS
+		AccelerationStructurePtr blas;
+		{
+			AccelerationStructureInitInfo init;
+			init.m_type = AccelerationStructureType::kBottomLevel;
+			init.m_bottomLevel.m_indexBuffer = BufferView(idxBuffer.get());
+			init.m_bottomLevel.m_indexCount = 3;
+			init.m_bottomLevel.m_indexType = IndexType::kU16;
+			init.m_bottomLevel.m_positionBuffer = BufferView(vertBuffer.get());
+			init.m_bottomLevel.m_positionCount = 3;
+			init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
+			init.m_bottomLevel.m_positionStride = 4 * 4;
 
-		blas = g_gr->newAccelerationStructure(init);
-	}
+			blas = GrManager::getSingleton().newAccelerationStructure(init);
+		}
 
-	// TLAS
-	AccelerationStructurePtr tlas;
-	if(useRayTracing)
-	{
-		AccelerationStructureInitInfo init;
-		init.m_type = AccelerationStructureType::kTopLevel;
-		Array<AccelerationStructureInstanceInfo, 1> instances = {{{blas, Mat3x4::getIdentity()}}};
-		init.m_topLevel.m_directArgs.m_instances = instances;
+		// TLAS
+		AccelerationStructurePtr tlas;
+		{
+			AccelerationStructureInstance inst = {};
+			inst.m_accelerationStructureAddress = blas->getGpuAddress();
+			inst.m_transform = Mat3x4::getIdentity();
+			inst.m_mask = 0xFF;
+			inst.m_flags = kAccellerationStructureFlagForceOpaque;
+			BufferPtr instBuff = createBuffer(BufferUsageBit::kAll, inst, 1);
 
-		tlas = g_gr->newAccelerationStructure(init);
-	}
+			AccelerationStructureInitInfo init;
+			init.m_type = AccelerationStructureType::kTopLevel;
+			init.m_topLevel.m_instancesBuffer = BufferView(instBuff.get());
+			init.m_topLevel.m_instanceCount = 1;
 
-	// Program
-	ShaderProgramPtr prog;
-	{
-		CString src = R"(
+			tlas = GrManager::getSingleton().newAccelerationStructure(init);
+		}
 
-#if USE_RAY_TRACING
-#extension GL_EXT_ray_query : enable
-#endif
-
-layout(push_constant, std140, row_major) uniform b_pc
+		// Program
+		ShaderProgramPtr prog;
+		{
+			constexpr const Char* kVertSrc = R"(
+struct VertOut
 {
-	Mat4 u_vp;
-	Vec3 u_cameraPos;
-	F32 u_padding0;
+	float4 m_svPosition : SV_POSITION;
+	float2 m_uv : TEXCOORDS;
 };
 
-#if USE_RAY_TRACING
-layout(set = 0, binding = 0) uniform accelerationStructureEXT u_tlas;
+VertOut main(uint svVertexId : SV_VERTEXID)
+{
+	const float2 coord = float2(svVertexId >> 1, svVertexId & 1);
+
+	VertOut output;
+	output.m_svPosition = float4(coord * float2(4.0, -4.0) + float2(-1.0, 1.0), 0.0, 1.0);
+	output.m_uv = coord * 2.0;
+
+	return output;
+})";
+
+			CString kPixelSrc = R"(
+struct Consts
+{
+	float4x4 m_invViewProj;
+	float3 m_cameraPos;
+	float m_padding0;
+	float2 m_viewport;
+	float2 m_padding1;
+};
+
+#if defined(__spirv__)
+[[vk::push_constant]] ConstantBuffer<Consts> g_consts;
+#else
+ConstantBuffer<Consts> g_consts : register(b0, space3000);
 #endif
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec3 out_color;
+RaytracingAccelerationStructure g_tlas : register(t0);
 
-Bool rayTriangleIntersect(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F32 t, out F32 u, out F32 v)
+struct VertOut
 {
-	const Vec3 v0v1 = v1 - v0;
-	const Vec3 v0v2 = v2 - v0;
-	const Vec3 pvec = cross(dir, v0v2);
-	const F32 det = dot(v0v1, pvec);
+	float4 m_svPosition : SV_POSITION;
+	float2 m_uv : TEXCOORDS;
+};
 
-	if(det < 0.00001)
-	{
-		return false;
-	}
-
-	const F32 invDet = 1.0 / det;
-
-	const Vec3 tvec = orig - v0;
-	u = dot(tvec, pvec) * invDet;
-	if(u < 0.0 || u > 1.0)
-	{
-		return false;
-	}
-
-	const Vec3 qvec = cross(tvec, v0v1);
-	v = dot(dir, qvec) * invDet;
-	if(v < 0.0 || u + v > 1.0)
-	{
-		return false;
-	}
-
-	t = dot(v0v2, qvec) * invDet;
-	return true;
-}
-
-void main()
+float4 main(VertOut input) : SV_TARGET0
 {
 	// Unproject
-	const Vec2 ndc = in_uv * 2.0 - 1.0;
-	const Vec4 p4 = inverse(u_vp) * Vec4(ndc, 1.0, 1.0);
-	const Vec3 p3 = p4.xyz / p4.w;
+	const float2 uv = input.m_uv;
+	float2 ndc = uv * 2.0 - 1.0;
+	ndc.y *= -1;
+	const float4 p4 = mul(g_consts.m_invViewProj, float4(ndc, 1.0, 1.0));
+	const float3 p3 = p4.xyz / p4.w;
 
-	const Vec3 rayDir = normalize(p3 - u_cameraPos);
-	const Vec3 rayOrigin = u_cameraPos;
+	const float3 rayDir = normalize(p3 - g_consts.m_cameraPos);
+	const float3 rayOrigin = g_consts.m_cameraPos;
 
-#if USE_RAY_TRACING
-	Bool hit = false;
-	F32 u = 0.0;
-	F32 v = 0.0;
+	RayQuery<RAY_FLAG_NONE> q;
+	const uint cullMask = 0xFFu;
+	const uint traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = 0.01;
+	ray.Direction = rayDir;
+	ray.TMax = 100.0;
+	q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
+	q.Proceed();
+	bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 
-	rayQueryEXT rayQuery;
-	rayQueryInitializeEXT(rayQuery, u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT, 0xFFu, rayOrigin,
-		0.01, rayDir, 1000.0);
-
-	rayQueryProceedEXT(rayQuery);
-
-	const U32 committedStatus = rayQueryGetIntersectionTypeEXT(rayQuery, true);
-	if(committedStatus == gl_RayQueryCommittedIntersectionTriangleEXT)
-	{
-		const Vec2 bary = rayQueryGetIntersectionBarycentricsEXT(rayQuery, true);
-		u = bary.x;
-		v = bary.y;
-		hit = true;
-	}
-#else
-	// Manual trace
-	Vec3 arr[3] = Vec3[](Vec3(-1.0f, 0.0f, 0.0f), Vec3(1.0f, 0.0f, 0.0f), Vec3(0.0f, 2.0f, 0.0f));
-	F32 t;
-	F32 u;
-	F32 v;
-	const Bool hit = rayTriangleIntersect(rayOrigin, rayDir, arr[0], arr[1], arr[2], t, u, v);
-#endif
-
+	float u = 0;
+    float v = 0;
+    float w = 0;
 	if(hit)
 	{
-		out_color = Vec3(u, v, 1.0 - (u + v));
+		float2 bary = q.CandidateTriangleBarycentrics();
+		u = 1.0 - bary.x - bary.y;
+		v = bary.x;
+		w = bary.y;
 	}
-	else
-	{
-		out_color = Vec3(mix(0.5, 0.2, in_uv.x));
+
+	return float4(u, v, w, 0.0);
+})";
+
+			prog = createVertFragProg(kVertSrc, kPixelSrc);
+		}
+
+		// Build AS
+		{
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			AccelerationStructureBarrierInfo barr;
+			barr.m_as = blas.get();
+			barr.m_previousUsage = AccelerationStructureUsageBit::kNone;
+			barr.m_nextUsage = AccelerationStructureUsageBit::kBuild;
+
+			cmdb->setPipelineBarrier({}, {}, {&barr, 1});
+			BufferInitInfo scratchInit;
+			scratchInit.m_size = blas->getBuildScratchBufferSize();
+			scratchInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+			BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+			cmdb->buildAccelerationStructure(blas.get(), BufferView(scratchBuff.get()));
+
+			Array<AccelerationStructureBarrierInfo, 2> barr2;
+			barr2[0].m_as = blas.get();
+			barr2[0].m_previousUsage = AccelerationStructureUsageBit::kBuild;
+			barr2[0].m_nextUsage = AccelerationStructureUsageBit::kAttach;
+			barr2[1].m_as = tlas.get();
+			barr2[1].m_previousUsage = AccelerationStructureUsageBit::kNone;
+			barr2[1].m_nextUsage = AccelerationStructureUsageBit::kBuild;
+
+			cmdb->setPipelineBarrier({}, {}, barr2);
+
+			scratchInit.m_size = tlas->getBuildScratchBufferSize();
+			scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+			cmdb->buildAccelerationStructure(tlas.get(), BufferView(scratchBuff.get()));
+
+			AccelerationStructureBarrierInfo barr3;
+			barr3.m_as = tlas.get();
+			barr3.m_previousUsage = AccelerationStructureUsageBit::kBuild;
+			barr3.m_nextUsage = AccelerationStructureUsageBit::kSrvCompute;
+
+			cmdb->setPipelineBarrier({}, {}, {&barr3, 1});
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+		}
+
+		// Draw
+		constexpr U32 kIterations = 200;
+		for(U i = 0; i < kIterations; ++i)
+		{
+			HighRezTimer timer;
+			timer.start();
+
+			GrManager::getSingleton().beginFrame();
+
+			const Vec4 cameraPos(0.0f, 0.0f, 3.0f, 0.0f);
+			const Mat4 viewMat = Mat4(cameraPos.xyz, Mat3::getIdentity(), Vec3(1.0f)).invert();
+			const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			cmdb->bindShaderProgram(prog.get());
+			struct Consts
+			{
+				Mat4 m_invViewProj;
+				Vec3 m_cameraPos;
+				F32 m_padding0;
+				Vec2 m_viewport;
+				Vec2 m_padding1;
+			} consts;
+			consts.m_invViewProj = (projMat * viewMat).invert().transpose();
+			consts.m_cameraPos = cameraPos.xyz;
+			consts.m_viewport = Vec2(kWidth, kHeight);
+			cmdb->setFastConstants(&consts, sizeof(consts));
+
+			cmdb->bindSrv(0, 0, tlas.get());
+
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
+
+			TextureBarrierInfo barr;
+			barr.m_textureView = TextureView(presentTex.get(), TextureSubresourceDesc::all());
+			barr.m_previousUsage = TextureUsageBit::kNone;
+			barr.m_nextUsage = TextureUsageBit::kRtvDsvWrite;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDesc::firstSurface())});
+			cmdb->setViewport(0, 0, kWidth, kHeight);
+			cmdb->draw(PrimitiveTopology::kTriangles, 3);
+
+			cmdb->endRenderPass();
+
+			barr.m_previousUsage = TextureUsageBit::kRtvDsvWrite;
+			barr.m_nextUsage = TextureUsageBit::kPresent;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+
+			GrManager::getSingleton().endFrame();
+
+			timer.stop();
+			const F32 TICK = 1.0f / 30.0f;
+			if(timer.getElapsedTime() < TICK)
+			{
+				HighRezTimer::sleep(TICK - timer.getElapsedTime());
+			}
+		}
 	}
+
+	commonDestroy();
 }
-		)";
 
-		String fragSrc;
-		if(useRayTracing)
-		{
-			fragSrc += "#define USE_RAY_TRACING 1\n";
-		}
-		else
-		{
-			fragSrc += "#define USE_RAY_TRACING 0\n";
-		}
-		fragSrc += src;
-		prog = createProgram(VERT_QUAD_STRIP_SRC, fragSrc, *g_gr);
-	}
+ANKI_TEST(Gr, RayTracingPipeline)
+{
+	g_cvarGrRayTracing = true;
+	// g_deviceCVar = 1;
+	commonInit();
 
-	// Build AS
-	if(useRayTracing)
 	{
-		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
-
-		setAccelerationStructureBarrier(cmdb, blas, AccelerationStructureUsageBit::kNone, AccelerationStructureUsageBit::kBuild);
-		BufferInitInfo scratchInit;
-		scratchInit.m_size = blas->getBuildScratchBufferSize();
-		scratchInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
-		BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
-		cmdb->buildAccelerationStructure(blas.get(), scratchBuff.get(), 0);
-		setAccelerationStructureBarrier(cmdb, blas, AccelerationStructureUsageBit::kBuild, AccelerationStructureUsageBit::kAttach);
-
-		setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kNone, AccelerationStructureUsageBit::kBuild);
-		scratchInit.m_size = tlas->getBuildScratchBufferSize();
-		scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
-		cmdb->buildAccelerationStructure(tlas.get(), scratchBuff.get(), 0);
-		setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kBuild, AccelerationStructureUsageBit::kFragmentRead);
-
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get());
-	}
-
-	// Draw
-	constexpr U32 ITERATIONS = 200;
-	for(U i = 0; i < ITERATIONS; ++i)
-	{
-		HighRezTimer timer;
-		timer.start();
-
-		const Vec4 cameraPos(0.0f, 0.0f, 3.0f, 0.0f);
-		const Mat4 viewMat = Mat4(cameraPos.xyz(), Mat3::getIdentity(), Vec3(1.0f)).getInverse();
-		const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
-
-		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
-
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-
-		cmdb->bindShaderProgram(prog.get());
-		struct PC
+		if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 		{
-			Mat4 m_vp;
-			Vec4 m_cameraPos;
-		} pc;
-		pc.m_vp = projMat * viewMat;
-		pc.m_cameraPos = cameraPos;
-		cmdb->setFastConstants(&pc, sizeof(pc));
-
-		if(useRayTracing)
-		{
-			cmdb->bindAccelerationStructure(0, 0, tlas.get());
+			ANKI_TEST_LOGF("Test can't run without ray tracing");
 		}
 
-		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
-
-		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kNone, TextureUsageBit::kRtvDsvWrite, TextureSubresourceInfo{});
-
-		cmdb->beginRenderPass(fb.get(), {TextureUsageBit::kRtvDsvWrite}, {});
-		cmdb->draw(PrimitiveTopology::kTriangleStrip, 4);
-		cmdb->endRenderPass();
-
-		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kRtvDsvWrite, TextureUsageBit::kPresent, TextureSubresourceInfo{});
-
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get());
-
-		g_gr->swapBuffers();
-
-		timer.stop();
-		const F32 TICK = 1.0f / 30.0f;
-		if(timer.getElapsedTime() < TICK)
+		// Index buffer
+		BufferPtr idxBuffer;
 		{
-			HighRezTimer::sleep(TICK - timer.getElapsedTime());
-		}
-	}
+			Array<U16, 3> indices = {0, 1, 2};
+			BufferInitInfo init("IdxBuffer");
+			init.m_mapAccess = BufferMapAccessBit::kWrite;
+			init.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kAccelerationStructureBuild;
+			init.m_size = sizeof(indices);
+			idxBuffer = GrManager::getSingleton().newBuffer(init);
 
-	COMMON_END();
+			void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			memcpy(addr, &indices[0], sizeof(indices));
+			idxBuffer->unmap();
+		}
+
+		// Position buffer (add some padding to complicate things a bit)
+		BufferPtr vertBuffer;
+		{
+			Array<Vec4, 3> verts = {{Vec4(-1.0f, 0.0f, 0.0f, 100.0f), Vec4(1.0f, 0.0f, 0.0f, 100.0f), Vec4(0.0f, 2.0f, 0.0f, 100.0f)}};
+
+			BufferInitInfo init("VertBuffer");
+			init.m_mapAccess = BufferMapAccessBit::kWrite;
+			init.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kAccelerationStructureBuild;
+			init.m_size = sizeof(verts);
+			vertBuffer = GrManager::getSingleton().newBuffer(init);
+
+			void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			memcpy(addr, &verts[0], sizeof(verts));
+			vertBuffer->unmap();
+		}
+
+		// BLAS
+		AccelerationStructurePtr blas;
+		{
+			AccelerationStructureInitInfo init;
+			init.m_type = AccelerationStructureType::kBottomLevel;
+			init.m_bottomLevel.m_indexBuffer = BufferView(idxBuffer.get());
+			init.m_bottomLevel.m_indexCount = 3;
+			init.m_bottomLevel.m_indexType = IndexType::kU16;
+			init.m_bottomLevel.m_positionBuffer = BufferView(vertBuffer.get());
+			init.m_bottomLevel.m_positionCount = 3;
+			init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
+			init.m_bottomLevel.m_positionStride = 4 * 4;
+
+			blas = GrManager::getSingleton().newAccelerationStructure(init);
+		}
+
+		// TLAS
+		AccelerationStructurePtr tlas;
+		{
+			Array<AccelerationStructureInstance, 2> inst = {};
+			inst[0].m_accelerationStructureAddress = blas->getGpuAddress();
+			inst[0].m_transform = Mat3x4::getIdentity();
+			inst[0].m_mask = 0xFF;
+			inst[0].m_flags = kAccellerationStructureFlagForceOpaque;
+			inst[1] = inst[0];
+			inst[1].m_transform = Mat3x4(Vec3(0.0f, -2.0f, 0.0f), Mat3::getIdentity(), Vec3(1.0f));
+			inst[1].m_instanceCustomIndex = 1;
+			inst[1].m_instanceShaderBindingTableRecordOffset = 1;
+			BufferPtr instBuff = createBuffer(BufferUsageBit::kAccelerationStructureBuild, inst, 1, "TLAS instances");
+
+			AccelerationStructureInitInfo init;
+			init.m_type = AccelerationStructureType::kTopLevel;
+			init.m_topLevel.m_instancesBuffer = BufferView(instBuff.get());
+			init.m_topLevel.m_instanceCount = 2;
+
+			tlas = GrManager::getSingleton().newAccelerationStructure(init);
+		}
+
+		// Program
+		ShaderProgramPtr prog;
+		{
+			constexpr const Char* kCHit = R"(
+struct Barycentrics
+{
+	float2 m_value;
+};
+
+struct [raypayload] Payload
+{
+	float3 m_color : write(closesthit, miss, caller) : read(caller);
+};
+
+struct SbtConsts
+{
+	float3 m_color;
+};
+
+[[vk::shader_record_ext]] ConstantBuffer<SbtConsts> g_sbtConsts : register(b0, space3001);
+
+[shader("closesthit")] void main(inout Payload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
+{
+	const float3 bary = float3(1.0 - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
+	float3 c = bary * COLOR_SCALE;
+	float factor = max(c.x, max(c.y, c.z));
+	payload.m_color = lerp(g_sbtConsts.m_color, c, saturate(factor));
+})";
+
+			constexpr const Char* kMiss = R"(
+struct [raypayload] Payload
+{
+	float3 m_color : write(closesthit, miss, caller) : read(caller);
+};
+
+[shader("miss")] void main(inout Payload payload : SV_RayPayload)
+{
+	payload.m_color = float3(0.2, 0.0, 0.2);
+})";
+
+			constexpr const Char* kRaygen = R"(
+struct Consts
+{
+	float4x4 m_invViewProj;
+	float3 m_cameraPos;
+	float m_padding0;
+	float2 m_viewport;
+	float2 m_padding1;
+};
+
+struct [raypayload] Payload
+{
+	float3 m_color : write(closesthit, miss, caller) : read(caller);
+};
+
+#if defined(__spirv__)
+[[vk::push_constant]] ConstantBuffer<Consts> g_consts;
+#else
+ConstantBuffer<Consts> g_consts : register(b0, space3000);
 #endif
+
+RaytracingAccelerationStructure g_tlas : register(t0);
+RWTexture2D<float4> g_uav : register(u0);
+
+[shader("raygeneration")] void main()
+{
+	// Unproject
+	const float2 uv = (DispatchRaysIndex().xy + 0.5) / g_consts.m_viewport;
+	float2 ndc = uv * 2.0 - 1.0;
+	ndc.y *= -1;
+	const float4 p4 = mul(g_consts.m_invViewProj, float4(ndc, 1.0, 1.0));
+	const float3 p3 = p4.xyz / p4.w;
+
+	const float3 rayDir = normalize(p3 - g_consts.m_cameraPos);
+	const float3 rayOrigin = g_consts.m_cameraPos;
+
+	Payload payload;
+	payload.m_color = 0.0;
+
+	const uint cullMask = 0xFFu;
+	const uint traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
+	const uint missIndex = 0u;
+	const uint sbtRecordOffset = 0u;
+	const uint sbtRecordStride = 0u;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = 0.01;
+	ray.Direction = rayDir;
+	ray.TMax = 100.0;
+	TraceRay(g_tlas, traceFlags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
+
+	g_uav[DispatchRaysIndex().xy] = float4(payload.m_color + COLOR_BIAS * ((DispatchRaysIndex().x / 32) & 1), 0.0);
+})";
+
+			ShaderPtr chit1Shader = createShader(kCHit, ShaderType::kClosestHit, Array<CString, 1>{"-DCOLOR_SCALE=float4(1, 0, 0, 0)"});
+			ShaderPtr chit2Shader = createShader(kCHit, ShaderType::kClosestHit, Array<CString, 1>{"-DCOLOR_SCALE=float4(0, 0, 1, 0)"});
+			ShaderPtr missShader = createShader(kMiss, ShaderType::kMiss);
+			ShaderPtr raygen1Shader = createShader(kRaygen, ShaderType::kRayGen, Array<CString, 1>{"-DCOLOR_BIAS=float4(1, 1, 1, 0)"});
+			ShaderPtr raygen2Shader = createShader(kRaygen, ShaderType::kRayGen, Array<CString, 1>{"-DCOLOR_BIAS=float4(0, 0, 0, 0)"});
+
+			ShaderProgramInitInfo inf;
+			Array<Shader*, 2> raygenArr = {raygen1Shader.get(), raygen2Shader.get()};
+			inf.m_rayTracingShaders.m_rayGenShaders = raygenArr;
+			Shader* pMiss = missShader.get();
+			inf.m_rayTracingShaders.m_missShaders = {&pMiss, 1};
+			Array<RayTracingHitGroup, 2> hits = {{{chit1Shader.get(), nullptr}, {chit2Shader.get(), nullptr}}};
+			inf.m_rayTracingShaders.m_hitGroups = hits;
+			prog = GrManager::getSingleton().newShaderProgram(inf);
+		}
+
+		// Build SBT
+		BufferPtr sbt;
+		U32 sbtRecordSize;
+		{
+			const U32 handleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
+			sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment, handleSize + U32(sizeof(Vec3)));
+
+			ConstWeakArray<U8> handles = prog->getShaderGroupHandles();
+
+			const Array<U32, 4> copyHandles = {0, 2, 3, 4};
+			const Array<Vec3, 4> colors = {Vec3(0.0f), Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f), Vec3(1.0f, 0.0f, 0.0f)};
+
+			DynamicArray<U8> sbtData;
+			sbtData.resize(copyHandles.getSize() * sbtRecordSize, 0);
+
+			U32 count = 0;
+			for(U32 handleIdx : copyHandles)
+			{
+				memcpy(sbtData.getBegin() + sbtRecordSize * count, handles.getBegin() + handleSize * handleIdx, handleSize);
+				memcpy(sbtData.getBegin() + sbtRecordSize * count + handleSize, &colors[count], sizeof(Vec3));
+				++count;
+			}
+
+			sbt = createBuffer(BufferUsageBit::kShaderBindingTable, ConstWeakArray(sbtData), "SBT");
+		}
+
+		// Build AS
+		{
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			AccelerationStructureBarrierInfo barr;
+			barr.m_as = blas.get();
+			barr.m_previousUsage = AccelerationStructureUsageBit::kNone;
+			barr.m_nextUsage = AccelerationStructureUsageBit::kBuild;
+
+			cmdb->setPipelineBarrier({}, {}, {&barr, 1});
+			BufferInitInfo scratchInit;
+			scratchInit.m_size = blas->getBuildScratchBufferSize();
+			scratchInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+			BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+			cmdb->buildAccelerationStructure(blas.get(), BufferView(scratchBuff.get()));
+
+			Array<AccelerationStructureBarrierInfo, 2> barr2;
+			barr2[0].m_as = blas.get();
+			barr2[0].m_previousUsage = AccelerationStructureUsageBit::kBuild;
+			barr2[0].m_nextUsage = AccelerationStructureUsageBit::kAttach;
+			barr2[1].m_as = tlas.get();
+			barr2[1].m_previousUsage = AccelerationStructureUsageBit::kNone;
+			barr2[1].m_nextUsage = AccelerationStructureUsageBit::kBuild;
+
+			cmdb->setPipelineBarrier({}, {}, barr2);
+
+			scratchInit.m_size = tlas->getBuildScratchBufferSize();
+			scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+			cmdb->buildAccelerationStructure(tlas.get(), BufferView(scratchBuff.get()));
+
+			AccelerationStructureBarrierInfo barr3;
+			barr3.m_as = tlas.get();
+			barr3.m_previousUsage = AccelerationStructureUsageBit::kBuild;
+			barr3.m_nextUsage = AccelerationStructureUsageBit::kSrvCompute;
+
+			cmdb->setPipelineBarrier({}, {}, {&barr3, 1});
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+		}
+
+		// UAV
+		TexturePtr uav;
+		{
+			TextureInitInfo texInit;
+			texInit.m_width = kWidth;
+			texInit.m_height = kHeight;
+			texInit.m_format = Format::kR8G8B8A8_Unorm;
+			texInit.m_usage = TextureUsageBit::kAllUav | TextureUsageBit::kAllSrv;
+			uav = GrManager::getSingleton().newTexture(texInit);
+		}
+
+		// Prog to blit to swapchain
+		ShaderProgramPtr blitProg;
+		{
+			constexpr const Char* kVertSrc = R"(
+float4 main(uint svVertexId : SV_VERTEXID) : SV_POSITION
+{
+	const float2 coord = float2(svVertexId >> 1, svVertexId & 1);
+	return float4(coord * float2(4.0, -4.0) + float2(-1.0, 1.0), 0.0, 1.0);
+})";
+
+			CString kPixelSrc = R"(
+Texture2D g_srv : register(t0);
+
+float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
+{
+	return g_srv[svPosition.xy];
+})";
+
+			blitProg = createVertFragProg(kVertSrc, kPixelSrc);
+		}
+
+		// Build indirect args
+		BufferPtr indirectArgs;
+		{
+			const DispatchIndirectArgs args = {kWidth, kHeight, 1};
+			indirectArgs = createBuffer(BufferUsageBit::kIndirectDispatchRays, args, 1, "IndirectArgs");
+		}
+
+		// Draw
+		constexpr U32 kIterations = 200;
+		for(U i = 0; i < kIterations; ++i)
+		{
+			HighRezTimer timer;
+			timer.start();
+
+			GrManager::getSingleton().beginFrame();
+
+			const Vec4 cameraPos(0.0f, 0.0f, 3.0f, 0.0f);
+			const Mat4 viewMat = Mat4(cameraPos.xyz, Mat3::getIdentity(), Vec3(1.0f)).invert();
+			const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			TextureBarrierInfo barr;
+			barr.m_textureView = TextureView(uav.get());
+			barr.m_previousUsage = (i == 0) ? TextureUsageBit::kNone : TextureUsageBit::kSrvPixel;
+			barr.m_nextUsage = TextureUsageBit::kUavDispatchRays;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			cmdb->bindShaderProgram(prog.get());
+			struct Consts
+			{
+				Mat4 m_invViewProj;
+				Vec3 m_cameraPos;
+				F32 m_padding0;
+				Vec2 m_viewport;
+				Vec2 m_padding1;
+			} consts;
+			consts.m_invViewProj = (projMat * viewMat).invert().transpose();
+			consts.m_cameraPos = cameraPos.xyz;
+			consts.m_viewport = Vec2(kWidth, kHeight);
+			cmdb->setFastConstants(&consts, sizeof(consts));
+
+			cmdb->bindSrv(0, 0, tlas.get());
+			cmdb->bindUav(0, 0, TextureView(uav.get()));
+
+			cmdb->dispatchRaysIndirect(BufferView(sbt.get()), sbtRecordSize, 2, 1, BufferView(indirectArgs.get()));
+
+			barr.m_previousUsage = TextureUsageBit::kUavDispatchRays;
+			barr.m_nextUsage = TextureUsageBit::kSrvPixel;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			// Blit to swapchain
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
+			barr.m_textureView = TextureView(presentTex.get());
+			barr.m_previousUsage = TextureUsageBit::kNone;
+			barr.m_nextUsage = TextureUsageBit::kRtvDsvWrite;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			cmdb->beginRenderPass({TextureView(presentTex.get())});
+
+			cmdb->setViewport(0, 0, kWidth, kHeight);
+			cmdb->bindSrv(0, 0, TextureView(uav.get()));
+			cmdb->bindShaderProgram(blitProg.get());
+
+			cmdb->draw(PrimitiveTopology::kTriangles, 3);
+
+			cmdb->endRenderPass();
+
+			barr.m_previousUsage = TextureUsageBit::kRtvDsvWrite;
+			barr.m_nextUsage = TextureUsageBit::kPresent;
+			cmdb->setPipelineBarrier({&barr, 1}, {}, {});
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+
+			GrManager::getSingleton().endFrame();
+
+			timer.stop();
+			const F32 TICK = 1.0f / 30.0f;
+			if(timer.getElapsedTime() < TICK)
+			{
+				HighRezTimer::sleep(TICK - timer.getElapsedTime());
+			}
+		}
+	}
+
+	commonDestroy();
 }
 
-static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& indexBuffer, BufferPtr& vertBuffer, Bool turnInsideOut = false)
+[[maybe_unused]] static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& indexBuffer, BufferPtr& vertBuffer,
+											   Bool turnInsideOut = false)
 {
 	BufferInitInfo inf;
 	inf.m_mapAccess = BufferMapAccessBit::kWrite;
-	inf.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kSrvTraceRays;
+	inf.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kSrvDispatchRays;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
 	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::kWrite);
@@ -2523,14 +2910,14 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 	// | 4 ---|-5
 	// |/     |/
 	// 0------1
-	positions[0] = Vec3(min.x(), min.y(), max.z());
-	positions[1] = Vec3(max.x(), min.y(), max.z());
-	positions[2] = Vec3(max.x(), max.y(), max.z());
-	positions[3] = Vec3(min.x(), max.y(), max.z());
-	positions[4] = Vec3(min.x(), min.y(), min.z());
-	positions[5] = Vec3(max.x(), min.y(), min.z());
-	positions[6] = Vec3(max.x(), max.y(), min.z());
-	positions[7] = Vec3(min.x(), max.y(), min.z());
+	positions[0] = Vec3(min.x, min.y, max.z);
+	positions[1] = Vec3(max.x, min.y, max.z);
+	positions[2] = Vec3(max.x, max.y, max.z);
+	positions[3] = Vec3(min.x, max.y, max.z);
+	positions[4] = Vec3(min.x, min.y, min.z);
+	positions[5] = Vec3(max.x, min.y, min.z);
+	positions[6] = Vec3(max.x, max.y, min.z);
+	positions[7] = Vec3(min.x, max.y, min.z);
 
 	vertBuffer->unmap();
 
@@ -2692,21 +3079,21 @@ void main()
 	geometries[GeomWhat::SMALL_BOX].m_aabb = Aabb(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
 	geometries[GeomWhat::SMALL_BOX].m_worldRotation = Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f)));
 	geometries[GeomWhat::SMALL_BOX].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::SMALL_BOX].m_aabb.getMin() + geometries[GeomWhat::SMALL_BOX].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::SMALL_BOX].m_aabb.getMin() + geometries[GeomWhat::SMALL_BOX].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::SMALL_BOX].m_worldRotation);
 	geometries[GeomWhat::SMALL_BOX].m_diffuseColor = Vec3(0.75f);
 
 	geometries[GeomWhat::BIG_BOX].m_aabb = Aabb(Vec3(265.0f, 0.0f, 295.0f), Vec3(430.0f, 330.0f, 460.0f));
 	geometries[GeomWhat::BIG_BOX].m_worldRotation = Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f)));
 	geometries[GeomWhat::BIG_BOX].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::BIG_BOX].m_aabb.getMin() + geometries[GeomWhat::BIG_BOX].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::BIG_BOX].m_aabb.getMin() + geometries[GeomWhat::BIG_BOX].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::BIG_BOX].m_worldRotation);
 	geometries[GeomWhat::BIG_BOX].m_diffuseColor = Vec3(0.75f);
 
 	geometries[GeomWhat::ROOM].m_aabb = Aabb(Vec3(0.0f), Vec3(555.0f));
 	geometries[GeomWhat::ROOM].m_worldRotation = Mat3::getIdentity();
 	geometries[GeomWhat::ROOM].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::ROOM].m_aabb.getMin() + geometries[GeomWhat::ROOM].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::ROOM].m_aabb.getMin() + geometries[GeomWhat::ROOM].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::ROOM].m_worldRotation);
 	geometries[GeomWhat::ROOM].m_insideOut = true;
 	geometries[GeomWhat::ROOM].m_indexCount = 30;
@@ -2714,7 +3101,7 @@ void main()
 	geometries[GeomWhat::LIGHT].m_aabb = Aabb(Vec3(213.0f + 1.0f, 554.0f, 227.0f + 1.0f), Vec3(343.0f - 1.0f, 554.0f + 0.001f, 332.0f - 1.0f));
 	geometries[GeomWhat::LIGHT].m_worldRotation = Mat3::getIdentity();
 	geometries[GeomWhat::LIGHT].m_worldTransform =
-		Mat3x4(Vec3((geometries[GeomWhat::LIGHT].m_aabb.getMin() + geometries[GeomWhat::LIGHT].m_aabb.getMax()).xyz() / 2.0f),
+		Mat3x4(Vec3((geometries[GeomWhat::LIGHT].m_aabb.getMin() + geometries[GeomWhat::LIGHT].m_aabb.getMax()).xyz / 2.0f),
 			   geometries[GeomWhat::LIGHT].m_worldRotation);
 	geometries[GeomWhat::LIGHT].m_asMask = 0b01;
 	geometries[GeomWhat::LIGHT].m_emissiveColor = Vec3(15.0f);
@@ -2722,8 +3109,8 @@ void main()
 	// Create Buffers
 	for(Geom& g : geometries)
 	{
-		createCubeBuffers(*g_gr, -(g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f,
-						  (g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f, g.m_indexBuffer, g.m_vertexBuffer, g.m_insideOut);
+		createCubeBuffers(*g_gr, -(g.m_aabb.getMax().xyz - g.m_aabb.getMin().xyz) / 2.0f,
+						  (g.m_aabb.getMax().xyz - g.m_aabb.getMin().xyz) / 2.0f, g.m_indexBuffer, g.m_vertexBuffer, g.m_insideOut);
 	}
 
 	// Create AS
@@ -3233,8 +3620,8 @@ void main()
 		lightBuffer = g_gr->newBuffer(inf);
 		WeakArray<Light, PtrSize> lights = lightBuffer->map<Light>(0, lightCount, BufferMapAccessBit::kWrite);
 
-		lights[0].m_min = geometries[GeomWhat::LIGHT].m_aabb.getMin().xyz();
-		lights[0].m_max = geometries[GeomWhat::LIGHT].m_aabb.getMax().xyz();
+		lights[0].m_min = geometries[GeomWhat::LIGHT].m_aabb.getMin().xyz;
+		lights[0].m_max = geometries[GeomWhat::LIGHT].m_aabb.getMax().xyz;
 		lights[0].m_intensity = Vec3(1.0f);
 
 		lightBuffer->unmap();
@@ -3325,7 +3712,7 @@ void main()
 		cmdb->setFastConstants(&pc, sizeof(pc));
 
 		const U32 sbtRecordSize = g_gr->getDeviceCapabilities().m_sbtRecordAlignment;
-		cmdb->traceRays(BufferView(sbt.get()), sbtRecordSize, U32(GeomWhat::kCount) * 2, 2, WIDTH, HEIGHT, 1);
+		cmdb->dispatchRays(BufferView(sbt.get()), sbtRecordSize, U32(GeomWhat::kCount) * 2, 2, WIDTH, HEIGHT, 1);
 
 		// Copy to present
 		setTextureBarrier(cmdb, offscreenRts[i & 1], TextureUsageBit::kUavTraceRaysWrite, TextureUsageBit::kUavComputeRead,
@@ -3501,4 +3888,145 @@ void main()
 
 	COMMON_END()
 #endif
+}
+
+ANKI_TEST(Gr, DrawID)
+{
+	commonInit();
+
+	{
+		// Prog
+		constexpr const char* kVert = R"(
+struct Consts
+{
+	uint index;
+	int padding;
+	int padding1;
+	int padding2;
+};
+
+#if defined(__spirv__)
+#	define SpvDrawIndex 4426
+[[vk::ext_builtin_input(SpvDrawIndex)]] const static uint gl_DrawID;
+
+[[vk::push_constant]] ConstantBuffer<Consts> g_consts;
+#else
+struct U32Struct
+{
+	uint m_data;
+};
+ConstantBuffer<U32Struct> g_drawIdConstant : register(b0, space%u);
+#	define gl_DrawID g_drawIdConstant.m_data
+
+ConstantBuffer<Consts> g_consts : register(b0, space%u);
+#endif
+
+struct VertOut
+{
+	float4 m_svPosition : SV_POSITION;
+	float3 m_color : COLOR;
+};
+
+VertOut main(uint svVertexId : SV_VERTEXID)
+{
+	float2 verts[6] = {float2(0, 0), float2(0, 1), float2(1, 1), float2(1, 1), float2(1, 0), float2(0, 0)};
+
+	uint maxDraws = 32;
+
+	float2 pos = verts[svVertexId];
+	pos.x /= maxDraws;
+	pos.x += gl_DrawID * 1.0 / maxDraws;
+	pos = pos * 2.0 - 1.0;
+	pos.y *= -1.0;
+
+	VertOut o;
+	o.m_svPosition = float4(pos, 0.0, 1.0);
+
+	uint index = gl_DrawID + g_consts.index;
+	index = index %% 6;
+	o.m_color = float3(index & 1, (index / 2) & 1, (index / 3) & 1);
+
+	return o;
+})";
+
+		constexpr const char* kUboFrag = R"(
+struct VertOut
+{
+	float4 m_svPosition : SV_POSITION;
+	float3 m_color : COLOR;
+};
+
+float4 main(VertOut i) : SV_TARGET0
+{
+	return float4(i.m_color, 1.0);
+})";
+
+		ShaderProgramPtr prog = createVertFragProg(String().sprintf(kVert, ANKI_D3D_DRAW_ID_CONSTANT_SPACE, ANKI_D3D_FAST_CONSTANTS_SPACE), kUboFrag);
+
+		constexpr U32 maxDraws = 32;
+		Array<DrawIndirectArgs, maxDraws> data = {};
+		for(DrawIndirectArgs& arg : data)
+		{
+			arg.m_instanceCount = 1;
+			arg.m_vertexCount = 6;
+		}
+		BufferPtr indirectArgs = createBuffer(BufferUsageBit::kIndirectDraw, ConstWeakArray(data), "indirect args");
+
+		U32 count = maxDraws;
+		BufferPtr indirectCount = createBuffer(BufferUsageBit::kIndirectDraw, ConstWeakArray<U32>(&count, 1), "indirect count");
+
+		const U kIterationCount = 200;
+		U iterations = kIterationCount;
+		while(iterations--)
+		{
+			HighRezTimer timer;
+			timer.start();
+
+			GrManager::getSingleton().beginFrame();
+
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			cmdb->setViewport(0, 0, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
+			cmdb->bindShaderProgram(prog.get());
+
+			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
+												TextureUsageBit::kRtvDsvWrite};
+			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+
+			cmdb->pushDebugMarker("AnKi", Vec3(1.0f, 0.0f, 0.0f));
+
+			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDesc::firstSurface())});
+
+			UVec4 consts(iterations / 10);
+			cmdb->setFastConstants(&consts, sizeof(consts));
+
+			cmdb->drawIndirectCount(PrimitiveTopology::kTriangles, BufferView(indirectArgs.get()), sizeof(DrawIndirectArgs),
+									BufferView(indirectCount.get()), maxDraws);
+			cmdb->endRenderPass();
+
+			const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kRtvDsvWrite,
+												 TextureUsageBit::kPresent};
+			cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
+
+			cmdb->popDebugMarker();
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+
+			GrManager::getSingleton().endFrame();
+
+			timer.stop();
+			const Second kTick = 1.0f / 30.0f;
+			if(timer.getElapsedTime() < kTick)
+			{
+				HighRezTimer::sleep(kTick - timer.getElapsedTime());
+			}
+		}
+	}
+
+	commonDestroy();
 }

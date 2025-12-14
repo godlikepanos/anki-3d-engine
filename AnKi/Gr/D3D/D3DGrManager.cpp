@@ -5,7 +5,6 @@
 
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 #include <AnKi/Gr/D3D/D3DDescriptor.h>
-#include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 
 #include <AnKi/Gr/D3D/D3DAccelerationStructure.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
@@ -28,7 +27,7 @@
 
 // Use the Agility SDK
 extern "C" {
-__declspec(dllexport) extern const UINT D3D12SDKVersion = 615; // Number taken from the download page
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 616; // Number taken from the download page
 __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; // The D3D12Core.dll should be in the same dir as the .exe
 }
 
@@ -102,61 +101,47 @@ GrManager::~GrManager()
 {
 }
 
+PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const
+{
+	PtrSize asSize, unused;
+	AccelerationStructureImpl::getMemoryRequirement(init, asSize, unused);
+	return asSize;
+}
+
 Error GrManager::init(GrManagerInitInfo& inf)
 {
 	ANKI_D3D_SELF(GrManagerImpl);
 	return self.initInternal(inf);
 }
 
+void GrManager::beginFrame()
+{
+	ANKI_D3D_SELF(GrManagerImpl);
+	self.beginFrameInternal();
+}
+
 TexturePtr GrManager::acquireNextPresentableTexture()
 {
 	ANKI_D3D_SELF(GrManagerImpl);
-
-	self.m_crntSwapchain->m_backbufferIdx = self.m_crntSwapchain->m_swapchain->GetCurrentBackBufferIndex();
-	return self.m_crntSwapchain->m_textures[self.m_crntSwapchain->m_backbufferIdx];
+	return self.acquireNextPresentableTextureInternal();
 }
 
-void GrManager::swapBuffers()
+void GrManager::endFrame()
 {
-	ANKI_TRACE_SCOPED_EVENT(D3DSwapBuffers);
 	ANKI_D3D_SELF(GrManagerImpl);
-
-	self.m_crntSwapchain->m_swapchain->Present((g_vsyncCVar) ? 1 : 0, (g_vsyncCVar) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
-
-	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance();
-	presentFence->gpuSignal(GpuQueueType::kGeneral);
-
-	auto& crntFrame = self.m_frames[self.m_crntFrame];
-
-	if(crntFrame.m_presentFence) [[likely]]
-	{
-		// Wait prev fence
-		const Bool signaled = crntFrame.m_presentFence->clientWait(kMaxSecond);
-		if(!signaled)
-		{
-			ANKI_D3D_LOGF("Frame fence didn't signal");
-		}
-	}
-
-	crntFrame.m_presentFence = presentFence;
-
-	self.m_crntFrame = (self.m_crntFrame + 1) % self.m_frames.getSize();
-
-	FrameGarbageCollector::getSingleton().endFrame(presentFence.get());
-	DescriptorFactory::getSingleton().endFrame();
+	self.endFrameInternal();
 }
 
 void GrManager::finish()
 {
-	if(FenceFactory::isAllocated())
-	{
-		for(GpuQueueType qType : EnumIterable<GpuQueueType>())
-		{
-			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-			fence->gpuSignal(qType);
-			fence->clientWait(kMaxSecond);
-		}
-	}
+	ANKI_D3D_SELF(GrManagerImpl);
+	self.finishInternal();
+}
+
+void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+{
+	ANKI_D3D_SELF(GrManagerImpl);
+	self.submitInternal(cmdbs, waitFences, signalFence);
 }
 
 #define ANKI_NEW_GR_OBJECT(type) \
@@ -201,12 +186,72 @@ GrManagerImpl::~GrManagerImpl()
 	destroy();
 }
 
-void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+void GrManagerImpl::beginFrameInternal()
 {
-	ANKI_D3D_SELF(GrManagerImpl);
+	ANKI_TRACE_FUNCTION();
+
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	// Do that at begin frame, ALWAYS
+	m_crntFrame = (m_crntFrame + 1) % m_frames.getSize();
+	PerFrame& frame = m_frames[m_crntFrame];
+
+	// Wait for the oldest frame because we don't want to start the new one too early
+	{
+		ANKI_TRACE_SCOPED_EVENT(WaitFences);
+		for(MicroFencePtr& fence : frame.m_fences)
+		{
+			if(fence)
+			{
+				const Bool signaled = fence->clientWait(kMaxSecond);
+				if(!signaled)
+				{
+					ANKI_D3D_LOGF("Timeout detected");
+				}
+			}
+		}
+	}
+
+	frame.m_fences.destroy();
+	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+
+	// Clear garbage
+	deleteObjectsMarkedForDeletion();
+}
+
+TexturePtr GrManagerImpl::acquireNextPresentableTextureInternal()
+{
+	ANKI_TRACE_FUNCTION();
+
+	m_crntSwapchain->m_backbufferIdx = m_crntSwapchain->m_swapchain->GetCurrentBackBufferIndex();
+	Texture* tex = m_crntSwapchain->m_textures[m_crntSwapchain->m_backbufferIdx].get();
+	return TexturePtr(tex);
+}
+
+void GrManagerImpl::endFrameInternal()
+{
+	ANKI_TRACE_FUNCTION();
+
+	m_crntSwapchain->m_swapchain->Present((g_cvarGrVsync) ? 1 : 0, (g_cvarGrVsync) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+
+	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance("Present");
+	presentFence->getImplementation().gpuSignal(GpuQueueType::kGeneral); // Only general can present
+
+	LockGuard lock(m_globalMtx);
+
+	auto& crntFrame = m_frames[m_crntFrame];
+
+	crntFrame.m_fences.emplaceBack(presentFence);
+
+	DescriptorFactory::getSingleton().endFrame();
+}
+
+void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+{
+	ANKI_TRACE_FUNCTION();
 
 	// First thing, create a fence
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Submit");
 
 	// Gather command lists
 	GrDynamicArray<ID3D12CommandList*> d3dCmdLists;
@@ -227,7 +272,6 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 			ANKI_ASSERT(queueType == mcmdb.getQueueType());
 		}
 
-		mcmdb.setFence(fence.get());
 		impl.postSubmitWork(fence.get());
 	}
 
@@ -235,14 +279,14 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 	for(Fence* fence : waitFences)
 	{
 		FenceImpl& impl = static_cast<FenceImpl&>(*fence);
-		impl.m_fence->gpuWait(queueType);
+		impl.m_fence->getImplementation().gpuWait(queueType);
 	}
 
 	// Submit command lists
-	self.m_queues[queueType]->ExecuteCommandLists(d3dCmdLists.getSize(), d3dCmdLists.getBegin());
+	m_queues[queueType]->ExecuteCommandLists(d3dCmdLists.getSize(), d3dCmdLists.getBegin());
 
 	// Signal fence
-	fence->gpuSignal(queueType);
+	fence->getImplementation().gpuSignal(queueType);
 
 	if(signalFence)
 	{
@@ -250,6 +294,71 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 		fenceImpl->m_fence = fence;
 		signalFence->reset(fenceImpl);
 	}
+
+	LockGuard lock(m_globalMtx);
+	PerFrame& frame = m_frames[m_crntFrame];
+
+	frame.m_fences.emplaceBack(fence.get());
+
+	// Throttle the number of fences
+	Bool fencesThrottled = false;
+	while(frame.m_fences.getSize() > 64)
+	{
+		fencesThrottled = true;
+		auto it = frame.m_fences.getBegin();
+		for(; it != frame.m_fences.getEnd(); ++it)
+		{
+			if((*it)->signaled())
+			{
+				frame.m_fences.erase(it);
+				break;
+			}
+		}
+	}
+
+	if(fencesThrottled)
+	{
+		ANKI_D3D_LOGV("Had to throttle the number of fences");
+	}
+}
+
+void GrManagerImpl::finishInternal()
+{
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	// Queue wait
+	if(FenceFactory::isAllocated())
+	{
+		for(GpuQueueType qType : EnumIterable<GpuQueueType>())
+		{
+			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+			fence->getImplementation().gpuSignal(qType);
+			fence->clientWait(kMaxSecond);
+		}
+	}
+
+	for(PerFrame& frame : m_frames)
+	{
+		for(MicroFencePtr& fence : frame.m_fences)
+		{
+			const Bool signaled = fence->clientWait(kMaxSecond);
+			if(!signaled)
+			{
+				ANKI_D3D_LOGF("Timeout detected");
+			}
+		}
+
+		frame.m_fences.destroy();
+	}
+
+	// Since we waited for the GPU do a cleanup as well
+	const U8 oldFrame = m_crntFrame;
+	for(U8 frame = 0; frame < m_frames.getSize(); ++frame)
+	{
+		m_crntFrame = frame;
+		deleteObjectsMarkedForDeletion();
+	}
+	m_crntFrame = oldFrame;
 }
 
 Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
@@ -260,7 +369,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Validation
 	UINT dxgiFactoryFlags = 0;
-	if(g_validationCVar || g_gpuValidationCVar)
+	if(g_cvarGrValidation || g_cvarGrGpuValidation)
 	{
 		ComPtr<ID3D12Debug> debugInterface;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
@@ -269,7 +378,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 
-		if(g_gpuValidationCVar)
+		if(g_cvarGrGpuValidation)
 		{
 			ComPtr<ID3D12Debug1> debugInterface1;
 			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
@@ -277,7 +386,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
 
-		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_gpuValidationCVar) ? "as well" : "no");
+		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_cvarGrGpuValidation) ? "as well" : "no");
 	}
 
 	ComPtr<IDXGIFactory2> factory2;
@@ -304,7 +413,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		++adapterIdx;
 	}
 
-	const U32 chosenPhysDevIdx = min<U32>(g_deviceCVar, adapters.getSize() - 1);
+	const U32 chosenPhysDevIdx = min<U32>(g_cvarGrDevice, adapters.getSize() - 1);
 
 	ANKI_D3D_LOGI("Physical devices:");
 	for(U32 i = 0; i < adapters.getSize(); ++i)
@@ -317,35 +426,22 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::kArm;
-		m_capabilities.m_minWaveSize = 16;
-		m_capabilities.m_maxWaveSize = 16;
 		break;
 	case 0x10DE:
 		m_capabilities.m_gpuVendor = GpuVendor::kNvidia;
-		m_capabilities.m_minWaveSize = 32;
-		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x1002:
 	case 0x1022:
 		m_capabilities.m_gpuVendor = GpuVendor::kAMD;
-		m_capabilities.m_minWaveSize = 32;
-		m_capabilities.m_maxWaveSize = 64;
 		break;
 	case 0x8086:
 		m_capabilities.m_gpuVendor = GpuVendor::kIntel;
-		m_capabilities.m_minWaveSize = 8;
-		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x5143:
 		m_capabilities.m_gpuVendor = GpuVendor::kQualcomm;
-		m_capabilities.m_minWaveSize = 64;
-		m_capabilities.m_maxWaveSize = 128;
 		break;
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
-		// Choose something really low
-		m_capabilities.m_minWaveSize = 8;
-		m_capabilities.m_maxWaveSize = 8;
 	}
 	ANKI_D3D_LOGI("Vendor identified as %s", &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
@@ -354,7 +450,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dev)));
 	ANKI_D3D_CHECK(dev->QueryInterface(IID_PPV_ARGS(&m_device)));
 
-	if(g_validationCVar)
+	if(g_cvarGrValidation)
 	{
 		ComPtr<ID3D12InfoQueue1> infoq;
 		const HRESULT res = m_device->QueryInterface(IID_PPV_ARGS(&infoq));
@@ -383,7 +479,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	if(g_dredCVar)
+	if(g_cvarGrDred)
 	{
 		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
@@ -410,6 +506,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Set device capabilities (taken from mesa's dozen driver)
 	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &options1, sizeof(options1)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5)));
 		D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16;
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16)));
 		D3D12_FEATURE_DATA_ARCHITECTURE architecture = {.NodeIndex = 0};
@@ -417,11 +517,11 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21;
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21)));
 
-		if(g_workGraphcsCVar && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		if(g_cvarGrWorkGraphcs && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
 			ANKI_D3D_LOGW("WorkGraphs can't be enabled. They not supported");
 		}
-		else if(g_workGraphcsCVar && options21.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		else if(g_cvarGrWorkGraphcs && options21.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
 			ANKI_D3D_LOGV("WorkGraphs supported");
 			m_capabilities.m_workGraphs = true;
@@ -433,24 +533,44 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			ANKI_D3D_LOGW("ReBAR not supported");
 		}
 
+		if(g_cvarGrRayTracing && options5.RaytracingTier != D3D12_RAYTRACING_TIER_1_1)
+		{
+			ANKI_D3D_LOGW("Raytracing can't be enabled. Not supported");
+			m_capabilities.m_rayTracingEnabled = false;
+		}
+		else if(g_cvarGrRayTracing && options5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
+		{
+			ANKI_D3D_LOGV("Raytracing supported");
+			m_capabilities.m_rayTracingEnabled = true;
+		}
+		else
+		{
+			m_capabilities.m_rayTracingEnabled = false;
+		}
+
+		m_capabilities.m_minWaveSize = options1.WaveLaneCountMin;
+		m_capabilities.m_maxWaveSize = options1.WaveLaneCountMax;
 		m_capabilities.m_constantBufferBindOffsetAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 		m_capabilities.m_structuredBufferBindOffsetAlignment = 0; // Not for DX
 		m_capabilities.m_structuredBufferNaturalAlignment = true;
 		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
 		m_capabilities.m_fastConstantsSize = kMaxFastConstantsSize;
 		m_capabilities.m_computeSharedMemorySize = D3D12_CS_TGSM_REGISTER_COUNT * sizeof(F32);
-		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = 32; // ?
 		m_capabilities.m_sbtRecordAlignment = 32; // ?
 		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
 		m_capabilities.m_discreteGpu = !architecture.UMA;
 		m_capabilities.m_majorApiVersion = 12;
-		m_capabilities.m_rayTracingEnabled = g_rayTracingCVar && false; // TODO: Support RT
-		m_capabilities.m_vrs = g_vrsCVar;
+		m_capabilities.m_vrs = g_cvarGrVrs;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;
-		m_capabilities.m_meshShaders = g_meshShadersCVar;
+		m_capabilities.m_meshShaders = g_cvarGrMeshShaders;
 		m_capabilities.m_pipelineQuery = true;
 		m_capabilities.m_barycentrics = true;
+		m_capabilities.m_shaderGroupHandleSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+
+		// It should be D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT but anki uses a single SBT for raygen, miss and hit groups so the non raygen
+		// groups should be aligned to the SBT buffer itself
+		m_capabilities.m_sbtRecordAlignment = D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
 	}
 
 	// Other systems
@@ -463,7 +583,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	RootSignatureFactory::allocateSingleton();
 	FenceFactory::allocateSingleton();
 	CommandBufferFactory::allocateSingleton();
-	FrameGarbageCollector::allocateSingleton();
 
 	IndirectCommandSignatureFactory::allocateSingleton();
 	ANKI_CHECK(IndirectCommandSignatureFactory::getSingleton().init());
@@ -490,20 +609,23 @@ void GrManagerImpl::destroy()
 {
 	ANKI_D3D_LOGI("Destroying D3D backend");
 
+	finishInternal();
+
+	// Destroy everything that has a reference to GrObjects.
 	m_zeroBuffer.reset(nullptr);
-
-	waitAllQueues();
-
-	// Cleanup self
 	m_crntSwapchain.reset(nullptr);
-	m_frames = {};
+	SwapchainFactory::freeSingleton();
+
+	for(U8 frame = 0; frame < m_frames.getSize(); ++frame)
+	{
+		m_crntFrame = frame;
+		deleteObjectsMarkedForDeletion();
+	}
 
 	// Destroy systems
-	CommandBufferFactory::freeSingleton();
 	PrimitivesPassedClippingFactory::freeSingleton();
 	TimestampQueryFactory::freeSingleton();
-	SwapchainFactory::freeSingleton();
-	FrameGarbageCollector::freeSingleton();
+	CommandBufferFactory::freeSingleton();
 	RootSignatureFactory::freeSingleton();
 	DescriptorFactory::freeSingleton();
 	IndirectCommandSignatureFactory::freeSingleton();
@@ -523,19 +645,6 @@ void GrManagerImpl::destroy()
 	}
 
 	GrMemoryPool::freeSingleton();
-}
-
-void GrManagerImpl::waitAllQueues()
-{
-	if(FenceFactory::isAllocated())
-	{
-		for(GpuQueueType queueType : EnumIterable<GpuQueueType>())
-		{
-			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-			fence->gpuSignal(queueType);
-			fence->clientWait(kMaxSecond);
-		}
-	}
 }
 
 void GrManagerImpl::invokeDred() const

@@ -66,7 +66,11 @@ public:
 	U32 m_mipmapCount;
 	U32 m_astcBlockSizeX;
 	U32 m_astcBlockSizeY;
-	Array<U8, 80> m_padding;
+
+	/// For U8 formats from 0.0 to 1.0.
+	Array<F32, 4> m_averageColor;
+
+	Array<U8, 64> m_padding;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -82,6 +86,7 @@ public:
 		s.doValue("m_mipmapCount", offsetof(ImageBinaryHeader, m_mipmapCount), self.m_mipmapCount);
 		s.doValue("m_astcBlockSizeX", offsetof(ImageBinaryHeader, m_astcBlockSizeX), self.m_astcBlockSizeX);
 		s.doValue("m_astcBlockSizeY", offsetof(ImageBinaryHeader, m_astcBlockSizeY), self.m_astcBlockSizeY);
+		s.doArray("m_averageColor", offsetof(ImageBinaryHeader, m_averageColor), &self.m_averageColor[0], self.m_averageColor.getSize());
 		s.doArray("m_padding", offsetof(ImageBinaryHeader, m_padding), &self.m_padding[0], self.m_padding.getSize());
 	}
 

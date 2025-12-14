@@ -9,17 +9,10 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-// Workaround validation errors
-#if ANKI_GR_BACKEND_DIRECT3D
-#	define OUT_TYPE Vec4
-#else
-#	define OUT_TYPE RVec4
-#endif
-
 struct VertIn
 {
 	Vec2 m_position : POSITION;
-	OUT_TYPE m_color : COLOR;
+	ANKI_RELAXED_PRECISION Vec4 m_color : COLOR;
 #if TEXTURE_TYPE > 0
 	Vec2 m_uv : TEXCOORD;
 #endif
@@ -30,7 +23,7 @@ struct VertOut
 #if TEXTURE_TYPE > 0
 	Vec2 m_uv : TEXCOORD;
 #endif
-	RVec4 m_color : COLOR;
+	ANKI_RELAXED_PRECISION Vec4 m_color : COLOR;
 	Vec4 m_svPosition : SV_POSITION;
 };
 
@@ -64,7 +57,7 @@ SamplerState g_trilinearRepeatSampler : register(s0);
 Texture2D g_tex : register(t0);
 #	endif
 
-OUT_TYPE main(VertOut input) : SV_TARGET0
+Vec4 main(VertOut input) : SV_TARGET0
 {
 #	if TEXTURE_TYPE == 0
 	return input.m_color;

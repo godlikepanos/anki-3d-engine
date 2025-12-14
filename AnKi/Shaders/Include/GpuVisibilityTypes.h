@@ -36,6 +36,8 @@ struct DistanceGpuVisibilityConstants
 
 struct GpuVisibilityNonRenderableConstants
 {
+	Mat4 m_viewProjectionMat;
+
 	Vec4 m_clipPlanes[6u];
 };
 
@@ -57,13 +59,18 @@ struct GpuVisibilityHash
 
 struct GpuVisibilityVisibleRenderableDesc
 {
-	U32 m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit;
+	U32 m_lod : 2;
+	U32 m_renderableIndex : 20;
+	U32 m_renderStateBucket : 10;
 };
 
 struct GpuVisibilityVisibleMeshletDesc
 {
-	U32 m_renderableIndex_30bit_renderStageBucket_12bit;
-	U32 m_lod_2bit_meshletIndex_30bit;
+	U32 m_renderableIndex : 30;
+	U32 m_renderStateBucket : 12;
+
+	U32 m_lod : 2;
+	U32 m_meshletIndex : 30;
 };
 
 struct GpuVisibilityMeshletConstants
@@ -96,12 +103,30 @@ enum class GpuVisibilityIndirectDispatches : U32
 	kCount
 };
 
-/// Counters used in non-renderables visibility
+// Counters used in non-renderables visibility
 struct GpuVisibilityNonRenderablesCounters
 {
 	U32 m_threadgroupCount; ///< Counts the no of threadgroups
 	U32 m_visibleObjectCount; ///< Counts the visible objects
 	U32 m_feedbackObjectCount; ///< Counts the visbile objects that need feedback
+};
+
+// Packs the LOD in the MSB 3bit and the rest it's an index to a GpuSceneRenderableBoundingVolume. It's actually U32 because of some shader logic
+typedef U32 LodAndGpuSceneRenderableBoundingVolumeIndex;
+
+struct GpuVisibilityLocalLightsConsts
+{
+	Vec3 m_cellSize;
+	U32 m_maxLightIndices;
+
+	Vec3 m_gridVolumeMin;
+	F32 m_padding2;
+
+	Vec3 m_gridVolumeSize;
+	F32 m_padding3;
+
+	UVec3 m_cellCounts;
+	U32 m_cellCount;
 };
 
 ANKI_END_NAMESPACE

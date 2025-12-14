@@ -11,40 +11,32 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/Functions.h>
-#include <AnKi/Ui/UiImmediateModeBuilder.h>
 
 namespace anki {
 
-inline NumericCVar<U32> g_windowWidthCVar("Core", "Width", 1920, 16, 16 * 1024, "Width");
-inline NumericCVar<U32> g_windowHeightCVar("Core", "Height", 1080, 16, 16 * 1024, "Height");
-inline NumericCVar<U32> g_windowFullscreenCVar("Core", "WindowFullscreen", 1, 0, 2, "0: windowed, 1: borderless fullscreen, 2: exclusive fullscreen");
-inline NumericCVar<U32> g_targetFpsCVar("Core", "TargetFps", 60u, 1u, kMaxU32, "Target FPS");
-inline NumericCVar<U32> g_jobThreadCountCVar("Core", "JobThreadCount", clamp(getCpuCoresCount() / 2u, 2u, 16u), 2u, 1024u, "Number of job thread");
-inline NumericCVar<U32> g_displayStatsCVar("Core", "DisplayStats", 0, 0, 2, "Display stats, 0: None, 1: Simple, 2: Detailed");
-inline BoolCVar g_clearCachesCVar("Core", "ClearCaches", false, "Clear all caches");
-inline BoolCVar g_verboseLogCVar("Core", "VerboseLog", false, "Verbose logging");
-inline BoolCVar g_benchmarkModeCVar("Core", "BenchmarkMode", false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS");
-inline NumericCVar<U32> g_benchmarkModeFrameCountCVar("Core", "BenchmarkModeFrameCount", 60 * 60 * 2, 1, kMaxU32,
-													  "How many frames the benchmark will run before it quits");
-inline BoolCVar g_meshletRenderingCVar("Core", "MeshletRendering", false, "Do meshlet culling and rendering");
+ANKI_CVAR(NumericCVar<U32>, Core, TargetFps, 60u, 1u, kMaxU32, "Target FPS")
+ANKI_CVAR(NumericCVar<U32>, Core, JobThreadCount, clamp(getCpuCoresCount() / 2u, 2u, 16u), 2u, 1024u, "Number of job thread")
+ANKI_CVAR(NumericCVar<U32>, Core, DisplayStats, 0, 0, 2, "Display stats, 0: None, 1: Simple, 2: Detailed")
+ANKI_CVAR(BoolCVar, Core, ClearCaches, false, "Clear all caches")
+ANKI_CVAR(BoolCVar, Core, VerboseLog, false, "Verbose logging")
+ANKI_CVAR(BoolCVar, Core, BenchmarkMode, false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS")
+ANKI_CVAR(NumericCVar<U32>, Core, BenchmarkModeFrameCount, 60 * 60 * 2, 1, kMaxU32, "How many frames the benchmark will run before it quits")
+ANKI_CVAR(BoolCVar, Core, MeshletRendering, false, "Do meshlet culling and rendering")
+ANKI_CVAR(StringCVar, Core, LoadScene, "", "Load this scene at startup")
 
 #if ANKI_PLATFORM_MOBILE
-inline BoolCVar g_maliHwCountersCVar("Core", "MaliHwCounters", false, "Enable Mali counters");
+ANKI_CVAR(BoolCVar, Core, MaliHwCounters, false, "Enable Mali counters")
 #endif
 
-inline StatCounter g_cpuTotalTimeStatVar(StatCategory::kTime, "CPU total",
-										 StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(CpuTotalTime, StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 /// The core class of the engine.
 class App
 {
 public:
-	App(AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
+	App(CString applicationName, AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
 
 	virtual ~App();
-
-	/// Initialize the application.
-	Error init();
 
 	CString getSettingsDirectory() const
 	{
@@ -59,7 +51,23 @@ public:
 	/// Run the main loop.
 	Error mainLoop();
 
-	/// The user code to run along with the other main loop code.
+	/// User defined init code that will execute before all subsystems have initialized. Will be executed just before the main loop. Useful for
+	/// setting cvars.
+	virtual Error userPreInit()
+	{
+		// Do nothing
+		return Error::kNone;
+	}
+
+	/// User defined init code that will execute after all subsystems have initialized. Will be executed just before the main loop and after
+	/// everything has been initialized.
+	virtual Error userPostInit()
+	{
+		// Do nothing
+		return Error::kNone;
+	}
+
+	/// User defined code to run along with the other main loop code.
 	virtual Error userMainLoop([[maybe_unused]] Bool& quit, [[maybe_unused]] Second elapsedTime)
 	{
 		// Do nothing
@@ -73,19 +81,25 @@ public:
 		return m_consoleEnabled;
 	}
 
+	CString getApplicationName() const
+	{
+		return m_appName;
+	}
+
 private:
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache
+	CoreString m_appName;
 
 	void* m_originalAllocUserData = nullptr;
 	AllocAlignedCallback m_originalAllocCallback = nullptr;
+	void* m_allocUserData = nullptr;
+	AllocAlignedCallback m_allocCallback = nullptr;
 
 	static void* statsAllocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
-	void initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData);
-
-	Error initInternal();
+	Error init();
 
 	Error initDirs();
 	void cleanup();

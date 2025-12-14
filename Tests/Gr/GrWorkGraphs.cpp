@@ -10,7 +10,7 @@
 
 using namespace anki;
 
-static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
+[[maybe_unused]] static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
 {
 	const Bool continueCmdb = cmdb.isCreated();
 
@@ -142,8 +142,8 @@ struct ThirdNodeRecord
 
 RWStructuredBuffer<uint> g_buff : register(u0);
 
-[Shader("node")] [NodeLaunch("broadcasting")] [NodeIsProgramEntry] [NodeMaxDispatchGrid(1, 1, 1)] [NumThreads(16, 1, 1)]
-void main(DispatchNodeInputRecord<FirstNodeRecord> inp, [MaxRecords(2)] NodeOutput<SecondNodeRecord> secondNode, uint svGroupIndex : SV_GroupIndex)
+[Shader("node")] [NodeLaunch("broadcasting")] [NodeIsProgramEntry] [NodeMaxDispatchGrid(1, 1, 1)] [numthreads(16, 1, 1)]
+void main(DispatchNodeInputRecord<FirstNodeRecord> inp, [MaxRecords(2)] NodeOutput<SecondNodeRecord> secondNode, uint svGroupIndex : SV_GROUPINDEX)
 {
 	GroupNodeOutputRecords<SecondNodeRecord> rec = secondNode.GetGroupNodeOutputRecords(2);
 
@@ -156,7 +156,7 @@ void main(DispatchNodeInputRecord<FirstNodeRecord> inp, [MaxRecords(2)] NodeOutp
 	rec.OutputComplete();
 }
 
-[Shader("node")] [NodeLaunch("broadcasting")] [NumThreads(16, 1, 1)] [NodeMaxDispatchGrid(16, 1, 1)]
+[Shader("node")] [NodeLaunch("broadcasting")] [numthreads(16, 1, 1)] [NodeMaxDispatchGrid(16, 1, 1)]
 void secondNode(DispatchNodeInputRecord<SecondNodeRecord> inp, [MaxRecords(32)] NodeOutput<ThirdNodeRecord> thirdNode,
 				uint svGroupIndex : SV_GROUPINDEX)
 {
@@ -168,8 +168,8 @@ void secondNode(DispatchNodeInputRecord<SecondNodeRecord> inp, [MaxRecords(32)] 
 	recs.OutputComplete();
 }
 
-[Shader("node")] [NodeLaunch("coalescing")] [NumThreads(16, 1, 1)]
-void thirdNode([MaxRecords(32)] GroupNodeInputRecords<ThirdNodeRecord> inp, uint svGroupIndex : SV_GroupIndex)
+[Shader("node")] [NodeLaunch("coalescing")] [numthreads(16, 1, 1)]
+void thirdNode([MaxRecords(32)] GroupNodeInputRecords<ThirdNodeRecord> inp, uint svGroupIndex : SV_GROUPINDEX)
 {
 	if (svGroupIndex * 2 < inp.Count())
 		InterlockedAdd(g_buff[0], inp[svGroupIndex * 2].m_value);
@@ -261,9 +261,9 @@ StructuredBuffer<uint> g_positions : register(t1);
 #define THREAD_COUNT 64u
 
 // Operates per object
-[Shader("node")] [NodeLaunch("broadcasting")] [NodeIsProgramEntry] [NodeMaxDispatchGrid(1, 1, 1)] [NumThreads(THREAD_COUNT, 1, 1)]
+[Shader("node")] [NodeLaunch("broadcasting")] [NodeIsProgramEntry] [NodeMaxDispatchGrid(1, 1, 1)] [numthreads(THREAD_COUNT, 1, 1)]
 void main(DispatchNodeInputRecord<FirstNodeRecord> inp, [MaxRecords(THREAD_COUNT)] NodeOutput<SecondNodeRecord> computeAabb,
-		  uint svGroupIndex : SV_GroupIndex, uint svDispatchThreadId : SV_DispatchThreadId)
+		  uint svGroupIndex : SV_GROUPINDEX, uint svDispatchThreadId : SV_DispatchThreadId)
 {
 	GroupNodeOutputRecords<SecondNodeRecord> recs = computeAabb.GetGroupNodeOutputRecords(THREAD_COUNT);
 
@@ -278,8 +278,8 @@ void main(DispatchNodeInputRecord<FirstNodeRecord> inp, [MaxRecords(THREAD_COUNT
 groupshared Aabb g_aabb;
 
 // Operates per position
-[Shader("node")] [NodeLaunch("broadcasting")] [NodeMaxDispatchGrid(1, 1, 1)] [NumThreads(THREAD_COUNT, 1, 1)]
-void computeAabb(DispatchNodeInputRecord<SecondNodeRecord> inp, uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_GroupIndex)
+[Shader("node")] [NodeLaunch("broadcasting")] [NodeMaxDispatchGrid(1, 1, 1)] [numthreads(THREAD_COUNT, 1, 1)]
+void computeAabb(DispatchNodeInputRecord<SecondNodeRecord> inp, uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_GROUPINDEX)
 {
 	const Object obj = g_objects[inp.Get().m_objectIndex];
 
@@ -341,8 +341,8 @@ ConstantBuffer<PushConsts> g_consts : register(b0, space3000);
 
 groupshared Aabb g_aabb;
 
-[NumThreads(THREAD_COUNT, 1, 1)]
-void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_GroupIndex)
+[numthreads(THREAD_COUNT, 1, 1)]
+void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_GROUPINDEX)
 {
 	const Object obj = g_objects[g_consts.m_objectIndex];
 

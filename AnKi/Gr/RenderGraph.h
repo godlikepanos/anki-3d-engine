@@ -68,7 +68,7 @@ class RenderTargetHandle : public RenderGraphGrObjectHandle
 {
 };
 
-/// BufferPtr handle.
+/// Buffer handle.
 /// @memberof RenderGraphBuilder
 class BufferHandle : public RenderGraphGrObjectHandle
 {
@@ -284,6 +284,11 @@ public:
 		newDependency<RenderPassDependency::Type::kAccelerationStructure>(RenderPassDependency(handle, usage));
 	}
 
+	void setWritesToSwapchain()
+	{
+		m_writesToSwapchain = true;
+	}
+
 protected:
 	enum class Type : U8
 	{
@@ -309,6 +314,8 @@ protected:
 	BitSet<kMaxRenderGraphAccelerationStructures, U32> m_writeAsMask{false};
 
 	BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> m_name;
+
+	Bool m_writesToSwapchain = false;
 
 	RenderPassBase(Type t, RenderGraphBuilder* descr, StackMemoryPool* pool)
 		: m_type(t)
@@ -464,7 +471,7 @@ private:
 	public:
 		TextureInitInfo m_initInfo;
 		U64 m_hash = 0;
-		TexturePtr m_importedTex;
+		TextureInternalPtr m_importedTex;
 		TextureUsageBit m_importedLastKnownUsage = TextureUsageBit::kNone;
 		/// Derived by the deps of this RT and will be used to set its usage.
 		TextureUsageBit m_usageDerivedByDeps = TextureUsageBit::kNone;
@@ -475,7 +482,7 @@ private:
 	{
 	public:
 		BufferUsageBit m_usage;
-		BufferPtr m_importedBuff;
+		BufferInternalPtr m_importedBuff;
 		PtrSize m_offset;
 		PtrSize m_range;
 	};
@@ -552,7 +559,7 @@ private:
 	class RenderTargetCacheEntry
 	{
 	public:
-		GrDynamicArray<TexturePtr> m_textures;
+		GrDynamicArray<TextureInternalPtr> m_textures;
 		U32 m_texturesInUse = 0;
 	};
 
@@ -573,7 +580,7 @@ private:
 	class
 	{
 	public:
-		Array2d<TimestampQueryPtr, kMaxBufferedTimestamps, 2> m_timestamps;
+		Array2d<TimestampQueryInternalPtr, kMaxBufferedTimestamps, 2> m_timestamps;
 		Array<Second, kMaxBufferedTimestamps> m_cpuStartTimes;
 		U8 m_nextTimestamp = 0;
 	} m_statistics;
@@ -593,7 +600,7 @@ private:
 	void minimizeSubchannelSwitches();
 	void sortBatchPasses();
 
-	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
+	TextureInternalPtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
 
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();

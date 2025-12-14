@@ -1,0 +1,386 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Terminology:
+// - Grid: The volume we are looking to gather lights for
+// - Cell: The grid is dividied in cells
+// - Light index list: An array of indices that point the GPU scene lights. Each cell points to a part of this list
+
+#pragma anki technique Setup comp
+#pragma anki technique Count comp
+#pragma anki technique PrefixSum comp
+#pragma anki technique Fill comp
+
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
+
+constexpr U32 kPrefixSumThreadCount = 1024; // Common for most GPUs
+constexpr U32 kPrefixSumElementCountPerThreadgroup =
+	kPrefixSumThreadCount * 2; // Now many elements a single threadgroup can calculate their prfix sum
+
+Bool insideFrustum(Vec4 planes[5], Vec3 aabbMin, Vec3 aabbMax)
+{
+	[unroll] for(U32 i = 0; i < 5; ++i)
+	{
+		if(testPlaneAabb(planes[i].xyz, planes[i].w, aabbMin, aabbMax) < 0.0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+template<typename TFunc, typename TFunc2>
+void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 cellIdx, GpuVisibilityLocalLightsConsts consts,
+						   RWStructuredBuffer<U32> lightIndexCount, Bool detailedTests, TFunc binLightToCellFunc, TFunc2 informLightIndexCountFunc)
+{
+	if(cellIdx >= consts.m_cellCount)
+	{
+		return;
+	}
+
+	UVec3 cellId;
+	unflatten3dArrayIndex(consts.m_cellCounts.z, consts.m_cellCounts.y, consts.m_cellCounts.x, cellIdx, cellId.z, cellId.y, cellId.x);
+	const Vec3 cellMin = cellId * consts.m_cellSize + consts.m_gridVolumeMin;
+	const Vec3 cellMax = cellMin + consts.m_cellSize;
+
+	U32 visibleLightCount = 0;
+	const U32 lightCount = getStructuredBufferElementCount(lights);
+	for(U32 i = 0; i < lightCount; ++i)
+	{
+		const GpuSceneLight light = lights[i];
+
+		// Get the light bounds
+		Vec3 worldLightAabbMin;
+		Vec3 worldLightAabbMax;
+		if(light.m_isPointLight)
+		{
+			worldLightAabbMin = light.m_position - light.m_radius;
+			worldLightAabbMax = light.m_position + light.m_radius;
+		}
+		else
+		{
+			worldLightAabbMin = light.m_position;
+			worldLightAabbMax = light.m_position;
+
+			[unroll] for(U32 i = 0; i < 4; ++i)
+			{
+				worldLightAabbMin = min(worldLightAabbMin, light.m_edgePoints[i]);
+				worldLightAabbMax = max(worldLightAabbMax, light.m_edgePoints[i]);
+			}
+		}
+
+		if(!aabbAabbOverlap(worldLightAabbMin, worldLightAabbMax, cellMin, cellMax))
+		{
+			continue;
+		}
+
+		if(detailedTests)
+		{
+			Vec4 spotLightPlanes[5];
+			if(light.m_isSpotLight)
+			{
+				const Vec3 pe = light.m_position;
+				const Vec3 p0 = light.m_edgePoints[0];
+				const Vec3 p1 = light.m_edgePoints[1];
+				const Vec3 p2 = light.m_edgePoints[2];
+				const Vec3 p3 = light.m_edgePoints[3];
+				spotLightPlanes[0] = computePlane(pe, p0, p3);
+				spotLightPlanes[1] = computePlane(pe, p1, p0);
+				spotLightPlanes[2] = computePlane(pe, p2, p1);
+				spotLightPlanes[3] = computePlane(pe, p3, p2);
+				spotLightPlanes[4] = computePlane(p3, p0, p1);
+			}
+
+			if(light.m_isPointLight && !aabbSphereOverlap(cellMin, cellMax, light.m_position, light.m_radius))
+			{
+				continue;
+			}
+			else if(light.m_isSpotLight && !insideFrustum(spotLightPlanes, cellMin, cellMax))
+			{
+				continue;
+			}
+		}
+
+		U32 count;
+		InterlockedAdd(SBUFF(lightIndexCount, 0), 1, count);
+		++count;
+
+		if(count > consts.m_maxLightIndices)
+		{
+			// Light index list is too small
+			break;
+		}
+
+		++visibleLightCount;
+		binLightToCellFunc(cellIdx, i);
+	}
+
+	informLightIndexCountFunc(cellIdx, visibleLightCount);
+}
+
+// ===========================================================================
+// Setup                                                                     =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_Setup)
+
+RWStructuredBuffer<U32> g_lightIndexCountsPerCell : register(u0);
+RWStructuredBuffer<U32> g_lightIndexCount : register(u1);
+RWStructuredBuffer<U32> g_groupWidePrefixSums : register(u2);
+RWStructuredBuffer<U32> g_threadgroupCount : register(u3);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	if(svDispatchThreadId.x == 0)
+	{
+		SBUFF(g_lightIndexCount, 0) = 0;
+		SBUFF(g_threadgroupCount, 0) = 0;
+	}
+
+	if(svDispatchThreadId.x < getStructuredBufferElementCount(g_lightIndexCountsPerCell))
+	{
+		SBUFF(g_lightIndexCountsPerCell, svDispatchThreadId.x) = 0;
+	}
+
+	if(svDispatchThreadId.x < getStructuredBufferElementCount(g_groupWidePrefixSums))
+	{
+		SBUFF(g_groupWidePrefixSums, svDispatchThreadId.x) = 0;
+	}
+}
+#endif
+
+// ===========================================================================
+// Count                                                                     =
+// ===========================================================================
+
+// Counts the light indices per cell
+
+#if NOT_ZERO(ANKI_TECHNIQUE_Count)
+
+StructuredBuffer<GpuSceneLight> g_lights : register(t0);
+
+RWStructuredBuffer<U32> g_lightIndexCountsPerCell : register(u0);
+RWStructuredBuffer<U32> g_lightIndexCount : register(u1);
+RWStructuredBuffer<U32> g_groupWidePrefixSums : register(u2);
+RWStructuredBuffer<U32> g_threadgroupCount : register(u3);
+
+ANKI_FAST_CONSTANTS(GpuVisibilityLocalLightsConsts, g_consts)
+
+struct Func
+{
+	void operator()(U32 cellIdx, U32 lightIdx)
+	{
+		InterlockedAdd(SBUFF(g_lightIndexCountsPerCell, cellIdx), 1);
+	}
+};
+
+struct Func2
+{
+	void operator()(U32 cellIdx, U32 visibleLightCount)
+	{
+		if(visibleLightCount)
+		{
+			const U32 group = cellIdx / kPrefixSumElementCountPerThreadgroup;
+			InterlockedAdd(SBUFF(g_groupWidePrefixSums, group), visibleLightCount);
+		}
+	}
+};
+
+constexpr U32 kThreadCount = 64;
+
+[numthreads(kThreadCount, 1, 1)] void main(COMPUTE_ARGS)
+{
+	Func func;
+	Func2 func2;
+	lightVsCellVisibility(g_lights, svDispatchThreadId.x, g_consts, g_lightIndexCount, false, func, func2);
+
+	// Sync to make sure all the atomic ops have finished before the following code reads them
+	AllMemoryBarrierWithGroupSync();
+
+	// Compute the group prefix sum
+	if(svGroupIndex == 0)
+	{
+		U32 threadgroupIdx;
+		InterlockedAdd(SBUFF(g_threadgroupCount, 0), 1, threadgroupIdx);
+		const U32 threadgroupCount = (g_consts.m_cellCount + kThreadCount - 1) / kThreadCount;
+		const Bool lastThreadgroupExecuting = (threadgroupIdx + 1 == threadgroupCount);
+
+		if(lastThreadgroupExecuting)
+		{
+			const U32 prefixSumGroupCount = getStructuredBufferElementCount(g_groupWidePrefixSums);
+
+			U32 count = 0;
+			for(U32 i = 0; i < prefixSumGroupCount; ++i)
+			{
+				const U32 c = SBUFF(g_groupWidePrefixSums, i);
+				SBUFF(g_groupWidePrefixSums, i) = count;
+				count += c;
+			}
+		}
+	}
+}
+#endif
+
+// ===========================================================================
+// PrefixSum                                                                 =
+// ===========================================================================
+
+// Parallel prefix based on: https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda
+// But it runs multiple iterations to support bigger arrays
+
+#if NOT_ZERO(ANKI_TECHNIQUE_PrefixSum)
+
+StructuredBuffer<U32> g_groupWidePrefixSums : register(t0);
+
+RWStructuredBuffer<U32> g_inputElements : register(u0); // It's the g_lightIndexCountsPerCell. RW because we want to zero it at the end
+
+RWStructuredBuffer<U32> g_outputElements : register(u1);
+
+// Some stuff to zero
+RWStructuredBuffer<U32> g_lightIndexCount : register(u2);
+
+ANKI_FAST_CONSTANTS(GpuVisibilityLocalLightsConsts, g_consts)
+
+groupshared U32 g_tmp[kPrefixSumElementCountPerThreadgroup];
+
+[numthreads(kPrefixSumThreadCount, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const U32 elementCount = g_consts.m_cellCount;
+
+	const U32 tid = svGroupIndex;
+	const U32 group = svGroupId.x;
+
+	const U32 firstElement = group * kPrefixSumElementCountPerThreadgroup;
+	const U32 endElement = min((group + 1) * kPrefixSumElementCountPerThreadgroup, elementCount);
+
+	// Load input into shared memory
+	const U32 inIdx1 = 2 * tid + firstElement;
+	const U32 value1 = (inIdx1 < endElement) ? SBUFF(g_inputElements, inIdx1) : 0;
+	g_tmp[2 * tid] = value1;
+
+	const U32 inIdx2 = 2 * tid + 1 + firstElement;
+	const U32 value2 = (inIdx2 < endElement) ? SBUFF(g_inputElements, inIdx2) : 0;
+	g_tmp[2 * tid + 1] = value2;
+
+	// Since g_inputElements have been read reset them to be reused in the next job
+	if(inIdx1 < endElement)
+	{
+		SBUFF(g_inputElements, inIdx1) = 0;
+	}
+
+	if(inIdx2 < endElement)
+	{
+		SBUFF(g_inputElements, inIdx2) = 0;
+	}
+
+	// Perform reduction
+	U32 offset = 1;
+	for(U32 d = kPrefixSumElementCountPerThreadgroup >> 1; d > 0; d >>= 1)
+	{
+		GroupMemoryBarrierWithGroupSync();
+
+		if(tid < d)
+		{
+			const U32 ai = offset * (2 * tid + 1) - 1;
+			const U32 bi = offset * (2 * tid + 2) - 1;
+			g_tmp[bi] += g_tmp[ai];
+		}
+
+		offset *= 2;
+	}
+
+	// Clear the last element
+	if(tid == 0)
+	{
+		g_tmp[kPrefixSumElementCountPerThreadgroup - 1] = 0;
+	}
+
+	// Perform downsweep and build scan
+	for(U32 d = 1; d < kPrefixSumElementCountPerThreadgroup; d *= 2)
+	{
+		offset >>= 1;
+
+		GroupMemoryBarrierWithGroupSync();
+
+		if(tid < d)
+		{
+			const U32 ai = offset * (2 * tid + 1) - 1;
+			const U32 bi = offset * (2 * tid + 2) - 1;
+			const U32 t = g_tmp[ai];
+			g_tmp[ai] = g_tmp[bi];
+			g_tmp[bi] += t;
+		}
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	// Write to output buffer
+	const U32 groupPrefixSum = SBUFF(g_groupWidePrefixSums, group);
+	if(inIdx1 < endElement)
+	{
+		SBUFF(g_outputElements, inIdx1) = g_tmp[2 * tid] + groupPrefixSum;
+	}
+
+	if(inIdx2 < endElement)
+	{
+		SBUFF(g_outputElements, inIdx2) = g_tmp[2 * tid + 1] + groupPrefixSum;
+	}
+
+	// Abuse this compute job to also reset that buffer
+	if(svDispatchThreadId.x == 0)
+	{
+		SBUFF(g_lightIndexCount, 0) = 0;
+	}
+}
+#endif
+
+// ===========================================================================
+// Fill                                                                      =
+// ===========================================================================
+
+// After the prefix sum is complete this job can store the results
+
+#if NOT_ZERO(ANKI_TECHNIQUE_Fill)
+
+StructuredBuffer<GpuSceneLight> g_lights : register(t0);
+StructuredBuffer<U32> g_lightIndexListOffsets : register(t1); // Basically the prefix sum. One per cell
+
+RWStructuredBuffer<U32> g_lightIndexCount : register(u0);
+RWStructuredBuffer<U32> g_lightIndexCountsPerCell : register(u1);
+RWStructuredBuffer<U32> g_lightIndexList : register(u2);
+
+ANKI_FAST_CONSTANTS(GpuVisibilityLocalLightsConsts, g_consts)
+
+struct Func
+{
+	void operator()(U32 clusterIdx, U32 lightIdx)
+	{
+		U32 offset;
+		InterlockedAdd(SBUFF(g_lightIndexCountsPerCell, clusterIdx), 1, offset);
+
+		offset += SBUFF(g_lightIndexListOffsets, clusterIdx);
+
+		SBUFF(g_lightIndexList, offset) = lightIdx;
+	}
+};
+
+struct Func2
+{
+	void operator()(U32 clusterIdx, U32 visibleLightCount)
+	{
+	}
+};
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	Func func;
+	Func2 func2;
+	lightVsCellVisibility(g_lights, svDispatchThreadId.x, g_consts, g_lightIndexCount, true, func, func2);
+}
+
+#endif

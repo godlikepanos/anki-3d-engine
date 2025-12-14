@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Ui/Canvas.h>
+#include <AnKi/Ui/UiCanvas.h>
 #include <AnKi/Script/ScriptEnvironment.h>
 
 namespace anki {
@@ -44,7 +44,7 @@ private:
 		LoggerMessageType m_type;
 	};
 
-	FontPtr m_font;
+	ImFont* m_font = nullptr;
 	IntrusiveList<LogItem> m_logItems;
 	U32 m_logItemCount = 0;
 	Array<Char, 256> m_inputText = {};
@@ -63,7 +63,7 @@ private:
 		static_cast<DeveloperConsoleUiNode*>(userData)->newLogItem(info);
 	}
 
-	void draw(CanvasPtr& canvas);
+	void draw(UiCanvas& canvas);
 };
 /// @}
 

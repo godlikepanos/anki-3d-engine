@@ -92,15 +92,15 @@ CoreTracer::~CoreTracer()
 Error CoreTracer::init(CString directory)
 {
 	Tracer::allocateSingleton();
-	if(Tracer::getSingleton().getEnabled() != g_tracingEnabledCVar)
+	if(Tracer::getSingleton().getEnabled() != g_cvarCoreTracingEnabled)
 	{
 		// Change the value inside the if because setEnabled prints a message
-		Tracer::getSingleton().setEnabled(g_tracingEnabledCVar);
+		Tracer::getSingleton().setEnabled(g_cvarCoreTracingEnabled);
 	}
 #	if ANKI_OS_ANDROID
 	if(Tracer::getSingleton().getStreamlineEnabled())
 	{
-		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar);
+		Tracer::getSingleton().setStreamlineEnabled(g_cvarCoreStreamlineAnnotations);
 	}
 #	endif
 
@@ -329,15 +329,15 @@ void CoreTracer::flushFrame(U64 frame)
 		},
 		&ctx);
 
-	if(Tracer::getSingleton().getEnabled() != g_tracingEnabledCVar)
+	if(Tracer::getSingleton().getEnabled() != g_cvarCoreTracingEnabled)
 	{
-		Tracer::getSingleton().setEnabled(g_tracingEnabledCVar);
+		Tracer::getSingleton().setEnabled(g_cvarCoreTracingEnabled);
 	}
 
 #	if ANKI_OS_ANDROID
-	if(Tracer::getSingleton().getStreamlineEnabled() != g_streamlineEnabledCVar)
+	if(Tracer::getSingleton().getStreamlineEnabled() != g_cvarCoreStreamlineAnnotations)
 	{
-		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar);
+		Tracer::getSingleton().setStreamlineEnabled(g_cvarCoreStreamlineAnnotations);
 	}
 #	endif
 }

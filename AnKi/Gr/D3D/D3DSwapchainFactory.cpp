@@ -45,7 +45,7 @@ Error MicroSwapchain::initInternal()
 		static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window.m_sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL));
 
 	ComPtr<IDXGIFactory2> factory2;
-	ANKI_D3D_CHECK(CreateDXGIFactory2((g_validationCVar) ? DXGI_CREATE_FACTORY_DEBUG : 0, IID_PPV_ARGS(&factory2)));
+	ANKI_D3D_CHECK(CreateDXGIFactory2((g_cvarGrValidation) ? DXGI_CREATE_FACTORY_DEBUG : 0, IID_PPV_ARGS(&factory2)));
 
 	// Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -56,7 +56,7 @@ Error MicroSwapchain::initInternal()
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapChainDesc.SampleDesc.Count = 1;
-	swapChainDesc.Flags |= (!g_vsyncCVar) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+	swapChainDesc.Flags |= (!g_cvarGrVsync) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	ComPtr<IDXGISwapChain1> swapChain;
 	// Swap chain needs the queue so that it can force a flush on it.
@@ -79,7 +79,13 @@ Error MicroSwapchain::initInternal()
 		init.m_width = window.getWidth();
 		init.m_height = window.getHeight();
 		init.m_format = Format::kR8G8B8A8_Unorm;
+
 		init.m_usage = TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
+		if(m_rtvResources[i]->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)
+		{
+			init.m_usage |= TextureUsageBit::kAllUav;
+		}
+
 		init.m_type = TextureType::k2D;
 
 		TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
@@ -89,6 +95,11 @@ Error MicroSwapchain::initInternal()
 	}
 
 	return Error::kNone;
+}
+
+void MicroSwapchain::releaseInternal()
+{
+	SwapchainFactory::getSingleton().m_recycler.recycle(this);
 }
 
 MicroSwapchainPtr SwapchainFactory::newInstance()

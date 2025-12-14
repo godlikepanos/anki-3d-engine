@@ -42,6 +42,14 @@ public:
 		D3D12_PROGRAM_IDENTIFIER m_progIdentifier = {};
 	} m_workGraph;
 
+	class
+	{
+	public:
+		ID3D12StateObject* m_stateObject = nullptr;
+		BufferInternalPtr m_handlesGpuBuff;
+		GrDynamicArray<U8> m_handlesCpuBuff;
+	} m_rt;
+
 	ShaderProgramImpl(CString name)
 		: ShaderProgram(name)
 	{
@@ -52,7 +60,7 @@ public:
 	Error init(const ShaderProgramInitInfo& inf);
 
 private:
-	GrDynamicArray<ShaderPtr> m_shaders;
+	GrDynamicArray<ShaderInternalPtr> m_shaders;
 };
 /// @}
 

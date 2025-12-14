@@ -74,7 +74,8 @@ public:
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
-	void getMeshletBufferInfo(U32 lod, PtrSize& meshletBoundingVolumesUgbOffset, PtrSize& meshletGeometryDescriptorsUgbOffset, U32& meshletCount)
+	void getMeshletBufferInfo(U32 lod, PtrSize& meshletBoundingVolumesUgbOffset, PtrSize& meshletGeometryDescriptorsUgbOffset,
+							  U32& meshletCount) const
 	{
 		meshletBoundingVolumesUgbOffset = m_lods[lod].m_meshletBoundingVolumes.getOffset();
 		meshletGeometryDescriptorsUgbOffset = m_lods[lod].m_meshletGeometryDescriptors.getOffset();
@@ -111,6 +112,11 @@ public:
 
 	Error getOrCreateCollisionShape(Bool wantStatic, U32 lod, PhysicsCollisionShapePtr& out) const;
 
+	Bool isLoaded() const
+	{
+		return m_loadedLodCount.load() == m_lods.getSize();
+	}
+
 private:
 	class LoadTask;
 	class LoadContext;
@@ -141,6 +147,7 @@ private:
 		Array<U32, kMaxLodCount> m_firstMeshlet = {};
 		Array<U32, kMaxLodCount> m_meshletCounts = {};
 
+		Array<UnifiedGeometryBufferAllocation, kMaxLodCount> m_blasAllocationTokens;
 		Array<AccelerationStructurePtr, kMaxLodCount> m_blas;
 
 		Aabb m_aabb;
@@ -154,6 +161,8 @@ private:
 
 	F32 m_positionsScale = 0.0f;
 	Vec3 m_positionsTranslation = Vec3(0.0f);
+
+	mutable Atomic<U32> m_loadedLodCount = {0};
 
 	Bool m_isConvex = false;
 

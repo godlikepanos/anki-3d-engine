@@ -3,31 +3,47 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator DEPTH_FAIL_VISUALIZATION 0 1
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
-#pragma anki technique Renderables vert pixel mutators DEPTH_FAIL_VISUALIZATION
+#pragma anki technique RenderableBoxes vert pixel mutators
 #pragma anki technique Bilboards vert pixel
-#pragma anki technique Lines vert pixel mutators DEPTH_FAIL_VISUALIZATION
+#pragma anki technique Lines vert pixel mutators
+
+// Prepare the indirect calls for RenderableUuids
+#pragma anki technique PrepareRenderableUuids comp mutators
+
+// Draw the renderables to output the UUID
+#pragma anki technique RenderableUuids vert pixel mutators
+
+// Pick one UUID at mouse position
+#pragma anki technique RenderableUuidsPick comp mutators
+
+#pragma anki technique Gizmos vert pixel mutators
+#pragma anki technique GizmosPick vert pixel mutators
 
 #include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 // ===========================================================================
-// Renderables                                                               =
+// RenderableBoxes                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Renderables)
-#	include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#if ANKI_TECHNIQUE_RenderableBoxes
+
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t1);
+StructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleRenderableBoundingVolumeIndices : register(t2);
+
+Texture2D g_depthRt : register(t0);
 
 struct Constants
 {
 	Vec4 m_color;
 	Mat4 m_viewProjMat;
+
+	UVec3 m_padding;
+	U32 m_depthFailureVisualization;
 };
-
 ANKI_FAST_CONSTANTS(Constants, g_consts)
-
-StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t1);
-StructuredBuffer<U32> g_visibleRenderableBoundingVolumeIndices : register(t2);
 
 struct VertOut
 {
@@ -49,7 +65,8 @@ VertOut main(VertIn input)
 
 	if(input.m_svInstanceId < bvolumeCount)
 	{
-		const GpuSceneRenderableBoundingVolume bvol = g_renderableBoundingVolumes[g_visibleRenderableBoundingVolumeIndices[input.m_svInstanceId + 1]];
+		const U32 bvolIdx = g_visibleRenderableBoundingVolumeIndices[input.m_svInstanceId + 1] & ((1u << 29u) - 1u);
+		const GpuSceneRenderableBoundingVolume bvol = g_renderableBoundingVolumes[bvolIdx];
 		const Vec3 boxCenter = (bvol.m_aabbMin + bvol.m_aabbMax) * 0.5f;
 		Vec3 localPos = input.m_position * (bvol.m_aabbMax - boxCenter) + boxCenter;
 		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(localPos, 1.0));
@@ -65,36 +82,27 @@ VertOut main(VertIn input)
 #	endif // ANKI_VERTEX_SHADER
 
 #	if ANKI_PIXEL_SHADER
-#		include <AnKi/Shaders/ImportanceSampling.hlsl>
-
-// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#		if DEPTH_FAIL_VISUALIZATION == 1
-SamplerState g_nearestAnyClampSampler : register(s0);
-Texture2D g_depthRt : register(t0);
-#		endif
-
 Vec4 main(VertOut input) : SV_TARGET0
 {
-	ANKI_MAYBE_UNUSED(input);
+	Vec4 col = g_consts.m_color;
 
-	// Check if we should skip the frag
-#		if DEPTH_FAIL_VISUALIZATION == 1
-	Vec2 texSize;
-	g_depthRt.GetDimensions(texSize.x, texSize.y);
-	const Vec2 uv = input.m_svPosition.xy / texSize;
-	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
-	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
-	if(depthTestFailed)
+	if(g_consts.m_depthFailureVisualization)
 	{
-		return g_consts.m_color * 0.5;
+		Vec2 texSize;
+		g_depthRt.GetDimensions(texSize.x, texSize.y);
+		const F32 depthRef = g_depthRt[clamp(input.m_svPosition.xy, 0.0, texSize - 1.0)].r;
+		const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+		if(depthTestFailed)
+		{
+			col.xyz *= 0.4;
+		}
 	}
-#		endif
 
 	// Write the color
-	return g_consts.m_color;
+	return col;
 }
 #	endif // ANKI_PIXEL_SHADER
-#endif // ANKI_TECHNIQUE_Renderables
+#endif // ANKI_TECHNIQUE_RenderableBoxes
 
 // ===========================================================================
 // Bilboards                                                                 =
@@ -110,6 +118,9 @@ struct Constants
 {
 	Mat4 m_viewProjMat;
 	Mat3x4 m_camTrf;
+
+	UVec3 m_padding;
+	U32 m_depthFailureVisualization;
 };
 
 ANKI_FAST_CONSTANTS(Constants, g_consts)
@@ -128,14 +139,19 @@ typedef GlobalIlluminationProbe ClusteredType;
 #		error See file
 #	endif
 
+Texture2D g_depthRt : register(t0);
 StructuredBuffer<ClusteredType> g_visibleObjects : register(t1);
 StructuredBuffer<U32> g_visibleObjectCount : register(t2);
+Texture2D<Vec4> g_tex : register(t3);
+Texture2D<Vec4> g_tex2 : register(t4);
+
+SamplerState g_trilinearRepeatSampler : register(s1);
 
 struct VertOut
 {
 	Vec4 m_svPosition : SV_POSITION;
 	Vec2 m_uv : TEXCOORD;
-	Vec4 m_colorScale : COLOR;
+	Vec3 m_colorScale : COLOR;
 	nointerpolation U32 m_textureIndex : TEX_INDEX;
 };
 
@@ -150,7 +166,7 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	output.m_colorScale = Vec4(1.0f, 1.0f, 1.0f, kAlpha);
+	output.m_colorScale = 1.0;
 	output.m_textureIndex = 0;
 
 	output.m_uv = Vec2(input.m_svVertexId & 1u, ((input.m_svVertexId + 1u) / 3u) & 1u);
@@ -161,7 +177,7 @@ VertOut main(VertIn input)
 	{
 #		if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
-		output.m_colorScale.xyz = reinhardTonemap(g_visibleObjects[input.m_svInstanceId].m_diffuseColor);
+		output.m_colorScale = reinhardTonemap(g_visibleObjects[input.m_svInstanceId].m_diffuseColor);
 		output.m_textureIndex = g_visibleObjects[input.m_svInstanceId].m_lightType;
 #		elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_sphereCenter;
@@ -192,45 +208,37 @@ VertOut main(VertIn input)
 #	endif // ANKI_VERTEX_SHADER
 
 #	if ANKI_PIXEL_SHADER
-#		include <AnKi/Shaders/ImportanceSampling.hlsl>
-
-SamplerState g_trilinearRepeatSampler : register(s1);
-Texture2D<Vec4> g_tex : register(t3);
-Texture2D<Vec4> g_tex2 : register(t4);
-
-// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#		if DEPTH_FAIL_VISUALIZATION == 1
-SamplerState g_nearestAnyClampSampler : register(s0);
-Texture2D g_depthRt : register(t0);
-#		endif
-
 Vec4 main(VertOut input) : SV_TARGET0
 {
 	ANKI_MAYBE_UNUSED(input);
 
-	// Check if we should skip the frag
-	F32 colorFactor = 1.0f;
-#		if DEPTH_FAIL_VISUALIZATION == 1
-	Vec2 texSize;
-	g_depthRt.GetDimensions(texSize.x, texSize.y);
-	const Vec2 uv = input.m_svPosition.xy / texSize;
-	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
-	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
-	if(depthTestFailed)
-	{
-		colorFactor = 0.6;
-	}
-#		endif
-
 	// Write the color
+	Vec4 color;
 	if(input.m_textureIndex == 0)
 	{
-		return g_tex.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
+		color = g_tex.Sample(g_trilinearRepeatSampler, input.m_uv);
 	}
 	else
 	{
-		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
+		color = g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv);
 	}
+
+	color.xyz *= input.m_colorScale;
+
+	if(g_consts.m_depthFailureVisualization)
+	{
+		Vec2 texSize;
+		g_depthRt.GetDimensions(texSize.x, texSize.y);
+
+		const F32 depthRef = g_depthRt[clamp(input.m_svPosition.xy, 0.0, texSize - 1.0)].r;
+		const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+		if(depthTestFailed)
+		{
+			color.xyz *= 0.5;
+		}
+	}
+
+	return color;
 }
 #	endif // ANKI_PIXEL_SHADER
 #endif // ANKI_TECHNIQUE_Bilboards
@@ -248,7 +256,7 @@ struct VertIn
 
 struct VertOut
 {
-	Vec4 m_svPosition : SV_Position;
+	Vec4 m_svPosition : SV_POSITION;
 	Vec4 m_color : COLOR;
 };
 
@@ -269,9 +277,230 @@ VertOut main(VertIn input)
 #	endif // ANKI_VERTEX_SHADER
 
 #	if ANKI_PIXEL_SHADER
-Vec4 main(VertOut input) : SV_Target0
+Vec4 main(VertOut input) : SV_TARGET0
 {
 	return input.m_color;
 }
 #	endif // ANKI_PIXEL_SHADER
 #endif // ANKI_TECHNIQUE_Lines
+
+// ===========================================================================
+// Gizmos                                                                    =
+// ===========================================================================
+#if ANKI_TECHNIQUE_Gizmos
+
+struct Consts
+{
+	Mat4 m_mvp;
+	Vec4 m_color;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+#	if ANKI_VERTEX_SHADER
+Vec4 main(Vec3 positions : POSITION) : SV_POSITION
+{
+	return mul(g_consts.m_mvp, Vec4(positions, 1.0));
+}
+#	endif
+
+#	if ANKI_PIXEL_SHADER
+Vec4 main() : SV_TARGET0
+{
+	return g_consts.m_color;
+}
+#	endif
+
+#endif
+
+// ===========================================================================
+// GizmosPick                                                                =
+// ===========================================================================
+#if ANKI_TECHNIQUE_GizmosPick
+
+struct Consts
+{
+	Mat4 m_mvp;
+
+	UVec3 m_padding;
+	U32 m_id;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+#	if ANKI_VERTEX_SHADER
+Vec4 main(Vec3 positions : POSITION) : SV_POSITION
+{
+	return mul(g_consts.m_mvp, Vec4(positions, 1.0));
+}
+#	endif
+
+#	if ANKI_PIXEL_SHADER
+U32 main() : SV_TARGET0
+{
+	return g_consts.m_id;
+}
+#	endif
+
+#endif
+
+// ===========================================================================
+// PrepareRenderableUuids                                                    =
+// ===========================================================================
+#if ANKI_TECHNIQUE_PrepareRenderableUuids
+
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleRenderableBoundingVolumeIndices : register(t3);
+
+RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawArgs : register(u0);
+RWStructuredBuffer<U32> g_drawArgCount : register(u1);
+
+RWStructuredBuffer<U32> g_lodAndRenderableIndices : register(u2);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	if(svDispatchThreadId.x >= SBUFF(g_visibleRenderableBoundingVolumeIndices, 0))
+	{
+		return;
+	}
+
+	const LodAndGpuSceneRenderableBoundingVolumeIndex packed = SBUFF(g_visibleRenderableBoundingVolumeIndices, svDispatchThreadId.x + 1);
+	const U32 lod = packed >> 29u;
+	const U32 bvolIdx = packed & ((1u << 29u) - 1u);
+
+	const GpuSceneRenderableBoundingVolume bvol = SBUFF(g_renderableBoundingVolumes, bvolIdx);
+	const GpuSceneRenderable renderable = SBUFF(g_renderables, bvol.m_renderableIndex);
+
+	const Bool isParticleEmitter = renderable.m_particleEmitterIndex2 < kMaxU32;
+	if(isParticleEmitter)
+	{
+		// Can't draw particle emitters as is
+		return;
+	}
+
+	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);
+
+	DrawIndexedIndirectArgs indirect;
+	indirect.m_indexCount = meshLod.m_indexCount;
+	indirect.m_instanceCount = 1;
+	indirect.m_firstIndex = meshLod.m_firstIndex;
+	indirect.m_vertexOffset = 0;
+	indirect.m_firstInstance = 0;
+
+	U32 index;
+	InterlockedAdd(g_drawArgCount[0], 1, index);
+
+	SBUFF(g_drawArgs, index) = indirect;
+
+	U32 packed2 = lod << 29u;
+	packed2 |= bvol.m_renderableIndex;
+	SBUFF(g_lodAndRenderableIndices, index) = packed2;
+}
+#endif
+
+// ===========================================================================
+// RenderableUuids                                                           =
+// ===========================================================================
+#if ANKI_TECHNIQUE_RenderableUuids
+
+StructuredBuffer<U32> g_lodAndRenderableIndices : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
+
+Buffer<Vec4> g_unifiedGeom_R16G16B16A16_Unorm : register(t4);
+Buffer<UVec4> g_unifiedGeom_R8G8B8A8_Uint : register(t5);
+Buffer<Vec4> g_unifiedGeom_R8G8B8A8_Snorm : register(t6);
+ByteAddressBuffer g_gpuScene : register(t7);
+
+ANKI_FAST_CONSTANTS(Mat4, g_mvp);
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+	U32 m_sceneNodeUuid : SCENE_NODE_UUID;
+};
+
+#	if ANKI_VERTEX_SHADER
+struct Mat3x4_2
+{
+	Mat3x4 m_a;
+	Mat3x4 m_b;
+};
+
+VertOut main(U32 svVertexId : SV_VERTEXID)
+{
+	const U32 packed = SBUFF(g_lodAndRenderableIndices, gl_DrawID);
+	const U32 lod = packed >> 29u;
+	ANKI_ASSERT(lod < kMaxLodCount);
+	const U32 renderableIdx = packed & ((1u << 29u) - 1u);
+
+	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
+
+	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);
+
+	Vec3 position = g_unifiedGeom_R16G16B16A16_Unorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kPosition] + svVertexId];
+	position = position * meshLod.m_positionScale + meshLod.m_positionTranslation;
+
+	if(renderable.m_boneTransformsOffset)
+	{
+		const UVec4 boneIndices = g_unifiedGeom_R8G8B8A8_Uint[meshLod.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + svVertexId];
+		const Vec4 boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + svVertexId];
+
+		Mat3x4 skinMat = (Mat3x4)0.0;
+		for(U32 i = 0; i < 4; ++i)
+		{
+			U32 byteOffset = renderable.m_boneTransformsOffset;
+			byteOffset += boneIndices[i] * sizeof(Mat3x4_2);
+
+			const Mat3x4_2 mats = g_gpuScene.Load<Mat3x4_2>(byteOffset);
+			skinMat = skinMat + mats.m_a * boneWeights[i];
+		}
+
+		position = mul(skinMat, Vec4(position, 1.0)).xyz;
+	}
+
+	const Mat3x4 trf = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
+	position = mul(trf, Vec4(position, 1.0));
+
+	VertOut output;
+	output.m_svPosition = mul(g_mvp, Vec4(position, 1.0));
+	output.m_sceneNodeUuid = renderable.m_sceneNodeUuid;
+	return output;
+}
+#	endif
+
+#	if ANKI_PIXEL_SHADER
+U32 main(VertOut input) : SV_TARGET0
+{
+	return input.m_sceneNodeUuid;
+}
+#	endif
+
+#endif
+
+// ===========================================================================
+// RenderableUuidsPick                                                       =
+// ===========================================================================
+#if ANKI_TECHNIQUE_RenderableUuidsPick
+
+Texture2D<UVec4> g_uuidsTex : register(t0);
+
+RWStructuredBuffer<U32> g_outUuid : register(u0);
+
+struct Consts
+{
+	UVec2 m_mousePos;
+	UVec2 m_padding;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts);
+
+[numthreads(1, 1, 1)] void main()
+{
+	const U32 uuid = g_uuidsTex[g_consts.m_mousePos].x;
+	g_outUuid[0] = uuid;
+}
+#endif

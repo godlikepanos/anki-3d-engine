@@ -15,6 +15,25 @@ namespace anki {
 /// @addtogroup util_other
 /// @{
 
+/// Define a global CVAR.
+#define ANKI_CVAR(type, namespace, name, ...) inline type g_cvar##namespace##name(ANKI_STRINGIZE(namespace) "." ANKI_STRINGIZE(name), __VA_ARGS__);
+
+/// Same as ANKI_CVAR but you can define 2 namespaces.
+#define ANKI_CVAR2(type, namespaceA, namespaceB, name, ...) \
+	inline type g_cvar##namespaceA##namespaceB##name(ANKI_STRINGIZE(namespaceA) "." ANKI_STRINGIZE(namespaceB) "." ANKI_STRINGIZE(name), __VA_ARGS__);
+
+enum class CVarValueType : U32
+{
+	kString,
+	kBool,
+	kNumericU8,
+	kNumericU16,
+	kNumericU32,
+	kNumericPtrSize,
+	kNumericF32,
+	kNumericF64
+};
+
 /// ConfigSet variable base.
 class CVar : public IntrusiveListEnabled<CVar>
 {
@@ -25,40 +44,40 @@ public:
 
 	CVar& operator=(const CVar&) = delete;
 
-	String getFullName() const;
+	CString getName() const
+	{
+		return m_name;
+	}
+
+	CVarValueType getValueType() const
+	{
+		return m_type;
+	}
 
 protected:
 	CString m_name;
 	CString m_descr;
-	CString m_subsystem;
 
-	enum class Type : U32
-	{
-		kString,
-		kBool,
-		kNumericU8,
-		kNumericU16,
-		kNumericU32,
-		kNumericPtrSize,
-		kNumericF32,
-		kNumericF64
-	};
+	CVarValueType m_type;
 
-	Type m_type;
-
-	CVar(Type type, CString subsystem, CString name, CString descr = {})
+	CVar(CVarValueType type, CString name, CString descr = {})
 		: m_name(name)
 		, m_descr((!descr.isEmpty()) ? descr : "No description")
-		, m_subsystem(subsystem)
 		, m_type(type)
 	{
 		registerSelf();
 	}
 
+	void validateSetValue() const
+#if ANKI_ASSERTIONS_ENABLED
+		;
+#else
+	{
+	}
+#endif
+
 private:
 	void registerSelf();
-
-	void getFullNameInternal(Array<Char, 256>& arr) const;
 };
 
 /// Numeric config variable.
@@ -69,8 +88,8 @@ public:
 	using CheckValueCallback = Bool (*)(TNumber);
 
 	/// Initialize using a custom callback the checks the correctness of the value.
-	NumericCVar(CString subsystem, CString name, TNumber defaultVal, CheckValueCallback checkValueCallback, CString descr = CString())
-		: CVar(getCVarType(), subsystem, name, descr)
+	NumericCVar(CString name, TNumber defaultVal, CheckValueCallback checkValueCallback, CString descr = CString())
+		: CVar(getCVarType(), name, descr)
 		, m_value(defaultVal)
 		, m_checkValueCallback(checkValueCallback)
 	{
@@ -79,9 +98,9 @@ public:
 	}
 
 	/// Initialize using a min max range.
-	NumericCVar(CString subsystem, CString name, TNumber defaultVal, TNumber min = getMinNumericLimit<TNumber>(),
-				TNumber max = getMaxNumericLimit<TNumber>(), CString descr = CString())
-		: CVar(getCVarType(), subsystem, name, descr)
+	NumericCVar(CString name, TNumber defaultVal, TNumber min = getMinNumericLimit<TNumber>(), TNumber max = getMaxNumericLimit<TNumber>(),
+				CString descr = CString())
+		: CVar(getCVarType(), name, descr)
 		, m_value(defaultVal)
 		, m_min(min)
 		, m_max(max)
@@ -92,6 +111,7 @@ public:
 
 	NumericCVar& operator=(TNumber val)
 	{
+		validateSetValue();
 		Bool ok = true;
 		if(!m_checkValueCallback)
 		{
@@ -102,6 +122,10 @@ public:
 		else
 		{
 			ok = m_checkValueCallback(val);
+			if(ok)
+			{
+				m_value = val;
+			}
 		}
 
 		if(!ok)
@@ -123,14 +147,14 @@ private:
 	TNumber m_max = getMaxNumericLimit<TNumber>();
 	CheckValueCallback m_checkValueCallback = nullptr;
 
-	static Type getCVarType();
+	static CVarValueType getCVarType();
 };
 
 #define ANKI_CVAR_NUMERIC_TYPE(type) \
 	template<> \
-	inline CVar::Type NumericCVar<type>::getCVarType() \
+	inline CVarValueType NumericCVar<type>::getCVarType() \
 	{ \
-		return Type::kNumeric##type; \
+		return CVarValueType::kNumeric##type; \
 	}
 
 ANKI_CVAR_NUMERIC_TYPE(U8)
@@ -145,8 +169,8 @@ ANKI_CVAR_NUMERIC_TYPE(F64)
 class StringCVar : public CVar
 {
 public:
-	StringCVar(CString subsystem, CString name, CString value, CString descr = CString())
-		: CVar(Type::kString, subsystem, name, descr)
+	StringCVar(CString name, CString value, CString descr = CString())
+		: CVar(CVarValueType::kString, name, descr)
 	{
 		*this = value;
 	}
@@ -161,6 +185,7 @@ public:
 
 	StringCVar& operator=(CString name)
 	{
+		validateSetValue();
 		if(m_str)
 		{
 			free(m_str);
@@ -193,14 +218,15 @@ private:
 class BoolCVar : public CVar
 {
 public:
-	BoolCVar(CString subsystem, CString name, Bool defaultVal, CString descr = CString())
-		: CVar(Type::kBool, subsystem, name, descr)
+	explicit BoolCVar(CString name, Bool defaultVal, CString descr = CString())
+		: CVar(CVarValueType::kBool, name, descr)
 		, m_val(defaultVal)
 	{
 	}
 
 	BoolCVar& operator=(Bool val)
 	{
+		validateSetValue();
 		m_val = val;
 		return *this;
 	}
@@ -244,8 +270,23 @@ public:
 
 	Error setMultiple(ConstWeakArray<const Char*> arr);
 
+	template<typename TFunc>
+	void iterateCVars(TFunc func)
+	{
+		for(CVar& cvar : m_cvars)
+		{
+			if(func(cvar) == FunctorContinue::kStop)
+			{
+				return;
+			}
+		}
+	}
+
 private:
 	IntrusiveList<CVar> m_cvars;
+#if ANKI_ASSERTIONS_ENABLED
+	U64 m_mainThreadHandle = 0;
+#endif
 
 	void registerCVar(CVar* var);
 };

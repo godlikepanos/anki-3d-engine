@@ -97,7 +97,7 @@ void main()
 	HeapMemoryPool pool(allocAligned, nullptr);
 
 	const U32 threadCount = 8;
-	ThreadHive hive(threadCount, &pool);
+	ThreadHive hive(threadCount);
 
 	class TaskManager : public ShaderCompilerAsyncTaskInterface
 	{
@@ -292,7 +292,7 @@ void main()
 	HeapMemoryPool pool(allocAligned, nullptr);
 
 	const U32 threadCount = 24;
-	ThreadHive hive(threadCount, &pool);
+	ThreadHive hive(threadCount);
 
 	class TaskManager : public ShaderCompilerAsyncTaskInterface
 	{

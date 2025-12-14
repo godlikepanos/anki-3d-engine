@@ -15,15 +15,15 @@ namespace anki {
 Aabb computeAabb(const Sphere& sphere)
 {
 	Aabb aabb;
-	aabb.setMin((sphere.getCenter() - sphere.getRadius()).xyz0());
-	aabb.setMax((sphere.getCenter() + sphere.getRadius()).xyz0());
+	aabb.setMin((sphere.getCenter() - sphere.getRadius()).xyz0);
+	aabb.setMax((sphere.getCenter() + sphere.getRadius()).xyz0);
 	return aabb;
 }
 
 Aabb computeAabb(const Obb& obb)
 {
 	Mat3x4 absM;
-	for(U i = 0; i < 12; ++i)
+	for(U32 i = 0; i < 12; ++i)
 	{
 		absM[i] = absolute(obb.getRotation()[i]);
 	}
@@ -48,7 +48,7 @@ Aabb computeAabb(const ConvexHullShape& hull)
 		maxa = maxa.max(o);
 	}
 
-	return Aabb(mina.xyz0(), maxa.xyz0());
+	return Aabb(mina.xyz0, maxa.xyz0);
 }
 
 Aabb computeAabb(const LineSegment& ls)

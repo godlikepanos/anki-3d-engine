@@ -9,16 +9,6 @@
 
 ANKI_BEGIN_NAMESPACE
 
-inline GpuSceneRenderableInstance unpackGpuSceneRenderableVertex(UVec4 x)
-{
-	GpuSceneRenderableInstance o;
-	o.m_worldTransformsIndex = x[0];
-	o.m_constantsOffset = x[1];
-	o.m_meshLodIndex = x[2];
-	o.m_boneTransformsOffsetOrParticleEmitterIndex = x[3];
-	return o;
-}
-
 inline GpuSceneMeshletInstance unpackGpuSceneMeshletInstance(UVec4 x)
 {
 	GpuSceneMeshletInstance o;
@@ -44,10 +34,10 @@ inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec
 #endif
 
 	ANKI_ASSERT(renderableIndex <= (1u << 20u) - 1u);
-	gpuVolume.m_renderableIndex_20bit_renderStateBucket_12bit = renderableIndex << 12u;
+	gpuVolume.m_renderableIndex = renderableIndex;
 
 	ANKI_ASSERT(renderStateBucket <= (1u << 12u) - 1u);
-	gpuVolume.m_renderableIndex_20bit_renderStateBucket_12bit |= renderStateBucket;
+	gpuVolume.m_renderStateBucket = renderStateBucket;
 	return gpuVolume;
 }
 

@@ -15,7 +15,7 @@ namespace anki {
 /// @addtogroup gpu_memory
 /// @{
 
-inline NumericCVar<PtrSize> g_rebarGpuMemorySizeCvar("Core", "RebarGpuMemorySize", 24_MB, 1_MB, 1_GB, "ReBAR: always mapped GPU memory");
+ANKI_CVAR(NumericCVar<PtrSize>, Core, RebarGpuMemorySize, 24_MB, 1_MB, 1_GB, "ReBAR: always mapped GPU memory")
 
 /// Manages staging GPU memory.
 class RebarTransientMemoryPool : public MakeSingleton<RebarTransientMemoryPool>

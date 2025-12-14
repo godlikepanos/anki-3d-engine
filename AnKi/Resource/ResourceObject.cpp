@@ -11,14 +11,14 @@ namespace anki {
 
 Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 {
-	return ResourceManager::getSingleton().getFilesystem().openFile(filename, file);
+	return ResourceFilesystem::getSingleton().openFile(filename, file);
 }
 
 Error ResourceObject::openFileReadAllText(const CString& filename, ResourceString& text)
 {
 	// Load file
 	ResourceFilePtr file;
-	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
+	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, file));
 
 	// Read string
 	ANKI_CHECK(file->readAllText(text));

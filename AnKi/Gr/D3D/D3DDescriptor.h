@@ -273,6 +273,11 @@ public:
 		return *m_rootSignature;
 	}
 
+	U32 getDrawIdRootParamIdx() const
+	{
+		return m_drawIdRootParamIdx;
+	}
+
 private:
 	class Descriptor
 	{
@@ -302,6 +307,8 @@ private:
 
 	Array<Space, kMaxRegisterSpaces> m_spaces;
 
+	U32 m_drawIdRootParamIdx = kMaxU32;
+
 	U32 m_rootConstantsSize = kMaxU32;
 	U8 m_rootConstantsParameterIdx = kMaxU8;
 
@@ -315,6 +322,9 @@ public:
 	~RootSignatureFactory();
 
 	Error getOrCreateRootSignature(const ShaderReflection& refl, RootSignature*& signature);
+
+	/// Local root signature for hit shaders.
+	Error getOrCreateLocalRootSignature(const ShaderReflection& refl, RootSignature*& signature);
 
 private:
 	GrDynamicArray<RootSignature*> m_signatures;
@@ -397,6 +407,18 @@ public:
 		m_spaces[space].m_cbvSrvUavDirty = true;
 	}
 
+	void bindSrv(U32 space, U32 registerBinding, D3D12_GPU_VIRTUAL_ADDRESS asAddress)
+	{
+		Descriptor& descriptor = getDescriptor(HlslResourceType::kSrv, space, registerBinding);
+		descriptor.m_asAddress = asAddress;
+		descriptor.m_isHandle = false;
+#if ANKI_ASSERTIONS_ENABLED
+		descriptor.m_type = DescriptorType::kAccelerationStructure;
+#endif
+
+		m_spaces[space].m_cbvSrvUavDirty = true;
+	}
+
 	void bindCbv(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range)
 	{
 		Descriptor& descriptor = getDescriptor(HlslResourceType::kCbv, space, registerBinding);
@@ -451,6 +473,7 @@ private:
 		{
 			BufferView m_bufferView; ///< For buffers
 			D3D12_CPU_DESCRIPTOR_HANDLE m_heapOffset; ///< For samplers and texture SRVs/UAVs
+			D3D12_GPU_VIRTUAL_ADDRESS m_asAddress;
 		};
 
 		Bool m_isHandle;

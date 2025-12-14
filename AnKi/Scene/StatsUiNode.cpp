@@ -8,7 +8,6 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Ui/UiManager.h>
-#include <AnKi/Ui/Font.h>
 #include <AnKi/Renderer/Renderer.h>
 
 namespace anki {
@@ -71,7 +70,7 @@ StatsUiNode::StatsUiNode(CString name)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(
-		[](CanvasPtr& canvas, void* ud) {
+		[](UiCanvas& canvas, void* ud) {
 			static_cast<StatsUiNode*>(ud)->draw(canvas);
 		},
 		this);
@@ -80,16 +79,19 @@ StatsUiNode::StatsUiNode(CString name)
 	{
 		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
 	}
-
-	ANKI_CHECKF(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
 }
 
 StatsUiNode::~StatsUiNode()
 {
 }
 
-void StatsUiNode::draw(CanvasPtr& canvas)
+void StatsUiNode::draw(UiCanvas& canvas)
 {
+	if(!m_font)
+	{
+		m_font = canvas.addFont("EngineAssets/UbuntuMonoRegular.ttf");
+	}
+
 	Bool flush = false;
 	if(m_bufferedFrames == kBufferedFrames)
 	{
@@ -98,7 +100,7 @@ void StatsUiNode::draw(CanvasPtr& canvas)
 	}
 	++m_bufferedFrames;
 
-	canvas->pushFont(m_font, 24);
+	ImGui::PushFont(m_font, 24.0f);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
@@ -156,9 +158,9 @@ void StatsUiNode::draw(CanvasPtr& canvas)
 		}
 		else
 		{
-			const Second maxTime = max(g_cpuTotalTimeStatVar.getValue<F64>(), g_rendererGpuTimeStatVar.getValue<F64>()) / 1000.0;
+			const Second maxTime = max(g_svarCpuTotalTime.getValue<F64>(), g_svarRendererGpuTime.getValue<F64>()) / 1000.0;
 			const F32 fps = F32(1.0 / maxTime);
-			const Bool cpuBound = g_cpuTotalTimeStatVar.getValue<F64>() > g_rendererGpuTimeStatVar.getValue<F64>();
+			const Bool cpuBound = g_svarCpuTotalTime.getValue<F64>() > g_svarRendererGpuTime.getValue<F64>();
 			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f", fps);
 		}
 	}
@@ -166,7 +168,7 @@ void StatsUiNode::draw(CanvasPtr& canvas)
 	ImGui::End();
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
 
-	canvas->popFont();
+	ImGui::PopFont();
 }
 
 } // end namespace anki

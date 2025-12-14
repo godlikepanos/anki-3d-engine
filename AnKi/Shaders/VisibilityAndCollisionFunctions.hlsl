@@ -52,7 +52,7 @@ Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Boo
 }
 
 /// Return true if to AABBs overlap.
-Bool testAabbAabb(Vec3 aMin, Vec3 aMax, Vec3 bMin, Vec3 bMax)
+Bool aabbAabbOverlap(Vec3 aMin, Vec3 aMax, Vec3 bMin, Vec3 bMax)
 {
 	return all(aMin < bMax) && all(bMin < aMax);
 }
@@ -174,6 +174,31 @@ F32 testPlaneSphere(Vec3 planeNormal, F32 planeOffset, Vec3 sphereCenter, F32 sp
 	return (dist < 0.0f) ? dist : 0.0f;
 }
 
+Bool aabbSphereOverlap(Vec3 aabbMin, Vec3 aabbMax, Vec3 sphereCenter, F32 sphereRadius)
+{
+	Vec3 closestPoint = sphereCenter;
+
+#if 0
+	[unroll] for(U32 i = 0; i < 3; ++i)
+	{
+		if(sphereCenter[i] < aabbMin[i])
+		{
+			closestPoint[i] = aabbMin[i];
+		}
+		else if(sphereCenter[i] > aabbMax[i])
+		{
+			closestPoint[i] = aabbMax[i];
+		}
+	}
+#else
+	closestPoint = select(sphereCenter > aabbMax, aabbMax, sphereCenter);
+	closestPoint = select(closestPoint < aabbMin, aabbMin, closestPoint);
+#endif
+
+	const Vec3 sub = sphereCenter - closestPoint;
+	return dot(sub, sub) <= square(sphereRadius);
+}
+
 Bool frustumTest(Vec4 frustumPlanes[6], Vec3 sphereCenter, F32 sphereRadius)
 {
 	F32 minPlaneDistance = testPlanePoint(frustumPlanes[0].xyz, frustumPlanes[0].w, sphereCenter);
@@ -286,4 +311,15 @@ F32 distancePointToLineSegment(Vec2 p, Vec2 lineSegmentA, Vec2 lineSegmentB)
 	const F32 t = saturate(dot(ap, ab) / abLenSq);
 	const Vec2 closestPoint = lineSegmentA + t * ab;
 	return length(p - closestPoint);
+}
+
+Vec4 computePlane(Vec3 p0, Vec3 p1, Vec3 p2)
+{
+	const Vec3 u = p1 - p0;
+	const Vec3 v = p2 - p0;
+
+	const Vec3 normal = normalize(cross(u, v));
+	const F32 offset = dot(normal, p1);
+
+	return Vec4(normal, offset);
 }

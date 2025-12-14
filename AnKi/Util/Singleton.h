@@ -5,10 +5,8 @@
 
 #pragma once
 
-#include "AnKi/Config.h"
 #include <AnKi/Util/StdTypes.h>
-#include <AnKi/Util/Assert.h>
-#include <utility>
+#include <AnKi/Util/Thread.h>
 
 namespace anki {
 
@@ -130,21 +128,33 @@ template<typename T>
 T MakeSingletonSimple<T>::m_global;
 
 /// If class inherits that it will become a singleton. This is a simple version with implicit init.
-template<typename T>
+template<typename T, Bool kThreadsafe = true>
 class MakeSingletonLazyInit
 {
 public:
 	ANKI_FORCE_INLINE static T& getSingleton()
 	{
+		if constexpr(kThreadsafe)
+		{
+			m_mtx.lock();
+		}
+
 		if(m_global == nullptr) [[unlikely]]
 		{
 			m_global = new T;
 		}
+
+		if constexpr(kThreadsafe)
+		{
+			m_mtx.unlock();
+		}
+
 		return *m_global;
 	}
 
 private:
 	static inline T* m_global = nullptr;
+	static inline SpinLock m_mtx;
 };
 /// @}
 

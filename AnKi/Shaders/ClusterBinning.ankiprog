@@ -146,7 +146,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	const Vec2 uv = Vec2(pixel) / g_consts.m_renderingSize;
 	const Vec2 ndc = uvToNdc(uv);
 
-	// Unproject the sample in world space
+	// Unproject the sample to world space
 	const Vec4 farWorldPos4 = mul(g_consts.m_invertedViewProjMat, Vec4(ndc, 1.0, 1.0));
 	const Vec3 farWorldPos = farWorldPos4.xyz / farWorldPos4.w;
 
@@ -160,7 +160,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	const GpuSceneType obj = g_objects[g_visibleObjectIds[visibleObjectIdx + 1]];
 
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-	if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
+	if(obj.m_isPointLight)
 	{
 		collides = testRaySphere(rayOrigin, rayDir, obj.m_position, obj.m_radius, t0, t1);
 	}
@@ -229,7 +229,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 
 		// Set the tile
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-		if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
+		if(obj.m_isPointLight)
 		{
 			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask[maskArrayIdx], mask);
 		}
@@ -273,7 +273,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-			if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
+			if(obj.m_isPointLight)
 			{
 				InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_pointLightsMask[maskArrayIdx], mask);
 			}
@@ -339,7 +339,7 @@ StructuredBuffer<U32> g_visibles : register(t1);
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 	const GpuSceneLight input = g_inBuffer[g_visibles[idxOut + 1]];
 
-	const Bool isPoint = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kPointLight) ? true : false;
+	const Bool isPoint = input.m_isPointLight;
 
 	LightUnion output = (LightUnion)0;
 	output.m_position = input.m_position;
@@ -348,7 +348,7 @@ StructuredBuffer<U32> g_visibles : register(t1);
 	output.m_diffuseColor = input.m_diffuseColor;
 	output.m_lightType = (isPoint) ? 0 : 1;
 
-	output.m_shadow = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kShadow) ? 1 : 0;
+	output.m_shadow = input.m_shadow;
 	output.m_innerCos = input.m_innerCos;
 	output.m_outerCos = input.m_outerCos;
 

@@ -16,10 +16,7 @@ class ImageResource::LoadingContext
 {
 public:
 	ImageLoader m_loader{&ResourceMemoryPool::getSingleton()};
-	U32 m_faces = 0;
-	U32 m_layerCount = 0;
-	TextureType m_texType;
-	TexturePtr m_tex;
+	ImageResourcePtr m_image;
 };
 
 /// Image upload async task.
@@ -30,7 +27,12 @@ public:
 
 	Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
 	{
-		return ImageResource::load(m_ctx);
+		return m_ctx.m_image->loadAsync(m_ctx);
+	}
+
+	static BaseMemoryPool& getMemoryPool()
+	{
+		return ResourceMemoryPool::getSingleton();
 	}
 };
 
@@ -40,18 +42,18 @@ ImageResource::~ImageResource()
 
 Error ImageResource::load(const ResourceFilename& filename, Bool async)
 {
-	TexUploadTask* task;
+	UniquePtr<TexUploadTask> task;
 	LoadingContext* ctx;
 	LoadingContext localCtx;
 
 	if(async)
 	{
-		task = ResourceManager::getSingleton().getAsyncLoader().newTask<TexUploadTask>();
+		task.reset(AsyncLoader::getSingleton().newTask<TexUploadTask>());
 		ctx = &task->m_ctx;
+		ctx->m_image.reset(this);
 	}
 	else
 	{
-		task = nullptr;
 		ctx = &localCtx;
 	}
 	ImageLoader& loader = ctx->m_loader;
@@ -61,12 +63,13 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	TextureInitInfo init(filenameExt);
 	init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kCopyDestination;
-	U32 faces = 0;
 
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, g_maxImageSizeCVar));
+	ANKI_CHECK(loader.load(file, filename, g_cvarRsrcMaxImageSize));
+
+	m_avgColor = loader.getAverageColor();
 
 	// Various sizes
 	init.m_width = loader.getWidth();
@@ -77,26 +80,22 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	case ImageBinaryType::k2D:
 		init.m_type = TextureType::k2D;
 		init.m_depth = 1;
-		faces = 1;
 		init.m_layerCount = 1;
 		break;
 	case ImageBinaryType::kCube:
 		init.m_type = TextureType::kCube;
 		init.m_depth = 1;
-		faces = 6;
 		init.m_layerCount = 1;
 		break;
 	case ImageBinaryType::k2DArray:
 		init.m_type = TextureType::k2DArray;
 		init.m_layerCount = loader.getLayerCount();
 		init.m_depth = 1;
-		faces = 1;
 		break;
 	case ImageBinaryType::k3D:
 		init.m_type = TextureType::k3D;
 		init.m_depth = loader.getDepth();
 		init.m_layerCount = 1;
-		faces = 1;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -190,52 +189,30 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	// mipmapsCount
 	init.m_mipmapCount = U8(loader.getMipmapCount());
+	m_pendingLoadedMips.setNonAtomically(init.m_mipmapCount);
 
 	// Create the texture
 	m_tex = GrManager::getSingleton().newTexture(init);
 
-	// Transition it. TODO remove this
-	{
-		const TextureView view(m_tex.get(), TextureSubresourceDesc::all());
-
-		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
-
-		const TextureBarrierInfo barrier = {view, TextureUsageBit::kNone, TextureUsageBit::kAllSrv};
-		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
-
-		FencePtr outFence;
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get(), {}, &outFence);
-		outFence->clientWait(60.0_sec);
-	}
-
-	// Set the context
-	ctx->m_faces = faces;
-	ctx->m_layerCount = init.m_layerCount;
-	ctx->m_texType = init.m_type;
-	ctx->m_tex = m_tex;
-
 	// Upload the data
 	if(async)
 	{
-		ResourceManager::getSingleton().getAsyncLoader().submitTask(task);
+		TexUploadTask* pTask;
+		task.moveAndReset(pTask);
+		AsyncLoader::getSingleton().submitTask(pTask, AsyncLoaderPriority::kMedium);
 	}
 	else
 	{
-		ANKI_CHECK(load(*ctx));
+		ANKI_CHECK(loadAsync(*ctx));
 	}
-
-	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
-	m_layerCount = init.m_layerCount;
 
 	return Error::kNone;
 }
 
-Error ImageResource::load(LoadingContext& ctx)
+Error ImageResource::loadAsync(LoadingContext& ctx) const
 {
-	const U32 copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipmapCount();
+	const U32 faceCount = textureTypeIsCube(m_tex->getTextureType()) ? 6 : 1;
+	const U32 copyCount = m_tex->getLayerCount() * faceCount * ctx.m_loader.getMipmapCount();
 
 	for(U32 b = 0; b < copyCount; b += kMaxCopiesBeforeFlush)
 	{
@@ -252,9 +229,9 @@ Error ImageResource::load(LoadingContext& ctx)
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
-			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
+			unflatten3dArrayIndex(m_tex->getLayerCount(), faceCount, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kAllSrv,
+			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kNone,
 										TextureUsageBit::kCopyDestination};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
@@ -265,20 +242,19 @@ Error ImageResource::load(LoadingContext& ctx)
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
-			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
+			unflatten3dArrayIndex(m_tex->getLayerCount(), faceCount, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			PtrSize surfOrVolSize;
 			const void* surfOrVolData;
 			PtrSize allocationSize;
 
-			if(ctx.m_texType == TextureType::k3D)
+			if(m_tex->getTextureType() == TextureType::k3D)
 			{
 				const auto& vol = ctx.m_loader.getVolume(mip);
 				surfOrVolSize = vol.m_data.getSize();
 				surfOrVolData = &vol.m_data[0];
 
-				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getDepth() >> mip,
-												   ctx.m_tex->getFormat());
+				allocationSize = computeVolumeSize(m_tex->getWidth() >> mip, m_tex->getHeight() >> mip, m_tex->getDepth() >> mip, m_tex->getFormat());
 			}
 			else
 			{
@@ -286,12 +262,12 @@ Error ImageResource::load(LoadingContext& ctx)
 				surfOrVolSize = surf.m_data.getSize();
 				surfOrVolData = &surf.m_data[0];
 
-				allocationSize = computeSurfaceSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getFormat());
+				allocationSize = computeSurfaceSize(m_tex->getWidth() >> mip, m_tex->getHeight() >> mip, m_tex->getFormat());
 			}
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-			ANKI_CHECK(ResourceManager::getSingleton().getTransferGpuAllocator().allocate(allocationSize, handle));
+			ANKI_CHECK(TransferGpuAllocator::getSingleton().allocate(allocationSize, handle));
 			void* data = handle.getMappedMemory();
 			ANKI_ASSERT(data);
 
@@ -299,7 +275,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 			// Create temp tex view
 			const TextureSubresourceDesc subresource = TextureSubresourceDesc::surface(mip, face, layer);
-			cmdb->copyBufferToTexture(handle, TextureView(ctx.m_tex.get(), subresource));
+			cmdb->copyBufferToTexture(handle, TextureView(m_tex.get(), subresource));
 		}
 
 		// Set the barriers of the batch
@@ -307,10 +283,10 @@ Error ImageResource::load(LoadingContext& ctx)
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
-			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
+			unflatten3dArrayIndex(m_tex->getLayerCount(), faceCount, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
-										TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvGeometry};
+			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
+										TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
@@ -321,11 +297,13 @@ Error ImageResource::load(LoadingContext& ctx)
 
 		for(U i = 0; i < handleCount; ++i)
 		{
-			ResourceManager::getSingleton().getTransferGpuAllocator().release(handles[i], fence);
+			TransferGpuAllocator::getSingleton().release(handles[i], fence);
 		}
 		cmdb.reset(nullptr);
 	}
 
+	[[maybe_unused]] const U32 prevVal = m_pendingLoadedMips.fetchSub(m_tex->getMipmapCount());
+	ANKI_ASSERT(prevVal == m_tex->getMipmapCount());
 	return Error::kNone;
 }
 

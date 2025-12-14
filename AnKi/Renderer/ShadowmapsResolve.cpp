@@ -17,9 +17,9 @@ namespace anki {
 
 Error ShadowmapsResolve::init()
 {
-	m_quarterRez = g_smResolveQuarterRezCVar;
-	const U32 width = getRenderer().getInternalResolution().x() / (m_quarterRez + 1);
-	const U32 height = getRenderer().getInternalResolution().y() / (m_quarterRez + 1);
+	m_quarterRez = g_cvarRenderShadowmapResolveQuarterRez;
+	const U32 width = getRenderer().getInternalResolution().x / (m_quarterRez + 1);
+	const U32 height = getRenderer().getInternalResolution().y / (m_quarterRez + 1);
 
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR8G8B8A8_Unorm, "SM resolve");
 	m_rtDescr.bake();
@@ -44,7 +44,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	if(g_preferComputeCVar)
+	if(g_cvarRenderPreferCompute)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ResolveShadows");
 
@@ -92,11 +92,11 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	U32 quality;
-	if(g_shadowMappingPcssCVar)
+	if(g_cvarRenderSmPcss)
 	{
 		quality = 2;
 	}
-	else if(g_shadowMappingPcfCVar)
+	else if(g_cvarRenderSmPcf)
 	{
 		quality = 1;
 	}
@@ -131,13 +131,13 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 		rgraphCtx.bindSrv(6, 0, getRtShadows().getRt());
 	}
 
-	if(g_preferComputeCVar || g_shadowMappingPcfCVar || g_shadowMappingPcssCVar)
+	if(g_cvarRenderPreferCompute || g_cvarRenderSmPcf || g_cvarRenderSmPcss)
 	{
 		const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
 		cmdb.setFastConstants(&consts, sizeof(consts));
 	}
 
-	if(g_preferComputeCVar)
+	if(g_cvarRenderPreferCompute)
 	{
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);

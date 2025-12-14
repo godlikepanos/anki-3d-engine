@@ -3,7 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma once
+
 #include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 // These are per megameter
 constexpr F32 kGroundRadiusMM = 6.360f;
@@ -79,4 +82,22 @@ Vec3 computeSkyColor(Texture2D<Vec4> skyLut, SamplerState linearAnyClampSampler,
 	col *= sunPower;
 
 	return col;
+}
+
+template<typename T, typename Y>
+vector<T, 3> sampleSkyCheap(Sky sky, vector<Y, 3> direction, SamplerState trilinearClampSampler)
+{
+	vector<T, 3> color;
+	if(sky.m_type == (U32)SkyType::kSolidColor)
+	{
+		color = sky.m_solidColor;
+	}
+	else
+	{
+		const Vec2 uv =
+			(sky.m_type == (U32)SkyType::kTextureWithEquirectangularMapping) ? equirectangularMapping(direction) : octahedronEncode(direction);
+		color = getBindlessTexture2DVec4(sky.m_texture).SampleLevel(trilinearClampSampler, uv, 0.0).xyz;
+	}
+
+	return color;
 }

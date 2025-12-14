@@ -19,14 +19,14 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	// Do visibility
 	GpuVisibilityAccelerationStructuresOutput visOut;
 	{
-		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
+		const Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 		GpuVisibilityAccelerationStructuresInput in;
 		in.m_passesName = "Main TLAS visiblity";
-		in.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+		in.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 		in.m_lodDistances = lodDistances;
 		in.m_pointOfTest = in.m_lodReferencePoint;
-		in.m_testRadius = g_rayTracingExtendedFrustumDistanceCVar;
+		in.m_testRadius = g_cvarRenderRtExtendedFrustumDistance;
 		in.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
 		in.m_rgraph = &ctx.m_renderGraphDescr;
 
@@ -40,17 +40,19 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	// Create the TLAS
 	AccelerationStructureInitInfo initInf("Main TLAS");
 	initInf.m_type = AccelerationStructureType::kTopLevel;
-	initInf.m_topLevel.m_indirectArgs.m_maxInstanceCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
-	initInf.m_topLevel.m_indirectArgs.m_instancesBuffer = visOut.m_instancesBuffer;
+	initInf.m_topLevel.m_instanceCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
+	initInf.m_topLevel.m_instancesBuffer = visOut.m_instancesBuffer;
+
+	const PtrSize memoryReq = GrManager::getSingleton().getAccelerationStructureMemoryRequirement(initInf);
+	initInf.m_accelerationStructureBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(memoryReq, 1);
+
 	m_runCtx.m_tlas = GrManager::getSingleton().newAccelerationStructure(initInf);
 
 	// Build the AS
 	{
 		RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-		const BufferView scratchBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(
-			m_runCtx.m_tlas->getBuildScratchBufferSize(),
-			GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
+		const BufferView scratchBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(m_runCtx.m_tlas->getBuildScratchBufferSize(), 1);
 
 		m_runCtx.m_tlasHandle = rgraph.importAccelerationStructure(m_runCtx.m_tlas.get(), AccelerationStructureUsageBit::kNone);
 
@@ -62,6 +64,24 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 			ANKI_TRACE_SCOPED_EVENT(ASBuilder);
 			rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas.get(), scratchBuff);
 		});
+	}
+
+	// Light visibility
+	{
+		GpuVisibilityLocalLightsInput in;
+		in.m_cellCounts = UVec3(g_cvarRenderRtLightGridCellCountXZ, g_cvarRenderRtLightGridCellCountY, g_cvarRenderRtLightGridCellCountXZ);
+		in.m_cellSize = Vec3(g_cvarRenderRtLightGridSizeXZ, g_cvarRenderRtLightGridSizeY, g_cvarRenderRtLightGridSizeXZ) / Vec3(in.m_cellCounts);
+		in.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
+		in.m_lookDirection = -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis();
+		in.m_lightIndexListSize = g_cvarRenderRtLightIndexListSize;
+		in.m_rgraph = &ctx.m_renderGraphDescr;
+
+		getGpuVisibilityLocalLights().populateRenderGraph(in, m_runCtx.m_lightVisInfo);
+
+		m_runCtx.m_lightGridConsts.m_volumeMin = m_runCtx.m_lightVisInfo.m_lightGridMin;
+		m_runCtx.m_lightGridConsts.m_volumeMax = m_runCtx.m_lightVisInfo.m_lightGridMax;
+		m_runCtx.m_lightGridConsts.m_cellCounts = in.m_cellCounts;
+		m_runCtx.m_lightGridConsts.m_cellSize = in.m_cellSize;
 	}
 }
 

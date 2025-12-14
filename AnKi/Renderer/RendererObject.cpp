@@ -5,10 +5,15 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/AccelerationStructureBuilder.h>
+#include <AnKi/Renderer/Sky.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
+
+#include <AnKi/Renderer/AccelerationStructureBuilder.h>
+#include <AnKi/Renderer/ShadowMapping.h>
+#include <AnKi/Renderer/GBuffer.h>
 
 namespace anki {
 
@@ -57,7 +62,7 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 
 		if(techniqueShaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kPixel | ShaderTypeBit::kVertex))
 		{
-			if(g_preferComputeCVar)
+			if(g_cvarRenderPreferCompute)
 			{
 				shaderTypes = ShaderTypeBit::kCompute;
 			}
@@ -171,9 +176,9 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 																U32 sbtRecordSize, RenderGraphBuilder& rgraph, BufferHandle& sbtHandle,
 																BufferView& sbtBuffer)
 {
-	BufferHandle visibilityDep;
-	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
-	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
+	AccelerationStructureVisibilityInfo asVis;
+	GpuVisibilityLocalLightsOutput lightVis;
+	getAccelerationStructureBuilder().getVisibilityInfo(asVis, lightVis);
 
 	// Allocate SBT
 	U32 sbtAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
@@ -188,11 +193,12 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 	// Create the pass
 	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass(passName);
 
-	rpass.newBufferDependency(visibilityDep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
+	rpass.newBufferDependency(asVis.m_depedency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
 	rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
-	rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff, lib = ShaderProgramPtr(library), sbtRecordSize,
-				   raygenHandleIdx, missHandleIdx](RenderPassWorkContext& rgraphCtx) {
+	rpass.setWork([this, buildSbtIndirectArgsBuff = asVis.m_buildSbtIndirectArgsBuffer, sbtBuffer,
+				   visibleRenderableIndicesBuff = asVis.m_visibleRenderablesBuffer, lib = ShaderProgramPtr(library), sbtRecordSize, raygenHandleIdx,
+				   missHandleIdx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(btBuild);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -249,6 +255,97 @@ void RtMaterialFetchRendererObject::patchShaderBindingTablePass(CString passName
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});
+}
+
+void RtMaterialFetchRendererObject::setRgenSpace2Dependencies(RenderPassBase& pass, Bool isComputeDispatch)
+{
+	const TextureUsageBit srvTexUsage = (isComputeDispatch) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvDispatchRays;
+	const BufferUsageBit srvBuffUsage = (isComputeDispatch) ? BufferUsageBit::kSrvCompute : BufferUsageBit::kSrvDispatchRays;
+	const AccelerationStructureUsageBit srvAsUsage =
+		(isComputeDispatch) ? AccelerationStructureUsageBit::kSrvCompute : AccelerationStructureUsageBit::kSrvDispatchRays;
+
+	pass.newAccelerationStructureDependency(getAccelerationStructureBuilder().getAccelerationStructureHandle(), srvAsUsage);
+
+	if(getGeneratedSky().isEnabled())
+	{
+		pass.newTextureDependency(getGeneratedSky().getEnvironmentMapRt(), srvTexUsage);
+	}
+
+	pass.newTextureDependency(getShadowMapping().getShadowmapRt(), srvTexUsage);
+
+	pass.newTextureDependency(getGBuffer().getDepthRt(), srvTexUsage);
+	pass.newTextureDependency(getGBuffer().getColorRt(1), srvTexUsage);
+	pass.newTextureDependency(getGBuffer().getColorRt(2), srvTexUsage);
+
+	{
+		AccelerationStructureVisibilityInfo asVis;
+		GpuVisibilityLocalLightsOutput lightVis;
+		getAccelerationStructureBuilder().getVisibilityInfo(asVis, lightVis);
+
+		pass.newBufferDependency(lightVis.m_dependency, srvBuffUsage);
+	}
+}
+
+void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+{
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+	const U32 space = 2;
+	U32 srv = 0;
+	rgraphCtx.bindSrv(srv++, space, getAccelerationStructureBuilder().getAccelerationStructureHandle());
+
+	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+	const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+	const Bool bSkySolidColor =
+		(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
+	if(bSkySolidColor)
+	{
+		cmdb.bindSrv(srv++, space, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+	}
+	else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+	{
+		cmdb.bindSrv(srv++, space, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+	}
+	else
+	{
+		rgraphCtx.bindSrv(srv++, space, getGeneratedSky().getEnvironmentMapRt());
+	}
+
+	rgraphCtx.bindSrv(srv++, space, getShadowMapping().getShadowmapRt());
+
+	const auto& arr = GpuSceneArrays::GlobalIlluminationProbe::getSingleton();
+	cmdb.bindSrv(srv++, space,
+				 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
+
+	rgraphCtx.bindSrv(srv++, space, getGBuffer().getDepthRt());
+	rgraphCtx.bindSrv(srv++, space, getGBuffer().getColorRt(1));
+	rgraphCtx.bindSrv(srv++, space, getGBuffer().getColorRt(2));
+
+	// Someone else will have to bind comething if they use it
+	cmdb.bindSrv(srv++, space, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
+
+	{
+		AccelerationStructureVisibilityInfo asVis;
+		GpuVisibilityLocalLightsOutput lightVis;
+		getAccelerationStructureBuilder().getVisibilityInfo(asVis, lightVis);
+
+		const auto& arr = GpuSceneArrays::Light::getSingleton();
+		cmdb.bindSrv(srv++, space,
+					 (arr.getElementCount()) ? arr.getBufferView() : BufferView(getDummyGpuResources().m_buffer.get(), 0, arr.getElementSize()));
+
+		cmdb.bindSrv(srv++, space, lightVis.m_lightIndexCountsPerCellBuffer);
+		cmdb.bindSrv(srv++, space, lightVis.m_lightIndexOffsetsPerCellBuffer);
+		cmdb.bindSrv(srv++, space, lightVis.m_lightIndexListBuffer);
+	}
+
+	cmdb.bindSampler(0, space, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(1, space, getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb.bindSampler(2, space, getRenderer().getSamplers().m_trilinearRepeat.get());
+
+	cmdb.bindUav(0, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+	cmdb.bindUav(1, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+
+	cmdb.bindConstantBuffer(0, space, ctx.m_globalRenderingConstantsBuffer);
 }
 
 } // end namespace anki

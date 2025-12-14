@@ -8,6 +8,16 @@
 
 namespace anki {
 
+void GrObjectDeleter::operator()(GrObject* ptr)
+{
+	getGrManagerImpl().releaseObject(ptr);
+}
+
+void GrObjectDeleterInternal::operator()(GrObject* ptr)
+{
+	getGrManagerImpl().releaseObjectDeleteLoop(ptr);
+}
+
 ID3D12DeviceX& getDevice()
 {
 	return static_cast<GrManagerImpl&>(GrManager::getSingleton()).getDevice();

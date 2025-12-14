@@ -19,7 +19,7 @@ namespace anki {
 
 #define ANKI_DBG_RENDER_GRAPH 0
 
-static inline U32 getTextureSurfOrVolCount(const TexturePtr& tex)
+static inline U32 getTextureSurfOrVolCount(const TextureInternalPtr& tex)
 {
 	return tex->getMipmapCount() * tex->getLayerCount() * (textureTypeIsCube(tex->getTextureType()) ? 6 : 1);
 }
@@ -30,7 +30,7 @@ class RenderGraph::RT
 public:
 	DynamicArray<TextureUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_surfOrVolUsages;
 	DynamicArray<U16, MemoryPoolPtrWrapper<StackMemoryPool>> m_lastBatchThatTransitionedIt;
-	TexturePtr m_texture; ///< Hold a reference.
+	TextureInternalPtr m_texture; ///< Hold a reference.
 	Bool m_imported;
 
 	RT(StackMemoryPool* pool)
@@ -45,7 +45,7 @@ class RenderGraph::BufferRange
 {
 public:
 	BufferUsageBit m_usage;
-	BufferPtr m_buffer; ///< Hold a reference.
+	BufferInternalPtr m_buffer; ///< Hold a reference.
 	PtrSize m_offset;
 	PtrSize m_range;
 };
@@ -129,13 +129,13 @@ public:
 		U8 m_vrsTexelSizeY = 0;
 		Bool m_hasRenderpass = false;
 
-		Array<TexturePtr, kMaxColorRenderTargets + 2> m_refs;
+		Array<TextureInternalPtr, kMaxColorRenderTargets + 2> m_refs;
 	} m_beginRenderpassInfo;
 
 	BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> m_name;
 
 	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
-	Bool m_drawsToPresentable = false;
+	Bool m_writesToSwapchain = false;
 
 	Pass(StackMemoryPool* pool)
 		: m_dependsOn(pool)
@@ -284,7 +284,7 @@ void RenderGraph::reset()
 
 	for(Pass& p : m_ctx->m_passes)
 	{
-		p.m_beginRenderpassInfo.m_refs.fill(TexturePtr(nullptr));
+		p.m_beginRenderpassInfo.m_refs.fill(TextureInternalPtr(nullptr));
 		p.m_callback.destroy();
 		p.m_name.destroy();
 	}
@@ -293,7 +293,7 @@ void RenderGraph::reset()
 	++m_version;
 }
 
-TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash)
+TextureInternalPtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash)
 {
 	ANKI_ASSERT(hash);
 
@@ -314,7 +314,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	ANKI_ASSERT(entry);
 
 	// Create or pop one tex from the cache
-	TexturePtr tex;
+	TextureInternalPtr tex;
 	const Bool createNewTex = entry->m_textures.getSize() == entry->m_texturesInUse;
 	if(!createNewTex)
 	{
@@ -599,6 +599,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 
 		outPass.m_callback = inPass.m_callback;
 		outPass.m_name = inPass.m_name;
+		outPass.m_writesToSwapchain = inPass.m_writesToSwapchain;
 
 		// Create consumer info
 		outPass.m_consumedTextures.resize(inPass.m_rtDeps.getSize());
@@ -1104,6 +1105,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	DynamicArray<CommandBufferPtr, MemoryPoolPtrWrapper<StackMemoryPool>> cmdbs(pool);
 	cmdbs.resize(batchGroupCount);
 	SpinLock cmdbsMtx;
+	Atomic<U32> firstGroupThatWroteToSwapchain(kMaxU32);
 
 	for(U32 group = 0; group < batchGroupCount; ++group)
 	{
@@ -1116,7 +1118,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 		}
 
 		CoreThreadJobManager::getSingleton().dispatchTask(
-			[this, start, end, pool, &cmdbs, &cmdbsMtx, group, batchGroupCount]([[maybe_unused]] U32 tid) {
+			[this, start, end, pool, &cmdbs, &cmdbsMtx, group, batchGroupCount, &firstGroupThatWroteToSwapchain]([[maybe_unused]] U32 tid) {
 				ANKI_TRACE_SCOPED_EVENT(GrRenderGraphTask);
 
 				Array<Char, 32> name;
@@ -1128,7 +1130,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 				// Write timestamp
 				const Bool setPreQuery = m_ctx->m_gatherStatistics && group == 0;
 				const Bool setPostQuery = m_ctx->m_gatherStatistics && group == batchGroupCount - 1;
-				TimestampQueryPtr preQuery, postQuery;
+				TimestampQueryInternalPtr preQuery, postQuery;
 				if(setPreQuery)
 				{
 					preQuery = GrManager::getSingleton().newTimestampQuery();
@@ -1213,6 +1215,11 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 					{
 						Pass& pass = m_ctx->m_passes[passIdx];
 
+						if(pass.m_writesToSwapchain)
+						{
+							firstGroupThatWroteToSwapchain.min(group);
+						}
+
 						const Vec3 passColor = (pass.m_beginRenderpassInfo.m_hasRenderpass) ? Vec3(0.0f, 1.0f, 0.0f) : Vec3(1.0f, 1.0f, 0.0f);
 						cmdb->pushDebugMarker(pass.m_name, passColor);
 
@@ -1253,24 +1260,26 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
 
 	// Submit
-	if(cmdbs.getSize() == 1) [[unlikely]]
+	DynamicArray<CommandBuffer*, MemoryPoolPtrWrapper<StackMemoryPool>> pCmdbs(pool);
+	pCmdbs.resize(cmdbs.getSize());
+	for(U32 i = 0; i < cmdbs.getSize(); ++i)
 	{
-		GrManager::getSingleton().submit(cmdbs[0].get(), {}, optionalFence);
+		pCmdbs[i] = cmdbs[i].get();
+	}
+
+	const U32 firstGroupThatWroteToSwapchain2 = firstGroupThatWroteToSwapchain.getNonAtomically();
+	if(firstGroupThatWroteToSwapchain2 == 0 || firstGroupThatWroteToSwapchain2 == kMaxU32)
+	{
+		GrManager::getSingleton().submit(WeakArray(pCmdbs), {}, optionalFence);
 	}
 	else
 	{
-		// 2 submits. The 1st contains all the batches minus the last. Then the last batch is alone given that it most likely it writes to the
-		// swapchain
+		// 2 submits. The 1st contains all the batches that don't write to swapchain
 
-		DynamicArray<CommandBuffer*, MemoryPoolPtrWrapper<StackMemoryPool>> pCmdbs(pool);
-		pCmdbs.resize(cmdbs.getSize() - 1);
-		for(U32 i = 0; i < cmdbs.getSize() - 1; ++i)
-		{
-			pCmdbs[i] = cmdbs[i].get();
-		}
+		GrManager::getSingleton().submit(WeakArray(pCmdbs).subrange(0, firstGroupThatWroteToSwapchain2), {}, nullptr);
 
-		GrManager::getSingleton().submit(WeakArray(pCmdbs), {}, nullptr);
-		GrManager::getSingleton().submit(cmdbs.getBack().get(), {}, optionalFence);
+		GrManager::getSingleton().submit(
+			WeakArray(pCmdbs).subrange(firstGroupThatWroteToSwapchain2, batchGroupCount - firstGroupThatWroteToSwapchain2), {}, optionalFence);
 	}
 }
 
@@ -1304,7 +1313,7 @@ void RenderGraph::periodicCleanup()
 			rtsCleanedCount += entry.m_textures.getSize() - entry.m_texturesInUse;
 
 			// New array
-			GrDynamicArray<TexturePtr> newArray;
+			GrDynamicArray<TextureInternalPtr> newArray;
 			if(entry.m_texturesInUse > 0)
 			{
 				newArray.resize(entry.m_texturesInUse);
@@ -1418,7 +1427,7 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 	ANKI_BUFF_USAGE(kConstantGeometry);
 	ANKI_BUFF_USAGE(kConstantPixel);
 	ANKI_BUFF_USAGE(kConstantCompute);
-	ANKI_BUFF_USAGE(kConstantTraceRays);
+	ANKI_BUFF_USAGE(kConstantDispatchRays);
 	ANKI_BUFF_USAGE(kStorageGeometryRead);
 	ANKI_BUFF_USAGE(kStorageGeometryWrite);
 	ANKI_BUFF_USAGE(kStorageFragmentRead);
@@ -1439,7 +1448,7 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 	ANKI_BUFF_USAGE(kVertex);
 	ANKI_BUFF_USAGE(kIndirectCompute);
 	ANKI_BUFF_USAGE(kIndirectDraw);
-	ANKI_BUFF_USAGE(kIndirectTraceRays);
+	ANKI_BUFF_USAGE(kIndirectDispatchRays);
 	ANKI_BUFF_USAGE(kTransferSource);
 	ANKI_BUFF_USAGE(kTransferDestination);
 	ANKI_BUFF_USAGE(kAccelerationStructureBuild);

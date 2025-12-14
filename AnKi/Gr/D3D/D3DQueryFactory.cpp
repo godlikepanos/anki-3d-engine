@@ -81,7 +81,7 @@ void QueryFactory::deleteQuery(QueryHandle& handle)
 
 	if(chunkIt->m_fenceArr[handle.m_queryIndex].isCreated())
 	{
-		ANKI_ASSERT(chunkIt->m_fenceArr[handle.m_queryIndex]->done() && "Trying to delete while the query is in flight");
+		ANKI_ASSERT(chunkIt->m_fenceArr[handle.m_queryIndex]->signaled() && "Trying to delete while the query is in flight");
 		chunkIt->m_fenceArr[handle.m_queryIndex].reset(nullptr);
 	}
 
@@ -108,7 +108,7 @@ Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 	auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 	ANKI_ASSERT(it->m_queryWritten.get(handle.m_queryIndex) && "Trying to get the result of a query that wasn't written");
 
-	const Bool available = (it->m_fenceArr[handle.m_queryIndex].isCreated()) ? it->m_fenceArr[handle.m_queryIndex]->done() : true;
+	const Bool available = (it->m_fenceArr[handle.m_queryIndex].isCreated()) ? it->m_fenceArr[handle.m_queryIndex]->signaled() : true;
 	if(available)
 	{
 		result = it->m_resultsBufferCpuAddr[(handle.m_queryIndex * m_resultStructSize + m_resultMemberOffset) / sizeof(U64)];
@@ -122,7 +122,7 @@ Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 	return available;
 }
 
-void QueryFactory::postSubmitWork(QueryHandle handle, MicroFence* fence)
+void QueryFactory::postSubmitWork(QueryHandle handle, D3DMicroFence* fence)
 {
 	ANKI_ASSERT(handle.isValid() && handle.m_type == m_type && fence);
 

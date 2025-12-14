@@ -124,11 +124,19 @@ def ret(ret_el):
     (type, is_ref, is_ptr, is_const) = parse_type_decl(type_txt)
 
     if is_ptr:
+        if ret_el.get("canBeNullptr") is not None and ret_el.get("canBeNullptr") == "1":
+            can_be_nullptr = True
+        else:
+            can_be_nullptr = False
+
         wglue("if(ret == nullptr) [[unlikely]]")
         wglue("{")
         ident(1)
-        wglue("lua_pushstring(l, \"Glue code returned nullptr\");")
-        wglue("return -1;")
+        if can_be_nullptr:
+            wglue("lua_pushnil(l);")
+            wglue("return 1;")
+        else:
+            wglue("return luaL_error(l, \"Returned nullptr. Location %s:%d %s\", ANKI_FILE, __LINE__, ANKI_FUNC);")
         ident(-1)
         wglue("}")
         wglue("")
@@ -143,8 +151,7 @@ def ret(ret_el):
         wglue("if(ret) [[unlikely]]")
         wglue("{")
         ident(1)
-        wglue("lua_pushstring(l, \"Glue code returned an error\");")
-        wglue("return -1;")
+        wglue("return luaL_error(l, \"Returned an error. Location %s:%d %s\", ANKI_FILE, __LINE__, ANKI_FUNC);")
         ident(-1)
         wglue("}")
         wglue("")
@@ -155,19 +162,19 @@ def ret(ret_el):
             wglue("ud = static_cast<LuaUserData*>(voidp);")
             wglue("luaL_setmetatable(l, \"%s\");" % type)
 
-            wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % type)
+            wglue("extern LuaUserDataTypeInfo g_luaUserDataTypeInfo%s;" % type)
             if is_ptr:
-                wglue("ud->initPointed(&luaUserDataTypeInfo%s, ret);" % type)
+                wglue("ud->initPointed(&g_luaUserDataTypeInfo%s, ret);" % type)
             elif is_ref:
-                wglue("ud->initPointed(&luaUserDataTypeInfo%s, &ret);" % type)
+                wglue("ud->initPointed(&g_luaUserDataTypeInfo%s, &ret);" % type)
         else:
             wglue("size = LuaUserData::computeSizeForGarbageCollected<%s>();" % type)
             wglue("voidp = lua_newuserdata(l, size);")
             wglue("luaL_setmetatable(l, \"%s\");" % type)
 
             wglue("ud = static_cast<LuaUserData*>(voidp);")
-            wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % type)
-            wglue("ud->initGarbageCollected(&luaUserDataTypeInfo%s);" % type)
+            wglue("extern LuaUserDataTypeInfo g_luaUserDataTypeInfo%s;" % type)
+            wglue("ud->initGarbageCollected(&g_luaUserDataTypeInfo%s);" % type)
 
             wglue("::new(ud->getData<%s>()) %s(std::move(ret));" % (type, type))
 
@@ -182,36 +189,36 @@ def arg(arg_txt, stack_index, index):
 
     if type_is_bool(type) or type_is_number(type):
         wglue("%s arg%d;" % (type, index))
-        wglue("if(LuaBinder::checkNumber(l, %d, arg%d)) [[unlikely]]" % (stack_index, index))
+        wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, arg%d)) [[unlikely]]" % (stack_index, index))
         wglue("{")
         ident(1)
-        wglue("return -1;")
+        wglue("return lua_error(l);")
         ident(-1)
         wglue("}")
     elif type == "char" or type == "CString":
         wglue("const char* arg%d;" % index)
-        wglue("if(LuaBinder::checkString(l, %d, arg%d)) [[unlikely]]" % (stack_index, index))
+        wglue("if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, arg%d)) [[unlikely]]" % (stack_index, index))
         wglue("{")
         ident(1)
-        wglue("return -1;")
+        wglue("return lua_error(l);")
         ident(-1)
         wglue("}")
     elif type_is_enum(type):
         wglue("lua_Number arg%dTmp;" % index)
-        wglue("if(LuaBinder::checkNumber(l, %d, arg%dTmp)) [[unlikely]]" % (stack_index, index))
+        wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, arg%dTmp)) [[unlikely]]" % (stack_index, index))
         wglue("{")
         ident(1)
-        wglue("return -1;")
+        wglue("return lua_error(l);")
         ident(-1)
         wglue("}")
         wglue("const %s arg%d = %s(arg%dTmp);" % (type, index, type, index))
     else:
         # Must be user type
-        wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % type)
-        wglue("if(LuaBinder::checkUserData(l, %d, luaUserDataTypeInfo%s, ud)) [[unlikely]]" % (stack_index, type))
+        wglue("extern LuaUserDataTypeInfo g_luaUserDataTypeInfo%s;" % type)
+        wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % (stack_index, type))
         wglue("{")
         ident(1)
-        wglue("return -1;")
+        wglue("return lua_error(l);")
         ident(-1)
         wglue("}")
         wglue("")
@@ -270,10 +277,10 @@ def check_args(args_el, bias):
     else:
         count = bias
 
-    wglue("if(LuaBinder::checkArgsCount(l, %d)) [[unlikely]]" % count)
+    wglue("if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d)) [[unlikely]]" % count)
     wglue("{")
     ident(1)
-    wglue("return -1;")
+    wglue("return lua_error(l);")
     ident(-1)
     wglue("}")
     wglue("")
@@ -327,8 +334,8 @@ def method(class_name, meth_el):
     meth_name = meth_el.get("name")
     meth_alias = get_meth_alias(meth_el)
 
-    wglue("/// Pre-wrap method %s::%s." % (class_name, meth_name))
-    wglue("static inline int pwrap%s%s(lua_State* l)" % (class_name, meth_alias))
+    wglue("// Wrap method %s::%s." % (class_name, meth_name))
+    wglue("static inline int wrap%s%s(lua_State* l)" % (class_name, meth_alias))
     wglue("{")
     ident(1)
     write_local_vars()
@@ -337,10 +344,10 @@ def method(class_name, meth_el):
 
     # Get this pointer
     wglue("// Get \"this\" as \"self\"")
-    wglue("if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfo%s, ud))" % class_name)
+    wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
     wglue("{")
     ident(1)
-    wglue("return -1;")
+    wglue("return lua_error(l);")
     ident(-1)
     wglue("}")
     wglue("")
@@ -376,25 +383,6 @@ def method(class_name, meth_el):
     wglue("}")
     wglue("")
 
-    # Write the actual function
-    wglue("/// Wrap method %s::%s." % (class_name, meth_name))
-    wglue("static int wrap%s%s(lua_State* l)" % (class_name, meth_alias))
-    wglue("{")
-    ident(1)
-    wglue("int res = pwrap%s%s(l);" % (class_name, meth_alias))
-    wglue("if(res >= 0)")
-    wglue("{")
-    ident(1)
-    wglue("return res;")
-    ident(-1)
-    wglue("}")
-    wglue("")
-    wglue("lua_error(l);")
-    wglue("return 0;")
-    ident(-1)
-    wglue("}")
-    wglue("")
-
 
 def static_method(class_name, meth_el):
     """ Handle a static method """
@@ -402,7 +390,7 @@ def static_method(class_name, meth_el):
     meth_name = meth_el.get("name")
     meth_alias = get_meth_alias(meth_el)
 
-    wglue("/// Pre-wrap static method %s::%s." % (class_name, meth_name))
+    wglue("// Wrap static method %s::%s." % (class_name, meth_name))
     wglue("static inline int pwrap%s%s(lua_State* l)" % (class_name, meth_alias))
     wglue("{")
     ident(1)
@@ -433,30 +421,11 @@ def static_method(class_name, meth_el):
     wglue("}")
     wglue("")
 
-    # Write the actual function
-    wglue("/// Wrap static method %s::%s." % (class_name, meth_name))
-    wglue("static int wrap%s%s(lua_State* l)" % (class_name, meth_alias))
-    wglue("{")
-    ident(1)
-    wglue("int res = pwrap%s%s(l);" % (class_name, meth_alias))
-    wglue("if(res >= 0)")
-    wglue("{")
-    ident(1)
-    wglue("return res;")
-    ident(-1)
-    wglue("}")
-    wglue("")
-    wglue("lua_error(l);")
-    wglue("return 0;")
-    ident(-1)
-    wglue("}")
-    wglue("")
-
 
 def constructor(constr_el, class_name, constructor_idx):
     """ Handle constructor """
 
-    wglue("/// Pre-wrap constructor for %s." % (class_name))
+    wglue("// Pre-wrap constructor for %s." % (class_name))
     wglue("static inline int pwrap%sCtor%d(lua_State* l)" % (class_name, constructor_idx))
     wglue("{")
     ident(1)
@@ -472,10 +441,10 @@ def constructor(constr_el, class_name, constructor_idx):
 
     wglue("size = LuaUserData::computeSizeForGarbageCollected<%s>();" % class_name)
     wglue("voidp = lua_newuserdata(l, size);")
-    wglue("luaL_setmetatable(l, luaUserDataTypeInfo%s.m_typeName);" % class_name)
+    wglue("luaL_setmetatable(l, g_luaUserDataTypeInfo%s.m_typeName);" % class_name)
     wglue("ud = static_cast<LuaUserData*>(voidp);")
-    wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % class_name)
-    wglue("ud->initGarbageCollected(&luaUserDataTypeInfo%s);" % class_name)
+    wglue("extern LuaUserDataTypeInfo g_luaUserDataTypeInfo%s;" % class_name)
+    wglue("ud->initGarbageCollected(&g_luaUserDataTypeInfo%s);" % class_name)
     wglue("::new(ud->getData<%s>()) %s(%s);" % (class_name, class_name, args_str))
     wglue("")
 
@@ -509,7 +478,7 @@ def constructors(constructors_el, class_name):
         raise Exception("Found no <constructor>")
 
     # Create the landing function
-    wglue("/// Wrap constructors for %s." % class_name)
+    wglue("// Wrap constructors for %s." % class_name)
     wglue("static int wrap%sCtor(lua_State* l)" % class_name)
     wglue("{")
     ident(1)
@@ -550,7 +519,7 @@ def constructors(constructors_el, class_name):
 def destructor(class_name):
     """ Create a destructor """
 
-    wglue("/// Wrap destructor for %s." % (class_name))
+    wglue("// Wrap destructor for %s." % (class_name))
     wglue("static int wrap%sDtor(lua_State* l)" % class_name)
     wglue("{")
     ident(1)
@@ -558,10 +527,10 @@ def destructor(class_name):
 
     check_args(None, 1)
 
-    wglue("if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
+    wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
     wglue("{")
     ident(1)
-    wglue("return -1;")
+    wglue("return lua_error(l);")
     ident(-1)
     wglue("}")
     wglue("")
@@ -582,6 +551,130 @@ def destructor(class_name):
     wglue("")
 
 
+def do__newindex(vars_el, class_name):
+    """ Write the __newindex cfunction which is called when assigning to a class instance """
+
+    wglue("// Wrap writing the member vars of %s" % class_name)
+    wglue("static int wrap%s__newindex(lua_State* l)" % class_name)
+    wglue("{")
+    ident(1)
+    write_local_vars()
+
+    check_args(None, 3)
+
+    wglue("// Get \"this\" as \"self\"")
+    wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("%s* self = ud->getData<%s>();" % (class_name, class_name))
+    wglue("")
+
+    wglue("// Get the member variable name")
+    wglue("const Char* ckey;")
+    wglue("if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]")
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("CString key = ckey;")
+    wglue("")
+
+    wglue("// Try to find the member variable")
+    count = 0
+    for var_el in vars_el.iter("var"):
+        wglue("%sif(key == \"%s\")" % (("else " if count > 0 else ""), var_el.get("name")))
+        count = count + 1
+        wglue("{")
+        ident(1)
+
+        arg(var_el.text, 3, 0)
+        wglue("self->%s = arg0;" % var_el.get("name"))
+        wglue("return 0;")
+
+        ident(-1)
+        wglue("}")
+    wglue("")
+
+    wglue("return luaL_error(l, \"Unknown field %s. Location %s:%d %s\", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);")
+
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+
+def do__index(vars_el, class_name):
+    """ Write the __index cfunction which is called when assigning to a class instance """
+
+    wglue("// Wrap reading the member vars of %s" % class_name)
+    wglue("static int wrap%s__index(lua_State* l)" % class_name)
+    wglue("{")
+    ident(1)
+    write_local_vars()
+
+    check_args(None, 2)
+
+    wglue("// Get \"this\" as \"self\"")
+    wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("%s* self = ud->getData<%s>();" % (class_name, class_name))
+    wglue("")
+
+    wglue("// Get the member variable name")
+    wglue("const Char* ckey;")
+    wglue("if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, ckey)) [[unlikely]]")
+    wglue("{")
+    ident(1)
+    wglue("return lua_error(l);")
+    ident(-1)
+    wglue("}")
+    wglue("")
+    wglue("CString key = ckey;")
+    wglue("")
+
+    wglue("// Try to find the member variable")
+    count = 0
+    for var_el in vars_el.iter("var"):
+        wglue("%sif(key == \"%s\")" % (("else " if count > 0 else ""), var_el.get("name")))
+        count = count + 1
+        wglue("{")
+        ident(1)
+
+        wglue("%s ret = self->%s;" % (var_el.text, var_el.get("name")))
+        ret(var_el)
+
+        ident(-1)
+        wglue("}")
+    wglue("")
+
+    wglue("// Fallback to methods")
+    wglue("luaL_getmetatable(l, \"%s\");" % class_name)
+    wglue("lua_getfield(l, -1, ckey);")
+    wglue("if (!lua_isnil(l, -1))")
+    wglue("{")
+    ident(1)
+    wglue("return 1;")
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+    wglue("return luaL_error(l, \"Unknown field %s. Location %s:%d %s\", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);")
+
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+
 def class_(class_el):
     """ Create a class """
 
@@ -592,7 +685,7 @@ def class_(class_el):
     if serialize:
         # Serialize
         serialize_cb_name = "serialize%s" % class_name
-        wglue("/// Serialize %s" % class_name)
+        wglue("// Serialize %s" % class_name)
         wglue("static void %s(LuaUserData& self, void* data, PtrSize& size)" % serialize_cb_name)
         wglue("{")
         ident(1)
@@ -604,7 +697,7 @@ def class_(class_el):
 
         # Deserialize
         deserialize_cb_name = "deserialize%s" % class_name
-        wglue("/// De-serialize %s" % class_name)
+        wglue("// De-serialize %s" % class_name)
         wglue("static void %s(const void* data, LuaUserData& self)" % deserialize_cb_name)
         wglue("{")
         ident(1)
@@ -620,7 +713,7 @@ def class_(class_el):
         deserialize_cb_name = "nullptr"
 
     # Write the type info
-    wglue("LuaUserDataTypeInfo luaUserDataTypeInfo%s = {" % class_name)
+    wglue("LuaUserDataTypeInfo g_luaUserDataTypeInfo%s = {" % class_name)
     ident(1)
     wglue("%d, \"%s\", LuaUserData::computeSizeForGarbageCollected<%s>(), %s, %s" %
           (type_sig(class_name), class_name, class_name, serialize_cb_name, deserialize_cb_name))
@@ -633,7 +726,7 @@ def class_(class_el):
     wglue("const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<%s>()" % class_name)
     wglue("{")
     ident(1)
-    wglue("return luaUserDataTypeInfo%s;" % class_name)
+    wglue("return g_luaUserDataTypeInfo%s;" % class_name)
     ident(-1)
     wglue("}")
     wglue("")
@@ -648,6 +741,14 @@ def class_(class_el):
     # Destructor declarations
     if has_constructor:
         destructor(class_name)
+
+    # Member variables
+    has_member_vars = False
+    vars_el = class_el.find("vars")
+    if vars_el is not None:
+        has_member_vars = True
+        do__newindex(vars_el, class_name)
+        do__index(vars_el, class_name)
 
     # Methods LUA C functions declarations
     meth_names_aliases = []
@@ -667,15 +768,15 @@ def class_(class_el):
             meth_names_aliases.append([meth_name, meth_alias, is_static])
 
     # Start class declaration
-    wglue("/// Wrap class %s." % class_name)
+    wglue("// Wrap class %s." % class_name)
     wglue("static inline void wrap%s(lua_State* l)" % class_name)
     wglue("{")
     ident(1)
-    wglue("LuaBinder::createClass(l, &luaUserDataTypeInfo%s);" % class_name)
+    wglue("LuaBinder::createClass(l, &g_luaUserDataTypeInfo%s);" % class_name)
 
     # Register constructor
     if has_constructor:
-        wglue("LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfo%s.m_typeName, \"new\", wrap%sCtor);" %
+        wglue("LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfo%s.m_typeName, \"new\", wrap%sCtor);" %
               (class_name, class_name))
 
     # Register destructor
@@ -688,10 +789,15 @@ def class_(class_el):
             meth_alias = meth_name_alias[1]
             is_static = meth_name_alias[2]
             if is_static:
-                wglue("LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfo%s.m_typeName, \"%s\", wrap%s%s);" %
+                wglue("LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfo%s.m_typeName, \"%s\", wrap%s%s);" %
                       (class_name, meth_alias, class_name, meth_alias))
             else:
                 wglue("LuaBinder::pushLuaCFuncMethod(l, \"%s\", wrap%s%s);" % (meth_alias, class_name, meth_alias))
+
+    # Register member vars
+    if has_member_vars:
+        wglue("LuaBinder::pushLuaCFuncMethod(l, \"__newindex\", wrap%s__newindex);" % class_name)
+        wglue("LuaBinder::pushLuaCFuncMethod(l, \"__index\", wrap%s__index);" % class_name)
 
     wglue("lua_settop(l, 0);")
 
@@ -706,8 +812,8 @@ def function(func_el):
     func_name = func_el.get("name")
     func_alias = get_meth_alias(func_el)
 
-    wglue("/// Pre-wrap function %s." % func_name)
-    wglue("static inline int pwrap%s(lua_State* l)" % func_alias)
+    wglue("// Wrap function %s." % func_name)
+    wglue("static inline int wrap%s(lua_State* l)" % func_alias)
     wglue("{")
     ident(1)
     write_local_vars()
@@ -744,31 +850,12 @@ def function(func_el):
     wglue("}")
     wglue("")
 
-    # Write the actual function
-    wglue("/// Wrap function %s." % func_name)
-    wglue("static int wrap%s(lua_State* l)" % func_alias)
-    wglue("{")
-    ident(1)
-    wglue("int res = pwrap%s(l);" % func_alias)
-    wglue("if(res >= 0)")
-    wglue("{")
-    ident(1)
-    wglue("return res;")
-    ident(-1)
-    wglue("}")
-    wglue("")
-    wglue("lua_error(l);")
-    wglue("return 0;")
-    ident(-1)
-    wglue("}")
-    wglue("")
-
 
 def enum(enum_el):
     enum_name = enum_el.get("name")
 
     # Write the type info
-    wglue("LuaUserDataTypeInfo luaUserDataTypeInfo%s = {" % enum_name)
+    wglue("LuaUserDataTypeInfo g_luaUserDataTypeInfo%s = {" % enum_name)
     ident(1)
     wglue("%d, \"%s\", 0, nullptr, nullptr" % (type_sig(enum_name), enum_name))
     ident(-1)
@@ -780,20 +867,20 @@ def enum(enum_el):
     wglue("const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<%s>()" % enum_name)
     wglue("{")
     ident(1)
-    wglue("return luaUserDataTypeInfo%s;" % enum_name)
+    wglue("return g_luaUserDataTypeInfo%s;" % enum_name)
     ident(-1)
     wglue("}")
     wglue("")
 
     # Start declaration
-    wglue("/// Wrap enum %s." % enum_name)
+    wglue("// Wrap enum %s." % enum_name)
     wglue("static inline void wrap%s(lua_State* l)" % enum_name)
     wglue("{")
     ident(1)
 
     wglue("lua_newtable(l);")  # Push new table
-    wglue("lua_setglobal(l, luaUserDataTypeInfo%s.m_typeName);" % enum_name)  # Pop and make global
-    wglue("lua_getglobal(l, luaUserDataTypeInfo%s.m_typeName);" % enum_name)  # Push the table again
+    wglue("lua_setglobal(l, g_luaUserDataTypeInfo%s.m_typeName);" % enum_name)  # Pop and make global
+    wglue("lua_getglobal(l, g_luaUserDataTypeInfo%s.m_typeName);" % enum_name)  # Push the table again
     wglue("")
 
     # Now the table is at the top of the stack
@@ -857,7 +944,7 @@ def main():
                 func_names.append(f.get("name"))
 
         # Wrap function
-        wglue("/// Wrap the module.")
+        wglue("// Wrap the module.")
         wglue("void wrapModule%s(lua_State* l)" % get_base_fname(filename))
         wglue("{")
         ident(1)

@@ -12,7 +12,7 @@
 #define THREAD_COUNT_Y 16u
 #define THREAD_COUNT UVec2(THREAD_COUNT_X, THREAD_COUNT_Y)
 
-Texture2D<RVec4> g_tex : register(t0);
+Texture2D<Vec4> g_tex : register(t0);
 
 #define TONEMAPPING_REGISTER u0
 #include <AnKi/Shaders/TonemappingResources.hlsl>

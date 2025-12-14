@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki 16bit
-
 #pragma anki technique ForwardLegacy vert pixel
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
@@ -18,7 +16,6 @@
 
 struct VertIn
 {
-	UVec4 m_gpuSceneRenderable : MISC0;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -34,9 +31,9 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_meshLods[renderable.m_meshLodIndex];
-	const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
+	const GpuScenePerDraw perDraw = getGpuScenePerDraw();
+	const GpuSceneMeshLod mesh = g_meshLods[perDraw.m_meshLodIndex];
+	const Mat3x4 worldTransform = g_transforms[perDraw.m_worldTransformsIndex];
 	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
 
 	const Vec3 worldPos = mul(worldTransform, Vec4(vertex.m_position, 1.0));
@@ -45,7 +42,7 @@ VertOut main(VertIn input)
 	const Vec3 viewPos = mul(g_globalConstants.m_viewTransform, Vec4(worldPos, 1.0));
 	output.m_zVSpace = viewPos.z;
 
-	output.m_constantsOffset = renderable.m_constantsOffset;
+	output.m_constantsOffset = perDraw.m_constantsOffset;
 
 	return output;
 }
