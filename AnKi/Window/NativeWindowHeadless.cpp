@@ -32,11 +32,11 @@ void MakeSingletonPtr<NativeWindow>::freeSingleton()
 	}
 }
 
-Error NativeWindow::init([[maybe_unused]] const NativeWindowInitInfo& inf)
+Error NativeWindow::init([[maybe_unused]] U32 targetFps, [[maybe_unused]] CString title)
 {
 	// Nothing important
-	m_width = inf.m_width;
-	m_height = inf.m_height;
+	m_width = g_cvarWindowWidth;
+	m_height = g_cvarWindowHeight;
 	return Error::kNone;
 }
 

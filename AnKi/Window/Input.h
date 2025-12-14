@@ -41,8 +41,8 @@ enum class MouseCursor : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MouseCursor)
 
-/// Handle the input and other events
-/// @note All positions are in NDC space
+// Handle the input and other events
+// @note All positions are in NDC space
 class Input : public MakeSingletonPtr<Input>
 {
 	template<typename>
@@ -51,17 +51,17 @@ class Input : public MakeSingletonPtr<Input>
 public:
 	Error init();
 
-	/// Shows the current key state
-	/// 0: Key resting
-	/// 1: Ley pressed once
-	/// >1: Kept pressed 'n' times continuously
-	/// <0: Key up
+	// Shows the current key state
+	// 0: Key resting
+	// 1: Ley pressed once
+	// >1: Kept pressed 'n' times continuously
+	// <0: Key up
 	I32 getKey(KeyCode i) const
 	{
 		return m_keys[i];
 	}
 
-	/// See getKey()
+	// See getKey()
 	I32 getMouseButton(MouseButton i) const
 	{
 		return m_mouseBtns[i];
@@ -82,21 +82,21 @@ public:
 		return m_mousePosNdc - m_prevMousePosNdc;
 	}
 
-	/// Move the mouse cursor to a position inside the window. Useful for locking the cursor into a fixed location (eg in the center of the screen)
+	// Move the mouse cursor to a position inside the window. Useful for locking the cursor into a fixed location (eg in the center of the screen)
 	void moveMouseNdc(const Vec2& posNdc);
 
-	/// Lock mouse to (0, 0)
+	// Lock mouse to (0, 0)
 	void lockMouseWindowCenter(Bool lock)
 	{
 		m_lockCurs = lock;
 	}
 
-	/// Hide the mouse cursor
+	// Hide the mouse cursor
 	void hideCursor(Bool hide);
 
 	void setMouseCursor(MouseCursor cursor);
 
-	/// See getKey()
+	// See getKey()
 	I32 getTouchPointer(TouchPointer p) const
 	{
 		return m_touchPointers[p];
@@ -109,7 +109,7 @@ public:
 
 	Bool hasTouchDevice() const;
 
-	/// Populate the key and button with the new state
+	// Populate the key and button with the new state
 	Error handleEvents();
 
 	// Add a new event
@@ -126,7 +126,7 @@ public:
 		return m_events[eventId].exchange(0);
 	}
 
-	/// Get some easy to digest input from the keyboard.
+	// Get some easy to digest input from the keyboard.
 	CString getTextInput() const
 	{
 		return &m_textInput[0];
@@ -144,7 +144,7 @@ protected:
 
 	mutable Array<Atomic<U32>, U(InputEvent::kCount)> m_events;
 
-	/// The keybord input as ascii.
+	// The keybord input as ascii.
 	static constexpr U32 kMaxTexInput = 256;
 	Array<Char, kMaxTexInput> m_textInput;
 
