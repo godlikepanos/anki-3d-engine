@@ -417,11 +417,11 @@ Error Dbg::init()
 	m_objectPickingDepthRtDescr.bake();
 
 	ResourceManager& rsrcManager = ResourceManager::getSingleton();
-	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GiProbe.ankitex", m_giProbeImage));
-	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/LightBulb.ankitex", m_pointLightImage));
-	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/SpotLight.ankitex", m_spotLightImage));
-	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GreenDecal.ankitex", m_decalImage));
-	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Mirror.ankitex", m_reflectionImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/GiProbe.png", m_giProbeImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/LightBulb.png", m_pointLightImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/SpotLight.png", m_spotLightImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Decal.png", m_decalImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/ReflectionProbe.png", m_reflectionImage));
 
 	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/Dbg.ankiprogbin", m_dbgProg));
 

@@ -486,7 +486,7 @@ Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& hei
 
 	// Use STB to read the image
 	int stbw, stbh, comp;
-	stbi_set_flip_vertically_on_load_thread(false);
+	stbi_set_flip_vertically_on_load_thread(true);
 	U8* stbdata;
 	if(isFloat)
 	{
