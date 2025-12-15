@@ -108,9 +108,8 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 
 	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 	cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-	cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-	rgraphCtx.bindSrv(2, 0, getShadowMapping().getShadowmapRt());
-	cmdb.bindSrv(3, 0, getClusterBinning().getClustersBuffer());
+	rgraphCtx.bindSrv(1, 0, getShadowMapping().getShadowmapRt());
+	cmdb.bindSrv(2, 0, getClusterBinning().getClustersBuffer());
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
@@ -118,17 +117,17 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 
 	if(m_quarterRez)
 	{
-		rgraphCtx.bindSrv(4, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+		rgraphCtx.bindSrv(3, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	}
 	else
 	{
-		rgraphCtx.bindSrv(4, 0, getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(3, 0, getGBuffer().getDepthRt());
 	}
-	cmdb.bindSrv(5, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
+	cmdb.bindSrv(4, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 
 	if(isRtShadowsEnabled())
 	{
-		rgraphCtx.bindSrv(6, 0, getRtShadows().getRt());
+		rgraphCtx.bindSrv(5, 0, getRtShadows().getRt());
 	}
 
 	if(g_cvarRenderPreferCompute || g_cvarRenderSmPcf || g_cvarRenderSmPcss)

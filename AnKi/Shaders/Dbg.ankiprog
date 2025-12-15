@@ -126,21 +126,21 @@ struct Constants
 ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-typedef LightUnion ClusteredType;
+typedef GpuSceneLight GpuSceneType;
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-typedef Decal ClusteredType;
+typedef GpuSceneDecal GpuSceneType;
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-typedef FogDensityVolume ClusteredType;
+typedef GpuSceneFogDensityVolume GpuSceneType;
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-typedef ReflectionProbe ClusteredType;
+typedef GpuSceneReflectionProbe GpuSceneType;
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-typedef GlobalIlluminationProbe ClusteredType;
+typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 #	else
 #		error See file
 #	endif
 
 Texture2D g_depthRt : register(t0);
-StructuredBuffer<ClusteredType> g_visibleObjects : register(t1);
+StructuredBuffer<GpuSceneType> g_visibleObjects : register(t1);
 StructuredBuffer<U32> g_visibleObjectCount : register(t2);
 Texture2D<Vec4> g_tex : register(t3);
 Texture2D<Vec4> g_tex2 : register(t4);
@@ -175,19 +175,20 @@ VertOut main(VertIn input)
 
 	if(input.m_svInstanceId < objCount)
 	{
+		const GpuSceneType obj = g_visibleObjects[input.m_svInstanceId];
+
 #		if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
-		output.m_colorScale = reinhardTonemap(g_visibleObjects[input.m_svInstanceId].m_diffuseColor);
-		output.m_textureIndex = g_visibleObjects[input.m_svInstanceId].m_lightType;
+		const Vec3 localPos = obj.m_position;
+		output.m_colorScale = reinhardTonemap(obj.m_diffuseColor);
+		output.m_textureIndex = obj.m_isSpotLight;
 #		elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_sphereCenter;
+		const Vec3 localPos = obj.m_sphereCenter;
 #		elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-		const ClusteredType obj = g_visibleObjects[input.m_svInstanceId];
 		const Vec3 localPos = (obj.m_isBox) ? (obj.m_aabbMinOrSphereCenter + obj.m_aabbMaxOrSphereRadius) / 2.0f : obj.m_aabbMinOrSphereCenter;
 #		elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
+		const Vec3 localPos = obj.m_position;
 #		elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-		const Vec3 localPos = (g_visibleObjects[input.m_svInstanceId].m_aabbMin + g_visibleObjects[input.m_svInstanceId].m_aabbMax) / 2.0f;
+		const Vec3 localPos = (obj.m_aabbMin + obj.m_aabbMax) / 2.0f;
 #		else
 #			error See file
 #		endif

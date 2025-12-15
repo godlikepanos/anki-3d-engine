@@ -61,8 +61,7 @@ SamplerComparisonState g_shadowSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGI
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS));
 StructuredBuffer<Cluster> g_clusters : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTERS));
-StructuredBuffer<PointLight> g_pointLights : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS));
-StructuredBuffer<SpotLight> g_spotLights : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_SPOT_LIGHTS));
+StructuredBuffer<GpuSceneLight> g_lights : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_LIGHTS));
 Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_SHADOW_ATLAS));
 #endif
 

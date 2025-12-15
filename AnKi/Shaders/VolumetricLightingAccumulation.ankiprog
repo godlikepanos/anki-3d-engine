@@ -25,13 +25,12 @@ RWTexture3D<Vec4> g_volume : register(u0);
 Texture2D<Vec4> g_noiseTex : register(t0);
 Texture3D<Vec4> g_prevVolume : register(t1);
 
-StructuredBuffer<PointLight> g_pointLights : register(t2);
-StructuredBuffer<SpotLight> g_spotLights : register(t3);
-Texture2D<Vec4> g_shadowAtlasTex : register(t4);
-StructuredBuffer<FogDensityVolume> g_fogDensityVolumes : register(t5);
-StructuredBuffer<Cluster> g_clusters : register(t6);
+StructuredBuffer<GpuSceneLight> g_lights : register(t2);
+Texture2D<Vec4> g_shadowAtlasTex : register(t3);
+StructuredBuffer<GpuSceneFogDensityVolume> g_fogDensityVolumes : register(t4);
+StructuredBuffer<Cluster> g_clusters : register(t5);
 #if !CLIPMAP_DIFFUSE_INDIRECT
-StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t7);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t6);
 #endif
 
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
@@ -114,7 +113,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	U32 idx = 0;
 	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const PointLight light = g_pointLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
@@ -134,7 +133,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	// Spot lights
 	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const SpotLight light = g_spotLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
@@ -184,7 +183,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		{
 			const U32 idx = U32(firstbitlow2(cluster.m_fogDensityVolumesMask));
 			cluster.m_fogDensityVolumesMask &= ~(1u << idx);
-			const FogDensityVolume vol = g_fogDensityVolumes[idx];
+			const GpuSceneFogDensityVolume vol = g_fogDensityVolumes[idx];
 
 			F32 factor;
 			[branch] if(vol.m_isBox == 1u)

@@ -189,12 +189,11 @@ Texture2D<Vec4> g_gbufferRt2 : register(t2);
 Texture2D<Vec4> g_downscaledDepthTex : register(t3);
 Texture2D<Vec4> g_depthTex : register(t4);
 Texture2D<Vec4> g_lightBufferRt : register(t5);
-StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t6);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t6);
 StructuredBuffer<Cluster> g_clusters : register(t7);
 Texture2D<Vec4> g_shadowAtlasTex : register(t8);
 Texture2D<UVec4> g_classTileMap : register(t9);
-StructuredBuffer<PointLight> g_pointLights : register(t10);
-StructuredBuffer<SpotLight> g_spotLights : register(t11);
+StructuredBuffer<GpuSceneLight> g_lights : register(t10);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
@@ -263,7 +262,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	U32 idx;
 	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const PointLight light = g_pointLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		const F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
@@ -275,7 +274,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	// Spot lights
 	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const SpotLight light = g_spotLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
@@ -594,7 +593,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 Texture2D<Vec4> g_depthTex : register(t0);
 StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t1);
-StructuredBuffer<ReflectionProbe> g_reflectionProbes : register(t2);
+StructuredBuffer<GpuSceneReflectionProbe> g_reflectionProbes : register(t2);
 StructuredBuffer<Cluster> g_clusters : register(t3);
 StructuredBuffer<U32> g_pixelsFailedSsrCount : register(t4);
 Texture2D<Vec4> g_envMap : register(t5);

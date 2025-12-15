@@ -15,7 +15,7 @@ RWTexture2D<Vec4> g_gbuffer1Tex : register(u1);
 RWTexture2D<Vec4> g_gbuffer2Tex : register(u2);
 
 Texture2D<Vec4> g_depthTex : register(t0);
-StructuredBuffer<Decal> g_decals : register(t1);
+StructuredBuffer<GpuSceneDecal> g_decals : register(t1);
 StructuredBuffer<Cluster> g_clusters : register(t2);
 
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
@@ -62,7 +62,7 @@ SamplerState g_linearAnyClampSampler : register(s0);
 	U32 idx;
 	[loop] while((idx = iterateDecals(cluster)) != kMaxU32)
 	{
-		const Decal decal = g_decals[idx];
+		const GpuSceneDecal decal = g_decals[idx];
 
 		// Project pos to decal space
 		const Vec4 texCoords4 = mul(decal.m_textureMatrix, Vec4(worldPos, 1.0));

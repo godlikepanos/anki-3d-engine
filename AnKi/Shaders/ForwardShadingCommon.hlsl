@@ -51,7 +51,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	U32 idx = 0;
 	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const PointLight light = g_pointLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
@@ -59,7 +59,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 
 		F32 shadow = 1.0;
-		if(light.m_shadowAtlasTileScale >= 0.0)
+		if(light.m_shadow)
 		{
 			shadow = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
 		}
@@ -70,7 +70,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	// Spot lights
 	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const SpotLight light = g_spotLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 

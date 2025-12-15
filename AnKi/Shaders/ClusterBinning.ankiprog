@@ -14,10 +14,26 @@
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
+#if ANKI_TECHNIQUE_Binning || ANKI_TECHNIQUE_PackVisibles
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+typedef GpuSceneLight GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+typedef GpuSceneDecal GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+typedef GpuSceneFogDensityVolume GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+typedef GpuSceneReflectionProbe GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
+#	else
+#		error See file
+#	endif
+#endif
+
 // ===========================================================================
 // Setup                                                                     =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Setup)
+#if ANKI_TECHNIQUE_Setup
 
 StructuredBuffer<U32> g_visibleIndices[(U32)GpuSceneNonRenderableObjectType::kCount] : register(t0);
 
@@ -81,21 +97,7 @@ constexpr U32 kPackVisiblesThreadgroupSize = 64;
 // ===========================================================================
 // Binning                                                                   =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Binning)
-
-#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-typedef GpuSceneLight GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-typedef GpuSceneDecal GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-typedef GpuSceneFogDensityVolume GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-typedef GpuSceneReflectionProbe GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
-#	else
-#		error See file
-#	endif
+#if ANKI_TECHNIQUE_Binning
 
 struct ClusterBinningConstants
 {
@@ -300,29 +302,10 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 // ===========================================================================
 // PackVisibles                                                              =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_PackVisibles)
-
-#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-typedef LightUnion ClusteredType;
-typedef GpuSceneLight GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-typedef Decal ClusteredType;
-typedef GpuSceneDecal GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-typedef FogDensityVolume ClusteredType;
-typedef GpuSceneFogDensityVolume GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-typedef ReflectionProbe ClusteredType;
-typedef GpuSceneReflectionProbe GpuSceneType;
-#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-typedef GlobalIlluminationProbe ClusteredType;
-typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
-#	else
-#		error See file
-#	endif
+#if ANKI_TECHNIQUE_PackVisibles
 
 StructuredBuffer<GpuSceneType> g_inBuffer : register(t0);
-RWStructuredBuffer<ClusteredType> g_outBuffer : register(u0);
+RWStructuredBuffer<GpuSceneType> g_outBuffer : register(u0);
 StructuredBuffer<U32> g_visibles : register(t1);
 
 #	define THREAD_GROUP_SIZE 64
@@ -336,33 +319,6 @@ StructuredBuffer<U32> g_visibles : register(t1);
 		return;
 	}
 
-#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-	const GpuSceneLight input = g_inBuffer[g_visibles[idxOut + 1]];
-
-	const Bool isPoint = input.m_isPointLight;
-
-	LightUnion output = (LightUnion)0;
-	output.m_position = input.m_position;
-	output.m_radius = input.m_radius;
-
-	output.m_diffuseColor = input.m_diffuseColor;
-	output.m_lightType = (isPoint) ? 0 : 1;
-
-	output.m_shadow = input.m_shadow;
-	output.m_innerCos = input.m_innerCos;
-	output.m_outerCos = input.m_outerCos;
-
-	output.m_direction = input.m_direction;
-	output.m_shadowAtlasTileScale = input.m_spotLightMatrixOrPointLightUvViewports[0].z; // Scale should be the same for all
-
-	for(U32 i = 0; i < 6; ++i)
-	{
-		output.m_spotLightMatrixOrPointLightUvViewports[i] = input.m_spotLightMatrixOrPointLightUvViewports[i];
-	}
-
-	g_outBuffer[idxOut] = output;
-#	else
 	g_outBuffer[idxOut] = g_inBuffer[g_visibles[idxOut + 1]];
-#	endif
 }
 #endif

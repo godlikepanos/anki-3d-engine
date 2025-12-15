@@ -126,7 +126,7 @@ struct GpuSceneLightVisibleRenderablesHash
 struct GpuSceneLight
 {
 	Vec3 m_position ANKI_CPP_CODE(= Vec3(kSomeFarDistance)); // Position in world space.
-	F32 m_radius ANKI_CPP_CODE(= 0.0f); // Radius.
+	F32 m_radius ANKI_CPP_CODE(= 0.0f); // Radius
 
 	Vec3 m_diffuseColor;
 	U32 m_visibleRenderablesHashIndex; // Points to a GpuSceneLightVisibleRenderablesHash
@@ -137,16 +137,16 @@ struct GpuSceneLight
 	U32 m_cpuFeedback : 1; // If true the GPU visibility will inform the CPU about it
 	U32 m_padding : 28;
 	U32 m_componentArrayIndex; // Array index of the LightComponent in the CPU scene.
-	U32 m_uuid; // The UUID of that light. If it's zero the GPU will not inform the CPU about it.
+	U32 m_uuid; // The UUID of the LightComponent
 	F32 m_innerCos; // Only for spot light.
 
 	Vec3 m_direction; // Only for spot light. Light direction.
 	F32 m_outerCos; // Only for spot light.
 
-	Vec4 m_edgePoints[4u]; // Edge points in world space. Only for spot light.
-
 	// If it's a spot light the 4 first rows are the texture matrix. If it's point light it's the UV viewports in the shadow atlas
 	Vec4 m_spotLightMatrixOrPointLightUvViewports[6u];
+
+	Vec4 m_edgePoints[4u]; // Edge points in world space. Only for spot light.
 };
 
 // Representation of a reflection probe.

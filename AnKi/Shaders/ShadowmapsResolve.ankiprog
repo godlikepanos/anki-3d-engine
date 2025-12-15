@@ -16,19 +16,18 @@
 #	define DEBUG_CASCADES 0
 
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
-StructuredBuffer<PointLight> g_pointLights : register(t0);
-StructuredBuffer<SpotLight> g_spotLights : register(t1);
-Texture2D<Vec4> g_shadowAtlasTex : register(t2);
-StructuredBuffer<Cluster> g_clusters : register(t3);
+StructuredBuffer<GpuSceneLight> g_lights : register(t0);
+Texture2D<Vec4> g_shadowAtlasTex : register(t1);
+StructuredBuffer<Cluster> g_clusters : register(t2);
 
 SamplerState g_linearAnyClampSampler : register(s0);
 SamplerComparisonState g_linearAnyClampShadowSampler : register(s1);
 SamplerState g_trilinearRepeatSampler : register(s2);
-Texture2D<Vec4> g_depthRt : register(t4);
-Texture2D<Vec4> g_noiseTex : register(t5);
+Texture2D<Vec4> g_depthRt : register(t3);
+Texture2D<Vec4> g_noiseTex : register(t4);
 
 #	if DIRECTIONAL_LIGHT_SHADOW_RESOLVED
-Texture2D<Vec4> g_dirLightResolvedShadowsTex : register(t6);
+Texture2D<Vec4> g_dirLightResolvedShadowsTex : register(t5);
 #	endif
 
 #	if ANKI_COMPUTE_SHADER
@@ -195,7 +194,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	U32 idx = 0;
 	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const PointLight light = g_pointLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		[branch] if(light.m_shadow)
 		{
@@ -213,7 +212,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	// Spot lights
 	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const SpotLight light = g_spotLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		[branch] if(light.m_shadow)
 		{

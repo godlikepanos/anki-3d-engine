@@ -168,7 +168,7 @@ U32 iterateDecals(inout Cluster cluster)
 }
 
 template<typename T>
-vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<ReflectionProbe> probes, Vec3 reflDir, Vec3 worldPos, T reflTexLod,
+vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<GpuSceneReflectionProbe> probes, Vec3 reflDir, Vec3 worldPos, T reflTexLod,
 									SamplerState trilinearClampSampler)
 {
 	const U32 probeCount = countbits(cluster.m_reflectionProbesMask);
@@ -182,7 +182,7 @@ vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<Reflection
 	{
 		// Only one probe, do a fast path without blending probes
 
-		const ReflectionProbe probe = probes[firstbitlow2(cluster.m_reflectionProbesMask)];
+		const GpuSceneReflectionProbe probe = probes[firstbitlow2(cluster.m_reflectionProbesMask)];
 
 		// Sample
 		Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
@@ -201,7 +201,7 @@ vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<Reflection
 		{
 			const U32 idx = U32(firstbitlow2(cluster.m_reflectionProbesMask));
 			cluster.m_reflectionProbesMask &= ~(1u << idx);
-			const ReflectionProbe probe = probes[idx];
+			const GpuSceneReflectionProbe probe = probes[idx];
 
 			// Compute blend weight
 			const T blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
@@ -223,7 +223,7 @@ vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<Reflection
 }
 
 template<typename T>
-vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GlobalIlluminationProbe> probes, Vec3 normal, Vec3 worldPos,
+vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GpuSceneGlobalIlluminationProbe> probes, Vec3 normal, Vec3 worldPos,
 							SamplerState trilinearClampSampler)
 {
 	vector<T, 3> probeColor;
@@ -238,7 +238,7 @@ vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GlobalIllumination
 	{
 		// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 
-		const GlobalIlluminationProbe probe = probes[firstbitlow2(cluster.m_giProbesMask)];
+		const GpuSceneGlobalIlluminationProbe probe = probes[firstbitlow2(cluster.m_giProbesMask)];
 
 		// Sample
 		probeColor = sampleGlobalIllumination<T>(worldPos, normal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), trilinearClampSampler);
@@ -255,7 +255,7 @@ vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GlobalIllumination
 		{
 			const U32 idx = U32(firstbitlow2(cluster.m_giProbesMask));
 			cluster.m_giProbesMask &= ~(1u << idx);
-			const GlobalIlluminationProbe probe = probes[idx];
+			const GpuSceneGlobalIlluminationProbe probe = probes[idx];
 
 			// Compute blend weight
 			const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);

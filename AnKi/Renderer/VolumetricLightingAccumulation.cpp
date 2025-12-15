@@ -100,7 +100,6 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(srv++, 0, m_runCtx.m_rts[0]);
 
 		cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		rgraphCtx.bindSrv(srv++, 0, getShadowMapping().getShadowmapRt());
 		cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
 		cmdb.bindSrv(srv++, 0, getClusterBinning().getClustersBuffer());

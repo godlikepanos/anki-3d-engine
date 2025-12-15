@@ -188,10 +188,16 @@ struct PcssDisabled
 };
 
 template<typename T, typename TPcss>
-T computeShadowFactorSpotLightGeneric(SpotLight light, Vec3 worldPos, Texture2D<Vec4> shadowTex, SamplerComparisonState shadowMapSampler, Bool pcf,
-									  T randFactor, TPcss pcss)
+T computeShadowFactorSpotLightGeneric(GpuSceneLight light, Vec3 worldPos, Texture2D<Vec4> shadowTex, SamplerComparisonState shadowMapSampler,
+									  Bool pcf, T randFactor, TPcss pcss)
 {
-	const Vec4 texCoords4 = mul(light.m_textureMatrix, Vec4(worldPos, 1.0));
+	Mat4 textureMatrix;
+	textureMatrix.m_row0 = light.m_spotLightMatrixOrPointLightUvViewports[0];
+	textureMatrix.m_row1 = light.m_spotLightMatrixOrPointLightUvViewports[1];
+	textureMatrix.m_row2 = light.m_spotLightMatrixOrPointLightUvViewports[2];
+	textureMatrix.m_row3 = light.m_spotLightMatrixOrPointLightUvViewports[3];
+
+	const Vec4 texCoords4 = mul(textureMatrix, Vec4(worldPos, 1.0));
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 	T shadow;
@@ -251,21 +257,21 @@ T computeShadowFactorSpotLightGeneric(SpotLight light, Vec3 worldPos, Texture2D<
 }
 
 template<typename T>
-T computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler)
+T computeShadowFactorSpotLight(GpuSceneLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler)
 {
 	PcssDisabled<T> noPcss = (PcssDisabled<T>)0;
 	return computeShadowFactorSpotLightGeneric(light, worldPos, shadowTex, shadowMapSampler, false, 0.0, noPcss);
 }
 
 template<typename T>
-T computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, T randFactor)
+T computeShadowFactorSpotLightPcf(GpuSceneLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, T randFactor)
 {
 	PcssDisabled<T> noPcss = (PcssDisabled<T>)0;
 	return computeShadowFactorSpotLightGeneric(light, worldPos, shadowTex, shadowMapSampler, true, randFactor, noPcss);
 }
 
 template<typename T>
-T computeShadowFactorSpotLightPcss(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, T randFactor,
+T computeShadowFactorSpotLightPcss(GpuSceneLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, T randFactor,
 								   SamplerState linearClampAnySampler)
 {
 	Pcss<T> pcss;
@@ -275,8 +281,8 @@ T computeShadowFactorSpotLightPcss(SpotLight light, Vec3 worldPos, Texture2D sha
 
 // Compute the shadow factor of point (omni) lights.
 template<typename T>
-T computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler, T randFactor,
-									   Bool pcf)
+T computeShadowFactorPointLightGeneric(GpuSceneLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler,
+									   T randFactor, Bool pcf)
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);
@@ -301,10 +307,11 @@ T computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Textur
 	Vec2 uv = convertCubeUvs(dir * Vec3(1.0, 1.0, -1.0), faceIdxu);
 
 	// Get the atlas offset
-	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu].xy;
+	const Vec2 atlasOffset = light.m_spotLightMatrixOrPointLightUvViewports[faceIdxu].xy;
 
 	// Compute UV
-	uv *= Vec2(light.m_shadowAtlasTileScale, light.m_shadowAtlasTileScale);
+	const F32 shadowAtlasTileScale = light.m_spotLightMatrixOrPointLightUvViewports[0].z; // Scale should be the same for all
+	uv *= Vec2(shadowAtlasTileScale, shadowAtlasTileScale);
 	uv += atlasOffset;
 
 	// Sample
@@ -346,13 +353,13 @@ T computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Textur
 }
 
 template<typename T>
-T computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler)
+T computeShadowFactorPointLight(GpuSceneLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler)
 {
 	return computeShadowFactorPointLightGeneric(light, frag2Light, shadowMap, shadowMapSampler, -1.0, false);
 }
 
 template<typename T>
-T computeShadowFactorPointLightPcf(PointLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler, T randFactor)
+T computeShadowFactorPointLightPcf(GpuSceneLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler, T randFactor)
 {
 	return computeShadowFactorPointLightGeneric(light, frag2Light, shadowMap, shadowMapSampler, randFactor, true);
 }
@@ -574,8 +581,8 @@ vector<T, 3> sampleAmbientDice(vector<T, 3> posx, vector<T, 3> negx, vector<T, 3
 
 // Sample the irradiance term from the clipmap
 template<typename T>
-vector<T, 3> sampleGlobalIllumination(const Vec3 worldPos, const vector<T, 3> normal, const GlobalIlluminationProbe probe, Texture3D<Vec4> tex,
-									  SamplerState linearAnyClampSampler)
+vector<T, 3> sampleGlobalIllumination(const Vec3 worldPos, const vector<T, 3> normal, const GpuSceneGlobalIlluminationProbe probe,
+									  Texture3D<Vec4> tex, SamplerState linearAnyClampSampler)
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);

@@ -84,28 +84,26 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		// Bind all
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		if(getRenderer().isIndirectDiffuseClipmapsEnabled())
 		{
-			rgraphCtx.bindSrv(2, 0, getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance);
+			rgraphCtx.bindSrv(1, 0, getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance);
 		}
 		else
 		{
-			cmdb.bindSrv(2, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+			cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
 		}
-		cmdb.bindSrv(3, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
-		cmdb.bindSrv(4, 0, getClusterBinning().getClustersBuffer());
+		cmdb.bindSrv(2, 0, getClusterBinning().getClustersBuffer());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindSrv(5, 0, getGBuffer().getColorRt(0));
-		rgraphCtx.bindSrv(6, 0, getGBuffer().getColorRt(1));
-		rgraphCtx.bindSrv(7, 0, getGBuffer().getColorRt(2));
-		rgraphCtx.bindSrv(8, 0, getGBuffer().getDepthRt());
-		rgraphCtx.bindSrv(9, 0, getShadowmapsResolve().getRt());
-		rgraphCtx.bindSrv(10, 0, getSsao().getRt());
-		rgraphCtx.bindSrv(11, 0, getReflections().getRt());
-		cmdb.bindSrv(12, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
+		rgraphCtx.bindSrv(3, 0, getGBuffer().getColorRt(0));
+		rgraphCtx.bindSrv(4, 0, getGBuffer().getColorRt(1));
+		rgraphCtx.bindSrv(5, 0, getGBuffer().getColorRt(2));
+		rgraphCtx.bindSrv(6, 0, getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(7, 0, getShadowmapsResolve().getRt());
+		rgraphCtx.bindSrv(8, 0, getSsao().getRt());
+		rgraphCtx.bindSrv(9, 0, getReflections().getRt());
+		cmdb.bindSrv(10, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 
 		// Draw
 		drawQuad(cmdb);

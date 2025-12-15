@@ -65,9 +65,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS, 0, ctx.m_globalRenderingConstantsBuffer);
 
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS, 0,
-					 getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_SPOT_LIGHTS, 0,
+		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_LIGHTS, 0,
 					 getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
 		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_SHADOW_ATLAS, 0, getShadowMapping().getShadowmapRt());

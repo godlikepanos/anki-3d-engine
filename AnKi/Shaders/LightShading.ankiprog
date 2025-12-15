@@ -16,26 +16,25 @@
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
-StructuredBuffer<PointLight> g_pointLights : register(t0);
-StructuredBuffer<SpotLight> g_spotLights : register(t1);
+StructuredBuffer<GpuSceneLight> g_lights : register(t0);
 #	if INDIRECT_DIFFUSE_TEX
-Texture2D<Vec4> g_indirectDiffuseTex : register(t2);
+Texture2D<Vec4> g_indirectDiffuseTex : register(t1);
 #	else
-StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t2);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t1);
 #	endif
-StructuredBuffer<Cluster> g_clusters : register(t4);
+StructuredBuffer<Cluster> g_clusters : register(t2);
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 SamplerState g_trilinearClampSampler : register(s1);
 
-Texture2D<Vec4> g_gbuffer0Tex : register(t5);
-Texture2D<Vec4> g_gbuffer1Tex : register(t6);
-Texture2D<Vec4> g_gbuffer2Tex : register(t7);
-Texture2D g_depthTex : register(t8);
-Texture2D<Vec4> g_resolvedShadowsTex : register(t9);
-Texture2D<Vec4> g_ssaoTex : register(t10);
-Texture2D<Vec4> g_reflectionsTex : register(t11);
-Texture2D<Vec4> g_integrationLut : register(t12);
+Texture2D<Vec4> g_gbuffer0Tex : register(t3);
+Texture2D<Vec4> g_gbuffer1Tex : register(t4);
+Texture2D<Vec4> g_gbuffer2Tex : register(t5);
+Texture2D g_depthTex : register(t6);
+Texture2D<Vec4> g_resolvedShadowsTex : register(t7);
+Texture2D<Vec4> g_ssaoTex : register(t8);
+Texture2D<Vec4> g_reflectionsTex : register(t9);
+Texture2D<Vec4> g_integrationLut : register(t10);
 
 // Common code for lighting
 #	define LIGHTING_COMMON_BRDF() \
@@ -137,7 +136,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	U32 idx;
 	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const PointLight light = g_pointLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		LIGHTING_COMMON_BRDF();
 
@@ -153,7 +152,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	// Spot lights
 	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const SpotLight light = g_spotLights[idx];
+		const GpuSceneLight light = g_lights[idx];
 
 		LIGHTING_COMMON_BRDF();
 

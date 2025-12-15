@@ -241,7 +241,6 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(8, 0, getShadowMapping().getShadowmapRt());
 			rgraphCtx.bindSrv(9, 0, classTileMapRt);
 			cmdb.bindSrv(10, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-			cmdb.bindSrv(11, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
 			rgraphCtx.bindUav(0, 0, transientRt1);
 			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
