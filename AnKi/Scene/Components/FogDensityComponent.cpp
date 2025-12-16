@@ -46,6 +46,7 @@ void FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 		gpuVolume.m_isBox = m_type == FogDensityComponentShape::kBox;
 		gpuVolume.m_density = m_density;
+		gpuVolume.m_sceneNodeUuid = info.m_node->getUuid();
 
 		m_gpuSceneVolume.uploadToGpuScene(gpuVolume);
 	}

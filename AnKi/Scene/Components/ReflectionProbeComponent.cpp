@@ -61,9 +61,10 @@ void ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upda
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz;
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz;
 
-		gpuProbe.m_uuid = getUuid();
+		gpuProbe.m_componentUuid = getUuid();
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
 		gpuProbe.m_cpuFeedback = m_reflectionNeedsRefresh;
+		gpuProbe.m_sceneNodeUuid = info.m_node->getUuid();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 }

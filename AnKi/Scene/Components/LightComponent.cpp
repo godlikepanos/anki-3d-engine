@@ -132,7 +132,8 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_shadow = reallyShadow;
 		gpuLight.m_cpuFeedback = m_shadow;
 		gpuLight.m_componentArrayIndex = getArrayIndex();
-		gpuLight.m_uuid = getUuid();
+		gpuLight.m_componentUuid = getUuid();
+		gpuLight.m_sceneNodeUuid = info.m_node->getUuid();
 		for(U32 f = 0; f < m_shadowAtlasUvViewportCount; ++f)
 		{
 			gpuLight.m_spotLightMatrixOrPointLightUvViewports[f] = m_shadowAtlasUvViewports[f];
@@ -174,7 +175,8 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_shadow = reallyShadow;
 		gpuLight.m_cpuFeedback = m_shadow;
 		gpuLight.m_componentArrayIndex = getArrayIndex();
-		gpuLight.m_uuid = getUuid();
+		gpuLight.m_componentUuid = getUuid();
+		gpuLight.m_sceneNodeUuid = info.m_node->getUuid();
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);

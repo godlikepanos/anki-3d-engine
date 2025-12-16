@@ -147,9 +147,10 @@ void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bo
 		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
-		gpuProbe.m_uuid = getUuid();
+		gpuProbe.m_componentUuid = getUuid();
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
 		gpuProbe.m_cpuFeedback = cpuFeedback;
+		gpuProbe.m_sceneNodeUuid = info.m_node->getUuid();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 

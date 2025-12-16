@@ -539,11 +539,13 @@ void Dbg::initGizmos()
 }
 
 void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
-							CommandBuffer& cmdb)
+							Bool objectPicking, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 	variantInitInfo.addMutation("OBJECT_TYPE", U32(type));
-	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Bilboards");
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, (objectPicking) ? "BilboardsPicking" : "Bilboards");
 	const ShaderProgramResourceVariant* variant;
 	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());
@@ -562,12 +564,16 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
+	if(!objectPicking)
+	{
+		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+	}
 	cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(type));
 	cmdb.bindSrv(2, 0, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
-
-	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 	cmdb.bindSrv(3, 0, TextureView(&image.getTexture(), TextureSubresourceDesc::all()));
 	cmdb.bindSrv(4, 0, TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDesc::all()));
+
+	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
 }
@@ -698,13 +704,13 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 		if(!!(m_options & DbgOption::kIcons))
 		{
 			drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), ctx,
-							  *m_pointLightImage, cmdb);
+							  *m_pointLightImage, false, rgraphCtx);
 			drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), ctx, *m_decalImage,
-							  cmdb);
+							  false, rgraphCtx);
 			drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
-							  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), ctx, *m_giProbeImage, cmdb);
+							  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), ctx, *m_giProbeImage, false, rgraphCtx);
 			drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe, GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(),
-							  ctx, *m_reflectionImage, cmdb);
+							  ctx, *m_reflectionImage, false, rgraphCtx);
 		}
 
 		// Physics
@@ -874,7 +880,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "PrepareRenderableUuids");
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "PrepareRenderablesPicking");
 			const ShaderProgramResourceVariant* variant;
 			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 			cmdb.bindShaderProgram(&variant->getProgram());
@@ -929,45 +935,57 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 		pass.setRenderpassInfo({colorRti}, &depthRti);
 
-		pass.setWork(
-			[this, lodAndRenderableIndicesBuff, &ctx, drawIndirectArgsBuff, drawCountBuff, maxVisibleCount](RenderPassWorkContext& rgraphCtx) {
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		pass.setWork([this, lodAndRenderableIndicesBuff, &ctx, drawIndirectArgsBuff, drawCountBuff,
+					  maxVisibleCount](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				// Set common state
-				cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
+			// Set common state
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
+			cmdb.setDepthCompareOperation(CompareOperation::kLess);
+
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
+			variantInitInfo.addMutation("OBJECT_TYPE", 0);
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderablesPicking");
+			const ShaderProgramResourceVariant* variant;
+			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
+			cmdb.bindShaderProgram(&variant->getProgram());
+
+			cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);
+
+			cmdb.bindSrv(0, 0, lodAndRenderableIndicesBuff);
+			cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+			cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+			cmdb.bindSrv(4, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR16G16B16A16_Unorm);
+			cmdb.bindSrv(5, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Uint);
+			cmdb.bindSrv(6, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Snorm);
+			cmdb.bindSrv(7, 0, GpuSceneBuffer::getSingleton().getBufferView());
+
+			cmdb.setFastConstants(&ctx.m_matrices.m_viewProjection, sizeof(ctx.m_matrices.m_viewProjection));
+
+			cmdb.drawIndexedIndirectCount(PrimitiveTopology::kTriangles, drawIndirectArgsBuff, sizeof(DrawIndexedIndirectArgs), drawCountBuff,
+										  maxVisibleCount);
+
+			// Draw icons
+			{
+				drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), ctx,
+								  *m_pointLightImage, true, rgraphCtx);
+				drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), ctx,
+								  *m_decalImage, true, rgraphCtx);
+				drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
+								  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), ctx, *m_giProbeImage, true, rgraphCtx);
+				drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe,
+								  GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(), ctx, *m_reflectionImage, true, rgraphCtx);
+			}
+
+			// Draw gizmos
+			if(m_gizmos.m_enabled)
+			{
+				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+				drawGizmos(m_gizmos.m_trf, ctx, true, cmdb);
 				cmdb.setDepthCompareOperation(CompareOperation::kLess);
-
-				ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-				variantInitInfo.addMutation("OBJECT_TYPE", 0);
-				variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderableUuids");
-				const ShaderProgramResourceVariant* variant;
-				m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-				cmdb.bindShaderProgram(&variant->getProgram());
-
-				cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);
-
-				cmdb.bindSrv(0, 0, lodAndRenderableIndicesBuff);
-				cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-				cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-				cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
-				cmdb.bindSrv(4, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR16G16B16A16_Unorm);
-				cmdb.bindSrv(5, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Uint);
-				cmdb.bindSrv(6, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Snorm);
-				cmdb.bindSrv(7, 0, GpuSceneBuffer::getSingleton().getBufferView());
-
-				cmdb.setFastConstants(&ctx.m_matrices.m_viewProjection, sizeof(ctx.m_matrices.m_viewProjection));
-
-				cmdb.drawIndexedIndirectCount(PrimitiveTopology::kTriangles, drawIndirectArgsBuff, sizeof(DrawIndexedIndirectArgs), drawCountBuff,
-											  maxVisibleCount);
-
-				// Draw gizmos
-				if(m_gizmos.m_enabled)
-				{
-					cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-					drawGizmos(m_gizmos.m_trf, ctx, true, cmdb);
-					cmdb.setDepthCompareOperation(CompareOperation::kLess);
-				}
-			});
+			}
+		});
 	}
 
 	// Read the UUID RT to get the UUID that is over the mouse
@@ -1013,7 +1031,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "RenderableUuidsPick");
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "ReadPickingBuffer");
 			const ShaderProgramResourceVariant* variant;
 			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 			cmdb.bindShaderProgram(&variant->getProgram());
@@ -1083,7 +1101,7 @@ void Dbg::drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, 
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 	variantInitInfo.addMutation("OBJECT_TYPE", 0);
-	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, (objectPicking) ? "GizmosPick" : "Gizmos");
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, (objectPicking) ? "GizmosPicking" : "Gizmos");
 	const ShaderProgramResourceVariant* variant;
 	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());

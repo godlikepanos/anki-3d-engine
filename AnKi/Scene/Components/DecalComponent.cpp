@@ -88,6 +88,7 @@ void DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	gpuDecal.m_textureMatrix = biasedProjViewMat;
 	gpuDecal.m_sphereCenter = info.m_node->getWorldTransform().getOrigin().xyz;
 	gpuDecal.m_sphereRadius = halfBoxSize.length();
+	gpuDecal.m_sceneNodeUuid = info.m_node->getUuid();
 
 	m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 }

@@ -6,20 +6,22 @@
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
 #pragma anki technique RenderableBoxes vert pixel mutators
-#pragma anki technique Bilboards vert pixel
 #pragma anki technique Lines vert pixel mutators
 
-// Prepare the indirect calls for RenderableUuids
-#pragma anki technique PrepareRenderableUuids comp mutators
+#pragma anki technique Bilboards vert pixel
+#pragma anki technique BilboardsPicking vert pixel
+
+// Prepare the indirect calls for RenderablesPicking
+#pragma anki technique PrepareRenderablesPicking comp mutators
 
 // Draw the renderables to output the UUID
-#pragma anki technique RenderableUuids vert pixel mutators
-
-// Pick one UUID at mouse position
-#pragma anki technique RenderableUuidsPick comp mutators
+#pragma anki technique RenderablesPicking vert pixel mutators
 
 #pragma anki technique Gizmos vert pixel mutators
-#pragma anki technique GizmosPick vert pixel mutators
+#pragma anki technique GizmosPicking vert pixel mutators
+
+// Pick one UUID at mouse position
+#pragma anki technique ReadPickingBuffer comp mutators
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
@@ -105,9 +107,9 @@ Vec4 main(VertOut input) : SV_TARGET0
 #endif // ANKI_TECHNIQUE_RenderableBoxes
 
 // ===========================================================================
-// Bilboards                                                                 =
+// Bilboards & BilboardsPicking                                              =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Bilboards)
+#if ANKI_TECHNIQUE_Bilboards || ANKI_TECHNIQUE_BilboardsPicking
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
@@ -139,7 +141,9 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 #		error See file
 #	endif
 
+#	if ANKI_TECHNIQUE_Bilboards
 Texture2D g_depthRt : register(t0);
+#	endif
 StructuredBuffer<GpuSceneType> g_visibleObjects : register(t1);
 StructuredBuffer<U32> g_visibleObjectCount : register(t2);
 Texture2D<Vec4> g_tex : register(t3);
@@ -147,18 +151,19 @@ Texture2D<Vec4> g_tex2 : register(t4);
 
 SamplerState g_trilinearRepeatSampler : register(s1);
 
+struct VertIn
+{
+	U32 m_svInstanceId : SV_INSTANCEID;
+	U32 m_svVertexId : SV_VERTEXID;
+};
+
 struct VertOut
 {
 	Vec4 m_svPosition : SV_POSITION;
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_colorScale : COLOR;
 	nointerpolation U32 m_textureIndex : TEX_INDEX;
-};
-
-struct VertIn
-{
-	U32 m_svInstanceId : SV_INSTANCEID;
-	U32 m_svVertexId : SV_VERTEXID;
+	nointerpolation U32 m_sceneNodeUuid : UUID;
 };
 
 #	if ANKI_VERTEX_SHADER
@@ -168,7 +173,7 @@ VertOut main(VertIn input)
 
 	output.m_colorScale = 1.0;
 	output.m_textureIndex = 0;
-
+	output.m_sceneNodeUuid = 0;
 	output.m_uv = Vec2(input.m_svVertexId & 1u, ((input.m_svVertexId + 1u) / 3u) & 1u);
 
 	const U32 objCount = g_visibleObjectCount[0];
@@ -197,6 +202,8 @@ VertOut main(VertIn input)
 		const Vec3 worldPos = mul(g_consts.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + localPos;
 
 		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(worldPos, 1.0));
+
+		output.m_sceneNodeUuid = obj.m_sceneNodeUuid;
 	}
 	else
 	{
@@ -209,7 +216,12 @@ VertOut main(VertIn input)
 #	endif // ANKI_VERTEX_SHADER
 
 #	if ANKI_PIXEL_SHADER
-Vec4 main(VertOut input) : SV_TARGET0
+#		if ANKI_TECHNIQUE_Bilboards
+Vec4
+#		else
+U32
+#		endif
+main(VertOut input) : SV_TARGET0
 {
 	ANKI_MAYBE_UNUSED(input);
 
@@ -226,6 +238,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 	color.xyz *= input.m_colorScale;
 
+#		if ANKI_TECHNIQUE_Bilboards
 	if(g_consts.m_depthFailureVisualization)
 	{
 		Vec2 texSize;
@@ -240,6 +253,14 @@ Vec4 main(VertOut input) : SV_TARGET0
 	}
 
 	return color;
+#		else
+	if(color.a <= 0.1)
+	{
+		discard;
+	}
+
+	return input.m_sceneNodeUuid;
+#		endif
 }
 #	endif // ANKI_PIXEL_SHADER
 #endif // ANKI_TECHNIQUE_Bilboards
@@ -315,9 +336,9 @@ Vec4 main() : SV_TARGET0
 #endif
 
 // ===========================================================================
-// GizmosPick                                                                =
+// GizmosPicking                                                             =
 // ===========================================================================
-#if ANKI_TECHNIQUE_GizmosPick
+#if ANKI_TECHNIQUE_GizmosPicking
 
 struct Consts
 {
@@ -346,9 +367,9 @@ U32 main() : SV_TARGET0
 #endif
 
 // ===========================================================================
-// PrepareRenderableUuids                                                    =
+// PrepareRenderablesPicking                                                  =
 // ===========================================================================
-#if ANKI_TECHNIQUE_PrepareRenderableUuids
+#if ANKI_TECHNIQUE_PrepareRenderablesPicking
 
 StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
@@ -402,9 +423,9 @@ RWStructuredBuffer<U32> g_lodAndRenderableIndices : register(u2);
 #endif
 
 // ===========================================================================
-// RenderableUuids                                                           =
+// RenderablesPicking                                                         =
 // ===========================================================================
-#if ANKI_TECHNIQUE_RenderableUuids
+#if ANKI_TECHNIQUE_RenderablesPicking
 
 StructuredBuffer<U32> g_lodAndRenderableIndices : register(t0);
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
@@ -483,9 +504,9 @@ U32 main(VertOut input) : SV_TARGET0
 #endif
 
 // ===========================================================================
-// RenderableUuidsPick                                                       =
+// ReadPickingBuffer                                                         =
 // ===========================================================================
-#if ANKI_TECHNIQUE_RenderableUuidsPick
+#if ANKI_TECHNIQUE_ReadPickingBuffer
 
 Texture2D<UVec4> g_uuidsTex : register(t0);
 

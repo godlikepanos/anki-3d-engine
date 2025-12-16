@@ -172,7 +172,7 @@ private:
 	void populateRenderGraphObjectPicking(RenderingContext& ctx);
 
 	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
-						   CommandBuffer& cmdb);
+						   Bool objectPicking, RenderPassWorkContext& rgraphCtx);
 
 	void drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, Bool objectPicking, CommandBuffer& cmdb) const;
 
