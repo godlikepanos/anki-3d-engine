@@ -392,6 +392,18 @@ static constexpr F32 kCubePositions[] = {
 	// Bottom face
 	-0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f};
 
+class Dbg::InternalCtx
+{
+public:
+	class
+	{
+	public:
+		BufferView m_renderableIndices;
+		BufferView m_drawIndirectArgs;
+		BufferHandle m_handle;
+	} m_particleEmitter;
+};
+
 Dbg::Dbg()
 {
 	registerDebugRenderTarget("ObjectPicking");
@@ -422,6 +434,7 @@ Error Dbg::init()
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/SpotLight.png", m_spotLightImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Decal.png", m_decalImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/ReflectionProbe.png", m_reflectionImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Particles.png", m_particlesImage));
 
 	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/Dbg.ankiprogbin", m_dbgProg));
 
@@ -545,7 +558,8 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 	variantInitInfo.addMutation("OBJECT_TYPE", U32(type));
-	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, (objectPicking) ? "BilboardsPicking" : "Bilboards");
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
+											 (objectPicking) ? "BilboardsRenderPicking" : "BilboardsRenderMain");
 	const ShaderProgramResourceVariant* variant;
 	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());
@@ -578,6 +592,46 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
 }
 
+void Dbg::drawParticleEmitters(const RenderingContext& ctx, const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx)
+{
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
+	variantInitInfo.addMutation("OBJECT_TYPE", 0);
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
+											 (objectPicking) ? "ParticleEmittersRenderPicking" : "ParticleEmittersRenderMain");
+	const ShaderProgramResourceVariant* variant;
+	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
+	cmdb.bindShaderProgram(&variant->getProgram());
+
+	struct Constants
+	{
+		Mat4 m_viewProjMat;
+		Mat3x4 m_camTrf;
+
+		UVec3 m_padding;
+		U32 m_depthFailureVisualization;
+	} consts;
+	consts.m_viewProjMat = ctx.m_matrices.m_viewProjection;
+	consts.m_camTrf = ctx.m_matrices.m_cameraTransform;
+	consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
+	cmdb.setFastConstants(&consts, sizeof(consts));
+
+	if(!objectPicking)
+	{
+		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+	}
+
+	cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+	cmdb.bindSrv(2, 0, ictx.m_particleEmitter.m_renderableIndices);
+	cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+	cmdb.bindSrv(4, 0, TextureView(&m_particlesImage->getTexture(), TextureSubresourceDesc::all()));
+
+	cmdb.bindSampler(1, 1, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
+
+	cmdb.drawIndirect(PrimitiveTopology::kTriangles, ictx.m_particleEmitter.m_drawIndirectArgs);
+}
+
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
@@ -589,20 +643,106 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
+	InternalCtx ictx;
+
+	// Common stuff for the particle emitters
+	populateRenderGraphParticleEmitters(ctx, ictx);
+
 	// Debug visualization
 	if(!!(m_options & (DbgOption::kDbgScene)))
 	{
-		populateRenderGraphMain(ctx);
+		populateRenderGraphMain(ctx, ictx);
 	}
 
 	// Object picking
 	if(!!(m_options & DbgOption::kObjectPicking))
 	{
-		populateRenderGraphObjectPicking(ctx);
+		populateRenderGraphObjectPicking(ctx, ictx);
 	}
 }
 
-void Dbg::populateRenderGraphMain(RenderingContext& ctx)
+void Dbg::populateRenderGraphParticleEmitters(RenderingContext& ctx, InternalCtx& ictx)
+{
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+
+	const U32 particleEmitterCount = GpuSceneArrays::ParticleEmitter2::getSingleton().getElementCount();
+	const BufferView renderableIndices = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(particleEmitterCount + 1);
+
+	const BufferView drawIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DrawIndirectArgs>(1);
+	const BufferHandle handle = rgraph.importBuffer(drawIndirectArgs, BufferUsageBit::kNone);
+
+	ictx.m_particleEmitter.m_drawIndirectArgs = drawIndirectArgs;
+	ictx.m_particleEmitter.m_renderableIndices = renderableIndices;
+	ictx.m_particleEmitter.m_handle = handle;
+
+	// Prepare the prepare
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Dbg: Zero particle emitter stuff");
+
+		pass.newBufferDependency(handle, BufferUsageBit::kCopyDestination);
+
+		pass.setWork([drawIndirectArgs](RenderPassWorkContext& rgraphCtx) {
+			rgraphCtx.m_commandBuffer->zeroBuffer(drawIndirectArgs);
+		});
+	}
+
+	// Prepare
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Dbg: Prepare particle emitters");
+
+		pass.newBufferDependency(handle, BufferUsageBit::kUavCompute);
+
+		const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+		if(visOut.m_dependency.isValid())
+		{
+			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kSrvCompute);
+		}
+
+		const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
+		if(fvisOut.m_dependency.isValid())
+		{
+			pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvCompute);
+		}
+
+		pass.setWork([drawIndirectArgs, renderableIndices, this](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
+			variantInitInfo.addMutation("OBJECT_TYPE", 0);
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "ParticleEmittersPrepare");
+			const ShaderProgramResourceVariant* variant;
+			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
+			cmdb.bindShaderProgram(&variant->getProgram());
+
+			cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+
+			cmdb.bindUav(0, 0, drawIndirectArgs);
+			cmdb.bindUav(1, 0, renderableIndices);
+
+			const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+			if(visOut.m_dependency.isValid())
+			{
+				cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
+				cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
+
+				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
+				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
+			}
+
+			const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
+			if(fvisOut.m_dependency.isValid())
+			{
+				cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
+				cmdb.bindSrv(2, 0, fvisOut.m_visibleAaabbIndicesBuffer);
+
+				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
+				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
+			}
+		});
+	}
+}
+
+void Dbg::populateRenderGraphMain(RenderingContext& ctx, InternalCtx& ictx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
@@ -620,6 +760,8 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
 
+	pass.newBufferDependency(ictx.m_particleEmitter.m_handle, BufferUsageBit::kIndirectDraw);
+
 	const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
 	if(visOut.m_dependency.isValid())
 	{
@@ -632,7 +774,7 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 		pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvGeometry);
 	}
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, &ctx, ictx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(Dbg);
 		ANKI_ASSERT(!!(m_options & DbgOption::kDbgScene));
 
@@ -713,6 +855,12 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 							  ctx, *m_reflectionImage, false, rgraphCtx);
 		}
 
+		// Particle emitter icons
+		if(!!(m_options & DbgOption::kIcons))
+		{
+			drawParticleEmitters(ctx, ictx, false, rgraphCtx);
+		}
+
 		// Physics
 		if(!!(m_options & DbgOption::kPhysics))
 		{
@@ -772,42 +920,6 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 			}
 		}
 
-		// Debug point
-		if(m_debugPoint.m_position != kMaxF32)
-		{
-			struct Consts
-			{
-				Mat4 m_mvp;
-				Vec4 m_color;
-			} consts;
-			const Mat4 trf = Mat4(m_debugPoint.m_position, Mat3::getIdentity(), Vec3(m_debugPoint.m_size));
-			consts.m_mvp = ctx.m_matrices.m_viewProjection * trf;
-			consts.m_color = m_debugPoint.m_color;
-			cmdb.setFastConstants(&consts, sizeof(consts));
-
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Gizmos");
-			const ShaderProgramResourceVariant* variant;
-			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-			cmdb.bindShaderProgram(&variant->getProgram());
-
-			cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
-			cmdb.bindVertexBuffer(0, BufferView(m_debugPoint.m_positionsBuff.get()), sizeof(Vec3));
-
-			if(!m_debugPoint.m_enableDepthTest)
-			{
-				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-			}
-
-			cmdb.draw(PrimitiveTopology::kTriangles, sizeof(kCubePositions) / sizeof(F32));
-
-			if(!m_debugPoint.m_enableDepthTest)
-			{
-				cmdb.setDepthCompareOperation(CompareOperation::kLess);
-			}
-		}
-
 		if(m_gizmos.m_enabled)
 		{
 			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
@@ -821,7 +933,7 @@ void Dbg::populateRenderGraphMain(RenderingContext& ctx)
 	});
 }
 
-void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
+void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx, InternalCtx& ictx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
@@ -880,7 +992,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "PrepareRenderablesPicking");
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "RenderablesPreparePicking");
 			const ShaderProgramResourceVariant* variant;
 			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 			cmdb.bindShaderProgram(&variant->getProgram());
@@ -926,6 +1038,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 		pass.newBufferDependency(bufferHandle, BufferUsageBit::kIndirectDraw);
 		pass.newTextureDependency(objectPickingRt, TextureUsageBit::kRtvDsvWrite);
 		pass.newTextureDependency(objectPickingDepthRt, TextureUsageBit::kRtvDsvWrite);
+		pass.newBufferDependency(ictx.m_particleEmitter.m_handle, BufferUsageBit::kIndirectDraw);
 
 		GraphicsRenderPassTargetDesc colorRti(objectPickingRt);
 		colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
@@ -935,8 +1048,8 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 		pass.setRenderpassInfo({colorRti}, &depthRti);
 
-		pass.setWork([this, lodAndRenderableIndicesBuff, &ctx, drawIndirectArgsBuff, drawCountBuff,
-					  maxVisibleCount](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, lodAndRenderableIndicesBuff, &ctx, drawIndirectArgsBuff, drawCountBuff, maxVisibleCount,
+					  ictx](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			// Set common state
@@ -945,7 +1058,7 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderablesPicking");
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderablesRenderPicking");
 			const ShaderProgramResourceVariant* variant;
 			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 			cmdb.bindShaderProgram(&variant->getProgram());
@@ -977,6 +1090,9 @@ void Dbg::populateRenderGraphObjectPicking(RenderingContext& ctx)
 				drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe,
 								  GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(), ctx, *m_reflectionImage, true, rgraphCtx);
 			}
+
+			// Draw particle emitters
+			drawParticleEmitters(ctx, ictx, true, rgraphCtx);
 
 			// Draw gizmos
 			if(m_gizmos.m_enabled)
@@ -1101,7 +1217,8 @@ void Dbg::drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, 
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 	variantInitInfo.addMutation("OBJECT_TYPE", 0);
-	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, (objectPicking) ? "GizmosPicking" : "Gizmos");
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
+											 (objectPicking) ? "GizmosRenderPicking" : "GizmosRenderMain");
 	const ShaderProgramResourceVariant* variant;
 	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());

@@ -386,7 +386,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 	if(in.m_gatherAabbIndices)
 	{
-		stage1Mem.m_visibleAabbIndices = allocateStructuredBuffer<U32>(buckets.getBucketsActiveUserCount(in.m_technique));
+		stage1Mem.m_visibleAabbIndices = allocateStructuredBuffer<U32>(buckets.getBucketsActiveUserCount(in.m_technique) + 1);
 	}
 
 	if(in.m_hashVisibles)

@@ -155,10 +155,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		renderer.getDbg().setOptions(options);
 	}
 
-	if(in.getKey(KeyCode::kF11) == 1 && ANKI_TRACING_ENABLED)
+#if ANKI_TRACING_ENABLED
+	if(in.getKey(KeyCode::kF11) == 1)
 	{
 		g_cvarCoreTracingEnabled = !g_cvarCoreTracingEnabled;
 	}
+#endif
 
 	if(in.getMouseButton(MouseButton::kRight) > 0 || in.hasTouchDevice())
 	{

@@ -13,27 +13,24 @@
 
 namespace anki {
 
-/// @addtogroup core
-/// @{
-
-ANKI_CVAR(BoolCVar, Core, TracingEnabled, false, "Enable or disable tracing")
-#if ANKI_OS_ANDROID
-ANKI_CVAR(BoolCVar, Core, StreamlineAnnotations, false, "Enable or disable Streamline annotations")
-#endif
-
 #if ANKI_TRACING_ENABLED
 
-/// A system that sits on top of the tracer and processes the counters and events.
+ANKI_CVAR(BoolCVar, Core, TracingEnabled, false, "Enable or disable tracing")
+#	if ANKI_OS_ANDROID
+ANKI_CVAR(BoolCVar, Core, StreamlineAnnotations, false, "Enable or disable Streamline annotations")
+#	endif
+
+// A system that sits on top of the tracer and processes the counters and events.
 class CoreTracer : public MakeSingleton<CoreTracer>
 {
 	template<typename>
 	friend class MakeSingleton;
 
 public:
-	/// @param directory The directory to store the trace and counters.
+	// directory: The directory to store the trace and counters.
 	Error init(CString directory);
 
-	/// It will flush everything.
+	// It will flush everything.
 	void flushFrame(U64 frame);
 
 private:
@@ -47,7 +44,7 @@ private:
 	CoreDynamicArray<CoreString> m_counterNames;
 	IntrusiveList<PerFrameCounters> m_frameCounters;
 
-	IntrusiveList<ThreadWorkItem> m_workItems; ///< Items for the thread to process.
+	IntrusiveList<ThreadWorkItem> m_workItems; // Items for the thread to process.
 	CoreString m_traceJsonFilename;
 	CoreString m_countersCsvFilename;
 	File m_traceJsonFile;
@@ -65,6 +62,5 @@ private:
 };
 
 #endif
-/// @}
 
 } // end namespace anki

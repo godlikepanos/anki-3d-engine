@@ -118,6 +118,7 @@ private:
 	ImageResourcePtr m_spotLightImage;
 	ImageResourcePtr m_decalImage;
 	ImageResourcePtr m_reflectionImage;
+	ImageResourcePtr m_particlesImage;
 
 	ShaderProgramResourcePtr m_dbgProg;
 
@@ -165,14 +166,18 @@ private:
 		DbgObjectPickingResult m_objPickingRes;
 	} m_runCtx;
 
+	class InternalCtx;
+
 	void initGizmos();
 
-	void populateRenderGraphMain(RenderingContext& ctx);
-
-	void populateRenderGraphObjectPicking(RenderingContext& ctx);
+	void populateRenderGraphParticleEmitters(RenderingContext& ctx, InternalCtx& ictx);
+	void populateRenderGraphMain(RenderingContext& ctx, InternalCtx& ictx);
+	void populateRenderGraphObjectPicking(RenderingContext& ctx, InternalCtx& ictx);
 
 	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
 						   Bool objectPicking, RenderPassWorkContext& rgraphCtx);
+
+	void drawParticleEmitters(const RenderingContext& ctx, const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx);
 
 	void drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, Bool objectPicking, CommandBuffer& cmdb) const;
 

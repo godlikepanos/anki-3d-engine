@@ -59,7 +59,9 @@ Error MyApp::userPostInit()
 	{
 		m_profile = true;
 		g_cvarCoreTargetFps = 240;
+#if ANKI_TRACING_ENABLED
 		g_cvarCoreTracingEnabled = true;
+#endif
 	}
 
 	// Load scene
@@ -146,10 +148,12 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		renderer.getDbg().setOptions(options);
 	}
 
+#if ANKI_TRACING_ENABLED
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
 		g_cvarCoreTracingEnabled = !g_cvarCoreTracingEnabled;
 	}
+#endif
 
 #if !PLAYER
 	static Vec2 mousePosOn1stClick = in.getMousePositionNdc();
