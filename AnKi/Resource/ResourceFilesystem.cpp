@@ -579,6 +579,8 @@ ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) co
 
 U64 ResourceFilesystem::getFileUpdateTime(ResourceFilename filename) const
 {
+	ANKI_TRACE_FUNCTION();
+
 	const ResourceString fullFilename = getFileFullPath(filename);
 
 	const std::filesystem::path stdpath = fullFilename.cstr();

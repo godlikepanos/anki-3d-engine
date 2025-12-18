@@ -13,8 +13,10 @@ using namespace anki;
 ANKI_CVAR(NumericCVar<F32>, Game, Fov, 90.0f, 60.0f, 110.0f, "Field of view")
 ANKI_CVAR(NumericCVar<F32>, Game, MouseLookPower, 5.0f, 1.0f, 100.0f, "Mouselook")
 
-class FpsCharacter : public SceneNode
+class FpsCharacter final : public SceneNode
 {
+	ANKI_REGISTER_SCENE_NODE_CLASS(FpsCharacter)
+
 public:
 	F32 m_walkingSpeed = 8.5f;
 	F32 m_jumpSpeed = 8.0f;
@@ -32,10 +34,11 @@ public:
 
 	FpsCharacter(CString name);
 
-	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override;
-
 private:
 	void fireShotgun();
-
 	void fireGrenade();
+
+	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };

@@ -563,6 +563,10 @@ void SceneGraph::sceneNodeChangedName(SceneNode& node, CString oldName)
 
 Error SceneGraph::saveToTextFile(CString filename)
 {
+	ANKI_TRACE_FUNCTION();
+
+	ANKI_LOGI("Saving scene: %s", filename.cstr());
+
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
 
@@ -588,16 +592,25 @@ Error SceneGraph::saveToTextFile(CString filename)
 	// Scene nodes
 	Error err = Error::kNone;
 
+	auto serializeNode = [&](SceneNode& node) -> Error {
+		SceneString className = (node.getSceneNodeRegistryRecord()) ? node.getSceneNodeRegistryRecord()->m_name : "SceneNode";
+		ANKI_SERIALIZE(className, 1);
+
+		ANKI_CHECK(node.serializeCommon(serializer));
+		ANKI_CHECK(node.serialize(serializer));
+
+		return Error::kNone;
+	};
+
 	visitNodes([&](SceneNode& node) {
 		if(node.getParent() != nullptr)
 		{
-			// Skip non-root nodes
+			// Skip non-root nodes, they will be visited later
 			return FunctorContinue::kContinue;
 		}
 
 		node.visitThisAndChildren([&](SceneNode& node) {
-			err = node.serializeCommon(serializer);
-			if(err)
+			if((err = serializeNode(node)))
 			{
 				return FunctorContinue::kStop;
 			}

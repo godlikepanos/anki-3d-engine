@@ -25,6 +25,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/AsyncLoader.h>
@@ -184,6 +185,12 @@ Error App::init()
 	StatsSet::getSingleton().initFromMainThread();
 	Logger::getSingleton().enableVerbosity(g_cvarCoreVerboseLog);
 
+	if(g_cvarCoreShowEditor)
+	{
+		g_cvarCorePlaying = false;
+		g_cvarRsrcTrackFileUpdates = true;
+	}
+
 	ANKI_CHECK(initDirs());
 
 	ANKI_CORE_LOGI("Initializing application. Build config: %s", kAnKiBuildConfigString);
@@ -316,6 +323,12 @@ Error App::init()
 	GrManager::getSingleton().finish();
 	ANKI_CORE_LOGI("Application initialized");
 
+	if(g_cvarCoreShowEditor)
+	{
+		SceneGraph::getSingleton().setCheckForResourceUpdates(true);
+		Renderer::getSingleton().getDbg().enableOptions(DbgOption::kObjectPicking | DbgOption::kIcons);
+	}
+
 	return Error::kNone;
 }
 
@@ -382,11 +395,11 @@ Error App::mainLoop()
 		return err;
 	}
 
-	if(CString(g_cvarCoreLoadScene) != "")
+	if(CString(g_cvarCoreStartupScene) != "")
 	{
-		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreLoadScene).cstr());
+		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreStartupScene).cstr());
 		ScriptResourcePtr script;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(g_cvarCoreLoadScene, script));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(g_cvarCoreStartupScene, script));
 		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 	}
 
@@ -431,6 +444,7 @@ Error App::mainLoop()
 
 			GpuSceneMicroPatcher::getSingleton().beginPatching();
 			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));
+
 			SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
 			GpuSceneMicroPatcher::getSingleton().endPatching();
 

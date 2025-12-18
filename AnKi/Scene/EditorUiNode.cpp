@@ -11,7 +11,9 @@ namespace anki {
 
 void EditorUiNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
-	if(!getFirstComponentOfType<UiComponent>().isEnabled())
+	getFirstComponentOfType<UiComponent>().setEnabled(g_cvarCoreShowEditor);
+
+	if(!g_cvarCoreShowEditor)
 	{
 		return;
 	}

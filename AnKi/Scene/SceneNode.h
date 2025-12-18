@@ -14,6 +14,40 @@
 
 namespace anki {
 
+class SceneNodeRegistryRecord : public GlobalRegistryRecord
+{
+public:
+	using GetClassSizeCallback = U32 (*)();
+	using ConstructCallback = void (*)(void*, CString);
+
+	GetClassSizeCallback m_getClassSizeCallback = nullptr;
+	ConstructCallback m_constructCallback = nullptr;
+
+	SceneNodeRegistryRecord(const Char* name, GetClassSizeCallback getClassSizeCallback, ConstructCallback constructCallback)
+		: GlobalRegistryRecord(name)
+		, m_getClassSizeCallback(getClassSizeCallback)
+		, m_constructCallback(constructCallback)
+	{
+	}
+};
+
+// It's required on all SceneNode derived classes. It registers some global info required by serialization
+#define ANKI_REGISTER_SCENE_NODE_CLASS(className) \
+	static U32 getClassSizeCallback() \
+	{ \
+		return U32(sizeof(className)); \
+	} \
+	static void constructCallback(void* memory, CString sceneNodeName) \
+	{ \
+		::new(memory) className(sceneNodeName); \
+	} \
+	inline static SceneNodeRegistryRecord m_registryRecord{ANKI_STRINGIZE(className), getClassSizeCallback, constructCallback}; \
+	const SceneNodeRegistryRecord* getSceneNodeRegistryRecord() const override \
+	{ \
+		static_assert(std::is_final_v<className>, "ANKI_REGISTER_SCENE_NODE_CLASS only in final classes"); \
+		return &m_registryRecord; \
+	}
+
 // Base class of the scene
 class SceneNode : public SceneHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
@@ -81,6 +115,11 @@ public:
 	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
 	{
 		return Error::kNone;
+	}
+
+	virtual const SceneNodeRegistryRecord* getSceneNodeRegistryRecord() const
+	{
+		return nullptr;
 	}
 
 	// Iterate all components.

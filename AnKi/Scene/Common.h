@@ -20,9 +20,6 @@ class ScriptManager;
 class GrManager;
 class PhysicsWorld;
 
-/// @addtogroup scene
-/// @{
-
 #define ANKI_SCENE_LOGI(...) ANKI_LOG("SCEN", kNormal, __VA_ARGS__)
 #define ANKI_SCENE_LOGE(...) ANKI_LOG("SCEN", kError, __VA_ARGS__)
 #define ANKI_SCENE_LOGW(...) ANKI_LOG("SCEN", kWarning, __VA_ARGS__)
@@ -54,6 +51,54 @@ ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Scene, SceneMemoryPool)
 		} \
 		return ok; \
 	})
-/// @}
+
+class GlobalRegistryRecord : public IntrusiveListEnabled<GlobalRegistryRecord>
+{
+public:
+	const Char* m_name;
+
+	GlobalRegistryRecord(const Char* name);
+};
+
+// It's used to register global variables (like functions) uppon initialization. Then the records that can be retrieved using their name
+class GlobalRegistry : public MakeSingletonLazyInit<GlobalRegistry>
+{
+public:
+	void registerRecord(GlobalRegistryRecord* record)
+	{
+		ANKI_ASSERT(record && record->m_name);
+		ANKI_ASSERT(tryFindRecord(record->m_name) == nullptr && "Already registered");
+		m_records.pushBack(record);
+	}
+
+	GlobalRegistryRecord* findRecord(CString name)
+	{
+		GlobalRegistryRecord* rec = tryFindRecord(name);
+		ANKI_ASSERT(rec && "Not found");
+		return rec;
+	}
+
+private:
+	IntrusiveList<GlobalRegistryRecord> m_records;
+
+	GlobalRegistryRecord* tryFindRecord(CString name)
+	{
+		for(auto& it : m_records)
+		{
+			if(it.m_name == name)
+			{
+				return &it;
+			}
+		}
+
+		return nullptr;
+	}
+};
+
+inline GlobalRegistryRecord::GlobalRegistryRecord(const Char* name)
+	: m_name(name)
+{
+	GlobalRegistry::getSingleton().registerRecord(this);
+}
 
 } // end namespace anki

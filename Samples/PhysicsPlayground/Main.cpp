@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <cstdio>
 #include <Samples/Common/SampleApp.h>
 #include <Samples/PhysicsPlayground/FpsCharacterNode.h>
 
@@ -132,123 +131,32 @@ Error MyApp::sampleExtraInit()
 		node->setLocalOrigin(Vec3(4.0f, 0.5f, 0.0f));
 	}
 
-	Input::getSingleton().lockMouseWindowCenter(true);
-	Input::getSingleton().hideCursor(true);
-	Input::getSingleton().moveMouseNdc(Vec2(0.0f));
+	if(!g_cvarCoreShowEditor)
+	{
+		Input::getSingleton().lockMouseWindowCenter(true);
+		Input::getSingleton().hideCursor(true);
+		Input::getSingleton().moveMouseNdc(Vec2(0.0f));
+	}
 
 	return Error::kNone;
 }
 
-Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
+Error MyApp::userMainLoop([[maybe_unused]] Bool& quit, [[maybe_unused]] Second elapsedTime)
 {
-	// ANKI_CHECK(SampleApp::userMainLoop(quit));
-	Renderer& renderer = Renderer::getSingleton();
-	Input& in = Input::getSingleton();
-
-	if(in.getKey(KeyCode::kGrave) == 1)
+	if(g_cvarCoreShowEditor)
 	{
-		toggleDeveloperConsole();
-	}
-
-	if(in.getKey(KeyCode::kEscape) > 0)
-	{
-		quit = true;
-	}
-
-	if(in.getKey(KeyCode::kY) == 1)
-	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmapsTest") ? "" : "IndirectDiffuseClipmapsTest");
-		// g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
-	}
-
-	if(in.getKey(KeyCode::kU) == 1)
-	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Reflections") ? "" : "Reflections");
-	}
-
-	if(in.getKey(KeyCode::kI) == 1)
-	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Ssao") ? "" : "Ssao");
-	}
-
-	if(in.getKey(KeyCode::kO) == 1)
-	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "HistoryLen") ? "" : "HistoryLen");
-	}
-
-	if(Input::getSingleton().getKey(KeyCode::kP) == 1)
-	{
-		static U32 idx = 3;
-		++idx;
-		idx %= 4;
-		if(idx == 0)
+		if(SceneGraph::getSingleton().getActiveCameraNode().getName() != "_MainCamera")
 		{
-			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
-		}
-		else if(idx == 1)
-		{
-			renderer.setCurrentDebugRenderTarget("VrsSriDownscaled");
-		}
-		else if(idx == 2)
-		{
-			renderer.setCurrentDebugRenderTarget("VrsSri");
-		}
-		else
-		{
-			renderer.setCurrentDebugRenderTarget("");
+			SceneNode& node = SceneGraph::getSingleton().findSceneNode("_MainCamera");
+			SceneGraph::getSingleton().setActiveCameraNode(&node);
 		}
 	}
-
-	if(Input::getSingleton().getKey(KeyCode::kL) == 1)
+	else
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Bloom") ? "" : "Bloom");
-	}
-
-	if(Input::getSingleton().getKey(KeyCode::kJ) == 1)
-	{
-		g_cvarGrVrs = !g_cvarGrVrs;
-	}
-
-	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)
-	{
-		DbgOption options = renderer.getDbg().getOptions();
-
-		static U mode = 0;
-		mode = (mode + 1) % 3;
-		if(mode == 0)
+		if(SceneGraph::getSingleton().getActiveCameraNode().getName() != "FpsCharacterCam")
 		{
-			options &= ~DbgOption::kBoundingBoxes;
-		}
-		else if(mode == 1)
-		{
-			options |= DbgOption::kBoundingBoxes;
-			options |= DbgOption::kDepthTest;
-		}
-		else
-		{
-			options |= DbgOption::kBoundingBoxes;
-			options &= ~DbgOption::kDepthTest;
-		}
-
-		renderer.getDbg().setOptions(options);
-	}
-
-	if(Input::getSingleton().getKey(KeyCode::kF2) == 1)
-	{
-		DbgOption options = renderer.getDbg().getOptions();
-		options ^= DbgOption::kPhysics;
-		renderer.getDbg().setOptions(options);
-	}
-
-	if(0)
-	{
-		SceneNode& node = SceneGraph::getSingleton().findSceneNode("trigger");
-		TriggerComponent& comp = node.getFirstComponentOfType<TriggerComponent>();
-
-		for(U32 i = 0; i < comp.getSceneNodesEnter().getSize(); ++i)
-		{
-			// ANKI_LOGI("Touching %s", comp.getContactSceneNodes()[i]->getName().cstr());
+			SceneNode* node = SceneGraph::getSingleton().tryFindSceneNode("FpsCharacterCam");
+			SceneGraph::getSingleton().setActiveCameraNode(node);
 		}
 	}
 

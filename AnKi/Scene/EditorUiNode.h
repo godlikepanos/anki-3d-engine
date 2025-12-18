@@ -6,6 +6,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Editor/EditorUi.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
 
@@ -24,6 +25,8 @@ public:
 				static_cast<EditorUiNode*>(ud)->m_editorUi.draw(canvas);
 			},
 			this);
+
+		uic->setEnabled(g_cvarCoreShowEditor);
 	}
 
 private:

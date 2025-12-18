@@ -23,7 +23,7 @@ function update(event, prevTime, crntTime)
 	radius = radius + 0.5 * dt
 
 	pos = node:getLocalOrigin()
-	pos:setY(pos:getY() - 1.1 * dt)
+	pos.y = pos.y - 1.1 * dt
 	node:setLocalOrigin(pos)
 
 	if density <= 0.0 or radius <= 0.0 then
@@ -65,6 +65,11 @@ FpsCharacter::FpsCharacter(CString name)
 
 void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
+	if(!g_cvarCorePlaying)
+	{
+		return;
+	}
+
 	// Change FOV
 	CameraComponent& camc = m_cameraNode->getFirstComponentOfType<CameraComponent>();
 	if(toRad<F32>(g_cvarGameFov) != camc.getFovY())
@@ -274,4 +279,11 @@ void FpsCharacter::fireGrenade()
 	grenade->setLocalRotation(camTrf.getRotation().getRotationPart());
 	BodyComponent& bodyc = grenade->getFirstComponentOfType<BodyComponent>();
 	bodyc.applyForce(camTrf.getRotation().getZAxis().xyz * -1200.0f, Vec3(0.0f, 0.0f, 0.0f));
+}
+
+Error FpsCharacter::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_walkingSpeed, 1);
+
+	return Error::kNone;
 }

@@ -27,19 +27,8 @@ public:
 		g_cvarWindowFullscreen = false;
 		g_cvarWindowMaximized = true;
 		g_cvarWindowBorderless = true;
-		g_cvarRsrcTrackFileUpdates = true;
+		g_cvarCoreShowEditor = true;
 		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
-
-		return Error::kNone;
-	}
-
-	Error userPostInit() override
-	{
-		SceneGraph::getSingleton().setCheckForResourceUpdates(true);
-		SceneNode& editorNode = SceneGraph::getSingleton().getEditorUiNode();
-		editorNode.getFirstComponentOfType<UiComponent>().setEnabled(true);
-
-		Renderer::getSingleton().getDbg().enableOptions(DbgOption::kObjectPicking | DbgOption::kIcons);
 
 		return Error::kNone;
 	}

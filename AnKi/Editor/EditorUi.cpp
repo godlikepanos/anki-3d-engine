@@ -436,10 +436,6 @@ void EditorUi::mainMenu()
 				{
 					ANKI_LOGE("Failed to save scene");
 				}
-				else
-				{
-					ANKI_LOGI("Scene saved");
-				}
 			}
 			ImGui::SetItemTooltip("Save scene");
 
