@@ -260,7 +260,7 @@ Error File::read(void* buff, PtrSize size)
 	}
 
 	Error err = Error::kNone;
-	if(static_cast<I64>(size) != readSize)
+	if(I64(size) != readSize)
 	{
 		ANKI_UTIL_LOGE("File read failed");
 		err = Error::kFileAccess;

@@ -10,16 +10,13 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// Lens flare scene component.
+// Lens flare scene component.
 class LensFlareComponent final : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(LensFlareComponent)
 
 public:
-	LensFlareComponent(SceneNode* node);
+	LensFlareComponent(SceneNode* node, U32 uuid);
 
 	~LensFlareComponent();
 
@@ -78,9 +75,9 @@ public:
 private:
 	static constexpr F32 kAabbSize = 25.0_cm;
 
-	Vec4 m_colorMul = Vec4(1.0f); ///< Color multiplier.
+	Vec4 m_colorMul = Vec4(1.0f); // Color multiplier.
 
-	ImageResourcePtr m_image; ///< Array of textures.
+	ImageResourcePtr m_image; // Array of textures.
 
 	Vec2 m_firstFlareSize = Vec2(1.0f);
 	Vec2 m_otherFlareSize = Vec2(1.0f);
@@ -91,6 +88,5 @@ private:
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
-/// @}
 
 } // end namespace anki

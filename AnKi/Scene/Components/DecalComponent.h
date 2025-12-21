@@ -18,7 +18,7 @@ class DecalComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(DecalComponent)
 
 public:
-	DecalComponent(SceneNode* node);
+	DecalComponent(SceneNode* node, U32 uuid);
 
 	~DecalComponent();
 

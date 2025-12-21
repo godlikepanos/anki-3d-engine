@@ -11,11 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup util_file
-/// @{
-
-/// Open mode
-/// @memberof File
+// Open mode
 enum class FileOpenFlag : U8
 {
 	kNone = 0,
@@ -23,14 +19,13 @@ enum class FileOpenFlag : U8
 	kWrite = 1 << 1,
 	kAppend = kWrite | (1 << 3),
 	kBinary = 1 << 4,
-	kLittleEndian = 1 << 5, ///< The default
+	kLittleEndian = 1 << 5, // The default
 	kBigEndian = 1 << 6,
-	kSpecial = 1 << 7, ///< Android package file.
+	kSpecial = 1 << 7, // Android package file.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag)
 
-/// Passed to seek function
-/// @memberof File
+// Passed to seek function
 enum class FileSeekOrigin
 {
 	kBeginning = SEEK_SET,
@@ -38,54 +33,54 @@ enum class FileSeekOrigin
 	kEnd = SEEK_END
 };
 
-/// An abstraction over typical files and files in ziped archives. This class can read from regular C files, zip files
-/// and on Android from the packed asset files.
-/// To identify the file:
-/// - If the filename starts with '$' it will try to load a system specific file. For Android this is a file in the .apk
-/// - If the above are false then try to load a regular C file
+// An abstraction over typical files and files in ziped archives. This class can read from regular C files, zip files
+// and on Android from the packed asset files.
+// To identify the file:
+// - If the filename starts with '$' it will try to load a system specific file. For Android this is a file in the .apk
+// - If the above are false then try to load a regular C file
 class File
 {
 public:
-	/// Default constructor
+	// Default constructor
 	File() = default;
 
 	File(const File&) = delete; // Non-copyable
 
 	File& operator=(const File&) = delete; // Non-copyable
 
-	/// Move
+	// Move
 	File(File&& b)
 	{
 		*this = std::move(b);
 	}
 
-	/// Closes the file if it's open
+	// Closes the file if it's open
 	~File();
 
-	/// Move
+	// Move
 	File& operator=(File&& b);
 
-	/// Open a file.
-	/// @param[in] filename The file to open
-	/// @param[in] openMask The open flags. It's a combination of FileOpenFlag enum
+	// Open a file.
+	// filename: The file to open
+	// openMask: The open flags. It's a combination of FileOpenFlag enum
 	Error open(const CString& filename, FileOpenFlag openMask);
 
-	/// Return true if the file is oppen
+	// Return true if the file is oppen
 	Bool isOpen() const
 	{
 		return m_file != nullptr;
 	}
 
-	/// Close the file
+	// Close the file
 	void close();
 
-	/// Flush pending operations
+	// Flush pending operations
 	Error flush();
 
-	/// Read data from the file
+	// Read data from the file
 	Error read(void* buff, PtrSize size);
 
-	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
+	// Read all the contents of a text file. If the file is not rewined it will probably fail.
 	template<typename TMemPool>
 	Error readAllText(BaseString<TMemPool>& out)
 	{
@@ -105,31 +100,31 @@ public:
 		return err;
 	}
 
-	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
+	// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
 	Error readU32(U32& u);
 
-	/// Read 32bit float. Set the endianness if the file's endianness is different from the machine's.
+	// Read 32bit float. Set the endianness if the file's endianness is different from the machine's.
 	Error readF32(F32& f);
 
-	/// Write data to the file
+	// Write data to the file
 	Error write(const void* buff, PtrSize size);
 
-	/// Write formated text
+	// Write formated text
 	ANKI_CHECK_FORMAT(1, 2)
 	Error writeTextf(const Char* format, ...);
 
-	/// Write plain text.
+	// Write plain text.
 	Error writeText(CString text);
 
-	/// Set the position indicator to a new position.
-	/// @param offset Number of bytes to offset from origin
-	/// @param origin Position used as reference for the offset
+	// Set the position indicator to a new position
+	// offset: Number of bytes to offset from origin
+	// origin: Position used as reference for the offset
 	Error seek(PtrSize offset, FileSeekOrigin origin);
 
-	/// Return the position indicator inside the file.
+	// Return the position indicator inside the file.
 	PtrSize tell();
 
-	/// The the size of the file.
+	// The the size of the file.
 	PtrSize getSize() const
 	{
 		ANKI_ASSERT(!(m_flags & FileOpenFlag::kWrite));
@@ -137,18 +132,20 @@ public:
 	}
 
 private:
-	void* m_file = nullptr; ///< A native file type
-	FileOpenFlag m_flags = FileOpenFlag::kNone; ///< All the flags. Set on open
-	PtrSize m_size = 0;
+	static constexpr U32 kReadLineInitialSize = 256;
 
-	/// Get the current machine's endianness
+	void* m_file = nullptr; // A native file type
+	PtrSize m_size = 0;
+	FileOpenFlag m_flags = FileOpenFlag::kNone; // All the flags. Set on open
+
+	// Get the current machine's endianness
 	static FileOpenFlag getMachineEndianness();
 
-	/// Open a C file
+	// Open a C file
 	Error openCFile(const CString& filename, FileOpenFlag flags);
 
 #if ANKI_OS_ANDROID
-	/// Open an Android file
+	// Open an Android file
 	Error openAndroidFile(const CString& filename, FileOpenFlag flags);
 #endif
 
@@ -159,6 +156,5 @@ private:
 		m_size = 0;
 	}
 };
-/// @}
 
 } // end namespace anki

@@ -10,17 +10,14 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
 /// A simple implicit component that updates the SceneNode's transform.
 class MoveComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(MoveComponent)
 
 public:
-	MoveComponent(SceneNode* node)
-		: SceneComponent(node, kClassType)
+	MoveComponent(SceneNode* node, U32 uuid)
+		: SceneComponent(node, kClassType, uuid)
 	{
 		m_gpuSceneTransforms.allocate();
 	}
@@ -42,6 +39,5 @@ private:
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
-/// @}
 
 } // end namespace anki

@@ -17,7 +17,7 @@ class MeshComponent final : public SceneComponent
 	ANKI_SCENE_COMPONENT(MeshComponent)
 
 public:
-	MeshComponent(SceneNode* node);
+	MeshComponent(SceneNode* node, U32 uuid);
 
 	~MeshComponent();
 

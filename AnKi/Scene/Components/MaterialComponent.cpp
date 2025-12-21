@@ -16,8 +16,8 @@
 
 namespace anki {
 
-MaterialComponent::MaterialComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+MaterialComponent::MaterialComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	m_gpuSceneRenderable.allocate();
 }

@@ -11,8 +11,8 @@
 
 namespace anki {
 
-CameraComponent::CameraComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+CameraComponent::CameraComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	// Init main frustum
 	m_frustum.init(FrustumType::kPerspective);

@@ -14,8 +14,8 @@
 
 namespace anki {
 
-BodyComponent::BodyComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+BodyComponent::BodyComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 	, m_node(node)
 {
 	node->setIgnoreParentTransform(true);

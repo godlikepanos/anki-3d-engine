@@ -11,8 +11,8 @@
 
 namespace anki {
 
-SkyboxComponent::SkyboxComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+SkyboxComponent::SkyboxComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 }
 

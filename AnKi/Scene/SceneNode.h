@@ -11,6 +11,7 @@
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Enum.h>
+#include <AnKi/Util/DynamicBitSet.h>
 
 namespace anki {
 
@@ -83,6 +84,17 @@ public:
 
 	void markForDeletion();
 
+	// Enable serialization for this node, its components and its children
+	void setSerialization(Bool enable)
+	{
+		m_serialize = enable;
+	}
+
+	Bool getSerialization() const
+	{
+		return m_serialize;
+	}
+
 	Timestamp getComponentMaxTimestamp() const
 	{
 		return m_maxComponentTimestamp;
@@ -128,7 +140,10 @@ public:
 	{
 		for(U32 i = 0; i < m_components.getSize(); ++i)
 		{
-			func(*m_components[i]);
+			if(func(*m_components[i]) == FunctorContinue::kStop)
+			{
+				break;
+			}
 		}
 	}
 
@@ -138,7 +153,10 @@ public:
 	{
 		for(U32 i = 0; i < m_components.getSize(); ++i)
 		{
-			func(*m_components[i]);
+			if(func(*m_components[i]) == FunctorContinue::kStop)
+			{
+				break;
+			}
 		}
 	}
 
@@ -152,7 +170,10 @@ public:
 			{
 				if(m_components[i]->getType() == TComponent::kClassType)
 				{
-					func(static_cast<const TComponent&>(*m_components[i]));
+					if(func(static_cast<const TComponent&>(*m_components[i])) == FunctorContinue::kStop)
+					{
+						break;
+					}
 				}
 			}
 		}
@@ -168,7 +189,10 @@ public:
 			{
 				if(m_components[i]->getType() == TComponent::kClassType)
 				{
-					func(static_cast<TComponent&>(*m_components[i]));
+					if(func(static_cast<TComponent&>(*m_components[i])) == FunctorContinue::kStop)
+					{
+						break;
+					}
 				}
 			}
 		}
@@ -441,8 +465,28 @@ public:
 	// End movement methods //
 
 private:
+	class SerializeCommonArgs
+	{
+	public:
+		class
+		{
+		public:
+			// Given an index to the component array find out if the component should be serialized
+			Array<SceneDynamicBitSet<U32>, U32(SceneComponentType::kCount)> m_serializableComponentMask;
+
+			Array<U32, U32(SceneComponentType::kCount)> m_componentsToBeSerializedCount = {};
+		} m_write;
+
+		class
+		{
+		public:
+			SceneHashMap<U32, SceneNode*> m_sceneNodeUuidToNode;
+			SceneHashMap<U32, SceneNode*> m_sceneComponentUuidToNode;
+		} m_read;
+	};
+
 	SceneString m_name; // A unique name.
-	U32 m_uuid;
+	U32 m_uuid = 0;
 
 	SceneComponentTypeMask m_componentTypeMask = SceneComponentTypeMask::kNone;
 
@@ -459,10 +503,11 @@ private:
 	Bool m_localTransformDirty : 1 = true;
 	Bool m_ignoreParentNodeTransform : 1 = false;
 	Bool m_transformUpdatedThisFrame : 1 = true;
+	Bool m_serialize : 1 = true;
 
-	void newComponentInternal(SceneComponent* newc);
+	void addComponent(SceneComponent* newc);
 
-	Error serializeCommon(SceneSerializer& serializer);
+	Error serializeCommon(SceneSerializer& serializer, SerializeCommonArgs& args);
 };
 
 } // end namespace anki

@@ -10,8 +10,8 @@
 
 namespace anki {
 
-PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+PlayerControllerComponent::PlayerControllerComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	PhysicsPlayerControllerInitInfo init;
 	init.m_initialPosition = node->getWorldTransform().getOrigin().xyz;

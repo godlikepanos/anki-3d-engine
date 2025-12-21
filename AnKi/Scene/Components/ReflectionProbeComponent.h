@@ -12,18 +12,15 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
 ANKI_CVAR2(NumericCVar<U32>, Render, ProbeReflections, Resolution, 128, 8, 2048, "The resolution of the reflection probe's reflection")
 
-/// Reflection probe component.
+// Reflection probe component.
 class ReflectionProbeComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(ReflectionProbeComponent)
 
 public:
-	ReflectionProbeComponent(SceneNode* node);
+	ReflectionProbeComponent(SceneNode* node, U32 uuid);
 
 	~ReflectionProbeComponent();
 
@@ -49,7 +46,7 @@ public:
 		return m_worldPos;
 	}
 
-	/// The radius around the probe's center that can infuence the rendering of the env texture.
+	// The radius around the probe's center that can infuence the rendering of the env texture.
 	ANKI_INTERNAL F32 getRenderRadius() const;
 
 	ANKI_INTERNAL F32 getShadowsRenderRadius() const;
@@ -80,6 +77,5 @@ private:
 
 	Error serialize(SceneSerializer& serializer) override;
 };
-/// @}
 
 } // end namespace anki

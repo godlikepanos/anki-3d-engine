@@ -70,6 +70,9 @@ class ConstWeakArray;
 template<typename T, typename TMemoryPool, typename TSize>
 class DynamicArray;
 
+template<typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename T = U32>
+class DynamicBitSet;
+
 class F16;
 
 template<typename TMemoryPool>
@@ -93,6 +96,8 @@ class XmlDocument;
 	template<typename T> \
 	using submoduleName##Hierarchy = Hierarchy<T, submoduleName##MemPoolWrapper>; \
 	template<typename T, typename TConfig = BlockArrayDefaultConfig> \
-	using submoduleName##BlockArray = BlockArray<T, submoduleName##MemPoolWrapper, TConfig>;
+	using submoduleName##BlockArray = BlockArray<T, submoduleName##MemPoolWrapper, TConfig>; \
+	template<typename T = U32> \
+	using submoduleName##DynamicBitSet = DynamicBitSet<submoduleName##MemPoolWrapper, T>;
 
 } // end namespace anki

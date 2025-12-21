@@ -19,6 +19,8 @@ DeveloperConsoleUiNode::DeveloperConsoleUiNode(CString name)
 		},
 		this);
 	uic->setEnabled(false);
+
+	setSerialization(false);
 }
 
 DeveloperConsoleUiNode::~DeveloperConsoleUiNode()

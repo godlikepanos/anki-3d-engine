@@ -21,7 +21,7 @@ class MaterialComponent final : public SceneComponent
 	ANKI_SCENE_COMPONENT(MaterialComponent)
 
 public:
-	MaterialComponent(SceneNode* node);
+	MaterialComponent(SceneNode* node, U32 uuid);
 
 	~MaterialComponent();
 

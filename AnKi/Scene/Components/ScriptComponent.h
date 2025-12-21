@@ -17,7 +17,7 @@ class ScriptComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(ScriptComponent)
 
 public:
-	ScriptComponent(SceneNode* node);
+	ScriptComponent(SceneNode* node, U32 uuid);
 
 	~ScriptComponent();
 

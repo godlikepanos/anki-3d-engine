@@ -690,12 +690,12 @@ void EditorUi::sceneNodePropertiesWindow()
 			ImGui::SetNextItemWidth(-1.0f);
 
 			I32 n = 0;
-			if(ImGui::BeginCombo(" ", kSceneComponentTypeName[state.m_selectedSceneComponentType]))
+			if(ImGui::BeginCombo(" ", kSceneComponentTypeInfos[state.m_selectedSceneComponentType].m_name))
 			{
-				for(const Char* name : kSceneComponentTypeName)
+				for(const SceneComponentTypeInfo& inf : kSceneComponentTypeInfos)
 				{
 					const Bool isSelected = (state.m_selectedSceneComponentType == n);
-					if(ImGui::Selectable(name, isSelected))
+					if(ImGui::Selectable(inf.m_name, isSelected))
 					{
 						state.m_selectedSceneComponentType = n;
 					}
@@ -744,7 +744,7 @@ void EditorUi::sceneNodePropertiesWindow()
 					// Header
 					{
 						String label;
-						label.sprintf(" %s %s (%u)", icon.cstr(), kSceneComponentTypeName[comp.getType()], comp.getUuid());
+						label.sprintf(" %s %s (%u)", icon.cstr(), kSceneComponentTypeInfos[comp.getType()].m_name, comp.getUuid());
 						ImGui::SeparatorText(label.cstr());
 
 						if(ImGui::Button(ICON_MDI_MINUS_BOX))
@@ -801,6 +801,8 @@ void EditorUi::sceneNodePropertiesWindow()
 				ImGui::EndChild();
 				ImGui::Text(" ");
 				++count;
+
+				return FunctorContinue::kContinue;
 			});
 		}
 	}

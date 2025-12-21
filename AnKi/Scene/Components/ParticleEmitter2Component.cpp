@@ -151,8 +151,8 @@ public:
 	}
 };
 
-ParticleEmitter2Component::ParticleEmitter2Component(SceneNode* node)
-	: SceneComponent(node, kClassType)
+ParticleEmitter2Component::ParticleEmitter2Component(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	ParticleEmitterQuadGeometry::getSingleton().addUser();
 }

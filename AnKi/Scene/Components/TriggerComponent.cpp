@@ -12,7 +12,7 @@
 
 namespace anki {
 
-/// The callbacks execute before the TriggerComponent::update
+// The callbacks execute before the TriggerComponent::update
 class TriggerComponent::MyPhysicsTriggerCallbacks final : public PhysicsTriggerCallbacks
 {
 public:
@@ -59,8 +59,8 @@ public:
 
 TriggerComponent::MyPhysicsTriggerCallbacks TriggerComponent::m_callbacks;
 
-TriggerComponent::TriggerComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+TriggerComponent::TriggerComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 }
 

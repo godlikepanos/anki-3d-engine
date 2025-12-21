@@ -32,7 +32,7 @@ class ParticleEmitter2Component : public SceneComponent
 	ANKI_SCENE_COMPONENT(ParticleEmitter2Component)
 
 public:
-	ParticleEmitter2Component(SceneNode* node);
+	ParticleEmitter2Component(SceneNode* node, U32 uuid);
 
 	~ParticleEmitter2Component();
 

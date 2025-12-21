@@ -10,8 +10,8 @@
 
 namespace anki {
 
-LensFlareComponent::LensFlareComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+LensFlareComponent::LensFlareComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 }
 

@@ -10,16 +10,13 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// Physics player controller component.
+// Physics player controller component.
 class PlayerControllerComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(PlayerControllerComponent)
 
 public:
-	PlayerControllerComponent(SceneNode* node);
+	PlayerControllerComponent(SceneNode* node, U32 uuid);
 
 	void setVelocity(F32 forwardSpeed, F32 jumpSpeed, Vec3 forwardDir, Bool crouch)
 	{
@@ -42,6 +39,5 @@ private:
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
-/// @}
 
 } // end namespace anki

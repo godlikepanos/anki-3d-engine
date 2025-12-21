@@ -52,6 +52,7 @@ FpsCharacter::FpsCharacter(CString name)
 	CameraComponent* camc = cam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, Renderer::getSingleton().getAspectRatio() * toRad<F32>(g_cvarGameFov), toRad<F32>(g_cvarGameFov));
 	addChild(cam);
+	cam->setSerialization(false);
 	m_cameraNode = cam;
 
 	SceneNode* shotgun = SceneGraph::getSingleton().newSceneNode<SceneNode>("Shotgun");
@@ -59,6 +60,7 @@ FpsCharacter::FpsCharacter(CString name)
 	shotgun->newComponent<MeshComponent>()->setMeshFilename("Assets/sleevegloveLOW.001_893660395596b206.ankimesh");
 	shotgun->newComponent<MaterialComponent>()->setMaterialFilename("Assets/arms_3a4232ebbd425e7a.ankimtl").setSubmeshIndex(0);
 	shotgun->newComponent<MaterialComponent>()->setMaterialFilename("Assets/boomstick_89a614a521ace7fd.ankimtl").setSubmeshIndex(1);
+	shotgun->setSerialization(false);
 	cam->addChild(shotgun);
 	m_shotgunNode = shotgun;
 }

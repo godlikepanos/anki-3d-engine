@@ -180,6 +180,18 @@ public:
 	}
 };
 
+#define ANKI_SERIALIZER_LOGE(...) ANKI_SCENE_LOGE("%s", (SceneString().sprintf(__VA_ARGS__) + SceneString().sprintf(". Line %u: ", m_lineno)).cstr())
+#define ANKI_SERIALIZER_CHECK(expr) \
+	do \
+	{ \
+		const Error retError = expr; \
+		if(retError) \
+		{ \
+			ANKI_SERIALIZER_LOGE("Expression failed: " ANKI_STRINGIZE(expr)); \
+			return retError; \
+		} \
+	} while(0)
+
 // Serialize in a custom text format
 class TextSceneSerializer : public SceneSerializer
 {
@@ -188,6 +200,14 @@ public:
 		: SceneSerializer(writingMode)
 		, m_file(*file)
 	{
+		if(!m_writeMode)
+		{
+			SceneString txt;
+			ANKI_CHECKF(file->readAllText(txt));
+
+			m_lines.splitString(txt, '\n');
+			m_linesIt = m_lines.getBegin();
+		}
 	}
 
 	Error write(CString name, ConstWeakArray<U32> values) final
@@ -207,9 +227,17 @@ public:
 		return Error::kNone;
 	}
 
-	Error read([[maybe_unused]] CString name, [[maybe_unused]] WeakArray<U32> values) final
+	Error read(CString name, WeakArray<U32> values) final
 	{
-		ANKI_ASSERT(!"TODO");
+		SceneStringList tokens;
+		ANKI_CHECK(parseCurrentLine(tokens, name, values.getSize()));
+
+		U32 count = 0;
+		for(const SceneString& str : tokens)
+		{
+			ANKI_SERIALIZER_CHECK(str.toNumber(values[count++]));
+		}
+
 		return Error::kNone;
 	}
 
@@ -230,9 +258,17 @@ public:
 		return Error::kNone;
 	}
 
-	Error read([[maybe_unused]] CString name, [[maybe_unused]] WeakArray<I32> values) final
+	Error read(CString name, WeakArray<I32> values) final
 	{
-		ANKI_ASSERT(!"TODO");
+		SceneStringList tokens;
+		ANKI_CHECK(parseCurrentLine(tokens, name, values.getSize()));
+
+		U32 count = 0;
+		for(const SceneString& str : tokens)
+		{
+			ANKI_SERIALIZER_CHECK(str.toNumber(values[count++]));
+		}
+
 		return Error::kNone;
 	}
 
@@ -253,9 +289,17 @@ public:
 		return Error::kNone;
 	}
 
-	Error read([[maybe_unused]] CString name, [[maybe_unused]] WeakArray<F32> values)
+	Error read(CString name, WeakArray<F32> values)
 	{
-		ANKI_ASSERT(!"TODO");
+		SceneStringList tokens;
+		ANKI_CHECK(parseCurrentLine(tokens, name, values.getSize()));
+
+		U32 count = 0;
+		for(const SceneString& str : tokens)
+		{
+			ANKI_SERIALIZER_CHECK(str.toNumber(values[count++]));
+		}
+
 		return Error::kNone;
 	}
 
@@ -266,12 +310,26 @@ public:
 
 	Error read([[maybe_unused]] CString name, [[maybe_unused]] SceneString& value) final
 	{
-		ANKI_ASSERT(!"TODO");
+		SceneStringList tokens;
+		ANKI_CHECK(parseCurrentLine(tokens, name));
+
+		value = "";
+		for(const SceneString& str : tokens)
+		{
+			value += str;
+		}
+
 		return Error::kNone;
 	}
 
 private:
 	File& m_file;
+
+	SceneStringList m_lines;
+	SceneStringList::Iterator m_linesIt;
+	U32 m_lineno = 0;
+
+	Error parseCurrentLine(SceneStringList& tokens, CString fieldName, U32 checkTokenCount = kMaxU32);
 };
 
 } // end namespace anki

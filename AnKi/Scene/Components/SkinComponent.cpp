@@ -13,8 +13,8 @@
 
 namespace anki {
 
-SkinComponent::SkinComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+SkinComponent::SkinComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 }
 

@@ -10,19 +10,16 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
+using UiComponentDrawCallback = void (*)(UiCanvas& canvas, void* userData);
 
-using UiQueueElementDrawCallback = void (*)(UiCanvas& canvas, void* userData);
-
-/// UI scene component.
+// UI scene component.
 class UiComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(UiComponent)
 
 public:
-	UiComponent(SceneNode* node)
-		: SceneComponent(node, kClassType)
+	UiComponent(SceneNode* node, U32 uuid)
+		: SceneComponent(node, kClassType, uuid)
 	{
 	}
 
@@ -30,7 +27,7 @@ public:
 	{
 	}
 
-	void init(UiQueueElementDrawCallback callback, void* userData)
+	void init(UiComponentDrawCallback callback, void* userData)
 	{
 		ANKI_ASSERT(callback != nullptr);
 		ANKI_ASSERT(userData != nullptr);
@@ -57,7 +54,7 @@ public:
 	}
 
 private:
-	UiQueueElementDrawCallback m_drawCallback = nullptr;
+	UiComponentDrawCallback m_drawCallback = nullptr;
 	void* m_userData = nullptr;
 	Bool m_enabled = true;
 
@@ -66,6 +63,5 @@ private:
 		updated = false;
 	}
 };
-/// @}
 
 } // end namespace anki

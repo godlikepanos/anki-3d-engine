@@ -9,8 +9,8 @@
 
 namespace anki {
 
-JointComponent::JointComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+JointComponent::JointComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 	, m_node(node)
 {
 	node->setIgnoreParentTransform(true);

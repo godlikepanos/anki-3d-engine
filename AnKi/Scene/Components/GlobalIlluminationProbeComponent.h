@@ -18,7 +18,7 @@ class GlobalIlluminationProbeComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(GlobalIlluminationProbeComponent)
 
 public:
-	GlobalIlluminationProbeComponent(SceneNode* node);
+	GlobalIlluminationProbeComponent(SceneNode* node, U32 uuid);
 
 	~GlobalIlluminationProbeComponent();
 

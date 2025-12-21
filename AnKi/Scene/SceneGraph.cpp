@@ -117,6 +117,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 
 	// Init the default main camera
 	m_defaultMainCam = newSceneNode<SceneNode>("_MainCamera");
+	m_defaultMainCam->setSerialization(false);
 	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
@@ -198,7 +199,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 		// Add to list
 		m_nodes.pushBack(node);
-		++m_nodesCount;
+		++m_nodeCount;
 	}
 
 	// Re-index renamed nodes
@@ -356,8 +357,8 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		{
 			// Remove from the graph
 			m_nodes.erase(node);
-			ANKI_ASSERT(m_nodesCount > 0);
-			--m_nodesCount;
+			ANKI_ASSERT(m_nodeCount > 0);
+			--m_nodeCount;
 
 			if(m_mainCam != m_defaultMainCam && m_mainCam == node)
 			{
@@ -446,6 +447,8 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 				ctx.m_perThread[tid].m_skyboxComponent = &skyc;
 			}
 		}
+
+		return FunctorContinue::kContinue;
 	});
 
 	// Frame update
@@ -561,9 +564,24 @@ void SceneGraph::sceneNodeChangedName(SceneNode& node, CString oldName)
 	m_nodesRenamed.emplaceBack(std::pair(&node, oldName));
 }
 
+void SceneGraph::countSerializableNodes(SceneNode& root, U32& serializableNodeCount)
+{
+	if(root.getSerialization())
+	{
+		++serializableNodeCount;
+
+		root.visitChildrenMaxDepth(0, [&](SceneNode& child) {
+			countSerializableNodes(child, serializableNodeCount);
+			return FunctorContinue::kContinue;
+		});
+	}
+}
+
 Error SceneGraph::saveToTextFile(CString filename)
 {
 	ANKI_TRACE_FUNCTION();
+
+	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
 	ANKI_LOGI("Saving scene: %s", filename.cstr());
 
@@ -572,40 +590,51 @@ Error SceneGraph::saveToTextFile(CString filename)
 
 	TextSceneSerializer serializer(&file, true);
 
+	// Header
+	ANKI_CHECK(file.writeText("ANKISCEN\n"));
 	U32 version = kSceneBinaryVersion;
 	ANKI_SERIALIZE(version, 1);
 
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
-	if(serializable) \
-	{ \
-		U32 name##Count = m_componentArrays.get##name##s().getSize(); \
-		ANKI_SERIALIZE(name##Count, 1); \
-		for(SceneComponent & comp : m_componentArrays.get##name##s()) \
-		{ \
-			U32 uuid = comp.getUuid(); \
-			ANKI_SERIALIZE(uuid, 1); \
-			ANKI_CHECK(comp.serialize(serializer)); \
-		} \
-	}
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+	// Count the serializable nodes
+	U32 serializableNodeCount = 0;
+	visitNodes([&](SceneNode& node) {
+		if(node.getParent() == nullptr)
+		{
+			// Only root nodes, rest will be visited later
+			countSerializableNodes(node, serializableNodeCount);
+		}
+
+		return FunctorContinue::kContinue;
+	});
 
 	// Scene nodes
-	Error err = Error::kNone;
+	SceneNode::SerializeCommonArgs serializationArgs;
+	ANKI_ASSERT(serializableNodeCount <= m_nodeCount);
+	U32 nodeCount = serializableNodeCount;
+	ANKI_SERIALIZE(nodeCount, 1);
 
+	Error err = Error::kNone;
 	auto serializeNode = [&](SceneNode& node) -> Error {
 		SceneString className = (node.getSceneNodeRegistryRecord()) ? node.getSceneNodeRegistryRecord()->m_name : "SceneNode";
 		ANKI_SERIALIZE(className, 1);
 
-		ANKI_CHECK(node.serializeCommon(serializer));
+		U32 uuid = node.getUuid();
+		ANKI_SERIALIZE(uuid, 1);
+		SceneString name = node.m_name;
+		ANKI_SERIALIZE(name, 1);
+
+		ANKI_CHECK(node.serializeCommon(serializer, serializationArgs));
 		ANKI_CHECK(node.serialize(serializer));
+
+		--nodeCount;
 
 		return Error::kNone;
 	};
 
 	visitNodes([&](SceneNode& node) {
-		if(node.getParent() != nullptr)
+		if(node.getParent() != nullptr || !node.getSerialization())
 		{
-			// Skip non-root nodes, they will be visited later
+			// Skip non-root nodes (they will be visited later) and non-serializable nodes
 			return FunctorContinue::kContinue;
 		}
 
@@ -630,6 +659,146 @@ Error SceneGraph::saveToTextFile(CString filename)
 	{
 		return err;
 	}
+
+	ANKI_ASSERT(nodeCount == 0);
+
+	// Components
+	auto serializeComponent = [&](auto& comp) -> Error {
+		if(!serializationArgs.m_write.m_serializableComponentMask[comp.getType()].getBit(comp.getArrayIndex()))
+		{
+			return Error::kNone;
+		}
+
+		ANKI_ASSERT(comp.getSerialization());
+
+		U32 uuid = comp.getUuid();
+		ANKI_SERIALIZE(uuid, 1);
+
+		ANKI_CHECK(comp.serialize(serializer));
+
+		--serializationArgs.m_write.m_componentsToBeSerializedCount[comp.getType()];
+
+		return Error::kNone;
+	};
+
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+	if(serializable) \
+	{ \
+		U32 name##Count = serializationArgs.m_write.m_componentsToBeSerializedCount[SceneComponentType::k##name]; \
+		ANKI_SERIALIZE(name##Count, 1); \
+		for(SceneComponent & comp : m_componentArrays.get##name##s()) \
+		{ \
+			ANKI_CHECK(serializeComponent(comp)); \
+		} \
+		ANKI_ASSERT(serializationArgs.m_write.m_componentsToBeSerializedCount[SceneComponentType::k##name] == 0); \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
+	const F64 timeDiffMs = F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0;
+	ANKI_SCENE_LOGI("Saving scene finished. %fms", timeDiffMs);
+
+	return Error::kNone;
+}
+
+Error SceneGraph::loadFromTextFile(CString filename)
+{
+	ANKI_TRACE_FUNCTION();
+
+	ANKI_LOGI("Loading scene: %s", filename.cstr());
+
+	File file;
+	ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
+
+	TextSceneSerializer serializer(&file, true);
+
+	// Header
+	Array<Char, 9> magic;
+	ANKI_CHECK(file.read(magic.getBegin(), magic.getSize()));
+	if(CString("ANKISCEN\n") != magic.getBegin())
+	{
+		ANKI_LOGE("Wrong magic value");
+		return Error::kUserData;
+	}
+
+	U32 version = 0;
+	ANKI_SERIALIZE(version, 1);
+	if(version > kSceneBinaryVersion)
+	{
+		ANKI_LOGE("Wrong version number");
+		return Error::kUserData;
+	}
+
+	// Scene nodes
+	SceneNode::SerializeCommonArgs serializationArgs;
+	U32 nodeCount = 0;
+	ANKI_SERIALIZE(nodeCount, 1);
+
+	for(U32 i = 0; i < nodeCount; ++i)
+	{
+		SceneString className;
+		ANKI_SERIALIZE(className, 1);
+		U32 uuid = 0;
+		ANKI_SERIALIZE(uuid, 1);
+		SceneString name;
+		ANKI_SERIALIZE(name, 1);
+
+		SceneNode* node;
+		if(className != "SceneNode")
+		{
+			// Derived SceneNode class
+			const SceneNodeRegistryRecord& record = *static_cast<SceneNodeRegistryRecord*>(GlobalRegistry::getSingleton().findRecord(className));
+
+			void* mem = SceneMemoryPool::getSingleton().allocate(record.m_getClassSizeCallback(), ANKI_SAFE_ALIGNMENT);
+			record.m_constructCallback(mem, name);
+
+			node = static_cast<SceneNode*>(mem);
+		}
+		else
+		{
+			node = newInstance<SceneNode>(SceneMemoryPool::getSingleton(), name);
+		}
+
+		node->m_uuid = uuid;
+		ANKI_CHECK(node->serializeCommon(serializer, serializationArgs));
+		ANKI_CHECK(node->serialize(serializer));
+
+		m_nodesForRegistration.pushBack(node);
+	}
+
+	// Components
+	auto serializeComponent = [&](auto& compArray) -> Error {
+		U32 uuid;
+		ANKI_SERIALIZE(uuid, 1);
+
+		auto it2 = serializationArgs.m_read.m_sceneComponentUuidToNode.find(uuid);
+		if(it2 == serializationArgs.m_read.m_sceneComponentUuidToNode.getEnd())
+		{
+			ANKI_SCENE_LOGE("Incorrect UUID");
+			return Error::kUserData;
+		}
+		SceneNode* node = *it2;
+
+		auto it = compArray.emplace(node, uuid);
+		SceneComponent& comp = *it;
+		comp.setArrayIndex(it.getArrayIndex());
+		ANKI_CHECK(comp.serialize(serializer));
+
+		node->addComponent(&comp);
+
+		return Error::kNone;
+	};
+
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+	if(serializable) \
+	{ \
+		U32 name##Count = 0; \
+		ANKI_SERIALIZE(name##Count, 1); \
+		for(U32 i = 0; i < name##Count; ++i) \
+		{ \
+			ANKI_CHECK(serializeComponent(SceneGraph::getSingleton().getComponentArrays().get##name##s())); \
+		} \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 	return Error::kNone;
 }

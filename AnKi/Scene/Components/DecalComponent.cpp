@@ -10,8 +10,8 @@
 
 namespace anki {
 
-DecalComponent::DecalComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+DecalComponent::DecalComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	m_gpuSceneDecal.allocate();
 	setDiffuseImageFilename("EngineAssets/DefaultDecal.png");

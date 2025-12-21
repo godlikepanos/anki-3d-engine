@@ -8,16 +8,12 @@
 
 namespace anki {
 
-SceneComponent::SceneComponent([[maybe_unused]] SceneNode* node, SceneComponentType type)
-	: m_uuid(SceneGraph::getSingleton().getNewUuid())
+SceneComponent::SceneComponent([[maybe_unused]] SceneNode* node, SceneComponentType type, U32 uuid)
+	: m_uuid(uuid)
 	, m_type(U8(type))
 {
-}
-
-U32 SceneComponent::regenerateUuid()
-{
-	m_uuid = SceneGraph::getSingleton().getNewUuid();
-	return m_uuid;
+	ANKI_ASSERT(uuid);
+	ANKI_ASSERT(SceneComponentType(m_type) < SceneComponentType::kCount);
 }
 
 } // namespace anki

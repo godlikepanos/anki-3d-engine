@@ -35,21 +35,20 @@ namespace anki {
 	template<> \
 	name##Component* SceneNode::newComponent<name##Component>() \
 	{ \
-		if(hasComponent<name##Component>() && !kSceneComponentSceneNodeCanHaveMany[SceneComponentType::k##name]) \
+		if(hasComponent<name##Component>() && !kSceneComponentTypeInfos[SceneComponentType::k##name].m_sceneNodeCanHaveMany) \
 		{ \
-			ANKI_SCENE_LOGE("Can't have many %s components in scene node %s", kSceneComponentTypeName[SceneComponentType::k##name], \
+			ANKI_SCENE_LOGE("Can't have many %s components in scene node %s", kSceneComponentTypeInfos[SceneComponentType::k##name].m_name, \
 							getName().cstr()); \
 			return nullptr; \
 		} \
-		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(this); \
+		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(this, SceneGraph::getSingleton().getNewUuid()); \
 		it->setArrayIndex(it.getArrayIndex()); \
-		newComponentInternal(&(*it)); \
+		addComponent(&(*it)); \
 		return &(*it); \
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 SceneNode::SceneNode(CString name)
-	: m_uuid(SceneGraph::getSingleton().getNewUuid())
 {
 	if(name)
 	{
@@ -87,7 +86,7 @@ void SceneNode::markForDeletion()
 	});
 }
 
-void SceneNode::newComponentInternal(SceneComponent* newc)
+void SceneNode::addComponent(SceneComponent* newc)
 {
 	m_componentTypeMask |= 1 << SceneComponentTypeMask(newc->getType());
 
@@ -166,11 +165,11 @@ void SceneNode::setName(CString name)
 	SceneGraph::getSingleton().sceneNodeChangedName(*this, oldName);
 }
 
-Error SceneNode::serializeCommon(SceneSerializer& serializer)
+Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArgs& args)
 {
-	ANKI_SERIALIZE(m_uuid, 1);
-	ANKI_SERIALIZE(m_name, 1);
+	ANKI_ASSERT(m_serialize);
 
+	// Trf
 	Vec3 origin = m_ltrf.getOrigin().xyz;
 	ANKI_SERIALIZE(origin, 1);
 	m_ltrf.setOrigin(origin);
@@ -183,7 +182,20 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer)
 	ANKI_SERIALIZE(scale, 1);
 	m_ltrf.setScale(scale);
 
-	U32 componentCount = m_components.getSize();
+	// Components
+	U32 componentCount = 0;
+
+	if(serializer.isInWriteMode())
+	{
+		for(SceneComponent* comp : m_components)
+		{
+			if(comp->getSerialization())
+			{
+				++componentCount;
+			}
+		}
+	}
+
 	ANKI_SERIALIZE(componentCount, 1);
 
 	SceneDynamicArray<U32> componentUuids;
@@ -191,24 +203,46 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer)
 	{
 		for(SceneComponent* comp : m_components)
 		{
-			componentUuids.emplaceBack(comp->getUuid());
+			if(comp->getSerialization())
+			{
+				componentUuids.emplaceBack(comp->getUuid());
+
+				args.m_write.m_serializableComponentMask[comp->getType()].setBit(comp->getArrayIndex());
+				++args.m_write.m_componentsToBeSerializedCount[comp->getType()];
+			}
 		}
 	}
 	else
 	{
-		ANKI_ASSERT(!"TODO");
+		componentUuids.resize(componentCount, 0);
 	}
 
 	ANKI_SERIALIZE(componentUuids, 1);
+
+	if(serializer.isInReadMode())
+	{
+		for(U32 componentUuid : componentUuids)
+		{
+			args.m_read.m_sceneComponentUuidToNode.emplace(componentUuid, this);
+		}
+	}
 
 	// Parent
 	SceneNode* parent = getParent();
 	U32 parentUuid = (parent) ? parent->getUuid() : 0;
 	ANKI_SERIALIZE(parentUuid, 1);
 
-	if(serializer.isInReadMode())
+	if(serializer.isInReadMode() && parentUuid > 0)
 	{
-		ANKI_ASSERT(!"TODO");
+		auto it = args.m_read.m_sceneNodeUuidToNode.find(parentUuid);
+		if(it == args.m_read.m_sceneNodeUuidToNode.getEnd())
+		{
+			ANKI_SCENE_LOGE("Failed to find parent UUID: %u", parentUuid);
+			return Error::kUserData;
+		}
+
+		SceneNode* parent = *it;
+		parent->addChild(this);
 	}
 
 	return Error::kNone;

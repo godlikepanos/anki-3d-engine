@@ -47,19 +47,24 @@ public: \
 \
 private:
 
-// Component names
-inline Array<const Char*, U32(SceneComponentType::kCount)> kSceneComponentTypeName = {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) ANKI_STRINGIZE(name)
-#define ANKI_SCENE_COMPONENT_SEPARATOR ,
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+class SceneComponentTypeInfo
+{
+public:
+	const Char* m_name;
+	F32 m_weight;
+	Bool m_sceneNodeCanHaveMany;
+	Bool m_serializable;
 };
 
-// Just a flag per component
-inline Array<Bool, U32(SceneComponentType::kCount)> kSceneComponentSceneNodeCanHaveMany = {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) sceneNodeCanHaveMany
+// Component names
+inline Array<SceneComponentTypeInfo, U32(SceneComponentType::kCount)> kSceneComponentTypeInfos = {{
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+	{ \
+		ANKI_STRINGIZE(name), weight, sceneNodeCanHaveMany, serializable \
+	}
 #define ANKI_SCENE_COMPONENT_SEPARATOR ,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-};
+}};
 
 // Passed to SceneComponent::update.
 class SceneComponentUpdateInfo
@@ -100,7 +105,7 @@ private:
 class SceneComponent
 {
 public:
-	SceneComponent(SceneNode* node, SceneComponentType type);
+	SceneComponent(SceneNode* node, SceneComponentType type, U32 uuid);
 
 	virtual ~SceneComponent() = default;
 
@@ -151,7 +156,7 @@ public:
 
 	static constexpr F32 getUpdateOrderWeight(SceneComponentType type)
 	{
-		return m_updateOrderWeights[type];
+		return kSceneComponentTypeInfos[type].m_weight;
 	}
 
 	Bool updatedThisFrame() const
@@ -161,12 +166,22 @@ public:
 
 	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
 	{
+		ANKI_ASSERT(!"Not supported");
 		return Error::kNone;
 	}
 
-protected:
-	U32 regenerateUuid();
+	void setSerialization(Bool enable)
+	{
+		ANKI_ASSERT(!enable || kSceneComponentTypeInfos[m_type].m_serializable);
+		m_serialize = enable;
+	}
 
+	Bool getSerialization() const
+	{
+		return m_serialize;
+	}
+
+protected:
 	// A convenience function for components to keep tabs on other components of a SceneNode
 	template<typename TComponent>
 	static void bookkeepComponent(SceneDynamicArray<TComponent*>& arr, SceneComponent* other, Bool added, Bool& firstDirty)
@@ -219,17 +234,12 @@ protected:
 	}
 
 private:
-	Timestamp m_timestamp = 1; ///< Indicates when an update happened
-	U32 m_uuid = 0;
+	Timestamp m_timestamp = 1; // Indicates when an update happened
+	U32 m_uuid : 31 = 0;
+	U32 m_serialize : 1 = kSceneComponentTypeInfos[m_type].m_serializable;
 
 	U32 m_arrayIdx : 24 = kMaxU32 >> 8u;
-	U32 m_type : 8 = 0; ///< Cache the type ID.
-
-	static constexpr Array<F32, U32(SceneComponentType::kCount)> m_updateOrderWeights = {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) weight
-#define ANKI_SCENE_COMPONENT_SEPARATOR ,
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-	};
+	U32 m_type : 8 = 0; // Cache the type ID.
 };
 
 } // end namespace anki

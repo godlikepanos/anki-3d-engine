@@ -12,8 +12,8 @@
 
 namespace anki {
 
-ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	m_worldPos = node->getWorldTransform().getOrigin().xyz;
 	m_gpuSceneProbe.allocate();

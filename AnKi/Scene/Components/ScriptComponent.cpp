@@ -12,8 +12,8 @@
 
 namespace anki {
 
-ScriptComponent::ScriptComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+ScriptComponent::ScriptComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	ANKI_ASSERT(node);
 }

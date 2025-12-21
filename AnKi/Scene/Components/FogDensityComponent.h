@@ -12,10 +12,6 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// @memberof FogDensityComponent
 enum class FogDensityComponentShape : U8
 {
 	kSphere,
@@ -23,7 +19,7 @@ enum class FogDensityComponentShape : U8
 	kCount
 };
 
-/// Fog density component. Controls the fog density.
+// Fog density component. Controls the fog density.
 class FogDensityComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(FogDensityComponent)
@@ -31,7 +27,7 @@ class FogDensityComponent : public SceneComponent
 public:
 	static constexpr F32 kMinShapeSize = 1.0_cm;
 
-	FogDensityComponent(SceneNode* node);
+	FogDensityComponent(SceneNode* node, U32 uuid);
 
 	~FogDensityComponent();
 

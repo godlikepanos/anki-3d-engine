@@ -28,9 +28,55 @@ Error SceneSerializer::write(CString name, ConstWeakArray<F64> values)
 	return write(name, arr);
 }
 
-Error SceneSerializer::read([[maybe_unused]] CString name, [[maybe_unused]] WeakArray<F64> values)
+Error SceneSerializer::read(CString name, WeakArray<F64> values)
 {
-	ANKI_ASSERT(!"TODO");
+	Array<F32, 32> tmpArray;
+	WeakArray<F32> arr;
+	if(values.getSize() < tmpArray.getSize())
+	{
+		arr = {tmpArray.getBegin(), values.getSize()};
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
+
+	return read(name, arr);
+}
+
+Error TextSceneSerializer::parseCurrentLine(SceneStringList& tokens, CString fieldName, U32 checkTokenCount)
+{
+	if(m_linesIt == m_lines.getEnd())
+	{
+		ANKI_SERIALIZER_LOGE("Can't read next line");
+		return Error::kUserData;
+	}
+
+	const SceneString& line = *m_linesIt;
+	tokens.splitString(line, ' ');
+	if(tokens.getSize() == 0)
+	{
+		ANKI_SERIALIZER_LOGE("Line empty");
+		return Error::kUserData;
+	}
+
+	if(*tokens.getBegin() != fieldName)
+	{
+		ANKI_SERIALIZER_LOGE("Wrong token. Got: %s, expecting: %s", tokens.getBegin()->cstr(), fieldName.cstr());
+		return Error::kUserData;
+	}
+
+	tokens.popFront();
+
+	if(checkTokenCount < kMaxU32 && tokens.getSize() != checkTokenCount)
+	{
+		ANKI_SERIALIZER_LOGE("Incorrect number of tokens");
+		return Error::kUserData;
+	}
+
+	++m_linesIt;
+	++m_lineno;
+
 	return Error::kNone;
 }
 

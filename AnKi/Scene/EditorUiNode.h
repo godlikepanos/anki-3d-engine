@@ -16,18 +16,7 @@ class EditorUiNode : public SceneNode
 public:
 	EditorUi m_editorUi;
 
-	EditorUiNode(CString name)
-		: SceneNode(name)
-	{
-		UiComponent* uic = newComponent<UiComponent>();
-		uic->init(
-			[](UiCanvas& canvas, void* ud) {
-				static_cast<EditorUiNode*>(ud)->m_editorUi.draw(canvas);
-			},
-			this);
-
-		uic->setEnabled(g_cvarCoreShowEditor);
-	}
+	EditorUiNode(CString name);
 
 private:
 	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override;

@@ -14,8 +14,8 @@
 
 namespace anki {
 
-GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* node)
-	: SceneComponent(node, kClassType)
+GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* node, U32 uuid)
+	: SceneComponent(node, kClassType, uuid)
 {
 	m_gpuSceneProbe.allocate();
 

@@ -87,7 +87,7 @@ public:
 
 	U32 getSceneNodesCount() const
 	{
-		return m_nodesCount;
+		return m_nodeCount;
 	}
 
 	EventManager& getEventManager()
@@ -126,6 +126,7 @@ public:
 	TNode* newSceneNode(CString name)
 	{
 		TNode* node = newInstance<TNode>(SceneMemoryPool::getSingleton(), name);
+		node->m_uuid = getNewUuid();
 		LockGuard lock(m_nodesForRegistrationMtx);
 		m_nodesForRegistration.pushBack(node);
 		return node;
@@ -178,6 +179,8 @@ public:
 
 	Error saveToTextFile(CString filename);
 
+	Error loadFromTextFile(CString filename);
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -195,7 +198,7 @@ private:
 	mutable StackMemoryPool m_framePool;
 
 	IntrusiveList<SceneNode> m_nodes;
-	U32 m_nodesCount = 0;
+	U32 m_nodeCount = 0;
 	GrHashMap<CString, SceneNode*> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
@@ -230,6 +233,8 @@ private:
 	void updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx);
 
 	void sceneNodeChangedName(SceneNode& node, CString oldName);
+
+	static void countSerializableNodes(SceneNode& root, U32& serializableNodeCount);
 };
 
 } // end namespace anki

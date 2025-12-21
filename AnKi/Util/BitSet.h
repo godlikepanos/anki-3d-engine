@@ -11,26 +11,23 @@
 
 namespace anki {
 
-/// @addtogroup util_containers
-/// @{
-
-/// Easy bit manipulation.
-/// @tparam kBitCount The number of bits.
-/// @tparam TChunkType The type of the chunks that the bitset consists. By default it's U8.
+// Easy bit manipulation.
+// kBitCount: The number of bits.
+// TChunkType: The type of the chunks that the bitset consists. By default it's U8.
 template<U32 kBitCount, typename TChunkType = U8>
 class BitSet
 {
 private:
 	using ChunkType = TChunkType;
 
-	/// Number of bits a chunk holds.
+	// Number of bits a chunk holds.
 	static constexpr U32 kChunkBitCount = sizeof(ChunkType) * 8;
 
-	/// Number of chunks.
+	// Number of chunks.
 	static constexpr U32 kChunkCount = (kBitCount + (kChunkBitCount - 1)) / kChunkBitCount;
 
 public:
-	/// Constructor. It will set all the bits or unset them.
+	// Constructor. It will set all the bits or unset them.
 	BitSet(Bool set)
 	{
 		ANKI_ASSERT(set == 0 || set == 1);
@@ -44,20 +41,20 @@ public:
 		}
 	}
 
-	/// Copy.
+	// Copy.
 	BitSet(const BitSet& b)
 		: m_chunks(b.m_chunks)
 	{
 	}
 
-	/// Copy.
+	// Copy.
 	BitSet& operator=(const BitSet& b)
 	{
 		m_chunks = b.m_chunks;
 		return *this;
 	}
 
-	/// Bitwise or between this and @a b sets.
+	// Bitwise or between this and @a b sets.
 	BitSet operator|(const BitSet& b) const
 	{
 		BitSet out;
@@ -68,7 +65,7 @@ public:
 		return out;
 	}
 
-	/// Bitwise or between this and @a b sets.
+	// Bitwise or between this and @a b sets.
 	BitSet& operator|=(const BitSet& b)
 	{
 		for(U32 i = 0; i < kChunkCount; ++i)
@@ -78,7 +75,7 @@ public:
 		return *this;
 	}
 
-	/// Bitwise and between this and @a b sets.
+	// Bitwise and between this and @a b sets.
 	BitSet operator&(const BitSet& b) const
 	{
 		BitSet out;
@@ -89,7 +86,7 @@ public:
 		return out;
 	}
 
-	/// Bitwise and between this and @a b sets.
+	// Bitwise and between this and @a b sets.
 	BitSet& operator&=(const BitSet& b)
 	{
 		for(U32 i = 0; i < kChunkCount; ++i)
@@ -99,7 +96,7 @@ public:
 		return *this;
 	}
 
-	/// Bitwise xor between this and @a b sets.
+	// Bitwise xor between this and @a b sets.
 	BitSet operator^(const BitSet& b) const
 	{
 		BitSet out;
@@ -110,7 +107,7 @@ public:
 		return out;
 	}
 
-	/// Bitwise xor between this and @a b sets.
+	// Bitwise xor between this and @a b sets.
 	BitSet& operator^=(const BitSet& b)
 	{
 		for(U32 i = 0; i < kChunkCount; ++i)
@@ -120,7 +117,7 @@ public:
 		return *this;
 	}
 
-	/// Bitwise not of self.
+	// Bitwise not of self.
 	BitSet operator~() const
 	{
 		BitSet out;
@@ -157,7 +154,7 @@ public:
 		return getAnySet();
 	}
 
-	/// Set or unset a bit at the given position.
+	// Set or unset a bit at the given position.
 	template<typename TInt>
 	BitSet& set(TInt pos, Bool setBit = true)
 	{
@@ -168,7 +165,7 @@ public:
 		return *this;
 	}
 
-	/// Set multiple bits.
+	// Set multiple bits.
 	template<typename TInt>
 	BitSet& set(std::initializer_list<TInt> list, Bool setBits = true)
 	{
@@ -179,7 +176,7 @@ public:
 		return *this;
 	}
 
-	/// Set all bits.
+	// Set all bits.
 	BitSet& setAll()
 	{
 		memset(&m_chunks[0], 0xFF, sizeof(m_chunks));
@@ -187,28 +184,28 @@ public:
 		return *this;
 	}
 
-	/// Unset a bit (set to zero) at the given position.
+	// Unset a bit (set to zero) at the given position.
 	template<typename TInt>
 	BitSet& unset(TInt pos)
 	{
 		return set(pos, false);
 	}
 
-	/// Unset multiple bits.
+	// Unset multiple bits.
 	template<typename TInt>
 	BitSet& unset(std::initializer_list<TInt> list)
 	{
 		return set(list, false);
 	}
 
-	/// Unset all bits.
+	// Unset all bits.
 	BitSet& unsetAll()
 	{
 		memset(&m_chunks[0], 0, sizeof(m_chunks));
 		return *this;
 	}
 
-	/// Flip the bits at the given position. It will go from 1 to 0 or from 0 to 1.
+	// Flip the bits at the given position. It will go from 1 to 0 or from 0 to 1.
 	template<typename TInt>
 	BitSet& flip(TInt pos)
 	{
@@ -219,7 +216,7 @@ public:
 		return *this;
 	}
 
-	/// Return true if the bit is set or false if it's not.
+	// Return true if the bit is set or false if it's not.
 	template<typename TInt>
 	Bool get(TInt pos) const
 	{
@@ -229,14 +226,14 @@ public:
 		return (m_chunks[high] & mask) != 0;
 	}
 
-	/// Any are enabled.
+	// Any are enabled.
 	Bool getAnySet() const
 	{
 		const BitSet kZero(false);
 		return *this != kZero;
 	}
 
-	/// Count bits.
+	// Count bits.
 	U32 getSetBitCount() const
 	{
 		U32 count = 0;
@@ -247,7 +244,7 @@ public:
 		return count;
 	}
 
-	/// Get the most significant bit that is enabled. Or kMaxU32 if all is zero.
+	// Get the most significant bit that is enabled. Or kMaxU32 if all is zero.
 	U32 getMostSignificantBit() const
 	{
 		U32 i = kChunkCount;
@@ -264,7 +261,7 @@ public:
 		return kMaxU32;
 	}
 
-	/// Get the least significant bit that is enabled. Or kMaxU32 if all is zero.
+	// Get the least significant bit that is enabled. Or kMaxU32 if all is zero.
 	U32 getLeastSignificantBit() const
 	{
 		for(U32 i = 0; i < kChunkCount; ++i)
@@ -285,7 +282,7 @@ public:
 		return m_chunks;
 	}
 
-	/// Unset the N least significant bits of the bitset.
+	// Unset the N least significant bits of the bitset.
 	BitSet& unsetNLeastSignificantBits(U32 n)
 	{
 		ANKI_ASSERT(n);
@@ -323,7 +320,7 @@ private:
 		ANKI_ASSERT(low < kChunkBitCount);
 	}
 
-	/// Zero the unused bits.
+	// Zero the unused bits.
 	void zeroUnusedBits()
 	{
 		constexpr ChunkType kUnusedBits = kChunkCount * kChunkBitCount - kBitCount;
@@ -334,6 +331,5 @@ private:
 		}
 	}
 };
-/// @}
 
 } // end namespace anki

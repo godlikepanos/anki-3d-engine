@@ -19,7 +19,7 @@ class CameraComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(CameraComponent)
 
 public:
-	CameraComponent(SceneNode* node);
+	CameraComponent(SceneNode* node, U32 uuid);
 
 	~CameraComponent();
 
