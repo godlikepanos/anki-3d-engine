@@ -14,6 +14,7 @@ SceneComponent::SceneComponent([[maybe_unused]] SceneNode* node, SceneComponentT
 {
 	ANKI_ASSERT(uuid);
 	ANKI_ASSERT(SceneComponentType(m_type) < SceneComponentType::kCount);
+	m_serialize = kSceneComponentTypeInfos[m_type].m_serializable;
 }
 
 } // namespace anki

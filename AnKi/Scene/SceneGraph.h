@@ -177,9 +177,9 @@ public:
 		m_checkForResourceUpdates = enable;
 	}
 
-	Error saveToTextFile(CString filename);
+	Error saveToFile(CString filename);
 
-	Error loadFromTextFile(CString filename);
+	Error loadFromFile(CString filename);
 
 private:
 	class UpdateSceneNodesCtx;

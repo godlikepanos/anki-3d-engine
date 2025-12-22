@@ -11,7 +11,10 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/FileSystem.h>
 #include <AnKi/Core/App.h>
+#include <AnKi/Resource/ScriptResource.h>
+#include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Scene/StatsUiNode.h>
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
 #include <AnKi/Scene/EditorUiNode.h>
@@ -536,7 +539,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 const SceneNode& SceneGraph::getActiveCameraNode() const
 {
 	ANKI_ASSERT(m_mainCam);
-	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()))
+	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()) && !g_cvarCoreShowEditor)
 	{
 		return *m_mainCam;
 	}
@@ -577,7 +580,7 @@ void SceneGraph::countSerializableNodes(SceneNode& root, U32& serializableNodeCo
 	}
 }
 
-Error SceneGraph::saveToTextFile(CString filename)
+Error SceneGraph::saveToFile(CString filename)
 {
 	ANKI_TRACE_FUNCTION();
 
@@ -588,10 +591,11 @@ Error SceneGraph::saveToTextFile(CString filename)
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
 
-	TextSceneSerializer serializer(&file, true);
+	TextSceneSerializer serializer(&file);
 
 	// Header
-	ANKI_CHECK(file.writeText("ANKISCEN\n"));
+	SceneString magic = "ANKISCEN";
+	ANKI_SERIALIZE(magic, 1);
 	U32 version = kSceneBinaryVersion;
 	ANKI_SERIALIZE(version, 1);
 
@@ -700,21 +704,36 @@ Error SceneGraph::saveToTextFile(CString filename)
 	return Error::kNone;
 }
 
-Error SceneGraph::loadFromTextFile(CString filename)
+Error SceneGraph::loadFromFile(CString filename)
 {
 	ANKI_TRACE_FUNCTION();
 
+	const U64 begin = HighRezTimer::getCurrentTimeUs();
+
 	ANKI_LOGI("Loading scene: %s", filename.cstr());
 
-	File file;
-	ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
+	String extension;
+	getFilepathExtension(filename, extension);
 
-	TextSceneSerializer serializer(&file, true);
+	if(extension == "lua")
+	{
+		ScriptResourcePtr script;
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, script));
+		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
+
+		ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
+		return Error::kNone;
+	}
+
+	ResourceFilePtr file;
+	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, file));
+
+	TextSceneSerializer serializer(file.get());
 
 	// Header
-	Array<Char, 9> magic;
-	ANKI_CHECK(file.read(magic.getBegin(), magic.getSize()));
-	if(CString("ANKISCEN\n") != magic.getBegin())
+	SceneString magic;
+	ANKI_SERIALIZE(magic, 1);
+	if(magic != "ANKISCEN")
 	{
 		ANKI_LOGE("Wrong magic value");
 		return Error::kUserData;
@@ -800,6 +819,7 @@ Error SceneGraph::loadFromTextFile(CString filename)
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
+	ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 	return Error::kNone;
 }
 

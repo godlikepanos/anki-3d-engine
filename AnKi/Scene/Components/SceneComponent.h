@@ -172,13 +172,17 @@ public:
 
 	void setSerialization(Bool enable)
 	{
-		ANKI_ASSERT(!enable || kSceneComponentTypeInfos[m_type].m_serializable);
-		m_serialize = enable;
+		if(ANKI_EXPECT(!enable || kSceneComponentTypeInfos[m_type].m_serializable))
+		{
+			m_serialize = enable;
+		}
 	}
 
 	Bool getSerialization() const
 	{
-		return m_serialize;
+		const Bool serialize = m_serialize;
+		ANKI_ASSERT(!serialize || kSceneComponentTypeInfos[m_type].m_serializable);
+		return serialize;
 	}
 
 protected:
@@ -236,7 +240,7 @@ protected:
 private:
 	Timestamp m_timestamp = 1; // Indicates when an update happened
 	U32 m_uuid : 31 = 0;
-	U32 m_serialize : 1 = kSceneComponentTypeInfos[m_type].m_serializable;
+	U32 m_serialize : 1 = false;
 
 	U32 m_arrayIdx : 24 = kMaxU32 >> 8u;
 	U32 m_type : 8 = 0; // Cache the type ID.

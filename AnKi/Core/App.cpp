@@ -398,9 +398,7 @@ Error App::mainLoop()
 	if(CString(g_cvarCoreStartupScene) != "")
 	{
 		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreStartupScene).cstr());
-		ScriptResourcePtr script;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(g_cvarCoreStartupScene, script));
-		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
+		ANKI_CHECK(SceneGraph::getSingleton().loadFromFile(g_cvarCoreStartupScene));
 	}
 
 	// Continue with the main loop

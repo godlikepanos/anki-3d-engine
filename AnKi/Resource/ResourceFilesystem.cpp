@@ -293,9 +293,26 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
 	ResourceStringList filenameList;
-	constexpr CString extension(".ankizip");
+	constexpr CString archiveExtension(".ankizip");
+	constexpr CString allowedExtensions[] = {".ankiprog", ".ankiprogbin", ".ankitex", ".ankimtl", ".ankimesh", ".ankiskel", ".ankianim", ".ankiscene",
+											 ".ankipart", ".png",         ".jpg",     ".jpeg",    ".tga",      ".lua",      ".ttf"};
 
 	auto includePath = [&](CString p) -> Bool {
+		Bool extensionGood = false;
+		for(CString allowedExtension : allowedExtensions)
+		{
+			if(p.find(allowedExtension) != CString::kNpos)
+			{
+				extensionGood = true;
+				break;
+			}
+		}
+
+		if(!extensionGood)
+		{
+			return false;
+		}
+
 		for(const ResourceString& s : excludedStrings)
 		{
 			const Bool found = p.find(s) != CString::kNpos;
@@ -324,7 +341,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 
 	PtrSize pos;
 	Path path;
-	if((pos = filepath.find(extension)) != CString::kNpos && pos == filepath.getLength() - extension.getLength())
+	if((pos = filepath.find(archiveExtension)) != CString::kNpos && pos == filepath.getLength() - archiveExtension.getLength())
 	{
 		// It's an archive
 

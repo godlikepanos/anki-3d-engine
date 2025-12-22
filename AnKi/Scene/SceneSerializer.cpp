@@ -46,13 +46,13 @@ Error SceneSerializer::read(CString name, WeakArray<F64> values)
 
 Error TextSceneSerializer::parseCurrentLine(SceneStringList& tokens, CString fieldName, U32 checkTokenCount)
 {
-	if(m_linesIt == m_lines.getEnd())
+	if(m_read.m_linesIt == m_read.m_lines.getEnd())
 	{
 		ANKI_SERIALIZER_LOGE("Can't read next line");
 		return Error::kUserData;
 	}
 
-	const SceneString& line = *m_linesIt;
+	const SceneString& line = *m_read.m_linesIt;
 	tokens.splitString(line, ' ');
 	if(tokens.getSize() == 0)
 	{
@@ -74,8 +74,8 @@ Error TextSceneSerializer::parseCurrentLine(SceneStringList& tokens, CString fie
 		return Error::kUserData;
 	}
 
-	++m_linesIt;
-	++m_lineno;
+	++m_read.m_linesIt;
+	++m_read.m_lineno;
 
 	return Error::kNone;
 }

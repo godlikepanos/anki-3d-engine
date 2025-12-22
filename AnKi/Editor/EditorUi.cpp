@@ -432,7 +432,7 @@ void EditorUi::mainMenu()
 		{
 			if(ImGui::Button(ICON_MDI_CONTENT_SAVE_ALL))
 			{
-				if(SceneGraph::getSingleton().saveToTextFile("./scene.ankiscene"))
+				if(SceneGraph::getSingleton().saveToFile("./Scene.ankiscene"))
 				{
 					ANKI_LOGE("Failed to save scene");
 				}
