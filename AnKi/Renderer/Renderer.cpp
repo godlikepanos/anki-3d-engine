@@ -35,7 +35,6 @@
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
-#include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/TemporalUpscaler.h>
@@ -47,7 +46,6 @@
 #include <AnKi/Renderer/MotionBlur.h>
 #include <AnKi/Renderer/RtMaterialFetchDbg.h>
 #include <AnKi/Renderer/Reflections.h>
-#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/GpuParticles.h>
@@ -323,80 +321,76 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	return Error::kNone;
 }
 
-Error Renderer::populateRenderGraph(RenderingContext& ctx)
+Error Renderer::populateRenderGraph()
 {
 	// Import RTs first
-	m_bloom2->importRenderTargets(ctx);
-	m_tonemapping->importRenderTargets(ctx);
-	m_vrsSriGeneration->importRenderTargets(ctx);
-	m_gbuffer->importRenderTargets(ctx);
+	m_bloom2->importRenderTargets();
+	m_tonemapping->importRenderTargets();
+	m_vrsSriGeneration->importRenderTargets();
+	m_gbuffer->importRenderTargets();
 
 	// Populate render graph. WARNING Watch the order
-	gpuSceneCopy(ctx);
-	m_primaryNonRenderableVisibility->populateRenderGraph(ctx);
+	gpuSceneCopy();
+	m_primaryNonRenderableVisibility->populateRenderGraph();
 	if(m_accelerationStructureBuilder)
 	{
-		m_accelerationStructureBuilder->populateRenderGraph(ctx);
+		m_accelerationStructureBuilder->populateRenderGraph();
 	}
-	m_gbuffer->populateRenderGraph(ctx);
-	m_gpuParticles->populateRenderGraph(ctx);
-	m_motionVectors->populateRenderGraph(ctx);
-	m_historyLength->populateRenderGraph(ctx);
-	m_depthDownscale->populateRenderGraph(ctx);
-	m_shadowMapping->populateRenderGraph(ctx);
-	m_clusterBinning2->populateRenderGraph(ctx);
-	m_generatedSky->populateRenderGraph(ctx);
+	m_gbuffer->populateRenderGraph();
+	m_gpuParticles->populateRenderGraph();
+	m_motionVectors->populateRenderGraph();
+	m_historyLength->populateRenderGraph();
+	m_depthDownscale->populateRenderGraph();
+	m_shadowMapping->populateRenderGraph();
+	m_clusterBinning2->populateRenderGraph();
+	m_generatedSky->populateRenderGraph();
 	if(m_indirectDiffuseProbes)
 	{
-		m_indirectDiffuseProbes->populateRenderGraph(ctx);
+		m_indirectDiffuseProbes->populateRenderGraph();
 	}
 	if(m_indirectDiffuseClipmaps)
 	{
-		m_indirectDiffuseClipmaps->populateRenderGraph(ctx);
+		m_indirectDiffuseClipmaps->populateRenderGraph();
 	}
-	m_probeReflections->populateRenderGraph(ctx);
-	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
-	m_gbufferPost->populateRenderGraph(ctx);
-	if(m_rtShadows)
-	{
-		m_rtShadows->populateRenderGraph(ctx);
-	}
+	m_probeReflections->populateRenderGraph();
+	m_volumetricLightingAccumulation->populateRenderGraph();
+	m_gbufferPost->populateRenderGraph();
 	if(m_rtMaterialFetchDbg)
 	{
-		m_rtMaterialFetchDbg->populateRenderGraph(ctx);
+		m_rtMaterialFetchDbg->populateRenderGraph();
 	}
-	m_indirectDiffuse->populateRenderGraph(ctx);
-	m_reflections->populateRenderGraph(ctx);
-	m_shadowmapsResolve->populateRenderGraph(ctx);
-	m_volumetricFog->populateRenderGraph(ctx);
-	m_lensFlare->populateRenderGraph(ctx);
-	m_ssao->populateRenderGraph(ctx);
-	m_forwardShading->populateRenderGraph(ctx); // This may feel out of place but it's only visibility. Keep it just before light shading
-	m_lightShading->populateRenderGraph(ctx);
+	m_reflections->populateRenderGraph();
+	m_shadowmapsResolve->populateRenderGraph();
+	m_volumetricFog->populateRenderGraph();
+	m_lensFlare->populateRenderGraph();
+	m_ssao->populateRenderGraph();
+	m_forwardShading->populateRenderGraph(); // This may feel out of place but it's only visibility. Keep it just before light shading
+	m_lightShading->populateRenderGraph();
 	if(getTemporalUpscaler().getEnabled())
 	{
-		m_temporalUpscaler->populateRenderGraph(ctx);
+		m_temporalUpscaler->populateRenderGraph();
 	}
 	else
 	{
-		m_temporalAA->populateRenderGraph(ctx);
+		m_temporalAA->populateRenderGraph();
 	}
-	m_vrsSriGeneration->populateRenderGraph(ctx);
-	m_tonemapping->populateRenderGraph(ctx);
-	m_motionBlur->populateRenderGraph(ctx);
-	m_bloom2->populateRenderGraph(ctx);
-	m_dbg->populateRenderGraph(ctx);
-	m_uiStage->populateRenderGraph(ctx);
+	m_vrsSriGeneration->populateRenderGraph();
+	m_tonemapping->populateRenderGraph();
+	m_motionBlur->populateRenderGraph();
+	m_bloom2->populateRenderGraph();
+	m_dbg->populateRenderGraph();
+	m_uiStage->populateRenderGraph();
 
-	m_finalComposite->populateRenderGraph(ctx);
+	m_finalComposite->populateRenderGraph();
 
 	return Error::kNone;
 }
 
-void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& outConsts)
+void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 {
 	ANKI_TRACE_SCOPED_EVENT(RWriteGlobalRendererConstants);
 
+	RenderingContext& ctx = getRenderingContext();
 	GlobalRendererConstants consts;
 	memset(&consts, 0, sizeof(consts));
 
@@ -779,9 +773,9 @@ Format Renderer::getDepthNoStencilFormat() const
 	}
 }
 
-void Renderer::gpuSceneCopy(RenderingContext& ctx)
+void Renderer::gpuSceneCopy()
 {
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	m_runCtx.m_gpuSceneHandle =
 		rgraph.importBuffer(GpuSceneBuffer::getSingleton().getBufferView(), GpuSceneBuffer::getSingleton().getBuffer().getBufferUsage());
@@ -835,7 +829,12 @@ Error Renderer::render()
 
 	m_uiStage->buildUi();
 
-	RenderingContext ctx(&m_framePool);
+	m_runCtx.m_currentCtx = newInstance<RenderingContext>(m_framePool, &m_framePool);
+	ANKI_DEFER({
+		deleteInstance(m_framePool, m_runCtx.m_currentCtx);
+		m_runCtx = {};
+	});
+	RenderingContext& ctx = *m_runCtx.m_currentCtx;
 	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
 
 #if ANKI_STATS_ENABLED
@@ -885,7 +884,7 @@ Error Renderer::render()
 		ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocate(sizeof(*globalConsts), alignment, globalConsts);
 	}
 
-	ANKI_CHECK(populateRenderGraph(ctx));
+	ANKI_CHECK(populateRenderGraph());
 
 	// Blit renderer's result to swapchain
 	if(!ctx.m_swapchainRenderTarget.isValid())
@@ -932,7 +931,7 @@ Error Renderer::render()
 		pass.newTextureDependency(ctx.m_swapchainRenderTarget, TextureUsageBit::kPresent);
 	}
 
-	writeGlobalRendererConstants(ctx, *globalConsts);
+	writeGlobalRendererConstants(*globalConsts);
 
 	// Bake the render graph
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);

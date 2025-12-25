@@ -6,9 +6,12 @@
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/DepthDownscale.h>
+#include <AnKi/Renderer/VolumetricLightingAccumulation.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
@@ -27,12 +30,15 @@ Error RenderableDrawer::init()
 	return Error::kNone;
 }
 
-void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
+void RenderableDrawer::setState(const RenderableDrawerArguments& args, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
 	// Allocate, set and bind global uniforms
+	BufferView globalConstantsToken;
 	{
 		MaterialGlobalConstants* globalConstants;
-		const BufferView globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateConstantBuffer(globalConstants);
+		globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateConstantBuffer(globalConstants);
 
 		globalConstants->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
 		globalConstants->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
@@ -43,55 +49,18 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 
 		ANKI_ASSERT(args.m_viewport != UVec4(0u));
 		globalConstants->m_viewport = Vec4(args.m_viewport);
-
-		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_GLOBAL_CONSTANTS, 0, globalConstantsToken);
 	}
 
-	// More globals
-	cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, args.m_sampler);
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
-
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
-	cmdb.bindSrv( \
-		reg, 0, \
-		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
-				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
-		Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
-
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
-	if(args.m_mesh.m_meshletInstancesBuffer)
-	{
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESHLET_INSTANCES, 0, args.m_mesh.m_meshletInstancesBuffer);
-	}
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_RENDERABLES, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
-	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS2, 0, GpuSceneArrays::ParticleEmitter2::getSingleton().getBufferViewSafe());
-
-	cmdb.bindSampler(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	if(args.m_legacy.m_perDrawBuffer)
-	{
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PER_DRAW, 0, args.m_legacy.m_perDrawBuffer);
-	}
-
-	if(args.m_mesh.m_firstMeshletBuffer)
-	{
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_FIRST_MESHLET, 0, args.m_mesh.m_firstMeshletBuffer);
-	}
-
-	if(args.m_legacy.m_firstPerDrawBuffer)
-	{
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PER_DRAW_OFFSET, 0, args.m_legacy.m_firstPerDrawBuffer);
-	}
+	// Space 0 globals
+	const Bool bForwardShading = args.m_renderingTechinuqe == RenderingTechnique::kForward;
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
 	// Misc
 	cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);
 }
 
-void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
+void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(DrawMdi);
 	ANKI_ASSERT(args.m_viewport != UVec4(0u));
@@ -100,6 +69,8 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	{
 		return;
 	}
+
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 #if ANKI_STATS_ENABLED
 	PipelineQueryPtr pplineQuery;
@@ -115,7 +86,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	}
 #endif
 
-	setState(args, cmdb);
+	setState(args, rgraphCtx);
 
 	const Bool meshShaderHwSupport = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
 

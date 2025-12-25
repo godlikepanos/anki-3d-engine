@@ -25,7 +25,6 @@ struct GpuSceneRenderable
 	U32 m_meshLodsIndex; // Points to the array of GpuSceneMeshLod. kMaxLodCount are reserved for each renderable.
 	U32 m_boneTransformsOffset; // Array of Mat3x4 or 0 if its not a skin.
 	U32 m_particleEmitterIndex2; // Index to the GpuSceneParticleEmitter2 array or kMaxU32 if it's not an emitter.
-	U32 m_rtShadowsShaderHandleIndex; // The index of the shader handle in the array of library's handles.
 	U32 m_rtMaterialFetchShaderHandleIndex; // The index of the shader handle in the array of library's handles.
 	U32 m_uuid; // A UUID specific for this renderable. Not related to the scene object
 	U32 m_sceneNodeUuid;
@@ -115,6 +114,38 @@ struct GpuSceneParticleEmitter2
 	U32 m_padding2;
 };
 static_assert(sizeof(GpuSceneParticleEmitter2) % sizeof(Vec4) == 0);
+
+enum class GpuSceneSkyboxType : U32
+{
+	kSolidColor,
+	kTexture,
+	kGenerated,
+
+	kCount,
+	kFirst
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneSkyboxType)
+
+struct GpuSceneSkybox
+{
+	Vec3 m_skyColor ANKI_CPP_CODE(= Vec3(0.0f, 0.0f, 0.5f));
+	GpuSceneSkyboxType m_type ANKI_CPP_CODE(= GpuSceneSkyboxType::kSolidColor);
+
+	Vec3 m_skyColorScale ANKI_CPP_CODE(= Vec3(1.0f));
+	U32 m_skyTexture ANKI_CPP_CODE(= 0u);
+
+	Vec3 m_skyColorBias ANKI_CPP_CODE(= Vec3(0.0f));
+	F32 m_fogScatteringCoeff ANKI_CPP_CODE(= 0.01f);
+
+	F32 m_fogMinDensity ANKI_CPP_CODE(= 0.0f);
+	F32 m_fogMaxDensity ANKI_CPP_CODE(= 0.9f);
+	F32 m_fogHeightOfMinDensity ANKI_CPP_CODE(= 20.0f); // The height (meters) where fog density is max.
+	F32 m_fogHeightOfMaxDensity ANKI_CPP_CODE(= 0.0f); // The height (meters) where fog density is the min value.
+
+	Vec3 m_fogColor ANKI_CPP_CODE(= Vec3(1.0f));
+	F32 m_fogAbsorptionCoeff ANKI_CPP_CODE(= 0.02f);
+};
+static_assert(sizeof(GpuSceneSkybox) % sizeof(Vec4) == 0);
 
 // A hash of all visible renderables. If it matches between vis tests then skip the drawcalls. Touched only by the GPU.
 struct GpuSceneLightVisibleRenderablesHash

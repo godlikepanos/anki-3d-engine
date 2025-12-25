@@ -182,6 +182,7 @@ private:
 	void jointComponent(JointComponent& comp);
 	void bodyComponent(BodyComponent& comp);
 	void decalComponent(DecalComponent& comp);
+	void cameraComponent(CameraComponent& comp);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils

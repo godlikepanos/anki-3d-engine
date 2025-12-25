@@ -9,20 +9,17 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Tonemapping.
+// Tonemapping.
 class Tonemapping : public RendererObject
 {
 public:
 	Error init();
 
-	void importRenderTargets(RenderingContext& ctx);
+	void importRenderTargets();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
-	/// @copydoc m_exposureAndAvgLuminance1x1
+	// See m_exposureAndAvgLuminance1x1
 	RenderTargetHandle getExposureAndAvgLuminanceRt() const
 	{
 		return m_runCtx.m_exposureLuminanceHandle;
@@ -41,8 +38,8 @@ private:
 		ShaderProgramPtr m_grProg;
 		U32 m_inputTexMip;
 
-		/// This is a 1x1 2 component texture where R is the exposure and G the average luminance. It's not tracked in
-		/// rendergraph depedencies. We don't care to track it because it affects the eye adaptation.
+		// This is a 1x1 2 component texture where R is the exposure and G the average luminance. It's not tracked in
+		// rendergraph depedencies. We don't care to track it because it affects the eye adaptation.
 		TexturePtr m_exposureAndAvgLuminance1x1;
 	} m_expAndAvgLum;
 
@@ -64,6 +61,5 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

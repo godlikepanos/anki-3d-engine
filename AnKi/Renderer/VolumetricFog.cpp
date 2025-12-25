@@ -38,10 +38,10 @@ Error VolumetricFog::init()
 	return Error::kNone;
 }
 
-void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
+void VolumetricFog::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(VolumetricFog);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
@@ -50,7 +50,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSrvCompute);
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(VolumetricFog);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -67,8 +67,8 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 		consts.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
 		consts.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
 		consts.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;
-		consts.m_near = ctx.m_matrices.m_near;
-		consts.m_far = ctx.m_matrices.m_far;
+		consts.m_near = getRenderingContext().m_matrices.m_near;
+		consts.m_far = getRenderingContext().m_matrices.m_far;
 		consts.m_zSplitCountf = F32(getRenderer().getZSplitCount());
 		consts.m_volumeSize = UVec3(m_volumeSize);
 		consts.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);

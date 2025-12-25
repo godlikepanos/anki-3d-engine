@@ -35,7 +35,7 @@ Error LensFlare::initInternal()
 	return Error::kNone;
 }
 
-void LensFlare::populateRenderGraph(RenderingContext& ctx)
+void LensFlare::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(LensFlare);
 	const U32 flareCount = SceneGraph::getSingleton().getComponentArrays().getLensFlares().getSize();
@@ -45,7 +45,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// Create indirect buffer
 	m_runCtx.m_indirectBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DrawIndirectArgs>(flareCount);
@@ -57,7 +57,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kUavCompute);
 	rpass.newTextureDependency(getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute, DepthDownscale::kEighthInternalResolution);
 
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(LensFlare);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -66,7 +66,8 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_updateIndirectBuffGrProg.get());
 
-		cmdb.setFastConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
+		cmdb.setFastConstants(&getRenderingContext().m_matrices.m_viewProjectionJitter,
+							  sizeof(getRenderingContext().m_matrices.m_viewProjectionJitter));
 
 		// Write flare info
 		WeakArray<Vec4> flarePositions = allocateAndBindSrvStructuredBuffer<Vec4>(cmdb, 0, 0, flareCount);
@@ -85,7 +86,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	});
 }
 
-void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
+void LensFlare::runDrawFlares(CommandBuffer& cmdb)
 {
 	const U32 flareCount = SceneGraph::getSingleton().getComponentArrays().getLensFlares().getSize();
 
@@ -103,7 +104,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 	{
 		// Compute position
 		Vec4 lfPos = Vec4(comp.getWorldPosition(), 1.0f);
-		Vec4 posClip = ctx.m_matrices.m_viewProjectionJitter * lfPos;
+		Vec4 posClip = getRenderingContext().m_matrices.m_viewProjectionJitter * lfPos;
 
 		/*if(posClip.x > posClip.w || posClip.x < -posClip.w || posClip.y > posClip.w
 			|| posClip.y < -posClip.w)

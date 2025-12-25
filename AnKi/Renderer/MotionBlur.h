@@ -9,13 +9,10 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<U32>, Render, MotionBlur, TileSize, 32, 8, 64, "Motion blur tile size")
 ANKI_CVAR2(NumericCVar<U32>, Render, MotionBlur, SampleCount, 16, 0, 64, "Motion blur sample count")
 
-/// Motion blur.
+// Motion blur.
 class MotionBlur : public RendererObject
 {
 public:
@@ -26,7 +23,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -56,6 +53,5 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

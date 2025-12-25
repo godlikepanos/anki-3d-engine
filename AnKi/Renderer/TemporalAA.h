@@ -9,16 +9,13 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Temporal AA resolve.
+// Temporal AA resolve.
 class TemporalAA : public RendererObject
 {
 public:
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getRt() const
 	{
@@ -39,6 +36,5 @@ private:
 		RenderTargetHandle m_historyRt;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

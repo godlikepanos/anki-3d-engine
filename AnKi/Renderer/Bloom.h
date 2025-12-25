@@ -9,15 +9,12 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<F32>, Render, Bloom, Threshold, 2.5f, 0.0f, 256.0f, "Bloom threshold")
 ANKI_CVAR2(NumericCVar<F32>, Render, Bloom, Scale, 2.5f, 0.0f, 256.0f, "Bloom scale")
 ANKI_CVAR2(NumericCVar<U32>, Render, Bloom, PyramidLowLimit, 32, 8, 1024, "Downscale the boom pyramid up to that size")
 ANKI_CVAR2(NumericCVar<U32>, Render, Bloom, UpscaleDivisor, 4, 1, 1024, "Defines the resolution of the final bloom result")
 
-/// Contains multiple post-process passes that operate on the HDR output.
+// Contains multiple post-process passes that operate on the HDR output.
 class Bloom : public RendererObject
 {
 public:
@@ -28,9 +25,9 @@ public:
 
 	Error init();
 
-	void importRenderTargets(RenderingContext& ctx);
+	void importRenderTargets();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getPyramidRt() const
 	{
@@ -79,6 +76,5 @@ private:
 		RenderTargetHandle m_finalRt;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

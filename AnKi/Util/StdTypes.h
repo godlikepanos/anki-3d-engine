@@ -353,4 +353,40 @@ ANKI_FORCE_INLINE U32 asU32(F32 f)
 	return out;
 }
 
+// Implement defer operations (like zig). Don't use it directly but use ANKI_DEFER
+// Use it like:
+// Defer([&](){
+//     free(ptr);
+// });
+template<typename TFunc>
+class Defer
+{
+public:
+	Defer(TFunc func)
+		: m_func(func)
+	{
+	}
+
+	~Defer()
+	{
+		m_func();
+	}
+
+private:
+	TFunc m_func;
+};
+
+// Implement defer operations (like zig)
+// Use it like:
+// ANKI_DEFER(free(ptr));
+// or like:
+// ANKI_DEFER({
+//     free(ptr);
+//     doSomething();
+// });
+#define ANKI_DEFER(x) \
+	Defer ANKI_CONCATENATE(_defer, __LINE__)([&]() { \
+		x; \
+	})
+
 } // end namespace anki

@@ -44,7 +44,7 @@ Error MotionBlur::init()
 	return Error::kNone;
 }
 
-void MotionBlur::populateRenderGraph(RenderingContext& ctx)
+void MotionBlur::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(MotionBlur);
 	if(g_cvarRenderMotionBlurSampleCount == 0)
@@ -53,7 +53,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// MaxTileVelocity
 	const RenderTargetHandle maxVelRt = rgraph.newRenderTarget(m_maxVelocityRtDesc);
@@ -133,9 +133,10 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 		ppass->newTextureDependency(m_runCtx.m_rt, writeUsage);
 
-		ppass->setWork([this, maxNeighbourVelRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+		ppass->setWork([this, maxNeighbourVelRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(MotionBlurReconstruct);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			RenderingContext& ctx = getRenderingContext();
 
 			cmdb.bindShaderProgram(m_reconstructGrProg.get());
 

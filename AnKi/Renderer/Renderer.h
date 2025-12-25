@@ -13,8 +13,6 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
 ANKI_CVAR(
 	NumericCVar<F32>, Render, InternalRenderScaling, 1.0f,
 	[](F32 value) {
@@ -43,7 +41,7 @@ ANKI_CVAR(NumericCVar<F32>, Render, Lod1MaxDistance, 40.0f, 2.0f, kMaxF32, "Dist
 
 ANKI_SVAR(RendererGpuTime, StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
-/// Renderer statistics.
+// Renderer statistics.
 class RendererPrecreatedSamplers
 {
 public:
@@ -56,7 +54,7 @@ public:
 	SamplerPtr m_trilinearClampShadow;
 };
 
-/// Some dummy resources to fill the slots.
+// Some dummy resources to fill the slots.
 class DummyGpuResources
 {
 public:
@@ -84,7 +82,7 @@ public:
 	void* m_allocCallbackUserData = nullptr;
 };
 
-/// Offscreen renderer.
+// The container of all rendering
 class Renderer : public MakeSingleton<Renderer>
 {
 	friend class RendererObject;
@@ -141,10 +139,10 @@ public:
 		return m_meshletRenderingType;
 	}
 
-	/// Create the init info for a 2D texture that will be used as a render target.
+	// Create the init info for a 2D texture that will be used as a render target.
 	[[nodiscard]] TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name = {});
 
-	/// Create the init info for a 2D texture that will be used as a render target.
+	// Create the init info for a 2D texture that will be used as a render target.
 	[[nodiscard]] RenderTargetDesc create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name = {});
 
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
@@ -173,16 +171,13 @@ public:
 		return m_runCtx.m_gpuSceneHandle;
 	}
 
-	/// @name Debug render targets
-	/// @{
-
-	/// Register a debug render target.
+	// Register a debug render target.
 	void registerDebugRenderTarget(RendererObject* obj, CString rtName);
 
-	/// Set the render target you want to show.
+	// Set the render target you want to show.
 	void setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping = false);
 
-	/// Get the render target currently showing.
+	// Get the render target currently showing.
 	CString getCurrentDebugRenderTarget() const
 	{
 		return m_currentDebugRtName;
@@ -191,7 +186,6 @@ public:
 	// Need to call it after the handle is set by the RenderGraph.
 	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 									 DebugRenderTargetDrawStyle& drawStyle);
-	/// @}
 
 	StackMemoryPool& getFrameMemoryPool()
 	{
@@ -224,6 +218,13 @@ public:
 		}
 	}
 
+	// Return the current rendering context. It's valid only inside render()
+	ANKI_INTERNAL RenderingContext& getRenderingContext() const
+	{
+		ANKI_ASSERT(m_runCtx.m_currentCtx);
+		return *m_runCtx.m_currentCtx;
+	}
+
 private:
 	class Cleanup
 	{
@@ -234,19 +235,17 @@ private:
 		}
 	} m_cleanup; // First so it will be called last in the renderer's destructor
 
-	/// @name Rendering stages
-	/// @{
+	// Rendering stages
 #define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) name* m_##name2 = numberToPtr<name*>(kMaxPtrSize);
 #include <AnKi/Renderer/RendererObject.def.h>
-	/// @}
 
 	StackMemoryPool m_framePool;
 
-	UVec2 m_internalResolution = UVec2(0u); ///< The resolution of all passes up until TAA.
-	UVec2 m_postProcessResolution = UVec2(0u); ///< The resolution of post processing and following passes.
+	UVec2 m_internalResolution = UVec2(0u); // The resolution of all passes up until TAA.
+	UVec2 m_postProcessResolution = UVec2(0u); // The resolution of post processing and following passes.
 	UVec2 m_swapchainResolution = UVec2(0u);
 
-	U64 m_frameCount; ///< Frame number
+	U64 m_frameCount; // Frame number
 
 	CommonMatrices m_prevMatrices;
 
@@ -283,6 +282,7 @@ private:
 	{
 	public:
 		BufferHandle m_gpuSceneHandle;
+		RenderingContext* m_currentCtx = nullptr;
 	} m_runCtx;
 
 #if ANKI_STATS_ENABLED
@@ -294,17 +294,16 @@ private:
 
 	Error initInternal(const RendererInitInfo& inf);
 
-	void gpuSceneCopy(RenderingContext& ctx);
+	void gpuSceneCopy();
 
 #if ANKI_STATS_ENABLED
 	void updatePipelineStats();
 #endif
 
-	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& consts);
+	void writeGlobalRendererConstants(GlobalRendererConstants& consts);
 
-	/// This function does all the rendering stages and produces a final result.
-	Error populateRenderGraph(RenderingContext& ctx);
+	// This function does all the rendering stages and produces a final result.
+	Error populateRenderGraph();
 };
-/// @}
 
 } // end namespace anki

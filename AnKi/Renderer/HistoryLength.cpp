@@ -28,9 +28,9 @@ Error HistoryLength::init()
 	return Error::kNone;
 }
 
-void HistoryLength::populateRenderGraph(RenderingContext& ctx)
+void HistoryLength::populateRenderGraph()
 {
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	RenderTargetHandle history;
 	RenderTargetHandle current;
@@ -75,7 +75,7 @@ void HistoryLength::populateRenderGraph(RenderingContext& ctx)
 	pass->newTextureDependency(history, readTexUsage);
 	pass->newTextureDependency(current, writeTexUsage);
 
-	pass->setWork([this, &ctx, history, current](RenderPassWorkContext& rgraphCtx) {
+	pass->setWork([this, history, current](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());
@@ -85,7 +85,7 @@ void HistoryLength::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(2, 0, getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindSrv(3, 0, history);
 
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 

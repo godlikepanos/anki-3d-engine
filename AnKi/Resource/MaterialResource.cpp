@@ -191,13 +191,6 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 			m_techniquesMask |= RenderingTechniqueBit::kDepth;
 			m_shaderTechniques |= ShaderTechniqueBit::kSwMeshletRendering;
 		}
-		else if(t.m_name.getBegin() == CString("RtShadows"))
-		{
-			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
-			{
-				m_techniquesMask |= RenderingTechniqueBit::kRtShadow;
-			}
-		}
 		else if(t.m_name.getBegin() == CString("ForwardSwMeshletRendering"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kForward;
@@ -620,9 +613,6 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		{
 			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "ForwardLegacy");
 		}
-		break;
-	case RenderingTechnique::kRtShadow:
-		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");
 		break;
 	case RenderingTechnique::kRtMaterialFetch:
 		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtMaterialFetch");

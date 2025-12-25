@@ -11,9 +11,6 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR(BoolCVar, Render, Idc, true, "Enable ray traced indirect diffuse clipmaps")
 ANKI_CVAR2(BoolCVar, Render, Idc, InlineRt, false, "Use a cheap and less accurate path with inline RT");
 ANKI_CVAR2(BoolCVar, Render, Idc, UseSHL2, !ANKI_PLATFORM_MOBILE, "Use L2 SH for calculations. Else use L1");
@@ -26,7 +23,7 @@ constexpr F32 kDefaultClipmap2ProbeSize = 6.0f;
 constexpr U32 kDefaultRadianceOctMapSize = 10;
 constexpr U32 kDefaultRayCountPerTexelOfNewProbe = 4;
 
-/// As if you are updating 25% of the probes each frame.
+// As if you are updating 25% of the probes each frame.
 constexpr U32 kDefaultProbeRayBudget =
 	(kIndirectDiffuseClipmapCount * square(kDefaultClipmapProbeCountXZ) * kDefaultClipmapProbeCountY * square(kDefaultRadianceOctMapSize)) * 25 / 100;
 
@@ -65,7 +62,6 @@ ANKI_CVAR2(NumericCVar<U8>, Render, Idc, RayCountPerTexelOfNewProbe, kDefaultRay
 ANKI_CVAR2(NumericCVar<U32>, Render, Idc, ProbeRayBudget, kDefaultProbeRayBudget, 1024, 100 * 1024 * 1024,
 		   "The number of rays for a single texel of the oct map that will be cast for probes that are seen for the 1st time")
 
-/// @memberof IndirectDiffuseClipmaps
 class IndirectDiffuseClipmapsRenderTargetHandles
 {
 public:
@@ -77,7 +73,7 @@ public:
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 };
 
-/// Indirect diffuse based on clipmaps of probes.
+// Indirect diffuse based on clipmaps of probes.
 class IndirectDiffuseClipmaps : public RtMaterialFetchRendererObject
 {
 public:
@@ -88,7 +84,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -102,14 +98,14 @@ public:
 		return m_consts;
 	}
 
-	void drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
+	void drawDebugProbes(RenderPassWorkContext& rgraphCtx) const;
 
 	const IndirectDiffuseClipmapsRenderTargetHandles& getRts() const
 	{
 		return m_runCtx.m_handles;
 	}
 
-	/// Output of IndirectDiffuseClipmaps is hidden and bindless so have this function to set dependencies
+	// Output of IndirectDiffuseClipmaps is hidden and bindless so have this function to set dependencies
 	void setDependencies(RenderPassBase& pass, TextureUsageBit usage) const
 	{
 		ANKI_ASSERT(!(usage & ~TextureUsageBit::kAllSrv) && "Only SRV allowed");
@@ -159,6 +155,5 @@ private:
 		IndirectDiffuseClipmapsRenderTargetHandles m_handles;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

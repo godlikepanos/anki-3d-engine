@@ -9,21 +9,17 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Applies decals to the GBuffer. It's a seperate pass because it requres the depth buffer.
+// Applies decals to the GBuffer. It's a seperate pass because it requres the depth buffer.
 class GBufferPost : public RendererObject
 {
 public:
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 };
-/// @}
 
 } // end namespace anki

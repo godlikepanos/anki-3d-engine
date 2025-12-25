@@ -41,11 +41,11 @@ Error ClusterBinning::init()
 	return Error::kNone;
 }
 
-void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
+void ClusterBinning::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(ClusterBinning);
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// Allocate the clusters buffer
 	{
@@ -103,7 +103,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kUavCompute | BufferUsageBit::kIndirectCompute);
 
-		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ClusterBinning);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -178,6 +178,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					Mat4 m_invertedViewProjMat;
 				} consts;
 
+				RenderingContext& ctx = getRenderingContext();
 				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
 				consts.m_renderingSize = Vec2(getRenderer().getInternalResolution());

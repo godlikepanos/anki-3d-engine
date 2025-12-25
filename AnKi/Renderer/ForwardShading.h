@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Forward rendering stage. The objects that blend must be handled differently
+// Forward rendering stage. The objects that blend must be handled differently
 class ForwardShading : public RendererObject
 {
 public:
@@ -26,13 +23,13 @@ public:
 		return Error::kNone;
 	}
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void setDependencies(GraphicsRenderPass& pass);
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx);
 
-	/// Use some of the output for debug drawing.
+	// Use some of the output for debug drawing.
 	const GpuVisibilityOutput& getGpuVisibilityOutput() const
 	{
 		return m_runCtx.m_visOut;
@@ -45,6 +42,5 @@ private:
 		GpuVisibilityOutput m_visOut;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

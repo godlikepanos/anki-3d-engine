@@ -144,6 +144,8 @@ protected:
 		return getRenderer().is##type##Enabled(); \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
+
+	ANKI_PURE RenderingContext& getRenderingContext() const;
 };
 
 /// Contains common functionality of all passes that use RtMaterialFetch.
@@ -163,7 +165,7 @@ protected:
 	void setRgenSpace2Dependencies(RenderPassBase& pass, Bool isComputeDispatch = false);
 
 	/// Bind the the resources of space 2 in RtMaterialFetch.hlsl.
-	void bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void bindRgenSpace2Resources(RenderPassWorkContext& rgraphCtx);
 
 private:
 	ShaderProgramResourcePtr m_sbtBuildProg;

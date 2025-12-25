@@ -11,12 +11,9 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<U32>, Render, ProbeReflections, ShadowMapResolution, 64, 4, 2048, "Reflection probe shadow resolution")
 
-/// Probe reflections.
+// Probe reflections.
 class ProbeReflections : public RendererObject
 {
 	friend class IrTask;
@@ -24,8 +21,7 @@ class ProbeReflections : public RendererObject
 public:
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	U getReflectionTextureMipmapCount() const
 	{
@@ -80,6 +76,5 @@ private:
 	// Other
 	ImageResourcePtr m_integrationLut;
 };
-/// @}
 
 } // end namespace anki

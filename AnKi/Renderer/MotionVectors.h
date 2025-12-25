@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Motion vector calculation.
+// Motion vector calculation.
 class MotionVectors : public RendererObject
 {
 public:
@@ -24,7 +21,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getMotionVectorsRt() const
 	{
@@ -48,6 +45,5 @@ private:
 		RenderTargetHandle m_motionVectorsRtHandle;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

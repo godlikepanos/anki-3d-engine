@@ -12,7 +12,6 @@
 #if ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 #	include <AnKi/Shaders/Functions.hlsl>
-#	include <AnKi/Shaders/RtShadows.hlsl>
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);

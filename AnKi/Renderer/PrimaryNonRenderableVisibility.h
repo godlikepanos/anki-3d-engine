@@ -12,11 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Contains some interesting visible scene components that will be used by various renderer systems.
-/// @memberof PrimaryNonRenderableVisibility
+// Contains some interesting visible scene components that will be used by various renderer systems.
 class InterestingVisibleComponents
 {
 public:
@@ -25,7 +21,7 @@ public:
 	WeakArray<GlobalIlluminationProbeComponent*> m_globalIlluminationProbes;
 };
 
-/// Multiple passes for GPU visibility of non-renderable entities.
+// Multiple passes for GPU visibility of non-renderable entities.
 class PrimaryNonRenderableVisibility : public RendererObject
 {
 public:
@@ -34,7 +30,7 @@ public:
 		return Error::kNone;
 	}
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	const InterestingVisibleComponents& getInterestingVisibleComponents() const
 	{
@@ -60,10 +56,9 @@ private:
 		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_visibleIndicesHandles;
 		Array<BufferView, U32(GpuSceneNonRenderableObjectType::kCount)> m_visibleIndicesBuffers;
 
-		/// Feedback from the GPU
+		// Feedback from the GPU
 		InterestingVisibleComponents m_interestingComponents;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

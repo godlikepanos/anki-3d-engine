@@ -11,10 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Downscales the depth buffer a few times.
+// Downscales the depth buffer a few times.
 class DepthDownscale : public RendererObject
 {
 public:
@@ -27,10 +24,9 @@ public:
 
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
-	/// Return a FP color render target with hierarchical Z (min Z) in it's mips.
+	// Return a FP color render target with hierarchical Z (min Z) in it's mips.
 	RenderTargetHandle getRt() const
 	{
 		return m_runCtx.m_rt;
@@ -55,10 +51,9 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-	} m_runCtx; ///< Run context.
+	} m_runCtx;
 
 	Error initInternal();
 };
-/// @}
 
 } // end namespace anki

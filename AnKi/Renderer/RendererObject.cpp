@@ -22,6 +22,11 @@ Renderer& RendererObject::getRenderer()
 	return Renderer::getSingleton();
 }
 
+RenderingContext& RendererObject::getRenderingContext() const
+{
+	return getRenderer().getRenderingContext();
+}
+
 void RendererObject::registerDebugRenderTarget(CString rtName)
 {
 	getRenderer().registerDebugRenderTarget(this, rtName);
@@ -166,9 +171,8 @@ void RendererObject::fillBuffers(CommandBuffer& cmdb, ConstWeakArray<BufferView>
 
 Error RtMaterialFetchRendererObject::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtBuildProg, m_sbtBuildGrProg, "Build"));
-	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtBuildProg, m_sbtPatchGrProg, "PatchRaygenAndMiss"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {}, m_sbtBuildProg, m_sbtBuildGrProg, "Build"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {}, m_sbtBuildProg, m_sbtPatchGrProg, "PatchRaygenAndMiss"));
 	return Error::kNone;
 }
 
@@ -210,7 +214,7 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 
 		cmdb.bindUav(0, 0, sbtBuffer);
 
-		RtShadowsSbtBuildConstants consts = {};
+		SbtBuildConstants consts = {};
 		ANKI_ASSERT(sbtRecordSize % 4 == 0);
 		consts.m_sbtRecordDwordSize = sbtRecordSize / 4;
 		const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
@@ -243,7 +247,7 @@ void RtMaterialFetchRendererObject::patchShaderBindingTablePass(CString passName
 
 			cmdb.bindUav(0, 0, sbtBuffer);
 
-			RtShadowsSbtBuildConstants consts = {};
+			SbtBuildConstants consts = {};
 			ANKI_ASSERT(sbtRecordSize % 4 == 0);
 			consts.m_sbtRecordDwordSize = sbtRecordSize / 4;
 			const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
@@ -286,7 +290,7 @@ void RtMaterialFetchRendererObject::setRgenSpace2Dependencies(RenderPassBase& pa
 	}
 }
 
-void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -345,7 +349,7 @@ void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderingContext& ct
 	cmdb.bindUav(0, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 	cmdb.bindUav(1, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
-	cmdb.bindConstantBuffer(0, space, ctx.m_globalRenderingConstantsBuffer);
+	cmdb.bindConstantBuffer(0, space, getRenderingContext().m_globalRenderingConstantsBuffer);
 }
 
 } // end namespace anki

@@ -3,10 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator TECHNIQUE 0 1 // Shdows or MaterialFetch
-
-#pragma anki technique Build comp mutators TECHNIQUE
-#pragma anki technique PatchRaygenAndMiss comp mutators
+#pragma anki technique Build comp
+#pragma anki technique PatchRaygenAndMiss comp
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
@@ -25,7 +23,7 @@ StructuredBuffer<U32> g_shaderHandles : register(t2);
 
 RWByteAddressBuffer g_sbtBuffer : register(u0);
 
-ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
+ANKI_FAST_CONSTANTS(SbtBuildConstants, g_consts)
 
 #	define NUMTHREADS 64
 
@@ -63,7 +61,7 @@ ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 	// Copy the handle
 	for(U32 i = 0; i < g_consts.m_shaderHandleDwordSize; ++i)
 	{
-		const U32 shaderHandleIdx = (TECHNIQUE == 0) ? renderable.m_rtShadowsShaderHandleIndex : renderable.m_rtMaterialFetchShaderHandleIndex;
+		const U32 shaderHandleIdx = renderable.m_rtMaterialFetchShaderHandleIndex;
 		const U32 offset = shaderHandleIdx * g_consts.m_shaderHandleDwordSize + i;
 		BAB_STORE(g_sbtBuffer, U32, sbtDwordOffset * 4, SBUFF(g_shaderHandles, offset));
 		++sbtDwordOffset;
@@ -90,7 +88,7 @@ StructuredBuffer<U32> g_shaderHandles : register(t0);
 
 RWByteAddressBuffer g_sbtBuffer : register(u0);
 
-ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
+ANKI_FAST_CONSTANTS(SbtBuildConstants, g_consts)
 
 // Patches only raygen and miss handles to the SBT
 [numthreads(32, 1, 1)] void main(COMPUTE_ARGS)

@@ -9,10 +9,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Compute the history length (aka disocclusion length)
+// Compute the history length (aka disocclusion length)
 class HistoryLength : public RendererObject
 {
 public:
@@ -23,7 +20,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -50,6 +47,5 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 };
-/// @}
 
 } // namespace anki

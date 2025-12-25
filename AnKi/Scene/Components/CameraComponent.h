@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// Perspective camera component.
+// Perspective camera component.
 class CameraComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(CameraComponent)
@@ -49,6 +46,7 @@ public:
 		return m_frustum.getFar();
 	}
 
+	// This is what games expose and fovY is based on aspect
 	void setFovX(F32 fovx)
 	{
 		if(ANKI_EXPECT(fovx > 0.0f && fovx < kPi))
@@ -57,6 +55,7 @@ public:
 		}
 	}
 
+	// This is what games expose and fovY is based on aspect
 	F32 getFovX() const
 	{
 		return m_frustum.getFovX();
@@ -80,6 +79,16 @@ public:
 		m_frustum.setPerspective(near, far, fovx, fovy);
 	}
 
+	Bool getFovYDerivesByRendererAspect() const
+	{
+		return m_fovYDerivesByAspect;
+	}
+
+	void setFovYDerivesByRendererAspect(Bool derives)
+	{
+		m_fovYDerivesByAspect = derives;
+	}
+
 	ANKI_INTERNAL const Frustum& getFrustum() const
 	{
 		return m_frustum;
@@ -92,11 +101,11 @@ public:
 
 private:
 	Frustum m_frustum;
+	Bool m_fovYDerivesByAspect = true; // Whatever the user sets if this flag is true fovY will change based on aspect
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	Error serialize(SceneSerializer& serializer) override;
 };
-/// @}
 
 } // end namespace anki

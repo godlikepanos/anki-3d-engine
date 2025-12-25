@@ -44,7 +44,7 @@ Error GeneratedSky::init()
 	return Error::kNone;
 }
 
-void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
+void GeneratedSky::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(Sky);
 
@@ -54,7 +54,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 	ANKI_ASSERT(dirLightc);
@@ -144,7 +144,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(multipleScatteringLutRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(m_runCtx.m_skyLutRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, transmittanceLutRt, multipleScatteringLutRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, transmittanceLutRt, multipleScatteringLutRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SkyLut);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -155,7 +155,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, multipleScatteringLutRt);
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_skyLutRt);
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x, kSkyLutSize.y);
 		});
@@ -169,7 +169,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_skyLutRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(m_runCtx.m_envMapRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SkyLut);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -179,7 +179,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, m_runCtx.m_skyLutRt);
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_envMapRt);
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, kEnvMapSize.x, kEnvMapSize.y);
 		});
@@ -191,7 +191,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kSrvCompute);
 
-		rpass.setWork([this, transmittanceLutRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, transmittanceLutRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ComputeSunColor);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -199,7 +199,7 @@ void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_computeSunColorGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, transmittanceLutRt);
-			cmdb.bindUav(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindUav(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			const UVec4 consts(offsetof(GlobalRendererConstants, m_directionalLight));
 			cmdb.setFastConstants(&consts, sizeof(consts));

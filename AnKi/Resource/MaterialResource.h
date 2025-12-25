@@ -11,17 +11,13 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
 
 // Forward
 class XmlElement;
 
-/// @addtogroup resource
-/// @{
-
-/// The ID of builtin mutators.
+// The ID of builtin mutators.
 enum class BuiltinMutatorId : U8
 {
 	kNone = 0,
@@ -33,7 +29,7 @@ enum class BuiltinMutatorId : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMutatorId)
 
-/// Holds the shader variables. It's a container for shader program variables that share the same name.
+// Holds the shader variables. It's a container for shader program variables that share the same name.
 class MaterialVariable
 {
 	friend class MaterialVariant;
@@ -93,8 +89,7 @@ protected:
 	U32 m_offsetInLocalConstants = kMaxU32;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
 
-	/// Values
-	/// @{
+	// Values
 	union
 	{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) type ANKI_CONCATENATE(m_, type);
@@ -102,7 +97,6 @@ protected:
 	};
 
 	ImageResourcePtr m_image;
-	/// @}
 };
 
 // Specialize the MaterialVariable::getValue
@@ -124,7 +118,7 @@ inline const ImageResourcePtr& MaterialVariable::getValue() const
 	return m_image;
 }
 
-/// Material variant.
+// Material variant.
 class MaterialVariant
 {
 	friend class MaterialResource;
@@ -164,22 +158,20 @@ private:
 	}
 };
 
-/// Material resource.
-///
-/// Material XML file format:
-/// @code
-///	<material [shadows="0|1"]>
-/// 	<shaderProgram name="name of the shader" />
-///			[<mutation>
-///				<mutator name="str" value="value"/>
-///			</mutation>]
-///		</shaderProgram>
-///
-///		[<inputs>
-///			<input name="name in AnKiLocalConstants struct" value="value(s)"/>
-///		</inputs>]
-///	</material>
-/// @endcode
+// Material resource.
+//
+// Material XML file format:
+//	<material [shadows="0|1"]>
+// 	<shaderProgram name="name of the shader" />
+//			[<mutation>
+//				<mutator name="str" value="value"/>
+//			</mutation>]
+//		</shaderProgram>
+//
+//		[<inputs>
+//			<input name="name in AnKiLocalConstants struct" value="value(s)"/>
+//		</inputs>]
+//	</material>
 class MaterialResource : public ResourceObject
 {
 public:
@@ -190,12 +182,12 @@ public:
 
 	~MaterialResource();
 
-	/// Load a material file
+	// Load a material file
 	Error load(const ResourceFilename& filename, Bool async);
 
 	Bool castsShadow() const
 	{
-		return !!(m_techniquesMask & (RenderingTechniqueBit::kDepth | RenderingTechniqueBit::kRtShadow));
+		return !!(m_techniquesMask & (RenderingTechniqueBit::kDepth));
 	}
 
 	ConstWeakArray<MaterialVariable> getVariables() const
@@ -214,10 +206,10 @@ public:
 		return m_techniquesMask;
 	}
 
-	/// @note It's thread-safe.
+	// Note: It's thread-safe.
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
-	/// Get a buffer with prefilled uniforms.
+	// Get a buffer with prefilled uniforms.
 	ConstWeakArray<U8> getPrefilledLocalConstants() const
 	{
 		return ConstWeakArray<U8>(static_cast<const U8*>(m_prefilledLocalConstants), m_localConstantsSize);
@@ -281,6 +273,5 @@ private:
 		return const_cast<MaterialVariable*>(tryFindVariableInternal(name));
 	}
 };
-/// @}
 
 } // end namespace anki

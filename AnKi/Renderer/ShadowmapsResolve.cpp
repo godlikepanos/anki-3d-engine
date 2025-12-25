@@ -9,7 +9,6 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ClusterBinning.h>
-#include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -27,9 +26,8 @@ Error ShadowmapsResolve::init()
 	// Prog
 	for(MutatorValue quality = 0; quality < 3; ++quality)
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowmapsResolve.ankiprogbin",
-									 {{"QUALITY", quality}, {"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", isRtShadowsEnabled()}}, m_prog,
-									 m_grProgs[quality]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowmapsResolve.ankiprogbin", {{"QUALITY", quality}, {"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", 0}},
+									 m_prog, m_grProgs[quality]));
 	}
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
@@ -37,19 +35,19 @@ Error ShadowmapsResolve::init()
 	return Error::kNone;
 }
 
-void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
+void ShadowmapsResolve::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	if(g_cvarRenderPreferCompute)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ResolveShadows");
 
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			run(rgraphCtx, ctx);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
@@ -57,11 +55,6 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
-
-		if(isRtShadowsEnabled())
-		{
-			rpass.newTextureDependency(getRtShadows().getRt(), TextureUsageBit::kSrvCompute);
-		}
 	}
 	else
 	{
@@ -69,8 +62,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_rt)});
 
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			run(rgraphCtx, ctx);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
@@ -78,15 +71,10 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvPixel);
 
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
-
-		if(isRtShadowsEnabled())
-		{
-			rpass.newTextureDependency(getRtShadows().getRt(), TextureUsageBit::kSrvPixel);
-		}
 	}
 }
 
-void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& ctx)
+void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -106,7 +94,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 	}
 	cmdb.bindShaderProgram(m_grProgs[quality].get());
 
-	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+	cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 	cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 	rgraphCtx.bindSrv(1, 0, getShadowMapping().getShadowmapRt());
 	cmdb.bindSrv(2, 0, getClusterBinning().getClustersBuffer());
@@ -124,11 +112,6 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 		rgraphCtx.bindSrv(3, 0, getGBuffer().getDepthRt());
 	}
 	cmdb.bindSrv(4, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
-
-	if(isRtShadowsEnabled())
-	{
-		rgraphCtx.bindSrv(5, 0, getRtShadows().getRt());
-	}
 
 	if(g_cvarRenderPreferCompute || g_cvarRenderSmPcf || g_cvarRenderSmPcss)
 	{

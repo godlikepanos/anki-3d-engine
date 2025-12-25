@@ -27,7 +27,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -54,7 +54,7 @@ public:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	void run(RenderPassWorkContext& rgraphCtx, RenderingContext& ctx);
+	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

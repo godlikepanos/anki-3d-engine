@@ -6,8 +6,9 @@
 #pragma once
 
 #include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/LightFunctions.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/Include/MeshTypes.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 #define FORWARD_SHADING 1
@@ -61,7 +62,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		F32 shadow = 1.0;
 		if(light.m_shadow)
 		{
-			shadow = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
+			shadow = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_trilinearClampShadowSampler);
 		}
 
 		outColor += diffC * (att * shadow);
@@ -84,7 +85,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		F32 shadow = 1.0;
 		[branch] if(light.m_shadow != 0u)
 		{
-			shadow = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
+			shadow = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_trilinearClampShadowSampler);
 		}
 
 		outColor += diffC * (att * spot * shadow);
@@ -103,7 +104,7 @@ Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	const F32 w = linearDepth * (F32(g_globalRendererConstants.m_zSplitCount) / F32(g_globalRendererConstants.m_lightVolumeLastZSplit + 1u));
 	const Vec3 uvw = Vec3(uv, w);
 
-	const Vec3 light = g_lightVol.SampleLevel(g_linearAnyClampSampler, uvw, 0.0).rgb;
+	const Vec3 light = g_lightVol.SampleLevel(g_trilinearClampSampler, uvw, 0.0).rgb;
 	return diffuseLobe(diffCol) * light;
 }
 
@@ -117,7 +118,7 @@ void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpac
 	const Vec2 screenSize = 1.0 / g_globalRendererConstants.m_renderingSize;
 
 	const Vec2 texCoords = svPosition * screenSize;
-	const F32 depth = g_gbufferDepthTex.Sample(g_linearAnyClampSampler, texCoords, 0.0).r;
+	const F32 depth = g_gbufferDepthTex.Sample(g_trilinearClampSampler, texCoords, 0.0).r;
 	F32 zFeatherFactor;
 
 	const Vec4 fragPosVspace4 = mul(g_globalRendererConstants.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));

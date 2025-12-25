@@ -9,9 +9,6 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(BoolCVar, Render, Reflections, Rt, true, "Enable RT reflections")
 ANKI_CVAR2(BoolCVar, Render, Reflections, InlineRt, false, "Enable a cheap inline RT alternative path")
 ANKI_CVAR2(NumericCVar<F32>, Render, Reflections, RtMaxRayDistance, 100.0f, 1.0f, 10000.0f, "Max RT reflections ray distance")
@@ -33,7 +30,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  DebugRenderTargetDrawStyle& drawStyle) const override
@@ -66,7 +63,7 @@ public:
 	RenderTargetDesc m_hitPosRtDesc;
 	RenderTargetDesc m_classTileMapRtDesc;
 
-	/// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
+	// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
 	BufferPtr m_indirectArgsBuffer;
 
 	TexturePtr m_tex;
@@ -85,6 +82,5 @@ public:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 };
-/// @}
 
 } // namespace anki

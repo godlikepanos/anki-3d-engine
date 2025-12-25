@@ -18,7 +18,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 private:
 	RendererDynamicArray<BufferPtr> m_scratchBuffers;

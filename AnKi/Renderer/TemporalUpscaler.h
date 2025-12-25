@@ -9,20 +9,18 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
 ANKI_CVAR(BoolCVar, Render, Dlss, true, "Enable or disable DLSS")
 ANKI_CVAR(NumericCVar<U8>, Render, DlssQuality, 1, 0, 3, "0: Performance, 1: Balanced, 2: Quality")
 
-/// Upscales.
+// Upscales.
 class TemporalUpscaler : public RendererObject
 {
 public:
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
-	/// This is the HDR upscaled RT.
+	// This is the HDR upscaled RT.
 	RenderTargetHandle getRt() const
 	{
 		return m_runCtx.m_rt;
@@ -47,6 +45,5 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

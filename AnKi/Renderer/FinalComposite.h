@@ -10,13 +10,10 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR(NumericCVar<F32>, Render, FilmGrain, 16.0f, 0.0f, 250.0f, "Film grain strength")
 ANKI_CVAR(NumericCVar<F32>, Render, Sharpness, (ANKI_PLATFORM_MOBILE) ? 0.0f : 1.0f, 0.0f, 1.0f, "Sharpen the image. It's a factor")
 
-/// Post-processing stage.
+// Final stage in the rendering pipeline
 class FinalComposite : public RendererObject
 {
 public:
@@ -26,8 +23,7 @@ public:
 
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getRenderTarget() const
 	{
@@ -53,6 +49,5 @@ private:
 
 	void run(RenderPassWorkContext& rgraphCtx);
 };
-/// @}
 
 } // end namespace anki

@@ -63,8 +63,9 @@ Error VrsSriGeneration::init()
 	return Error::kNone;
 }
 
-void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
+void VrsSriGeneration::importRenderTargets()
 {
+	RenderingContext& ctx = getRenderingContext();
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(!enableVrs)
 	{
@@ -84,7 +85,7 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 	}
 }
 
-void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
+void VrsSriGeneration::populateRenderGraph()
 {
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 	if(!enableVrs)
@@ -94,7 +95,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 	ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// SRI generation
 	{

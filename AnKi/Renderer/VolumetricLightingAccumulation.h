@@ -9,22 +9,18 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<F32>, Render, VolumetricLightingAccumulation, QualityXY, 4.0f, 1.0f, 16.0f, "Quality of XY dimensions of volumetric lights")
 ANKI_CVAR2(NumericCVar<F32>, Render, VolumetricLightingAccumulation, QualityZ, 4.0f, 1.0f, 16.0f, "Quality of Z dimension of volumetric lights")
 ANKI_CVAR2(NumericCVar<U32>, Render, VolumetricLightingAccumulation, FinalZSplit, 26, 1, 256,
 		   "Final cluster split that will recieve volumetric lights")
 
-/// Volumetric lighting. It accumulates lighting in a volume texture.
+// Volumetric lighting. It accumulates lighting in a volume texture.
 class VolumetricLightingAccumulation : public RendererObject
 {
 public:
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getRt() const
 	{
@@ -44,8 +40,7 @@ private:
 	{
 	public:
 		Array<RenderTargetHandle, 2> m_rts;
-	} m_runCtx; ///< Runtime context.
+	} m_runCtx; // Runtime context.
 };
-/// @}
 
 } // end namespace anki

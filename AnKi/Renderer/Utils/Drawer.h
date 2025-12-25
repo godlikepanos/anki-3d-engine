@@ -11,10 +11,6 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// @memberof RenderableDrawer.
 class RenderableDrawerArguments
 {
 public:
@@ -25,8 +21,6 @@ public:
 	Mat4 m_previousViewProjectionMatrix;
 
 	UVec4 m_viewport;
-
-	Sampler* m_sampler = nullptr;
 
 	RenderingTechnique m_renderingTechinuqe = RenderingTechnique::kCount;
 
@@ -39,7 +33,7 @@ public:
 		BufferView m_drawIndexedIndirectArgsBuffer;
 
 		ConstWeakArray<InstanceRange> m_bucketRenderableInstanceRanges;
-	} m_legacy; ///< Legacy vertex flow
+	} m_legacy; // Legacy vertex flow
 
 	class
 	{
@@ -66,7 +60,7 @@ public:
 	}
 };
 
-/// It uses visibility data to issue drawcalls.
+// It uses visibility data to issue drawcalls.
 class RenderableDrawer : public RendererObject
 {
 public:
@@ -76,13 +70,12 @@ public:
 
 	Error init();
 
-	/// Draw using multidraw indirect.
-	/// @note It's thread-safe.
-	void drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
+	// Draw using multidraw indirect.
+	// Note: It's thread-safe.
+	void drawMdi(const RenderableDrawerArguments& args, RenderPassWorkContext& rgraphCtx);
 
 private:
-	void setState(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
+	void setState(const RenderableDrawerArguments& args, RenderPassWorkContext& rgraphCtx);
 };
-/// @}
 
 } // end namespace anki

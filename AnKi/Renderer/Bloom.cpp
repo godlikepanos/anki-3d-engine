@@ -64,15 +64,15 @@ Error Bloom::init()
 	return Error::kNone;
 }
 
-void Bloom::importRenderTargets(RenderingContext& ctx)
+void Bloom::importRenderTargets()
 {
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 	m_runCtx.m_pyramidRt = rgraph.importRenderTarget(m_pyramidTex.get(), TextureUsageBit::kSrvCompute);
 }
 
-void Bloom::populateRenderGraph(RenderingContext& ctx)
+void Bloom::populateRenderGraph()
 {
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	// Pyramid generation

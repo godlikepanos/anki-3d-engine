@@ -76,10 +76,10 @@ Error DepthDownscale::init()
 	return err;
 }
 
-void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
+void DepthDownscale::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 

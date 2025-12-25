@@ -9,17 +9,13 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// VolumetricFog effects.
+// VolumetricFog effects.
 class VolumetricFog : public RendererObject
 {
 public:
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getRt() const
 	{
@@ -31,7 +27,7 @@ public:
 		return m_volumeSize;
 	}
 
-	/// Get the last cluster split in Z axis that will be affected by lighting.
+	// Get the last cluster split in Z axis that will be affected by lighting.
 	U32 getFinalClusterInZ() const
 	{
 		return m_finalZSplit;
@@ -51,8 +47,7 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-	} m_runCtx; ///< Runtime context.
+	} m_runCtx; // Runtime context.
 };
-/// @}
 
 } // end namespace anki

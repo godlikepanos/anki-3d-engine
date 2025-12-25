@@ -125,7 +125,7 @@ Error IndirectDiffuseProbes::initIrradiance()
 	return Error::kNone;
 }
 
-void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
+void IndirectDiffuseProbes::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
 
@@ -164,7 +164,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		g_svarGiProbeRenderCount.increment(1);
 	}
 
-	RenderGraphBuilder& rgraph = rctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// Create some common resources to save on memory
 	Array<RenderTargetHandle, kMaxColorRenderTargets> gbufferColorRts;
@@ -253,11 +253,10 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					args.m_viewProjectionMatrix = viewProjMat;
 					args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 					args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
-					args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 					args.m_viewport = UVec4(0, 0, m_tileSize, m_tileSize);
 					args.fill(visOut);
 
-					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+					getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
 
 					// It's secondary, no need to restore any state
 				});
@@ -321,12 +320,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					args.m_cameraTransform = cascadeViewMat.invertTransformation();
 					args.m_viewProjectionMatrix = cascadeViewProjMat;
 					args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-					args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 					args.m_renderingTechinuqe = RenderingTechnique::kDepth;
 					args.m_viewport = UVec4(0, 0, rez, rez);
 					args.fill(shadowVisOut);
 
-					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+					getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
 
 					cmdb.setPolygonOffset(0.0, 0.0);
 
@@ -376,8 +374,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				}
 
 				pass.setWork([this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
-							  gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt, faceIdx = f,
-							  &rctx](RenderPassWorkContext& rgraphCtx) {
+							  gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt,
+							  faceIdx = f](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseLightShading);
 
 					const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
@@ -418,7 +416,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
 					dsInfo.m_skyLutRenderTarget =
 						(getRenderer().getGeneratedSky().isEnabled()) ? getRenderer().getGeneratedSky().getSkyLutRt() : RenderTargetHandle();
-					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstantsBuffer;
+					dsInfo.m_globalRendererConsts = getRenderingContext().m_globalRenderingConstantsBuffer;
 					dsInfo.m_renderpassContext = &rgraphCtx;
 
 					m_lightShading.m_deferred.drawLights(dsInfo);

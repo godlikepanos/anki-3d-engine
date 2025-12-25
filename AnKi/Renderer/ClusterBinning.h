@@ -9,10 +9,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Bins clusterer objects to the clusterer.
+// Bins clusterer objects to the clusterer.
 class ClusterBinning : public RendererObject
 {
 public:
@@ -22,8 +19,7 @@ public:
 
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	const BufferView& getPackedObjectsBuffer(GpuSceneNonRenderableObjectType type) const
 	{
@@ -53,10 +49,7 @@ private:
 
 		BufferView m_clustersBuffer;
 		Array<BufferView, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsBuffers;
-
-		RenderingContext* m_rctx = nullptr;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

@@ -11,13 +11,10 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR(BoolCVar, Render, VisualizeGiProbes, false, "Visualize GI probes")
 ANKI_CVAR(BoolCVar, Render, VisualizeReflectionProbes, false, "Visualize reflection probes")
 
-/// G buffer stage. It populates the G buffer
+// G buffer stage. It populates the G buffer
 class GBuffer : public RendererObject
 {
 public:
@@ -36,10 +33,9 @@ public:
 
 	Error init();
 
-	void importRenderTargets(RenderingContext& ctx);
+	void importRenderTargets();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getColorRt(U idx) const
 	{
@@ -64,7 +60,7 @@ public:
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  DebugRenderTargetDrawStyle& drawStyle) const override;
 
-	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
+	// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
 	const GpuVisibilityOutput& getVisibilityOutput() const
 	{
 		return m_runCtx.m_visOut;
@@ -90,6 +86,5 @@ private:
 		GpuVisibilityOutput m_visOut;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

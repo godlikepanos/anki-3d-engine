@@ -16,24 +16,23 @@
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
-void ForwardShading::populateRenderGraph(RenderingContext& ctx)
+void ForwardShading::populateRenderGraph()
 {
 	m_runCtx = {};
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 	FrustumGpuVisibilityInput visIn;
 	visIn.m_passesName = "FW shading";
 	visIn.m_technique = RenderingTechnique::kForward;
-	visIn.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
-	visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
+	visIn.m_viewProjectionMatrix = getRenderingContext().m_matrices.m_viewProjection;
+	visIn.m_lodReferencePoint = getRenderingContext().m_matrices.m_cameraTransform.getTranslationPart().xyz;
 	visIn.m_lodDistances = lodDistances;
 	visIn.m_rgraph = &rgraph;
 	visIn.m_gatherAabbIndices = !!(getDbg().getOptions() & DbgOption::kGatherAabbs);
@@ -44,11 +43,12 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	getRenderer().getGpuVisibility().populateRenderGraph(visIn, m_runCtx.m_visOut);
 }
 
-void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void ForwardShading::run(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ForwardShading);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	RenderingContext& ctx = getRenderingContext();
 
 	if(m_runCtx.m_visOut.containsDrawcalls())
 	{
@@ -56,34 +56,17 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb.setDepthWrite(false);
 		cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
-		// Bind stuff
-		cmdb.bindSampler(ANKI_MATERIAL_REGISTER_LINEAR_CLAMP_SAMPLER, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb.bindSampler(ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
-
-		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_SCENE_DEPTH, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
-		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_LIGHT_VOLUME, 0, getRenderer().getVolumetricLightingAccumulation().getRt());
-
-		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS, 0, ctx.m_globalRenderingConstantsBuffer);
-
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_LIGHTS, 0,
-					 getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-
-		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_SHADOW_ATLAS, 0, getShadowMapping().getShadowmapRt());
-
-		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTERS, 0, getClusterBinning().getClustersBuffer());
-
 		// Draw
 		RenderableDrawerArguments args;
 		args.m_viewMatrix = ctx.m_matrices.m_view;
 		args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 		args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 		args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
-		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 		args.m_renderingTechinuqe = RenderingTechnique::kForward;
 		args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
 		args.fill(m_runCtx.m_visOut);
 
-		getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+		getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
 
 		// Restore state
 		cmdb.setDepthWrite(true);
@@ -91,13 +74,15 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	}
 
 	// Do lens flares
-	getRenderer().getLensFlare().runDrawFlares(ctx, cmdb);
+	getLensFlare().runDrawFlares(cmdb);
 }
 
 void ForwardShading::setDependencies(GraphicsRenderPass& pass)
 {
-	pass.newTextureDependency(getDepthDownscale().getRt(), TextureUsageBit::kSrvPixel, DepthDownscale::kQuarterInternalResolution);
-	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSrvPixel);
+	const Bool bForwardShading = true;
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
 	if(getRenderer().getLensFlare().getIndirectDrawBuffer().isValid())
 	{

@@ -12,13 +12,11 @@
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
-#include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Reflections.h>
-#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
@@ -59,7 +57,7 @@ Error LightShading::init()
 	return Error::kNone;
 }
 
-void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void LightShading::run(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(LightShading);
 
@@ -82,7 +80,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthWrite(false);
 
 		// Bind all
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		if(getRenderer().isIndirectDiffuseClipmapsEnabled())
 		{
@@ -149,8 +147,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 				F32 m_padding2;
 			} pc;
 
-			pc.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
+			pc.m_invertedViewProjectionJitterMat = getRenderingContext().m_matrices.m_invertedViewProjectionJitter;
+			pc.m_cameraPos = getRenderingContext().m_matrices.m_cameraTransform.getTranslationPart().xyz;
 			pc.m_scale = sky->getImageScale();
 			pc.m_bias = sky->getImageBias();
 
@@ -165,7 +163,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGeneratedSky().getSkyLutRt());
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 		}
 
 		drawQuad(cmdb);
@@ -199,8 +197,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		} consts;
 		consts.m_zSplitCount = F32(getRenderer().getZSplitCount());
 		consts.m_finalZSplit = F32(getRenderer().getVolumetricFog().getFinalClusterInZ());
-		consts.m_near = ctx.m_matrices.m_near;
-		consts.m_far = ctx.m_matrices.m_far;
+		consts.m_near = getRenderingContext().m_matrices.m_near;
+		consts.m_far = getRenderingContext().m_matrices.m_far;
 
 		cmdb.setFastConstants(&consts, sizeof(consts));
 
@@ -218,7 +216,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Debug stuff
 	if(g_cvarRenderVisualizeGiProbes && getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
-		getIndirectDiffuseClipmaps().drawDebugProbes(ctx, rgraphCtx);
+		getIndirectDiffuseClipmaps().drawDebugProbes(rgraphCtx);
 	}
 
 	// Forward shading last
@@ -230,7 +228,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			cmdb.setVrsRate(VrsRate::k2x2);
 		}
 
-		getRenderer().getForwardShading().run(ctx, rgraphCtx);
+		getRenderer().getForwardShading().run(rgraphCtx);
 
 		if(enableVrs)
 		{
@@ -242,10 +240,10 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 }
 
-void LightShading::populateRenderGraph(RenderingContext& ctx)
+void LightShading::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(LightShading);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_cvarGrVrs;
 
@@ -261,8 +259,8 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Light&FW Shad");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		run(ctx, rgraphCtx);
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		run(rgraphCtx);
 	});
 
 	GraphicsRenderPassTargetDesc colorRt(m_runCtx.m_rt);

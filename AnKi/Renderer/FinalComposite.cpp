@@ -73,11 +73,11 @@ Error FinalComposite::init()
 	return err;
 }
 
-void FinalComposite::populateRenderGraph(RenderingContext& ctx)
+void FinalComposite::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// Create the pass
 	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Final Composite");
@@ -87,9 +87,9 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	if(bRendersToSwapchain)
 	{
 		TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-		outRt = ctx.m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
-		ANKI_ASSERT(!ctx.m_swapchainRenderTarget.isValid());
-		ctx.m_swapchainRenderTarget = outRt;
+		outRt = getRenderingContext().m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
+		ANKI_ASSERT(!getRenderingContext().m_swapchainRenderTarget.isValid());
+		getRenderingContext().m_swapchainRenderTarget = outRt;
 
 		pass.setWritesToSwapchain();
 	}

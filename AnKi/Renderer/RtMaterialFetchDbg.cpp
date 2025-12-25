@@ -10,7 +10,6 @@
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
 
@@ -50,9 +49,9 @@ Error RtMaterialFetchDbg::init()
 	return Error::kNone;
 }
 
-void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
+void RtMaterialFetchDbg::populateRenderGraph()
 {
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// SBT build
 	BufferHandle sbtHandle;
@@ -74,28 +73,16 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kSrvDispatchRays);
 
-		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, sbtBuffer](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetchRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());
 
-			// More globals
-			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+			// Space 0 globals
+#include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
-	cmdb.bindSrv( \
-		reg, 0, \
-		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
-				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
-		Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
-
-			bindRgenSpace2Resources(ctx, rgraphCtx);
+			bindRgenSpace2Resources(rgraphCtx);
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
 
 			Vec4 dummy[3];

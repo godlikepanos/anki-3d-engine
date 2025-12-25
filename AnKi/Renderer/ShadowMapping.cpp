@@ -120,11 +120,11 @@ Mat4 ShadowMapping::createSpotLightTextureMatrix(const UVec4& viewport) const
 	return Mat4(sizeTextureSpace, 0.0f, 0.0f, uv.x, 0.0f, sizeTextureSpace, 0.0f, uv.y, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f) * biasMat4;
 }
 
-void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
+void ShadowMapping::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// Import
 	if(m_rtImportedOnce) [[likely]]
@@ -138,7 +138,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// First process the lights
-	processLights(ctx);
+	processLights();
 }
 
 void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const
@@ -245,12 +245,13 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 	return goodResult;
 }
 
-void ShadowMapping::processLights(RenderingContext& ctx)
+void ShadowMapping::processLights()
 {
 	// First allocate tiles for the dir light and then build passes for points and spot lights. Then passes for the dir light. The dir light has many
 	// passes and it will push the other types of lights further into the future. So do those first.
 
 	// Vars
+	RenderingContext& ctx = getRenderingContext();
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const CameraComponent& mainCam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
@@ -664,11 +665,10 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 			args.m_cameraTransform = spass.m_viewMat.invertTransformation();
 			args.m_viewProjectionMatrix = spass.m_viewProjMat;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 			args.m_viewport = UVec4(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
 			args.fill(visOut);
 
-			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+			getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
 
 			cmdb.setPolygonOffset(0.0, 0.0);
 		}

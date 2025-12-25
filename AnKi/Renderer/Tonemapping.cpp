@@ -49,17 +49,17 @@ Error Tonemapping::init()
 	return Error::kNone;
 }
 
-void Tonemapping::importRenderTargets(RenderingContext& ctx)
+void Tonemapping::importRenderTargets()
 {
 	// Just import it. It will not be used in resource tracking
 	m_runCtx.m_exposureLuminanceHandle =
-		ctx.m_renderGraphDescr.importRenderTarget(m_expAndAvgLum.m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kUavCompute);
+		getRenderingContext().m_renderGraphDescr.importRenderTarget(m_expAndAvgLum.m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kUavCompute);
 }
 
-void Tonemapping::populateRenderGraph(RenderingContext& ctx)
+void Tonemapping::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(Tonemapping);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// Create avg lum pass
 	{
@@ -90,14 +90,14 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		RenderPassBase* ppass;
 		if(g_cvarRenderPreferCompute)
 		{
-			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Tonemap");
+			NonGraphicsRenderPass& pass = getRenderingContext().m_renderGraphDescr.newNonGraphicsRenderPass("Tonemap");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSrvCompute);
 			pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
 			ppass = &pass;
 		}
 		else
 		{
-			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Tonemap");
+			GraphicsRenderPass& pass = getRenderingContext().m_renderGraphDescr.newGraphicsRenderPass("Tonemap");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
 			pass.newTextureDependency(inRt, TextureUsageBit::kSrvPixel);
 			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);

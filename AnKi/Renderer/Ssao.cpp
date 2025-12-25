@@ -45,10 +45,10 @@ Error Ssao::init()
 	return Error::kNone;
 }
 
-void Ssao::populateRenderGraph(RenderingContext& ctx)
+void Ssao::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(Ssao);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	const U32 readRtIdx = getRenderer().getFrameCount() & 1;
@@ -106,9 +106,10 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(getDepthDownscale().getRt(), readUsage);
 		ppass->newTextureDependency(finalRt, writeUsage);
 
-		ppass->setWork([this, &ctx, finalRt](RenderPassWorkContext& rgraphCtx) {
+		ppass->setWork([this, finalRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SsaoMain);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			RenderingContext& ctx = getRenderingContext();
 
 			cmdb.bindShaderProgram(m_grProg.get());
 
@@ -172,7 +173,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(bentNormalsAndSsaoTempRt, writeUsage);
 		ppass->newTextureDependency(getHistoryLength().getRt(), readUsage);
 
-		ppass->setWork([this, bentNormalsAndSsaoTempRt, finalRt, historyRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+		ppass->setWork([this, bentNormalsAndSsaoTempRt, finalRt, historyRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SsaoTemporalDenoise);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -184,7 +185,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(2, 0, getMotionVectors().getMotionVectorsRt());
 			rgraphCtx.bindSrv(3, 0, getHistoryLength().getRt());
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 

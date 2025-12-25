@@ -10,8 +10,6 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
 ANKI_CVAR2(NumericCVar<F32>, Render, Rt, ExtendedFrustumDistance, 200.0f, 10.0f, 10000.0f,
 		   "Every object that its distance from the camera is bellow that value will take part in ray tracing")
 
@@ -21,17 +19,16 @@ ANKI_CVAR2(NumericCVar<F32>, Render, Rt, LightGridSizeXZ, 128.0f, 10.0f, 10000.0
 ANKI_CVAR2(NumericCVar<F32>, Render, Rt, LightGridSizeY, 64.0f, 10.0f, 10000.0f, "The size of the grid in the Y dimension")
 ANKI_CVAR2(NumericCVar<U32>, Render, Rt, LightIndexListSize, 64 * 1024, 128, 256 * 1024, "The light index list size")
 
-/// @memberof AccelerationStructureBuilder
 class AccelerationStructureVisibilityInfo
 {
 public:
-	BufferHandle m_depedency; ///< Dependency for the buffer views bellow.
+	BufferHandle m_depedency; // Dependency for the buffer views bellow.
 
 	BufferView m_visibleRenderablesBuffer;
 	BufferView m_buildSbtIndirectArgsBuffer;
 };
 
-/// Builds acceleration structures and also bins lights to some sort of grid.
+// Builds acceleration structures and also bins lights to some sort of grid.
 class AccelerationStructureBuilder : public RendererObject
 {
 public:
@@ -40,7 +37,7 @@ public:
 		return Error::kNone;
 	}
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	AccelerationStructureHandle getAccelerationStructureHandle() const
 	{
@@ -75,6 +72,5 @@ public:
 		LocalLightsGridConstants m_lightGridConsts = {};
 	} m_runCtx;
 };
-/// @}
 
 } // namespace anki

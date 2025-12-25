@@ -33,10 +33,10 @@ Error TemporalAA::init()
 	return Error::kNone;
 }
 
-void TemporalAA::populateRenderGraph(RenderingContext& ctx)
+void TemporalAA::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(TemporalAA);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;

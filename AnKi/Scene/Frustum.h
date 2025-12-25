@@ -152,19 +152,28 @@ public:
 
 	const Mat4& getProjectionMatrix() const
 	{
-		ANKI_ASSERT(!isDirty());
+		if(isDirty())
+		{
+			ANKI_SCENE_LOGW("update() hasn't been called");
+		}
 		return m_projMat;
 	}
 
 	const Mat3x4& getViewMatrix() const
 	{
-		ANKI_ASSERT(!isDirty());
+		if(isDirty())
+		{
+			ANKI_SCENE_LOGW("update() hasn't been called");
+		}
 		return m_viewMat;
 	}
 
 	const Mat4& getViewProjectionMatrix() const
 	{
-		ANKI_ASSERT(!isDirty());
+		if(isDirty())
+		{
+			ANKI_SCENE_LOGW("update() hasn't been called");
+		}
 		return m_viewProjMat;
 	}
 

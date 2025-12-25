@@ -44,7 +44,7 @@ Error GpuParticles::init()
 	return Error::kNone;
 }
 
-void GpuParticles::populateRenderGraph(RenderingContext& ctx)
+void GpuParticles::populateRenderGraph()
 {
 	SceneBlockArray<ParticleEmitter2Component>& emitters = SceneGraph::getSingleton().getComponentArrays().getParticleEmitter2s();
 	if(emitters.getSize() == 0) [[unlikely]]
@@ -53,14 +53,14 @@ void GpuParticles::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Create the renderpass
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("GPU particle sim");
 
 	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 	pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavCompute);
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		SceneBlockArray<ParticleEmitter2Component>& emitters = SceneGraph::getSingleton().getComponentArrays().getParticleEmitter2s();
@@ -139,9 +139,9 @@ void GpuParticles::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(&rsrc.getShaderProgram());
 
 			ParticleSimulationConstants consts;
-			consts.m_viewProjMat = ctx.m_matrices.m_viewProjection;
-			consts.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjection;
-			consts.m_unprojectionParams = ctx.m_matrices.m_unprojectionParameters;
+			consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
+			consts.m_invertedViewProjMat = getRenderingContext().m_matrices.m_invertedViewProjection;
+			consts.m_unprojectionParams = getRenderingContext().m_matrices.m_unprojectionParameters;
 			consts.m_randomNumber = getRandom() % kMaxU32;
 			consts.m_dt = emitter.getDt();
 			consts.m_gpuSceneParticleEmitterIndex = emitter.getGpuSceneParticleEmitter2Index();

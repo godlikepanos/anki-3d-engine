@@ -9,7 +9,7 @@
 
 ANKI_BEGIN_NAMESPACE
 
-/// Directional light (sun).
+// Directional light (sun).
 struct DirectionalLight
 {
 	Vec3 m_diffuseColor;
@@ -124,7 +124,7 @@ struct LocalLightsGridConstants
 	F32 m_padding4;
 };
 
-/// Common constants for all passes.
+// Common constants for all passes.
 struct GlobalRendererConstants
 {
 	Vec2 m_renderingSize;
@@ -156,18 +156,7 @@ struct GlobalRendererConstants
 	LocalLightsGridConstants m_localLightsGrid;
 };
 
-// RT shadows
-struct RtShadowsDenoiseConstants
-{
-	Mat4 m_invViewProjMat;
-
-	F32 m_time;
-	U32 m_minSampleCount;
-	U32 m_maxSampleCount;
-	F32 m_padding2;
-};
-
-struct RtShadowsSbtBuildConstants
+struct SbtBuildConstants
 {
 	U32 m_shaderHandleDwordSize;
 	U32 m_sbtRecordDwordSize;
@@ -235,7 +224,7 @@ struct VolumetricLightingConstants
 // SSAO
 struct SsaoConstants
 {
-	F32 m_radius; ///< In meters.
+	F32 m_radius; // In meters.
 	U32 m_sampleCount;
 	Vec2 m_viewportSizef;
 
@@ -287,5 +276,17 @@ enum class DebugRenderTargetRegister
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DebugRenderTargetRegister)
+
+// Common data for all materials
+struct MaterialGlobalConstants
+{
+	Mat4 m_viewProjectionMatrix;
+	Mat4 m_previousViewProjectionMatrix;
+	Mat3x4 m_viewTransform;
+	Mat3x4 m_cameraTransform;
+
+	Vec4 m_viewport;
+};
+static_assert(sizeof(MaterialGlobalConstants) % sizeof(Vec4) == 0);
 
 ANKI_END_NAMESPACE

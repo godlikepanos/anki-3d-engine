@@ -210,7 +210,6 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					m_gpuSceneRenderableAabbForward.uploadToGpuScene(gpuVolume);
 					break;
 				case RenderingTechnique::kRtMaterialFetch:
-				case RenderingTechnique::kRtShadow:
 					m_gpuSceneRenderableAabbRt.uploadToGpuScene(gpuVolume);
 					break;
 				default:
@@ -304,12 +303,6 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			(prioritizeEmitter) ? m_emitterComponent->getGpuSceneMeshLodIndex(m_submeshIdx) : m_meshComponent->getGpuSceneMeshLodsIndex(m_submeshIdx);
 		gpuRenderable.m_boneTransformsOffset = (m_skinComponent) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 		gpuRenderable.m_particleEmitterIndex2 = (prioritizeEmitter) ? m_emitterComponent->getGpuSceneParticleEmitter2Index() : kMaxU32;
-		if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
-		{
-			const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false, false);
-			const MaterialVariant& variant = mtl.getOrCreateVariant(key);
-			gpuRenderable.m_rtShadowsShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
-		}
 		if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtMaterialFetch))
 		{
 			const RenderingKey key(RenderingTechnique::kRtMaterialFetch, 0, false, false, false);

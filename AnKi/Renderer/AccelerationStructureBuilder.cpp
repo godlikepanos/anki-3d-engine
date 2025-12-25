@@ -12,9 +12,11 @@
 
 namespace anki {
 
-void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
+void AccelerationStructureBuilder::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(ASBuilder);
+
+	RenderingContext& ctx = getRenderingContext();
 
 	// Do visibility
 	GpuVisibilityAccelerationStructuresOutput visOut;

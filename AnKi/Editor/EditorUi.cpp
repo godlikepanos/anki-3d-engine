@@ -794,6 +794,9 @@ void EditorUi::sceneNodePropertiesWindow()
 					case SceneComponentType::kDecal:
 						decalComponent(static_cast<DecalComponent&>(comp));
 						break;
+					case SceneComponentType::kCamera:
+						cameraComponent(static_cast<CameraComponent&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -1266,6 +1269,42 @@ void EditorUi::decalComponent(DecalComponent& comp)
 		comp.setRoughnessMetalnessBlendFactor(rmFactor);
 	}
 	ImGui::SetItemTooltip("Blend Factor");
+}
+
+void EditorUi::cameraComponent(CameraComponent& comp)
+{
+	F32 near = comp.getNear();
+	if(ImGui::SliderFloat("Near", &near, 0.1f, 10.0f))
+	{
+		comp.setNear(near);
+	}
+
+	F32 far = comp.getFar();
+	if(ImGui::SliderFloat("Far", &far, 10.2f, 10000.0f))
+	{
+		comp.setFar(far);
+	}
+
+	F32 fovX = toDegrees(comp.getFovX());
+	if(ImGui::SliderFloat("FovX", &fovX, 10.0f, 200.0f))
+	{
+		comp.setFovX(toRad(fovX));
+	}
+
+	Bool fovYDirivedFromAspect = comp.getFovYDerivesByRendererAspect();
+	if(ImGui::Checkbox("FovX derived by aspect", &fovYDirivedFromAspect))
+	{
+		comp.setFovYDerivesByRendererAspect(fovYDirivedFromAspect);
+	}
+
+	if(!comp.getFovYDerivesByRendererAspect())
+	{
+		F32 fovY = toDegrees(comp.getFovY());
+		if(ImGui::SliderFloat("FovY", &fovY, 10.0f, 200.0f))
+		{
+			comp.setFovY(toRad(fovY));
+		}
+	}
 }
 
 void EditorUi::cVarsWindow()

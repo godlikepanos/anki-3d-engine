@@ -8,6 +8,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Core/App.h>
+#include <AnKi/Renderer/Renderer.h>
 
 namespace anki {
 
@@ -29,6 +30,15 @@ void CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	if(info.m_node->movedThisFrame())
 	{
 		m_frustum.setWorldTransform(info.m_node->getWorldTransform());
+	}
+
+	if(m_fovYDerivesByAspect)
+	{
+		const F32 desiredFovY = m_frustum.getFovX() / Renderer::getSingleton().getAspectRatio();
+		if(m_frustum.getFovY() != desiredFovY)
+		{
+			m_frustum.setFovY(desiredFovY);
+		}
 	}
 
 	updated = m_frustum.update();

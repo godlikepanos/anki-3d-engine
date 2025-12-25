@@ -12,7 +12,6 @@
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 
@@ -27,8 +26,8 @@ public:
 	IVec3 m_end;
 };
 
-/// Given the clipmap's position of this and the previous frame it splits the clipmap into regions that contain new probes (thus they need a full
-/// update) or regions of probes that need a less frequent update.
+// Given the clipmap's position of this and the previous frame it splits the clipmap into regions that contain new probes (thus they need a full
+// update) or regions of probes that need a less frequent update.
 static void findClipmapInUpdateRanges(Vec3 newClipmapMin, Vec3 oldClipmapMin, Vec3 probeSize, UVec3 probeCountsu,
 									  Array<ProbeRange, 3>& fullUpdateProbeRanges, U32& fullUpdateProbeRangeCount,
 									  ProbeRange& partialUpdateProbeRange)
@@ -331,7 +330,7 @@ Error IndirectDiffuseClipmaps::init()
 	return Error::kNone;
 }
 
-void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
+void IndirectDiffuseClipmaps::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
 
@@ -341,11 +340,11 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_consts.m_previousFrameAabbMins[i] = m_consts.m_aabbMins[i];
 
-		computeClipmapBounds(ctx.m_matrices.m_cameraTransform.getTranslationPart(),
-							 -ctx.m_matrices.m_cameraTransform.getRotationPart().getZAxis().normalize(), i, m_consts);
+		computeClipmapBounds(getRenderingContext().m_matrices.m_cameraTransform.getTranslationPart(),
+							 -getRenderingContext().m_matrices.m_cameraTransform.getRotationPart().getZAxis().normalize(), i, m_consts);
 	}
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const RenderTargetHandle rtResultHandle = rgraph.newRenderTarget(m_rtResultRtDesc);
 	const RenderTargetHandle lowRezRt = rgraph.newRenderTarget(m_lowRezRtDesc);
@@ -466,28 +465,16 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvCompute);
 			}
 
-			pass.setWork([this, rtResultHandle, &ctx, sbtBuffer, fullUpdateRangeCount, clipmap, fullUpdateRanges, partialUpdateRange,
+			pass.setWork([this, rtResultHandle, sbtBuffer, fullUpdateRangeCount, clipmap, fullUpdateRanges, partialUpdateRange,
 						  partialUpdateProbeCount](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 				cmdb.bindShaderProgram((g_cvarRenderIdcInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get() : m_rtLibraryGrProg.get());
 
 				// More globals
-				cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
-				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+#include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
-				cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
-	cmdb.bindSrv( \
-		reg, 0, \
-		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
-				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
-		Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
-
-				bindRgenSpace2Resources(ctx, rgraphCtx);
+				bindRgenSpace2Resources(rgraphCtx);
 
 				rgraphCtx.bindUav(0, 2, rtResultHandle);
 
@@ -566,7 +553,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			pass.newTextureDependency(probeValidityVolumes[clipmap], TextureUsageBit::kUavCompute);
 			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kUavCompute);
 
-			pass.setWork([this, &ctx, rtResultHandle, radianceVolumes, probeValidityVolumes, distanceMomentsVolumes, clipmap, fullUpdateRanges,
+			pass.setWork([this, rtResultHandle, radianceVolumes, probeValidityVolumes, distanceMomentsVolumes, clipmap, fullUpdateRanges,
 						  partialUpdateRange, partialUpdateProbeCount, fullUpdateRangeCount](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -574,7 +561,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 				rgraphCtx.bindSrv(0, 0, rtResultHandle);
 
-				cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+				cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 				rgraphCtx.bindUav(0, 0, radianceVolumes[clipmap]);
 				rgraphCtx.bindUav(1, 0, distanceMomentsVolumes[clipmap]);
@@ -643,12 +630,12 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			pass.newTextureDependency(avgIrradianceVolumes[clipmap], TextureUsageBit::kUavCompute);
 		}
 
-		pass.setWork([this, &ctx, radianceVolumes, irradianceVolumes, avgIrradianceVolumes](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, radianceVolumes, irradianceVolumes, avgIrradianceVolumes](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_computeIrradianceGrProg.get());
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			U32 uav = 0;
 			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
@@ -692,25 +679,13 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavDispatchRays);
 		setRgenSpace2Dependencies(pass);
 
-		pass.setWork([this, &ctx, sbtBuffer, lowRezRt](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, sbtBuffer, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			// More globals
-			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+			// Space 0 globals
+#include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
-	cmdb.bindSrv( \
-		reg, 0, \
-		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
-				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
-		Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
-
-			bindRgenSpace2Resources(ctx, rgraphCtx);
+			bindRgenSpace2Resources(rgraphCtx);
 			rgraphCtx.bindUav(0, 2, lowRezRt);
 
 			const Array<Vec4, 3> consts = {Vec4(g_cvarRenderIdcFirstBounceRayDistance), {}, {}};
@@ -751,7 +726,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		}
 		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx, lowRezRt](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_applyGiGrProg.get());
@@ -762,7 +737,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindUav(0, 0, lowRezRt);
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
@@ -812,7 +787,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
 
-		pass.setWork([this, &ctx, fullRtTmp, historyRt, outRt](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, fullRtTmp, historyRt, outRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_temporalDenoiseGrProg.get());
@@ -826,7 +801,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
@@ -856,7 +831,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_handles.m_appliedIrradiance = historyRt;
 }
 
-void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const
+void IndirectDiffuseClipmaps::drawDebugProbes(RenderPassWorkContext& rgraphCtx) const
 {
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -867,7 +842,7 @@ void IndirectDiffuseClipmaps::drawDebugProbes(const RenderingContext& ctx, Rende
 	const UVec4 consts(clipmap);
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
-	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+	cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 	const RenderTargetHandle visVolume = m_runCtx.m_handles.m_radianceVolumes[clipmap];
 	rgraphCtx.bindSrv(0, 0, visVolume);

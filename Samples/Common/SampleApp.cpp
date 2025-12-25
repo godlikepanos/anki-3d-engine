@@ -96,29 +96,6 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "MotionBlur") ? "" : "MotionBlur");
 	}
 
-	if(in.getKey(KeyCode::kH) == 1)
-	{
-		static U32 pressCount = 0;
-		CString rtName;
-		switch(pressCount)
-		{
-		case 0:
-			rtName = "RtShadows";
-			break;
-		case 1:
-			rtName = "RtShadows1";
-			break;
-		case 2:
-			rtName = "RtShadows2";
-			break;
-		default:
-			rtName = "";
-		}
-		renderer.setCurrentDebugRenderTarget(rtName);
-
-		pressCount = (pressCount + 1) % 4;
-	}
-
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
 		g_cvarGrVrs = !g_cvarGrVrs;

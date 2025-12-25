@@ -15,22 +15,18 @@ namespace anki {
 // Forward
 class GpuVisibilityOutput;
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<U32>, Render, Sm, TileResolution, (ANKI_PLATFORM_MOBILE) ? 128 : 256, 16, 2048, "Shadowmapping tile resolution")
 ANKI_CVAR2(NumericCVar<U32>, Render, Sm, TileCountPerRowOrColumn, 32, 1, 256, "Shadowmapping atlas will have this number squared number of tiles")
 ANKI_CVAR2(BoolCVar, Render, Sm, Pcf, (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCF")
 ANKI_CVAR2(BoolCVar, Render, Sm, Pcss, (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCSS")
 
-/// Shadowmapping pass
+// Shadowmapping pass
 class ShadowMapping : public RendererObject
 {
 public:
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getShadowmapRt() const
 	{
@@ -73,7 +69,7 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	void processLights(RenderingContext& ctx);
+	void processLights();
 
 	TileAllocatorResult2 allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies, UVec4* atlasTileViewports);
 
@@ -90,6 +86,5 @@ private:
 	void createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subPasses, const GpuVisibilityOutput& visOut, CString passName,
 							   RenderGraphBuilder& rgraph);
 };
-/// @}
 
 } // end namespace anki

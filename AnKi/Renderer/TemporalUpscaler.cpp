@@ -49,16 +49,16 @@ Error TemporalUpscaler::init()
 	return Error::kNone;
 }
 
-void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
+void TemporalUpscaler::populateRenderGraph()
 {
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDesc);
 
 	if(m_grUpscaler.isCreated())
 	{
-		NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("DLSS");
+		NonGraphicsRenderPass& pass = getRenderingContext().m_renderGraphDescr.newNonGraphicsRenderPass("DLSS");
 
 		// DLSS says input textures in sampled state and out as storage image
 		const TextureUsageBit readUsage = TextureUsageBit::kAllSrv & TextureUsageBit::kAllCompute;
@@ -69,7 +69,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getGBuffer().getDepthRt(), readUsage, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 		pass.newTextureDependency(m_runCtx.m_rt, writeUsage);
 
-		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(TemporalUpscaler);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -78,7 +78,7 @@ void TemporalUpscaler::populateRenderGraph(RenderingContext& ctx)
 			const Bool reset = getRenderer().getFrameCount() == 0;
 			const Vec2 mvScale = srcRes; // UV space to Pixel space factor
 			// In [-texSize / 2, texSize / 2] -> sub-pixel space {-0.5, 0.5}
-			const Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy * srcRes * 0.5f;
+			const Vec2 jitterOffset = getRenderingContext().m_matrices.m_jitter.getTranslationPart().xy * srcRes * 0.5f;
 
 			const TextureView srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt(), TextureSubresourceDesc::firstSurface());
 			const TextureView motionVectorsView =

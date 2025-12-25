@@ -59,7 +59,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getRt() const
 	{
@@ -170,16 +170,16 @@ private:
 
 	void initGizmos();
 
-	void populateRenderGraphParticleEmitters(RenderingContext& ctx, InternalCtx& ictx);
-	void populateRenderGraphMain(RenderingContext& ctx, InternalCtx& ictx);
-	void populateRenderGraphObjectPicking(RenderingContext& ctx, InternalCtx& ictx);
+	void populateRenderGraphParticleEmitters(InternalCtx& ictx);
+	void populateRenderGraphMain(InternalCtx& ictx);
+	void populateRenderGraphObjectPicking(InternalCtx& ictx);
 
-	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
-						   Bool objectPicking, RenderPassWorkContext& rgraphCtx);
+	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const ImageResource& image, Bool objectPicking,
+						   RenderPassWorkContext& rgraphCtx);
 
-	void drawParticleEmitters(const RenderingContext& ctx, const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx);
+	void drawParticleEmitters(const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx);
 
-	void drawGizmos(const Mat3x4& worldTransform, const RenderingContext& ctx, Bool objectPicking, CommandBuffer& cmdb) const;
+	void drawGizmos(const Mat3x4& worldTransform, Bool objectPicking, CommandBuffer& cmdb) const;
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  DebugRenderTargetDrawStyle& drawStyle) const override

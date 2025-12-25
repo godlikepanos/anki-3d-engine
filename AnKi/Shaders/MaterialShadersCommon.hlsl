@@ -7,37 +7,18 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/MeshTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 
-#define _ANKI_REG(type, binding) type##binding
-#define ANKI_REG(type, binding) _ANKI_REG(type, binding)
-
-SamplerState g_globalSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER));
-ConstantBuffer<MaterialGlobalConstants> g_globalConstants : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_GLOBAL_CONSTANTS));
-ByteAddressBuffer g_gpuScene : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_GPU_SCENE));
-
-// Unified geom:
-ByteAddressBuffer g_unifiedGeom : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY));
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) Buffer<shaderType> g_unifiedGeom_##fmt : register(ANKI_REG(t, reg));
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
-
-StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES));
-StructuredBuffer<MeshletGeometryDescriptor> g_meshletGeometryDescriptors : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS));
-StructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_MESHLET_INSTANCES));
-StructuredBuffer<GpuSceneRenderable> g_renderables : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_RENDERABLES));
-StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_MESH_LODS));
-StructuredBuffer<GpuSceneParticleEmitter2> g_particleEmitters2 : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS2));
-StructuredBuffer<Mat3x4> g_transforms : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_TRANSFORMS));
-SamplerState g_nearestClampSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER));
-StructuredBuffer<U32> g_firstMeshlet : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_FIRST_MESHLET));
-StructuredBuffer<GpuScenePerDraw> g_perDraw : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_PER_DRAW));
-
-// One for each bucket. Points to g_perDraw
-StructuredBuffer<U32> g_firstPerDraw : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_PER_DRAW_OFFSET));
+// Write the bindings
+#if ANKI_MESH_SHADER || ANKI_VERTEX_SHADER || ANKI_PIXEL_SHADER
+#	define ANKI_RASTER_PATH 1
+#endif
+#include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
 #if ANKI_MESH_SHADER || ANKI_VERTEX_SHADER
 struct Consts
@@ -50,23 +31,6 @@ struct Consts
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 #endif
 
-// FW shading specific
-#if defined(FORWARD_SHADING)
-#	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
-
-SamplerState g_linearAnyClampSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_LINEAR_CLAMP_SAMPLER));
-Texture2D g_gbufferDepthTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_SCENE_DEPTH));
-Texture3D<Vec4> g_lightVol : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_LIGHT_VOLUME));
-SamplerComparisonState g_shadowSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER));
-
-ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS));
-StructuredBuffer<Cluster> g_clusters : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTERS));
-StructuredBuffer<GpuSceneLight> g_lights : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_LIGHTS));
-Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_SHADOW_ATLAS));
-#endif
-
-#undef ANKI_REG
-
 #if ANKI_VERTEX_SHADER
 GpuScenePerDraw getGpuScenePerDraw()
 {
@@ -74,7 +38,7 @@ GpuScenePerDraw getGpuScenePerDraw()
 }
 #endif
 
-/// Used in vert shading.
+// Used in vert shading.
 UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 {
 	UnpackedMeshVertex v;
@@ -93,7 +57,7 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	return v;
 }
 
-/// Used in mesh shading.
+// Used in mesh shading.
 UnpackedMeshVertex loadVertexLocalIndex(MeshletGeometryDescriptor meshlet, U32 localIdx, Bool bones)
 {
 	UnpackedMeshVertex v;
@@ -112,7 +76,7 @@ UnpackedMeshVertex loadVertexLocalIndex(MeshletGeometryDescriptor meshlet, U32 l
 	return v;
 }
 
-/// Used in SW meshlet rendering.
+// Used in SW meshlet rendering.
 UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 svVertexId, Bool bones)
 {
 	// Indices are stored in R8G8B8A8_Uint per primitive. Last component is not used.

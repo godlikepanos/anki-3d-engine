@@ -11,22 +11,16 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<U32>, Render, Idp, TileResolution, (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32, "GI tile resolution")
 ANKI_CVAR2(NumericCVar<U32>, Render, Idp, ShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
 
-/// Ambient global illumination passes.
-///
-/// It builds a volume clipmap with ambient GI information.
+// Ambient global illumination passes. It builds a volume clipmap with ambient GI information.
 class IndirectDiffuseProbes : public RendererObject
 {
 public:
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getCurrentlyRefreshedVolumeRt() const
 	{
@@ -45,7 +39,7 @@ private:
 	public:
 		Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 		RenderTargetDesc m_depthRtDescr;
-	} m_gbuffer; ///< G-buffer pass.
+	} m_gbuffer; // G-buffer pass.
 
 	class
 	{
@@ -58,14 +52,14 @@ private:
 	public:
 		RenderTargetDesc m_rtDescr;
 		TraditionalDeferredLightShading m_deferred;
-	} m_lightShading; ///< Light shading.
+	} m_lightShading; // Light shading.
 
 	class
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-	} m_irradiance; ///< Irradiance.
+	} m_irradiance; // Irradiance.
 
 	static constexpr U32 kProbeCellRefreshesPerFrame = 2;
 
@@ -83,6 +77,5 @@ private:
 	Error initLightShading();
 	Error initIrradiance();
 };
-/// @}
 
 } // end namespace anki

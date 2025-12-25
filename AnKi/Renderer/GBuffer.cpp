@@ -64,9 +64,9 @@ Error GBuffer::init()
 	return Error::kNone;
 }
 
-void GBuffer::importRenderTargets(RenderingContext& ctx)
+void GBuffer::importRenderTargets()
 {
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
 	{
@@ -86,17 +86,17 @@ void GBuffer::importRenderTargets(RenderingContext& ctx)
 	}
 }
 
-void GBuffer::populateRenderGraph(RenderingContext& ctx)
+void GBuffer::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	// Visibility
 	GpuVisibilityOutput& visOut = m_runCtx.m_visOut;
 	FrustumGpuVisibilityInput visIn;
 	{
-		const CommonMatrices& matrices = ctx.m_matrices;
+		const CommonMatrices& matrices = getRenderingContext().m_matrices;
 		const Array<F32, kMaxLodCount - 1> lodDistances = {g_cvarRenderLod0MaxDistance, g_cvarRenderLod1MaxDistance};
 
 		visIn.m_passesName = "GBuffer";
@@ -160,7 +160,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 		pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti);
 
-		pass.setWork([&ctx, visOut, this](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([visOut, this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
 			if(!visOut.containsDrawcalls()) [[unlikely]]
@@ -169,6 +169,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			}
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			RenderingContext& ctx = getRenderingContext();
 
 			// Set some state, leave the rest to default
 			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
@@ -178,14 +179,12 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 			args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 			args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 			args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 			args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
-
 			args.fill(visOut);
 
 			cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
-			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+			getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
 
 			{
 				struct Consts

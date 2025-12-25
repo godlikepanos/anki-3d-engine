@@ -11,9 +11,6 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<U32>, Render, Ssao, SampleCount, 4, 1, 1024, "SSAO sample count")
 ANKI_CVAR2(NumericCVar<F32>, Render, Ssao, Radius, 2.0f, 0.1f, 100.0f, "SSAO radius in meters")
 ANKI_CVAR2(BoolCVar, Render, Ssao, QuarterRez, ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez")
@@ -25,7 +22,7 @@ ANKI_CVAR2(
 	},
 	"SSAO spatial denoise quality")
 
-/// Screen space ambient occlusion.
+// Screen space ambient occlusion.
 class Ssao : public RendererObject
 {
 public:
@@ -37,7 +34,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -73,6 +70,5 @@ public:
 
 	Error initInternal();
 };
-/// @}
 
 } // end namespace anki

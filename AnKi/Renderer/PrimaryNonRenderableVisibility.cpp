@@ -42,10 +42,10 @@ static WeakArray<TComponent*> gatherComponents(ConstWeakArray<UVec2> pairs, TArr
 	return out;
 }
 
-void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
+void PrimaryNonRenderableVisibility::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(PrimaryNonRenderableVisibility);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	m_runCtx = {};
 
@@ -97,7 +97,7 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 			GpuVisibilityNonRenderablesInput in;
 			in.m_passesName = passName;
 			in.m_objectType = type;
-			in.m_viewProjectionMat = ctx.m_matrices.m_viewProjection;
+			in.m_viewProjectionMat = getRenderingContext().m_matrices.m_viewProjection;
 			in.m_hzbRt = &getGBuffer().getHzbRt();
 			in.m_rgraph = &rgraph;
 

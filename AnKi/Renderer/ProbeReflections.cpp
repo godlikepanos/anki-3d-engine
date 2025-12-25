@@ -75,7 +75,7 @@ Error ProbeReflections::init()
 	return Error::kNone;
 }
 
-void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
+void ProbeReflections::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
@@ -108,7 +108,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	g_svarProbeReflectionCount.increment(1);
 	probeToRefresh->setEnvironmentTextureAsRefreshed();
 
-	RenderGraphBuilder& rgraph = rctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 	const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
@@ -190,12 +190,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 					args.m_cameraTransform = viewMat.invertTransformation();
 					args.m_viewProjectionMatrix = viewProjMat;
 					args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
-					args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 					args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 					args.m_viewport = UVec4(0, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
 					args.fill(visOut);
 
-					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+					getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
 				});
 		}
 
@@ -257,12 +256,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				args.m_cameraTransform = cascadeViewMat.invertTransformation();
 				args.m_viewProjectionMatrix = cascadeViewProjMat;
 				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
 				args.m_renderingTechinuqe = RenderingTechnique::kDepth;
 				args.m_viewport = UVec4(0, 0, rez, rez);
 				args.fill(shadowVisOut);
 
-				getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+				getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
 
 				cmdb.setPolygonOffset(0.0, 0.0);
 			});
@@ -317,8 +315,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			}
 
 			pass.setWork([this, visResult = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(),
-						  cascadeViewProjMat = cascadeViewProjMat, probeToRefresh, gbufferColorRts, gbufferDepthRt, shadowMapRt, faceIdx = f,
-						  &rctx](RenderPassWorkContext& rgraphCtx) {
+						  cascadeViewProjMat = cascadeViewProjMat, probeToRefresh, gbufferColorRts, gbufferDepthRt, shadowMapRt,
+						  faceIdx = f](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 				TraditionalDeferredLightShadingDrawInfo dsInfo;
@@ -347,7 +345,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				}
 				dsInfo.m_skyLutRenderTarget =
 					(getRenderer().getGeneratedSky().isEnabled()) ? getRenderer().getGeneratedSky().getSkyLutRt() : RenderTargetHandle();
-				dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstantsBuffer;
+				dsInfo.m_globalRendererConsts = getRenderingContext().m_globalRenderingConstantsBuffer;
 				dsInfo.m_renderpassContext = &rgraphCtx;
 
 				m_lightShading.m_deferred.drawLights(dsInfo);

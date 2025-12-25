@@ -9,12 +9,9 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR(NumericCVar<F32>, Render, VrsThreshold, 0.1f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
 
-/// Computes the shading rate image to be used by a number of passes.
+// Computes the shading rate image to be used by a number of passes.
 class VrsSriGeneration : public RendererObject
 {
 public:
@@ -26,10 +23,9 @@ public:
 
 	Error init();
 
-	void importRenderTargets(RenderingContext& ctx);
+	void importRenderTargets();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getSriRt() const
 	{
@@ -83,6 +79,5 @@ public:
 		}
 	}
 };
-/// @}
 
 } // end namespace anki

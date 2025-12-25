@@ -11,22 +11,19 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(NumericCVar<U8>, Render, LensFlare, MaxSpritesPerFlare, 8, 4, 255, "Max sprites per lens flare")
 
-/// Lens flare rendering pass. Part of forward shading.
+// Lens flare rendering pass. Part of forward shading.
 class LensFlare : public RendererObject
 {
 public:
 	Error init();
 
-	void runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb);
+	void runDrawFlares(CommandBuffer& cmdb);
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
-	/// Get it to set a dependency.
+	// Get it to set a dependency.
 	BufferHandle getIndirectDrawBuffer() const
 	{
 		return m_runCtx.m_indirectBuffHandle;
@@ -51,6 +48,5 @@ private:
 
 	Error initInternal();
 };
-/// @}
 
 } // end namespace anki

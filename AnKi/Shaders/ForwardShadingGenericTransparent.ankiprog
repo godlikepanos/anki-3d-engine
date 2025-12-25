@@ -162,7 +162,7 @@ PixelOut main(VertOut input)
 	output.m_color = Vec4(1.0, 1.0, 1.0, 1.0);
 
 #	if TEXTURE == 1
-	output.m_color = getBindlessTexture2DVec4(localConstants.m_texture).Sample(g_globalSampler, input.m_uv);
+	output.m_color = getBindlessTexture2DVec4(localConstants.m_texture).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, input.m_uv);
 #	endif
 
 #	if LIGHT == 1

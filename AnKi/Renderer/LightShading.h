@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Clustered deferred light pass.
+// Clustered deferred light pass.
 class LightShading : public RendererObject
 {
 public:
@@ -24,7 +21,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	RenderTargetHandle getRt() const
 	{
@@ -62,7 +59,7 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Run context.
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx);
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -71,6 +68,5 @@ private:
 		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
 	}
 };
-/// @}
 
 } // end namespace anki

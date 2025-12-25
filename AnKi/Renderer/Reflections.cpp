@@ -20,7 +20,6 @@
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/ImageAtlasResource.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
 
@@ -132,9 +131,9 @@ Error Reflections::init()
 	return Error::kNone;
 }
 
-void Reflections::populateRenderGraph(RenderingContext& ctx)
+void Reflections::populateRenderGraph()
 {
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
 
@@ -220,7 +219,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx, pixelsFailedSsrBuff, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsSsr);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -247,7 +246,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindUav(2, 0, pixelsFailedSsrBuff);
 			cmdb.bindUav(3, 0, BufferView(m_indirectArgsBuffer.get()));
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
@@ -288,28 +287,16 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			getIndirectDiffuseClipmaps().setDependencies(rpass, srvTexUsage);
 		}
 
-		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, sbtBuffer, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram((g_cvarRenderReflectionsInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get() : m_libraryGrProg.get());
 
-			// More globals
-			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+			// Space 0 globals
+#include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
-			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
-	cmdb.bindSrv( \
-		reg, 0, \
-		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
-				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
-		Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
-
-			bindRgenSpace2Resources(ctx, rgraphCtx);
+			bindRgenSpace2Resources(rgraphCtx);
 			cmdb.bindSrv(7, 2, pixelsFailedSsrBuff);
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
@@ -356,7 +343,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rpass.newTextureDependency(getRenderer().getProbeReflections().getCurrentlyRefreshedReflectionRt(), TextureUsageBit::kSrvCompute);
 		}
 
-		rpass.setWork([this, pixelsFailedSsrBuff, &ctx, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, pixelsFailedSsrBuff, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsProbeFallback);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -385,7 +372,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindSrv(5, 0, getRenderer().getGeneratedSky().getEnvironmentMapRt());
 			}
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
@@ -410,7 +397,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsSpatialDenoise);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -427,7 +414,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(0, 0, transientRt2);
 			rgraphCtx.bindUav(1, 0, hitPosRt);
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
@@ -449,30 +436,30 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosRt,
-					   classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ReflectionsTemporalDenoise);
+		rpass.setWork(
+			[this, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosRt, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(ReflectionsTemporalDenoise);
 
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_temporalDenoisingGrProg.get());
+				cmdb.bindShaderProgram(m_temporalDenoisingGrProg.get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			rgraphCtx.bindSrv(0, 0, transientRt2);
-			rgraphCtx.bindSrv(1, 0, mainRt);
-			rgraphCtx.bindSrv(2, 0, readMomentsRt);
-			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindSrv(4, 0, hitPosRt);
-			rgraphCtx.bindSrv(5, 0, classTileMapRt);
+				rgraphCtx.bindSrv(0, 0, transientRt2);
+				rgraphCtx.bindSrv(1, 0, mainRt);
+				rgraphCtx.bindSrv(2, 0, readMomentsRt);
+				rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
+				rgraphCtx.bindSrv(4, 0, hitPosRt);
+				rgraphCtx.bindSrv(5, 0, classTileMapRt);
 
-			rgraphCtx.bindUav(0, 0, transientRt1);
-			rgraphCtx.bindUav(1, 0, writeMomentsRt);
+				rgraphCtx.bindUav(0, 0, transientRt1);
+				rgraphCtx.bindUav(1, 0, writeMomentsRt);
 
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+				cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
-		});
+				dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
+			});
 	}
 
 	// Hotizontal bilateral filter

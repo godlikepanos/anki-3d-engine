@@ -25,12 +25,10 @@ ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseProbes, indirectDiffuseProbes,
 ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseClipmaps, indirectDiffuseClipmaps,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_cvarRenderIdc)
 ANKI_RENDERER_OBJECT_DEF(VolumetricLightingAccumulation, volumetricLightingAccumulation, 1)
-ANKI_RENDERER_OBJECT_DEF(RtShadows, rtShadows, GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_cvarRenderRtShadows)
 ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
-							 && (g_cvarRenderRtShadows || g_cvarRenderDbgRtMaterialFetch || g_cvarRenderReflectionsRt || g_cvarRenderRtIndirectDiffuse
-								 || g_cvarRenderIdc))
+							 && (g_cvarRenderDbgRtMaterialFetch || g_cvarRenderReflectionsRt || g_cvarRenderIdc))
 ANKI_RENDERER_OBJECT_DEF(LightShading, lightShading, 1)
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalUpscaler, temporalUpscaler, 1)
@@ -43,8 +41,6 @@ ANKI_RENDERER_OBJECT_DEF(MotionBlur, motionBlur, 1)
 ANKI_RENDERER_OBJECT_DEF(RtMaterialFetchDbg, rtMaterialFetchDbg,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_cvarRenderDbgRtMaterialFetch)
 ANKI_RENDERER_OBJECT_DEF(Reflections, reflections, 1)
-ANKI_RENDERER_OBJECT_DEF(IndirectDiffuse, indirectDiffuse,
-						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_cvarRenderRtIndirectDiffuse)
 ANKI_RENDERER_OBJECT_DEF(GpuParticles, gpuParticles, 1)
 
 // Util objects

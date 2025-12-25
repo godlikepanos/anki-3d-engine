@@ -9,12 +9,9 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
 ANKI_CVAR2(BoolCVar, Render, Dbg, RtMaterialFetch, false, "Enable material debugging pass")
 
-/// Similar to ShadowmapsResolve but it's using ray tracing.
+// Similar to ShadowmapsResolve but it's using ray tracing.
 class RtMaterialFetchDbg : public RtMaterialFetchRendererObject
 {
 public:
@@ -25,7 +22,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -50,6 +47,5 @@ public:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 };
-/// @}
 
 } // namespace anki

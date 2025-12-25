@@ -41,11 +41,11 @@ void UiStage::buildUi()
 	m_canvas->endBuilding();
 }
 
-void UiStage::populateRenderGraph(RenderingContext& ctx)
+void UiStage::populateRenderGraph()
 {
 	// Create a pass that uploads UI textures
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 	DynamicArray<RenderTargetHandle, MemoryPoolPtrWrapper<StackMemoryPool>> texHandles(&getRenderer().getFrameMemoryPool());
 
 	m_canvas->visitTexturesForUpdate([&](Texture& tex, Bool isNew) {

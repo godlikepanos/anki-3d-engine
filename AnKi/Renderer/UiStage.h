@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Ui pass.
+// Ui pass.
 class UiStage : public RendererObject
 {
 public:
@@ -21,7 +18,7 @@ public:
 
 	void buildUi();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void setDependencies(RenderPassBase& pass);
 
@@ -36,6 +33,5 @@ private:
 		WeakArray<RenderTargetHandle> m_handles;
 	} m_runCtx;
 };
-/// @}
 
 } // end namespace anki

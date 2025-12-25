@@ -11,10 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Resolves shadowmaps into a single texture.
+// Resolves shadowmaps into a single texture.
 class GeneratedSky : public RendererObject
 {
 public:
@@ -25,7 +22,7 @@ public:
 
 	Error init();
 
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph();
 
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
@@ -83,6 +80,5 @@ public:
 		RenderTargetHandle m_envMapRt;
 	} m_runCtx;
 };
-/// @}
 
 } // namespace anki

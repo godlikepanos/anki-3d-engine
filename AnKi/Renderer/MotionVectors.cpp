@@ -23,10 +23,10 @@ Error MotionVectors::init()
 	return Error::kNone;
 }
 
-void MotionVectors::populateRenderGraph(RenderingContext& ctx)
+void MotionVectors::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(MotionVectors);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDescr);
 
@@ -51,9 +51,10 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		ppass = &pass;
 	}
 
-	ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
+	ppass->setWork([this](RenderPassWorkContext& rgraphCtx) -> void {
 		ANKI_TRACE_SCOPED_EVENT(MotionVectors);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		RenderingContext& ctx = getRenderingContext();
 
 		cmdb.bindShaderProgram(m_grProg.get());
 

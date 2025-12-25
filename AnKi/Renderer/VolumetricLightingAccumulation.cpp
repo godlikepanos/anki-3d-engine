@@ -52,10 +52,10 @@ Error VolumetricLightingAccumulation::init()
 	return Error::kNone;
 }
 
-void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
+void VolumetricLightingAccumulation::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(VolumetricLightingAccumulation);
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const U readRtIdx = getRenderer().getFrameCount() & 1;
 
@@ -80,7 +80,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		getIndirectDiffuseClipmaps().setDependencies(pass, TextureUsageBit::kSrvCompute);
 	}
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(VolumetricLightingAccumulation);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -93,7 +93,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_rts[1]);
 
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 		U32 srv = 0;
 		cmdb.bindSrv(srv++, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));

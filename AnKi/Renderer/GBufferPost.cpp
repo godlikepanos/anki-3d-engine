@@ -17,7 +17,7 @@ Error GBufferPost::init()
 	return Error::kNone;
 }
 
-void GBufferPost::populateRenderGraph(RenderingContext& ctx)
+void GBufferPost::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(GBufferPost);
 
@@ -26,7 +26,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("GBuffPost");
 
@@ -37,7 +37,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 	rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		rgraphCtx.bindUav(0, 0, getGBuffer().getColorRt(0));
@@ -48,7 +48,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
 		cmdb.bindSrv(2, 0, getClusterBinning().getClustersBuffer());
 
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 

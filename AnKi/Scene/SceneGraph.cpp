@@ -122,7 +122,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	m_defaultMainCam = newSceneNode<SceneNode>("_MainCamera");
 	m_defaultMainCam->setSerialization(false);
 	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
-	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
+	camc->setPerspective(0.1f, 1000.0f, toRad(100.0f), toRad(100.0f));
 	m_mainCam = m_defaultMainCam;
 
 	RenderStateBucketContainer::allocateSingleton();
