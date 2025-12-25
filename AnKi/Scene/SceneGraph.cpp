@@ -11,7 +11,7 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Util/FileSystem.h>
+#include <AnKi/Util/Filesystem.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Script/ScriptManager.h>
