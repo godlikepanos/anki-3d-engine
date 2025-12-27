@@ -326,7 +326,8 @@ Error App::init()
 	if(g_cvarCoreShowEditor)
 	{
 		SceneGraph::getSingleton().setCheckForResourceUpdates(true);
-		Renderer::getSingleton().getDbg().enableOptions(DbgOption::kObjectPicking | DbgOption::kIcons);
+		Renderer::getSingleton().getDbg().getOptions().m_sceneGraphIcons = true;
+		Renderer::getSingleton().getDbg().getOptions().m_objectPicking = true;
 	}
 
 	return Error::kNone;

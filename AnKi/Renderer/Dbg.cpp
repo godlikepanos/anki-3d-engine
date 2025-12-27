@@ -11,6 +11,7 @@
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Scene.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Enum.h>
@@ -575,7 +576,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	} consts;
 	consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
 	consts.m_camTrf = getRenderingContext().m_matrices.m_cameraTransform;
-	consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
+	consts.m_depthFailureVisualization = !m_options.m_depthTest;
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
 	if(!objectPicking)
@@ -614,7 +615,7 @@ void Dbg::drawParticleEmitters(const InternalCtx& ictx, Bool objectPicking, Rend
 	} consts;
 	consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
 	consts.m_camTrf = getRenderingContext().m_matrices.m_cameraTransform;
-	consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
+	consts.m_depthFailureVisualization = !m_options.m_depthTest;
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
 	if(!objectPicking)
@@ -649,13 +650,13 @@ void Dbg::populateRenderGraph()
 	populateRenderGraphParticleEmitters(ictx);
 
 	// Debug visualization
-	if(!!(m_options & (DbgOption::kDbgScene)))
+	if(m_options.mainDbgPass())
 	{
 		populateRenderGraphMain(ictx);
 	}
 
 	// Object picking
-	if(!!(m_options & DbgOption::kObjectPicking))
+	if(m_options.m_objectPicking)
 	{
 		populateRenderGraphObjectPicking(ictx);
 	}
@@ -774,9 +775,14 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 		pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvGeometry);
 	}
 
+	if(m_options.m_indirectDiffuseProbes && isIndirectDiffuseClipmapsEnabled())
+	{
+		getIndirectDiffuseClipmaps().setDependenciesForDrawDebugProbes(pass);
+	}
+
 	pass.setWork([this, ictx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(Dbg);
-		ANKI_ASSERT(!!(m_options & DbgOption::kDbgScene));
+		ANKI_ASSERT(m_options.mainDbgPass());
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -785,7 +791,7 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 		cmdb.setDepthWrite(false);
 
 		cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
-		cmdb.setDepthCompareOperation(!!(m_options & DbgOption::kDepthTest) ? CompareOperation::kLess : CompareOperation::kAlways);
+		cmdb.setDepthCompareOperation(m_options.m_depthTest ? CompareOperation::kLess : CompareOperation::kAlways);
 		cmdb.setLineWidth(2.0f);
 
 		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
@@ -810,7 +816,7 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 			} consts;
 			consts.m_color = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
 			consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
-			consts.m_depthFailureVisualization = !(m_options & DbgOption::kDepthTest);
+			consts.m_depthFailureVisualization = !m_options.m_depthTest;
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 			cmdb.bindVertexBuffer(0, BufferView(m_boxLines.m_positionsBuff.get()), sizeof(Vec3));
@@ -820,7 +826,7 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 
 		// GBuffer AABBs
 		const U32 gbufferAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
-		if(!!(m_options & DbgOption::kBoundingBoxes) && gbufferAllAabbCount)
+		if(m_options.m_renderableBoundingBoxes && gbufferAllAabbCount)
 		{
 			cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
 
@@ -832,7 +838,7 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 
 		// Forward shading renderables
 		const U32 forwardAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
-		if(!!(m_options & DbgOption::kBoundingBoxes) && forwardAllAabbCount)
+		if(m_options.m_renderableBoundingBoxes && forwardAllAabbCount)
 		{
 			cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
 
@@ -843,7 +849,7 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 		}
 
 		// Draw non-renderables
-		if(!!(m_options & DbgOption::kIcons))
+		if(m_options.m_sceneGraphIcons)
 		{
 			drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), *m_pointLightImage,
 							  false, rgraphCtx);
@@ -856,13 +862,13 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 		}
 
 		// Particle emitter icons
-		if(!!(m_options & DbgOption::kIcons))
+		if(m_options.m_sceneGraphIcons)
 		{
 			drawParticleEmitters(ictx, false, rgraphCtx);
 		}
 
 		// Physics
-		if(!!(m_options & DbgOption::kPhysics))
+		if(m_options.m_physics)
 		{
 			class MyPhysicsDebugDrawerInterface final : public PhysicsDebugDrawerInterface
 			{
@@ -918,6 +924,13 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 
 				cmdb.draw(PrimitiveTopology::kLines, vertCount);
 			}
+		}
+
+		if(m_options.m_indirectDiffuseProbes && isIndirectDiffuseClipmapsEnabled())
+		{
+			getIndirectDiffuseClipmaps().drawDebugProbes(rgraphCtx, m_options.m_indirectDiffuseProbesClipmap,
+														 m_options.m_indirectDiffuseProbesClipmapType,
+														 m_options.m_indirectDiffuseProbesClipmapColorScale);
 		}
 
 		if(m_gizmos.m_enabled)

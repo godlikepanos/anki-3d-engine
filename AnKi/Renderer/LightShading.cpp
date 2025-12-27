@@ -208,12 +208,6 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		cmdb.popDebugMarker();
 	}
 
-	// Debug stuff
-	if(g_cvarRenderVisualizeGiProbes && getRenderer().isIndirectDiffuseClipmapsEnabled())
-	{
-		getIndirectDiffuseClipmaps().drawDebugProbes(rgraphCtx);
-	}
-
 	// Forward shading last
 	{
 		cmdb.pushDebugMarker("ForwardShading", Vec3(0.0f, 1.0f, 1.0f));

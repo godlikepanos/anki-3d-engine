@@ -108,30 +108,6 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mousePosOn1stClick = in.getMousePositionNdc();
 	}
 
-	if(in.getKey(KeyCode::kF1) == 1)
-	{
-		DbgOption options = renderer.getDbg().getOptions();
-
-		static U mode = 0;
-		mode = (mode + 1) % 3;
-		if(mode == 0)
-		{
-			options &= ~DbgOption::kBoundingBoxes;
-		}
-		else if(mode == 1)
-		{
-			options |= DbgOption::kBoundingBoxes;
-			options |= DbgOption::kDepthTest;
-		}
-		else
-		{
-			options |= DbgOption::kBoundingBoxes;
-			options &= ~DbgOption::kDepthTest;
-		}
-
-		renderer.getDbg().setOptions(options);
-	}
-
 #if ANKI_TRACING_ENABLED
 	if(in.getKey(KeyCode::kF11) == 1)
 	{

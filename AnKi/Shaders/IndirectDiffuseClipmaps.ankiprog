@@ -962,7 +962,7 @@ struct FragOut
 struct Consts
 {
 	U32 m_clipmapIdx;
-	U32 m_padding1;
+	F32 m_colorScaleFactor;
 	U32 m_padding2;
 	U32 m_padding3;
 };
@@ -1079,7 +1079,10 @@ FragOut main(VertOut input)
 		radiance = Vec3(1.0, 0.0, 1.0);
 	}
 
-	output.m_color = Vec4(radiance, 0.0);
+	output.m_color = Vec4(radiance, 1.0);
+
+	output.m_color.xyz *= g_consts.m_colorScaleFactor;
+
 	return output;
 }
 #	endif // ANKI_PIXEL_SHADER

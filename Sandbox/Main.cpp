@@ -124,30 +124,6 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mover->setLocalOrigin(origin + Vec3(0, 15, 0));
 	}
 
-	if(in.getKey(KeyCode::kF1) == 1)
-	{
-		DbgOption options = renderer.getDbg().getOptions();
-
-		static U mode = 0;
-		mode = (mode + 1) % 3;
-		if(mode == 0)
-		{
-			options &= ~DbgOption::kBoundingBoxes;
-		}
-		else if(mode == 1)
-		{
-			options |= DbgOption::kBoundingBoxes;
-			options |= DbgOption::kDepthTest;
-		}
-		else
-		{
-			options |= DbgOption::kBoundingBoxes;
-			options &= ~DbgOption::kDepthTest;
-		}
-
-		renderer.getDbg().setOptions(options);
-	}
-
 #if ANKI_TRACING_ENABLED
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
@@ -173,30 +149,6 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(in.getKey(KeyCode::k1) == 1)
 		{
 			mover = &scene.getActiveCameraNode();
-		}
-
-		if(in.getKey(KeyCode::kF1) == 1)
-		{
-			DbgOption options = renderer.getDbg().getOptions();
-
-			static U mode = 0;
-			mode = (mode + 1) % 3;
-			if(mode == 0)
-			{
-				options &= ~DbgOption::kBoundingBoxes;
-			}
-			else if(mode == 1)
-			{
-				options |= DbgOption::kBoundingBoxes;
-				options |= DbgOption::kDepthTest;
-			}
-			else
-			{
-				options |= DbgOption::kBoundingBoxes;
-				options &= ~DbgOption::kDepthTest;
-			}
-
-			renderer.getDbg().setOptions(options);
 		}
 
 		if(in.getKey(KeyCode::kUp) > 0)

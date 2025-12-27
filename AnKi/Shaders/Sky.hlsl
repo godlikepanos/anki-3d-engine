@@ -67,9 +67,9 @@ Vec3 sunWithBloom(Vec3 rayDir, Vec3 dirToSun)
 	return gaussianBloom + invBloom;
 }
 
-/// Compute the sky color.
-/// @param rayDir It's the vector: normalize(frag-cameraOrigin)
-/// @param dirToSun It's opposite direction the light travels.
+// Compute the sky color.
+// rayDir: It's the vector: normalize(frag-cameraOrigin)
+// dirToSun: It's opposite direction the light travels.
 Vec3 computeSkyColor(Texture2D<Vec4> skyLut, SamplerState linearAnyClampSampler, Vec3 rayDir, Vec3 dirToSun, F32 sunPower, Bool drawSun)
 {
 	Vec3 col = getValFromSkyLut(skyLut, linearAnyClampSampler, rayDir, dirToSun);

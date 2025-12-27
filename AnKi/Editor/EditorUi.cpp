@@ -339,50 +339,69 @@ void EditorUi::mainMenu()
 
 			if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
 			{
-				Bool bBoundingBoxes = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kBoundingBoxes);
+				DbgOptions& options = Renderer::getSingleton().getDbg().getOptions();
+				Bool bBoundingBoxes = options.m_renderableBoundingBoxes;
 				if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))
 				{
-					DbgOption options = Renderer::getSingleton().getDbg().getOptions();
-					if(bBoundingBoxes)
-					{
-						options |= DbgOption::kBoundingBoxes;
-					}
-					else
-					{
-						options &= ~(DbgOption::kBoundingBoxes);
-					}
-					Renderer::getSingleton().getDbg().setOptions(options);
+					options.m_renderableBoundingBoxes = bBoundingBoxes;
 				}
 
-				Bool bPhysics = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kPhysics);
+				Bool bPhysics = options.m_physics;
 				if(ImGui::Checkbox("Physics Bodies", &bPhysics))
 				{
-					DbgOption options = Renderer::getSingleton().getDbg().getOptions();
-					if(bPhysics)
-					{
-						options |= DbgOption::kPhysics;
-					}
-					else
-					{
-						options &= ~DbgOption::kPhysics;
-					}
-					Renderer::getSingleton().getDbg().setOptions(options);
+					options.m_physics = bPhysics;
 				}
 
-				Bool bDepthTest = !!(Renderer::getSingleton().getDbg().getOptions() & DbgOption::kDepthTest);
+				Bool bDepthTest = options.m_depthTest;
 				if(ImGui::Checkbox("Depth Test", &bDepthTest))
 				{
-					DbgOption options = Renderer::getSingleton().getDbg().getOptions();
-					if(bDepthTest)
-					{
-						options |= DbgOption::kDepthTest;
-					}
-					else
-					{
-						options &= ~DbgOption::kDepthTest;
-					}
-					Renderer::getSingleton().getDbg().setOptions(options);
+					options.m_depthTest = bDepthTest;
 				}
+
+				ImGui::SeparatorText("Indirect Diffuse");
+				Bool bProbes = options.m_indirectDiffuseProbes;
+				if(ImGui::Checkbox("Indirect Probes", &bProbes))
+				{
+					options.m_indirectDiffuseProbes = bProbes;
+				}
+
+				ImGui::BeginDisabled(!bProbes);
+
+				// Clipmap
+				I32 clipmap = I32(options.m_indirectDiffuseProbesClipmap);
+				if(ImGui::InputInt("Clipmap", &clipmap))
+				{
+					options.m_indirectDiffuseProbesClipmap = clamp<U8>(U8(clipmap), 0, kIndirectDiffuseClipmapCount - 1);
+				}
+
+				// Clipmap type
+				if(ImGui::BeginCombo("Clipmap Type", kIndirectDiffuseClipmapsProbeTypeNames[options.m_indirectDiffuseProbesClipmapType]))
+				{
+					for(IndirectDiffuseClipmapsProbeType type : EnumIterable<IndirectDiffuseClipmapsProbeType>())
+					{
+						const Bool selected = type == options.m_indirectDiffuseProbesClipmapType;
+						if(ImGui::Selectable(kIndirectDiffuseClipmapsProbeTypeNames[type], selected))
+						{
+							options.m_indirectDiffuseProbesClipmapType = type;
+						}
+
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if(selected)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+					ImGui::EndCombo();
+				}
+
+				// Clipmap color scale
+				F32 scale = options.m_indirectDiffuseProbesClipmapColorScale;
+				if(ImGui::SliderFloat("Color Scale", &scale, 0.0f, 1.0f))
+				{
+					options.m_indirectDiffuseProbesClipmapColorScale = scale;
+				}
+
+				ImGui::EndDisabled();
 
 				ImGui::EndMenu();
 			}

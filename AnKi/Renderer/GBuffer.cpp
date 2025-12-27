@@ -106,7 +106,7 @@ void GBuffer::populateRenderGraph()
 		visIn.m_lodDistances = lodDistances;
 		visIn.m_rgraph = &rgraph;
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
-		visIn.m_gatherAabbIndices = !!(getDbg().getOptions() & DbgOption::kGatherAabbs);
+		visIn.m_gatherAabbIndices = getDbg().getOptions().visibilityShouldGatherAabbs();
 		visIn.m_viewportSize = getRenderer().getInternalResolution();
 		visIn.m_twoPhaseOcclusionCulling = getRenderer().getMeshletRenderingType() != MeshletRenderingType::kNone;
 

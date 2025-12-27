@@ -73,14 +73,27 @@ public:
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 };
 
+enum class IndirectDiffuseClipmapsProbeType : U8
+{
+	kRadiance,
+	kIrradiance,
+	kAverageIrradiance,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(IndirectDiffuseClipmapsProbeType)
+
+inline constexpr Array<const Char*, U32(IndirectDiffuseClipmapsProbeType::kCount)> kIndirectDiffuseClipmapsProbeTypeNames = {"Radiance", "Irradiance",
+																															 "Avg Irradiance"};
+
 // Indirect diffuse based on clipmaps of probes.
 class IndirectDiffuseClipmaps : public RtMaterialFetchRendererObject
 {
 public:
-	IndirectDiffuseClipmaps()
-	{
-		registerDebugRenderTarget("IndirectDiffuseClipmaps");
-	}
+	IndirectDiffuseClipmaps();
+
+	~IndirectDiffuseClipmaps();
 
 	Error init();
 
@@ -98,7 +111,10 @@ public:
 		return m_consts;
 	}
 
-	void drawDebugProbes(RenderPassWorkContext& rgraphCtx) const;
+	void drawDebugProbes(RenderPassWorkContext& rgraphCtx, U8 clipmap, IndirectDiffuseClipmapsProbeType probeType, F32 colorScale) const;
+
+	// Set the dependencies before calling drawDebugProbes()
+	void setDependenciesForDrawDebugProbes(RenderPassBase& pass);
 
 	const IndirectDiffuseClipmapsRenderTargetHandles& getRts() const
 	{

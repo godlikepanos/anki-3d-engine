@@ -158,6 +158,15 @@ static void computeClipmapBounds(Vec3 cameraPos, Vec3 lookDir, U32 clipmapIdx, I
 	ANKI_ASSERT(aabbMax - consts.m_aabbMins[clipmapIdx].xyz == consts.m_sizes[clipmapIdx].xyz);
 }
 
+IndirectDiffuseClipmaps::IndirectDiffuseClipmaps()
+{
+	registerDebugRenderTarget("IndirectDiffuseClipmaps");
+}
+
+IndirectDiffuseClipmaps::~IndirectDiffuseClipmaps()
+{
+}
+
 Error IndirectDiffuseClipmaps::init()
 {
 	ANKI_CHECK(RtMaterialFetchRendererObject::init());
@@ -831,25 +840,57 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	m_runCtx.m_handles.m_appliedIrradiance = historyRt;
 }
 
-void IndirectDiffuseClipmaps::drawDebugProbes(RenderPassWorkContext& rgraphCtx) const
+void IndirectDiffuseClipmaps::drawDebugProbes(RenderPassWorkContext& rgraphCtx, U8 clipmap, IndirectDiffuseClipmapsProbeType probeType,
+											  F32 colorScale) const
 {
+	ANKI_ASSERT(clipmap < kIndirectDiffuseClipmapCount);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-	const U32 clipmap = 0;
 
 	cmdb.bindShaderProgram(m_visProbesGrProg.get());
 
-	const UVec4 consts(clipmap);
+	const UVec4 consts(clipmap, asU32(colorScale), 0, 0);
 	cmdb.setFastConstants(&consts, sizeof(consts));
 
 	cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
-	const RenderTargetHandle visVolume = m_runCtx.m_handles.m_radianceVolumes[clipmap];
+	RenderTargetHandle visVolume;
+	if(probeType == IndirectDiffuseClipmapsProbeType::kRadiance)
+	{
+		visVolume = m_runCtx.m_handles.m_radianceVolumes[clipmap];
+	}
+	else if(probeType == IndirectDiffuseClipmapsProbeType::kIrradiance)
+	{
+		visVolume = m_runCtx.m_handles.m_irradianceVolumes[clipmap];
+	}
+	else
+	{
+		ANKI_ASSERT(probeType == IndirectDiffuseClipmapsProbeType::kAverageIrradiance);
+		visVolume = m_runCtx.m_handles.m_avgIrradianceVolumes[clipmap];
+	}
+
 	rgraphCtx.bindSrv(0, 0, visVolume);
 	rgraphCtx.bindSrv(1, 0, m_runCtx.m_handles.m_probeValidityVolumes[clipmap]);
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	cmdb.draw(PrimitiveTopology::kTriangles, 36, m_consts.m_totalProbeCount);
+}
+
+void IndirectDiffuseClipmaps::setDependenciesForDrawDebugProbes(RenderPassBase& pass)
+{
+	for(RenderTargetHandle& handle : m_runCtx.m_handles.m_radianceVolumes)
+	{
+		pass.newTextureDependency(handle, TextureUsageBit::kSrvPixel);
+	}
+
+	for(RenderTargetHandle& handle : m_runCtx.m_handles.m_irradianceVolumes)
+	{
+		pass.newTextureDependency(handle, TextureUsageBit::kSrvPixel);
+	}
+
+	for(RenderTargetHandle& handle : m_runCtx.m_handles.m_avgIrradianceVolumes)
+	{
+		pass.newTextureDependency(handle, TextureUsageBit::kSrvPixel);
+	}
 }
 
 } // end namespace anki

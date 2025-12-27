@@ -7,31 +7,46 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Utils/Readback.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Util/Enum.h>
 
 namespace anki {
 
-enum class DbgOption : U8
+class DbgOptions
 {
-	kNone = 0,
+public:
+	// Main pass:
+	Bool m_renderableBoundingBoxes : 1 = false;
+	Bool m_sceneGraphIcons : 1 = false;
+	Bool m_physics : 1 = false;
+	Bool m_indirectDiffuseProbes : 1 = false;
 
-	// Flags that draw something somewhere
-	kBoundingBoxes = 1 << 0,
-	kIcons = 1 << 1,
-	kPhysics = 1 << 2,
-	kObjectPicking = 1 << 3,
-	kSelectedObjectOutline = 1 << 4,
+	U8 m_indirectDiffuseProbesClipmap = 0;
+	IndirectDiffuseClipmapsProbeType m_indirectDiffuseProbesClipmapType = IndirectDiffuseClipmapsProbeType::kIrradiance;
+	F32 m_indirectDiffuseProbesClipmapColorScale = 1.0f;
 
-	// Flags that affect how things are drawn
-	kDepthTest = 1 << 5,
+	// Object picking:
+	Bool m_objectPicking : 1 = false;
 
-	// Agregate flags
-	kGatherAabbs = kBoundingBoxes | kObjectPicking,
-	kDbgScene = kBoundingBoxes | kIcons | kPhysics | kSelectedObjectOutline,
-	kDbgEnabled = kDbgScene | kObjectPicking | kSelectedObjectOutline,
+	// Misc flags:
+	Bool m_depthTest : 1 = true;
+
+	Bool visibilityShouldGatherAabbs() const
+	{
+		return m_renderableBoundingBoxes || m_objectPicking;
+	}
+
+	Bool mainDbgPass() const
+	{
+		return m_renderableBoundingBoxes || m_sceneGraphIcons || m_physics || m_indirectDiffuseProbes;
+	}
+
+	Bool dgbEnabled() const
+	{
+		return mainDbgPass() || m_objectPicking;
+	}
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgOption)
 
 class DbgObjectPickingResult
 {
@@ -66,29 +81,24 @@ public:
 		return m_runCtx.m_rt;
 	}
 
-	void setOptions(DbgOption options)
+	const DbgOptions& getOptions() const
 	{
-		m_options = options;
+		return m_options;
 	}
 
-	void enableOptions(DbgOption options)
-	{
-		m_options |= options;
-	}
-
-	DbgOption getOptions() const
+	DbgOptions& getOptions()
 	{
 		return m_options;
 	}
 
 	Bool isEnabled() const
 	{
-		return !!(m_options & DbgOption::kDbgEnabled);
+		return m_options.dgbEnabled();
 	}
 
 	const DbgObjectPickingResult& getObjectPickingResultAtMousePosition() const
 	{
-		ANKI_ASSERT(!!(m_options & DbgOption::kObjectPicking));
+		ANKI_ASSERT(m_options.m_objectPicking);
 		return m_runCtx.m_objPickingRes;
 	}
 
@@ -155,7 +165,7 @@ private:
 		Bool m_enableDepthTest = false;
 	} m_debugPoint;
 
-	DbgOption m_options = DbgOption::kDepthTest;
+	DbgOptions m_options;
 
 	class
 	{
