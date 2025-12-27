@@ -8,10 +8,7 @@
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// Parameters to be passed to TraditionalDeferredLightShading::drawLights.
+// Parameters to be passed to TraditionalDeferredLightShading::drawLights.
 class TraditionalDeferredLightShadingDrawInfo
 {
 public:
@@ -45,13 +42,13 @@ public:
 	RenderPassWorkContext* m_renderpassContext = nullptr;
 };
 
-/// Helper for drawing using traditional deferred shading.
+// Helper for drawing using traditional deferred shading.
 class TraditionalDeferredLightShading : public RendererObject
 {
 public:
 	Error init();
 
-	/// Run the light shading. It will iterate over the lights and draw them. It doesn't bind anything related to GBuffer or the output buffer.
+	// Run the light shading. It will iterate over the lights and draw them. It doesn't bind anything related to GBuffer or the output buffer.
 	void drawLights(TraditionalDeferredLightShadingDrawInfo& info);
 
 private:
@@ -63,5 +60,5 @@ private:
 
 	SamplerPtr m_shadowSampler;
 };
-/// @}
+
 } // end namespace anki

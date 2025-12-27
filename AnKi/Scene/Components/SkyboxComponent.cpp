@@ -11,27 +11,19 @@
 
 namespace anki {
 
-SkyboxComponent::SkyboxComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
-{
-}
-
-SkyboxComponent::~SkyboxComponent()
-{
-}
-
-void SkyboxComponent::loadImageResource(CString filename)
+SkyboxComponent& SkyboxComponent::setSkyImageFilename(CString filename)
 {
 	ImageResourcePtr img;
-	const Error err = ResourceManager::getSingleton().loadResource(filename, img);
-	if(err)
+	if(ResourceManager::getSingleton().loadResource(filename, img))
 	{
-		ANKI_SCENE_LOGE("Setting skybox image failed. Ignoring error");
-		return;
+		ANKI_SCENE_LOGE("Setting skybox image failed: %s", filename.cstr());
+	}
+	else
+	{
+		m_sky.m_image = std::move(img);
 	}
 
-	m_image = std::move(img);
-	m_type = SkyboxType::kImage2D;
+	return *this;
 }
 
 void SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
@@ -42,17 +34,17 @@ void SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bo
 Error SkyboxComponent::serialize(SceneSerializer& serializer)
 {
 	ANKI_SERIALIZE(m_type, 1);
-	ANKI_SERIALIZE(m_color, 1);
-	ANKI_SERIALIZE(m_image, 1);
-	ANKI_SERIALIZE(m_imageScale, 1);
-	ANKI_SERIALIZE(m_imageBias, 1);
+	ANKI_SERIALIZE(m_sky.m_color, 1);
+	ANKI_SERIALIZE(m_sky.m_image, 1);
+	ANKI_SERIALIZE(m_sky.m_imageColorScale, 1);
+	ANKI_SERIALIZE(m_sky.m_imageColorBias, 1);
+	ANKI_SERIALIZE(m_fog.m_scatteringCoeff, 1);
 	ANKI_SERIALIZE(m_fog.m_minDensity, 1);
 	ANKI_SERIALIZE(m_fog.m_maxDensity, 1);
 	ANKI_SERIALIZE(m_fog.m_heightOfMinDensity, 1);
 	ANKI_SERIALIZE(m_fog.m_heightOfMaxDensity, 1);
-	ANKI_SERIALIZE(m_fog.m_scatteringCoeff, 1);
-	ANKI_SERIALIZE(m_fog.m_absorptionCoeff, 1);
 	ANKI_SERIALIZE(m_fog.m_diffuseColor, 1);
+	ANKI_SERIALIZE(m_fog.m_absorptionCoeff, 1);
 
 	return Error::kNone;
 }

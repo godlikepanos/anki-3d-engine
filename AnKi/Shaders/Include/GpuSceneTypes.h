@@ -115,38 +115,6 @@ struct GpuSceneParticleEmitter2
 };
 static_assert(sizeof(GpuSceneParticleEmitter2) % sizeof(Vec4) == 0);
 
-enum class GpuSceneSkyboxType : U32
-{
-	kSolidColor,
-	kTexture,
-	kGenerated,
-
-	kCount,
-	kFirst
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneSkyboxType)
-
-struct GpuSceneSkybox
-{
-	Vec3 m_skyColor ANKI_CPP_CODE(= Vec3(0.0f, 0.0f, 0.5f));
-	GpuSceneSkyboxType m_type ANKI_CPP_CODE(= GpuSceneSkyboxType::kSolidColor);
-
-	Vec3 m_skyColorScale ANKI_CPP_CODE(= Vec3(1.0f));
-	U32 m_skyTexture ANKI_CPP_CODE(= 0u);
-
-	Vec3 m_skyColorBias ANKI_CPP_CODE(= Vec3(0.0f));
-	F32 m_fogScatteringCoeff ANKI_CPP_CODE(= 0.01f);
-
-	F32 m_fogMinDensity ANKI_CPP_CODE(= 0.0f);
-	F32 m_fogMaxDensity ANKI_CPP_CODE(= 0.9f);
-	F32 m_fogHeightOfMinDensity ANKI_CPP_CODE(= 20.0f); // The height (meters) where fog density is max.
-	F32 m_fogHeightOfMaxDensity ANKI_CPP_CODE(= 0.0f); // The height (meters) where fog density is the min value.
-
-	Vec3 m_fogColor ANKI_CPP_CODE(= Vec3(1.0f));
-	F32 m_fogAbsorptionCoeff ANKI_CPP_CODE(= 0.02f);
-};
-static_assert(sizeof(GpuSceneSkybox) % sizeof(Vec4) == 0);
-
 // A hash of all visible renderables. If it matches between vis tests then skip the drawcalls. Touched only by the GPU.
 struct GpuSceneLightVisibleRenderablesHash
 {

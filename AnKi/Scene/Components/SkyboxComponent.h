@@ -6,84 +6,107 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Resource/Forward.h>
+#include <AnKi/Scene/GpuSceneArray.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Math.h>
 
 namespace anki {
 
-// Forward
-class SkyboxQueueElement;
-
-enum class SkyboxType : U8
+enum class SkyboxComponentType : U8
 {
 	kSolidColor,
 	kImage2D,
-	kGenerated
-};
+	kGenerated, // The Renderer will generate the texture based on sun positions etc etc
 
-// Skybox config.
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SkyboxComponentType)
+
+inline constexpr Array<const Char*, U32(SkyboxComponentType::kCount)> kSkyboxComponentTypeNames = {"Solid Color", "2D Image", "Generated"};
+
+// It controls the skybox and atmoshpere. See the GpuSceneSkybox for comments.
 class SkyboxComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(SkyboxComponent)
 
 public:
-	SkyboxComponent(SceneNode* node, U32 uuid);
+	SkyboxComponent(SceneNode* node, U32 uuid)
+		: SceneComponent(node, kClassType, uuid)
+	{
+	}
 
-	~SkyboxComponent();
+	~SkyboxComponent()
+	{
+	}
 
-	SkyboxType getSkyboxType() const
+	SkyboxComponent& setSkyboxComponentType(SkyboxComponentType type)
+	{
+		m_type = type;
+		return *this;
+	}
+
+	SkyboxComponentType getSkyboxComponentType() const
 	{
 		return m_type;
 	}
 
-	void setSolidColor(const Vec3& color)
+	SkyboxComponent& setSkySolidColor(Vec3 color)
 	{
-		m_type = SkyboxType::kSolidColor;
-		m_color = color.max(Vec3(0.0f));
+		m_sky.m_color = color.max(Vec3(0.0f));
+		return *this;
 	}
 
-	Vec3 getSolidColor() const
+	Vec3 getSkySolidColor() const
 	{
-		ANKI_ASSERT(m_type == SkyboxType::kSolidColor);
-		return m_color;
+		return m_sky.m_color;
 	}
 
-	void loadImageResource(CString filename);
+	SkyboxComponent& setSkyImageFilename(CString filename);
 
-	ImageResource& getImageResource() const
+	CString getSkyImageFilename() const
 	{
-		ANKI_ASSERT(m_type == SkyboxType::kImage2D);
-		return *m_image;
+		if(m_sky.m_image)
+		{
+			return m_sky.m_image->getFilename();
+		}
+		else
+		{
+			return "*Error*";
+		}
 	}
 
-	void setImageScale(Vec3 s)
+	Bool hasSkyImageFilename() const
 	{
-		m_imageScale = s;
+		return !!m_sky.m_image;
 	}
 
-	const Vec3& getImageScale() const
+	SkyboxComponent& setSkyImageColorScale(Vec3 s)
 	{
-		return m_imageScale;
+		m_sky.m_imageColorScale = s.max(Vec3(0.0f));
+		return *this;
 	}
 
-	void setImageBias(Vec3 s)
+	const Vec3& getSkyImageColorScale() const
 	{
-		m_imageBias = s;
+		return m_sky.m_imageColorScale;
 	}
 
-	const Vec3& getImageBias() const
+	SkyboxComponent& setSkyImageColorBias(Vec3 s)
 	{
-		return m_imageBias;
+		m_sky.m_imageColorBias = s.max(Vec3(0.0f));
+		return *this;
 	}
 
-	void setGeneratedSky()
+	const Vec3& getSkyImageColorBias() const
 	{
-		m_type = SkyboxType::kGenerated;
+		return m_sky.m_imageColorBias;
 	}
 
-	void setMinFogDensity(F32 density)
+	SkyboxComponent& setMinFogDensity(F32 density)
 	{
 		m_fog.m_minDensity = clamp(density, 0.0f, 100.0f);
+		return *this;
 	}
 
 	F32 getMinFogDensity() const
@@ -91,9 +114,10 @@ public:
 		return m_fog.m_minDensity;
 	}
 
-	void setMaxFogDensity(F32 density)
+	SkyboxComponent& setMaxFogDensity(F32 density)
 	{
 		m_fog.m_maxDensity = clamp(density, 0.0f, 100.0f);
+		return *this;
 	}
 
 	F32 getMaxFogDensity() const
@@ -101,10 +125,11 @@ public:
 		return m_fog.m_maxDensity;
 	}
 
-	/// The height (units) where fog density is getMinFogDensity().
-	void setHeightOfMinFogDensity(F32 height)
+	// The height (units) where fog density is getMinFogDensity().
+	SkyboxComponent& setHeightOfMinFogDensity(F32 height)
 	{
 		m_fog.m_heightOfMinDensity = height;
+		return *this;
 	}
 
 	F32 getHeightOfMinFogDensity() const
@@ -112,10 +137,11 @@ public:
 		return m_fog.m_heightOfMinDensity;
 	}
 
-	/// The height (units) where fog density is getMaxFogDensity().
-	void setHeightOfMaxFogDensity(F32 height)
+	// The height (units) where fog density is getMaxFogDensity().
+	SkyboxComponent& setHeightOfMaxFogDensity(F32 height)
 	{
 		m_fog.m_heightOfMaxDensity = height;
+		return *this;
 	}
 
 	F32 getHeightOfMaxFogDensity() const
@@ -123,9 +149,10 @@ public:
 		return m_fog.m_heightOfMaxDensity;
 	}
 
-	void setFogScatteringCoefficient(F32 coeff)
+	SkyboxComponent& setFogScatteringCoefficient(F32 coeff)
 	{
 		m_fog.m_scatteringCoeff = coeff;
+		return *this;
 	}
 
 	F32 getFogScatteringCoefficient() const
@@ -133,9 +160,10 @@ public:
 		return m_fog.m_scatteringCoeff;
 	}
 
-	void setFogAbsorptionCoefficient(F32 coeff)
+	SkyboxComponent& setFogAbsorptionCoefficient(F32 coeff)
 	{
 		m_fog.m_absorptionCoeff = coeff;
+		return *this;
 	}
 
 	F32 getFogAbsorptionCoefficient() const
@@ -143,9 +171,10 @@ public:
 		return m_fog.m_absorptionCoeff;
 	}
 
-	void setFogDiffuseColor(const Vec3& color)
+	SkyboxComponent& setFogDiffuseColor(Vec3 color)
 	{
-		m_fog.m_diffuseColor = color;
+		m_fog.m_diffuseColor = color.max(Vec3(0.0f));
+		return *this;
 	}
 
 	const Vec3& getFogDiffuseColor() const
@@ -153,14 +182,24 @@ public:
 		return m_fog.m_diffuseColor;
 	}
 
-private:
-	SkyboxType m_type = SkyboxType::kSolidColor;
-	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
-	ImageResourcePtr m_image;
-	Vec3 m_imageScale = Vec3(1.0f);
-	Vec3 m_imageBias = Vec3(0.0f);
+	ANKI_INTERNAL Texture& getSkyTexture() const
+	{
+		ANKI_ASSERT(m_type == SkyboxComponentType::kImage2D);
+		return m_sky.m_image->getTexture();
+	}
 
-	// Fog
+private:
+	SkyboxComponentType m_type = SkyboxComponentType::kSolidColor;
+
+	class
+	{
+	public:
+		Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
+		ImageResourcePtr m_image;
+		Vec3 m_imageColorScale = Vec3(1.0f);
+		Vec3 m_imageColorBias = Vec3(0.0f);
+	} m_sky;
+
 	class
 	{
 	public:

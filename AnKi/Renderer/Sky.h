@@ -47,6 +47,7 @@ public:
 		return *m_envMap;
 	}
 
+	// Returns true if all the conditions are met to have generated sky
 	ANKI_PURE Bool isEnabled() const;
 
 public:

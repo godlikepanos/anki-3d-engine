@@ -298,21 +298,18 @@ void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderPassWorkContex
 	U32 srv = 0;
 	rgraphCtx.bindSrv(srv++, space, getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
-	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 	const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-	const Bool bSkySolidColor =
-		(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-	if(bSkySolidColor)
+	if(getGeneratedSky().isEnabled())
 	{
-		cmdb.bindSrv(srv++, space, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+		rgraphCtx.bindSrv(srv++, space, getGeneratedSky().getEnvironmentMapRt());
 	}
-	else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+	else if(sky && sky->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 	{
-		cmdb.bindSrv(srv++, space, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+		cmdb.bindSrv(srv++, space, TextureView(&sky->getSkyTexture(), TextureSubresourceDesc::all()));
 	}
 	else
 	{
-		rgraphCtx.bindSrv(srv++, space, getGeneratedSky().getEnvironmentMapRt());
+		cmdb.bindSrv(srv++, space, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 	}
 
 	rgraphCtx.bindSrv(srv++, space, getShadowMapping().getShadowmapRt());

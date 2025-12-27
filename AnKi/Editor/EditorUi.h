@@ -183,6 +183,7 @@ private:
 	void bodyComponent(BodyComponent& comp);
 	void decalComponent(DecalComponent& comp);
 	void cameraComponent(CameraComponent& comp);
+	void skyboxComponent(SkyboxComponent& comp);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils

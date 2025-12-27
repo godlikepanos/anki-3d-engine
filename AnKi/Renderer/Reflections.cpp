@@ -333,14 +333,14 @@ void Reflections::populateRenderGraph()
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
-		if(getRenderer().getGeneratedSky().isEnabled())
+		if(getGeneratedSky().isEnabled())
 		{
-			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvCompute);
+			rpass.newTextureDependency(getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvCompute);
 		}
 
-		if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
+		if(getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
 		{
-			rpass.newTextureDependency(getRenderer().getProbeReflections().getCurrentlyRefreshedReflectionRt(), TextureUsageBit::kSrvCompute);
+			rpass.newTextureDependency(getProbeReflections().getCurrentlyRefreshedReflectionRt(), TextureUsageBit::kSrvCompute);
 		}
 
 		rpass.setWork([this, pixelsFailedSsrBuff, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
@@ -355,21 +355,18 @@ void Reflections::populateRenderGraph()
 			cmdb.bindSrv(3, 0, getClusterBinning().getClustersBuffer());
 			cmdb.bindSrv(4, 0, BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(U32)));
 
-			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-			const Bool bSkySolidColor =
-				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-			if(bSkySolidColor)
+			if(getGeneratedSky().isEnabled())
 			{
-				cmdb.bindSrv(5, 0, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+				rgraphCtx.bindSrv(5, 0, getGeneratedSky().getEnvironmentMapRt());
 			}
-			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+			else if(sky && sky->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 			{
-				cmdb.bindSrv(5, 0, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(5, 0, TextureView(&sky->getSkyTexture(), TextureSubresourceDesc::all()));
 			}
 			else
 			{
-				rgraphCtx.bindSrv(5, 0, getRenderer().getGeneratedSky().getEnvironmentMapRt());
+				cmdb.bindSrv(5, 0, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			}
 
 			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);

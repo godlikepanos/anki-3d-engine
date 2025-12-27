@@ -214,7 +214,7 @@ Bool GeneratedSky::isEnabled() const
 	const SkyboxComponent* skyc = SceneGraph::getSingleton().getSkybox();
 	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 
-	return skyc && skyc->getSkyboxType() == SkyboxType::kGenerated && dirLightc;
+	return skyc && skyc->getSkyboxComponentType() == SkyboxComponentType::kGenerated && dirLightc;
 }
 
 } // end namespace anki

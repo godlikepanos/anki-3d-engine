@@ -58,10 +58,9 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Skybox first
 	const SkyboxComponent* skyc = SceneGraph::getSingleton().getSkybox();
-	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
-	if(skyc && !(skyc->getSkyboxType() == SkyboxType::kGenerated && !dirLightc))
+	if(skyc)
 	{
-		cmdb.bindShaderProgram(m_skyboxGrProgs[skyc->getSkyboxType()].get());
+		cmdb.bindShaderProgram(m_skyboxGrProgs[skyc->getSkyboxComponentType()].get());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindSrv(0, 0, info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresource);
@@ -69,17 +68,17 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		TraditionalDeferredSkyboxConstants consts = {};
 		consts.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
 		consts.m_cameraPos = info.m_cameraPosWSpace.xyz;
-		consts.m_scale = skyc->getImageScale();
-		consts.m_bias = skyc->getImageBias();
+		consts.m_scale = skyc->getSkyImageColorScale();
+		consts.m_bias = skyc->getSkyImageColorBias();
 
-		if(skyc->getSkyboxType() == SkyboxType::kSolidColor)
+		if(skyc->getSkyboxComponentType() == SkyboxComponentType::kSolidColor)
 		{
-			consts.m_solidColor = skyc->getSolidColor();
+			consts.m_solidColor = skyc->getSkySolidColor();
 		}
-		else if(skyc->getSkyboxType() == SkyboxType::kImage2D)
+		else if(skyc->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 		{
 			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
-			cmdb.bindSrv(1, 0, TextureView(&skyc->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(1, 0, TextureView(&skyc->getSkyTexture(), TextureSubresourceDesc::all()));
 		}
 		else
 		{
@@ -101,6 +100,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		consts->m_invViewProjMat = info.m_invViewProjectionMatrix;
 		consts->m_cameraPos = info.m_cameraPosWSpace.xyz;
 
+		const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 		if(dirLightc)
 		{
 			consts->m_dirLight.m_effectiveShadowDistance = info.m_effectiveShadowDistance;

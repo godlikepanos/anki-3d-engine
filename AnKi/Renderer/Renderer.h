@@ -63,7 +63,7 @@ public:
 	TexturePtr m_texture3DSrv;
 	TexturePtr m_texture2DUav;
 	TexturePtr m_texture3DUav;
-	BufferPtr m_buffer;
+	BufferPtr m_buffer; // It's 1024 bytes
 };
 
 enum class MeshletRenderingType

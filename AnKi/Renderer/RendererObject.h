@@ -17,10 +17,7 @@ namespace anki {
 // Forward
 class ResourceManager;
 
-/// @addtogroup renderer
-/// @{
-
-/// Renderer object.
+// Renderer object.
 class RendererObject
 {
 public:
@@ -38,13 +35,13 @@ public:
 protected:
 	static ANKI_PURE Renderer& getRenderer();
 
-	/// Used in fullscreen quad draws.
+	// Used in fullscreen quad draws.
 	static void drawQuad(CommandBuffer& cmdb)
 	{
 		cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
 	}
 
-	/// Dispatch a compute job equivelent to drawQuad
+	// Dispatch a compute job equivelent to drawQuad
 	static void dispatchPPCompute(CommandBuffer& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 outImageWidth, U32 outImageHeight)
 	{
 		const U32 sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
@@ -117,13 +114,13 @@ protected:
 
 	static void zeroBuffer(Buffer* buff);
 
-	/// Temp pass name.
+	// Temp pass name.
 	static CString generateTempPassName(const Char* fmt, ...);
 
-	/// Fill some buffers with some value. It's a **COMPUTE** dispatch.
+	// Fill some buffers with some value. It's a **COMPUTE** dispatch.
 	static void fillBuffers(CommandBuffer& cmdb, ConstWeakArray<BufferView> buffers, U32 value);
 
-	/// See @fillBuffers
+	// See fillBuffers
 	static void fillBuffer(CommandBuffer& cmdb, BufferView buffer, U32 value)
 	{
 		fillBuffers(cmdb, ConstWeakArray<BufferView>(&buffer, 1), value);
@@ -148,23 +145,23 @@ protected:
 	ANKI_PURE RenderingContext& getRenderingContext() const;
 };
 
-/// Contains common functionality of all passes that use RtMaterialFetch.
+// Contains common functionality of all passes that use RtMaterialFetch.
 class RtMaterialFetchRendererObject : protected RendererObject
 {
 protected:
 	Error init();
 
-	/// Build a pass that populates the shader binding table.
+	// Build a pass that populates the shader binding table.
 	void buildShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
 									 RenderGraphBuilder& rgraph, BufferHandle& sbtHandle, BufferView& sbtBuffer);
 
 	void patchShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
 									 RenderGraphBuilder& rgraph, BufferHandle sbtHandle, BufferView sbtBuffer);
 
-	/// Sets the the resources of space 2 in RtMaterialFetch.hlsl as dependencies on the given pass.
+	// Sets the the resources of space 2 in RtMaterialFetch.hlsl as dependencies on the given pass.
 	void setRgenSpace2Dependencies(RenderPassBase& pass, Bool isComputeDispatch = false);
 
-	/// Bind the the resources of space 2 in RtMaterialFetch.hlsl.
+	// Bind the the resources of space 2 in RtMaterialFetch.hlsl.
 	void bindRgenSpace2Resources(RenderPassWorkContext& rgraphCtx);
 
 private:
@@ -172,6 +169,5 @@ private:
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_sbtPatchGrProg;
 };
-/// @}
 
 } // end namespace anki

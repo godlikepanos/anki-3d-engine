@@ -10,7 +10,7 @@
 
 namespace anki {
 
-/// A simple implicit component that updates the SceneNode's transform.
+// A simple implicit component that updates the SceneNode's transform.
 class MoveComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(MoveComponent)

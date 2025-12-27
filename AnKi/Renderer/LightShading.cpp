@@ -116,19 +116,15 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		cmdb.setDepthCompareOperation(CompareOperation::kEqual);
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-		const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-
-		const Bool isSolidColor =
-			(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-
-		if(isSolidColor)
+		if(getGeneratedSky().isEnabled())
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[0].get());
+			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
 
-			const Vec4 color((sky) ? sky->getSolidColor() : Vec3(0.0f), 0.0);
-			cmdb.setFastConstants(&color, sizeof(color));
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getGeneratedSky().getSkyLutRt());
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 		}
-		else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+		else if(sky && sky->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 		{
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[1].get());
 
@@ -149,21 +145,20 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 
 			pc.m_invertedViewProjectionJitterMat = getRenderingContext().m_matrices.m_invertedViewProjectionJitter;
 			pc.m_cameraPos = getRenderingContext().m_matrices.m_cameraTransform.getTranslationPart().xyz;
-			pc.m_scale = sky->getImageScale();
-			pc.m_bias = sky->getImageBias();
+			pc.m_scale = sky->getSkyImageColorScale();
+			pc.m_bias = sky->getSkyImageColorBias();
 
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
-			cmdb.bindSrv(0, 0, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(0, 0, TextureView(&sky->getSkyTexture(), TextureSubresourceDesc::all()));
 		}
 		else
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
+			cmdb.bindShaderProgram(m_skybox.m_grProgs[0].get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindSrv(0, 0, getRenderer().getGeneratedSky().getSkyLutRt());
-			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
+			const Vec4 color((sky) ? sky->getSkySolidColor() : Vec3(0.0f), 0.0);
+			cmdb.setFastConstants(&color, sizeof(color));
 		}
 
 		drawQuad(cmdb);

@@ -797,6 +797,9 @@ void EditorUi::sceneNodePropertiesWindow()
 					case SceneComponentType::kCamera:
 						cameraComponent(static_cast<CameraComponent&>(comp));
 						break;
+					case SceneComponentType::kSkybox:
+						skyboxComponent(static_cast<SkyboxComponent&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -1304,6 +1307,96 @@ void EditorUi::cameraComponent(CameraComponent& comp)
 		{
 			comp.setFovY(toRad(fovY));
 		}
+	}
+}
+
+void EditorUi::skyboxComponent(SkyboxComponent& comp)
+{
+	// Type
+	if(ImGui::BeginCombo("Type", kSkyboxComponentTypeNames[comp.getSkyboxComponentType()]))
+	{
+		for(SkyboxComponentType type : EnumIterable<SkyboxComponentType>())
+		{
+			const Bool selected = type == comp.getSkyboxComponentType();
+			if(ImGui::Selectable(kSkyboxComponentTypeNames[type], selected))
+			{
+				comp.setSkyboxComponentType(type);
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if(selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	if(comp.getSkyboxComponentType() == SkyboxComponentType::kSolidColor)
+	{
+		Vec3 color = comp.getSkySolidColor();
+		if(ImGui::InputFloat3("Solid Color", &color.x))
+		{
+			comp.setSkySolidColor(color);
+		}
+	}
+	else if(comp.getSkyboxComponentType() == SkyboxComponentType::kImage2D)
+	{
+		// Filenames combo
+		{
+			const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
+
+			const String currentFilename = (comp.hasSkyImageFilename()) ? comp.getSkyImageFilename() : "";
+			U32 newSelectedFilename = kMaxU32;
+
+			ImGui::SetNextItemWidth(-1.0f);
+			comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
+
+			if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
+			{
+				comp.setSkyImageFilename(filenames[newSelectedFilename]);
+			}
+		}
+
+		Vec3 bias = comp.getSkyImageColorBias();
+		if(ImGui::SliderFloat3("Image Color Bias", &bias.x, 0.0f, 1000.0f))
+		{
+			comp.setSkyImageColorBias(bias);
+		}
+
+		Vec3 scale = comp.getSkyImageColorScale();
+		if(ImGui::SliderFloat3("Image Color Scale", &scale.x, 0.0f, 1000.0f))
+		{
+			comp.setSkyImageColorScale(scale);
+		}
+	}
+
+	// Fog stuff:
+
+#define ANKI_INPUT(methodName, labelTxt) \
+	{ \
+		F32 value = comp.get##methodName(); \
+		if(ImGui::SliderFloat(labelTxt, &value, 0.0f, 1000.0f)) \
+		{ \
+			comp.set##methodName(value); \
+		} \
+	}
+
+	ImGui::TextUnformatted("Fog:");
+
+	ANKI_INPUT(MinFogDensity, "Min Density")
+	ANKI_INPUT(MaxFogDensity, "Max Density")
+	ANKI_INPUT(HeightOfMinFogDensity, "Height of Min Density")
+	ANKI_INPUT(HeightOfMaxFogDensity, "Height of Max Density")
+	ANKI_INPUT(FogScatteringCoefficient, "Scattering Coeff")
+	ANKI_INPUT(FogAbsorptionCoefficient, "Absorption Coeff")
+
+#undef ANKI_INPUT
+
+	Vec3 fogColor = comp.getFogDiffuseColor();
+	if(ImGui::SliderFloat3("Color", &fogColor.x, 0.0f, 100.0f))
+	{
+		comp.setFogDiffuseColor(fogColor);
 	}
 }
 

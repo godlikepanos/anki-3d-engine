@@ -446,25 +446,21 @@ void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 
 	// Sky
 	const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
-
-	const Bool isSolidColor =
-		(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
-	if(isSolidColor)
-	{
-		consts.m_sky.m_solidColor = (sky) ? sky->getSolidColor() : Vec3(0.0);
-		consts.m_sky.m_type = U32(SkyType::kSolidColor);
-	}
-	else if(sky->getSkyboxType() == SkyboxType::kImage2D)
-	{
-		consts.m_sky.m_type = U32(SkyType::kTextureWithEquirectangularMapping);
-		consts.m_sky.m_texture =
-			sky->getImageResource().getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
-	}
-	else
+	if(getGeneratedSky().isEnabled())
 	{
 		consts.m_sky.m_type = U32(SkyType::kTextureWithEctahedronMapping);
 		consts.m_sky.m_texture =
 			m_generatedSky->getEnvironmentMapTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
+	}
+	else if(sky && sky->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
+	{
+		consts.m_sky.m_type = U32(SkyType::kTextureWithEquirectangularMapping);
+		consts.m_sky.m_texture = sky->getSkyTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
+	}
+	else
+	{
+		consts.m_sky.m_solidColor = (sky) ? sky->getSkySolidColor() : Vec3(0.0);
+		consts.m_sky.m_type = U32(SkyType::kSolidColor);
 	}
 
 	if(m_indirectDiffuseClipmaps)

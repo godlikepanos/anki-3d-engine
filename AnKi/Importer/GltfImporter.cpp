@@ -689,21 +689,23 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getExtra(extras, "skybox_solid_color", extraValueVec3, extraFound));
 			if(extraFound)
 			{
+				ANKI_CHECK(m_sceneFile.writeText("comp:setSkyboxComponentType(SkyboxComponentType.kSolidColor)\n"));
 				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x, extraValueVec3.y, extraValueVec3.z));
+					m_sceneFile.writeTextf("comp:setSkySolidColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x, extraValueVec3.y, extraValueVec3.z));
 			}
 
 			ANKI_CHECK(getExtra(extras, "skybox_image", extraValueStr, extraFound));
 			if(extraFound)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadImageResource(\"%s\")\n", extraValueStr.cstr()));
+				ANKI_CHECK(m_sceneFile.writeText("comp:setSkyboxComponentType(SkyboxComponentType.kImage2D)\n"));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setSkyImageFilename(\"%s\")\n", extraValueStr.cstr()));
 			}
 
 			ANKI_CHECK(getExtra(extras, "skybox_image_scale", extraValueVec3, extraFound));
 			if(extraFound)
 			{
-				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:setImageScale(Vec3.new(%f, %f, %f))\n", extraValueVec3.x, extraValueVec3.y, extraValueVec3.z));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setSkyImageColorScale(Vec3.new(%f, %f, %f))\n", extraValueVec3.x, extraValueVec3.y,
+												  extraValueVec3.z));
 			}
 
 			ANKI_CHECK(getExtra(extras, "fog_min_density", extraValuef, extraFound));
@@ -740,7 +742,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getExtra(extras, "skybox_generated", extraValueBool, extraFound));
 			if(extraFound && extraValueBool)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setGeneratedSky()\n"));
+				ANKI_CHECK(m_sceneFile.writeText("comp:setSkyboxComponentType(SkyboxComponentType.kGenerated)\n"));
 			}
 
 			Transform localTrf;
@@ -806,19 +808,25 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getExtra(extras, "decal_diffuse", extraValueStr, extraFound));
 			if(extraFound)
 			{
-				ANKI_CHECK(getExtra(extras, "decal_diffuse_factor", extraValuef, extraFound));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setDiffuseImageFilename(\"%s\")\n", extraValueStr.cstr()));
+			}
 
-				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:setDiffuseImageFilename(\"%s\", %f)\n", extraValueStr.cstr(), (extraFound) ? extraValuef : 1.0f));
+			ANKI_CHECK(getExtra(extras, "decal_diffuse_factor", extraValuef, extraFound));
+			if(extraFound)
+			{
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setDiffuseBlendFactor(%f)\n", extraValuef));
 			}
 
 			ANKI_CHECK(getExtra(extras, "decal_metal_roughness", extraValueStr, extraFound));
 			if(extraFound)
 			{
-				ANKI_CHECK(getExtra(extras, "decal_metal_roughness_factor", extraValuef, extraFound));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setRoughnessMetalnessImageFilename(\"%s\")\n", extraValueStr.cstr()));
+			}
 
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setMetalRoughnessImageFilename(\"%s\", %f)\n", extraValueStr.cstr(),
-												  (extraFound) ? extraValuef : 1.0f));
+			ANKI_CHECK(getExtra(extras, "decal_metal_roughness_factor", extraValuef, extraFound));
+			if(extraFound)
+			{
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setRoughnessMetalnessBlendFactor(%f)\n", extraValuef));
 			}
 
 			Vec3 tsl;

@@ -60,6 +60,12 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kQuad"/>
 			<enumerant name="kMeshComponent"/>
 		</enum>
+
+		<enum name="SkyboxComponentType">
+			<enumerant name="kSolidColor"/>
+			<enumerant name="kImage2D"/>
+			<enumerant name="kGenerated"/>
+		</enum>
 	</enums>
 
 	<classes>
@@ -349,51 +355,71 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="SkyboxComponent">
 			<methods>
-				<method name="setSolidColor">
+				<method name="setSkyboxComponentType">
+					<args>
+						<arg>SkyboxComponentType</arg>
+					</args>
+					<return>SkyboxComponent&amp;</return>
+				</method>
+				<method name="getSkyboxComponentType">
+					<return>SkyboxComponentType</return>
+				</method>
+				<method name="setSkySolidColor">
 					<args>
 						<arg>Vec3</arg>
 					</args>
+					<return>SkyboxComponent&amp;</return>
 				</method>
-				<method name="loadImageResource">
+				<method name="getSkySolidColor">
+					<return>Vec3</return>
+				</method>
+				<method name="setSkyImageFilename">
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>SkyboxComponent&amp;</return>
 				</method>
-				<method name="setGeneratedSky" />
+				<method name="setSkyImageColorBias">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+					<return>SkyboxComponent&amp;</return>
+				</method>
+				<method name="setSkyImageColorScale">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+					<return>SkyboxComponent&amp;</return>
+				</method>
 				<method name="setMinFogDensity">
 					<args>
 						<arg>F32</arg>
 					</args>
+					<return>SkyboxComponent&amp;</return>
 				</method>
 				<method name="setMaxFogDensity">
 					<args>
 						<arg>F32</arg>
 					</args>
+					<return>SkyboxComponent&amp;</return>
 				</method>
 				<method name="setHeightOfMinFogDensity">
 					<args>
 						<arg>F32</arg>
 					</args>
+					<return>SkyboxComponent&amp;</return>
 				</method>
 				<method name="setHeightOfMaxFogDensity">
 					<args>
 						<arg>F32</arg>
 					</args>
+					<return>SkyboxComponent&amp;</return>
 				</method>
 				<method name="setFogDiffuseColor">
 					<args>
 						<arg>Vec3</arg>
 					</args>
-				</method>
-				<method name="setImageBias">
-					<args>
-						<arg>Vec3</arg>
-					</args>
-				</method>
-				<method name="setImageScale">
-					<args>
-						<arg>Vec3</arg>
-					</args>
+					<return>SkyboxComponent&amp;</return>
 				</method>
 			</methods>
 		</class>
