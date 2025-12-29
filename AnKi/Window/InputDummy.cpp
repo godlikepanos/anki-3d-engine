@@ -42,32 +42,13 @@ Error Input::init()
 
 Error Input::handleEvents()
 {
-	if(m_lockCurs)
-	{
-		moveMouseNdc(Vec2(0.0f));
-	}
-
-	return Error::kNone;
-}
-
-void Input::moveMouseNdc(const Vec2& posNdc)
-{
-	m_mousePosNdc = posNdc;
-}
-
-void Input::hideCursor([[maybe_unused]] Bool hide)
-{
 	// Nothing
+	return Error::kNone;
 }
 
 Bool Input::hasTouchDevice() const
 {
 	return false;
-}
-
-void Input::setMouseCursor([[maybe_unused]] MouseCursor cursor)
-{
-	// Nothing
 }
 
 } // end namespace anki
