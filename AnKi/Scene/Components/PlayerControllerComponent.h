@@ -23,11 +23,6 @@ public:
 		m_player->updateState(forwardSpeed, forwardDir, jumpSpeed, crouch);
 	}
 
-	void moveToPosition(const Vec3& pos)
-	{
-		m_player->moveToPosition(pos);
-	}
-
 	PhysicsPlayerController& getPhysicsPlayerController()
 	{
 		return *m_player;

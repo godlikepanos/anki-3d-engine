@@ -23,15 +23,23 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node, U32 uuid)
 
 void PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	U32 posVersion;
-	const Vec3 newPos = m_player->getPosition(&posVersion);
+	if(!info.m_node->isLocalTransformDirty())
+	{
+		U32 posVersion;
+		const Vec3 newPos = m_player->getPosition(&posVersion);
 
-	if(posVersion != m_positionVersion)
+		if(posVersion != m_positionVersion)
+		{
+			updated = true;
+			m_positionVersion = posVersion;
+
+			info.m_node->setLocalOrigin(newPos);
+		}
+	}
+	else
 	{
 		updated = true;
-		m_positionVersion = posVersion;
-
-		info.m_node->setLocalOrigin(newPos);
+		m_player->moveToPosition(info.m_node->getLocalOrigin());
 	}
 }
 

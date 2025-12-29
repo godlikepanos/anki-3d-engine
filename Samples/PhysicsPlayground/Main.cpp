@@ -23,23 +23,6 @@ Error MyApp::sampleExtraInit()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
 	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
-	// Create the player
-	if(0)
-	{
-		SceneNode& cam = SceneGraph::getSingleton().getActiveCameraNode();
-		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 0.0, 0.0), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
-
-		SceneNode& arm = SceneGraph::getSingleton().findSceneNode("arm");
-		arm.setLocalTransform(Transform(Vec3(0.065f, -0.13f, -0.4f), Mat3(Euler(0.0f, kPi, 0.0f)), Vec3(1.0f, 1.0f, 1.0f)));
-		arm.setParent(&cam);
-
-		SceneNode* player = SceneGraph::getSingleton().newSceneNode<SceneNode>("player");
-		PlayerControllerComponent* playerc = player->newComponent<PlayerControllerComponent>();
-		playerc->moveToPosition(Vec3(0.0f, 10.5f, 0.0f));
-
-		player->addChild(&cam);
-	}
-
 	{
 		FpsCharacter* c = SceneGraph::getSingleton().newSceneNode<FpsCharacter>("FpsCharacter");
 		SceneGraph::getSingleton().setActiveCameraNode(c->m_cameraNode);
