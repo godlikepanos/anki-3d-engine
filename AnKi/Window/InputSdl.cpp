@@ -86,41 +86,9 @@ Error Input::handleEvents()
 	return self->handleEventsInternal();
 }
 
-void Input::moveMouseNdc(const Vec2& pos)
-{
-	if(pos != m_mousePosNdc)
-	{
-		const F32 x = F32(NativeWindow::getSingleton().getWidth()) * (pos.x * 0.5f + 0.5f);
-		const F32 y = F32(NativeWindow::getSingleton().getHeight()) * (-pos.y * 0.5f + 0.5f);
-
-		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, x, y);
-
-		// SDL doesn't generate a SDL_MOUSEMOTION event if the cursor is outside the window. Push that event
-		SDL_Event event;
-		event.type = SDL_EVENT_MOUSE_MOTION;
-		event.button.x = x;
-		event.button.y = y;
-
-		SDL_PushEvent(&event);
-	}
-}
-
-void Input::hideCursor(Bool hide)
-{
-	InputSdl* self = static_cast<InputSdl*>(this);
-	self->m_crntHideCursor = hide;
-}
-
 Bool Input::hasTouchDevice() const
 {
 	return false;
-}
-
-void Input::setMouseCursor(MouseCursor cursor)
-{
-	ANKI_ASSERT(cursor < MouseCursor::kCount);
-	InputSdl* self = static_cast<InputSdl*>(this);
-	self->m_crntMouseCursor = cursor;
 }
 
 InputSdl::~InputSdl()
@@ -264,23 +232,45 @@ Error InputSdl::handleEventsInternal()
 		m_mouseBtns[MouseButton::kScrollUp] = (m_mouseBtns[MouseButton::kScrollUp] > 0) ? -1 : 0;
 	}
 
-	// Lock mouse
-	if(m_lockCurs)
+	// Do that at the end to be processed at the next frame so that will give some time for the mouse to move
+	if(m_lockMouse.getNonAtomically() || m_requests.m_mousePosNdc != Vec2(kMaxF32))
 	{
-		moveMouseNdc(Vec2(0.0f));
+		Vec2 windPos(F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight()));
+		if(m_lockMouse.getNonAtomically())
+		{
+			windPos *= 0.5f;
+		}
+		else
+		{
+			windPos *= Vec2(m_requests.m_mousePosNdc.x, -m_requests.m_mousePosNdc.y) * 0.5f + 0.5f;
+		}
+
+		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, windPos.x, windPos.y);
+
+		// SDL doesn't generate a SDL_MOUSEMOTION event if the cursor is outside the window. Push that event
+		SDL_Event event;
+		event.type = SDL_EVENT_MOUSE_MOTION;
+		event.button.x = windPos.x;
+		event.button.y = windPos.y;
+
+		SDL_PushEvent(&event);
+
+		m_requests.m_mousePosNdc = Vec2(kMaxF32);
 	}
 
-	if(m_crntMouseCursor != m_prevMouseCursor)
+	// Cursor change request
+	if(m_requests.m_mouseCursor != MouseCursor::kCount)
 	{
-		SDL_SetCursor(m_cursors[m_crntMouseCursor]);
-		m_prevMouseCursor = m_crntMouseCursor;
+		SDL_SetCursor(m_cursors[m_requests.m_mouseCursor]);
+		m_requests.m_mouseCursor = MouseCursor::kCount;
 	}
 
-	if(m_crntHideCursor != m_prevHideCursor)
+	// Hide cursor request
+	if(m_requests.m_hideCursor.getNonAtomically() >= 0)
 	{
-		m_prevHideCursor = m_crntHideCursor;
+		const Bool hide = m_requests.m_hideCursor.getNonAtomically() != 0;
 
-		if(m_crntHideCursor)
+		if(hide)
 		{
 			if(!SDL_HideCursor())
 			{
@@ -304,6 +294,8 @@ Error InputSdl::handleEventsInternal()
 				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
 			}
 		}
+
+		m_requests.m_hideCursor.setNonAtomically(-1);
 	}
 
 	return Error::kNone;

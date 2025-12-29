@@ -444,12 +444,12 @@ void UiCanvas::handleInput()
 	if(io.MouseDrawCursor || imguiCursor == ImGuiMouseCursor_None)
 	{
 		// Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-		in.hideCursor(true);
+		in.hideMouseCursor(true);
 	}
 	else
 	{
 		// Show OS mouse cursor
-		in.hideCursor(false);
+		in.hideMouseCursor(false);
 		in.setMouseCursor(imguiCursorToAnki(imguiCursor));
 	}
 

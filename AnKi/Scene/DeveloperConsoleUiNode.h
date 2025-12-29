@@ -11,10 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// A node that draws the developer console.
+// A node that draws the developer console.
 class DeveloperConsoleUiNode : public SceneNode
 {
 public:
@@ -65,6 +62,5 @@ private:
 
 	void draw(UiCanvas& canvas);
 };
-/// @}
 
 } // end namespace anki

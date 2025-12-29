@@ -22,9 +22,7 @@ class SceneNode;
 class EditorUi
 {
 public:
-	Bool m_quit = false;
-
-	Bool m_mouseOverAnyWindow = false; // Mouse is over one of the editor windows.
+	Second m_dt = 0.0f;
 
 	EditorUi();
 
@@ -83,6 +81,8 @@ private:
 	Bool m_showSceneHierarcyWindow = true;
 	Bool m_showAssetsWindow = true;
 	Bool m_showDebugRtsWindow = false;
+	Bool m_quit = false;
+	Bool m_mouseOverAnyWindow = false; // Mouse is over one of the editor windows.
 
 	ImageResourcePtr m_materialIcon;
 	ImageResourcePtr m_meshIcon;
@@ -200,6 +200,7 @@ private:
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
 	void objectPicking();
 	static DynamicArray<CString> gatherResourceFilenames(CString filenameContains);
+	void handleInput();
 };
 
 } // end namespace anki

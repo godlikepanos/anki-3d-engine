@@ -21,6 +21,7 @@ DeveloperConsoleUiNode::DeveloperConsoleUiNode(CString name)
 	uic->setEnabled(false);
 
 	setSerialization(false);
+	setUpdateOnPause(true);
 }
 
 DeveloperConsoleUiNode::~DeveloperConsoleUiNode()

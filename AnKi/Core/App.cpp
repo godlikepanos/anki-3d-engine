@@ -187,7 +187,6 @@ Error App::init()
 
 	if(g_cvarCoreShowEditor)
 	{
-		g_cvarCorePlaying = false;
 		g_cvarRsrcTrackFileUpdates = true;
 	}
 
@@ -319,6 +318,7 @@ Error App::init()
 	// Scene
 	//
 	ANKI_CHECK(SceneGraph::allocateSingleton().init(m_allocCallback, m_allocUserData));
+	SceneGraph::getSingleton().pause(g_cvarCoreShowEditor);
 
 	GrManager::getSingleton().finish();
 	ANKI_CORE_LOGI("Application initialized");

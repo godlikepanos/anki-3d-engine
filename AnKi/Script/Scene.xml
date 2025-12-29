@@ -84,6 +84,23 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 		</class>
 
 		<!-- Components -->
+		<class name="SceneComponentUpdateInfo">
+			<methods>
+				<method name="getSceneNode">
+					<return>SceneNode&amp;</return>
+				</method>
+				<method name="getDt">
+					<return>F64</return>
+				</method>
+				<method name="getPreviousTime">
+					<return>F64</return>
+				</method>
+				<method name="getCurrentTime">
+					<return>F64</return>
+				</method>
+			</methods>
+		</class>
+
 		<class name="LightComponent">
 			<methods>
 				<method name="setLightComponentType">

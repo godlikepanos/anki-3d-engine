@@ -66,7 +66,7 @@ inline Array<SceneComponentTypeInfo, U32(SceneComponentType::kCount)> kSceneComp
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 }};
 
-// Passed to SceneComponent::update.
+// Passed to SceneComponent::update().
 class SceneComponentUpdateInfo
 {
 	friend class SceneGraph;
@@ -76,16 +76,18 @@ public:
 	const Second m_previousTime;
 	const Second m_currentTime;
 	const Second m_dt;
-	const Bool m_forceUpdateSceneBounds;
-	const Bool m_checkForResourceUpdates;
+	const Bool m_forceUpdateSceneBounds : 1;
+	const Bool m_checkForResourceUpdates : 1;
+	const Bool m_paused : 1;
 	StackMemoryPool* m_framePool = nullptr;
 
-	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds, Bool checkForResourceUpdates)
+	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds, Bool checkForResourceUpdates, Bool paused)
 		: m_previousTime(prevTime)
 		, m_currentTime(crntTime)
 		, m_dt(crntTime - prevTime)
 		, m_forceUpdateSceneBounds(forceUpdateSceneBounds)
 		, m_checkForResourceUpdates(checkForResourceUpdates)
+		, m_paused(paused)
 	{
 	}
 
@@ -94,6 +96,28 @@ public:
 		ANKI_ASSERT(aabbMin <= aabbMax);
 		m_sceneMin = m_sceneMin.min(aabbMin);
 		m_sceneMax = m_sceneMax.max(aabbMax);
+	}
+
+	// Bellow are methods exposed to scripting
+
+	SceneNode& getSceneNode()
+	{
+		return *m_node;
+	}
+
+	Second getPreviousTime() const
+	{
+		return m_previousTime;
+	}
+
+	Second getCurrentTime() const
+	{
+		return m_currentTime;
+	}
+
+	Second getDt() const
+	{
+		return m_dt;
 	}
 
 private:

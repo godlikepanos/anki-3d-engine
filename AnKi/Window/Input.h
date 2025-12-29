@@ -42,7 +42,7 @@ enum class MouseCursor : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MouseCursor)
 
 // Handle the input and other events
-// @note All positions are in NDC space
+// Note: All positions are in NDC space
 class Input : public MakeSingletonPtr<Input>
 {
 	template<typename>
@@ -83,18 +83,35 @@ public:
 	}
 
 	// Move the mouse cursor to a position inside the window. Useful for locking the cursor into a fixed location (eg in the center of the screen)
-	void moveMouseNdc(const Vec2& posNdc);
+	// It's thread-safe
+	void moveMouseNdc(Vec2 posNdc)
+	{
+		LockGuard lock(m_requests.m_lock);
+		m_requests.m_mousePosNdc = posNdc.clamp(-1.0f, 1.0f);
+	}
 
-	// Lock mouse to (0, 0)
+	// Lock the mouse to window center. Useful for FPS/TPS games
+	// It's thread safe
 	void lockMouseWindowCenter(Bool lock)
 	{
-		m_lockCurs = lock;
+		m_lockMouse.store(lock);
 	}
 
 	// Hide the mouse cursor
-	void hideCursor(Bool hide);
+	// It's thread-safe
+	void hideMouseCursor(Bool hide)
+	{
+		m_requests.m_hideCursor.store(I8(hide));
+	}
 
-	void setMouseCursor(MouseCursor cursor);
+	// Change the shape of the cursor
+	// It's thread-safe
+	void setMouseCursor(MouseCursor cursor)
+	{
+		ANKI_ASSERT(cursor < MouseCursor::kCount);
+		LockGuard lock(m_requests.m_lock);
+		m_requests.m_mouseCursor = cursor;
+	}
 
 	// See getKey()
 	I32 getTouchPointer(TouchPointer p) const
@@ -136,8 +153,8 @@ protected:
 	Array<I32, U(KeyCode::kCount)> m_keys;
 
 	Array<I32, U(MouseButton::kCount)> m_mouseBtns;
-	Vec2 m_mousePosNdc;
-	Vec2 m_prevMousePosNdc;
+	Vec2 m_mousePosNdc = Vec2(-1.0f);
+	Vec2 m_prevMousePosNdc = Vec2(-1.0f);
 
 	Array<I32, U(TouchPointer::kCount)> m_touchPointers;
 	Array<Vec2, U(TouchPointer::kCount)> m_touchPointerPosNdc;
@@ -148,22 +165,28 @@ protected:
 	static constexpr U32 kMaxTexInput = 256;
 	Array<Char, kMaxTexInput> m_textInput;
 
-	Bool m_lockCurs = false;
+	MouseCursor m_mouseCursor = MouseCursor::kArrow;
+
+	Atomic<Bool> m_lockMouse = {false};
+
+	// Requests are deferred until handleEvents() because most backends are not multi-threaded
+	class Requests
+	{
+	public:
+		Atomic<I8> m_hideCursor = {-1};
+		MouseCursor m_mouseCursor = MouseCursor::kCount;
+		Vec2 m_mousePosNdc = Vec2(kMaxF32);
+		SpinLock m_lock;
+	} m_requests;
 
 	Input()
 	{
-		reset();
-	}
-
-	void reset()
-	{
 		zeroMemory(m_keys);
 		zeroMemory(m_mouseBtns);
-		m_mousePosNdc = m_prevMousePosNdc = Vec2(-1.0f);
-		zeroMemory(m_events);
-		zeroMemory(m_textInput);
 		zeroMemory(m_touchPointers);
 		zeroMemory(m_touchPointerPosNdc);
+		zeroMemory(m_events);
+		zeroMemory(m_textInput);
 	}
 };
 

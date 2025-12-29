@@ -25,10 +25,6 @@ public:
 		m_ui.m_open = true;
 	}
 
-	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
-	{
-	}
-
 private:
 	ImFont* m_font = nullptr;
 

@@ -216,6 +216,7 @@ void EditorUi::draw(UiCanvas& canvas)
 {
 	m_canvas = &canvas;
 
+	handleInput();
 	objectPicking();
 
 	if(!m_font)
@@ -476,6 +477,21 @@ void EditorUi::mainMenu()
 			{
 				const F32 roundTo = 1.0f;
 				m_toolbox.m_rotationSnappingDeg = round(m_toolbox.m_rotationSnappingDeg / roundTo) * roundTo;
+			}
+
+			// Play button
+			{
+				const Bool bPaused = SceneGraph::getSingleton().isPaused();
+
+				CString text = (bPaused) ? ICON_MDI_PLAY_CIRCLE " Play" : ICON_MDI_STOP_CIRCLE "Stop (Esc)";
+				const F32 menuBarWidth = ImGui::GetWindowWidth();
+				const F32 textWidth = ImGui::CalcTextSize(text.cstr()).x;
+				ImGui::SameLine(menuBarWidth - menuBarWidth / 2.0f - textWidth / 2.0f);
+
+				if(ImGui::Button(text.cstr()))
+				{
+					SceneGraph::getSingleton().pause(!bPaused);
+				}
 			}
 
 			ImGui::EndMenuBar();
@@ -897,7 +913,7 @@ void EditorUi::scriptComponent(ScriptComponent& comp)
 			state.m_textEditorOpen = true;
 			state.m_scriptComponentThatHasTheTextEditorOpen = comp.getUuid();
 			state.m_textEditorTxt =
-				(comp.hasScriptText()) ? comp.getScriptText() : "function update(node, prevTime, crntTime)\n    -- Your code here\nend";
+				(comp.hasScriptText()) ? comp.getScriptText() : "function update(info) --info: SceneComponentUpdateInfo\n    -- Your code here\nend";
 		}
 	}
 
@@ -2283,6 +2299,117 @@ DynamicArray<CString> EditorUi::gatherResourceFilenames(CString filenameContains
 	});
 
 	return out;
+}
+
+void EditorUi::handleInput()
+{
+	Input& input = Input::getSingleton();
+
+	if(!SceneGraph::getSingleton().isPaused())
+	{
+		if(input.getKey(KeyCode::kEscape) > 0)
+		{
+			// Esc pauses
+			SceneGraph::getSingleton().pause(true);
+		}
+		else
+		{
+			// Skip input handling if playing
+			return;
+		}
+	}
+
+	input.hideMouseCursor(false);
+	input.lockMouseWindowCenter(false);
+
+	if(m_quit)
+	{
+		input.addEvent(InputEvent::kWindowClosed);
+	}
+
+	static Vec2 mousePosOn1stClick = input.getMousePositionNdc();
+	if(input.getMouseButton(MouseButton::kRight) == 1)
+	{
+		// Re-init mouse pos
+		mousePosOn1stClick = input.getMousePositionNdc();
+	}
+
+	if(input.getMouseButton(MouseButton::kRight) > 0 && !m_mouseOverAnyWindow)
+	{
+		// move the camera
+		SceneNode& mover = SceneGraph::getSingleton().getActiveCameraNode();
+
+		constexpr F32 kRotateAngle = toRad(2.5f);
+		constexpr F32 kMouseSensitivity = 5.0f;
+
+		if(input.getKey(KeyCode::kUp) > 0)
+		{
+			mover.rotateLocalX(kRotateAngle);
+		}
+
+		if(input.getKey(KeyCode::kDown) > 0)
+		{
+			mover.rotateLocalX(-kRotateAngle);
+		}
+
+		if(input.getKey(KeyCode::kLeft) > 0)
+		{
+			mover.rotateLocalY(kRotateAngle);
+		}
+
+		if(input.getKey(KeyCode::kRight) > 0)
+		{
+			mover.rotateLocalY(-kRotateAngle);
+		}
+
+		F32 moveDistance = 0.1f;
+		if(input.getKey(KeyCode::kLeftShift) > 0)
+		{
+			moveDistance *= 4.0f;
+		}
+
+		if(input.getKey(KeyCode::kA) > 0)
+		{
+			mover.moveLocalX(-moveDistance);
+		}
+
+		if(input.getKey(KeyCode::kD) > 0)
+		{
+			mover.moveLocalX(moveDistance);
+		}
+
+		if(input.getKey(KeyCode::kQ) > 0)
+		{
+			mover.moveLocalY(-moveDistance);
+		}
+
+		if(input.getKey(KeyCode::kE) > 0)
+		{
+			mover.moveLocalY(moveDistance);
+		}
+
+		if(input.getKey(KeyCode::kW) > 0)
+		{
+			mover.moveLocalZ(-moveDistance);
+		}
+
+		if(input.getKey(KeyCode::kS) > 0)
+		{
+			mover.moveLocalZ(moveDistance);
+		}
+
+		const Vec2 velocity = input.getMousePositionNdc() - mousePosOn1stClick;
+		input.moveMouseNdc(mousePosOn1stClick);
+		if(velocity != Vec2(0.0))
+		{
+			Euler angles(mover.getLocalRotation().getRotationPart());
+			angles.x += velocity.y * toRad(360.0f) * F32(m_dt) * kMouseSensitivity;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -velocity.x * toRad(360.0f) * F32(m_dt) * kMouseSensitivity;
+			angles.z = 0.0f;
+			mover.setLocalRotation(Mat3(angles));
+		}
+	}
 }
 
 } // end namespace anki

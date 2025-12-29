@@ -131,35 +131,14 @@ Error MyApp::sampleExtraInit()
 		node->setLocalOrigin(Vec3(4.0f, 0.5f, 0.0f));
 	}
 
-	if(!g_cvarCoreShowEditor)
-	{
-		Input::getSingleton().lockMouseWindowCenter(true);
-		Input::getSingleton().hideCursor(true);
-		Input::getSingleton().moveMouseNdc(Vec2(0.0f));
-	}
+	Input::getSingleton().moveMouseNdc(Vec2(0.0f));
+	ANKI_CHECK(Input::getSingleton().handleEvents());
 
 	return Error::kNone;
 }
 
 Error MyApp::userMainLoop([[maybe_unused]] Bool& quit, [[maybe_unused]] Second elapsedTime)
 {
-	if(g_cvarCoreShowEditor)
-	{
-		if(SceneGraph::getSingleton().getActiveCameraNode().getName() != "_MainCamera")
-		{
-			SceneNode& node = SceneGraph::getSingleton().findSceneNode("_MainCamera");
-			SceneGraph::getSingleton().setActiveCameraNode(&node);
-		}
-	}
-	else
-	{
-		if(SceneGraph::getSingleton().getActiveCameraNode().getName() != "FpsCharacterCam")
-		{
-			SceneNode* node = SceneGraph::getSingleton().tryFindSceneNode("FpsCharacterCam");
-			SceneGraph::getSingleton().setActiveCameraNode(node);
-		}
-	}
-
 	return Error::kNone;
 }
 

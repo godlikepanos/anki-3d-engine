@@ -122,7 +122,7 @@ CString ScriptComponent::getScriptText() const
 void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
-	if(!m_environments[0] && !m_environments[1])
+	if((!m_environments[0] && !m_environments[1]) || info.m_paused)
 	{
 		return;
 	}
@@ -133,12 +133,10 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	lua_getglobal(lua, "update");
 
 	// Push args
-	LuaBinder::pushVariableToTheStack(lua, info.m_node);
-	lua_pushnumber(lua, info.m_previousTime);
-	lua_pushnumber(lua, info.m_currentTime);
+	LuaBinder::pushVariableToTheStack(lua, &info);
 
-	// Do the call (3 arguments, no result)
-	if(lua_pcall(lua, 3, 0, 0) != 0)
+	// Do the call (1 argument, no result)
+	if(lua_pcall(lua, 1, 0, 0) != 0)
 	{
 		ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": %s", lua_tostring(lua, -1));
 		return;

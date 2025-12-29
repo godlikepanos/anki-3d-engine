@@ -49,6 +49,24 @@ public:
 		return &m_registryRecord; \
 	}
 
+// Used in SceneNode::update()
+class SceneNodeUpdateInfo
+{
+public:
+	const Second m_previousTime;
+	const Second m_currentTime;
+	const Second m_dt;
+	const Bool m_paused;
+
+	SceneNodeUpdateInfo(Second prevTime, Second crntTime, Bool paused)
+		: m_previousTime(prevTime)
+		, m_currentTime(crntTime)
+		, m_dt(crntTime - prevTime)
+		, m_paused(paused)
+	{
+	}
+};
+
 // Base class of the scene
 class SceneNode : public SceneHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
@@ -95,6 +113,17 @@ public:
 		return m_serialize;
 	}
 
+	// Some nodes may need to be updated even on pause
+	void setUpdateOnPause(Bool update)
+	{
+		m_updateOnPause = update;
+	}
+
+	Bool getUpdateOnPause() const
+	{
+		return m_updateOnPause;
+	}
+
 	Timestamp getComponentMaxTimestamp() const
 	{
 		return m_maxComponentTimestamp;
@@ -117,9 +146,7 @@ public:
 	}
 
 	// This is called by the scenegraph every frame after all component updates. By default it does nothing.
-	// prevUpdateTime: Timestamp of the previous update
-	// crntTime: Timestamp of this update
-	virtual void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
+	virtual void update([[maybe_unused]] SceneNodeUpdateInfo& info)
 	{
 	}
 
@@ -504,6 +531,7 @@ private:
 	Bool m_ignoreParentNodeTransform : 1 = false;
 	Bool m_transformUpdatedThisFrame : 1 = true;
 	Bool m_serialize : 1 = true;
+	Bool m_updateOnPause : 1 = false;
 
 	void addComponent(SceneComponent* newc);
 

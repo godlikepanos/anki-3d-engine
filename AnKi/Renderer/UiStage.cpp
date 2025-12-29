@@ -29,7 +29,10 @@ void UiStage::buildUi()
 
 	ANKI_TRACE_SCOPED_EVENT(UiBuild);
 
-	m_canvas->handleInput();
+	if(SceneGraph::getSingleton().isPaused())
+	{
+		m_canvas->handleInput();
+	}
 	m_canvas->beginBuilding();
 	m_canvas->resize(getRenderer().getSwapchainResolution());
 

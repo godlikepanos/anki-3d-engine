@@ -170,6 +170,17 @@ public:
 		return {m_sceneMin, m_sceneMax};
 	}
 
+	// Pause the game loop
+	void pause(Bool pause_)
+	{
+		m_paused = pause_;
+	}
+
+	Bool isPaused() const
+	{
+		return m_paused;
+	}
+
 	// If enable is true the components will be checking for updates of resources. Useful for the editor resource updates. It has a perf hit so it
 	// should be enabled only by the editor
 	void setCheckForResourceUpdates(Bool enable)
@@ -216,7 +227,9 @@ private:
 	SceneDynamicArray<std::pair<SceneNode*, SceneString>> m_nodesRenamed;
 	SpinLock m_nodesForRegistrationMtx;
 
-	Bool m_checkForResourceUpdates = false;
+	Bool m_checkForResourceUpdates = false; // If true the components will have to re-check their resources for updates
+
+	Bool m_paused = true; // If true the game-loop is paused
 
 	Atomic<U32> m_nodesUuid = {1};
 

@@ -38,7 +38,7 @@ private:
 	void fireShotgun();
 	void fireGrenade();
 
-	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override;
+	void update(SceneNodeUpdateInfo& info) override;
 
 	Error serialize(SceneSerializer& serializer) override;
 };

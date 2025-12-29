@@ -61,8 +61,8 @@ public:
 		Vec3 m_sceneMin = Vec3(kMaxF32);
 		Vec3 m_sceneMax = Vec3(kMinF32);
 
-		Bool m_multipleDirLights = false;
-		Bool m_multipleSkyboxes = false;
+		Bool m_multipleDirLights : 1 = false;
+		Bool m_multipleSkyboxes : 1 = false;
 
 		PerThread()
 			: m_nodesForDeletion(&SceneGraph::getSingleton().m_framePool)
@@ -236,7 +236,10 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	m_nodesRenamed.destroy();
 
 	// Update physics
-	PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
+	if(!m_paused) [[likely]]
+	{
+		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
+	}
 
 	// Before the update wake some threads with dummy work
 	for(U i = 0; i < 2; i++)
@@ -398,7 +401,8 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 	UpdateSceneNodesCtx::PerThread& thread = ctx.m_perThread[tid];
 
 	// Components update
-	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds, m_checkForResourceUpdates);
+	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds, m_checkForResourceUpdates,
+												 m_paused);
 	componentUpdateInfo.m_framePool = &m_framePool;
 	U32 sceneComponentUpdatedCount = 0;
 	node.iterateComponents([&](SceneComponent& comp) {
@@ -454,7 +458,7 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 		return FunctorContinue::kContinue;
 	});
 
-	// Frame update
+	// Node update
 	{
 		if(sceneComponentUpdatedCount)
 		{
@@ -467,7 +471,11 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 			// No components or nothing updated, don't change the timestamp
 		}
 
-		node.frameUpdate(ctx.m_prevUpdateTime, ctx.m_crntTime);
+		if(!m_paused || node.getUpdateOnPause()) [[likely]]
+		{
+			SceneNodeUpdateInfo info(ctx.m_prevUpdateTime, ctx.m_crntTime, m_paused);
+			node.update(info);
+		}
 	}
 
 	// Update children
@@ -539,7 +547,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 const SceneNode& SceneGraph::getActiveCameraNode() const
 {
 	ANKI_ASSERT(m_mainCam);
-	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()) && !g_cvarCoreShowEditor)
+	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()) && !m_paused)
 	{
 		return *m_mainCam;
 	}

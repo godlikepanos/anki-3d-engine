@@ -24,7 +24,6 @@ ANKI_CVAR(NumericCVar<U32>, Core, BenchmarkModeFrameCount, 60 * 60 * 2, 1, kMaxU
 ANKI_CVAR(BoolCVar, Core, MeshletRendering, false, "Do meshlet culling and rendering")
 ANKI_CVAR(StringCVar, Core, StartupScene, "", "Load this scene at startup")
 ANKI_CVAR(BoolCVar, Core, ShowEditor, false, "Show the editor")
-ANKI_CVAR(BoolCVar, Core, Playing, true, "If true the game logic is running")
 
 #if ANKI_PLATFORM_MOBILE
 ANKI_CVAR(BoolCVar, Core, MaliHwCounters, false, "Enable Mali counters")

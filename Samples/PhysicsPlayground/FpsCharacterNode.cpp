@@ -65,13 +65,8 @@ FpsCharacter::FpsCharacter(CString name)
 	m_shotgunNode = shotgun;
 }
 
-void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
+void FpsCharacter::update([[maybe_unused]] SceneNodeUpdateInfo& info)
 {
-	if(!g_cvarCorePlaying)
-	{
-		return;
-	}
-
 	// Change FOV
 	CameraComponent& camc = m_cameraNode->getFirstComponentOfType<CameraComponent>();
 	if(toRad<F32>(g_cvarGameFov) != camc.getFovY())
@@ -81,8 +76,8 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 	}
 
 	// Mouselook
-	const Input& inp = Input::getSingleton();
-	const Vec2 mousePos = inp.getMousePositionNdc();
+	Input& input = Input::getSingleton();
+	const Vec2 mousePos = input.getMousePositionNdc();
 	if(mousePos != 0.0f)
 	{
 		Mat3 camRot = m_cameraNode->getLocalRotation();
@@ -102,34 +97,34 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 	// Movement
 	{
 		Vec3 moveVec(0.0);
-		if(inp.getKey(KeyCode::kW) > 0)
+		if(input.getKey(KeyCode::kW) > 0)
 		{
 			moveVec.z += 1.0f;
 		}
 
-		if(inp.getKey(KeyCode::kA) > 0)
+		if(input.getKey(KeyCode::kA) > 0)
 		{
 			moveVec.x += 1.0f;
 		}
 
-		if(inp.getKey(KeyCode::kS) > 0)
+		if(input.getKey(KeyCode::kS) > 0)
 		{
 			moveVec.z -= 1.0f;
 		}
 
-		if(inp.getKey(KeyCode::kD) > 0)
+		if(input.getKey(KeyCode::kD) > 0)
 		{
 			moveVec.x -= 1.0f;
 		}
 
 		F32 jumpSpeed = 0.0f;
-		if(inp.getKey(KeyCode::kSpace) > 0)
+		if(input.getKey(KeyCode::kSpace) > 0)
 		{
 			jumpSpeed += m_jumpSpeed;
 		}
 
 		Bool crouchChanged = false;
-		if(inp.getKey(KeyCode::kC) > 0)
+		if(input.getKey(KeyCode::kC) > 0)
 		{
 			m_crouching = !m_crouching;
 			crouchChanged = true;
@@ -146,7 +141,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 			}
 
 			F32 speed = m_walkingSpeed;
-			if(inp.getKey(KeyCode::kLeftShift) > 0)
+			if(input.getKey(KeyCode::kLeftShift) > 0)
 			{
 				speed *= 2.0f;
 			}
@@ -166,7 +161,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 		travelDir = travelDir.normalize();
 
 		const F32 speed = getRandomRange(0.2f, 0.4f);
-		const F32 dist = speed * F32(crntTime - prevUpdateTime);
+		const F32 dist = speed * F32(info.m_dt);
 
 		if(dist >= remainlingDist)
 		{
@@ -186,7 +181,7 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 	}
 
 	// Shooting
-	if(inp.getMouseButton(MouseButton::kLeft) == 1)
+	if(input.getMouseButton(MouseButton::kLeft) == 1)
 	{
 		fireShotgun();
 
@@ -196,10 +191,13 @@ void FpsCharacter::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_u
 		m_shotgunNode->setLocalRotation(Mat3(newRotation) * Mat3(m_shotgunRestingRotation));
 	}
 
-	if(inp.getMouseButton(MouseButton::kRight) == 1)
+	if(input.getMouseButton(MouseButton::kRight) == 1)
 	{
 		fireGrenade();
 	}
+
+	input.hideMouseCursor(true);
+	input.lockMouseWindowCenter(true);
 }
 
 void FpsCharacter::fireShotgun()

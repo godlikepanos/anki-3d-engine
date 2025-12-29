@@ -117,7 +117,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getMouseButton(MouseButton::kRight) > 0 || in.hasTouchDevice())
 	{
-		in.hideCursor(true);
+		in.hideMouseCursor(true);
 
 		// move the camera
 		static SceneNode* mover = &scene.getActiveCameraNode();
@@ -265,7 +265,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 	else
 	{
-		in.hideCursor(false);
+		in.hideMouseCursor(false);
 	}
 
 	return Error::kNone;

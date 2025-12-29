@@ -19,7 +19,7 @@ public:
 	EditorUiNode(CString name);
 
 private:
-	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override;
+	void update(SceneNodeUpdateInfo& info) override;
 };
 
 } // end namespace anki

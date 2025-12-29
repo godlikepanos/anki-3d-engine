@@ -11,13 +11,12 @@
 
 namespace anki {
 
-/// Android input implementation
+// Android input implementation
 class InputAndroid : public Input
 {
 public:
 	Error initInternal();
 
-	void handleAndroidEvents(android_app* app, int32_t cmd);
 	int handleAndroidInput(android_app* app, AInputEvent* event);
 };
 

@@ -70,24 +70,9 @@ Error Input::handleEvents()
 	return Error::kNone;
 }
 
-void Input::moveMouseNdc(const Vec2& posNdc)
-{
-	m_mousePosNdc = posNdc;
-}
-
-void Input::hideCursor([[maybe_unused]] Bool hide)
-{
-	// do nothing
-}
-
 Bool Input::hasTouchDevice() const
 {
 	return true;
-}
-
-void Input::setMouseCursor([[maybe_unused]] MouseCursor cursor)
-{
-	// nothing
 }
 
 Error InputAndroid::initInternal()
@@ -96,7 +81,13 @@ Error InputAndroid::initInternal()
 
 	g_androidApp->onAppCmd = [](android_app* app, int32_t cmd) {
 		InputAndroid* self = static_cast<InputAndroid*>(app->userData);
-		self->handleAndroidEvents(app, cmd);
+		switch(cmd)
+		{
+		case APP_CMD_TERM_WINDOW:
+		case APP_CMD_LOST_FOCUS:
+			self->addEvent(InputEvent::kWindowClosed);
+			break;
+		}
 	};
 
 	g_androidApp->onInputEvent = [](android_app* app, AInputEvent* event) -> int {
@@ -105,17 +96,6 @@ Error InputAndroid::initInternal()
 	};
 
 	return Error::kNone;
-}
-
-void InputAndroid::handleAndroidEvents([[maybe_unused]] android_app* app, int32_t cmd)
-{
-	switch(cmd)
-	{
-	case APP_CMD_TERM_WINDOW:
-	case APP_CMD_LOST_FOCUS:
-		addEvent(InputEvent::kWindowClosed);
-		break;
-	}
 }
 
 int InputAndroid::handleAndroidInput([[maybe_unused]] android_app* app, AInputEvent* event)
@@ -185,6 +165,27 @@ int InputAndroid::handleAndroidInput([[maybe_unused]] android_app* app, AInputEv
 
 	default:
 		break;
+	}
+
+	// Do that at the end to be processed at the next frame so that will give some time for the mouse to move
+	if(m_lockMouse.getNonAtomically() || m_requests.m_mousePosNdc != Vec2(kMaxF32))
+	{
+		// TODO: Implement mouse
+		m_requests.m_mousePosNdc = Vec2(kMaxF32);
+	}
+
+	// Cursor change request
+	if(m_requests.m_mouseCursor != MouseCursor::kCount)
+	{
+		// TODO: Implement mouse
+		m_requests.m_mouseCursor = MouseCursor::kCount;
+	}
+
+	// Hide cursor request
+	if(m_requests.m_hideCursor.getNonAtomically() >= 0)
+	{
+		// TODO: Implement mouse
+		m_requests.m_hideCursor.setNonAtomically(-1);
 	}
 
 	return handled;

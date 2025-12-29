@@ -144,7 +144,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		constexpr F32 ROTATE_ANGLE = toRad(2.5f);
 		constexpr F32 MOUSE_SENSITIVITY = 5.0f;
 
-		in.hideCursor(true);
+		in.hideMouseCursor(true);
 
 		if(in.getKey(KeyCode::k1) == 1)
 		{
@@ -284,7 +284,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 	else
 	{
-		in.hideCursor(false);
+		in.hideMouseCursor(false);
 	}
 #endif
 
