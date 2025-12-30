@@ -11,13 +11,9 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
 inline constexpr const Char* kImageMagic = "ANKITEX1";
 
-/// Image type.
-/// @memberof ImageBinaryHeader
+// Image type.
 enum class ImageBinaryType : U32
 {
 	kNone,
@@ -27,8 +23,7 @@ enum class ImageBinaryType : U32
 	k2DArray
 };
 
-/// The acceptable color types.
-/// @memberof ImageBinaryHeader
+// The acceptable color types.
 enum class ImageBinaryColorFormat : U32
 {
 	kNone,
@@ -36,11 +31,14 @@ enum class ImageBinaryColorFormat : U32
 	kRgba8,
 	kSrgb8,
 	kRgbFloat,
-	kRgbaFloat
+	kRgbaFloat,
+	kSrgba8,
+
+	kLast = kSrgba8,
+	kFirst = kRgb8
 };
 
-/// The available data compressions.
-/// @memberof ImageBinaryHeader
+// The available data compressions.
 enum class ImageBinaryDataCompression : U32
 {
 	kNone,
@@ -51,7 +49,7 @@ enum class ImageBinaryDataCompression : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 
-/// The 1st things that appears in a image binary.
+// The 1st things that appears in a image binary.
 class ImageBinaryHeader
 {
 public:
@@ -67,7 +65,7 @@ public:
 	U32 m_astcBlockSizeX;
 	U32 m_astcBlockSizeY;
 
-	/// For U8 formats from 0.0 to 1.0.
+	// For U8 formats from 0.0 to 1.0.
 	Array<F32, 4> m_averageColor;
 
 	Array<U8, 64> m_padding;
@@ -102,7 +100,5 @@ public:
 		serializeCommon<TSerializer, const ImageBinaryHeader&>(serializer, *this);
 	}
 };
-
-/// @}
 
 } // end namespace anki

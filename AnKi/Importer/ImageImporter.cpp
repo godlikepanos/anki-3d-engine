@@ -835,6 +835,10 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	{
 		header.m_colorFormat = (ctx.m_channelCount == 3) ? ImageBinaryColorFormat::kRgbFloat : ImageBinaryColorFormat::kRgbaFloat;
 	}
+	else if(config.m_asSRgb)
+	{
+		header.m_colorFormat = (ctx.m_channelCount == 3) ? ImageBinaryColorFormat::kSrgb8 : ImageBinaryColorFormat::kSrgba8;
+	}
 	else
 	{
 		header.m_colorFormat = (ctx.m_channelCount == 3) ? ImageBinaryColorFormat::kRgb8 : ImageBinaryColorFormat::kRgba8;

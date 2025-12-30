@@ -127,6 +127,31 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 			ANKI_ASSERT(0);
 		}
 	}
+	else if(loader.getColorFormat() == ImageBinaryColorFormat::kSrgb8)
+	{
+		switch(loader.getCompression())
+		{
+		case ImageBinaryDataCompression::kRaw:
+			init.m_format = Format::kR8G8B8_Srgb;
+			break;
+		case ImageBinaryDataCompression::kS3tc:
+			init.m_format = Format::kBC1_Rgba_Srgb_Block;
+			break;
+		case ImageBinaryDataCompression::kAstc:
+			if(loader.getAstcBlockSize() == UVec2(4u))
+			{
+				init.m_format = Format::kASTC_4x4_Srgb_Block;
+			}
+			else
+			{
+				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+				init.m_format = Format::kASTC_8x8_Srgb_Block;
+			}
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
 	else if(loader.getColorFormat() == ImageBinaryColorFormat::kRgba8)
 	{
 		switch(loader.getCompression())
@@ -146,6 +171,31 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 			{
 				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
 				init.m_format = Format::kASTC_8x8_Unorm_Block;
+			}
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
+	else if(loader.getColorFormat() == ImageBinaryColorFormat::kSrgba8)
+	{
+		switch(loader.getCompression())
+		{
+		case ImageBinaryDataCompression::kRaw:
+			init.m_format = Format::kR8G8B8A8_Srgb;
+			break;
+		case ImageBinaryDataCompression::kS3tc:
+			init.m_format = Format::kBC3_Srgb_Block;
+			break;
+		case ImageBinaryDataCompression::kAstc:
+			if(loader.getAstcBlockSize() == UVec2(4u))
+			{
+				init.m_format = Format::kASTC_4x4_Srgb_Block;
+			}
+			else
+			{
+				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+				init.m_format = Format::kASTC_8x8_Srgb_Block;
 			}
 			break;
 		default:

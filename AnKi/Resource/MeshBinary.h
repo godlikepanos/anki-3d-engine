@@ -13,9 +13,6 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
 inline constexpr const char* kMeshMagic = "ANKIMES8";
 
 enum class MeshBinaryFlag : U32
@@ -27,11 +24,11 @@ enum class MeshBinaryFlag : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 
-/// Vertex buffer info.
+// Vertex buffer info.
 class MeshBinaryVertexBuffer
 {
 public:
-	/// The size of the vertex. It's zero if the buffer is not present.
+	// The size of the vertex. It's zero if the buffer is not present.
 	U32 m_vertexStride;
 
 	template<typename TSerializer, typename TClass>
@@ -53,21 +50,21 @@ public:
 	}
 };
 
-/// Vertex attribute.
+// Vertex attribute.
 class MeshBinaryVertexAttribute
 {
 public:
 	U32 m_bufferIndex;
 
-	/// If the format is kNone then the attribute is not present.
+	// If the format is kNone then the attribute is not present.
 	Format m_format;
 
 	U32 m_relativeOffset;
 
-	/// Attribute is compressed and needs to be scaled.
+	// Attribute is compressed and needs to be scaled.
 	Array<F32, 4> m_scale;
 
-	/// Attribute is compressed and needs to be translated.
+	// Attribute is compressed and needs to be translated.
 	Array<F32, 4> m_translation;
 
 	template<typename TSerializer, typename TClass>
@@ -93,20 +90,20 @@ public:
 	}
 };
 
-/// Bounding volume info.
+// Bounding volume info.
 class MeshBinaryBoundingVolume
 {
 public:
-	/// Bounding box min.
+	// Bounding box min.
 	Vec3 m_aabbMin;
 
-	/// Bounding box max.
+	// Bounding box max.
 	Vec3 m_aabbMax;
 
-	/// Bounding sphere center.
+	// Bounding sphere center.
 	Vec3 m_sphereCenter;
 
-	/// Bounding sphere radius.
+	// Bounding sphere radius.
 	F32 m_sphereRadius;
 
 	template<typename TSerializer, typename TClass>
@@ -131,11 +128,11 @@ public:
 	}
 };
 
-/// MeshBinarySubMeshLod class.
+// MeshBinarySubMeshLod class.
 class MeshBinarySubMeshLod
 {
 public:
-	/// Offset in sizeof(indexType) to the global indices buffer of the LOD this belongs to.
+	// Offset in sizeof(indexType) to the global indices buffer of the LOD this belongs to.
 	U32 m_firstIndex;
 
 	U32 m_indexCount;
@@ -164,7 +161,7 @@ public:
 	}
 };
 
-/// The 1st thing that appears in a mesh binary.
+// The 1st thing that appears in a mesh binary.
 class MeshBinaryHeader
 {
 public:
@@ -175,7 +172,7 @@ public:
 	IndexType m_indexType;
 	Array<U8, 3> m_padding;
 
-	/// The format of the 3 indices that make a primitive.
+	// The format of the 3 indices that make a primitive.
 	Format m_meshletPrimitiveFormat;
 
 	Array<U32, kMaxLodCount> m_indexCounts;
@@ -224,7 +221,7 @@ public:
 	}
 };
 
-/// The 2nd thing that appears in a mesh binary.
+// The 2nd thing that appears in a mesh binary.
 class MeshBinarySubMesh
 {
 public:
@@ -251,16 +248,16 @@ public:
 	}
 };
 
-/// The 3rd thing that appears in a mesh binary.
+// The 3rd thing that appears in a mesh binary.
 class MeshBinaryMeshlet
 {
 public:
-	/// Index of the 1st primitive.
+	// Index of the 1st primitive.
 	U32 m_firstPrimitive;
 
 	U32 m_primitiveCount;
 
-	/// Index of the first vertex.
+	// Index of the first vertex.
 	U32 m_firstVertex;
 
 	U32 m_vertexCount;
@@ -294,7 +291,5 @@ public:
 		serializeCommon<TSerializer, const MeshBinaryMeshlet&>(serializer, *this);
 	}
 };
-
-/// @}
 
 } // end namespace anki

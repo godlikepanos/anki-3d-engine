@@ -10,11 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup importer
-/// @{
-
-/// Config for importImage().
-/// @relates importImage.
+// Config for importImage().
 class ImageImporterConfig
 {
 public:
@@ -26,18 +22,18 @@ public:
 	U8 m_mipmapCount = kMaxU8;
 	Bool m_noAlpha = true;
 	CString m_tempDirectory;
-	CString m_compressonatorFilename; ///< Optional.
-	CString m_astcencFilename; ///< Optional.
-	Vec3 m_hdrScale = Vec3(1.0f); ///< Scale the values of HDR textures.
-	Vec3 m_hdrBias = Vec3(0.0f); ///< Add that value to the HDR textures.
+	CString m_compressonatorFilename; // Optional.
+	CString m_astcencFilename; // Optional.
+	Vec3 m_hdrScale = Vec3(1.0f); // Scale the values of HDR textures.
+	Vec3 m_hdrBias = Vec3(0.0f); // Add that value to the HDR textures.
 	UVec2 m_astcBlockSize = UVec2(8u);
 	Bool m_sRgbToLinear = false;
 	Bool m_linearToSRgb = false;
+	Bool m_asSRgb = false; // Interpret the format as sRGB
 	Bool m_flipImage = false;
 };
 
-/// Converts images to AnKi's specific format.
+// Converts images to AnKi's specific format.
 Error importImage(const ImageImporterConfig& config);
-/// @}
 
 } // end namespace anki

@@ -16,10 +16,6 @@
 
 namespace anki {
 
-/// @addtogroup importer
-/// @{
-
-/// @memberof GltfImporter
 class GltfImporterInitInfo
 {
 public:
@@ -37,7 +33,7 @@ public:
 	Bool m_importTextures = false;
 };
 
-/// Import GLTF and spit AnKi scenes.
+// Import GLTF and spit AnKi scenes.
 class GltfImporter
 {
 public:
@@ -75,7 +71,7 @@ private:
 	Bool m_optimizeAnimations = false;
 	ImporterString m_comment;
 
-	/// Don't generate LODs for meshes with less vertices than this number.
+	// Don't generate LODs for meshes with less vertices than this number.
 	U32 m_skipLodVertexCountThreshold = 256;
 
 	Bool m_importTextures = false;
@@ -185,7 +181,6 @@ private:
 	Error writeCamera(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
 	Error writeMeshMaterialNode(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
 };
-/// @}
 
 template<typename T, typename TFunc>
 void GltfImporter::visitAccessor(const cgltf_accessor& accessor, TFunc func)

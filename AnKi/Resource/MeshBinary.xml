@@ -5,8 +5,6 @@
 		<include file="&lt;AnKi/Gr/Common.h&gt;"/>
 	</includes>
 
-	<doxygen_group name="resource"/>
-
 	<prefix_code><![CDATA[
 inline constexpr const char* kMeshMagic = "ANKIMES8";
 

@@ -19,13 +19,12 @@ static PtrSize calcRawTexelSize(const ImageBinaryColorFormat cf)
 	switch(cf)
 	{
 	case ImageBinaryColorFormat::kRgb8:
+	case ImageBinaryColorFormat::kSrgb8:
 		out = 3;
 		break;
 	case ImageBinaryColorFormat::kRgba8:
+	case ImageBinaryColorFormat::kSrgba8:
 		out = 4;
-		break;
-	case ImageBinaryColorFormat::kSrgb8:
-		out = 3;
 		break;
 	case ImageBinaryColorFormat::kRgbFloat:
 		out = 3 * sizeof(F32);
@@ -47,13 +46,12 @@ static PtrSize calcS3tcBlockSize(const ImageBinaryColorFormat cf)
 	switch(cf)
 	{
 	case ImageBinaryColorFormat::kRgb8:
+	case ImageBinaryColorFormat::kSrgb8:
 		out = 8;
 		break;
 	case ImageBinaryColorFormat::kRgba8:
+	case ImageBinaryColorFormat::kSrgba8:
 		out = 16;
-		break;
-	case ImageBinaryColorFormat::kSrgb8:
-		out = 8;
 		break;
 	case ImageBinaryColorFormat::kRgbFloat:
 		out = 16;
@@ -66,7 +64,7 @@ static PtrSize calcS3tcBlockSize(const ImageBinaryColorFormat cf)
 	return out;
 }
 
-/// Get the size in bytes of a single surface
+// Get the size in bytes of a single surface
 static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageBinaryDataCompression comp, const ImageBinaryColorFormat cf,
 							   UVec2 astcBlockSize)
 {
@@ -99,7 +97,7 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 	return out;
 }
 
-/// Get the size in bytes of a single volume
+// Get the size in bytes of a single volume
 static PtrSize calcVolumeSize(const U width, const U height, const U depth, const ImageBinaryDataCompression comp, const ImageBinaryColorFormat cf)
 {
 	PtrSize out = 0;
@@ -120,7 +118,7 @@ static PtrSize calcVolumeSize(const U width, const U height, const U depth, cons
 	return out;
 }
 
-/// Calculate the size of a compressed or uncomressed color data
+// Calculate the size of a compressed or uncomressed color data
 static PtrSize calcSizeOfSegment(const ImageBinaryHeader& header, ImageBinaryDataCompression comp)
 {
 	PtrSize out = 0;
@@ -267,7 +265,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBin
 		return Error::kUserData;
 	}
 
-	if(header.m_colorFormat < ImageBinaryColorFormat::kRgb8 || header.m_colorFormat > ImageBinaryColorFormat::kRgbaFloat)
+	if(header.m_colorFormat < ImageBinaryColorFormat::kFirst || header.m_colorFormat > ImageBinaryColorFormat::kLast)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: color format");
 		return Error::kUserData;

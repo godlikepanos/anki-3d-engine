@@ -91,9 +91,9 @@ def gen_class(root_el):
 
     # Write doxygen
     if not root_el.get("comment"):
-        writeln("/// %s class." % name)
+        writeln("// %s class." % name)
     else:
-        writeln("/// %s." % root_el.get("comment"))
+        writeln("// %s." % root_el.get("comment"))
 
     # Body start
     writeln("class %s" % name)
@@ -131,7 +131,7 @@ def gen_class(root_el):
     for member in member_arr:
         if member.comment:
             writeln("")
-            writeln("/// %s." % member.comment)
+            writeln("// %s." % member.comment)
 
         if member.constructor:
             constructor = " %s" % member.constructor
@@ -218,13 +218,6 @@ def gen_file(filename):
     writeln("{")
     writeln("")
 
-    doxygen_group_el = root.find("doxygen_group")
-    if doxygen_group_el is not None:
-        doxygen_group = doxygen_group_el.get("name")
-        writeln("/// @addtogroup %s" % doxygen_group)
-        writeln("/// @{")
-        writeln("")
-
     prefix_code = root.find("prefix_code")
     if prefix_code is not None:
         writeln("%s" % prefix_code.text)
@@ -232,10 +225,6 @@ def gen_file(filename):
     for cls in root.iter("classes"):
         for cl in cls.iter("class"):
             gen_class(cl)
-
-    if doxygen_group_el is not None:
-        writeln("/// @}")
-        writeln("")
 
     writeln("} // end namespace anki")
 

@@ -143,11 +143,11 @@ Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool 
 			else
 			{
 				entry->m_resources.emplaceBack(rsrc);
-			}
 
-			if(m_trackFileUpdateTimes)
-			{
-				entry->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
+				if(m_trackFileUpdateTimes)
+				{
+					entry->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
+				}
 			}
 		}
 		else
