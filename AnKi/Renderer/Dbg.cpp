@@ -436,6 +436,8 @@ Error Dbg::init()
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Decal.png", m_decalImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/ReflectionProbe.png", m_reflectionImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Particles.png", m_particlesImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Clouds.png", m_cloudImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Sun.png", m_sunImage));
 
 	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/Dbg.ankiprogbin", m_dbgProg));
 
@@ -631,6 +633,82 @@ void Dbg::drawParticleEmitters(const InternalCtx& ictx, Bool objectPicking, Rend
 	cmdb.bindSampler(1, 1, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
 
 	cmdb.drawIndirect(PrimitiveTopology::kTriangles, ictx.m_particleEmitter.m_drawIndirectArgs);
+}
+
+void Dbg::drawNonGpuSceneObjects(Bool objectPicking, RenderPassWorkContext& rgraphCtx)
+{
+	auto drawNode = [&](const SceneNode& node, const ImageResource& iconImage) {
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
+		variantInitInfo.addMutation("OBJECT_TYPE", 0);
+		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
+												 (objectPicking) ? "IconRenderPicking" : "IconRenderMain");
+		const ShaderProgramResourceVariant* variant;
+		m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
+		cmdb.bindShaderProgram(&variant->getProgram());
+
+		struct Constants
+		{
+			Mat4 m_viewProjMat;
+			Mat3x4 m_camTrf;
+
+			U32 m_depthFailureVisualization;
+			U32 m_sceneNodeUuid;
+			U32 m_padding1;
+			U32 m_padding2;
+
+			Vec3 m_objectPosition;
+			U32 m_padding3;
+		} consts;
+		consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
+		consts.m_camTrf = getRenderingContext().m_matrices.m_cameraTransform;
+		consts.m_depthFailureVisualization = !m_options.m_depthTest;
+		consts.m_sceneNodeUuid = node.getUuid();
+		consts.m_objectPosition = node.getWorldTransform().getOrigin().xyz;
+
+		cmdb.setFastConstants(&consts, sizeof(consts));
+
+		if(!objectPicking)
+		{
+			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+		}
+		cmdb.bindSrv(1, 0, TextureView(&iconImage.getTexture(), TextureSubresourceDesc::all()));
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+
+		cmdb.draw(PrimitiveTopology::kTriangles, 6);
+	};
+
+	SceneGraph::getSingleton().visitNodes([&](const SceneNode& node) {
+		if(node.hasComponent<SkyboxComponent>())
+		{
+			drawNode(node, *m_cloudImage);
+		}
+
+		if(node.hasComponent<LightComponent>()
+		   && node.getFirstComponentOfType<LightComponent>().getLightComponentType() == LightComponentType::kDirectional)
+		{
+			drawNode(node, *m_sunImage);
+		}
+
+		return FunctorContinue::kContinue;
+	});
+}
+
+void Dbg::drawIcons(const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx)
+{
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), *m_pointLightImage,
+					  objectPicking, rgraphCtx);
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), *m_decalImage, objectPicking,
+					  rgraphCtx);
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
+					  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), *m_giProbeImage, objectPicking, rgraphCtx);
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe, GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(),
+					  *m_reflectionImage, objectPicking, rgraphCtx);
+
+	drawParticleEmitters(ictx, objectPicking, rgraphCtx);
+
+	drawNonGpuSceneObjects(objectPicking, rgraphCtx);
 }
 
 void Dbg::populateRenderGraph()
@@ -848,23 +926,10 @@ void Dbg::populateRenderGraphMain(InternalCtx& ictx)
 			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, forwardAllAabbCount);
 		}
 
-		// Draw non-renderables
+		// Icons
 		if(m_options.m_sceneGraphIcons)
 		{
-			drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), *m_pointLightImage,
-							  false, rgraphCtx);
-			drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), *m_decalImage, false,
-							  rgraphCtx);
-			drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
-							  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), *m_giProbeImage, false, rgraphCtx);
-			drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe, GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(),
-							  *m_reflectionImage, false, rgraphCtx);
-		}
-
-		// Particle emitter icons
-		if(m_options.m_sceneGraphIcons)
-		{
-			drawParticleEmitters(ictx, false, rgraphCtx);
+			drawIcons(ictx, false, rgraphCtx);
 		}
 
 		// Physics
@@ -1092,20 +1157,7 @@ void Dbg::populateRenderGraphObjectPicking(InternalCtx& ictx)
 				cmdb.drawIndexedIndirectCount(PrimitiveTopology::kTriangles, drawIndirectArgsBuff, sizeof(DrawIndexedIndirectArgs), drawCountBuff,
 											  maxVisibleCount);
 
-				// Draw icons
-				{
-					drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(),
-									  *m_pointLightImage, true, rgraphCtx);
-					drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), *m_decalImage,
-									  true, rgraphCtx);
-					drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
-									  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), *m_giProbeImage, true, rgraphCtx);
-					drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe,
-									  GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(), *m_reflectionImage, true, rgraphCtx);
-				}
-
-				// Draw particle emitters
-				drawParticleEmitters(ictx, true, rgraphCtx);
+				drawIcons(ictx, true, rgraphCtx);
 
 				// Draw gizmos
 				if(m_gizmos.m_enabled)

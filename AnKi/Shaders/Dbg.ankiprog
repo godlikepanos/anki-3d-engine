@@ -23,6 +23,9 @@
 #pragma anki technique ParticleEmittersRenderMain vert pixel mutators
 #pragma anki technique ParticleEmittersRenderPicking vert pixel mutators
 
+#pragma anki technique IconRenderMain vert pixel mutators
+#pragma anki technique IconRenderPicking vert pixel mutators
+
 // Pick one UUID at mouse position
 #pragma anki technique ReadPickingBuffer comp mutators
 
@@ -656,4 +659,99 @@ ANKI_FAST_CONSTANTS(Consts, g_consts);
 	const U32 uuid = g_uuidsTex[g_consts.m_mousePos].x;
 	g_outUuid[0] = uuid;
 }
+#endif
+
+// ===========================================================================
+// IconRenderMain & IconRenderPicking                                        =
+// ===========================================================================
+#if ANKI_TECHNIQUE_IconRenderMain || ANKI_TECHNIQUE_IconRenderPicking
+struct Constants
+{
+	Mat4 m_viewProjMat;
+	Mat3x4 m_camTrf;
+
+	U32 m_depthFailureVisualization;
+	U32 m_sceneNodeUuid;
+	U32 m_padding1;
+	U32 m_padding2;
+
+	Vec3 m_objectPosition;
+	U32 m_padding3;
+};
+
+ANKI_FAST_CONSTANTS(Constants, g_consts)
+
+#	if ANKI_TECHNIQUE_IconRenderMain
+Texture2D g_depthRt : register(t0);
+#	endif
+Texture2D<Vec4> g_tex : register(t1);
+
+SamplerState g_trilinearRepeatSampler : register(s1);
+
+struct VertIn
+{
+	U32 m_svInstanceId : SV_INSTANCEID;
+	U32 m_svVertexId : SV_VERTEXID;
+};
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+	Vec2 m_uv : TEXCOORD;
+};
+
+#	if ANKI_VERTEX_SHADER
+VertOut main(VertIn input)
+{
+	VertOut output;
+
+	output.m_uv = Vec2(input.m_svVertexId & 1u, ((input.m_svVertexId + 1u) / 3u) & 1u);
+
+	// Rotate towards the camera and apply translation
+	const Vec3 worldPos = mul(g_consts.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + g_consts.m_objectPosition;
+
+	output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(worldPos, 1.0));
+
+	return output;
+}
+#	endif // ANKI_VERTEX_SHADER
+
+#	if ANKI_PIXEL_SHADER
+#		if ANKI_TECHNIQUE_IconRenderMain
+Vec4
+#		else
+U32
+#		endif
+main(VertOut input) : SV_TARGET0
+{
+	ANKI_MAYBE_UNUSED(input);
+
+	// Write the color
+	Vec4 color = g_tex.Sample(g_trilinearRepeatSampler, input.m_uv);
+
+#		if ANKI_TECHNIQUE_IconRenderMain
+	if(g_consts.m_depthFailureVisualization)
+	{
+		Vec2 texSize;
+		g_depthRt.GetDimensions(texSize.x, texSize.y);
+
+		const F32 depthRef = g_depthRt[clamp(input.m_svPosition.xy, 0.0, texSize - 1.0)].r;
+		const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+		if(depthTestFailed)
+		{
+			color.xyz *= 0.5;
+		}
+	}
+
+	return color;
+#		else
+	if(color.a <= 0.1)
+	{
+		discard;
+	}
+
+	return g_consts.m_sceneNodeUuid;
+#		endif
+}
+#	endif // ANKI_PIXEL_SHADER
 #endif

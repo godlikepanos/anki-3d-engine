@@ -129,6 +129,8 @@ private:
 	ImageResourcePtr m_decalImage;
 	ImageResourcePtr m_reflectionImage;
 	ImageResourcePtr m_particlesImage;
+	ImageResourcePtr m_cloudImage;
+	ImageResourcePtr m_sunImage;
 
 	ShaderProgramResourcePtr m_dbgProg;
 
@@ -188,6 +190,10 @@ private:
 						   RenderPassWorkContext& rgraphCtx);
 
 	void drawParticleEmitters(const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx);
+
+	void drawNonGpuSceneObjects(Bool objectPicking, RenderPassWorkContext& rgraphCtx);
+
+	void drawIcons(const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx);
 
 	void drawGizmos(const Mat3x4& worldTransform, Bool objectPicking, CommandBuffer& cmdb) const;
 
