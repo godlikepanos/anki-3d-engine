@@ -70,16 +70,22 @@ Vec3 worldPosInsideCluster(Vec3 relativePos, Vec3 clusterIdf)
 }
 
 // https://developer.nvidia.com/gpugems/GPUGems2/gpugems2_chapter16.html
-F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
+F32 phaseFunction2(Vec3 pont2CameraDir, Vec3 point2LightDir, F32 g)
 {
 	const F32 g2 = g * g;
-	const F32 cosTheta = max(0.0, dot(viewDir, lightDir));
+	const F32 cosTheta = max(0.0, dot(pont2CameraDir, point2LightDir));
 	const F32 cosTheta2 = cosTheta * cosTheta;
 
 	const F32 a = (3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2));
 	const F32 b = (1.0 + cosTheta2) / pow(1.0 + g2 - 2.0 * g * cosTheta, 3.0 / 2.0);
 
 	return saturate(a * b);
+}
+
+// Found in https://www.shadertoy.com/view/XlBSRz
+float phaseFunction(Vec3 pont2CameraDir, Vec3 point2LightDir, F32 g)
+{
+	return 1.0 / (4.0 * kPi);
 }
 
 Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpace, F32 noise)
@@ -93,7 +99,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
 	if(dirLight.m_active)
 	{
-		F32 factor = phaseFunction(viewDir, dirLight.m_direction, kPhaseFunctionAnisotropy);
+		F32 factor = phaseFunction(viewDir, -dirLight.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
@@ -118,7 +124,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 
-		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_position), kPhaseFunctionAnisotropy);
+		factor *= phaseFunction(viewDir, normalize(frag2Light), kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		if(light.m_shadow)
@@ -142,7 +148,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 
 		factor *= computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
-		factor *= phaseFunction(viewDir, light.m_direction, kPhaseFunctionAnisotropy);
+		factor *= phaseFunction(viewDir, -light.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		if(light.m_shadow)
