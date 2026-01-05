@@ -713,6 +713,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 			}
 
 			coord = quarterCoord * 2 + IVec2(x, y) * 2;
+			coord = min(coord, quarterViewportSize - 1);
 			sampleDepths[x][y] = TEX(g_depthTex, coord);
 		}
 	}
