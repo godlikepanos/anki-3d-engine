@@ -38,6 +38,8 @@ Error ClusterBinning::init()
 									 m_packingGrProgs[type], "PackVisibles"));
 	}
 
+	m_tileCounts = (getRenderer().getInternalResolution() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+
 	return Error::kNone;
 }
 
@@ -49,8 +51,10 @@ void ClusterBinning::populateRenderGraph()
 
 	// Allocate the clusters buffer
 	{
-		const U32 clusterCount = getRenderer().getTileCounts().x * getRenderer().getTileCounts().y + getRenderer().getZSplitCount();
-		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<Cluster>(clusterCount);
+		const U32 clusterCount = m_tileCounts.x * m_tileCounts.y + g_cvarRenderClustererZSplitCount;
+
+		// Allocate +1 which is used as a zero cluster when a point is outside the clusterer
+		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<Cluster>(clusterCount + 1);
 		m_runCtx.m_dep = rgraph.importBuffer(m_runCtx.m_clustersBuffer, BufferUsageBit::kNone);
 	}
 
@@ -78,7 +82,7 @@ void ClusterBinning::populateRenderGraph()
 
 			cmdb.bindShaderProgram(m_jobSetupGrProg.get());
 
-			const UVec4 consts(getRenderer().getTileCounts().x * getRenderer().getTileCounts().y);
+			const UVec4 consts(m_tileCounts.x * m_tileCounts.y);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
@@ -162,7 +166,7 @@ void ClusterBinning::populateRenderGraph()
 				struct ClusterBinningConstants
 				{
 					Vec3 m_cameraOrigin;
-					F32 m_zSplitCountOverFrustumLength;
+					F32 m_zSplitCountOverClustererLength;
 
 					Vec2 m_renderingSize;
 					U32 m_tileCountX;
@@ -180,16 +184,16 @@ void ClusterBinning::populateRenderGraph()
 
 				RenderingContext& ctx = getRenderingContext();
 				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
-				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
+				consts.m_zSplitCountOverClustererLength = F32(g_cvarRenderClustererZSplitCount) / (computeClustererFar() - ctx.m_matrices.m_near);
 				consts.m_renderingSize = Vec2(getRenderer().getInternalResolution());
-				consts.m_tileCountX = getRenderer().getTileCounts().x;
-				consts.m_tileCount = getRenderer().getTileCounts().x * getRenderer().getTileCounts().y;
+				consts.m_tileCountX = m_tileCounts.x;
+				consts.m_tileCount = m_tileCounts.x * m_tileCounts.y;
 
 				Plane nearPlane;
 				extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
 				consts.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz, nearPlane.getOffset());
 
-				consts.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
+				consts.m_zSplitCountMinusOne = g_cvarRenderClustererZSplitCount - 1;
 
 				consts.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 
@@ -278,6 +282,21 @@ void ClusterBinning::populateRenderGraph()
 			}
 		});
 	}
+}
+
+void ClusterBinning::fillClustererConstants(ClustererConstants& consts) const
+{
+	const F32 clustererFar = computeClustererFar();
+	const F32 zSplitCount = F32(g_cvarRenderClustererZSplitCount);
+	const F32 n = getRenderingContext().m_matrices.m_near;
+	const F32 f = getRenderingContext().m_matrices.m_far;
+
+	consts.m_zSplitMagic.x = (clustererFar - n) / (-n * zSplitCount);
+	consts.m_zSplitMagic.y = f * (clustererFar - n) / (n * (f - n) * zSplitCount);
+	consts.m_tileCounts = m_tileCounts;
+	consts.m_clustererFar = clustererFar;
+	consts.m_clusterCount = consts.m_tileCounts.x * consts.m_tileCounts.y * U32(zSplitCount);
+	consts.m_zSplitCount = U32(zSplitCount);
 }
 
 } // end namespace anki

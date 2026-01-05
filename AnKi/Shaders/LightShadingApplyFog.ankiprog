@@ -9,33 +9,35 @@
 
 #if ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/ImportanceSampling.hlsl>
 
-SamplerState g_nearestAnyClampSampler : register(s0);
-SamplerState g_linearAnyClampSampler : register(s1);
+SamplerState g_linearAnyClampSampler : register(s0);
+
 Texture2D g_depthRt : register(t0);
 Texture3D<Vec4> g_fogVolume : register(t1);
 
-struct Constants
-{
-	F32 m_zSplitCount;
-	F32 m_finalZSplit;
-	F32 m_near;
-	F32 m_far;
-};
-ANKI_FAST_CONSTANTS(Constants, g_consts)
+ConstantBuffer<GlobalRendererConstants> g_consts : register(b0);
 
 Vec4 main(VertOut input) : SV_TARGET0
 {
-	const Vec2 uv = input.m_uv;
-	Vec3 uvw;
+	Vec3 texSize;
+	g_fogVolume.GetDimensions(texSize.x, texSize.y, texSize.z);
+	const Vec3 texelSize = 1.0 / texSize;
 
-	// Compute W coordinate
-	const F32 depth = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
-	const F32 linearDepth = linearizeDepth(depth, g_consts.m_near, g_consts.m_far);
-	uvw.z = linearDepth * (g_consts.m_zSplitCount / (g_consts.m_finalZSplit + 1.0f));
+	// Random
+	const UVec3 seed = rand3DPCG16(UVec3(input.m_svPosition.xy, g_consts.m_frame % 8u));
+	const Vec2 random = hammersleyRandom16(g_consts.m_frame % 16, 16, seed);
+	const Vec2 urandom = random * 2.0 - 1.0;
 
 	// Compute UV coordinates
-	uvw.xy = uv;
+	const F32 depth = TEX(g_depthRt, input.m_svPosition.xy).r;
+	Vec3 uvw;
+	uvw.xy = input.m_uv;
+	uvw.xy += texelSize * urandom;
+	uvw.z = computeVolumeWTexCoord(depth, g_consts.m_clusterer.m_lightVolumeWMagic.x, g_consts.m_clusterer.m_lightVolumeWMagic.y);
+	uvw.z += texelSize / 2.0 * urandom.x;
 
 	// Read the volume
 	const Vec4 fogVals = g_fogVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);

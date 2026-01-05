@@ -22,26 +22,13 @@ public:
 		return m_runCtx.m_rt;
 	}
 
-	const Array<U32, 3>& getVolumeSize() const
-	{
-		return m_volumeSize;
-	}
-
-	// Get the last cluster split in Z axis that will be affected by lighting.
-	U32 getFinalClusterInZ() const
-	{
-		return m_finalZSplit;
-	}
-
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
 	RenderTargetDesc m_rtDescr;
 
-	U32 m_finalZSplit = 0;
-
-	Array<U32, 3> m_volumeSize;
+	UVec3 m_volumeSize;
 
 	class
 	{

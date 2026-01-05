@@ -53,22 +53,32 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask, U32 maxObjectOverride =
 	return heatmap(factor);
 }
 
-/// Returns the index of the zSplit or linearizeDepth(n, f, depth)*zSplitCount
-/// Simplifying this equation is 1/(a+b/depth) where a=(n-f)/(n*zSplitCount) and b=f/(n*zSplitCount)
-U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
+// Returns the index of the zSplit. Calculated as linearizeDepth(depth, n, f)*(f-n)/(clustererFar-n)*zSplitCount
+// Simplifying this equation is 1/(a+b/depth) where a=(clustererFar-n)/(-n*zSplitCount) and b=f*(clustererFar-n)/(n*(f-n)*zSplitCount)
+// If the depth is outside the clusterer's range then the return value will be creater or equal to zSplitCount
+U32 computeZSplitClusterIndex(F32 depth, F32 a, F32 b)
 {
-	const F32 fSplitIdx = 1.0 / (a + b / depth);
-	return min(zSplitCount - 1u, (U32)fSplitIdx);
+	const F32 splitIdxf = 1.0 / (a + b / depth); // It's fine if depth is zero. The splitIdxf will become 0.0
+	return (U32)splitIdxf;
 }
 
-/// Return the tile index.
+// It's similar to computeZSplitClusterIndex but instead of an index it returns a tex coordinate for the w coord of a 3D texture that covers the
+// clusterer. Calculated as linearizeDepth(depth, n, f)*(f-n)/(clustererFar-n).
+// Simplifying this equation is 1/(a+b/depth) where a=(clustererFar-n)/(-n) and b=f*(clustererFar-n)/(n*(f-n))
+// If the depth is outside the clusterer's range then the return value will be creater or equal than 1.0
+F32 computeVolumeWTexCoord(F32 depth, F32 a, F32 b)
+{
+	return 1.0 / (a + b / depth); // It's fine if depth is zero. The expression will become 0.0
+}
+
+// Return the tile index.
 U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileCountX)
 {
 	const UVec2 tileXY = UVec2(fragCoord / F32(kClusteredShadingTileSize));
 	return tileXY.y * tileCountX + tileXY.x;
 }
 
-/// Merge the tiles with z splits into a single cluster.
+// Merge the tiles with z splits into a single cluster.
 template<Bool kDynamicallyUniform = false>
 Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 {
@@ -78,18 +88,18 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 	{
 		[unroll] for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
 		{
-			outCluster.m_pointLightsMask[i] = WaveActiveBitOr(tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
-			outCluster.m_spotLightsMask[i] = WaveActiveBitOr(tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
+			outCluster.m_pointLightsMask[i] = WaveActiveBitAnd(tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
+			outCluster.m_spotLightsMask[i] = WaveActiveBitAnd(tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
 		}
 
 		[unroll] for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
 		{
-			outCluster.m_decalsMask[i] = WaveActiveBitOr(tileCluster.m_decalsMask[i] & zCluster.m_decalsMask[i]);
+			outCluster.m_decalsMask[i] = WaveActiveBitAnd(tileCluster.m_decalsMask[i] & zCluster.m_decalsMask[i]);
 		}
 
-		outCluster.m_fogDensityVolumesMask = WaveActiveBitOr(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
-		outCluster.m_reflectionProbesMask = WaveActiveBitOr(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
-		outCluster.m_giProbesMask = WaveActiveBitOr(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
+		outCluster.m_fogDensityVolumesMask = WaveActiveBitAnd(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
+		outCluster.m_reflectionProbesMask = WaveActiveBitAnd(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
+		outCluster.m_giProbesMask = WaveActiveBitAnd(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
 	}
 	else
 	{
@@ -112,13 +122,18 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 	return outCluster;
 }
 
-/// Get the final cluster after ORing and ANDing the masks.
+// Get the final cluster after ORing and ANDing the masks.
 template<Bool kDynamicallyUniform = false>
-Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, GlobalRendererConstants consts, Vec3 fragCoord)
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClustererConstants consts, Vec3 fragCoord)
 {
-	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, consts.m_tileCounts.x)];
-	const Cluster zCluster = clusters[computeZSplitClusterIndex(fragCoord.z, consts.m_zSplitCount, consts.m_zSplitMagic.x, consts.m_zSplitMagic.y)
-									  + consts.m_tileCounts.x * consts.m_tileCounts.y];
+	U32 idx = computeTileClusterIndexFragCoord(fragCoord.xy, consts.m_tileCounts.x);
+	const Cluster tileCluster = SBUFF(clusters, idx);
+
+	idx = computeZSplitClusterIndex(fragCoord.z, consts.m_zSplitMagic.x, consts.m_zSplitMagic.y);
+	idx += consts.m_tileCounts.x * consts.m_tileCounts.y;
+	idx = min(idx, consts.m_clusterCount); // The "consts.m_clusterCount" is intentional. There is a hiden cluster at the end that is all zeroes
+	const Cluster zCluster = SBUFF(clusters, idx);
+
 	return mergeClusters<kDynamicallyUniform>(tileCluster, zCluster);
 }
 

@@ -124,6 +124,18 @@ struct LocalLightsGridConstants
 	F32 m_padding4;
 };
 
+struct ClustererConstants
+{
+	Vec2 m_zSplitMagic; // It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
+	UVec2 m_tileCounts;
+
+	Vec2 m_lightVolumeWMagic; // the "a" and "b" of computeVolumeWTexCoord(). See there for details.
+	F32 m_clustererFar;
+	U32 m_clusterCount : 16;
+	U32 m_zSplitCount : 16;
+};
+static_assert(sizeof(ClustererConstants) % sizeof(Vec4) == 0);
+
 // Common constants for all passes.
 struct GlobalRendererConstants
 {
@@ -136,13 +148,7 @@ struct GlobalRendererConstants
 	Vec3 m_cameraPosition;
 	F32 m_reflectionProbesMipCount;
 
-	UVec2 m_tileCounts;
-	U32 m_zSplitCount;
-	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
-
-	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
-	U32 m_lightVolumeLastZSplit;
-	U32 m_padding1;
+	ClustererConstants m_clusterer;
 
 	DirectionalLight m_directionalLight;
 
@@ -200,13 +206,13 @@ struct VolumetricFogConstants
 	Vec3 m_fogDiffuse;
 	F32 m_fogScatteringCoeff;
 
-	F32 m_fogAbsorptionCoeff;
-	F32 m_near;
-	F32 m_far;
-	F32 m_zSplitCountf;
-
 	UVec3 m_volumeSize;
-	F32 m_maxZSplitsToProcessf;
+	F32 m_fogAbsorptionCoeff;
+
+	F32 m_zSplitThickness;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
 };
 
 // Vol lighting
@@ -218,7 +224,10 @@ struct VolumetricLightingConstants
 	F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
 
 	UVec3 m_volumeSize;
-	F32 m_maxZSplitsToProcessf;
+	F32 m_subZSplitThickness;
+
+	UVec3 m_clusterSubdivision;
+	F32 m_padding;
 };
 
 // SSAO

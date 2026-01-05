@@ -25,7 +25,6 @@ ANKI_CVAR(
 		return (value > 0.1f && value <= 8.0f) || value == 540.0f || value == 720.0f || value == 1080.0f || value == 1440.0f || value == 2160.0f;
 	},
 	"A factor over the requested swapchain resolution. Applies to post-processing and UI")
-ANKI_CVAR(NumericCVar<U32>, Render, ZSplitCount, 64, 8, kMaxZsplitCount, "Clusterer number of Z splits")
 ANKI_CVAR(NumericCVar<U8>, Render, TextureAnisotropy, (ANKI_PLATFORM_MOBILE) ? 1 : 16, 1, 16, "Texture anisotropy for the main passes")
 ANKI_CVAR(BoolCVar, Render, PreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")
 ANKI_CVAR(BoolCVar, Render, HighQualityHdr, !ANKI_PLATFORM_MOBILE, "If true use R16G16B16 for HDR images. Alternatively use B10G11R11")
@@ -153,16 +152,6 @@ public:
 		return m_samplers;
 	}
 
-	const UVec2& getTileCounts() const
-	{
-		return m_tileCounts;
-	}
-
-	U32 getZSplitCount() const
-	{
-		return m_zSplitCount;
-	}
-
 	Format getHdrFormat() const;
 	Format getDepthNoStencilFormat() const;
 
@@ -274,9 +263,6 @@ private:
 	ShaderProgramPtr m_fillBufferGrProg;
 
 	RenderGraphPtr m_rgraph;
-
-	UVec2 m_tileCounts = UVec2(0u);
-	U32 m_zSplitCount = 0;
 
 	class
 	{

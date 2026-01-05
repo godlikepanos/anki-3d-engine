@@ -46,7 +46,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	Vec3 outColor = Vec3(0.0, 0.0, 0.0);
 
 	// Find the cluster and then the light counts
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, svPosition.xyz);
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, svPosition.xyz);
 
 	// Point lights
 	U32 idx = 0;
@@ -97,12 +97,10 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 // Just read the light color from the vol texture
 Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 {
-	ANKI_MAYBE_UNUSED(worldPos);
-
-	const Vec2 uv = svPosition.xy / g_globalRendererConstants.m_renderingSize;
-	const F32 linearDepth = linearizeDepth(svPosition.z, g_globalRendererConstants.m_matrices.m_near, g_globalRendererConstants.m_matrices.m_far);
-	const F32 w = linearDepth * (F32(g_globalRendererConstants.m_zSplitCount) / F32(g_globalRendererConstants.m_lightVolumeLastZSplit + 1u));
-	const Vec3 uvw = Vec3(uv, w);
+	Vec3 uvw;
+	uvw.xy = svPosition.xy / g_globalRendererConstants.m_renderingSize;
+	uvw.z = computeVolumeWTexCoord(svPosition.z, g_globalRendererConstants.m_clusterer.m_lightVolumeWMagic.x,
+								   g_globalRendererConstants.m_clusterer.m_lightVolumeWMagic.y);
 
 	const Vec3 light = g_lightVol.SampleLevel(g_trilinearClampSampler, uvw, 0.0).rgb;
 	return diffuseLobe(diffCol) * light;

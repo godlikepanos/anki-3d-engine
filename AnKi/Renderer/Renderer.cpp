@@ -163,10 +163,6 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x, m_postProcessResolution.y,
 				m_internalResolution.x, m_internalResolution.y);
 
-	m_tileCounts.x = (m_internalResolution.x + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
-	m_tileCounts.y = (m_internalResolution.y + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
-	m_zSplitCount = g_cvarRenderZSplitCount;
-
 	if(g_cvarCoreMeshletRendering && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 	{
 		m_meshletRenderingType = MeshletRenderingType::kSoftware;
@@ -342,7 +338,7 @@ Error Renderer::populateRenderGraph()
 	m_historyLength->populateRenderGraph();
 	m_depthDownscale->populateRenderGraph();
 	m_shadowMapping->populateRenderGraph();
-	m_clusterBinning2->populateRenderGraph();
+	m_clusterBinning->populateRenderGraph();
 	m_generatedSky->populateRenderGraph();
 	if(m_indirectDiffuseProbes)
 	{
@@ -392,7 +388,7 @@ void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 
 	RenderingContext& ctx = getRenderingContext();
 	GlobalRendererConstants consts;
-	memset(&consts, 0, sizeof(consts));
+	zeroMemory(consts);
 
 	consts.m_renderingSize = Vec2(F32(m_internalResolution.x), F32(m_internalResolution.y));
 
@@ -404,12 +400,8 @@ void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 	consts.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz, nearPlane.getOffset());
 	consts.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz;
 
-	consts.m_tileCounts = m_tileCounts;
-	consts.m_zSplitCount = m_zSplitCount;
-	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_matrices.m_far - ctx.m_matrices.m_near);
-	consts.m_zSplitMagic.x = (ctx.m_matrices.m_near - ctx.m_matrices.m_far) / (ctx.m_matrices.m_near * F32(m_zSplitCount));
-	consts.m_zSplitMagic.y = ctx.m_matrices.m_far / (ctx.m_matrices.m_near * F32(m_zSplitCount));
-	consts.m_lightVolumeLastZSplit = min(g_cvarRenderVolumetricLightingAccumulationFinalZSplit - 1, m_zSplitCount);
+	m_clusterBinning->fillClustererConstants(consts.m_clusterer);
+	m_volumetricLightingAccumulation->fillClustererConstants(consts.m_clusterer);
 
 	consts.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
 

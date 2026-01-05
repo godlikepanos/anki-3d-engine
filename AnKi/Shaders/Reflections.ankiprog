@@ -220,7 +220,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 
 	Vec3 outColor = gbuffer.m_emission;
 
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(coord.xy + 0.5, depth));
 
 	// GI
 #	if INDIRECT_DIFFUSE_CLIPMAPS
@@ -416,7 +416,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		const Vec3 col = sampleClipmapRadiance(worldPos, reflDir, g_globalRendererConstants.m_cameraPosition,
 											   g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
 #	else
-		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
+		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(logicalCoord.xy + 0.5, depth));
 		const Vec3 col = sampleGiProbes<F32>(cluster, g_giProbes, reflDir, worldPos.xyz, g_trilinearClampSampler);
 #	endif
 
@@ -457,7 +457,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	{
 		viewReflDir = reflect(-viewDir, viewNormal);
 
-		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
+		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(logicalCoord.xy + 0.5, depth));
 
 		const Vec3 woldReflDir = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0));
 
@@ -628,7 +628,7 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;
 
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(logicalCoord.xy + 0.5, depth));
 
 	const F32 reflLod = (g_globalRendererConstants.m_reflectionProbesMipCount - 1.0f) * roughness;
 	Vec3 probeColor = sampleReflectionProbes<F32>(cluster, g_reflectionProbes, reflDir, worldPos, reflLod, g_trilinearClampSampler);

@@ -7,9 +7,6 @@
 
 #pragma once
 
-/// @addtogroup config
-/// @{
-
 #define _ANKI_STR_HELPER(x) #x
 #define _ANKI_STR(x) _ANKI_STR_HELPER(x)
 
@@ -350,4 +347,3 @@ void cleanupGetAndroidCommandLineArguments(void* ptr);
 		return exitCode; \
 	}
 #endif
-/// @}

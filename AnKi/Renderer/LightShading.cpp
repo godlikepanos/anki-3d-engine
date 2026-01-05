@@ -176,26 +176,12 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
 
 		// Bind all
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 		rgraphCtx.bindSrv(1, 0, getRenderer().getVolumetricFog().getRt());
 
-		class Consts
-		{
-		public:
-			F32 m_zSplitCount;
-			F32 m_finalZSplit;
-			F32 m_near;
-			F32 m_far;
-		} consts;
-		consts.m_zSplitCount = F32(getRenderer().getZSplitCount());
-		consts.m_finalZSplit = F32(getRenderer().getVolumetricFog().getFinalClusterInZ());
-		consts.m_near = getRenderingContext().m_matrices.m_near;
-		consts.m_far = getRenderingContext().m_matrices.m_far;
-
-		cmdb.setFastConstants(&consts, sizeof(consts));
+		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 		// finalPixelColor = pixelWithoutFog * transmitance + inScattering (see the shader)
 		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha);

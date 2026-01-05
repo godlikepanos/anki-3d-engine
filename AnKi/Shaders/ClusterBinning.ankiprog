@@ -102,7 +102,7 @@ constexpr U32 kPackVisiblesThreadgroupSize = 64;
 struct ClusterBinningConstants
 {
 	Vec3 m_cameraOrigin;
-	F32 m_zSplitCountOverFrustumLength;
+	F32 m_zSplitCountOverClustererLength; // = clustererFar - near
 
 	Vec2 m_renderingSize;
 	U32 m_tileCountX;
@@ -233,20 +233,20 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 		if(obj.m_isPointLight)
 		{
-			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask[maskArrayIdx], mask);
+			InterlockedOr(SBUFF(g_clusters, tileIdx).m_pointLightsMask[maskArrayIdx], mask);
 		}
 		else
 		{
-			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask[maskArrayIdx], mask);
+			InterlockedOr(SBUFF(g_clusters, tileIdx).m_spotLightsMask[maskArrayIdx], mask);
 		}
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-		InterlockedOr(g_clusters[tileIdx].m_decalsMask[maskArrayIdx], mask);
+		InterlockedOr(SBUFF(g_clusters, tileIdx).m_decalsMask[maskArrayIdx], mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-		InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, mask);
+		InterlockedOr(SBUFF(g_clusters, tileIdx).m_fogDensityVolumesMask, mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-		InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, mask);
+		InterlockedOr(SBUFF(g_clusters, tileIdx).m_reflectionProbesMask, mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-		InterlockedOr(g_clusters[tileIdx].m_giProbesMask, mask);
+		InterlockedOr(SBUFF(g_clusters, tileIdx).m_giProbesMask, mask);
 #	else
 #		error See file
 #	endif
@@ -270,27 +270,27 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 			maxDistFromNearPlane = distFromNearPlaneA;
 		}
 
-		const I32 startZSplit = max(I32(minDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0);
-		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0, g_consts.m_zSplitCountMinusOne);
+		const I32 startZSplit = max(I32(floor(minDistFromNearPlane * g_consts.m_zSplitCountOverClustererLength)), 0);
+		const I32 endZSplit = clamp(I32(ceil(maxDistFromNearPlane * g_consts.m_zSplitCountOverClustererLength)), 0, g_consts.m_zSplitCountMinusOne);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 			if(obj.m_isPointLight)
 			{
-				InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_pointLightsMask[maskArrayIdx], mask);
+				InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_pointLightsMask[maskArrayIdx], mask);
 			}
 			else
 			{
-				InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_spotLightsMask[maskArrayIdx], mask);
+				InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_spotLightsMask[maskArrayIdx], mask);
 			}
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_decalsMask[maskArrayIdx], mask);
+			InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_decalsMask[maskArrayIdx], mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_fogDensityVolumesMask, mask);
+			InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_fogDensityVolumesMask, mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_reflectionProbesMask, mask);
+			InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_reflectionProbesMask, mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_giProbesMask, mask);
+			InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_giProbesMask, mask);
 #	else
 #		error See file
 #	endif
@@ -319,6 +319,6 @@ StructuredBuffer<U32> g_visibles : register(t1);
 		return;
 	}
 
-	g_outBuffer[idxOut] = g_inBuffer[g_visibles[idxOut + 1]];
+	SBUFF(g_outBuffer, idxOut) = SBUFF(g_inBuffer, SBUFF(g_visibles, idxOut + 1));
 }
 #endif

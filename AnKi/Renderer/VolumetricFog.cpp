@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/LightShading.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -18,20 +19,17 @@ namespace anki {
 Error VolumetricFog::init()
 {
 	// Misc
-	const F32 qualityXY = g_cvarRenderVolumetricLightingAccumulationQualityXY;
-	const F32 qualityZ = g_cvarRenderVolumetricLightingAccumulationQualityZ;
-	m_finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_cvarRenderVolumetricLightingAccumulationFinalZSplit);
+	const U32 zSplitCount = min<U32>(g_cvarRenderClustererZSplitCount, g_cvarRenderVolumetricLightingAccumulationFinalZSplit + 1);
 
-	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x) * qualityXY);
-	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y) * qualityXY);
-	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
+	m_volumeSize.xy = getClusterBinning().getTileCounts() << g_cvarRenderVolumetricLightingAccumulationSubdivisionXY;
+	m_volumeSize.z = zSplitCount << g_cvarRenderVolumetricLightingAccumulationSubdivisionZ;
 
 	// Shaders
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog, m_grProg));
 
 	// RT descr
-	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");
-	m_rtDescr.m_depth = m_volumeSize[2];
+	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize.x, m_volumeSize.y, Format::kR16G16B16A16_Sfloat, "Fog");
+	m_rtDescr.m_depth = m_volumeSize.z;
 	m_rtDescr.m_type = TextureType::k3D;
 	m_rtDescr.bake();
 
@@ -67,15 +65,13 @@ void VolumetricFog::populateRenderGraph()
 		consts.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
 		consts.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
 		consts.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;
-		consts.m_near = getRenderingContext().m_matrices.m_near;
-		consts.m_far = getRenderingContext().m_matrices.m_far;
-		consts.m_zSplitCountf = F32(getRenderer().getZSplitCount());
-		consts.m_volumeSize = UVec3(m_volumeSize);
-		consts.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
+		consts.m_zSplitThickness = (getClusterBinning().computeClustererFar() - getRenderingContext().m_matrices.m_near)
+								   / F32(g_cvarRenderClustererZSplitCount << g_cvarRenderVolumetricLightingAccumulationSubdivisionZ);
+		consts.m_volumeSize = m_volumeSize;
 
 		cmdb.setFastConstants(&consts, sizeof(consts));
 
-		dispatchPPCompute(cmdb, 8, 8, m_volumeSize[0], m_volumeSize[1]);
+		dispatchPPCompute(cmdb, 8, 8, m_volumeSize.x, m_volumeSize.y);
 	});
 }
 

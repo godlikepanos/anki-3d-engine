@@ -102,7 +102,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 	// Cluster
 	const Vec2 fragCoord = uv * g_globalConstants.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants, Vec3(fragCoord, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants.m_clusterer, Vec3(fragCoord, depth));
 
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;

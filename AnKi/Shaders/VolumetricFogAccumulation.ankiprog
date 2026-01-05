@@ -26,29 +26,13 @@ ANKI_FAST_CONSTANTS(VolumetricFogConstants, g_consts)
 	Vec4 colorAndDensityFront = 0.0;
 	[loop] for(U32 i = 0u; i < g_consts.m_volumeSize.z; ++i)
 	{
-		const F32 fi = F32(i);
-
-		// Compute the linear depth
-		const F32 maxLinearDepth = g_consts.m_maxZSplitsToProcessf / g_consts.m_zSplitCountf;
-		const F32 linearDepthFraction = maxLinearDepth / F32(g_consts.m_volumeSize.z);
-		const F32 linearDepthNear = fi * linearDepthFraction;
-		const F32 linearDepthFar = (fi + 1.0) * linearDepthFraction;
-
-		// Compute the min and max Z in view space if this cluster fragment
-		const F32 zVSpaceNear = -linearDepthNear * (g_consts.m_far - g_consts.m_near) + g_consts.m_near;
-		const F32 zVSpaceFar = -linearDepthFar * (g_consts.m_far - g_consts.m_near) + g_consts.m_near;
-
-		// Compute the thikness of this fragment
-		const F32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
-
 		// Read the light value and the fog density from the fog volumes
-		const F32 w = (fi + 0.5) / F32(g_consts.m_volumeSize.z);
-		Vec4 lightAndFogDensity = g_lightVolume.SampleLevel(g_linearAnyClampSampler, Vec3(uv, w), 0.0);
+		Vec4 lightAndFogDensity = TEX(g_lightVolume, UVec3(svDispatchThreadId.xy, i));
 		lightAndFogDensity.xyz *= g_consts.m_fogDiffuse / kPi;
 
 		// Scattering & absorption
-		const F32 scattering = lightAndFogDensity.w * g_consts.m_fogScatteringCoeff * layerThinkness;
-		const F32 absorption = lightAndFogDensity.w * g_consts.m_fogAbsorptionCoeff * layerThinkness;
+		const F32 scattering = lightAndFogDensity.w * g_consts.m_fogScatteringCoeff * g_consts.m_zSplitThickness;
+		const F32 absorption = lightAndFogDensity.w * g_consts.m_fogAbsorptionCoeff * g_consts.m_zSplitThickness;
 
 		// Integrate
 		const Vec4 colorAndDensityBack = Vec4(lightAndFogDensity.xyz * scattering, scattering + absorption);
@@ -58,6 +42,6 @@ ANKI_FAST_CONSTANTS(VolumetricFogConstants, g_consts)
 
 		// Write the value
 		const Vec4 valToWrite = Vec4(colorAndDensityFront.rgb, saturate(exp(-colorAndDensityFront.a)));
-		g_fogVolume[UVec3(svDispatchThreadId.xy, i)] = valToWrite;
+		TEX(g_fogVolume, UVec3(svDispatchThreadId.xy, i)) = valToWrite;
 	}
 }

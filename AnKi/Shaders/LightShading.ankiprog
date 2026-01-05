@@ -63,7 +63,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	const HVec3 viewDir = normalize(g_globalConstants.m_cameraPosition - worldPos);
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants, Vec3(input.m_svPosition.xy, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants.m_clusterer, Vec3(input.m_svPosition.xy, depth));
 
 	// return clusterHeatmap(cluster, 1u << (U32)GpuSceneNonRenderableObjectType::kLight, 3);
 
