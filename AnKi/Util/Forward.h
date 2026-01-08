@@ -31,9 +31,6 @@ class DefaultHasher;
 class HashMapSparseArrayConfig;
 
 template<typename T, typename TMemoryPool>
-class Hierarchy;
-
-template<typename T, typename TMemoryPool>
 class List;
 
 template<typename T, typename TMemoryPool, typename TConfig>
@@ -93,8 +90,6 @@ class XmlDocument;
 	using submoduleName##List = List<T, submoduleName##MemPoolWrapper>; \
 	using submoduleName##StringList = BaseStringList<submoduleName##MemPoolWrapper>; \
 	using submoduleName##XmlDocument = XmlDocument<submoduleName##MemPoolWrapper>; \
-	template<typename T> \
-	using submoduleName##Hierarchy = Hierarchy<T, submoduleName##MemPoolWrapper>; \
 	template<typename T, typename TConfig = BlockArrayDefaultConfig> \
 	using submoduleName##BlockArray = BlockArray<T, submoduleName##MemPoolWrapper, TConfig>; \
 	template<typename T = U32> \

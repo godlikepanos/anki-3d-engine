@@ -111,9 +111,13 @@ public:
 	template<typename Func>
 	void visitNodes(Func func)
 	{
-		for(SceneNode& psn : m_nodes)
+		for(SceneNode& node : m_rootNodes)
 		{
-			if(func(psn) == FunctorContinue::kStop)
+			const FunctorContinue cont = node.visitThisAndChildren([&](SceneNode& n) {
+				return func(n);
+			});
+
+			if(cont == FunctorContinue::kStop)
 			{
 				break;
 			}
@@ -127,8 +131,8 @@ public:
 	{
 		TNode* node = newInstance<TNode>(SceneMemoryPool::getSingleton(), name);
 		node->m_uuid = getNewUuid();
-		LockGuard lock(m_nodesForRegistrationMtx);
-		m_nodesForRegistration.pushBack(node);
+		LockGuard lock(m_deferredOps.m_mtx);
+		m_deferredOps.m_nodesForRegistration.pushBack(node);
 		return node;
 	}
 
@@ -166,6 +170,7 @@ public:
 
 	Array<Vec3, 2> getSceneBounds() const
 	{
+		ANKI_ASSERT_MAIN_THREAD();
 		ANKI_ASSERT(m_sceneMin < m_sceneMax);
 		return {m_sceneMin, m_sceneMax};
 	}
@@ -173,11 +178,13 @@ public:
 	// Pause the game loop
 	void pause(Bool pause_)
 	{
+		ANKI_ASSERT_MAIN_THREAD();
 		m_paused = pause_;
 	}
 
 	Bool isPaused() const
 	{
+		ANKI_ASSERT_MAIN_THREAD();
 		return m_paused;
 	}
 
@@ -185,6 +192,7 @@ public:
 	// should be enabled only by the editor
 	void setCheckForResourceUpdates(Bool enable)
 	{
+		ANKI_ASSERT_MAIN_THREAD();
 		m_checkForResourceUpdates = enable;
 	}
 
@@ -208,7 +216,7 @@ private:
 
 	mutable StackMemoryPool m_framePool;
 
-	IntrusiveList<SceneNode> m_nodes;
+	IntrusiveList<SceneNode> m_rootNodes;
 	U32 m_nodeCount = 0;
 	GrHashMap<CString, SceneNode*> m_nodesDict;
 
@@ -223,9 +231,15 @@ private:
 	Vec3 m_sceneMin = Vec3(-0.1f);
 	Vec3 m_sceneMax = Vec3(+0.1f);
 
-	IntrusiveList<SceneNode> m_nodesForRegistration;
-	SceneDynamicArray<std::pair<SceneNode*, SceneString>> m_nodesRenamed;
-	SpinLock m_nodesForRegistrationMtx;
+	// These are operations that might happen in threads and they need to be processed when there are no other threads running
+	class
+	{
+	public:
+		IntrusiveList<SceneNode> m_nodesForRegistration;
+		SceneDynamicArray<std::pair<SceneNode*, SceneString>> m_nodesRenamed;
+		SceneDynamicArray<std::pair<SceneNode*, SceneNode*>> m_nodesParentChanged;
+		SpinLock m_mtx;
+	} m_deferredOps;
 
 	Bool m_checkForResourceUpdates = false; // If true the components will have to re-check their resources for updates
 
@@ -245,7 +259,21 @@ private:
 	void updateNodes(U32 tid, UpdateSceneNodesCtx& ctx);
 	void updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx);
 
-	void sceneNodeChangedName(SceneNode& node, CString oldName);
+	// Begin deferred operations //
+	void sceneNodeChangedNameDeferred(SceneNode& node, CString oldName)
+	{
+		LockGuard lock(m_deferredOps.m_mtx);
+		m_deferredOps.m_nodesRenamed.emplaceBack(std::pair(&node, oldName));
+	}
+
+	void setSceneNodeParentDeferred(SceneNode* node, SceneNode* parent)
+	{
+		LockGuard lock(m_deferredOps.m_mtx);
+		m_deferredOps.m_nodesParentChanged.emplaceBack(std::pair(node, parent));
+	}
+
+	void doDeferredOperations();
+	// End deferred operations //
 
 	static void countSerializableNodes(SceneNode& root, U32& serializableNodeCount);
 };

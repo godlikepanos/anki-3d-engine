@@ -68,13 +68,16 @@ public:
 };
 
 // Base class of the scene
-class SceneNode : public SceneHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
+class SceneNode : private IntrusiveHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
 	friend class SceneComponent;
 	friend class SceneGraph;
 
+	template<typename>
+	friend class IntrusiveHierarchy;
+
 public:
-	using Base = SceneHierarchy<SceneNode>;
+	using Base = IntrusiveHierarchy<SceneNode>;
 
 	// The one and only constructor.
 	// name: The unique name of the node. If it's empty the the node is not searchable.
@@ -88,12 +91,46 @@ public:
 		return (!m_name.isEmpty()) ? m_name.toCString() : "Unnamed";
 	}
 
+	// Operation is partially deferred. Scene node won't be searchable until the next frame.
 	void setName(CString name);
 
 	U32 getUuid() const
 	{
 		return m_uuid;
 	}
+
+	// Hierarchy manipulation //
+	// Changes in the hierarchy are deferred and won't be visible until the next frame
+
+	void addChild(SceneNode* obj)
+	{
+		ANKI_ASSERT(obj);
+		obj->setParent(this);
+	}
+
+	U32 getChildrenCount() const
+	{
+		return m_children.getSize();
+	}
+
+	WeakArray<SceneNode*> getChildren()
+	{
+		return WeakArray(m_children);
+	}
+
+	ConstWeakArray<SceneNode*> getChildren() const
+	{
+		return ConstWeakArray(m_children);
+	}
+
+	void setParent(SceneNode* obj);
+
+	SceneNode* getParent() const
+	{
+		return m_parent;
+	}
+
+	// End hierarchy manipulation //
 
 	Bool isMarkedForDeletion() const
 	{
@@ -133,16 +170,6 @@ public:
 	{
 		ANKI_ASSERT(maxComponentTimestamp > 0);
 		m_maxComponentTimestamp = maxComponentTimestamp;
-	}
-
-	void addChild(SceneNode* obj)
-	{
-		Base::addChild(obj);
-	}
-
-	void setParent(SceneNode* obj)
-	{
-		Base::setParent(obj);
 	}
 
 	// This is called by the scenegraph every frame after all component updates. By default it does nothing.
@@ -515,6 +542,17 @@ private:
 	SceneString m_name; // A unique name.
 	U32 m_uuid = 0;
 
+	// Flags
+	Bool m_markedForDeletion : 1 = false;
+	Bool m_localTransformDirty : 1 = true;
+	Bool m_ignoreParentNodeTransform : 1 = false;
+	Bool m_transformUpdatedThisFrame : 1 = true;
+	Bool m_serialize : 1 = true;
+	Bool m_updateOnPause : 1 = false;
+
+	SceneNode* m_parent = nullptr;
+	SceneDynamicArray<SceneNode*> m_children;
+
 	SceneComponentTypeMask m_componentTypeMask = SceneComponentTypeMask::kNone;
 
 	GrDynamicArray<SceneComponent*> m_components;
@@ -525,17 +563,30 @@ private:
 	Transform m_wtrf = Transform::getIdentity(); // The transformation in world space (local combined with parent's transformation)
 	Transform m_prevWTrf = Transform::getIdentity(); // Keep the previous transformation for checking if it moved
 
-	// Flags
-	Bool m_markedForDeletion : 1 = false;
-	Bool m_localTransformDirty : 1 = true;
-	Bool m_ignoreParentNodeTransform : 1 = false;
-	Bool m_transformUpdatedThisFrame : 1 = true;
-	Bool m_serialize : 1 = true;
-	Bool m_updateOnPause : 1 = false;
-
 	void addComponent(SceneComponent* newc);
 
 	Error serializeCommon(SceneSerializer& serializer, SerializeCommonArgs& args);
+
+	// For the IntrusiveHierarchy interface
+	SceneDynamicArray<SceneNode*>& getHierarchyChildren()
+	{
+		return m_children;
+	}
+
+	const SceneDynamicArray<SceneNode*>& getHierarchyChildren() const
+	{
+		return m_children;
+	}
+
+	SceneNode* getHierarchyParent() const
+	{
+		return m_parent;
+	}
+
+	SceneNode*& getHierarchyParent()
+	{
+		return m_parent;
+	}
 };
 
 } // end namespace anki

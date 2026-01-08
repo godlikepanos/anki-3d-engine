@@ -22,19 +22,13 @@
 
 namespace anki {
 
-/// @addtogroup util_thread
-/// @{
-
-/// The thread ID.
-/// @memberof Thread
+// The thread ID.
 using ThreadId = U64;
 
-/// Core affinity mask.
-/// @memberof Thread
+// Core affinity mask.
 using ThreadCoreAffinityMask = BitSet<256, U64>;
 
-/// It holds some information to be passed to the thread's callback.
-/// @memberof Thread
+// It holds some information to be passed to the thread's callback.
 class ThreadCallbackInfo
 {
 public:
@@ -42,18 +36,17 @@ public:
 	const char* m_threadName;
 };
 
-/// The type of the tread callback.
-/// @memberof Thread
+// The type of the tread callback.
 using ThreadCallback = Error (*)(ThreadCallbackInfo&);
 
-/// Thread implementation.
+// Thread implementation.
 class Thread
 {
 public:
 	static constexpr U32 kThreadNameMaxLength = 15;
 
-	/// Create a thread with or without a name
-	/// @param[in] name The name of the new thread. Can be nullptr.
+	// Create a thread with or without a name
+	// name: The name of the new thread. Can be nullptr.
 	Thread(const Char* name);
 
 	Thread(const Thread&) = delete;
@@ -66,17 +59,17 @@ public:
 
 	Thread& operator=(const Thread&) = delete;
 
-	/// Start the thread.
-	/// @param userData The user data of the thread callback
-	/// @param callback The thread callback that will be executed
-	/// @param coreAffintyMask Pin the thread to a number of cores.
+	// Start the thread.
+	// userData: The user data of the thread callback
+	// callback: The thread callback that will be executed
+	// coreAffintyMask: Pin the thread to a number of cores.
 	void start(void* userData, ThreadCallback callback, const ThreadCoreAffinityMask& coreAffinityMask = ThreadCoreAffinityMask(false));
 
-	/// Wait for the thread to finish
-	/// @return The error code of the thread's callback
+	// Wait for the thread to finish
+	// Returns the error code of the thread's callback
 	Error join();
 
-	/// Identify the current thread
+	// Identify the current thread
 	static ThreadId getCurrentThreadId()
 	{
 #if ANKI_POSIX
@@ -86,28 +79,33 @@ public:
 #endif
 	}
 
-	/// Pin to some core.
-	/// @param coreAffintyMask Pin the thread to a number of cores.
+	static ThreadId getMainThreadId()
+	{
+		return m_mainThreadId;
+	}
+
+	// Pin to some core.
+	// coreAffintyMask: Pin the thread to a number of cores.
 	void pinToCores(const ThreadCoreAffinityMask& coreAffintyMask);
 
-	/// Name the current thread.
+	// Name the current thread.
 	static void setCurrentThreadName(const Char* name);
 
 	static const Char* getCurrentThreadName();
 
 private:
-	/// The system native type.
+	// The system native type.
 #if ANKI_POSIX
 	pthread_t m_handle = {};
 #else
-	HANDLE m_handle = 0; ///< The user date to pass to the callback.
+	HANDLE m_handle = 0; // The user date to pass to the callback.
 	Error m_returnCode = Error::kNone;
 #endif
-	void* m_userData = nullptr; ///< The user date to pass to the callback.
-	Array<Char, kThreadNameMaxLength + 1> m_name = {}; ///< The name of the thread.
+	void* m_userData = nullptr; // The user date to pass to the callback.
+	Array<Char, kThreadNameMaxLength + 1> m_name = {}; // The name of the thread.
 	static thread_local Array<Char, kThreadNameMaxLength + 1> m_nameTls;
-	static constexpr const Char* kDefaultThreadName = "AnKiUnnamed"; ///< the name of an unnamed thread.
-	ThreadCallback m_callback = nullptr; ///< The callback.
+	static constexpr const Char* kDefaultThreadName = "AnKiUnnamed"; // the name of an unnamed thread.
+	ThreadCallback m_callback = nullptr; // The callback.
 
 #if ANKI_EXTRA_CHECKS
 	Bool m_started = false;
@@ -116,9 +114,11 @@ private:
 #if ANKI_OS_WINDOWS
 	static DWORD ANKI_WINAPI threadCallback(LPVOID ud);
 #endif
+
+	static ThreadId m_mainThreadId;
 };
 
-/// Mutual exclusion primitive.
+// Mutual exclusion primitive.
 class Mutex
 {
 	friend class ConditionVariable;
@@ -150,7 +150,7 @@ public:
 
 	Mutex& operator=(const Mutex&) = delete;
 
-	/// Lock
+	// Lock
 	void lock()
 	{
 #if ANKI_POSIX
@@ -160,8 +160,7 @@ public:
 #endif
 	}
 
-	/// Try lock
-	/// @return True if it was locked successfully
+	// Try lock. Returns true if it was locked successfully
 	Bool tryLock()
 	{
 #if ANKI_POSIX
@@ -172,7 +171,7 @@ public:
 #endif
 	}
 
-	/// Unlock
+	// Unlock
 	void unlock()
 	{
 #if ANKI_POSIX
@@ -183,7 +182,7 @@ public:
 	}
 
 private:
-	/// The system native type.
+	// The system native type.
 #if ANKI_POSIX
 	pthread_mutex_t m_handle = {};
 #else
@@ -191,7 +190,7 @@ private:
 #endif
 };
 
-/// Dummy mutex. Used mainly in tests.
+// Dummy mutex. Used mainly in tests.
 class DummyMutex
 {
 public:
@@ -212,7 +211,7 @@ public:
 	}
 };
 
-/// Read write mutex.
+// Read write mutex.
 class RWMutex
 {
 public:
@@ -242,7 +241,7 @@ public:
 
 	RWMutex& operator=(const RWMutex&) = delete;
 
-	/// Lock for reading.
+	// Lock for reading.
 	void lockRead()
 	{
 #if ANKI_POSIX
@@ -252,7 +251,7 @@ public:
 #endif
 	}
 
-	/// Unlock from reading.
+	// Unlock from reading.
 	void unlockRead()
 	{
 #if ANKI_POSIX
@@ -262,7 +261,7 @@ public:
 #endif
 	}
 
-	/// Lock for writing.
+	// Lock for writing.
 	void lockWrite()
 	{
 #if ANKI_POSIX
@@ -272,7 +271,7 @@ public:
 #endif
 	}
 
-	/// Unlock from writing.
+	// Unlock from writing.
 	void unlockWrite()
 	{
 #if ANKI_POSIX
@@ -290,7 +289,7 @@ private:
 #endif
 };
 
-/// Condition variable.
+// Condition variable.
 class ConditionVariable
 {
 public:
@@ -320,7 +319,7 @@ public:
 
 	ConditionVariable& operator=(const ConditionVariable&) = delete;
 
-	/// Signal one thread
+	// Signal one thread
 	void notifyOne()
 	{
 #if ANKI_POSIX
@@ -330,7 +329,7 @@ public:
 #endif
 	}
 
-	/// Signal all threads
+	// Signal all threads
 	void notifyAll()
 	{
 #if ANKI_POSIX
@@ -340,8 +339,7 @@ public:
 #endif
 	}
 
-	/// Bock until signaled.
-	/// @param mtx The mutex.
+	// Bock until signaled.
 	void wait(Mutex& mtx)
 	{
 #if ANKI_POSIX
@@ -359,8 +357,7 @@ private:
 #endif
 };
 
-/// Mutual exclusion primitive. Like Mutex. It's better than Mutex only if the critical section will be executed in a
-/// very short period of time.
+// Mutual exclusion primitive. Like Mutex. It's better than Mutex only if the critical section will be executed in a very short period of time.
 class SpinLock
 {
 public:
@@ -370,7 +367,7 @@ public:
 
 	SpinLock& operator=(const SpinLock&) = delete;
 
-	/// Lock.
+	// Lock.
 	void lock()
 	{
 		for(U spinCount = 0; !tryLock(); ++spinCount)
@@ -389,13 +386,13 @@ public:
 		}
 	}
 
-	/// Unlock.
+	// Unlock.
 	void unlock()
 	{
 		m_lock.store(false, AtomicMemoryOrder::kRelease);
 	}
 
-	/// Try to lock.
+	// Try to lock.
 	Bool tryLock()
 	{
 		return !m_lock.load(AtomicMemoryOrder::kRelaxed) && !m_lock.exchange(true, AtomicMemoryOrder::kAcquire);
@@ -405,7 +402,7 @@ private:
 	Atomic<Bool> m_lock = {false};
 };
 
-/// A barrier for thread synchronization. It works almost like boost::barrier.
+// A barrier for thread synchronization. It works almost like boost::barrier.
 class Barrier
 {
 public:
@@ -440,7 +437,7 @@ public:
 
 	Barrier& operator=(const Barrier&) = delete;
 
-	/// Wait until all threads call wait().
+	// Wait until all threads call wait().
 	void wait()
 	{
 #if ANKI_POSIX
@@ -479,7 +476,7 @@ private:
 #endif
 };
 
-/// Semaphore for thread synchronization.
+// Semaphore for thread synchronization.
 class Semaphore
 {
 public:
@@ -506,11 +503,10 @@ public:
 
 	Semaphore& operator=(const Semaphore&) = delete;
 
-	/// Same as sem_wait().
-	/// @code
-	/// if(value == 0) wait();
-	/// --value;
-	/// @endcode
+	// Same as sem_wait().
+	// Code:
+	// if(value == 0) wait();
+	// --value;
 	void wait()
 	{
 #if ANKI_POSIX
@@ -520,11 +516,10 @@ public:
 #endif
 	}
 
-	/// Same as sem_post().
-	/// @code
-	/// ++value;
-	/// wakeupWaiters();
-	/// @endcode
+	// Same as sem_post().
+	// Code:
+	// ++value;
+	// wakeupWaiters();
 	void post()
 	{
 #if ANKI_POSIX
@@ -540,8 +535,8 @@ private:
 #endif
 };
 
-/// Lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
-/// @tparam TMutex Can be Mutex or SpinLock.
+// Lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
+// TMutex: Can be Mutex or SpinLock.
 template<typename TMutex>
 class LockGuard
 {
@@ -576,7 +571,7 @@ private:
 	TMutex* m_mtx;
 };
 
-/// Read lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
+// Read lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
 template<typename TMutex>
 class RLockGuard
 {
@@ -600,7 +595,7 @@ private:
 	TMutex* m_mtx;
 };
 
-/// Write lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
+// Write lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
 template<typename TMutex>
 class WLockGuard
 {
@@ -623,6 +618,5 @@ public:
 private:
 	TMutex* m_mtx;
 };
-/// @}
 
 } // end namespace anki

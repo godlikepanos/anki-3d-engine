@@ -23,7 +23,7 @@ JointComponent::~JointComponent()
 Bool JointComponent::isValid() const
 {
 	SceneNode* parent = m_node->getParent();
-	SceneNode* child = m_node->hasChildren() ? &m_node->getChild(0) : nullptr;
+	SceneNode* child = m_node->getChildrenCount() ? m_node->getChildren()[0] : nullptr;
 
 	BodyComponent* bodyc1 = (parent) ? parent->tryGetFirstComponentOfType<BodyComponent>() : nullptr;
 	BodyComponent* bodyc2 = (child) ? child->tryGetFirstComponentOfType<BodyComponent>() : nullptr;
@@ -45,7 +45,7 @@ void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	SceneNode* parent = node.getParent();
-	SceneNode* child = &node.getChild(0);
+	SceneNode* child = node.getChildren()[0];
 
 	BodyComponent* bodyc1 = parent->tryGetFirstComponentOfType<BodyComponent>();
 	BodyComponent* bodyc2 = child->tryGetFirstComponentOfType<BodyComponent>();

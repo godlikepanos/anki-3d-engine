@@ -517,7 +517,7 @@ void EditorUi::sceneNode(SceneNode& node)
 		treeFlags |= ImGuiTreeNodeFlags_Selected;
 	}
 
-	if(!node.hasChildren())
+	if(!node.getChildrenCount())
 	{
 		treeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
 	}

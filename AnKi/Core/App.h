@@ -31,7 +31,7 @@ ANKI_CVAR(BoolCVar, Core, MaliHwCounters, false, "Enable Mali counters")
 
 ANKI_SVAR(CpuTotalTime, StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
-/// The core class of the engine.
+// The core class of the engine.
 class App
 {
 public:
@@ -49,26 +49,26 @@ public:
 		return m_cacheDir;
 	}
 
-	/// Run the main loop.
+	// Run the main loop.
 	Error mainLoop();
 
-	/// User defined init code that will execute before all subsystems have initialized. Will be executed just before the main loop. Useful for
-	/// setting cvars.
+	// User defined init code that will execute before all subsystems have initialized. Will be executed just before the main loop. Useful for
+	// setting cvars.
 	virtual Error userPreInit()
 	{
 		// Do nothing
 		return Error::kNone;
 	}
 
-	/// User defined init code that will execute after all subsystems have initialized. Will be executed just before the main loop and after
-	/// everything has been initialized.
+	// User defined init code that will execute after all subsystems have initialized. Will be executed just before the main loop and after
+	// everything has been initialized.
 	virtual Error userPostInit()
 	{
 		// Do nothing
 		return Error::kNone;
 	}
 
-	/// User defined code to run along with the other main loop code.
+	// User defined code to run along with the other main loop code.
 	virtual Error userMainLoop([[maybe_unused]] Bool& quit, [[maybe_unused]] Second elapsedTime)
 	{
 		// Do nothing

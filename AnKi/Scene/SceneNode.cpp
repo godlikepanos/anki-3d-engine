@@ -162,7 +162,7 @@ void SceneNode::setName(CString name)
 {
 	const SceneString oldName = getName();
 	m_name = name;
-	SceneGraph::getSingleton().sceneNodeChangedName(*this, oldName);
+	SceneGraph::getSingleton().sceneNodeChangedNameDeferred(*this, oldName);
 }
 
 Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArgs& args)
@@ -246,6 +246,11 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 	}
 
 	return Error::kNone;
+}
+
+void SceneNode::setParent(SceneNode* parent)
+{
+	SceneGraph::getSingleton().setSceneNodeParentDeferred(this, parent);
 }
 
 } // end namespace anki

@@ -45,7 +45,18 @@ ANKI_SVAR(SceneUpdateTime, StatCategory::kTime, "All scene update", StatFlag::kM
 ANKI_SVAR(SceneComponentsUpdated, StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame)
 ANKI_SVAR(SceneNodesUpdated, StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame)
 
-constexpr U32 kUpdateNodeBatchSize = 10;
+constexpr U32 kUpdateNodeBatchSize = 1;
+
+static void deleteNodesRecursively(SceneNode* node)
+{
+	ANKI_ASSERT(node);
+	for(SceneNode* child : node->getChildren())
+	{
+		deleteNodesRecursively(child);
+	}
+
+	deleteInstance(SceneMemoryPool::getSingleton(), node);
+}
 
 class SceneGraph::UpdateSceneNodesCtx
 {
@@ -93,14 +104,14 @@ SceneGraph::SceneGraph()
 
 SceneGraph::~SceneGraph()
 {
-	while(!m_nodesForRegistration.isEmpty())
+	while(!m_deferredOps.m_nodesForRegistration.isEmpty())
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), m_nodesForRegistration.popBack());
+		deleteInstance(SceneMemoryPool::getSingleton(), m_deferredOps.m_nodesForRegistration.popBack());
 	}
 
-	while(!m_nodes.isEmpty())
+	while(!m_rootNodes.isEmpty())
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), m_nodes.popBack());
+		deleteNodesRecursively(m_rootNodes.popBack());
 	}
 
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::freeSingleton();
@@ -160,8 +171,8 @@ SceneNode* SceneGraph::tryFindSceneNode(const CString& name)
 	}
 
 	// Didn't found it, search those up for registration
-	LockGuard lock(m_nodesForRegistrationMtx);
-	for(SceneNode& node : m_nodesForRegistration)
+	LockGuard lock(m_deferredOps.m_mtx);
+	for(SceneNode& node : m_deferredOps.m_nodesForRegistration)
 	{
 		if(node.getName() == name)
 		{
@@ -182,58 +193,8 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Reset the framepool
 	m_framePool.reset();
 
-	// Register new nodes
-	while(!m_nodesForRegistration.isEmpty())
-	{
-		SceneNode* node = m_nodesForRegistration.popFront();
-
-		// Add to dict if it has a name
-		if(node->getName() != "Unnamed")
-		{
-			if(m_nodesDict.find(node->getName()) != m_nodesDict.getEnd())
-			{
-				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node->getName().cstr());
-			}
-			else
-			{
-				m_nodesDict.emplace(node->getName(), node);
-			}
-		}
-
-		// Add to list
-		m_nodes.pushBack(node);
-		++m_nodeCount;
-	}
-
-	// Re-index renamed nodes
-	for(auto& pair : m_nodesRenamed)
-	{
-		SceneNode& node = *pair.first;
-		CString oldName = pair.second;
-
-		auto it = m_nodesDict.find(oldName);
-		if(it != m_nodesDict.getEnd())
-		{
-			m_nodesDict.erase(it);
-		}
-		else
-		{
-			ANKI_ASSERT(oldName == "Unnamed" && "Didn't found the SceneNode and its name wasn't unnamed");
-		}
-
-		if(node.getName() != "Unnamed")
-		{
-			if(m_nodesDict.find(node.getName()) != m_nodesDict.getEnd())
-			{
-				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node.getName().cstr());
-			}
-			else
-			{
-				m_nodesDict.emplace(node.getName(), &node);
-			}
-		}
-	}
-	m_nodesRenamed.destroy();
+	// Deferred ops at the beginning
+	doDeferredOperations();
 
 	// Update physics
 	if(!m_paused) [[likely]]
@@ -257,7 +218,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	UpdateSceneNodesCtx updateCtx(CoreThreadJobManager::getSingleton().getThreadCount());
 	{
 		ANKI_TRACE_SCOPED_EVENT(SceneNodesUpdate);
-		updateCtx.m_crntNode = m_nodes.getBegin();
+		updateCtx.m_crntNode = m_rootNodes.getBegin();
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
 		updateCtx.m_forceUpdateSceneBounds = (m_frame % kForceSetSceneBoundsFrameCount) == 0;
@@ -362,7 +323,10 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		for(SceneNode* node : thread.m_nodesForDeletion)
 		{
 			// Remove from the graph
-			m_nodes.erase(node);
+			if(node->getParent() == nullptr)
+			{
+				m_rootNodes.erase(node);
+			}
 			ANKI_ASSERT(m_nodeCount > 0);
 			--m_nodeCount;
 
@@ -492,7 +456,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(SceneNodeUpdate);
 
-	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
+	IntrusiveList<SceneNode>::ConstIterator end = m_rootNodes.getEnd();
 
 	Bool quit = false;
 	while(!quit)
@@ -517,20 +481,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 					break;
 				}
 
-				SceneNode& node = *ctx.m_crntNode;
-
-				if(node.isMarkedForDeletion())
-				{
-					ctx.m_perThread[tid].m_nodesForDeletion.emplaceBack(&node);
-				}
-				else if(node.getParent() == nullptr)
-				{
-					batch[batchSize++] = &node;
-				}
-				else
-				{
-					// Ignore
-				}
+				batch[batchSize++] = &(*ctx.m_crntNode);
 
 				++ctx.m_crntNode;
 			}
@@ -539,7 +490,15 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 		// Process nodes
 		for(U i = 0; i < batchSize; ++i)
 		{
-			updateNode(tid, *batch[i], ctx);
+			SceneNode& node = *batch[i];
+			if(node.isMarkedForDeletion()) [[unlikely]]
+			{
+				ctx.m_perThread[tid].m_nodesForDeletion.emplaceBack(&node);
+			}
+			else
+			{
+				updateNode(tid, *batch[i], ctx);
+			}
 		}
 	}
 }
@@ -567,12 +526,6 @@ void SceneGraph::setActiveCameraNode(SceneNode* cam)
 	{
 		m_mainCam = m_defaultMainCam;
 	}
-}
-
-void SceneGraph::sceneNodeChangedName(SceneNode& node, CString oldName)
-{
-	LockGuard lock(m_nodesForRegistrationMtx);
-	m_nodesRenamed.emplaceBack(std::pair(&node, oldName));
 }
 
 void SceneGraph::countSerializableNodes(SceneNode& root, U32& serializableNodeCount)
@@ -789,7 +742,7 @@ Error SceneGraph::loadFromFile(CString filename)
 		ANKI_CHECK(node->serializeCommon(serializer, serializationArgs));
 		ANKI_CHECK(node->serialize(serializer));
 
-		m_nodesForRegistration.pushBack(node);
+		m_deferredOps.m_nodesForRegistration.pushBack(node);
 	}
 
 	// Components
@@ -829,6 +782,119 @@ Error SceneGraph::loadFromFile(CString filename)
 
 	ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 	return Error::kNone;
+}
+
+void SceneGraph::doDeferredOperations()
+{
+	// Register new nodes
+	while(!m_deferredOps.m_nodesForRegistration.isEmpty())
+	{
+		SceneNode* node = m_deferredOps.m_nodesForRegistration.popFront();
+
+		// Add to dict if it has a name
+		if(node->getName() != "Unnamed")
+		{
+			if(m_nodesDict.find(node->getName()) != m_nodesDict.getEnd())
+			{
+				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node->getName().cstr());
+			}
+			else
+			{
+				m_nodesDict.emplace(node->getName(), node);
+			}
+		}
+
+		// Add to list
+		ANKI_ASSERT(node->getParent() == nullptr && "New nodes can't have a parent yet");
+		m_rootNodes.pushBack(node);
+		++m_nodeCount;
+	}
+
+	// Renaming
+	{
+		for(auto& pair : m_deferredOps.m_nodesRenamed)
+		{
+			SceneNode& node = *pair.first;
+			CString oldName = pair.second;
+
+			auto it = m_nodesDict.find(oldName);
+			if(it != m_nodesDict.getEnd())
+			{
+				m_nodesDict.erase(it);
+			}
+			else
+			{
+				ANKI_ASSERT(oldName == "Unnamed" && "Didn't found the SceneNode and its name wasn't unnamed");
+			}
+
+			if(node.getName() != "Unnamed")
+			{
+				if(m_nodesDict.find(node.getName()) != m_nodesDict.getEnd())
+				{
+					ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node.getName().cstr());
+				}
+				else
+				{
+					m_nodesDict.emplace(node.getName(), &node);
+				}
+			}
+		}
+
+		m_deferredOps.m_nodesRenamed.destroy();
+	}
+
+	// Hierarchy changes
+	{
+		for(auto& pair : m_deferredOps.m_nodesParentChanged)
+		{
+			SceneNode* child = pair.first;
+			SceneNode* parent = pair.second;
+
+			const Bool childHasParent = child->getParent() != nullptr;
+			const Bool childIsRootNode = !childHasParent;
+
+			// Some checks
+			if(childIsRootNode)
+			{
+				[[maybe_unused]] Bool found = false;
+				for(const SceneNode& other : m_rootNodes)
+				{
+					if(other.getUuid() == child->getUuid())
+					{
+						found = true;
+					}
+				}
+				ANKI_ASSERT(found);
+			}
+
+			child->removeParent();
+
+			if(parent)
+			{
+				// Add new parent
+
+				if(childIsRootNode)
+				{
+					// Child was root node but not anymore, remove it from the list
+					m_rootNodes.erase(child);
+				}
+
+				static_cast<SceneNode::Base*>(child)->setParent(parent);
+			}
+			else
+			{
+				// Remove parent
+
+				if(childHasParent)
+				{
+					// Child wasn't in the rootNodes list, add it
+					m_rootNodes.pushBack(child);
+				}
+			}
+		}
+
+		m_deferredOps.m_nodesParentChanged.destroy();
+	}
 }
 
 } // end namespace anki

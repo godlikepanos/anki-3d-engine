@@ -26,6 +26,8 @@ class PhysicsWorld;
 #define ANKI_SCENE_LOGF(...) ANKI_LOG("SCEN", kFatal, __VA_ARGS__)
 #define ANKI_SCENE_LOGV(...) ANKI_LOG("SCEN", kVerbose, __VA_ARGS__)
 
+#define ANKI_ASSERT_MAIN_THREAD() ANKI_ASSERT(Thread::getMainThreadId() == Thread::getCurrentThreadId())
+
 class SceneMemoryPool : public HeapMemoryPool, public MakeSingleton<SceneMemoryPool>
 {
 	template<typename>

@@ -9,6 +9,8 @@ namespace anki {
 
 thread_local Array<Char, Thread::kThreadNameMaxLength + 1> Thread::m_nameTls = {};
 
+ThreadId Thread::m_mainThreadId = Thread::getCurrentThreadId();
+
 Thread::Thread(const Char* name)
 {
 	if(name)
