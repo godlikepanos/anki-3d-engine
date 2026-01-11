@@ -1042,6 +1042,7 @@ public:
 
 	void validate() const
 	{
+#if ANKI_ASSERTIONS_ENABLED
 		m_descriptor.validate();
 		for([[maybe_unused]] VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 		{
@@ -1054,6 +1055,7 @@ public:
 		{
 			ANKI_ASSERT(m_pixel.m_colorRenderTargetWritemask.get(i) && "Should write to all attachments");
 		}
+#endif
 	}
 
 	/// Combine shader reflection.

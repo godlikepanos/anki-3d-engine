@@ -85,11 +85,6 @@ public:
 		return *m_editorUi;
 	}
 
-	U32 getSceneNodesCount() const
-	{
-		return m_nodeCount;
-	}
-
 	EventManager& getEventManager()
 	{
 		return m_events;
@@ -111,13 +106,9 @@ public:
 	template<typename Func>
 	void visitNodes(Func func)
 	{
-		for(SceneNode& node : m_rootNodes)
+		for(SceneNodeEntry& entry : m_nodes)
 		{
-			const FunctorContinue cont = node.visitThisAndChildren([&](SceneNode& n) {
-				return func(n);
-			});
-
-			if(cont == FunctorContinue::kStop)
+			if(func(*entry.getNode()) == FunctorContinue::kStop)
 			{
 				break;
 			}
@@ -132,7 +123,7 @@ public:
 		TNode* node = newInstance<TNode>(SceneMemoryPool::getSingleton(), name);
 		node->m_uuid = getNewUuid();
 		LockGuard lock(m_deferredOps.m_mtx);
-		m_deferredOps.m_nodesForRegistration.pushBack(node);
+		m_deferredOps.m_nodesForRegistration.emplaceBack(node);
 		return node;
 	}
 
@@ -203,6 +194,26 @@ public:
 private:
 	class UpdateSceneNodesCtx;
 
+	class SceneNodeEntry
+	{
+	public:
+		U64 m_nodePtr : 63;
+		U64 m_isRoot : 1;
+
+		SceneNode* getNode() const
+		{
+			return numberToPtr<SceneNode*>(m_nodePtr << 1u);
+		}
+
+		void setNode(SceneNode* node)
+		{
+			U64 ptr = ptrToNumber(node);
+			ptr >>= 1u;
+			m_nodePtr = ptr;
+			ANKI_ASSERT(getNode() == node);
+		}
+	};
+
 	class InitMemPoolDummy
 	{
 	public:
@@ -216,8 +227,7 @@ private:
 
 	mutable StackMemoryPool m_framePool;
 
-	IntrusiveList<SceneNode> m_rootNodes;
-	U32 m_nodeCount = 0;
+	SceneBlockArray<SceneNodeEntry> m_nodes;
 	GrHashMap<CString, SceneNode*> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
@@ -235,7 +245,7 @@ private:
 	class
 	{
 	public:
-		IntrusiveList<SceneNode> m_nodesForRegistration;
+		SceneDynamicArray<SceneNode*> m_nodesForRegistration;
 		SceneDynamicArray<std::pair<SceneNode*, SceneString>> m_nodesRenamed;
 		SceneDynamicArray<std::pair<SceneNode*, SceneNode*>> m_nodesParentChanged;
 		SpinLock m_mtx;

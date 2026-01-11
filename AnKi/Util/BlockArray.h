@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup util_containers
-/// @{
-
-/// Config options for a BlockArray.
+// Config options for a BlockArray.
 template<U32 kElementCountPerBlock>
 class BlockArrayConfig
 {
@@ -26,12 +23,12 @@ public:
 	}
 };
 
-/// Config options for a BlockArray.
+// Config options for a BlockArray.
 class BlockArrayDefaultConfig : public BlockArrayConfig<64>
 {
 };
 
-/// BlockArray iterator.
+// BlockArray iterator.
 template<typename TValuePointer, typename TValueReference, typename TBlockArrayPtr>
 class BlockArrayIterator
 {
@@ -42,21 +39,21 @@ class BlockArrayIterator
 	friend class BlockArrayIterator;
 
 public:
-	/// Default constructor.
+	// Default constructor.
 	BlockArrayIterator()
 		: m_array(nullptr)
 		, m_elementIdx(kMaxU32)
 	{
 	}
 
-	/// Copy.
+	// Copy.
 	BlockArrayIterator(const BlockArrayIterator& b)
 		: m_array(b.m_array)
 		, m_elementIdx(b.m_elementIdx)
 	{
 	}
 
-	/// Allow conversion from iterator to const iterator.
+	// Allow conversion from iterator to const iterator.
 	template<typename YValuePointer, typename YValueReference, typename YBlockArrayPtr>
 	BlockArrayIterator(const BlockArrayIterator<YValuePointer, YValueReference, YBlockArrayPtr>& b)
 		: m_array(b.m_array)
@@ -115,7 +112,7 @@ public:
 		return !(*this == b);
 	}
 
-	/// Returns the imaginary index inside the BlockArray.
+	// Returns the imaginary index inside the BlockArray.
 	U32 getArrayIndex() const
 	{
 		check();
@@ -133,7 +130,7 @@ private:
 	}
 };
 
-/// It's a type of dynamic array that unlike DynamicArray doesn't move elements around when it shrinks or grows the storage.
+// It's a type of dynamic array that unlike DynamicArray doesn't move elements around when it shrinks or grows the storage.
 template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TConfig = BlockArrayDefaultConfig>
 class BlockArray
 {
@@ -157,28 +154,28 @@ public:
 	{
 	}
 
-	/// Copy.
+	// Copy.
 	BlockArray(const BlockArray& b)
 	{
 		*this = b;
 	}
 
-	/// Move.
+	// Move.
 	BlockArray(BlockArray&& b)
 	{
 		*this = std::move(b);
 	}
 
-	/// Destroy.
+	// Destroy.
 	~BlockArray()
 	{
 		destroy();
 	}
 
-	/// Copy.
+	// Copy.
 	BlockArray& operator=(const BlockArray& b);
 
-	/// Move operator.
+	// Move operator.
 	BlockArray& operator=(BlockArray&& b)
 	{
 		destroy();
@@ -209,52 +206,74 @@ public:
 		return const_cast<Reference>(constSelf[idx]);
 	}
 
-	/// Get begin.
+	// Get begin.
 	Iterator getBegin()
 	{
 		return Iterator(this, m_firstIndex);
 	}
 
-	/// Get begin.
+	// Get begin.
 	ConstIterator getBegin() const
 	{
 		return ConstIterator(this, m_firstIndex);
 	}
 
-	/// Get end.
+	// Get end.
 	Iterator getEnd()
 	{
 		return Iterator(this, m_endIndex);
 	}
 
-	/// Get end.
+	// Get end.
 	ConstIterator getEnd() const
 	{
 		return ConstIterator(this, m_endIndex);
 	}
 
-	/// Get begin.
+	// Get begin.
 	Iterator begin()
 	{
 		return getBegin();
 	}
 
-	/// Get begin.
+	// Get begin.
 	ConstIterator begin() const
 	{
 		return getBegin();
 	}
 
-	/// Get end.
+	// Get end.
 	Iterator end()
 	{
 		return getEnd();
 	}
 
-	/// Get end.
+	// Get end.
 	ConstIterator end() const
 	{
 		return getEnd();
+	}
+
+	Iterator getFront()
+	{
+		return getBegin();
+	}
+
+	ConstIterator getFront() const
+	{
+		return getBegin();
+	}
+
+	Iterator getBack()
+	{
+		ANKI_ASSERT(m_endIndex > 0);
+		return Iterator(this, m_endIndex - 1);
+	}
+
+	ConstIterator getBack() const
+	{
+		ANKI_ASSERT(m_endIndex > 0);
+		return ConstIterator(this, m_endIndex - 1);
 	}
 
 	U32 getSize() const
@@ -267,19 +286,19 @@ public:
 		return m_elementCount == 0;
 	}
 
-	/// Destroy the array and free its elements.
+	// Destroy the array and free its elements.
 	void destroy();
 
-	/// Emplace somewhere in some block.
+	// Emplace somewhere in some block.
 	template<typename... TArgs>
 	Iterator emplace(TArgs&&... args);
 
-	/// Removes one element.
-	/// @param at Points to the position of the element to remove.
+	// Removes one element.
+	// at: Points to the position of the element to remove.
 	void erase(Iterator idx);
 
-	/// Removes one element.
-	/// @param at Points to the position of the element to remove.
+	// Removes one element.
+	// at: Points to the position of the element to remove.
 	void erase(U32 index)
 	{
 		erase(indexToIterator(index));
@@ -337,7 +356,7 @@ private:
 	DynamicArray<BlockMetadata, TMemoryPool> m_blockMetadatas;
 	U32 m_elementCount = 0;
 	U32 m_firstIndex = 0;
-	U32 m_endIndex = 0; ///< The index after the last.
+	U32 m_endIndex = 0; // The index after the last.
 
 	U32 getFirstElementIndex() const
 	{
@@ -372,7 +391,6 @@ private:
 
 	U32 getNextElementIndex(U32 crnt) const;
 };
-/// @}
 
 } // end namespace anki
 

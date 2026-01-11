@@ -244,8 +244,9 @@ public:
 		return m_allSurfacesOrVolumes || b.m_allSurfacesOrVolumes || (m_mipmap == b.m_mipmap && m_face == b.m_face && m_layer == b.m_layer);
 	}
 
-	void validate(const Texture& tex) const
+	void validate([[maybe_unused]] const Texture& tex) const
 	{
+#if ANKI_ASSERTIONS_ENABLED
 		if(!m_allSurfacesOrVolumes)
 		{
 			ANKI_ASSERT(m_mipmap <= tex.getMipmapCount());
@@ -274,6 +275,7 @@ public:
 		{
 			ANKI_ASSERT(m_depthStencilAspect == DepthStencilAspectBit::kNone);
 		}
+#endif
 	}
 
 private:

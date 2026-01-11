@@ -7,9 +7,6 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Util/Hierarchy.h>
-#include <AnKi/Util/BitMask.h>
-#include <AnKi/Util/BitSet.h>
-#include <AnKi/Util/List.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/DynamicBitSet.h>
 
@@ -68,7 +65,7 @@ public:
 };
 
 // Base class of the scene
-class SceneNode : private IntrusiveHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
+class SceneNode : private IntrusiveHierarchy<SceneNode>
 {
 	friend class SceneComponent;
 	friend class SceneGraph;
@@ -541,6 +538,8 @@ private:
 
 	SceneString m_name; // A unique name.
 	U32 m_uuid = 0;
+
+	U32 m_nodeArrayIndex = kMaxU32;
 
 	// Flags
 	Bool m_markedForDeletion : 1 = false;
