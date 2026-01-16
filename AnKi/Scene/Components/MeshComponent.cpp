@@ -10,8 +10,8 @@
 
 namespace anki {
 
-MeshComponent::MeshComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+MeshComponent::MeshComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
 }
 

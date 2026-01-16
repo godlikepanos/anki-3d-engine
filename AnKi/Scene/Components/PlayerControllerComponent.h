@@ -16,7 +16,7 @@ class PlayerControllerComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(PlayerControllerComponent)
 
 public:
-	PlayerControllerComponent(SceneNode* node, U32 uuid);
+	PlayerControllerComponent(const SceneComponentInitInfo& init);
 
 	void setVelocity(F32 forwardSpeed, F32 jumpSpeed, Vec3 forwardDir, Bool crouch)
 	{

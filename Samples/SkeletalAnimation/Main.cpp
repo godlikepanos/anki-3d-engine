@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <cstdio>
 #include <Samples/Common/SampleApp.h>
 
 using namespace anki;
@@ -16,7 +15,7 @@ public:
 	AnimationResourcePtr m_floatAnim;
 	AnimationResourcePtr m_waveAnim;
 
-	Error sampleExtraInit() override
+	Error userPostInit() override
 	{
 		ScriptResourcePtr script;
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));

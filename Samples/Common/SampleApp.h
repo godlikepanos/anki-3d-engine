@@ -24,14 +24,7 @@ public:
 
 	Error userPreInit() override;
 
-	Error userPostInit() override
-	{
-		return sampleExtraInit();
-	}
-
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
-
-	virtual Error sampleExtraInit() = 0;
 };
 
 } // end namespace anki

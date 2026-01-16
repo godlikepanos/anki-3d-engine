@@ -10,15 +10,15 @@
 
 namespace anki {
 
-PlayerControllerComponent::PlayerControllerComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+PlayerControllerComponent::PlayerControllerComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
-	PhysicsPlayerControllerInitInfo init;
-	init.m_initialPosition = node->getWorldTransform().getOrigin().xyz;
-	m_player = PhysicsWorld::getSingleton().newPlayerController(init);
+	PhysicsPlayerControllerInitInfo pinit;
+	pinit.m_initialPosition = init.m_node->getWorldTransform().getOrigin().xyz;
+	m_player = PhysicsWorld::getSingleton().newPlayerController(pinit);
 	m_player->setUserData(this);
 
-	node->setIgnoreParentTransform(true);
+	init.m_node->setIgnoreParentTransform(true);
 }
 
 void PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)

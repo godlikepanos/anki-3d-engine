@@ -28,7 +28,7 @@ class JointComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(JointComponent)
 
 public:
-	JointComponent(SceneNode* node, U32 uuid);
+	JointComponent(const SceneComponentInitInfo& init);
 
 	~JointComponent();
 

@@ -43,7 +43,7 @@ class SkinComponent : public SceneComponent
 public:
 	static constexpr U32 kMaxAnimationTracks = 4;
 
-	SkinComponent(SceneNode* node, U32 uuid);
+	SkinComponent(const SceneComponentInitInfo& init);
 
 	~SkinComponent();
 

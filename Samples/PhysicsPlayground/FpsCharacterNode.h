@@ -32,7 +32,7 @@ public:
 	SceneNode* m_cameraNode = nullptr;
 	SceneNode* m_shotgunNode = nullptr;
 
-	FpsCharacter(CString name);
+	FpsCharacter(const SceneNodeInitInfo& inf);
 
 private:
 	void fireShotgun();

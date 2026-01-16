@@ -16,7 +16,7 @@ class EditorUiNode : public SceneNode
 public:
 	EditorUi m_editorUi;
 
-	EditorUiNode(CString name);
+	EditorUiNode(const SceneNodeInitInfo& inf);
 
 private:
 	void update(SceneNodeUpdateInfo& info) override;

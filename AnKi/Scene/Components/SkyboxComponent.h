@@ -31,8 +31,8 @@ class SkyboxComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(SkyboxComponent)
 
 public:
-	SkyboxComponent(SceneNode* node, U32 uuid)
-		: SceneComponent(node, kClassType, uuid)
+	SkyboxComponent(const SceneComponentInitInfo& init)
+		: SceneComponent(kClassType, init)
 	{
 	}
 

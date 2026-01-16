@@ -12,10 +12,9 @@
 
 namespace anki {
 
-ScriptComponent::ScriptComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+ScriptComponent::ScriptComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
-	ANKI_ASSERT(node);
 }
 
 ScriptComponent::~ScriptComponent()

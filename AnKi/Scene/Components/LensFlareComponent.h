@@ -16,7 +16,7 @@ class LensFlareComponent final : public SceneComponent
 	ANKI_SCENE_COMPONENT(LensFlareComponent)
 
 public:
-	LensFlareComponent(SceneNode* node, U32 uuid);
+	LensFlareComponent(const SceneComponentInitInfo& init);
 
 	~LensFlareComponent();
 

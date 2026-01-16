@@ -65,8 +65,8 @@ public:
 	}
 };
 
-StatsUiNode::StatsUiNode(CString name)
-	: SceneNode(name)
+StatsUiNode::StatsUiNode(const SceneNodeInitInfo& inf)
+	: SceneNode(inf)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(

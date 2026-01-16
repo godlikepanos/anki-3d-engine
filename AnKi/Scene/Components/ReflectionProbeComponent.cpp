@@ -12,10 +12,10 @@
 
 namespace anki {
 
-ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+ReflectionProbeComponent::ReflectionProbeComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
-	m_worldPos = node->getWorldTransform().getOrigin().xyz;
+	m_worldPos = init.m_node->getWorldTransform().getOrigin().xyz;
 	m_gpuSceneProbe.allocate();
 
 	TextureInitInfo texInit("ReflectionProbe");

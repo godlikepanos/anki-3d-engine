@@ -10,14 +10,11 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// A node that draws a UI with stats.
+// A node that draws a UI with stats.
 class StatsUiNode : public SceneNode
 {
 public:
-	StatsUiNode(CString name);
+	StatsUiNode(const SceneNodeInitInfo& inf);
 
 	~StatsUiNode();
 
@@ -39,6 +36,5 @@ private:
 
 	void draw(UiCanvas& canvas);
 };
-/// @}
 
 } // end namespace anki

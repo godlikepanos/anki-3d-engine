@@ -9,8 +9,8 @@
 
 namespace anki {
 
-DeveloperConsoleUiNode::DeveloperConsoleUiNode(CString name)
-	: SceneNode(name)
+DeveloperConsoleUiNode::DeveloperConsoleUiNode(const SceneNodeInitInfo& inf)
+	: SceneNode(inf)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(

@@ -16,8 +16,8 @@ class MoveComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(MoveComponent)
 
 public:
-	MoveComponent(SceneNode* node, U32 uuid)
-		: SceneComponent(node, kClassType, uuid)
+	MoveComponent(const SceneComponentInitInfo& init)
+		: SceneComponent(kClassType, init)
 	{
 		m_gpuSceneTransforms.allocate();
 	}

@@ -14,11 +14,11 @@
 
 namespace anki {
 
-BodyComponent::BodyComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
-	, m_node(node)
+BodyComponent::BodyComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
+	, m_node(init.m_node)
 {
-	node->setIgnoreParentTransform(true);
+	m_node->setIgnoreParentTransform(true);
 }
 
 BodyComponent::~BodyComponent()

@@ -10,8 +10,8 @@
 
 namespace anki {
 
-FogDensityComponent::FogDensityComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+FogDensityComponent::FogDensityComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
 	m_gpuSceneVolume.allocate();
 }

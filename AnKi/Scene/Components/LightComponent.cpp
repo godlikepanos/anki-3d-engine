@@ -65,14 +65,14 @@ static void solarPosition(U32 year, U32 month, U32 day, F32 hourUtc, F32 latitud
 	}
 }
 
-LightComponent::LightComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+LightComponent::LightComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 	, m_type(LightComponentType::kPoint)
 {
 	m_point.m_radius = 1.0f;
 
 	setLightComponentType(LightComponentType::kPoint);
-	m_worldTransform = node->getWorldTransform();
+	m_worldTransform = init.m_node->getWorldTransform();
 }
 
 LightComponent::~LightComponent()

@@ -7,7 +7,6 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
-
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/DecalComponent.h>
@@ -41,18 +40,29 @@ namespace anki {
 							getName().cstr()); \
 			return nullptr; \
 		} \
-		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(this, SceneGraph::getSingleton().getNewUuid()); \
+		SceneComponentInitInfo compInit; \
+		compInit.m_node = this; \
+		compInit.m_componentUuid = SceneGraph::getSingleton().m_scenes[m_sceneIndex].getNewNodeUuid(); \
+		compInit.m_sceneUuid = m_sceneUuid; \
+		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(compInit); \
 		it->setArrayIndex(it.getArrayIndex()); \
 		addComponent(&(*it)); \
 		return &(*it); \
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
-SceneNode::SceneNode(CString name)
+SceneNode::SceneNode(const SceneNodeInitInfo& inf)
+	: m_nodeUuid(inf.m_nodeUuid)
+	, m_sceneUuid(inf.m_sceneUuid)
+	, m_sceneIndex(U8(inf.m_sceneIndex))
 {
-	if(name)
+	ANKI_ASSERT(m_nodeUuid > 0 && m_nodeUuid == inf.m_nodeUuid);
+	ANKI_ASSERT(m_sceneUuid > 0 && m_sceneUuid == inf.m_sceneUuid);
+	ANKI_ASSERT(inf.m_sceneIndex < kMaxU32 && m_sceneIndex == inf.m_sceneIndex);
+
+	if(inf.m_name)
 	{
-		m_name = name;
+		m_name = inf.m_name;
 	}
 
 	// Add the implicit MoveComponent
@@ -184,20 +194,6 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 
 	// Components
 	U32 componentCount = 0;
-
-	if(serializer.isInWriteMode())
-	{
-		for(SceneComponent* comp : m_components)
-		{
-			if(comp->getSerialization())
-			{
-				++componentCount;
-			}
-		}
-	}
-
-	ANKI_SERIALIZE(componentCount, 1);
-
 	SceneDynamicArray<U32> componentUuids;
 	if(serializer.isInWriteMode())
 	{
@@ -205,14 +201,19 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 		{
 			if(comp->getSerialization())
 			{
-				componentUuids.emplaceBack(comp->getUuid());
+				++componentCount;
+
+				componentUuids.emplaceBack(comp->getComponentUuid());
 
 				args.m_write.m_serializableComponentMask[comp->getType()].setBit(comp->getArrayIndex());
 				++args.m_write.m_componentsToBeSerializedCount[comp->getType()];
 			}
 		}
 	}
-	else
+
+	ANKI_SERIALIZE(componentCount, 1);
+
+	if(serializer.isInReadMode())
 	{
 		componentUuids.resize(componentCount, 0);
 	}
@@ -221,21 +222,21 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 
 	if(serializer.isInReadMode())
 	{
-		for(U32 componentUuid : componentUuids)
+		for(U32 uuid : componentUuids)
 		{
-			args.m_read.m_sceneComponentUuidToNode.emplace(componentUuid, this);
+			args.m_read.m_componentUuidToNode.emplace(uuid, this);
 		}
 	}
 
 	// Parent
 	SceneNode* parent = getParent();
-	U32 parentUuid = (parent) ? parent->getUuid() : 0;
+	U32 parentUuid = (parent) ? parent->m_nodeUuid : 0;
 	ANKI_SERIALIZE(parentUuid, 1);
 
 	if(serializer.isInReadMode() && parentUuid > 0)
 	{
-		auto it = args.m_read.m_sceneNodeUuidToNode.find(parentUuid);
-		if(it == args.m_read.m_sceneNodeUuidToNode.getEnd())
+		auto it = args.m_read.m_nodeUuidToNode.find(parentUuid);
+		if(it == args.m_read.m_nodeUuidToNode.getEnd())
 		{
 			ANKI_SCENE_LOGE("Failed to find parent UUID: %u", parentUuid);
 			return Error::kUserData;
@@ -250,6 +251,15 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 
 void SceneNode::setParent(SceneNode* parent)
 {
+	if(parent)
+	{
+		if(!ANKI_EXPECT(parent->m_sceneIndex == m_sceneIndex))
+		{
+			ANKI_SCENE_LOGE("Can't make node %s parent of %s. The don't belong in the same scene", parent->getName().cstr(), getName().cstr());
+			return;
+		}
+	}
+
 	SceneGraph::getSingleton().setSceneNodeParentDeferred(this, parent);
 }
 

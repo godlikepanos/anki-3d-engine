@@ -125,11 +125,30 @@ private:
 	Vec3 m_sceneMax = Vec3(kMinF32);
 };
 
+// Additional data passed to component initialization
+class SceneComponentInitInfo
+{
+public:
+	SceneNode* m_node = nullptr;
+	U32 m_componentUuid = 0;
+	U32 m_sceneUuid = 0;
+};
+
 // Scene node component.
 class SceneComponent
 {
 public:
-	SceneComponent(SceneNode* node, SceneComponentType type, U32 uuid);
+	SceneComponent(SceneComponentType type, const SceneComponentInitInfo& init)
+		: m_type(U8(type))
+		, m_sceneUuid(init.m_sceneUuid)
+		, m_componentUuid(init.m_componentUuid)
+	{
+		ANKI_ASSERT(SceneComponentType(m_type) < SceneComponentType::kCount);
+		ANKI_ASSERT(init.m_node);
+		ANKI_ASSERT(init.m_componentUuid > 0 && init.m_componentUuid == m_componentUuid);
+		ANKI_ASSERT(init.m_sceneUuid > 0 && m_sceneUuid == init.m_sceneUuid);
+		m_serialize = kSceneComponentTypeInfos[m_type].m_serializable;
+	}
 
 	virtual ~SceneComponent() = default;
 
@@ -145,18 +164,25 @@ public:
 
 	U32 getUuid() const
 	{
-		return m_uuid;
+		ANKI_ASSERT(m_sceneUuid && m_componentUuid);
+		return (m_sceneUuid << kSceneComponentUuidBits) | m_componentUuid;
+	}
+
+	ANKI_INTERNAL U32 getComponentUuid() const
+	{
+		ANKI_ASSERT(m_componentUuid > 0);
+		return m_componentUuid;
 	}
 
 	ANKI_INTERNAL U32 getArrayIndex() const
 	{
-		ANKI_ASSERT(m_arrayIdx != kMaxU32 >> 8u);
+		ANKI_ASSERT(m_arrayIdx != (1u << kArrayIdxBits) - 1u);
 		return m_arrayIdx;
 	}
 
 	ANKI_INTERNAL void setArrayIndex(U32 idx)
 	{
-		m_arrayIdx = idx & (kMaxU32 >> 8u);
+		m_arrayIdx = idx & ((1u << kArrayIdxBits) - 1u);
 		ANKI_ASSERT(m_arrayIdx == idx);
 	}
 
@@ -262,12 +288,16 @@ protected:
 	}
 
 private:
-	Timestamp m_timestamp = 1; // Indicates when an update happened
-	U32 m_uuid : 31 = 0;
-	U32 m_serialize : 1 = false;
+	static constexpr U32 kArrayIdxBits = 23u;
 
-	U32 m_arrayIdx : 24 = kMaxU32 >> 8u;
-	U32 m_type : 8 = 0; // Cache the type ID.
+	Timestamp m_timestamp = 1; // Indicates when an update happened
+
+	U32 m_serialize : 1 = false;
+	U32 m_arrayIdx : kArrayIdxBits = (1u << kArrayIdxBits) - 1u;
+	U32 m_type : 8 = 0; // Cache the type ID
+
+	U32 m_sceneUuid : kSceneUuidBits = 0;
+	U32 m_componentUuid : kSceneComponentUuidBits = 0;
 };
 
 } // end namespace anki

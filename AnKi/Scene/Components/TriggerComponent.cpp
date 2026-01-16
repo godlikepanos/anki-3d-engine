@@ -59,8 +59,8 @@ public:
 
 TriggerComponent::MyPhysicsTriggerCallbacks TriggerComponent::m_callbacks;
 
-TriggerComponent::TriggerComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+TriggerComponent::TriggerComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
 }
 

@@ -27,7 +27,7 @@ class FogDensityComponent : public SceneComponent
 public:
 	static constexpr F32 kMinShapeSize = 1.0_cm;
 
-	FogDensityComponent(SceneNode* node, U32 uuid);
+	FogDensityComponent(const SceneComponentInitInfo& init);
 
 	~FogDensityComponent();
 

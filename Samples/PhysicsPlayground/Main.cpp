@@ -13,16 +13,19 @@ class MyApp : public SampleApp
 public:
 	using SampleApp::SampleApp;
 
-	Error sampleExtraInit() override;
+	Error userPreInit() override
+	{
+		ANKI_CHECK(SampleApp::userPreInit());
+		g_cvarCoreStartupScene = "Assets/Scene.lua";
+		return Error::kNone;
+	}
+
+	Error userPostInit() override;
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 };
 
-Error MyApp::sampleExtraInit()
+Error MyApp::userPostInit()
 {
-	ScriptResourcePtr script;
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
-	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
-
 	{
 		FpsCharacter* c = SceneGraph::getSingleton().newSceneNode<FpsCharacter>("FpsCharacter");
 		SceneGraph::getSingleton().setActiveCameraNode(c->m_cameraNode);

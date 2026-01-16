@@ -20,7 +20,7 @@ class ReflectionProbeComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(ReflectionProbeComponent)
 
 public:
-	ReflectionProbeComponent(SceneNode* node, U32 uuid);
+	ReflectionProbeComponent(const SceneComponentInitInfo& init);
 
 	~ReflectionProbeComponent();
 

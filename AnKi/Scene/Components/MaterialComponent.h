@@ -21,7 +21,7 @@ class MaterialComponent final : public SceneComponent
 	ANKI_SCENE_COMPONENT(MaterialComponent)
 
 public:
-	MaterialComponent(SceneNode* node, U32 uuid);
+	MaterialComponent(const SceneComponentInitInfo& init);
 
 	~MaterialComponent();
 
@@ -63,6 +63,8 @@ private:
 
 	Bool m_anyDirty : 1 = true; // A compound flag because it's too difficult to track everything
 	Bool m_movedLastFrame : 1 = true;
+
+	static inline Atomic<U32> m_renderableUuid = {1};
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

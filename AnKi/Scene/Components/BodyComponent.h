@@ -31,7 +31,7 @@ class BodyComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(BodyComponent)
 
 public:
-	BodyComponent(SceneNode* node, U32 uuid);
+	BodyComponent(const SceneComponentInitInfo& init);
 
 	~BodyComponent();
 

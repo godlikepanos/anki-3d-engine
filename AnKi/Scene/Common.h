@@ -20,13 +20,15 @@ class ScriptManager;
 class GrManager;
 class PhysicsWorld;
 
+constexpr U32 kSceneUuidBits = 11;
+constexpr U32 kSceneNodeUuidBits = 21;
+constexpr U32 kSceneComponentUuidBits = kSceneNodeUuidBits;
+
 #define ANKI_SCENE_LOGI(...) ANKI_LOG("SCEN", kNormal, __VA_ARGS__)
 #define ANKI_SCENE_LOGE(...) ANKI_LOG("SCEN", kError, __VA_ARGS__)
 #define ANKI_SCENE_LOGW(...) ANKI_LOG("SCEN", kWarning, __VA_ARGS__)
 #define ANKI_SCENE_LOGF(...) ANKI_LOG("SCEN", kFatal, __VA_ARGS__)
 #define ANKI_SCENE_LOGV(...) ANKI_LOG("SCEN", kVerbose, __VA_ARGS__)
-
-#define ANKI_ASSERT_MAIN_THREAD() ANKI_ASSERT(Thread::getMainThreadId() == Thread::getCurrentThreadId())
 
 class SceneMemoryPool : public HeapMemoryPool, public MakeSingleton<SceneMemoryPool>
 {

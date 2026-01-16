@@ -12,17 +12,30 @@
 
 namespace anki {
 
+// Opaque data passed to the constructor
+class SceneNodeInitInfo
+{
+	friend class SceneNode;
+	friend class SceneGraph;
+
+private:
+	CString m_name;
+	U32 m_nodeUuid = 0;
+	U32 m_sceneUuid = 0;
+	U32 m_sceneIndex = kMaxU32;
+};
+
 class SceneNodeRegistryRecord : public GlobalRegistryRecord
 {
 public:
 	using GetClassSizeCallback = U32 (*)();
-	using ConstructCallback = void (*)(void*, CString);
+	using ConstructCallback = void (*)(void*, const SceneNodeInitInfo&);
 
 	GetClassSizeCallback m_getClassSizeCallback = nullptr;
 	ConstructCallback m_constructCallback = nullptr;
 
-	SceneNodeRegistryRecord(const Char* name, GetClassSizeCallback getClassSizeCallback, ConstructCallback constructCallback)
-		: GlobalRegistryRecord(name)
+	SceneNodeRegistryRecord(const Char* className, GetClassSizeCallback getClassSizeCallback, ConstructCallback constructCallback)
+		: GlobalRegistryRecord(className)
 		, m_getClassSizeCallback(getClassSizeCallback)
 		, m_constructCallback(constructCallback)
 	{
@@ -35,9 +48,9 @@ public:
 	{ \
 		return U32(sizeof(className)); \
 	} \
-	static void constructCallback(void* memory, CString sceneNodeName) \
+	static void constructCallback(void* memory, const SceneNodeInitInfo& inf) \
 	{ \
-		::new(memory) className(sceneNodeName); \
+		::new(memory) className(inf); \
 	} \
 	inline static SceneNodeRegistryRecord m_registryRecord{ANKI_STRINGIZE(className), getClassSizeCallback, constructCallback}; \
 	const SceneNodeRegistryRecord* getSceneNodeRegistryRecord() const override \
@@ -76,9 +89,7 @@ class SceneNode : private IntrusiveHierarchy<SceneNode>
 public:
 	using Base = IntrusiveHierarchy<SceneNode>;
 
-	// The one and only constructor.
-	// name: The unique name of the node. If it's empty the the node is not searchable.
-	SceneNode(CString name);
+	SceneNode(const SceneNodeInitInfo& inf);
 
 	virtual ~SceneNode();
 
@@ -93,7 +104,14 @@ public:
 
 	U32 getUuid() const
 	{
-		return m_uuid;
+		ANKI_ASSERT(m_sceneUuid && m_nodeUuid);
+		return (m_sceneUuid << kSceneNodeUuidBits) | m_nodeUuid;
+	}
+
+	ANKI_INTERNAL U32 getNodeUuid() const
+	{
+		ANKI_ASSERT(m_nodeUuid > 0);
+		return m_nodeUuid;
 	}
 
 	// Hierarchy manipulation //
@@ -531,15 +549,20 @@ private:
 		class
 		{
 		public:
-			SceneHashMap<U32, SceneNode*> m_sceneNodeUuidToNode;
-			SceneHashMap<U32, SceneNode*> m_sceneComponentUuidToNode;
+			SceneHashMap<U32, SceneNode*> m_nodeUuidToNode;
+			SceneHashMap<U32, SceneNode*> m_componentUuidToNode;
 		} m_read;
 	};
 
 	SceneString m_name; // A unique name.
-	U32 m_uuid = 0;
 
-	U32 m_nodeArrayIndex = kMaxU32;
+	U32 m_nodeArrayIndex = kMaxU32; // Index in Scene::m_nodes
+	U32 m_updatableNodesArrayIndex = kMaxU32; // Index in SceneGraph::m_updatableNodes
+
+	U32 m_nodeUuid : kSceneNodeUuidBits = 0;
+	U32 m_sceneUuid : kSceneUuidBits = 0;
+
+	U8 m_sceneIndex = kMaxU8; // Index in SceneGraph::m_scenes
 
 	// Flags
 	Bool m_markedForDeletion : 1 = false;

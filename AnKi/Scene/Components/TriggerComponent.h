@@ -23,7 +23,7 @@ class TriggerComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(TriggerComponent)
 
 public:
-	TriggerComponent(SceneNode* node, U32 uuid);
+	TriggerComponent(const SceneComponentInitInfo& init);
 
 	~TriggerComponent();
 

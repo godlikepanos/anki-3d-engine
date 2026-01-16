@@ -18,8 +18,8 @@ class UiComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(UiComponent)
 
 public:
-	UiComponent(SceneNode* node, U32 uuid)
-		: SceneComponent(node, kClassType, uuid)
+	UiComponent(const SceneComponentInitInfo& init)
+		: SceneComponent(kClassType, init)
 	{
 	}
 

@@ -134,8 +134,8 @@ struct GpuSceneLight
 	U32 m_isSpotLight : 1;
 	U32 m_shadow : 1;
 	U32 m_cpuFeedback : 1; // If true the GPU visibility will inform the CPU about it
-	U32 m_sceneNodeUuid : 28; // For object picking
-	U32 m_componentArrayIndex; // Array index of the LightComponent in the CPU scene.
+	U32 m_componentArrayIndex : 28; // Array index of the LightComponent in the CPU scene.
+	U32 m_sceneNodeUuid; // For object picking
 	U32 m_componentUuid; // The UUID of the LightComponent
 	F32 m_innerCos; // Only for spot light.
 
@@ -153,7 +153,7 @@ static_assert(sizeof(GpuSceneLight) % sizeof(Vec4) == 0);
 struct GpuSceneReflectionProbe
 {
 	Vec3 m_position; // Position of the probe in world space.
-	U32 m_cubeTexture : 30; // Bindless index of the reflection texture
+	U32 m_cubeTexture : 31; // Bindless index of the reflection texture
 	U32 m_cpuFeedback : 1;
 
 	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
@@ -176,13 +176,13 @@ struct GpuSceneGlobalIlluminationProbe
 	U32 m_componentUuid; // The UUID of the GlobalIlluminationProbeComponent
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_componentArrayIndex; // Array in the CPU scene.
+	U32 m_componentArrayIndex : 31; // Array in the CPU scene.
+	U32 m_cpuFeedback : 1;
 
 	U32 m_volumeTexture; // Bindless index of the irradiance volume texture.
 	F32 m_halfTexelSizeU; // (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
 	F32 m_fadeDistance; // Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less
-	U32 m_cpuFeedback : 1;
-	U32 m_sceneNodeUuid : 31; // For object picking
+	U32 m_sceneNodeUuid; // For object picking
 };
 constexpr U32 kSizeof_GpuSceneGlobalIlluminationProbe = 3u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneGlobalIlluminationProbe) == kSizeof_GpuSceneGlobalIlluminationProbe);
@@ -211,14 +211,17 @@ static_assert(sizeof(GpuSceneDecal) % sizeof(Vec4) == 0);
 struct GpuSceneFogDensityVolume
 {
 	Vec3 m_aabbMinOrSphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_isBox : 1 ANKI_CPP_CODE(= 1);
-	U32 m_sceneNodeUuid : 30; // For object picking
+	U32 m_isBox ANKI_CPP_CODE(= 1);
 
 	Vec3 m_aabbMaxOrSphereRadius ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	F32 m_density;
+
+	U32 m_sceneNodeUuid; // For object picking
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
 };
-constexpr U32 kSizeof_GpuSceneFogDensityVolume = 2u * sizeof(Vec4);
-static_assert(sizeof(GpuSceneFogDensityVolume) == kSizeof_GpuSceneFogDensityVolume);
+static_assert(sizeof(GpuSceneFogDensityVolume) % sizeof(Vec4) == 0);
 
 enum class GpuSceneNonRenderableObjectType : U32
 {

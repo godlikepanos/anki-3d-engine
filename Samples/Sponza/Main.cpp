@@ -12,19 +12,29 @@ class MyApp : public SampleApp
 public:
 	using SampleApp::SampleApp;
 
-	Error sampleExtraInit() final
+	Error userPostInit() final
 	{
-		ScriptResourcePtr script;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
-		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
+		g_cvarCoreStartupScene = "Assets/Scene.lua";
+		return Error::kNone;
+	}
 
-		SceneNode& knight = SceneGraph::getSingleton().findSceneNode("MESH_kinght.001");
-		AnimationResourcePtr anim;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Armature_mixamo.com_Layer0_2ff0b9b4a30af3d0.ankianim", anim));
-		AnimationPlayInfo inf;
-		inf.m_repeatTimes = -1;
-		inf.m_animationSpeedScale = 2.1f;
-		knight.getFirstComponentOfType<SkinComponent>().playAnimation(0, anim, inf);
+	Error userMainLoop(Bool& quit, Second elapsedTime) final
+	{
+		ANKI_CHECK(SampleApp::userMainLoop(quit, elapsedTime));
+
+		static Bool firstTime = true;
+		if(firstTime)
+		{
+			firstTime = false;
+
+			SceneNode& knight = SceneGraph::getSingleton().findSceneNode("MESH_kinght.001");
+			AnimationResourcePtr anim;
+			ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Armature_mixamo.com_Layer0_2ff0b9b4a30af3d0.ankianim", anim));
+			AnimationPlayInfo inf;
+			inf.m_repeatTimes = -1;
+			inf.m_animationSpeedScale = 2.1f;
+			knight.getFirstComponentOfType<SkinComponent>().playAnimation(0, anim, inf);
+		}
 
 		return Error::kNone;
 	}

@@ -87,6 +87,11 @@ public:
 	template<typename T>
 	Error serialize(String varName, U32 varVersion, Bool varDeprecated, SceneDynamicArray<T>& array) requires(std::is_arithmetic_v<T>)
 	{
+		if(array.getSize() == 0)
+		{
+			return Error::kNone;
+		}
+
 		WeakArray<T> arr(array);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
 	}

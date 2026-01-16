@@ -42,10 +42,11 @@ end
 	event->addAssociatedSceneNode(node);
 }
 
-FpsCharacter::FpsCharacter(CString name)
-	: SceneNode(name)
+FpsCharacter::FpsCharacter(const SceneNodeInitInfo& inf)
+	: SceneNode(inf)
 {
-	newComponent<PlayerControllerComponent>();
+	PlayerControllerComponent* playerc = newComponent<PlayerControllerComponent>();
+	playerc->setSerialization(false);
 
 	SceneNode* cam = SceneGraph::getSingleton().newSceneNode<SceneNode>("FpsCharacterCam");
 	cam->setLocalTransform(Transform(Vec3(0.0f, 2.0f, 0.0f), Mat3::getIdentity(), Vec3(1.0f)));

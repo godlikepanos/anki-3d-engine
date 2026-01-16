@@ -15,7 +15,7 @@ namespace anki {
 class DeveloperConsoleUiNode : public SceneNode
 {
 public:
-	DeveloperConsoleUiNode(CString name);
+	DeveloperConsoleUiNode(const SceneNodeInitInfo& inf);
 
 	~DeveloperConsoleUiNode();
 

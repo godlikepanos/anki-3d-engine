@@ -33,7 +33,7 @@ class LightComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(LightComponent)
 
 public:
-	LightComponent(SceneNode* node, U32 uuid);
+	LightComponent(const SceneComponentInitInfo& init);
 
 	~LightComponent();
 

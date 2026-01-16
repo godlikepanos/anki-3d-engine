@@ -390,16 +390,18 @@ Error App::mainLoop()
 		return err;
 	}
 
+	if(CString(g_cvarCoreStartupScene) != "")
+	{
+		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreStartupScene).cstr());
+		Scene* scene = nullptr;
+		ANKI_CHECK(SceneGraph::getSingleton().loadScene(g_cvarCoreStartupScene, scene));
+		SceneGraph::getSingleton().setActiveScene(scene);
+	}
+
 	if((err = userPostInit()))
 	{
 		ANKI_CORE_LOGE("User initialization failed. Shutting down");
 		return err;
-	}
-
-	if(CString(g_cvarCoreStartupScene) != "")
-	{
-		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreStartupScene).cstr());
-		ANKI_CHECK(SceneGraph::getSingleton().loadFromFile(g_cvarCoreStartupScene));
 	}
 
 	// Continue with the main loop

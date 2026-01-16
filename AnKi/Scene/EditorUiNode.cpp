@@ -9,8 +9,8 @@
 
 namespace anki {
 
-EditorUiNode::EditorUiNode(CString name)
-	: SceneNode(name)
+EditorUiNode::EditorUiNode(const SceneNodeInitInfo& inf)
+	: SceneNode(inf)
 {
 	UiComponent* uic = newComponent<UiComponent>();
 	uic->init(

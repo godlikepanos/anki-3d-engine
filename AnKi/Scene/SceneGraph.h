@@ -51,6 +51,83 @@ private:
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 
+// The scenegraph consists of multiple scenes. Scenes are containers of nodes.
+class Scene
+{
+	friend class SceneGraph;
+
+public:
+	Scene()
+		: m_sceneUuid(m_scenesUuid.fetchAdd(1))
+	{
+	}
+
+	CString getName() const
+	{
+		return m_name;
+	}
+
+	template<typename TFunc>
+	FunctorContinue visitNodes(TFunc func)
+	{
+		FunctorContinue cont = FunctorContinue::kContinue;
+		for(SceneNode* node : m_nodes)
+		{
+			cont = func(*node);
+			if(cont == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+		return cont;
+	}
+
+	template<typename TFunc>
+	FunctorContinue visitNodes(TFunc func) const
+	{
+		FunctorContinue cont = FunctorContinue::kContinue;
+		for(const SceneNode* node : m_nodes)
+		{
+			cont = func(*node);
+			if(cont == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+		return cont;
+	}
+
+	Bool isEmpty() const
+	{
+		return m_nodes.getSize() == 0;
+	}
+
+	ANKI_INTERNAL U32 getNewNodeUuid() const
+	{
+		return m_nodesUuid.fetchAdd(1);
+	}
+
+	ANKI_INTERNAL U32 getSceneUuid() const
+	{
+		ANKI_ASSERT(m_sceneUuid);
+		return m_sceneUuid;
+	}
+
+private:
+	SceneBlockArray<SceneNode*> m_nodes;
+
+	mutable Atomic<U32> m_nodesUuid = {1};
+
+	SceneString m_name;
+
+	static inline Atomic<U32> m_scenesUuid = {1};
+	U32 m_sceneUuid = 0;
+
+	U8 m_arrayIndex = kMaxU8; // Index in SceneGraph::m_scenes
+
+	Bool m_immutable = false; // Can't add or remove nodes from it
+};
+
 // The scene graph that  all the scene entities
 class SceneGraph : public MakeSingleton<SceneGraph>
 {
@@ -71,6 +148,7 @@ public:
 
 	SceneNode& getActiveCameraNode()
 	{
+		forbidCallOnUpdate();
 		const SceneNode& cam = static_cast<const SceneGraph*>(this)->getActiveCameraNode();
 		return const_cast<SceneNode&>(cam);
 	}
@@ -81,6 +159,7 @@ public:
 
 	SceneNode& getEditorUiNode()
 	{
+		forbidCallOnUpdate();
 		ANKI_ASSERT(m_editorUi);
 		return *m_editorUi;
 	}
@@ -96,6 +175,44 @@ public:
 
 	void update(Second prevUpdateTime, Second crntTime);
 
+	// Scene manipulation //
+
+	template<typename TFunc>
+	void visitScenes(TFunc func)
+	{
+		for(Scene& scene : m_scenes)
+		{
+			if(func(scene) == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+	}
+
+	Scene* newEmptyScene(CString name);
+
+	Scene* tryFindScene(CString name);
+
+	void setActiveScene(Scene* scene);
+
+	Scene& getActiveScene()
+	{
+		return m_scenes[m_activeSceneIndex];
+	}
+
+	const Scene& getActiveScene() const
+	{
+		return m_scenes[m_activeSceneIndex];
+	}
+
+	Error saveScene(CString filename, Scene& scene);
+
+	Error loadScene(CString filename, Scene*& scene);
+
+	void deleteScene(Scene* scene);
+
+	// End scene manipulation //
+
 	// Note: Thread-safe against itself. Can be called by SceneNode::update
 	SceneNode* tryFindSceneNode(const CString& name);
 
@@ -104,64 +221,78 @@ public:
 
 	// Iterate the scene nodes using a lambda
 	template<typename Func>
-	void visitNodes(Func func)
+	FunctorContinue visitNodes(Func func)
 	{
-		for(SceneNodeEntry& entry : m_nodes)
+		FunctorContinue cont = FunctorContinue::kContinue;
+		for(Scene& scene : m_scenes)
 		{
-			if(func(*entry.getNode()) == FunctorContinue::kStop)
+			cont = scene.visitNodes(func);
+			if(cont == FunctorContinue::kStop)
 			{
 				break;
 			}
 		}
+		return cont;
 	}
 
 	// Create a new SceneNode
 	// Note: Thread-safe against itself. Can be called by SceneNode::update
+	// name: The unique name of the node. If it's empty the the node is not searchable.
 	template<typename TNode>
 	TNode* newSceneNode(CString name)
 	{
-		TNode* node = newInstance<TNode>(SceneMemoryPool::getSingleton(), name);
-		node->m_uuid = getNewUuid();
-		LockGuard lock(m_deferredOps.m_mtx);
-		m_deferredOps.m_nodesForRegistration.emplaceBack(node);
+		TNode* node = nullptr;
+		if(!m_scenes[m_activeSceneIndex].m_immutable)
+		{
+			SceneNodeInitInfo inf;
+			inf.m_name = name;
+			ANKI_CALL_INTERNAL(inf.m_nodeUuid = m_scenes[m_activeSceneIndex].getNewNodeUuid());
+			inf.m_sceneIndex = m_activeSceneIndex;
+			inf.m_sceneUuid = m_scenes[m_activeSceneIndex].m_sceneUuid;
+			node = newInstance<TNode>(SceneMemoryPool::getSingleton(), inf);
+			LockGuard lock(m_deferredOps.m_mtx);
+			m_deferredOps.m_nodesForRegistration.emplaceBack(node);
+		}
+		else
+		{
+			ANKI_SCENE_LOGE("Can't create new nodes to the immutable scene: %s", m_scenes[m_activeSceneIndex].m_name.cstr());
+		}
 		return node;
 	}
 
 	const Vec3& getSceneMin() const
 	{
+		forbidCallOnUpdate();
 		return m_sceneMin;
 	}
 
 	const Vec3& getSceneMax() const
 	{
+		forbidCallOnUpdate();
 		return m_sceneMax;
-	}
-
-	// Get a unique UUID.
-	// Note: It's thread-safe.
-	U32 getNewUuid()
-	{
-		return m_nodesUuid.fetchAdd(1);
 	}
 
 	SceneComponentArrays& getComponentArrays()
 	{
+		forbidCallOnUpdate();
 		return m_componentArrays;
 	}
 
 	LightComponent* getDirectionalLight() const
 	{
+		forbidCallOnUpdate();
 		return m_activeDirLight;
 	}
 
 	SkyboxComponent* getSkybox() const
 	{
+		forbidCallOnUpdate();
 		return m_activeSkybox;
 	}
 
 	Array<Vec3, 2> getSceneBounds() const
 	{
-		ANKI_ASSERT_MAIN_THREAD();
+		forbidCallOnUpdate();
 		ANKI_ASSERT(m_sceneMin < m_sceneMax);
 		return {m_sceneMin, m_sceneMax};
 	}
@@ -169,13 +300,13 @@ public:
 	// Pause the game loop
 	void pause(Bool pause_)
 	{
-		ANKI_ASSERT_MAIN_THREAD();
+		forbidCallOnUpdate();
 		m_paused = pause_;
 	}
 
 	Bool isPaused() const
 	{
-		ANKI_ASSERT_MAIN_THREAD();
+		forbidCallOnUpdate();
 		return m_paused;
 	}
 
@@ -183,36 +314,12 @@ public:
 	// should be enabled only by the editor
 	void setCheckForResourceUpdates(Bool enable)
 	{
-		ANKI_ASSERT_MAIN_THREAD();
+		forbidCallOnUpdate();
 		m_checkForResourceUpdates = enable;
 	}
 
-	Error saveToFile(CString filename);
-
-	Error loadFromFile(CString filename);
-
 private:
 	class UpdateSceneNodesCtx;
-
-	class SceneNodeEntry
-	{
-	public:
-		U64 m_nodePtr : 63;
-		U64 m_isRoot : 1;
-
-		SceneNode* getNode() const
-		{
-			return numberToPtr<SceneNode*>(m_nodePtr << 1u);
-		}
-
-		void setNode(SceneNode* node)
-		{
-			U64 ptr = ptrToNumber(node);
-			ptr >>= 1u;
-			m_nodePtr = ptr;
-			ANKI_ASSERT(getNode() == node);
-		}
-	};
 
 	class InitMemPoolDummy
 	{
@@ -227,7 +334,11 @@ private:
 
 	mutable StackMemoryPool m_framePool;
 
-	SceneBlockArray<SceneNodeEntry> m_nodes;
+	BlockArray<Scene, SingletonMemoryPoolWrapper<SceneMemoryPool>, BlockArrayConfig<4>> m_scenes;
+	U8 m_activeSceneIndex = 0;
+
+	SceneBlockArray<SceneNode*> m_updatableNodes;
+
 	GrHashMap<CString, SceneNode*> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
@@ -255,12 +366,14 @@ private:
 
 	Bool m_paused = true; // If true the game-loop is paused
 
-	Atomic<U32> m_nodesUuid = {1};
-
 	SceneComponentArrays m_componentArrays;
 
 	LightComponent* m_activeDirLight = nullptr;
 	SkyboxComponent* m_activeSkybox = nullptr;
+
+#if ANKI_ASSERTIONS_ENABLED
+	volatile Bool m_inUpdate = false;
+#endif
 
 	SceneGraph();
 
@@ -286,6 +399,11 @@ private:
 	// End deferred operations //
 
 	static void countSerializableNodes(SceneNode& root, U32& serializableNodeCount);
+
+	void forbidCallOnUpdate() const
+	{
+		ANKI_ASSERT(!m_inUpdate && "Did a illegal function call from update()");
+	}
 };
 
 } // end namespace anki

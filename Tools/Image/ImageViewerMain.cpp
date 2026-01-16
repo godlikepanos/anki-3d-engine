@@ -12,8 +12,8 @@ class TextureViewerUiNode : public SceneNode
 public:
 	ImageViewerUi m_ui;
 
-	TextureViewerUiNode(CString name)
-		: SceneNode(name)
+	TextureViewerUiNode(const SceneNodeInitInfo& inf)
+		: SceneNode(inf)
 	{
 		UiComponent* uic = newComponent<UiComponent>();
 		uic->init(

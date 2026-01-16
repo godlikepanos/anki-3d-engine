@@ -96,9 +96,12 @@ SceneGraph::~SceneGraph()
 		deleteInstance(SceneMemoryPool::getSingleton(), node);
 	}
 
-	for(SceneNodeEntry& entry : m_nodes)
+	for(Scene& scene : m_scenes)
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), entry.getNode());
+		for(SceneNode* node : scene.m_nodes)
+		{
+			deleteInstance(SceneMemoryPool::getSingleton(), node);
+		}
 	}
 
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::freeSingleton();
@@ -116,27 +119,35 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
-	// Init the default main camera
-	m_defaultMainCam = newSceneNode<SceneNode>("_MainCamera");
-	m_defaultMainCam->setSerialization(false);
-	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
-	camc->setPerspective(0.1f, 1000.0f, toRad(100.0f), toRad(100.0f));
-	m_mainCam = m_defaultMainCam;
-
-	RenderStateBucketContainer::allocateSingleton();
-
-	// Construct a few common nodes
-	if(g_cvarCoreDisplayStats > 0)
+	// Setup the default scene
 	{
-		StatsUiNode* statsNode = newSceneNode<StatsUiNode>("_StatsUi");
-		statsNode->setFpsOnly(g_cvarCoreDisplayStats == 1);
+		Scene* scene = newEmptyScene("_DefaultScene");
+		setActiveScene(scene);
+
+		// Init the default main camera
+		m_defaultMainCam = newSceneNode<SceneNode>("_MainCamera");
+		m_defaultMainCam->setSerialization(false);
+		CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
+		camc->setPerspective(0.1f, 1000.0f, toRad(100.0f), toRad(100.0f));
+		m_mainCam = m_defaultMainCam;
+
+		RenderStateBucketContainer::allocateSingleton();
+
+		// Construct a few common nodes
+		if(g_cvarCoreDisplayStats > 0)
+		{
+			StatsUiNode* statsNode = newSceneNode<StatsUiNode>("_StatsUi");
+			statsNode->setFpsOnly(g_cvarCoreDisplayStats == 1);
+		}
+
+		newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
+
+		EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
+		editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
+		m_editorUi = editorNode;
+
+		scene->m_immutable = true;
 	}
-
-	newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
-
-	EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
-	editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
-	m_editorUi = editorNode;
 
 	return Error::kNone;
 }
@@ -189,11 +200,9 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
 	}
 
-	// Before the update wake some threads with dummy work
-	for(U i = 0; i < 2; i++)
-	{
-		CoreThreadJobManager::getSingleton().dispatchTask([]([[maybe_unused]] U32 tid) {});
-	}
+#if ANKI_ASSERTIONS_ENABLED
+	m_inUpdate = true;
+#endif
 
 	// Update events
 	{
@@ -201,16 +210,23 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		m_events.updateAllEvents(prevUpdateTime, crntTime);
 	}
 
-	// Update events and scene nodes
+	// Update scene nodes
 	UpdateSceneNodesCtx updateCtx(CoreThreadJobManager::getSingleton().getThreadCount());
 	{
+		// Before the update wake some threads with dummy work
+		for(U32 i = 0; i < 2; i++)
+		{
+			CoreThreadJobManager::getSingleton().dispatchTask([]([[maybe_unused]] U32 tid) {});
+		}
+
 		ANKI_TRACE_SCOPED_EVENT(SceneNodesUpdate);
-		updateCtx.m_lastNodeIndex = (m_nodes.isEmpty()) ? 0 : m_nodes.getBack().getArrayIndex();
+		updateCtx.m_crntNodeIndex.setNonAtomically((m_updatableNodes.isEmpty()) ? 0 : m_updatableNodes.getFront().getArrayIndex());
+		updateCtx.m_lastNodeIndex = (m_updatableNodes.isEmpty()) ? 0 : m_updatableNodes.getBack().getArrayIndex();
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
 		updateCtx.m_forceUpdateSceneBounds = (m_frame % kForceSetSceneBoundsFrameCount) == 0;
 
-		for(U i = 0; i < CoreThreadJobManager::getSingleton().getThreadCount(); i++)
+		for(U32 i = 0; i < CoreThreadJobManager::getSingleton().getThreadCount(); i++)
 		{
 			CoreThreadJobManager::getSingleton().dispatchTask([this, &updateCtx](U32 tid) {
 				updateNodes(tid, updateCtx);
@@ -219,6 +235,10 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 		CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
 	}
+
+#if ANKI_ASSERTIONS_ENABLED
+	m_inUpdate = false;
+#endif
 
 	// Update scene bounds
 	{
@@ -309,8 +329,10 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 		for(SceneNode* node : thread.m_nodesForDeletion)
 		{
-			// Remove from the array
-			m_nodes.erase(node->m_nodeArrayIndex);
+			Scene& scene = m_scenes[node->m_sceneIndex];
+
+			// Remove from the scene
+			scene.m_nodes.erase(node->m_nodeArrayIndex);
 
 			if(m_mainCam != m_defaultMainCam && m_mainCam == node)
 			{
@@ -328,6 +350,13 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 				}
 			}
 
+			// Remove from the updates array
+			if(node->m_updatableNodesArrayIndex != kMaxU32)
+			{
+				m_updatableNodes.erase(node->m_updatableNodesArrayIndex);
+			}
+
+			// ...and now can delete
 			deleteInstance(SceneMemoryPool::getSingleton(), node);
 		}
 	}
@@ -442,7 +471,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 	while(1)
 	{
 		// Fetch a batch of root scene nodes
-		constexpr U32 batchMaxSize = ANKI_CACHE_LINE_SIZE / sizeof(SceneNodeEntry); // Read a cacheline worth of SceneNodeEntry
+		constexpr U32 batchMaxSize = ANKI_CACHE_LINE_SIZE / sizeof(void*); // Read a cacheline worth of SceneNodeEntry
 		Array<SceneNode*, batchMaxSize> batch;
 		U32 batchSize = 0;
 
@@ -454,9 +483,9 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 
 		for(U32 i = entryIndex; i < min(entryIndex + batchMaxSize, ctx.m_lastNodeIndex + 1); ++i)
 		{
-			if(m_nodes.indexExists(i) && m_nodes[i].m_isRoot)
+			if(m_updatableNodes.indexExists(i))
 			{
-				batch[batchSize++] = m_nodes[i].getNode();
+				batch[batchSize++] = m_updatableNodes[i];
 			}
 		}
 
@@ -464,6 +493,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 		for(U32 i = 0; i < batchSize; ++i)
 		{
 			SceneNode& node = *batch[i];
+			ANKI_ASSERT(node.getParent() == nullptr);
 			if(node.isMarkedForDeletion()) [[unlikely]]
 			{
 				ctx.m_perThread[tid].m_nodesForDeletion.emplaceBack(&node);
@@ -478,6 +508,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 
 const SceneNode& SceneGraph::getActiveCameraNode() const
 {
+	forbidCallOnUpdate();
 	ANKI_ASSERT(m_mainCam);
 	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()) && !m_paused)
 	{
@@ -491,6 +522,7 @@ const SceneNode& SceneGraph::getActiveCameraNode() const
 
 void SceneGraph::setActiveCameraNode(SceneNode* cam)
 {
+	forbidCallOnUpdate();
 	if(cam)
 	{
 		m_mainCam = cam;
@@ -514,9 +546,10 @@ void SceneGraph::countSerializableNodes(SceneNode& root, U32& serializableNodeCo
 	}
 }
 
-Error SceneGraph::saveToFile(CString filename)
+Error SceneGraph::saveScene(CString filename, Scene& scene)
 {
 	ANKI_TRACE_FUNCTION();
+	forbidCallOnUpdate();
 
 	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
@@ -533,9 +566,12 @@ Error SceneGraph::saveToFile(CString filename)
 	U32 version = kSceneBinaryVersion;
 	ANKI_SERIALIZE(version, 1);
 
+	SceneString sceneName = scene.m_name;
+	ANKI_SERIALIZE(sceneName, 1);
+
 	// Count the serializable nodes
 	U32 serializableNodeCount = 0;
-	visitNodes([&](SceneNode& node) {
+	scene.visitNodes([&](SceneNode& node) {
 		if(node.getParent() == nullptr)
 		{
 			// Only root nodes, rest will be visited later
@@ -547,7 +583,7 @@ Error SceneGraph::saveToFile(CString filename)
 
 	// Scene nodes
 	SceneNode::SerializeCommonArgs serializationArgs;
-	ANKI_ASSERT(serializableNodeCount <= m_nodes.getSize());
+	ANKI_ASSERT(serializableNodeCount <= scene.m_nodes.getSize());
 	U32 nodeCount = serializableNodeCount;
 	ANKI_SERIALIZE(nodeCount, 1);
 
@@ -556,10 +592,11 @@ Error SceneGraph::saveToFile(CString filename)
 		SceneString className = (node.getSceneNodeRegistryRecord()) ? node.getSceneNodeRegistryRecord()->m_name : "SceneNode";
 		ANKI_SERIALIZE(className, 1);
 
-		U32 uuid = node.getUuid();
-		ANKI_SERIALIZE(uuid, 1);
-		SceneString name = node.m_name;
+		SceneString name = (node.getName() != "Unnamed") ? node.getName() : "";
 		ANKI_SERIALIZE(name, 1);
+
+		U32 uuid = node.getNodeUuid();
+		ANKI_SERIALIZE(uuid, 1);
 
 		ANKI_CHECK(node.serializeCommon(serializer, serializationArgs));
 		ANKI_CHECK(node.serialize(serializer));
@@ -569,7 +606,7 @@ Error SceneGraph::saveToFile(CString filename)
 		return Error::kNone;
 	};
 
-	visitNodes([&](SceneNode& node) {
+	scene.visitNodes([&](SceneNode& node) {
 		if(node.getParent() != nullptr || !node.getSerialization())
 		{
 			// Skip non-root nodes (they will be visited later) and non-serializable nodes
@@ -609,7 +646,7 @@ Error SceneGraph::saveToFile(CString filename)
 
 		ANKI_ASSERT(comp.getSerialization());
 
-		U32 uuid = comp.getUuid();
+		U32 uuid = comp.getComponentUuid();
 		ANKI_SERIALIZE(uuid, 1);
 
 		ANKI_CHECK(comp.serialize(serializer));
@@ -638,9 +675,12 @@ Error SceneGraph::saveToFile(CString filename)
 	return Error::kNone;
 }
 
-Error SceneGraph::loadFromFile(CString filename)
+Error SceneGraph::loadScene(CString filename, Scene*& scene)
 {
+	ANKI_ASSERT(scene == nullptr);
+
 	ANKI_TRACE_FUNCTION();
+	forbidCallOnUpdate();
 
 	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
@@ -651,11 +691,17 @@ Error SceneGraph::loadFromFile(CString filename)
 
 	if(extension == "lua")
 	{
+		scene = newEmptyScene("Level");
+		const U32 oldActiveScene = m_activeSceneIndex;
+		setActiveScene(scene);
+
 		ScriptResourcePtr script;
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, script));
 		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
 		ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
+		setActiveScene(&m_scenes[oldActiveScene]);
+
 		return Error::kNone;
 	}
 
@@ -681,6 +727,10 @@ Error SceneGraph::loadFromFile(CString filename)
 		return Error::kUserData;
 	}
 
+	SceneString sceneName;
+	ANKI_SERIALIZE(sceneName, 1);
+	scene = newEmptyScene(sceneName);
+
 	// Scene nodes
 	SceneNode::SerializeCommonArgs serializationArgs;
 	U32 nodeCount = 0;
@@ -690,10 +740,18 @@ Error SceneGraph::loadFromFile(CString filename)
 	{
 		SceneString className;
 		ANKI_SERIALIZE(className, 1);
-		U32 uuid = 0;
-		ANKI_SERIALIZE(uuid, 1);
+
+		SceneNodeInitInfo initInf;
+
 		SceneString name;
 		ANKI_SERIALIZE(name, 1);
+		initInf.m_name = name;
+
+		U32 uuid;
+		ANKI_SERIALIZE(uuid, 1);
+		initInf.m_nodeUuid = uuid;
+		initInf.m_sceneUuid = scene->m_sceneUuid;
+		initInf.m_sceneIndex = scene->m_arrayIndex;
 
 		SceneNode* node;
 		if(className != "SceneNode")
@@ -702,18 +760,20 @@ Error SceneGraph::loadFromFile(CString filename)
 			const SceneNodeRegistryRecord& record = *static_cast<SceneNodeRegistryRecord*>(GlobalRegistry::getSingleton().findRecord(className));
 
 			void* mem = SceneMemoryPool::getSingleton().allocate(record.m_getClassSizeCallback(), ANKI_SAFE_ALIGNMENT);
-			record.m_constructCallback(mem, name);
+			record.m_constructCallback(mem, initInf);
 
 			node = static_cast<SceneNode*>(mem);
 		}
 		else
 		{
-			node = newInstance<SceneNode>(SceneMemoryPool::getSingleton(), name);
+			node = newInstance<SceneNode>(SceneMemoryPool::getSingleton(), initInf);
 		}
 
-		node->m_uuid = uuid;
 		ANKI_CHECK(node->serializeCommon(serializer, serializationArgs));
 		ANKI_CHECK(node->serialize(serializer));
+
+		node->m_sceneIndex = scene->m_arrayIndex;
+		node->m_sceneUuid = scene->m_sceneUuid;
 
 		m_deferredOps.m_nodesForRegistration.emplaceBack(node);
 	}
@@ -723,20 +783,24 @@ Error SceneGraph::loadFromFile(CString filename)
 		U32 uuid;
 		ANKI_SERIALIZE(uuid, 1);
 
-		auto it2 = serializationArgs.m_read.m_sceneComponentUuidToNode.find(uuid);
-		if(it2 == serializationArgs.m_read.m_sceneComponentUuidToNode.getEnd())
+		auto it2 = serializationArgs.m_read.m_componentUuidToNode.find(uuid);
+		if(it2 == serializationArgs.m_read.m_componentUuidToNode.getEnd())
 		{
 			ANKI_SCENE_LOGE("Incorrect UUID");
 			return Error::kUserData;
 		}
-		SceneNode* node = *it2;
 
-		auto it = compArray.emplace(node, uuid);
+		SceneComponentInitInfo initInf;
+		initInf.m_node = *it2;
+		initInf.m_componentUuid = uuid;
+		initInf.m_sceneUuid = scene->m_sceneUuid;
+
+		auto it = compArray.emplace(initInf);
 		SceneComponent& comp = *it;
 		comp.setArrayIndex(it.getArrayIndex());
 		ANKI_CHECK(comp.serialize(serializer));
 
-		node->addComponent(&comp);
+		initInf.m_node->addComponent(&comp);
 
 		return Error::kNone;
 	};
@@ -775,13 +839,21 @@ void SceneGraph::doDeferredOperations()
 			}
 		}
 
-		// Add to list
+		// Add to scene
 		ANKI_ASSERT(node->getParent() == nullptr && "New nodes can't have a parent yet");
-		SceneNodeEntry entry;
-		entry.setNode(node);
-		entry.m_isRoot = 1;
-		auto it = m_nodes.emplace(entry);
+		auto it = m_scenes[node->m_sceneIndex].m_nodes.emplace(node);
 		node->m_nodeArrayIndex = it.getArrayIndex();
+
+		// Add to updatable
+		if(node->getParent() == nullptr)
+		{
+			auto it2 = m_updatableNodes.emplace(node);
+			node->m_updatableNodesArrayIndex = it2.getArrayIndex();
+		}
+		else
+		{
+			ANKI_ASSERT(node->m_updatableNodesArrayIndex == kMaxU32);
+		}
 	}
 	m_deferredOps.m_nodesForRegistration.destroy();
 
@@ -821,19 +893,105 @@ void SceneGraph::doDeferredOperations()
 		SceneNode* child = pair.first;
 		SceneNode* parent = pair.second;
 
-		ANKI_ASSERT((child->getParent() == nullptr && m_nodes[child->m_nodeArrayIndex].m_isRoot) || !m_nodes[child->m_nodeArrayIndex].m_isRoot);
-
-		child->removeParent();
+		if(child->getParent() == nullptr)
+		{
+			ANKI_ASSERT(m_updatableNodes[child->m_updatableNodesArrayIndex] == child);
+			m_updatableNodes.erase(child->m_updatableNodesArrayIndex);
+			child->m_updatableNodesArrayIndex = kMaxU32;
+		}
+		else
+		{
+			child->removeParent();
+		}
 
 		if(parent)
 		{
 			// Add new parent
 			static_cast<SceneNode::Base*>(child)->setParent(parent);
 		}
-
-		m_nodes[child->m_nodeArrayIndex].m_isRoot = parent == nullptr;
+		else
+		{
+			auto it = m_updatableNodes.emplace(child);
+			child->m_updatableNodesArrayIndex = it.getArrayIndex();
+		}
 	}
 	m_deferredOps.m_nodesParentChanged.destroy();
+}
+
+Scene* SceneGraph::newEmptyScene(CString name)
+{
+	forbidCallOnUpdate();
+
+	if(!name)
+	{
+		name = "Unnamed";
+	}
+
+	if(tryFindScene(name))
+	{
+		ANKI_SCENE_LOGE("Scene found with the same name %s", name.cstr());
+		return nullptr;
+	}
+
+	auto it = m_scenes.emplace();
+	it->m_name = name;
+	it->m_arrayIndex = U8(it.getArrayIndex());
+
+	return &(*it);
+}
+
+Scene* SceneGraph::tryFindScene(CString name)
+{
+	for(Scene& other : m_scenes)
+	{
+		if(other.m_name == name)
+		{
+			return &other;
+		}
+	}
+
+	return nullptr;
+}
+
+void SceneGraph::setActiveScene(Scene* scene)
+{
+	ANKI_ASSERT(scene);
+	forbidCallOnUpdate();
+	m_activeSceneIndex = scene->m_arrayIndex;
+}
+
+void SceneGraph::deleteScene(Scene* scene)
+{
+	ANKI_ASSERT(scene);
+	forbidCallOnUpdate();
+
+	const U64 begin = HighRezTimer::getCurrentTimeUs();
+
+	if(scene->m_arrayIndex == m_activeSceneIndex)
+	{
+		m_activeSceneIndex = tryFindScene("_DefaultScene")->m_arrayIndex;
+	}
+
+	for(SceneNode* node : scene->m_nodes)
+	{
+		if(node->m_updatableNodesArrayIndex != kMaxU32)
+		{
+			m_updatableNodes.erase(node->m_updatableNodesArrayIndex);
+		}
+
+		if(node->getName() != "Unnamed")
+		{
+			auto it = m_nodesDict.find(node->getName());
+			ANKI_ASSERT(it != m_nodesDict.getEnd());
+			m_nodesDict.erase(it);
+		}
+
+		deleteInstance(SceneMemoryPool::getSingleton(), node);
+	}
+
+	m_scenes.erase(scene->m_arrayIndex);
+
+	ANKI_SCENE_LOGI("Unloaded scene %s in %fms", scene->m_name.cstr(), F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 }
 
 } // end namespace anki

@@ -16,8 +16,8 @@
 
 namespace anki {
 
-MaterialComponent::MaterialComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+MaterialComponent::MaterialComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
 	m_gpuSceneRenderable.allocate();
 }
@@ -309,7 +309,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			const MaterialVariant& variant = mtl.getOrCreateVariant(key);
 			gpuRenderable.m_rtMaterialFetchShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
 		}
-		gpuRenderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
+		gpuRenderable.m_uuid = m_renderableUuid.fetchAdd(1);
 
 		const UVec3 u3(averageDiffuse.xyz.clamp(0.0f, 1.0f) * 255.0f);
 		gpuRenderable.m_diffuseColor = ((u3.x << 16u) | (u3.y << 8u) | u3.z) & 0xFFFFFFF;

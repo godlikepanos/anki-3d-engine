@@ -12,12 +12,12 @@
 
 namespace anki {
 
-CameraComponent::CameraComponent(SceneNode* node, U32 uuid)
-	: SceneComponent(node, kClassType, uuid)
+CameraComponent::CameraComponent(const SceneComponentInitInfo& init)
+	: SceneComponent(kClassType, init)
 {
 	// Init main frustum
 	m_frustum.init(FrustumType::kPerspective);
-	m_frustum.setWorldTransform(node->getWorldTransform());
+	m_frustum.setWorldTransform(init.m_node->getWorldTransform());
 	m_frustum.update();
 }
 

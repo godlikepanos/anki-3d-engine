@@ -13,8 +13,8 @@ using namespace anki;
 class GrenadeNode : public SceneNode
 {
 public:
-	GrenadeNode(CString name)
-		: SceneNode(name)
+	GrenadeNode(const SceneNodeInitInfo& inf)
+		: SceneNode(inf)
 	{
 		setLocalScale(Vec3(2.8f));
 
