@@ -20,10 +20,13 @@ public:
 #if ANKI_COMPILER_MSVC
 #	pragma warning(push)
 #	pragma warning(disable : 4201)
-#elif ANKI_COMPILER_GCC_COMPATIBLE
+#elif ANKI_COMPILER_CLANG
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wgnu-anonymous-struct"
 #	pragma GCC diagnostic ignored "-Wnested-anon-types"
+#elif ANKI_COMPILER_GCC
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 	union
 	{

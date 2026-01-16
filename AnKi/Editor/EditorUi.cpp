@@ -675,7 +675,7 @@ void EditorUi::sceneNodePropertiesWindow()
 				else
 				{
 					// The component that have changed wins
-					F32 scale = scale = localScale[2];
+					F32 scale = localScale[2];
 					if(localScale[0] != node.getLocalScale().x)
 					{
 						scale = localScale[0];

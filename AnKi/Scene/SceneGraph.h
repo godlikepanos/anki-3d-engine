@@ -246,7 +246,9 @@ public:
 		{
 			SceneNodeInitInfo inf;
 			inf.m_name = name;
-			ANKI_CALL_INTERNAL(inf.m_nodeUuid = m_scenes[m_activeSceneIndex].getNewNodeUuid());
+			ANKI_SILENCE_INTERNAL_BEGIN
+			inf.m_nodeUuid = m_scenes[m_activeSceneIndex].getNewNodeUuid();
+			ANKI_SILENCE_INTERNAL_END
 			inf.m_sceneIndex = m_activeSceneIndex;
 			inf.m_sceneUuid = m_scenes[m_activeSceneIndex].m_sceneUuid;
 			node = newInstance<TNode>(SceneMemoryPool::getSingleton(), inf);
