@@ -166,4 +166,13 @@ void BodyComponent::cleanup()
 	m_collisionShape.reset(nullptr);
 }
 
+Error BodyComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_box.m_extend, 1);
+	ANKI_SERIALIZE(m_sphere.m_radius, 1);
+	ANKI_SERIALIZE(m_mass, 1);
+	ANKI_SERIALIZE(m_shapeType, 1);
+	return Error::kNone;
+}
+
 } // end namespace anki

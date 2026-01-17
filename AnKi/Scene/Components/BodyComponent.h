@@ -154,6 +154,8 @@ private:
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 
+	Error serialize(SceneSerializer& serializer) override;
+
 	void cleanup();
 };
 

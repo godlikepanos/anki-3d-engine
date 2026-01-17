@@ -83,4 +83,10 @@ void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 }
 
+Error JointComponent::serialize(SceneSerializer& serializer)
+{
+	ANKI_SERIALIZE(m_type, 1);
+	return Error::kNone;
+}
+
 } // end namespace anki

@@ -63,6 +63,7 @@ class PhysicsBody : public PhysicsObjectBase
 	friend class PhysicsBodyPtrDeleter;
 
 public:
+	// version: It starts from 1
 	const Transform& getTransform(U32* version = nullptr) const
 	{
 		if(version)

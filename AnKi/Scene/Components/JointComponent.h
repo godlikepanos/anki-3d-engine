@@ -58,6 +58,8 @@ private:
 	JointComponentyType m_type = JointComponentyType::kPoint;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	Error serialize(SceneSerializer& serializer) override;
 };
 
 } // end namespace anki

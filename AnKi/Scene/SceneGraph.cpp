@@ -614,7 +614,7 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 		}
 
 		node.visitThisAndChildren([&](SceneNode& node) {
-			if((err = serializeNode(node)))
+			if(!node.getSerialization() || (err = serializeNode(node)))
 			{
 				return FunctorContinue::kStop;
 			}
