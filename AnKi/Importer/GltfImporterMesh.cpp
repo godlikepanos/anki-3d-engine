@@ -731,7 +731,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 
 	// Compute the pos scale and transform. The scale is uniform because it's applied to the model matrix of the object
 	F32 posScale = kMinF32;
-	for(U c = 0; c < 3; c++)
+	for(U32 c = 0; c < 3; c++)
 	{
 		posScale = max(posScale, aabbMax[c] - aabbMin[c]);
 	}

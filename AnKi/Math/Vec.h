@@ -890,7 +890,7 @@ public:
 		if constexpr(kVec4Simd)
 		{
 #if ANKI_SIMD_SSE
-			m_simd = _mm_load_ps(arr);
+			m_simd = _mm_loadu_ps(arr); // _mm_loadu_ps doesn't require arr to be 16 byte aligned unlike _mm_load_ps
 #else
 			m_simd = vld1q_f32(arr);
 #endif

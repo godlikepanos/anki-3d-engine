@@ -225,7 +225,7 @@ static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CS
 			return Error::kUserData;
 		}
 
-		U count = 0;
+		U32 count = 0;
 		for(auto& token : tokens)
 		{
 			F32 f;
@@ -916,7 +916,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 
 	ANKI_CHECK(m_sceneFile.writeText("rot = Mat3.new()\n"));
 	ANKI_CHECK(m_sceneFile.writeText("rot:setAll("));
-	for(U i = 0; i < 9; i++)
+	for(U32 i = 0; i < 9; i++)
 	{
 		ANKI_CHECK(m_sceneFile.writeTextf((i != 8) ? "%f, " : "%f)\n", trf.getRotation().getRotationPart()[i]));
 	}
@@ -980,7 +980,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 		ANKI_CHECK(getNodeTransform(boneNode, trf));
 		Mat3x4 mat(trf);
 		ANKI_CHECK(file.writeText("transform=\""));
-		for(U j = 0; j < 12; j++)
+		for(U32 j = 0; j < 12; j++)
 		{
 			ANKI_CHECK(file.writeTextf("%f ", mat[j]));
 		}

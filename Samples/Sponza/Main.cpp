@@ -12,8 +12,9 @@ class MyApp : public SampleApp
 public:
 	using SampleApp::SampleApp;
 
-	Error userPostInit() final
+	Error userPreInit() final
 	{
+		ANKI_CHECK(SampleApp::userPreInit());
 		g_cvarCoreStartupScene = "Assets/Scene.lua";
 		return Error::kNone;
 	}
