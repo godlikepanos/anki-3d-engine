@@ -45,7 +45,7 @@ MicroFenceFactory<TImplementation>::MyMicroFence* MicroFenceFactory<TImplementat
 {
 	MyMicroFence* out = nullptr;
 
-	LockGuard<Mutex> lock(m_mtx);
+	LockGuard lock(m_mtx);
 
 	// Trim fences if needed
 	if(m_aliveFenceCount > kMaxAliveFences * 80 / 100)
@@ -156,11 +156,6 @@ void MicroFenceFactory<TImplementation>::releaseFence(MyMicroFence* fence)
 
 	ANKI_ASSERT(!m_markedForDeletionMask.get(fence->m_arrayIdx));
 	m_markedForDeletionMask.set(fence->m_arrayIdx);
-
-	if(!fence->signaled())
-	{
-		ANKI_GR_LOGW("Fence marked for deletion but it's not signaled: %s", fence->m_name.cstr());
-	}
 }
 
 } // end namespace anki

@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup vulkan
-/// @{
-
-/// Simple semaphore wrapper.
+// Simple semaphore wrapper.
 class MicroSemaphore
 {
 	friend class SemaphoreFactory;
@@ -56,16 +53,16 @@ public:
 		return m_isTimeline;
 	}
 
-	/// Get the value of the semaphore after a signal.
-	/// @note It's thread safe.
+	// Get the value of the semaphore after a signal.
+	// Note: It's thread safe.
 	U64 getNextSemaphoreValue()
 	{
 		ANKI_ASSERT(m_isTimeline);
 		return m_timelineValue.fetchAdd(1) + 1;
 	}
 
-	/// Get the value of the semaphore to wait on.
-	/// @note It's thread safe.
+	// Get the value of the semaphore to wait on.
+	// Note: It's thread safe.
 	U64 getSemaphoreValue() const
 	{
 		ANKI_ASSERT(m_isTimeline);
@@ -86,10 +83,10 @@ private:
 	void releaseInternal();
 };
 
-/// MicroSemaphore smart pointer.
+// MicroSemaphore smart pointer.
 using MicroSemaphorePtr = IntrusiveNoDelPtr<MicroSemaphore>;
 
-/// Factory of semaphores.
+// Factory of semaphores.
 class SemaphoreFactory : public MakeSingleton<SemaphoreFactory>
 {
 	friend class MicroSemaphore;
@@ -108,6 +105,5 @@ private:
 	MicroObjectRecycler<MicroSemaphore> m_binaryRecycler;
 	MicroObjectRecycler<MicroSemaphore> m_timelineRecycler;
 };
-/// @}
 
 } // end namespace anki

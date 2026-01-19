@@ -14,15 +14,12 @@
 
 namespace anki {
 
-/// @note Disable that because it crashes Intel drivers
+// Note: Disable that because it crashes Intel drivers
 #define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_EXTRA_CHECKS && 0
 
 // Forward
 class TextureFallbackUploader;
 class MicroCommandBuffer;
-
-/// @addtogroup vulkan
-/// @{
 
 enum class AsyncComputeType
 {
@@ -31,7 +28,7 @@ enum class AsyncComputeType
 	kDisabled
 };
 
-/// A small struct with all the caps we need.
+// A small struct with all the caps we need.
 class VulkanCapabilities
 {
 public:
@@ -42,7 +39,7 @@ public:
 	U32 m_asBufferAlignment = 256; // Spec says 256
 };
 
-/// Vulkan implementation of GrManager.
+// Vulkan implementation of GrManager.
 class GrManagerImpl : public GrManager
 {
 	friend class GrManager;
@@ -139,53 +136,86 @@ public:
 		ANKI_ASSERT(width && height);
 	}
 
-	/// @name Debug report
-	/// @{
+	// Debug report //
 	void trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const;
 
 	void trySetVulkanHandleName(CString name, VkObjectType type, void* handle) const
 	{
 		trySetVulkanHandleName(name, type, U64(ptrToNumber(handle)));
 	}
-	/// @}
+	// End debug report //
 
-	/// @note It's thread-safe.
+	// Node: It's thread-safe.
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash = 0) const;
 
-	/// @note It's thread-safe.
+	// Node: It's thread-safe.
 	void releaseObject(GrObject* object)
 	{
 		ANKI_ASSERT(object);
 		LockGuard lock(m_globalMtx);
-		m_perFrame[m_frame % m_perFrame.getSize()].m_objectsMarkedForDeletion.emplaceBack(object);
+		releaseObjectDeleteLoop(object);
 	}
 
-	void releaseObjectDeleteLoop(GrObject* object)
-	{
-		ANKI_ASSERT(object);
-		m_perFrame[m_frame % m_perFrame.getSize()].m_objectsMarkedForDeletion.emplaceBack(object);
-	}
+	void releaseObjectDeleteLoop(GrObject* object);
 
 private:
-	enum FrameState : U8
-	{
-		kFrameStarted,
-		kPresentableAcquired,
-		kPresentableDrawn,
-		kFrameEnded,
-	};
-
-	class PerFrame
+	// Contains objects that are marked for deletion
+	class CleanupGroup
 	{
 	public:
-		GrDynamicArray<MicroFencePtr> m_fences;
-
-		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
-
+		Array<MicroFencePtr, U32(GpuQueueType::kCount)> m_fences;
 		GrDynamicArray<GrObject*> m_objectsMarkedForDeletion;
+		Bool m_finalized = false;
+
+		~CleanupGroup()
+		{
+			ANKI_ASSERT(m_objectsMarkedForDeletion.getSize() == 0);
+		}
+
+		Bool canDelete() const
+		{
+			if(m_fences[GpuQueueType::kGeneral] && !m_fences[GpuQueueType::kGeneral]->signaled())
+			{
+				return false;
+			}
+
+			if(m_fences[GpuQueueType::kCompute] && !m_fences[GpuQueueType::kCompute]->signaled())
+			{
+				return false;
+			}
+
+			return true;
+		}
+	};
+
+	class AcquireData
+	{
+	public:
+		MicroSemaphorePtr m_semaphore;
+		MicroFencePtr m_fence; // It's used to check if we can delete the semaphore
+
+		~AcquireData()
+		{
+			ANKI_ASSERT(!m_fence || m_fence->signaled());
+		}
 	};
 
 	U64 m_frame = 0;
+
+	GrBlockArray<CleanupGroup> m_cleanupGroups;
+	U32 m_activeCleanupGroup = kMaxU32;
+
+	Array<MicroFencePtr, U32(GpuQueueType::kCount) + 1> m_crntFences;
+
+	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
+	U32 m_nativeWindowWidth = 0;
+	U32 m_nativeWindowHeight = 0;
+	MicroSwapchainPtr m_crntSwapchain;
+
+	GrBlockArray<AcquireData> m_acquireData;
+	U32 m_activeAcquireDataIdx = kMaxU32;
+	GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
+	U8 m_acquiredImageIdx = kMaxU8;
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	VkAllocationCallbacks m_debugAllocCbs;
@@ -211,16 +241,7 @@ private:
 
 	mutable SpinLock m_shaderStatsMtx;
 
-	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-	U32 m_nativeWindowWidth = 0;
-	U32 m_nativeWindowHeight = 0;
-	MicroSwapchainPtr m_crntSwapchain;
-	U8 m_acquiredImageIdx = kMaxU8;
-	FrameState m_frameState = kFrameEnded;
-
 	VulkanCapabilities m_caps;
-
-	Array<PerFrame, kMaxFramesInFlight> m_perFrame;
 
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
@@ -261,21 +282,7 @@ private:
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features2);
 	}
 
-	void deleteObjectsMarkedForDeletion()
-	{
-		ANKI_TRACE_FUNCTION();
-		PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
-		while(!frame.m_objectsMarkedForDeletion.isEmpty())
-		{
-			GrDynamicArray<GrObject*> objects = std::move(frame.m_objectsMarkedForDeletion);
-
-			for(GrObject* obj : objects)
-			{
-				deleteInstance(GrMemoryPool::getSingleton(), obj);
-			}
-		}
-	}
+	void deleteObjectsMarkedForDeletion();
 };
-/// @}
 
 } // end namespace anki

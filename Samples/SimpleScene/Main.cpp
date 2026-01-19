@@ -13,12 +13,10 @@ class MyApp : public SampleApp
 public:
 	using SampleApp::SampleApp;
 
-	Error sampleExtraInit()
+	Error userPreInit() final
 	{
-		ScriptResourcePtr script;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
-		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
-
+		ANKI_CHECK(SampleApp::userPreInit());
+		g_cvarCoreStartupScene = "Assets/Scene.lua";
 		return Error::kNone;
 	}
 };

@@ -46,7 +46,7 @@ public:
 };
 #endif
 
-// Suffle NEON vector. Code stolen by Jolt
+// Suffle NEON vector. Code stolen from Jolt
 #if ANKI_SIMD_NEON
 
 // Constructing NEON values

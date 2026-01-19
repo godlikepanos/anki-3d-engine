@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup vulkan
-/// @{
-
-/// A wrapper for the swapchain.
+// A wrapper for the swapchain
 class MicroSwapchain
 {
 	friend class MicroSwapchainPtrDeleter;
@@ -25,8 +22,7 @@ public:
 	VkSwapchainKHR m_swapchain = {};
 
 	GrDynamicArray<TextureInternalPtr> m_textures;
-	GrDynamicArray<MicroSemaphorePtr> m_acquireSemaphores;
-	GrDynamicArray<MicroSemaphorePtr> m_renderSemaphores; ///< Signaled by the operation that renders to a presentable image.
+	GrDynamicArray<MicroSemaphorePtr> m_renderSemaphores; // Signaled by the operation that renders to a presentable image
 
 	MicroSwapchain();
 
@@ -58,10 +54,10 @@ private:
 	void releaseInternal();
 };
 
-/// MicroSwapchain smart pointer.
+// MicroSwapchain smart pointer
 using MicroSwapchainPtr = IntrusiveNoDelPtr<MicroSwapchain>;
 
-/// Swapchain factory.
+// Swapchain factory
 class SwapchainFactory : public MakeSingleton<SwapchainFactory>
 {
 	friend class MicroSwapchain;
@@ -83,6 +79,5 @@ private:
 	Bool m_vsync = false;
 	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };
-/// @}
 
 } // end namespace anki

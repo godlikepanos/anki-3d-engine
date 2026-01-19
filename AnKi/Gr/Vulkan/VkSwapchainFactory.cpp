@@ -211,7 +211,6 @@ Error MicroSwapchain::initInternal()
 		}
 
 		m_textures.resize(count);
-		m_acquireSemaphores.resize(count);
 		m_renderSemaphores.resize(count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count, presentMode, surfaceWidth,
@@ -234,7 +233,6 @@ Error MicroSwapchain::initInternal()
 			m_textures[i].reset(tex);
 			ANKI_CHECK(tex->initExternal(images[i], init));
 
-			m_acquireSemaphores[i] = SemaphoreFactory::getSingleton().newInstance(false, GrString().sprintf("Acquire #%u", i));
 			m_renderSemaphores[i] = SemaphoreFactory::getSingleton().newInstance(false, GrString().sprintf("Present #%u", i));
 		}
 	}

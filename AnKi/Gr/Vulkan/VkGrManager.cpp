@@ -168,11 +168,24 @@ GrManagerImpl::~GrManagerImpl()
 	m_crntSwapchain.reset(nullptr);
 	SwapchainFactory::freeSingleton();
 
-	for(U32 frame = 0; frame < m_perFrame.getSize(); ++frame)
+	for(auto it = m_cleanupGroups.getBegin(); it != m_cleanupGroups.getEnd(); ++it)
 	{
-		m_frame = frame;
-		deleteObjectsMarkedForDeletion();
+		it->m_finalized = false;
+		m_activeCleanupGroup = it.getArrayIndex();
+
+		while(it->m_objectsMarkedForDeletion.getSize())
+		{
+			GrDynamicArray<GrObject*> arr = std::move(it->m_objectsMarkedForDeletion);
+
+			for(GrObject* obj : arr)
+			{
+				deleteInstance(GrMemoryPool::getSingleton(), obj);
+			}
+		}
 	}
+	m_cleanupGroups.destroy();
+
+	m_acquireData.destroy();
 
 	// 3rd THING: Continue with the rest
 	CommandBufferFactory::freeSingleton();
@@ -1233,35 +1246,8 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 void GrManagerImpl::beginFrameInternal()
 {
 	ANKI_TRACE_FUNCTION();
-
 	LockGuard<Mutex> lock(m_globalMtx);
-
-	// Do that at begin frame, ALWAYS
 	++m_frame;
-	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
-	ANKI_ASSERT(m_frameState == kFrameEnded);
-	m_frameState = kFrameStarted;
-
-	// Wait for the oldest frame because we don't want to start the new one too early
-	{
-		ANKI_TRACE_SCOPED_EVENT(WaitFences);
-		for(MicroFencePtr& fence : frame.m_fences)
-		{
-			if(fence)
-			{
-				const Bool signaled = fence->clientWait(kMaxSecond);
-				if(!signaled)
-				{
-					ANKI_VK_LOGF("Timeout detected");
-				}
-			}
-		}
-	}
-
-	frame.m_fences.destroy();
-	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
-
-	// Clear garbage
 	deleteObjectsMarkedForDeletion();
 }
 
@@ -1274,18 +1260,21 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	snprintf(name.getBegin(), name.getSize(), "Acquire %" PRIu64, m_frame);
 	MicroFencePtr fence = FenceFactory::getSingleton().newInstance(name.getBegin());
 
+	MicroSemaphorePtr acquireSemaphore = SemaphoreFactory::getSingleton().newInstance(false, name.getBegin());
+
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	ANKI_ASSERT(m_frameState == kFrameStarted);
-	m_frameState = kPresentableAcquired;
-
-	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
-	frame.m_fences.emplaceBack(fence);
+	// Bookkeeping
+	m_crntFences[GpuQueueType::kCount] = fence;
+	auto it = m_acquireData.emplace();
+	AcquireData& data = *it;
+	data.m_fence = fence;
+	data.m_semaphore = acquireSemaphore;
+	m_activeAcquireDataIdx = it.getArrayIndex();
 
 	// Get new image
-	const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 	uint32_t imageIdx;
-	const VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore.getHandle(),
+	const VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore->getHandle(),
 											   fence->getImplementation().m_handle, &imageIdx);
 
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
@@ -1300,10 +1289,9 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		}
 		m_crntSwapchain.reset(nullptr);
 		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
-		const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
 
 		// Can't fail a second time
-		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore.getHandle(),
+		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore->getHandle(),
 											 fence->getImplementation().m_handle, &imageIdx));
 	}
 	else
@@ -1322,13 +1310,11 @@ void GrManagerImpl::endFrameInternal()
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
 	const Bool imageAcquired = m_acquiredImageIdx < kMaxU8;
 
 	// Present
 	if(imageAcquired)
 	{
-		ANKI_ASSERT(m_frameState == kPresentableDrawn && "Acquired an image but didn't draw to it?");
 		ANKI_ASSERT(m_acquiredImageIdx < kMaxU8);
 
 		VkResult res;
@@ -1342,7 +1328,7 @@ void GrManagerImpl::endFrameInternal()
 		present.pImageIndices = &idx;
 		present.pResults = &res;
 
-		const VkResult res1 = vkQueuePresentKHR(m_queues[frame.m_queueWroteToSwapchainImage], &present);
+		const VkResult res1 = vkQueuePresentKHR(m_queues[m_queueWroteToSwapchainImage], &present);
 		if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queues and create a new one");
@@ -1365,12 +1351,9 @@ void GrManagerImpl::endFrameInternal()
 
 		m_acquiredImageIdx = kMaxU8;
 	}
-	else
-	{
-		ANKI_ASSERT(m_frameState == kFrameStarted);
-	}
 
-	m_frameState = kFrameEnded;
+	deleteObjectsMarkedForDeletion();
+
 	GpuMemoryManager::getSingleton().updateStats();
 }
 
@@ -1441,17 +1424,30 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 	// Submit
 	{
-		// Protect the class, the queue and other stuff
 		LockGuard<Mutex> lock(m_globalMtx);
 
-		// Do some special stuff for the last command buffer
-		GrManagerImpl::PerFrame& frame = m_perFrame[m_frame % m_perFrame.getSize()];
+		// New submit so we need to finalize all groups. Following deletes will create a new group with the newely created fence
+		for(CleanupGroup& group : m_cleanupGroups)
+		{
+			group.m_finalized = true;
+		}
+		m_activeCleanupGroup = kMaxU32;
+
+		// Do cleanup as well
+		deleteObjectsMarkedForDeletion();
+
+		// Store the last fence
+		m_crntFences[queueType] = fence;
+
 		if(renderedToDefaultFb)
 		{
-			ANKI_ASSERT(m_frameState == kPresentableAcquired);
-			m_frameState = kPresentableDrawn;
+			const MicroSemaphore& acquireSemaphore = *m_acquireData[m_activeAcquireDataIdx].m_semaphore;
 
-			const MicroSemaphore& acquireSemaphore = *m_crntSwapchain->m_acquireSemaphores[m_frame % m_crntSwapchain->m_acquireSemaphores.getSize()];
+			// Can't release the acquireSemaphore until rendering is done
+			m_acquireData[m_activeAcquireDataIdx].m_fence = fence;
+
+			// Won't need it until the next acquire sets it
+			m_activeAcquireDataIdx = kMaxU32;
 
 			// Wait semaphore
 			waitSemaphores.emplaceBack(acquireSemaphore.getHandle());
@@ -1469,10 +1465,8 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
 			signalTimelineValues.emplaceBack(0);
 
-			frame.m_queueWroteToSwapchainImage = queueType;
+			m_queueWroteToSwapchainImage = queueType;
 		}
-
-		frame.m_fences.emplaceBack(fence);
 
 		// Submit
 		VkSubmitInfo submit = {};
@@ -1495,27 +1489,6 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
 		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[queueType], 1, &submit, fence->getImplementation().m_handle));
-
-		// Throttle the number of fences
-		Bool fencesThrottled = false;
-		while(frame.m_fences.getSize() > 64)
-		{
-			fencesThrottled = true;
-			auto it = frame.m_fences.getBegin();
-			for(; it != frame.m_fences.getEnd(); ++it)
-			{
-				if((*it)->signaled())
-				{
-					frame.m_fences.erase(it);
-					break;
-				}
-			}
-		}
-
-		if(fencesThrottled)
-		{
-			ANKI_VK_LOGV("Had to throttle the number of fences");
-		}
 	}
 }
 
@@ -1530,28 +1503,21 @@ void GrManagerImpl::finishInternal()
 		}
 	}
 
-	for(PerFrame& frame : m_perFrame)
+	for(MicroFencePtr& fence : m_crntFences)
 	{
-		for(MicroFencePtr& fence : frame.m_fences)
+		if(fence)
 		{
 			const Bool signaled = fence->clientWait(kMaxSecond);
 			if(!signaled)
 			{
 				ANKI_VK_LOGF("Timeout detected");
 			}
+			fence.reset(nullptr);
 		}
-
-		frame.m_fences.destroy();
 	}
 
 	// Since we waited for the GPU do a cleanup as well
-	const U64 oldFrame = m_frame;
-	for(U32 frame = 0; frame < m_perFrame.getSize(); ++frame)
-	{
-		m_frame = frame;
-		deleteObjectsMarkedForDeletion();
-	}
-	m_frame = oldFrame;
+	deleteObjectsMarkedForDeletion();
 }
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const
@@ -1683,6 +1649,85 @@ Error GrManagerImpl::initSurface()
 	m_nativeWindowHeight = NativeWindow::getSingleton().getHeight();
 
 	return Error::kNone;
+}
+
+void GrManagerImpl::releaseObjectDeleteLoop(GrObject* object)
+{
+	ANKI_ASSERT(object);
+	CleanupGroup* group;
+	if(m_activeCleanupGroup == kMaxU32)
+	{
+		auto it = m_cleanupGroups.emplace();
+		group = &*it;
+		group->m_fences[GpuQueueType::kGeneral] = m_crntFences[GpuQueueType::kGeneral];
+		group->m_fences[GpuQueueType::kCompute] = m_crntFences[GpuQueueType::kCompute];
+		m_activeCleanupGroup = it.getArrayIndex();
+	}
+	else
+	{
+		group = &m_cleanupGroups[m_activeCleanupGroup];
+	}
+
+	ANKI_ASSERT(!group->m_finalized);
+	group->m_objectsMarkedForDeletion.emplaceBack(object);
+}
+
+void GrManagerImpl::deleteObjectsMarkedForDeletion()
+{
+	ANKI_TRACE_FUNCTION();
+
+	// Object cleanup
+	Array<U32, 8> cleanupGroups;
+	U32 cleanupGroupCount = 0;
+
+	for(auto it = m_cleanupGroups.getBegin(); it != m_cleanupGroups.getEnd(); ++it)
+	{
+		if(it.getArrayIndex() != m_activeCleanupGroup && cleanupGroupCount < cleanupGroups.getSize() && it->canDelete())
+		{
+			cleanupGroups[cleanupGroupCount++] = it.getArrayIndex();
+		}
+	}
+
+	for(U32 i = 0; i < cleanupGroupCount; ++i)
+	{
+		const U32 idx = cleanupGroups[i];
+
+		const U32 crntActiveGroup = m_activeCleanupGroup;
+		m_activeCleanupGroup = idx;
+
+		m_cleanupGroups[idx].m_finalized = false;
+
+		while(m_cleanupGroups[idx].m_objectsMarkedForDeletion.getSize())
+		{
+			GrDynamicArray<GrObject*> arr = std::move(m_cleanupGroups[idx].m_objectsMarkedForDeletion);
+
+			for(GrObject* obj : arr)
+			{
+				deleteInstance(GrMemoryPool::getSingleton(), obj);
+			}
+		}
+
+		m_cleanupGroups.erase(idx);
+		m_activeCleanupGroup = crntActiveGroup; // Restore
+	}
+
+	// Acquire cleanup
+	Array<U32, 8> acquireDatas;
+	U32 acquireDataCount = 0;
+
+	for(auto it = m_acquireData.getBegin(); it != m_acquireData.getEnd(); ++it)
+	{
+		if(it.getArrayIndex() != m_activeAcquireDataIdx && acquireDataCount < acquireDatas.getSize() && it->m_fence->signaled())
+		{
+			acquireDatas[acquireDataCount++] = it.getArrayIndex();
+		}
+	}
+
+	for(U32 i = 0; i < acquireDataCount; ++i)
+	{
+		const U32 idx = acquireDatas[i];
+		m_acquireData.erase(idx);
+	}
 }
 
 VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

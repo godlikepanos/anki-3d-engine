@@ -6,8 +6,11 @@
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
+
+ANKI_SVAR(SemaphoreCount, StatCategory::kGr, "Semaphore count", StatFlag::kNone)
 
 MicroSemaphore::MicroSemaphore(Bool isTimeline)
 	: m_isTimeline(isTimeline)
@@ -21,8 +24,9 @@ MicroSemaphore::MicroSemaphore(Bool isTimeline)
 	ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	ci.pNext = &typeCreateInfo;
 
-	ANKI_TRACE_INC_COUNTER(VkSemaphoreCreate, 1);
 	ANKI_VK_CHECKF(vkCreateSemaphore(getVkDevice(), &ci, nullptr, &m_handle));
+	ANKI_TRACE_INC_COUNTER(VkSemaphoreCreate, 1);
+	g_svarSemaphoreCount.increment(1u);
 }
 
 MicroSemaphore::~MicroSemaphore()
@@ -30,6 +34,7 @@ MicroSemaphore::~MicroSemaphore()
 	if(m_handle)
 	{
 		vkDestroySemaphore(getVkDevice(), m_handle, nullptr);
+		g_svarSemaphoreCount.decrement(1u);
 	}
 }
 

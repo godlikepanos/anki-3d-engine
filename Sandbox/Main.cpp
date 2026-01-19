@@ -7,9 +7,6 @@
 
 using namespace anki;
 
-#define PLAYER 0
-#define MOUSE 1
-
 class MyApp : public App
 {
 public:
@@ -31,29 +28,12 @@ public:
 
 Error MyApp::userPreInit()
 {
-#if !ANKI_OS_ANDROID
-	if(m_argc < 2)
-	{
-		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", m_argv[0]);
-		return Error::kUserData;
-	}
-#endif
-
-	// Config
-#if ANKI_OS_ANDROID
 	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
-#else
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 2, m_argv + 2));
-#endif
-
 	return Error::kNone;
 }
 
 Error MyApp::userPostInit()
 {
-	// Other init
-	ResourceManager& resources = ResourceManager::getSingleton();
-
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
@@ -62,31 +42,6 @@ Error MyApp::userPostInit()
 		g_cvarCoreTracingEnabled = true;
 #endif
 	}
-
-	// Load scene
-	ScriptResourcePtr script;
-#if ANKI_OS_ANDROID
-	ANKI_CHECK(resources.loadResource("Assets/Scene.lua", script));
-#else
-	ANKI_CHECK(resources.loadResource(m_argv[1], script));
-#endif
-	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
-
-	// ANKI_CHECK(renderer.getFinalComposite().loadColorGradingTexture(
-	//	"textures/color_gradient_luts/forge_lut.ankitex"));
-
-#if PLAYER
-	SceneGraph& scene = getSceneGraph();
-	SceneNode& cam = scene.getActiveCameraNode();
-
-	PlayerNode* pnode;
-	ANKI_CHECK(
-		scene.newSceneNode<PlayerNode>("player", pnode, cam.getFirstComponentOfType<MoveComponent>().getLocalOrigin() - Vec4(0.0, 1.0, 0.0, 0.0)));
-
-	cam.getFirstComponentOfType<MoveComponent>().setLocalTransform(Transform(Vec4(0.0, 0.0, 0.0, 0.0), Mat3x4::getIdentity(), 1.0));
-
-	pnode->addChild(&cam);
-#endif
 
 	return Error::kNone;
 }
@@ -130,7 +85,6 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 #endif
 
-#if !PLAYER
 	static Vec2 mousePosOn1stClick = in.getMousePositionNdc();
 	if(in.getMouseButton(MouseButton::kRight) == 1)
 	{
@@ -285,7 +239,6 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	{
 		in.hideMouseCursor(false);
 	}
-#endif
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
