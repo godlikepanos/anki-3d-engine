@@ -125,11 +125,11 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 		setActiveScene(scene);
 
 		// Init the default main camera
-		m_defaultMainCam = newSceneNode<SceneNode>("_MainCamera");
-		m_defaultMainCam->setSerialization(false);
-		CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
+		m_defaultMainCamNode = newSceneNode<SceneNode>("_MainCamera");
+		m_defaultMainCamNode->setSerialization(false);
+		CameraComponent* camc = m_defaultMainCamNode->newComponent<CameraComponent>();
 		camc->setPerspective(0.1f, 1000.0f, toRad(100.0f), toRad(100.0f));
-		m_mainCam = m_defaultMainCam;
+		m_mainCamNode = m_defaultMainCamNode;
 
 		RenderStateBucketContainer::allocateSingleton();
 
@@ -142,9 +142,12 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 
 		newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
 
-		EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
-		editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
-		m_editorUi = editorNode;
+		if(g_cvarCoreShowEditor)
+		{
+			EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
+			editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
+			m_editorUiNode = editorNode;
+		}
 
 		scene->m_immutable = true;
 	}
@@ -183,7 +186,7 @@ SceneNode* SceneGraph::tryFindSceneNode(const CString& name)
 
 void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 {
-	ANKI_ASSERT(m_mainCam);
+	ANKI_ASSERT(m_mainCamNode);
 	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
 
 	const Second startUpdateTime = HighRezTimer::getCurrentTime();
@@ -334,9 +337,9 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 			// Remove from the scene
 			scene.m_nodes.erase(node->m_nodeArrayIndex);
 
-			if(m_mainCam != m_defaultMainCam && m_mainCam == node)
+			if(m_mainCamNode != m_defaultMainCamNode && m_mainCamNode == node)
 			{
-				m_mainCam = m_defaultMainCam;
+				m_mainCamNode = m_defaultMainCamNode;
 			}
 
 			// Remove from dict
@@ -509,14 +512,14 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 const SceneNode& SceneGraph::getActiveCameraNode() const
 {
 	forbidCallOnUpdate();
-	ANKI_ASSERT(m_mainCam);
-	if(ANKI_EXPECT(m_mainCam->hasComponent<CameraComponent>()) && !m_paused)
+	ANKI_ASSERT(m_mainCamNode);
+	if(ANKI_EXPECT(m_mainCamNode->hasComponent<CameraComponent>()) && !m_paused)
 	{
-		return *m_mainCam;
+		return *m_mainCamNode;
 	}
 	else
 	{
-		return *m_defaultMainCam;
+		return *m_defaultMainCamNode;
 	}
 }
 
@@ -525,11 +528,11 @@ void SceneGraph::setActiveCameraNode(SceneNode* cam)
 	forbidCallOnUpdate();
 	if(cam)
 	{
-		m_mainCam = cam;
+		m_mainCamNode = cam;
 	}
 	else
 	{
-		m_mainCam = m_defaultMainCam;
+		m_mainCamNode = m_defaultMainCamNode;
 	}
 }
 

@@ -157,13 +157,6 @@ public:
 
 	void setActiveCameraNode(SceneNode* cam);
 
-	SceneNode& getEditorUiNode()
-	{
-		forbidCallOnUpdate();
-		ANKI_ASSERT(m_editorUi);
-		return *m_editorUi;
-	}
-
 	EventManager& getEventManager()
 	{
 		return m_events;
@@ -343,9 +336,9 @@ private:
 
 	GrHashMap<CString, SceneNode*> m_nodesDict;
 
-	SceneNode* m_mainCam = nullptr;
-	SceneNode* m_defaultMainCam = nullptr;
-	SceneNode* m_editorUi = nullptr;
+	SceneNode* m_mainCamNode = nullptr;
+	SceneNode* m_defaultMainCamNode = nullptr;
+	SceneNode* m_editorUiNode = nullptr;
 
 	EventManager m_events;
 
