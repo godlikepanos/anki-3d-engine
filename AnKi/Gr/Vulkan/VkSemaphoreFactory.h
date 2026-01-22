@@ -46,6 +46,11 @@ public:
 		return m_refcount.load();
 	}
 
+	Bool canRecycle() const
+	{
+		return true;
+	}
+
 	Bool clientWait(Second seconds);
 
 	Bool isTimeline() const

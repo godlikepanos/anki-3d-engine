@@ -9,10 +9,7 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// GPU fence.
+// GPU fence
 class Fence : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -20,27 +17,28 @@ class Fence : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kFence;
 
-	/// Wait for the fence.
-	/// @param seconds The time to wait in seconds. If it's zero then just return the status.
-	/// @return True if is signaled (signaled == GPU work is done).
+	// Wait for the fence.
+	// seconds: The time to wait in seconds. If it's zero then just return the status.
+	// Return true if is signaled (signaled == GPU work is done).
 	Bool clientWait(Second seconds);
 
+	Bool signaled()
+	{
+		return clientWait(0.0);
+	}
+
 protected:
-	/// Construct.
 	Fence(CString name)
 		: GrObject(kClassType, name)
 	{
 	}
 
-	/// Destroy.
 	~Fence()
 	{
 	}
 
 private:
-	/// Allocate and initialize a new instance.
 	[[nodiscard]] static Fence* newInstance();
 };
-/// @}
 
 } // end namespace anki

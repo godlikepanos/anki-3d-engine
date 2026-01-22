@@ -125,9 +125,9 @@ public:
 		alloc.m_fakeOffset = kMaxU32;
 	}
 
-	void endFrame()
+	void endFrame(Fence* fence)
 	{
-		m_pool.endFrame();
+		m_pool.endFrame(fence);
 #if ANKI_STATS_ENABLED
 		updateStats();
 #endif

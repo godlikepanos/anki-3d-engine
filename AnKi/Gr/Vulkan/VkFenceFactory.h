@@ -6,33 +6,58 @@
 #pragma once
 
 #include <AnKi/Gr/Vulkan/VkCommon.h>
-#include <AnKi/Gr/BackendCommon/MicroFenceFactory.h>
+#include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
-/// @addtogroup vulkan
-/// @{
+ANKI_SVAR(FenceCount2, StatCategory::kGr, "Fence count", StatFlag::kNone)
+ANKI_SVAR(FencesCreated, StatCategory::kGr, "Fences created", StatFlag::kNone)
 
-/// Fence wrapper over VkFence.
-class MicroFenceImpl
+// Fence wrapper over VkFence.
+class MicroFence
 {
 public:
-	VkFence m_handle = VK_NULL_HANDLE;
-
-	~MicroFenceImpl()
+	MicroFence()
 	{
-		ANKI_ASSERT(!m_handle);
+		VkFenceCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		ANKI_VK_CHECKF(vkCreateFence(getVkDevice(), &ci, nullptr, &m_handle));
+		g_svarFenceCount2.increment(1u);
+		g_svarFencesCreated.increment(1u);
 	}
 
-	operator Bool() const
+	~MicroFence()
 	{
-		return m_handle != 0;
+		if(m_handle)
+		{
+			vkDestroyFence(getVkDevice(), m_handle, nullptr);
+			g_svarFenceCount2.decrement(1u);
+		}
 	}
 
-	Bool clientWait(Second seconds)
+	void retain() const
+	{
+		m_refcount.fetchAdd(1);
+	}
+
+	void release();
+
+	I32 getRefcount() const
+	{
+		return m_refcount.load();
+	}
+
+	Bool canRecycle() const
+	{
+		return signaled();
+	}
+
+	Bool clientWait(Second seconds) const
 	{
 		ANKI_ASSERT(m_handle);
+		seconds = min<Second>(seconds, g_cvarGrGpuTimeout);
 		const F64 nsf = 1e+9 * seconds;
 		const U64 ns = U64(nsf);
 		VkResult res;
@@ -41,7 +66,7 @@ public:
 		return res != VK_TIMEOUT;
 	}
 
-	Bool signaled()
+	Bool signaled() const
 	{
 		ANKI_ASSERT(m_handle);
 		VkResult status;
@@ -49,68 +74,50 @@ public:
 		return status == VK_SUCCESS;
 	}
 
-	void create()
-	{
-		ANKI_ASSERT(!m_handle);
-		VkFenceCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		ANKI_VK_CHECKF(vkCreateFence(getVkDevice(), &ci, nullptr, &m_handle));
-	}
-
-	void destroy()
-	{
-		ANKI_ASSERT(m_handle);
-		vkDestroyFence(getVkDevice(), m_handle, nullptr);
-		m_handle = 0;
-	}
-
-	void reset()
+	void reset() const
 	{
 		ANKI_ASSERT(m_handle);
 		ANKI_VK_CHECKF(vkResetFences(getVkDevice(), 1, &m_handle));
 	}
 
-	void setName(CString name) const;
-};
-
-using VulkanMicroFence = MicroFence<MicroFenceImpl>;
-
-/// Deleter for FencePtr.
-class MicroFencePtrDeleter
-{
-public:
-	void operator()(VulkanMicroFence* fence);
-};
-
-/// Fence smart pointer.
-using MicroFencePtr = IntrusivePtr<VulkanMicroFence, MicroFencePtrDeleter>;
-
-/// A factory of fences.
-class FenceFactory : public MakeSingleton<FenceFactory>
-{
-	friend class MicroFencePtrDeleter;
-
-public:
-	/// Create a new fence pointer.
-	MicroFencePtr newInstance(CString name = "unnamed")
+	VkFence getHandle() const
 	{
-		return MicroFencePtr(m_factory.newFence(name));
+		ANKI_ASSERT(m_handle);
+		return m_handle;
 	}
 
 private:
-	MicroFenceFactory<MicroFenceImpl> m_factory;
+	VkFence m_handle = VK_NULL_HANDLE;
+	mutable Atomic<I32> m_refcount = {0};
+};
 
-	void deleteFence(VulkanMicroFence* fence)
+// Fence smart pointer.
+using MicroFencePtr = IntrusiveNoDelPtr<MicroFence>;
+
+// A factory of fences.
+class FenceFactory : public MakeSingleton<FenceFactory>
+{
+	friend class MicroFence;
+
+public:
+	// Create a new fence pointer.
+	MicroFencePtr newInstance(CString name = "unnamed");
+
+private:
+	MicroObjectRecycler<MicroFence> m_recycler;
+
+	void releaseFence(MicroFence* fence)
 	{
-		m_factory.releaseFence(fence);
+		m_recycler.recycle(fence);
 	}
 };
 
-inline void MicroFencePtrDeleter::operator()(VulkanMicroFence* fence)
+inline void MicroFence::release()
 {
-	ANKI_ASSERT(fence);
-	FenceFactory::getSingleton().deleteFence(fence);
+	if(m_refcount.fetchSub(1) == 1)
+	{
+		FenceFactory::getSingleton().releaseFence(this);
+	}
 }
-/// @}
 
 } // end namespace anki

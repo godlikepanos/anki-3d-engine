@@ -138,8 +138,9 @@ void GrManager::finish()
 	self.finishInternal();
 }
 
-void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence, [[maybe_unused]] Bool flushAndSerialize)
 {
+	// No need to do something about flushAndSerialize, D3D does that anyways
 	ANKI_D3D_SELF(GrManagerImpl);
 	self.submitInternal(cmdbs, waitFences, signalFence);
 }

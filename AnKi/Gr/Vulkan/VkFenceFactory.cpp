@@ -8,10 +8,24 @@
 
 namespace anki {
 
-void MicroFenceImpl::setName(CString name) const
+MicroFencePtr FenceFactory::newInstance(CString name)
 {
-	ANKI_ASSERT(m_handle);
-	getGrManagerImpl().trySetVulkanHandleName(name, VK_OBJECT_TYPE_FENCE, m_handle);
+	MicroFence* fence = m_recycler.findToReuse();
+
+	if(fence == nullptr)
+	{
+		fence = newInstance<MicroFence>(GrMemoryPool::getSingleton());
+	}
+	else
+	{
+		fence->reset();
+	}
+
+	ANKI_ASSERT(fence->getRefcount() == 0);
+
+	getGrManagerImpl().trySetVulkanHandleName(name, VK_OBJECT_TYPE_FENCE, fence->getHandle());
+
+	return MicroFencePtr(fence);
 }
 
 } // end namespace anki

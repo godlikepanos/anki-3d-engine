@@ -10,10 +10,9 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// Helper class for MicroXXX objects. It expects a specific interface for the T.
+// Helper class for MicroXXX objects. It expects a specific interface for the T:
+// I32 getRefcount() const;
+// Bool canRecycle() const;
 template<typename T>
 class MicroObjectRecycler
 {
@@ -27,16 +26,16 @@ public:
 		destroy();
 	}
 
-	/// It's thread-safe.
+	// It's thread-safe.
 	void destroy();
 
-	/// Find a new one to reuse. It's thread-safe.
+	// Find a new one to reuse. It's thread-safe.
 	T* findToReuse();
 
-	/// Release an object back to the recycler. It's thread-safe.
+	// Release an object back to the recycler. It's thread-safe.
 	void recycle(T* s);
 
-	/// Destroy those objects that their fence is done. It's thread-safe.
+	// Destroy those objects that their fence is done. It's thread-safe.
 	void trimCache()
 	{
 		LockGuard<Mutex> lock(m_mtx);
@@ -67,7 +66,6 @@ private:
 
 	void adjustAliveObjectCount();
 };
-/// @}
 
 } // end namespace anki
 

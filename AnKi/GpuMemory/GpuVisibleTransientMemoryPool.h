@@ -45,7 +45,6 @@ public:
 
 private:
 	StackGpuMemoryPool m_pool;
-	U32 m_frame = 0;
 	U32 m_structuredBufferAlignment = kMaxU32;
 
 	GpuVisibleTransientMemoryPool()

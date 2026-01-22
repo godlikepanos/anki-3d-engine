@@ -6,21 +6,19 @@
 #pragma once
 
 #include <AnKi/Util/SegregatedListsAllocatorBuilder.h>
+#include <AnKi/Util/BlockArray.h>
 #include <AnKi/Gr/Buffer.h>
+#include <AnKi/Gr/Fence.h>
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// The result of an allocation of SegregatedListsGpuMemoryPool.
-/// @memberof SegregatedListsGpuMemoryPool
+// The result of an allocation of SegregatedListsGpuMemoryPool.
 class SegregatedListsGpuMemoryPoolToken
 {
 	friend class SegregatedListsGpuMemoryPool;
 
 public:
-	/// The offset in the SegregatedListsGpuMemoryPoolToken::getBuffer() buffer.
+	// The offset in the SegregatedListsGpuMemoryPoolToken::getBuffer() buffer.
 	PtrSize m_offset = kMaxPtrSize;
 
 	PtrSize m_size = kMaxPtrSize;
@@ -40,8 +38,8 @@ private:
 	PtrSize m_chunkOffset = kMaxPtrSize;
 };
 
-/// GPU memory allocator based on segregated lists. It allocates a GPU buffer with some initial size. If there is a need to grow it allocates a bigger
-/// buffer and copies contents of the old one to the new (CoW).
+// GPU memory allocator based on segregated lists. It allocates a GPU buffer with some initial size. If there is a need to grow it allocates a bigger
+// buffer and copies contents of the old one to the new (CoW).
 class SegregatedListsGpuMemoryPool
 {
 public:
@@ -61,19 +59,19 @@ public:
 
 	void destroy();
 
-	/// Allocate memory.
-	/// @note It's thread-safe.
+	// Allocate memory.
+	// It's thread-safe.
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token);
 
-	/// Free memory a few frames down the line.
-	/// @note It's thread-safe.
+	// Free memory a few frames down the line.
+	// It's thread-safe.
 	void deferredFree(SegregatedListsGpuMemoryPoolToken& token);
 
-	/// @note It's thread-safe.
-	void endFrame();
+	// It's thread-safe.
+	void endFrame(Fence* fence);
 
-	/// Need to be checking this constantly to get the updated buffer in case of CoWs.
-	/// @note It's not thread-safe.
+	// Need to be checking this constantly to get the updated buffer in case of CoWs.
+	// It's not thread-safe.
 	Buffer& getGpuBuffer() const
 	{
 		ANKI_ASSERT(m_gpuBuffer.isCreated() && "The buffer hasn't been created yet");
@@ -86,7 +84,7 @@ public:
 		return m_mappedGpuBufferMemory;
 	}
 
-	/// @note It's thread-safe.
+	// It's thread-safe.
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const;
 
 private:
@@ -108,8 +106,15 @@ private:
 
 	GrDynamicArray<Chunk*> m_deletedChunks;
 
-	Array<GrDynamicArray<SegregatedListsGpuMemoryPoolToken>, kMaxFramesInFlight> m_garbage;
-	U8 m_frame = 0;
+	class Garbage
+	{
+	public:
+		GrBlockArray<SegregatedListsGpuMemoryPoolToken, BlockArrayConfig<16>> m_tokens;
+		FencePtr m_fence;
+	};
+
+	GrBlockArray<Garbage, BlockArrayConfig<8>> m_garbage;
+	U32 m_activeGarbage = kMaxU32;
 	Bool m_allowCoWs = true;
 
 	BufferMapAccessBit m_mapAccess = BufferMapAccessBit::kNone;
@@ -122,6 +127,5 @@ private:
 		return m_bufferUsage != BufferUsageBit::kNone;
 	}
 };
-/// @}
 
 } // end namespace anki

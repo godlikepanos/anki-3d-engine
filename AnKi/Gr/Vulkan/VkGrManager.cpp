@@ -143,10 +143,10 @@ ANKI_NEW_GR_OBJECT(GrUpscaler)
 #undef ANKI_NEW_GR_OBJECT
 #undef ANKI_NEW_GR_OBJECT_NO_INIT_INFO
 
-void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence, Bool flushAndSerialize)
 {
 	ANKI_VK_SELF(GrManagerImpl);
-	self.submitInternal(cmdbs, waitFences, signalFence);
+	self.submitInternal(cmdbs, waitFences, signalFence, flushAndSerialize);
 }
 
 PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const
@@ -1146,7 +1146,7 @@ Error GrManagerImpl::initDevice()
 	if(pureAsyncCompute)
 	{
 		vkGetDeviceQueue(m_device, m_queueFamilyIndices[GpuQueueType::kCompute], 0, &m_queues[GpuQueueType::kCompute]);
-		trySetVulkanHandleName("AsyncCompute", VK_OBJECT_TYPE_QUEUE, m_queues[GpuQueueType::kGeneral]);
+		trySetVulkanHandleName("AsyncCompute", VK_OBJECT_TYPE_QUEUE, m_queues[GpuQueueType::kCompute]);
 	}
 	else if(lowPriorityQueueAsyncCompute)
 	{
@@ -1274,8 +1274,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 
 	// Get new image
 	uint32_t imageIdx;
-	const VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore->getHandle(),
-											   fence->getImplementation().m_handle, &imageIdx);
+	const VkResult res =
+		vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx);
 
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -1291,8 +1291,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
 		// Can't fail a second time
-		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore->getHandle(),
-											 fence->getImplementation().m_handle, &imageIdx));
+		ANKI_VK_CHECKF(
+			vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx));
 	}
 	else
 	{
@@ -1357,7 +1357,7 @@ void GrManagerImpl::endFrameInternal()
 	GpuMemoryManager::getSingleton().updateStats();
 }
 
-void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence, Bool flushAndSerialize)
 {
 	// First thing, create a fence
 	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Submit");
@@ -1388,6 +1388,33 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		}
 
 		vkCmdbs.emplaceBack(cmdb.getHandle());
+	}
+
+	// Create the flush command buffer
+	CommandBufferPtr flushCmdb;
+	if(flushAndSerialize)
+	{
+		CommandBufferInitInfo cmdbInit("Flush");
+		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
+		if(queueType == GpuQueueType::kCompute)
+		{
+			cmdbInit.m_flags |= CommandBufferFlag::kComputeWork;
+		}
+		else
+		{
+			cmdbInit.m_flags |= CommandBufferFlag::kGeneralWork;
+		}
+
+		flushCmdb = newCommandBuffer(cmdbInit);
+		CommandBufferImpl& impl = static_cast<CommandBufferImpl&>(*flushCmdb);
+		impl.setFullPipelineBarrier();
+		flushCmdb->endRecording();
+
+#if ANKI_ASSERTIONS_ENABLED
+		impl.setSubmitted();
+#endif
+
+		vkCmdbs.emplaceBack(impl.getHandle());
 	}
 
 	// Gather wait semaphores
@@ -1488,7 +1515,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		appendPNextList(submit, &timelineInfo);
 
 		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
-		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[queueType], 1, &submit, fence->getImplementation().m_handle));
+		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[queueType], 1, &submit, fence->getHandle()));
 	}
 }
 

@@ -44,7 +44,7 @@ namespace anki {
 		compInit.m_node = this; \
 		compInit.m_componentUuid = SceneGraph::getSingleton().m_scenes[m_sceneIndex].getNewNodeUuid(); \
 		compInit.m_sceneUuid = m_sceneUuid; \
-		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(compInit); \
+		auto it = SceneGraph::getSingleton().m_componentArrays.get##name##s().emplace(compInit); \
 		it->setArrayIndex(it.getArrayIndex()); \
 		addComponent(&(*it)); \
 		return &(*it); \

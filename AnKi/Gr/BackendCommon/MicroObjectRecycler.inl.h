@@ -34,10 +34,14 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 	// Trim the cache but leave at least one object to be recycled
 	trimCacheInternal(max(m_availableObjectsAfterTrim, 1u));
 
-	if(m_objectCache.getSize())
+	for(auto it = m_objectCache.getBegin(); it != m_objectCache.getEnd(); ++it)
 	{
-		out = m_objectCache[m_objectCache.getSize() - 1];
-		m_objectCache.popBack();
+		if((*it)->canRecycle())
+		{
+			out = *it;
+			m_objectCache.erase(it);
+			break;
+		}
 	}
 
 	ANKI_ASSERT(out == nullptr || out->getRefcount() == 0);
@@ -72,19 +76,28 @@ template<typename T>
 void MicroObjectRecycler<T>::trimCacheInternal(U32 aliveObjectCountAfterTrim)
 {
 	aliveObjectCountAfterTrim = min(aliveObjectCountAfterTrim, m_objectCache.getSize());
-	const U32 toBeKilledCount = m_objectCache.getSize() - aliveObjectCountAfterTrim;
+	U32 toBeKilledCount = m_objectCache.getSize() - aliveObjectCountAfterTrim;
 	if(toBeKilledCount == 0)
 	{
 		return;
 	}
 
-	for(U32 i = 0; i < toBeKilledCount; ++i)
+	GrDynamicArray<T*> newObjectCache;
+	for(U32 i = 0; i < m_objectCache.getSize(); ++i)
 	{
-		deleteInstance(GrMemoryPool::getSingleton(), m_objectCache[i]);
-		m_objectCache[i] = nullptr;
+		if(toBeKilledCount > 0 && m_objectCache[i]->canRecycle())
+		{
+			deleteInstance(GrMemoryPool::getSingleton(), m_objectCache[i]);
+			--toBeKilledCount;
+		}
+		else
+		{
+			newObjectCache.emplaceBack(m_objectCache[i]);
+		}
 	}
 
-	m_objectCache.erase(m_objectCache.getBegin(), m_objectCache.getBegin() + toBeKilledCount);
+	m_objectCache.destroy();
+	m_objectCache = std::move(newObjectCache);
 }
 
 template<typename T>
@@ -97,12 +110,15 @@ void MicroObjectRecycler<T>::adjustAliveObjectCount()
 	}
 	else
 	{
+		constexpr U32 kGrowCount = 4;
+		constexpr U32 kMinAvailableObjects = 1;
+
 		if(m_cacheMisses)
 		{
 			// Need more alive objects
-			m_availableObjectsAfterTrim += 4;
+			m_availableObjectsAfterTrim += kGrowCount;
 		}
-		else if(m_availableObjectsAfterTrim > 0)
+		else if(m_availableObjectsAfterTrim > kMinAvailableObjects)
 		{
 			// Have more than enough alive objects per request, decrease alive objects
 			--m_availableObjectsAfterTrim;

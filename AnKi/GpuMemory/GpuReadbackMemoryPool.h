@@ -97,7 +97,7 @@ public:
 	// Thread-safe
 	void deferredFree(GpuReadbackMemoryAllocation& allocation);
 
-	void endFrame();
+	void endFrame(Fence* fence);
 
 private:
 	SegregatedListsGpuMemoryPool m_pool;

@@ -806,7 +806,7 @@ void Renderer::updatePipelineStats()
 }
 #endif
 
-Error Renderer::render()
+Error Renderer::render(FencePtr& fence)
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
@@ -925,7 +925,6 @@ Error Renderer::render()
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
 
 	// Flush
-	FencePtr fence;
 	m_rgraph->recordAndSubmitCommandBuffers(&fence);
 
 	// Misc

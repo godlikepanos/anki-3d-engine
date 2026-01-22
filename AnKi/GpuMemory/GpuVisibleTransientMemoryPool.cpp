@@ -14,12 +14,8 @@ void GpuVisibleTransientMemoryPool::endFrame()
 {
 	g_svarGpuVisibleTransientMemory.set(m_pool.getAllocatedMemory());
 
-	if(m_frame == 0)
-	{
-		m_pool.reset();
-	}
-
-	m_frame = (m_frame + 1) % kMaxFramesInFlight;
+	// This is GPU only memory so next frame can start re-using immediately
+	m_pool.reset();
 }
 
 } // end namespace anki

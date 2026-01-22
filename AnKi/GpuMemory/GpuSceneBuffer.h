@@ -105,9 +105,9 @@ public:
 		m_pool.deferredFree(alloc.m_token);
 	}
 
-	void endFrame()
+	void endFrame(Fence* fence)
 	{
-		m_pool.endFrame();
+		m_pool.endFrame(fence);
 #if ANKI_STATS_ENABLED
 		updateStats();
 #endif

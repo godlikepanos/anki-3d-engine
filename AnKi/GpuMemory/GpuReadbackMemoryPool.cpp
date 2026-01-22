@@ -42,9 +42,9 @@ void GpuReadbackMemoryPool::deferredFree(GpuReadbackMemoryAllocation& allocation
 	::new(&allocation) GpuReadbackMemoryAllocation();
 }
 
-void GpuReadbackMemoryPool::endFrame()
+void GpuReadbackMemoryPool::endFrame(Fence* fence)
 {
-	m_pool.endFrame();
+	m_pool.endFrame(fence);
 }
 
 } // end namespace anki

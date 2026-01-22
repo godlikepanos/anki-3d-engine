@@ -449,7 +449,8 @@ Error App::mainLoop()
 			SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
 			GpuSceneMicroPatcher::getSingleton().endPatching();
 
-			ANKI_CHECK(Renderer::getSingleton().render());
+			FencePtr renderFence;
+			ANKI_CHECK(Renderer::getSingleton().render(renderFence));
 
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
 			Second grTime = 0.0;
@@ -465,11 +466,11 @@ Error App::mainLoop()
 				grTime = HighRezTimer::getCurrentTime() - grTime;
 			}
 
-			RebarTransientMemoryPool::getSingleton().endFrame();
-			UnifiedGeometryBuffer::getSingleton().endFrame();
-			GpuSceneBuffer::getSingleton().endFrame();
+			RebarTransientMemoryPool::getSingleton().endFrame(renderFence.get());
+			UnifiedGeometryBuffer::getSingleton().endFrame(renderFence.get());
+			GpuSceneBuffer::getSingleton().endFrame(renderFence.get());
 			GpuVisibleTransientMemoryPool::getSingleton().endFrame();
-			GpuReadbackMemoryPool::getSingleton().endFrame();
+			GpuReadbackMemoryPool::getSingleton().endFrame(renderFence.get());
 
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();

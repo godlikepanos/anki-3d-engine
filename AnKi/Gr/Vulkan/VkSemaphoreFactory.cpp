@@ -11,6 +11,7 @@
 namespace anki {
 
 ANKI_SVAR(SemaphoreCount, StatCategory::kGr, "Semaphore count", StatFlag::kNone)
+ANKI_SVAR(SemaphoresCreated, StatCategory::kGr, "Semaphores created", StatFlag::kNone)
 
 MicroSemaphore::MicroSemaphore(Bool isTimeline)
 	: m_isTimeline(isTimeline)
@@ -27,6 +28,7 @@ MicroSemaphore::MicroSemaphore(Bool isTimeline)
 	ANKI_VK_CHECKF(vkCreateSemaphore(getVkDevice(), &ci, nullptr, &m_handle));
 	ANKI_TRACE_INC_COUNTER(VkSemaphoreCreate, 1);
 	g_svarSemaphoreCount.increment(1u);
+	g_svarSemaphoresCreated.increment(1u);
 }
 
 MicroSemaphore::~MicroSemaphore()

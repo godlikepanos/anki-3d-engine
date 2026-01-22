@@ -88,6 +88,8 @@ public:
 	}
 #endif
 
+	void setFullPipelineBarrier();
+
 private:
 	StackMemoryPool m_pool;
 

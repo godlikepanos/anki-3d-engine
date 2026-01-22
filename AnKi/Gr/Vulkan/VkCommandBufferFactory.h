@@ -50,6 +50,11 @@ public:
 		return m_refcount.load();
 	}
 
+	Bool canRecycle() const
+	{
+		return true;
+	}
+
 	VkCommandBuffer getHandle() const
 	{
 		ANKI_ASSERT(m_handle);

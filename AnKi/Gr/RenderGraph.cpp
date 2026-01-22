@@ -1270,7 +1270,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	const U32 firstGroupThatWroteToSwapchain2 = firstGroupThatWroteToSwapchain.getNonAtomically();
 	if(firstGroupThatWroteToSwapchain2 == 0 || firstGroupThatWroteToSwapchain2 == kMaxU32)
 	{
-		GrManager::getSingleton().submit(WeakArray(pCmdbs), {}, optionalFence);
+		GrManager::getSingleton().submit(WeakArray(pCmdbs), {}, optionalFence, true);
 	}
 	else
 	{
@@ -1279,7 +1279,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 		GrManager::getSingleton().submit(WeakArray(pCmdbs).subrange(0, firstGroupThatWroteToSwapchain2), {}, nullptr);
 
 		GrManager::getSingleton().submit(
-			WeakArray(pCmdbs).subrange(firstGroupThatWroteToSwapchain2, batchGroupCount - firstGroupThatWroteToSwapchain2), {}, optionalFence);
+			WeakArray(pCmdbs).subrange(firstGroupThatWroteToSwapchain2, batchGroupCount - firstGroupThatWroteToSwapchain2), {}, optionalFence, true);
 	}
 }
 

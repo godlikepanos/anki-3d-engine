@@ -93,7 +93,7 @@ public:
 
 	Error init(const RendererInitInfo& inf);
 
-	Error render();
+	Error render(FencePtr& fence);
 
 #define ANKI_RENDERER_OBJECT_DEF(type, name, initCondition) \
 	type& get##type() \

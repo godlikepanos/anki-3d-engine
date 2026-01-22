@@ -12,12 +12,9 @@
 
 namespace anki {
 
-/// @addtogroup gpu_memory
-/// @{
-
 ANKI_CVAR(NumericCVar<PtrSize>, Core, RebarGpuMemorySize, 24_MB, 1_MB, 1_GB, "ReBAR: always mapped GPU memory")
 
-/// Manages staging GPU memory.
+// Manages staging GPU memory.
 class RebarTransientMemoryPool : public MakeSingleton<RebarTransientMemoryPool>
 {
 	template<typename>
@@ -30,9 +27,9 @@ public:
 
 	void init();
 
-	void endFrame();
+	void endFrame(Fence* fence);
 
-	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
+	// Allocate staging memory for various operations. The memory will be reused when it's safe
 	template<typename T>
 	BufferView allocate(PtrSize size, U32 alignment, T*& mappedMem)
 	{
@@ -42,14 +39,14 @@ public:
 		return out;
 	}
 
-	/// @copydoc allocate
+	// See allocate()
 	template<typename T>
 	BufferView allocateConstantBuffer(T*& mappedMem)
 	{
 		return allocate(sizeof(T), GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment, mappedMem);
 	}
 
-	/// @copydoc allocate
+	// See allocate()
 	template<typename T>
 	BufferView allocateStructuredBuffer(U32 count, WeakArray<T>& arr)
 	{
@@ -60,7 +57,7 @@ public:
 		return out;
 	}
 
-	/// @copydoc allocate
+	// See allocate()
 	template<typename T>
 	BufferView allocateCopyBuffer(U32 count, WeakArray<T>& arr)
 	{
@@ -83,18 +80,33 @@ public:
 
 private:
 	BufferPtr m_buffer;
-	U8* m_mappedMem = nullptr; ///< Cache it.
-	PtrSize m_bufferSize = 0; ///< Cache it.
+	U8* m_mappedMem = nullptr; // Cache it
+	PtrSize m_bufferSize = 0; // Cache it
+	U32 m_structuredBufferAlignment = kMaxU32; // Cache it
+
 	Atomic<PtrSize> m_offset = {0};
-	PtrSize m_previousFrameEndOffset = 0;
-	U32 m_structuredBufferAlignment = kMaxU32;
+
+	// This is the slice of the ReBAR buffer that is protected by a fence
+	class FrameSlice
+	{
+	public:
+		PtrSize m_offset = kMaxPtrSize;
+		PtrSize m_range = 0;
+	};
+
+	static constexpr U32 kSliceCount = 8; // It's actually "max slices in-flight"
+	BitSet<kSliceCount, U32> m_activeSliceMask = {false};
+	U32 m_crntActiveSlice = kMaxU32;
+	Array<FrameSlice, kSliceCount> m_slices;
+	Array<FencePtr, kSliceCount> m_sliceFences;
 
 	RebarTransientMemoryPool() = default;
 
 	~RebarTransientMemoryPool();
 
 	BufferView allocateInternal(PtrSize size, U32 alignment, void*& mappedMem);
+
+	void validateSlices() const;
 };
-/// @}
 
 } // end namespace anki

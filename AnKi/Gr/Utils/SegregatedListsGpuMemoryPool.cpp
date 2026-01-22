@@ -20,8 +20,7 @@ class SegregatedListsGpuMemoryPool::BuilderInterface
 public:
 	SegregatedListsGpuMemoryPool* m_parent = nullptr;
 
-	/// @name Interface methods
-	/// @{
+	// Interface methods
 	U32 getClassCount() const
 	{
 		return m_parent->m_classes.getSize();
@@ -46,7 +45,6 @@ public:
 	{
 		return 4;
 	}
-	/// @}
 };
 
 void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
@@ -72,7 +70,6 @@ void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeak
 	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
 	m_builder->getInterface().m_parent = this;
 
-	m_frame = 0;
 	m_allocatedSize = 0;
 	m_allowCoWs = allowCoWs;
 	m_mapAccess = map;
@@ -92,9 +89,19 @@ void SegregatedListsGpuMemoryPool::destroy()
 		m_gpuBuffer->unmap();
 	}
 
-	for(GrDynamicArray<SegregatedListsGpuMemoryPoolToken>& arr : m_garbage)
+	for(auto it = m_garbage.getBegin(); it != m_garbage.getEnd(); ++it)
 	{
-		for(const SegregatedListsGpuMemoryPoolToken& token : arr)
+		Garbage& garbage = *it;
+		if(it.getArrayIndex() != m_activeGarbage)
+		{
+			ANKI_CHECKF(garbage.m_fence->clientWait(kMaxSecond));
+		}
+		else
+		{
+			ANKI_ASSERT(!garbage.m_fence);
+		}
+
+		for(const SegregatedListsGpuMemoryPoolToken& token : garbage.m_tokens)
 		{
 			m_builder->free(static_cast<Chunk*>(token.m_chunk), token.m_chunkOffset, token.m_size);
 		}
@@ -237,30 +244,60 @@ void SegregatedListsGpuMemoryPool::deferredFree(SegregatedListsGpuMemoryPoolToke
 
 	{
 		LockGuard lock(m_lock);
-		m_garbage[m_frame].emplaceBack(token);
+
+		if(m_activeGarbage == kMaxU32)
+		{
+			m_activeGarbage = m_garbage.emplace().getArrayIndex();
+		}
+
+		m_garbage[m_activeGarbage].m_tokens.emplace(token);
 	}
 
 	token = {};
 }
 
-void SegregatedListsGpuMemoryPool::endFrame()
+void SegregatedListsGpuMemoryPool::endFrame(Fence* fence)
 {
+	ANKI_ASSERT(fence);
 	ANKI_ASSERT(isInitialized());
 
 	LockGuard lock(m_lock);
 
-	m_frame = (m_frame + 1) % kMaxFramesInFlight;
-
 	// Throw out the garbage
-	for(SegregatedListsGpuMemoryPoolToken& token : m_garbage[m_frame])
+	Array<U32, 8> garbageToDelete;
+	U32 garbageToDeleteCount = 0;
+	for(auto it = m_garbage.getBegin(); it != m_garbage.getEnd(); ++it)
 	{
-		m_builder->free(static_cast<Chunk*>(token.m_chunk), token.m_chunkOffset, token.m_size);
+		Garbage& garbage = *it;
 
-		ANKI_ASSERT(m_allocatedSize >= token.m_size);
-		m_allocatedSize -= token.m_size;
+		if(garbage.m_fence && garbage.m_fence->clientWait(0.0))
+		{
+			for(SegregatedListsGpuMemoryPoolToken token : garbage.m_tokens)
+			{
+				m_builder->free(static_cast<Chunk*>(token.m_chunk), token.m_chunkOffset, token.m_size);
+
+				ANKI_ASSERT(m_allocatedSize >= token.m_size);
+				m_allocatedSize -= token.m_size;
+			}
+
+			garbageToDelete[garbageToDeleteCount++] = it.getArrayIndex();
+		}
 	}
 
-	m_garbage[m_frame].destroy();
+	for(U32 i = 0; i < garbageToDeleteCount; ++i)
+	{
+		m_garbage.erase(garbageToDelete[i]);
+	}
+
+	// Set the new fence
+	if(m_activeGarbage != kMaxU32)
+	{
+		ANKI_ASSERT(m_garbage[m_activeGarbage].m_tokens.getSize());
+		ANKI_ASSERT(!m_garbage[m_activeGarbage].m_fence);
+		m_garbage[m_activeGarbage].m_fence.reset(fence);
+
+		m_activeGarbage = kMaxU32;
+	}
 }
 
 void SegregatedListsGpuMemoryPool::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const

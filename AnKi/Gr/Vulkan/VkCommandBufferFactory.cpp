@@ -10,7 +10,8 @@
 
 namespace anki {
 
-ANKI_SVAR(CommandBufferCount, StatCategory::kGr, "CommandBufferCount", StatFlag::kNone)
+ANKI_SVAR(CommandBufferCount, StatCategory::kGr, "Cmdb count", StatFlag::kNone)
+ANKI_SVAR(CommandBuffersCreated, StatCategory::kGr, "Cmdbs created", StatFlag::kNone)
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {
@@ -111,6 +112,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
 		g_svarCommandBufferCount.increment(1_U64);
+		g_svarCommandBuffersCreated.increment(1_U64);
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(getVkDevice(), &ci, &cmdb));
 

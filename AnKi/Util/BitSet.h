@@ -304,6 +304,30 @@ public:
 		return *this;
 	}
 
+	template<typename TFunc>
+	FunctorContinue iterateSetBitsFromLeastSignificant(TFunc func) const
+	{
+		for(U32 i = 0; i < kChunkCount; ++i)
+		{
+			ChunkType bits = m_chunks[i];
+			while(bits)
+			{
+				const U32 lsb = U32(std::countr_zero(bits));
+				const U32 bitIdx = lsb + (i * kChunkBitCount);
+
+				const FunctorContinue cont = func(bitIdx);
+				if(cont == FunctorContinue::kStop)
+				{
+					return cont;
+				}
+
+				bits &= ~(ChunkType(1) << ChunkType(lsb));
+			}
+		}
+
+		return FunctorContinue::kContinue;
+	}
+
 private:
 	Array<ChunkType, kChunkCount> m_chunks;
 

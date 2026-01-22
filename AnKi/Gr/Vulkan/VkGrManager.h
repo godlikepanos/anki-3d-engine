@@ -11,6 +11,7 @@
 #include <AnKi/Gr/Vulkan/VkFenceFactory.h>
 #include <AnKi/Gr/Vulkan/VkSwapchainFactory.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/BlockArray.h>
 
 namespace anki {
 
@@ -86,7 +87,7 @@ public:
 
 	void endFrameInternal();
 
-	void submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence);
+	void submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence, Bool flushAndSerialize);
 
 	void finishInternal();
 

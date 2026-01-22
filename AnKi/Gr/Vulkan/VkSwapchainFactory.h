@@ -46,6 +46,11 @@ public:
 		return m_refcount.load();
 	}
 
+	Bool canRecycle() const
+	{
+		return true;
+	}
+
 private:
 	mutable Atomic<I32> m_refcount = {0};
 
