@@ -51,6 +51,11 @@ public:
 		return m_refcount.load();
 	}
 
+	Bool canRecycle() const
+	{
+		return true;
+	}
+
 	/// Interface method.
 	void onFenceDone()
 	{

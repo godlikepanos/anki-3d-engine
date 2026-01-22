@@ -8,7 +8,7 @@
 
 namespace anki {
 
-MicroFencePtr FenceFactory::newInstance(CString name)
+MicroFencePtr FenceFactory::newFence(CString name)
 {
 	MicroFence* fence = m_recycler.findToReuse();
 

@@ -101,7 +101,7 @@ class FenceFactory : public MakeSingleton<FenceFactory>
 
 public:
 	// Create a new fence pointer.
-	MicroFencePtr newInstance(CString name = "unnamed");
+	MicroFencePtr newFence(CString name = "unnamed");
 
 private:
 	MicroObjectRecycler<MicroFence> m_recycler;

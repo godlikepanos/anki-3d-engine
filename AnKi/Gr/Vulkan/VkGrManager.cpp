@@ -1258,7 +1258,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	// Create some objets outside the lock
 	Array<Char, 16> name;
 	snprintf(name.getBegin(), name.getSize(), "Acquire %" PRIu64, m_frame);
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance(name.getBegin());
+	MicroFencePtr fence = FenceFactory::getSingleton().newFence(name.getBegin());
 
 	MicroSemaphorePtr acquireSemaphore = SemaphoreFactory::getSingleton().newInstance(false, name.getBegin());
 
@@ -1360,7 +1360,7 @@ void GrManagerImpl::endFrameInternal()
 void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence, Bool flushAndSerialize)
 {
 	// First thing, create a fence
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Submit");
+	MicroFencePtr fence = FenceFactory::getSingleton().newFence("Submit");
 
 	// Gather command buffers
 	GrDynamicArray<VkCommandBuffer> vkCmdbs;

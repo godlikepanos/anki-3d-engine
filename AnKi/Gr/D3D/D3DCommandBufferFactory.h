@@ -47,6 +47,11 @@ public:
 		return m_refcount.load();
 	}
 
+	Bool canRecycle() const
+	{
+		return true;
+	}
+
 	D3D12GraphicsCommandListX& getCmdList() const
 	{
 		ANKI_ASSERT(m_cmdList);
