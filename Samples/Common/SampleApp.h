@@ -12,13 +12,8 @@ namespace anki {
 class SampleApp : public App
 {
 public:
-	U32 m_argc = 0;
-	Char** m_argv = nullptr;
-
 	SampleApp(U32 argc, Char** argv, CString appName)
-		: App(appName)
-		, m_argc(argc)
-		, m_argv(argv)
+		: App(appName, argc, argv)
 	{
 	}
 

@@ -112,7 +112,7 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 	return out;
 }
 
-App::App(CString appName, AllocAlignedCallback allocCb, void* allocCbUserData)
+App::App(CString appName, U32 argc, Char** argv, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
@@ -136,6 +136,14 @@ App::App(CString appName, AllocAlignedCallback allocCb, void* allocCbUserData)
 		appName = "UnnamedApp";
 	}
 	m_appName = appName;
+
+	if(argc > 1 && argv)
+	{
+		if(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1))
+		{
+			ANKI_CORE_LOGE("Error setting command line arguments");
+		}
+	}
 }
 
 App::~App()
@@ -183,7 +191,6 @@ void App::cleanup()
 Error App::init()
 {
 	StatsSet::getSingleton().initFromMainThread();
-	Logger::getSingleton().enableVerbosity(g_cvarCoreVerboseLog);
 
 	if(g_cvarCoreShowEditor)
 	{
@@ -191,8 +198,6 @@ Error App::init()
 	}
 
 	ANKI_CHECK(initDirs());
-
-	ANKI_CORE_LOGI("Initializing application. Build config: %s", kAnKiBuildConfigString);
 
 // Check SIMD support
 #if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
@@ -376,6 +381,8 @@ Error App::initDirs()
 
 Error App::mainLoop()
 {
+	ANKI_CORE_LOGI("Starting application. Build config: %s", kAnKiBuildConfigString);
+
 	// Initialize the application
 	Error err = Error::kNone;
 	if((err = userPreInit()))
@@ -383,6 +390,16 @@ Error App::mainLoop()
 		ANKI_CORE_LOGE("User initialization failed. Shutting down");
 		return err;
 	}
+
+	Logger::getSingleton().enableVerbosity(g_cvarCoreVerboseLog);
+
+	ANKI_CORE_LOGV("CVar values before initializing the subsystems");
+	CVarSet::getSingleton().iterateCVars([](CVar& cvar) {
+		Array<Char, 256> str;
+		cvar.toString(str);
+		ANKI_CORE_LOGV("\t%s", str.getBegin());
+		return FunctorContinue::kContinue;
+	});
 
 	if((err = init()))
 	{
@@ -444,7 +461,9 @@ Error App::mainLoop()
 			GrManager::getSingleton().beginFrame();
 
 			GpuSceneMicroPatcher::getSingleton().beginPatching();
-			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));
+			Bool userQuit = false;
+			ANKI_CHECK(userMainLoop(userQuit, crntTime - prevUpdateTime));
+			quit = quit || userQuit;
 
 			SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
 			GpuSceneMicroPatcher::getSingleton().endPatching();

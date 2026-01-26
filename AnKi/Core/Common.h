@@ -17,6 +17,7 @@ namespace anki {
 #define ANKI_CORE_LOGE(...) ANKI_LOG("CORE", kError, __VA_ARGS__)
 #define ANKI_CORE_LOGW(...) ANKI_LOG("CORE", kWarning, __VA_ARGS__)
 #define ANKI_CORE_LOGF(...) ANKI_LOG("CORE", kFatal, __VA_ARGS__)
+#define ANKI_CORE_LOGV(...) ANKI_LOG("CORE", kVerbose, __VA_ARGS__)
 
 class CoreMemoryPool : public HeapMemoryPool, public MakeSingleton<CoreMemoryPool>
 {

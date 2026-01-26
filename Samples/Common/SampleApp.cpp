@@ -26,8 +26,6 @@ Error SampleApp::userPreInit()
 	}
 #endif
 
-	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
-
 	return Error::kNone;
 }
 

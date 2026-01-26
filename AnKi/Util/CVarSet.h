@@ -12,13 +12,10 @@
 
 namespace anki {
 
-/// @addtogroup util_other
-/// @{
-
-/// Define a global CVAR.
+// Define a global CVAR.
 #define ANKI_CVAR(type, namespace, name, ...) inline type g_cvar##namespace##name(ANKI_STRINGIZE(namespace) "." ANKI_STRINGIZE(name), __VA_ARGS__);
 
-/// Same as ANKI_CVAR but you can define 2 namespaces.
+// Same as ANKI_CVAR but you can define 2 namespaces.
 #define ANKI_CVAR2(type, namespaceA, namespaceB, name, ...) \
 	inline type g_cvar##namespaceA##namespaceB##name(ANKI_STRINGIZE(namespaceA) "." ANKI_STRINGIZE(namespaceB) "." ANKI_STRINGIZE(name), __VA_ARGS__);
 
@@ -34,7 +31,7 @@ enum class CVarValueType : U32
 	kNumericF64
 };
 
-/// ConfigSet variable base.
+// ConfigSet variable base.
 class CVar : public IntrusiveListEnabled<CVar>
 {
 	friend class CVarSet;
@@ -53,6 +50,8 @@ public:
 	{
 		return m_type;
 	}
+
+	virtual void toString(WeakArray<Char> str) = 0;
 
 protected:
 	CString m_name;
@@ -80,14 +79,14 @@ private:
 	void registerSelf();
 };
 
-/// Numeric config variable.
+// Numeric config variable.
 template<typename TNumber>
 class NumericCVar : public CVar
 {
 public:
 	using CheckValueCallback = Bool (*)(TNumber);
 
-	/// Initialize using a custom callback the checks the correctness of the value.
+	// Initialize using a custom callback the checks the correctness of the value.
 	NumericCVar(CString name, TNumber defaultVal, CheckValueCallback checkValueCallback, CString descr = CString())
 		: CVar(getCVarType(), name, descr)
 		, m_value(defaultVal)
@@ -97,7 +96,7 @@ public:
 		ANKI_ASSERT(checkValueCallback(defaultVal));
 	}
 
-	/// Initialize using a min max range.
+	// Initialize using a min max range.
 	NumericCVar(CString name, TNumber defaultVal, TNumber min = getMinNumericLimit<TNumber>(), TNumber max = getMaxNumericLimit<TNumber>(),
 				CString descr = CString())
 		: CVar(getCVarType(), name, descr)
@@ -148,6 +147,18 @@ private:
 	CheckValueCallback m_checkValueCallback = nullptr;
 
 	static CVarValueType getCVarType();
+
+	void toString(WeakArray<Char> str) final
+	{
+		if constexpr(std::is_integral_v<TNumber>)
+		{
+			std::snprintf(str.getBegin(), str.getSize(), "%s %" PRIu64, getName().cstr(), U64(m_value));
+		}
+		else
+		{
+			std::snprintf(str.getBegin(), str.getSize(), "%s %f", getName().cstr(), m_value);
+		}
+	}
 };
 
 #define ANKI_CVAR_NUMERIC_TYPE(type) \
@@ -165,7 +176,7 @@ ANKI_CVAR_NUMERIC_TYPE(F32)
 ANKI_CVAR_NUMERIC_TYPE(F64)
 #undef ANKI_CVAR_NUMERIC_TYPE
 
-/// String config variable.
+// String config variable.
 class StringCVar : public CVar
 {
 public:
@@ -212,9 +223,14 @@ public:
 
 private:
 	Char* m_str;
+
+	void toString(WeakArray<Char> str) final
+	{
+		std::snprintf(str.getBegin(), str.getSize(), "%s %s", getName().cstr(), m_str);
+	}
 };
 
-/// Boolean config variable.
+// Boolean config variable.
 class BoolCVar : public CVar
 {
 public:
@@ -238,9 +254,14 @@ public:
 
 private:
 	Bool m_val;
+
+	void toString(WeakArray<Char> str) final
+	{
+		std::snprintf(str.getBegin(), str.getSize(), "%s %d", getName().cstr(), m_val);
+	}
 };
 
-/// Access all configuration variables.
+// Access all configuration variables.
 class CVarSet : public MakeSingletonLazyInit<CVarSet>
 {
 	friend class CVar;
@@ -271,15 +292,18 @@ public:
 	Error setMultiple(ConstWeakArray<const Char*> arr);
 
 	template<typename TFunc>
-	void iterateCVars(TFunc func)
+	FunctorContinue iterateCVars(TFunc func)
 	{
+		FunctorContinue cont = FunctorContinue::kContinue;
 		for(CVar& cvar : m_cvars)
 		{
-			if(func(cvar) == FunctorContinue::kStop)
+			cont = func(cvar);
+			if(cont == FunctorContinue::kStop)
 			{
-				return;
+				break;
 			}
 		}
+		return cont;
 	}
 
 private:
@@ -295,6 +319,5 @@ inline void CVar::registerSelf()
 {
 	CVarSet::getSingleton().registerCVar(this);
 }
-/// @}
 
 } // end namespace anki

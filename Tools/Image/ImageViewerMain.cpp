@@ -49,27 +49,18 @@ private:
 class MyApp : public App
 {
 public:
-	U32 m_argc = 0;
-	Char** m_argv = nullptr;
+	const Char* m_imageFilename;
 
-	MyApp(U32 argc, Char** argv)
-		: App("ImageViewer")
-		, m_argc(argc)
-		, m_argv(argv)
+	MyApp(U32 argc, Char** argv, const Char* imageFilename)
+		: App("ImageViewer", argc, argv)
+		, m_imageFilename(imageFilename)
 	{
 	}
 
 	Error userPreInit() override
 	{
-		if(m_argc < 2)
-		{
-			ANKI_LOGE("Wrong number of arguments");
-			return Error::kUserData;
-		}
-
 		g_cvarWindowFullscreen = 0;
 		g_cvarRsrcDataPaths = ANKI_SOURCE_DIRECTORY;
-		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 2, m_argv + 2));
 
 		return Error::kNone;
 	}
@@ -78,11 +69,11 @@ public:
 	{
 		// Load the texture
 		ImageResourcePtr image;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(m_argv[1], image, false));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(m_imageFilename, image, false));
 
 		// Change window name
 		String title;
-		title.sprintf("%s %u x %u Mips %u Format %s", m_argv[1], image->getTexture().getWidth(), image->getTexture().getHeight(),
+		title.sprintf("%s %u x %u Mips %u Format %s", m_imageFilename, image->getTexture().getWidth(), image->getTexture().getHeight(),
 					  image->getTexture().getMipmapCount(), getFormatInfo(image->getTexture().getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
 
@@ -108,18 +99,32 @@ public:
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	MyApp* app = new MyApp(argc, argv);
+	if(argc < 2)
+	{
+		ANKI_LOGE("Wrong number of arguments");
+		return 1;
+	}
+
+	Array<Char*, 32> args;
+	U32 argCount = 0;
+	args[argCount++] = argv[0];
+	for(I32 i = 2; i < argc; ++i)
+	{
+		args[argCount++] = argv[i];
+	}
+
+	MyApp* app = new MyApp(argCount, args.getBegin(), argv[1]);
 	const Error err = app->mainLoop();
 	delete app;
 
 	if(err)
 	{
 		ANKI_LOGE("Error reported. Bye!!");
+		return 1;
 	}
 	else
 	{
 		ANKI_LOGI("Bye!!");
+		return 0;
 	}
-
-	return 0;
 }

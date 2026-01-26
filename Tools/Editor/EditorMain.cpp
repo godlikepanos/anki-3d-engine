@@ -10,15 +10,10 @@ using namespace anki;
 class MyApp : public App
 {
 public:
-	U32 m_argc = 0;
-	Char** m_argv = nullptr;
-
 	String m_sceneLuaFname;
 
 	MyApp(U32 argc, Char** argv)
-		: App("AnKiEditor")
-		, m_argc(argc)
-		, m_argv(argv)
+		: App("AnKiEditor", argc, argv)
 	{
 	}
 
@@ -28,7 +23,6 @@ public:
 		g_cvarWindowMaximized = true;
 		g_cvarWindowBorderless = true;
 		g_cvarCoreShowEditor = true;
-		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(m_argc - 1, m_argv + 1));
 
 		return Error::kNone;
 	}

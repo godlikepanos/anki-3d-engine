@@ -35,7 +35,7 @@ ANKI_SVAR(CpuTotalTime, StatCategory::kTime, "CPU total", StatFlag::kMilisecond 
 class App
 {
 public:
-	App(CString applicationName, AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
+	App(CString applicationName, U32 argc, Char** argv, AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
 
 	virtual ~App();
 
