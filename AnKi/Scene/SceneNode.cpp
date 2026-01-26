@@ -253,14 +253,25 @@ void SceneNode::setParent(SceneNode* parent)
 {
 	if(parent)
 	{
-		if(!ANKI_EXPECT(parent->m_sceneIndex == m_sceneIndex))
+		if(parent->m_sceneIndex != m_sceneIndex)
 		{
 			ANKI_SCENE_LOGE("Can't make node %s parent of %s. The don't belong in the same scene", parent->getName().cstr(), getName().cstr());
+			return;
+		}
+
+		if(parent == this)
+		{
+			ANKI_SCENE_LOGE("Can't make parent the not itself: %s", getName().cstr());
 			return;
 		}
 	}
 
 	SceneGraph::getSingleton().setSceneNodeParentDeferred(this, parent);
+}
+
+const Scene& SceneNode::getScene() const
+{
+	return SceneGraph::getSingleton().getSceneAt(m_sceneIndex);
 }
 
 } // end namespace anki

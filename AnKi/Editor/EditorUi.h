@@ -8,7 +8,10 @@
 #include <AnKi/Ui.h>
 #include <AnKi/Editor/ImageViewerUi.h>
 #include <AnKi/Editor/ParticleEditorUi.h>
+#include <AnKi/Editor/EditorUtils.h>
+#include <AnKi/Editor/SceneNodePropertiesUi.h>
 #include <AnKi/Util/Function.h>
+#include <AnKi/Scene/SceneNode.h>
 #include <filesystem>
 
 namespace anki {
@@ -89,8 +92,9 @@ private:
 
 	ImageViewerUi m_imageViewer;
 	ParticleEditorUi m_particlesEditor;
+	SceneNodePropertiesUi m_sceneNodePropertiesWindow;
 
-	ImGuiTextFilter m_tempFilter;
+	SceneGraphView m_sceneGraphView;
 
 	class
 	{
@@ -106,6 +110,14 @@ private:
 	public:
 		ImGuiTextFilter m_filter;
 		SceneNode* m_selectedNode = nullptr;
+		U32 m_selectedNodeUuid = 0;
+		Bool m_onNextUpdateFocusOnSelectedNode = false;
+		String m_selectedSceneName;
+
+		Bool selectedNodeValid() const
+		{
+			return m_selectedNode && m_selectedNode->getUuid() == m_selectedNodeUuid;
+		}
 	} m_sceneHierarchyWindow;
 
 	class
@@ -122,19 +134,6 @@ private:
 		SpinLock m_logMtx;
 		ImGuiTextFilter m_logFilter;
 	} m_consoleWindow;
-
-	class
-	{
-	public:
-		I32 m_selectedSceneComponentType = 0;
-		Bool m_uniformScale = false;
-
-		U32 m_scriptComponentThatHasTheTextEditorOpen = 0;
-		Bool m_textEditorOpen = false;
-		String m_textEditorTxt;
-
-		U32 m_currentSceneNodeUuid = 0;
-	} m_sceneNodePropsWindow;
 
 	class
 	{
@@ -166,32 +165,17 @@ private:
 
 	// Windows
 	void sceneHierarchyWindow();
-	void sceneNodePropertiesWindow();
 	void cVarsWindow();
 	void consoleWindow();
 	void assetsWindow();
 	void debugRtsWindow();
 
 	void sceneNode(SceneNode& node);
-	void scriptComponent(ScriptComponent& comp);
-	void materialComponent(MaterialComponent& comp);
-	void meshComponent(MeshComponent& comp);
-	void skinComponent(SkinComponent& comp);
-	void particleEmitterComponent(ParticleEmitter2Component& comp);
-	void lightComponent(LightComponent& comp);
-	void jointComponent(JointComponent& comp);
-	void bodyComponent(BodyComponent& comp);
-	void decalComponent(DecalComponent& comp);
-	void cameraComponent(CameraComponent& comp);
-	void skyboxComponent(SkyboxComponent& comp);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils
 	static void filter(ImGuiTextFilter& filter);
-	Bool textEditorWindow(CString extraWindowTitle, Bool* pOpen, String& inout) const;
-	static void dummyButton(I32 id);
-	template<typename TItemArray>
-	static void comboWithFilter(CString text, const TItemArray& items, CString selectedItemIn, U32& selectedItemOut, ImGuiTextFilter& filter);
+	void deleteSelectedNode(Bool del); // Dialog. Can't be inside branches
 
 	// Misc
 	static void loggerMessageHandler(void* ud, const LoggerMessageInfo& info);
@@ -199,8 +183,8 @@ private:
 	static void gatherAssets(DynamicArray<AssetPath>& paths);
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
 	void objectPicking();
-	static DynamicArray<CString> gatherResourceFilenames(CString filenameContains);
 	void handleInput();
+	void validateSelectedNode();
 };
 
 } // end namespace anki

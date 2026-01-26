@@ -214,10 +214,8 @@ void EditorUi::loggerMessageHandler(void* ud, const LoggerMessageInfo& info)
 
 void EditorUi::draw(UiCanvas& canvas)
 {
+	// Setup style and stuff
 	m_canvas = &canvas;
-
-	handleInput();
-	objectPicking();
 
 	if(!m_font)
 	{
@@ -236,6 +234,13 @@ void EditorUi::draw(UiCanvas& canvas)
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.0f;
 
+	// Do some pre-drawing work
+	m_sceneGraphView = gatherAllSceneNodes();
+	validateSelectedNode();
+	handleInput();
+	objectPicking();
+
+	// Draw the windows
 	ImGui::Begin("MainWindow", nullptr,
 				 ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
 					 | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
@@ -250,11 +255,21 @@ void EditorUi::draw(UiCanvas& canvas)
 	ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
 	sceneHierarchyWindow();
-	sceneNodePropertiesWindow();
 	consoleWindow();
 	assetsWindow();
 	cVarsWindow();
 	debugRtsWindow();
+
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+		const F32 initialWidth = 500.0f;
+		const Vec2 initialPos(viewportSize.x - initialWidth, viewportPos.y);
+		const Vec2 initialSize(initialWidth, viewportSize.y - kConsoleHeight);
+
+		m_sceneNodePropertiesWindow.drawWindow(m_sceneHierarchyWindow.m_selectedNode, m_sceneGraphView, initialPos, initialSize,
+											   ImGuiWindowFlags_NoCollapse);
+	}
 
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
@@ -281,6 +296,64 @@ void EditorUi::draw(UiCanvas& canvas)
 	m_mouseOverAnyWindow = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::GetIO().WantCaptureMouse;
 
 	m_canvas = nullptr;
+}
+
+void EditorUi::validateSelectedNode()
+{
+	if(m_sceneHierarchyWindow.m_selectedNode == nullptr)
+	{
+		return;
+	}
+
+	Bool found = false;
+	for(const SceneGraphViewScene& sceneView : m_sceneGraphView.m_scenes)
+	{
+		for(U32 i = 0; i < sceneView.m_nodeNames.getSize(); ++i)
+		{
+			if(sceneView.m_nodes[i] == m_sceneHierarchyWindow.m_selectedNode
+			   && sceneView.m_nodeUuids[i] == m_sceneHierarchyWindow.m_selectedNode->getUuid())
+			{
+				found = true;
+				break;
+			}
+		}
+	}
+
+	if(!found)
+	{
+		m_sceneHierarchyWindow.m_selectedNode = nullptr;
+		m_sceneHierarchyWindow.m_selectedNodeUuid = 0;
+	}
+}
+
+void EditorUi::deleteSelectedNode(Bool del)
+{
+	if(del)
+	{
+		const Vec2 center = ImGui::GetMainViewport()->GetCenter();
+		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, Vec2(0.5f));
+		ImGui::OpenPopup("Delete Node?");
+	}
+
+	if(ImGui::BeginPopupModal("Delete Node?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Delete node: %s", m_sceneHierarchyWindow.m_selectedNode->getName().cstr());
+
+		if(ImGui::Button("Yes"))
+		{
+			m_sceneHierarchyWindow.m_selectedNode->markForDeletion();
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+
+		if(ImGui::Button("No"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
 }
 
 void EditorUi::mainMenu()
@@ -502,6 +575,8 @@ void EditorUi::mainMenu()
 
 void EditorUi::sceneNode(SceneNode& node)
 {
+	auto& state = m_sceneHierarchyWindow;
+
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
 	ImGui::PushID(I32(node.getUuid()));
@@ -512,8 +587,10 @@ void EditorUi::sceneNode(SceneNode& node)
 	treeFlags |= ImGuiTreeNodeFlags_SpanFullWidth; // Span full width for easier mouse reach
 	treeFlags |= ImGuiTreeNodeFlags_DrawLinesToNodes; // Always draw hierarchy outlines
 
-	if(&node == m_sceneHierarchyWindow.m_selectedNode)
+	const Bool selected = &node == state.m_selectedNode;
+	if(selected)
 	{
+		ANKI_ASSERT(state.selectedNodeValid());
 		treeFlags |= ImGuiTreeNodeFlags_Selected;
 	}
 
@@ -537,11 +614,61 @@ void EditorUi::sceneNode(SceneNode& node)
 		}
 	}
 
+	// If one if the children of this node is selected and we need to focus on it then open the tree thingy
+	if(state.m_onNextUpdateFocusOnSelectedNode)
+	{
+		node.visitAllChildren([&](SceneNode& child) {
+			if(&child == state.m_selectedNode)
+			{
+				ImGui::SetNextItemOpen(true);
+				return FunctorContinue::kStop;
+			}
+
+			return FunctorContinue::kContinue;
+		});
+	}
+
 	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s  %s", node.getName().cstr(), componentsString.cstr());
 
-	if(ImGui::IsItemFocused())
+	// Right click popup menu
 	{
-		m_sceneHierarchyWindow.m_selectedNode = &node;
+		if(ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
+		{
+			ImGui::OpenPopup("Scene Node");
+
+			if(!selected)
+			{
+				state.m_selectedNode = &node;
+				state.m_selectedNodeUuid = node.getUuid();
+			}
+		}
+
+		Bool delSceneNode = false;
+		if(ImGui::BeginPopup("Scene Node"))
+		{
+			if(ImGui::Button(ICON_MDI_DELETE_FOREVER " Delete"))
+			{
+				delSceneNode = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+		deleteSelectedNode(delSceneNode);
+	}
+
+	if(ImGui::IsItemClicked())
+	{
+		state.m_selectedNode = &node;
+		state.m_selectedNodeUuid = node.getUuid();
+	}
+
+	// Scroll and focus on the selected node
+	if(selected && state.m_onNextUpdateFocusOnSelectedNode)
+	{
+		ImGui::SetScrollHereY();
+		ImGui::SetItemDefaultFocus();
+
+		state.m_onNextUpdateFocusOnSelectedNode = false;
 	}
 
 	if(nodeOpen)
@@ -563,6 +690,8 @@ void EditorUi::sceneHierarchyWindow()
 		return;
 	}
 
+	auto& state = m_sceneHierarchyWindow;
+
 	if(ImGui::GetFrameCount() > 1)
 	{
 		// Viewport is one frame delay so do that when frame >1
@@ -574,13 +703,41 @@ void EditorUi::sceneHierarchyWindow()
 
 	if(ImGui::Begin("Scene Hierarchy", &m_showSceneHierarcyWindow, ImGuiWindowFlags_NoCollapse))
 	{
+		// Scene selector
+		if(state.m_selectedSceneName.isEmpty())
+		{
+			state.m_selectedSceneName = SceneGraph::getSingleton().getActiveScene().getName();
+		}
+
+		if(ImGui::BeginCombo("Scene", state.m_selectedSceneName.cstr()))
+		{
+			SceneGraph::getSingleton().visitScenes([&](Scene& scene) {
+				const Bool isSelected = (scene.getName() == state.m_selectedSceneName);
+				if(ImGui::Selectable(scene.getName().cstr(), isSelected))
+				{
+					state.m_selectedSceneName = scene.getName();
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if(isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+
+				return FunctorContinue::kContinue;
+			});
+
+			ImGui::EndCombo();
+		}
+
 		filter(m_sceneHierarchyWindow.m_filter);
 
+		Scene& scene = *SceneGraph::getSingleton().tryFindScene(state.m_selectedSceneName);
 		if(ImGui::BeginChild("##tree", Vec2(0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_None))
 		{
 			if(ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
 			{
-				SceneGraph::getSingleton().visitNodes([this](SceneNode& node) {
+				scene.visitNodes([this](SceneNode& node) {
 					if(!node.getParent() && m_sceneHierarchyWindow.m_filter.PassFilter(node.getName().cstr()))
 					{
 						sceneNode(node);
@@ -594,845 +751,6 @@ void EditorUi::sceneHierarchyWindow()
 		ImGui::EndChild();
 	}
 	ImGui::End();
-}
-
-void EditorUi::sceneNodePropertiesWindow()
-{
-	if(!m_showSceneNodePropsWindow)
-	{
-		return;
-	}
-
-	auto& state = m_sceneNodePropsWindow;
-
-	if(ImGui::GetFrameCount() > 1)
-	{
-		// Viewport is one frame delay so do that when frame >1
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
-		const F32 initialWidth = 500.0f;
-		ImGui::SetNextWindowPos(Vec2(viewportSize.x - initialWidth, viewportPos.y), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(Vec2(initialWidth, viewportSize.y - kConsoleHeight), ImGuiCond_FirstUseEver);
-	}
-
-	if(ImGui::Begin("SceneNode Props", &m_showSceneNodePropsWindow, ImGuiWindowFlags_NoCollapse) && m_sceneHierarchyWindow.m_selectedNode)
-	{
-		SceneNode& node = *m_sceneHierarchyWindow.m_selectedNode;
-		I32 id = 0;
-
-		if(state.m_currentSceneNodeUuid != node.getUuid())
-		{
-			// Node changed, reset a few things
-			state.m_currentSceneNodeUuid = node.getUuid();
-			state.m_textEditorOpen = false;
-			state.m_scriptComponentThatHasTheTextEditorOpen = 0;
-			state.m_textEditorTxt.destroy();
-		}
-
-		ANKI_PUSH_POP_TEXT_INPUT_WIDTH(12);
-
-		// Name
-		{
-			dummyButton(id++);
-
-			Array<Char, kMaxTextInputLen> name;
-			std::strncpy(name.getBegin(), node.getName().getBegin(), name.getSize());
-			if(ImGui::InputText("Name", name.getBegin(), name.getSize(), ImGuiInputTextFlags_EnterReturnsTrue))
-			{
-				node.setName(&name[0]);
-			}
-		}
-
-		// Local transform
-		{
-			dummyButton(id++);
-
-			F32 localOrigin[3] = {node.getLocalOrigin().x, node.getLocalOrigin().y, node.getLocalOrigin().z};
-			if(ImGui::DragFloat3(ICON_MDI_AXIS_ARROW " Origin", localOrigin, 0.025f, -1000000.0f, 1000000.0f))
-			{
-				node.setLocalOrigin(Vec3(&localOrigin[0]));
-			}
-		}
-
-		// Local scale
-		{
-			ImGui::PushID(id++);
-			if(ImGui::Button(state.m_uniformScale ? ICON_MDI_LOCK : ICON_MDI_LOCK_OPEN))
-			{
-				state.m_uniformScale = !state.m_uniformScale;
-			}
-			ImGui::SetItemTooltip("Uniform/Non-uniform scale");
-			ImGui::PopID();
-			ImGui::SameLine();
-
-			F32 localScale[3] = {node.getLocalScale().x, node.getLocalScale().y, node.getLocalScale().z};
-			if(ImGui::DragFloat3(ICON_MDI_ARROW_EXPAND_ALL " Scale", localScale, 0.0025f, 0.01f, 1000000.0f))
-			{
-				if(!state.m_uniformScale)
-				{
-					node.setLocalScale(Vec3(&localScale[0]));
-				}
-				else
-				{
-					// The component that have changed wins
-					F32 scale = localScale[2];
-					if(localScale[0] != node.getLocalScale().x)
-					{
-						scale = localScale[0];
-					}
-					else if(localScale[1] != node.getLocalScale().y)
-					{
-						scale = localScale[1];
-					}
-					node.setLocalScale(Vec3(scale));
-				}
-			}
-		}
-
-		// Local rotation
-		{
-			dummyButton(id++);
-
-			const Euler rot(node.getLocalRotation());
-			F32 localRotation[3] = {toDegrees(rot.x), toDegrees(rot.y), toDegrees(rot.z)};
-			if(ImGui::DragFloat3(ICON_MDI_ROTATE_ORBIT " Rotation", localRotation, 0.25f, -360.0f, 360.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
-			{
-				const Euler rot(toRad(localRotation[0]), toRad(localRotation[1]), toRad(localRotation[2]));
-				node.setLocalRotation(Mat3(rot));
-			}
-
-			ImGui::Text(" ");
-		}
-
-		// Component controls
-		{
-			if(ImGui::Button(ICON_MDI_PLUS_BOX))
-			{
-				switch(SceneComponentType(state.m_selectedSceneComponentType))
-				{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
-	case SceneComponentType::k##name: \
-		node.newComponent<name##Component>(); \
-		break;
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-				default:
-					ANKI_ASSERT(0);
-				}
-			}
-			ImGui::SetItemTooltip("Add new component");
-
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(-1.0f);
-
-			I32 n = 0;
-			if(ImGui::BeginCombo(" ", kSceneComponentTypeInfos[state.m_selectedSceneComponentType].m_name))
-			{
-				for(const SceneComponentTypeInfo& inf : kSceneComponentTypeInfos)
-				{
-					const Bool isSelected = (state.m_selectedSceneComponentType == n);
-					if(ImGui::Selectable(inf.m_name, isSelected))
-					{
-						state.m_selectedSceneComponentType = n;
-					}
-
-					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-					if(isSelected)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-
-					++n;
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::Text(" ");
-		}
-
-		// Components
-		{
-			ANKI_PUSH_POP(StyleVar, ImGuiStyleVar_SeparatorTextAlign, Vec2(0.5f));
-
-			U32 count = 0;
-			node.iterateComponents([&](SceneComponent& comp) {
-				ANKI_PUSH_POP(ID, comp.getUuid());
-				const F32 alpha = 0.1f;
-				ANKI_PUSH_POP(StyleColor, ImGuiCol_ChildBg, (count & 1) ? Vec4(0.0, 0.0f, 1.0f, alpha) : Vec4(1.0, 0.0f, 0.0f, alpha));
-
-				if(ImGui::BeginChild("Child", Vec2(0.0f), ImGuiChildFlags_AutoResizeY))
-				{
-					ANKI_PUSH_POP_TEXT_INPUT_WIDTH(12);
-
-					// Find the icon
-					CString icon = ICON_MDI_TOY_BRICK;
-					switch(comp.getType())
-					{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon_, serializable) \
-	case SceneComponentType::k##name: \
-		icon = ANKI_CONCATENATE(ICON_MDI_, icon_); \
-		break;
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-					default:
-						ANKI_ASSERT(0);
-					}
-
-					// Header
-					{
-						String label;
-						label.sprintf(" %s %s (%u)", icon.cstr(), kSceneComponentTypeInfos[comp.getType()].m_name, comp.getUuid());
-						ImGui::SeparatorText(label.cstr());
-
-						if(ImGui::Button(ICON_MDI_MINUS_BOX))
-						{
-							ANKI_LOGW("TODO");
-						}
-						ImGui::SetItemTooltip("Delete Component");
-						ImGui::SameLine();
-
-						if(ImGui::Button(ICON_MDI_EYE))
-						{
-							ANKI_LOGW("TODO");
-						}
-						ImGui::SetItemTooltip("Disable component");
-					}
-
-					switch(comp.getType())
-					{
-					case SceneComponentType::kMove:
-					case SceneComponentType::kUi:
-						// Nothing
-						break;
-					case SceneComponentType::kScript:
-						scriptComponent(static_cast<ScriptComponent&>(comp));
-						break;
-					case SceneComponentType::kMaterial:
-						materialComponent(static_cast<MaterialComponent&>(comp));
-						break;
-					case SceneComponentType::kMesh:
-						meshComponent(static_cast<MeshComponent&>(comp));
-						break;
-					case SceneComponentType::kSkin:
-						skinComponent(static_cast<SkinComponent&>(comp));
-						break;
-					case SceneComponentType::kParticleEmitter2:
-						particleEmitterComponent(static_cast<ParticleEmitter2Component&>(comp));
-						break;
-					case SceneComponentType::kLight:
-						lightComponent(static_cast<LightComponent&>(comp));
-						break;
-					case SceneComponentType::kBody:
-						bodyComponent(static_cast<BodyComponent&>(comp));
-						break;
-					case SceneComponentType::kJoint:
-						jointComponent(static_cast<JointComponent&>(comp));
-						break;
-					case SceneComponentType::kDecal:
-						decalComponent(static_cast<DecalComponent&>(comp));
-						break;
-					case SceneComponentType::kCamera:
-						cameraComponent(static_cast<CameraComponent&>(comp));
-						break;
-					case SceneComponentType::kSkybox:
-						skyboxComponent(static_cast<SkyboxComponent&>(comp));
-						break;
-					default:
-						ImGui::Text("TODO");
-					}
-				}
-				ImGui::EndChild();
-				ImGui::Text(" ");
-				++count;
-
-				return FunctorContinue::kContinue;
-			});
-		}
-	}
-
-	ImGui::End();
-}
-
-void EditorUi::scriptComponent(ScriptComponent& comp)
-{
-	auto& state = m_sceneNodePropsWindow;
-
-	// Play button
-	{
-		ImGui::SameLine();
-		if(ImGui::Button(ICON_MDI_PLAY "##ScriptComponentResourceFilename"))
-		{
-			ANKI_LOGV("TODO");
-		}
-		ImGui::SetItemTooltip("Play script");
-	}
-
-	// Clear button
-	{
-		if(ImGui::Button(ICON_MDI_DELETE "##ScriptComponentResourceFilename"))
-		{
-			comp.setScriptResourceFilename("");
-		}
-		ImGui::SetItemTooltip("Clear");
-		ImGui::SameLine();
-	}
-
-	// Filename input
-	{
-		const DynamicArray<CString> filenames = gatherResourceFilenames(".lua");
-
-		const String currentFilename = (comp.hasScriptResource()) ? comp.getScriptResourceFilename() : "";
-		U32 newSelectedFilename = kMaxU32;
-
-		ImGui::SetNextItemWidth(-1.0f);
-		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
-		{
-			comp.setScriptResourceFilename(filenames[newSelectedFilename]);
-		}
-	}
-
-	ImGui::Text(" -- or --");
-
-	// Clear button
-	{
-		if(ImGui::Button(ICON_MDI_DELETE "##ScriptComponentScriptText"))
-		{
-			comp.setScriptText("");
-		}
-		ImGui::SetItemTooltip("Unset");
-		ImGui::SameLine();
-	}
-
-	// Button
-	{
-		String buttonTxt;
-		buttonTxt.sprintf(ICON_MDI_LANGUAGE_LUA " Embedded Script (%s)", comp.hasScriptText() ? "Set" : "Unset");
-		const Bool showEditor = ImGui::Button(buttonTxt.cstr(), Vec2(-1.0f, 0.0f));
-		if(showEditor && (state.m_scriptComponentThatHasTheTextEditorOpen == 0 || state.m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid()))
-		{
-			state.m_textEditorOpen = true;
-			state.m_scriptComponentThatHasTheTextEditorOpen = comp.getUuid();
-			state.m_textEditorTxt =
-				(comp.hasScriptText()) ? comp.getScriptText() : "function update(info) --info: SceneComponentUpdateInfo\n    -- Your code here\nend";
-		}
-	}
-
-	if(state.m_textEditorOpen && state.m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid())
-	{
-		if(textEditorWindow(String().sprintf("ScriptComponent %u", comp.getUuid()), &state.m_textEditorOpen, state.m_textEditorTxt))
-		{
-			ANKI_LOGV("Updating ScriptComponent");
-			comp.setScriptText(state.m_textEditorTxt);
-		}
-
-		if(!state.m_textEditorOpen)
-		{
-			state.m_scriptComponentThatHasTheTextEditorOpen = 0;
-			state.m_textEditorTxt.destroy();
-		}
-	}
-}
-
-void EditorUi::materialComponent(MaterialComponent& comp)
-{
-	if(!comp.isValid())
-	{
-		ImGui::SameLine();
-		ImGui::TextUnformatted(ICON_MDI_ALERT);
-		ImGui::SetItemTooltip("Component not valid");
-	}
-
-	// Filename
-	{
-		const DynamicArray<CString> mtlFilenames = gatherResourceFilenames(".ankimtl");
-
-		const String currentFilename = (comp.hasMaterialResource()) ? comp.getMaterialFilename() : "";
-		U32 newSelectedFilename = kMaxU32;
-
-		ImGui::SetNextItemWidth(-1.0f);
-		comboWithFilter("##Filenames", mtlFilenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-		if(newSelectedFilename < mtlFilenames.getSize() && currentFilename != mtlFilenames[newSelectedFilename])
-		{
-			comp.setMaterialFilename(mtlFilenames[newSelectedFilename]);
-		}
-	}
-
-	// Submesh ID
-	{
-		I32 value = comp.getSubmeshIndex();
-		if(ImGui::InputInt(ICON_MDI_VECTOR_POLYGON " Submesh ID", &value, 1, 1, 0))
-		{
-			comp.setSubmeshIndex(value);
-		}
-	}
-}
-
-void EditorUi::meshComponent(MeshComponent& comp)
-{
-	if(!comp.isValid())
-	{
-		ImGui::SameLine();
-		ImGui::TextUnformatted(ICON_MDI_ALERT);
-		ImGui::SetItemTooltip("Component not valid");
-	}
-
-	// Filename
-	{
-		const DynamicArray<CString> meshFilenames = gatherResourceFilenames(".ankimesh");
-
-		const String currentFilename = (comp.hasMeshResource()) ? comp.getMeshFilename() : "";
-		U32 newSelectedFilename = kMaxU32;
-
-		ImGui::SetNextItemWidth(-1.0f);
-		comboWithFilter("##Filenames", meshFilenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-		if(newSelectedFilename < meshFilenames.getSize() && currentFilename != meshFilenames[newSelectedFilename])
-		{
-			comp.setMeshFilename(meshFilenames[newSelectedFilename]);
-		}
-	}
-}
-
-void EditorUi::skinComponent(SkinComponent& comp)
-{
-	if(!comp.isValid())
-	{
-		ImGui::SameLine();
-		ImGui::TextUnformatted(ICON_MDI_ALERT);
-		ImGui::SetItemTooltip("Component not valid");
-	}
-
-	// Filename
-	{
-		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankiskel");
-
-		const String currentFilename = (comp.hasSkeletonResource()) ? comp.getSkeletonFilename() : "";
-		U32 newSelectedFilename = kMaxU32;
-
-		ImGui::SetNextItemWidth(-1.0f);
-		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
-		{
-			comp.setSkeletonFilename(filenames[newSelectedFilename]);
-		}
-	}
-}
-
-void EditorUi::particleEmitterComponent(ParticleEmitter2Component& comp)
-{
-	// Filename
-	{
-		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankiparts");
-
-		const String currentFilename = (comp.hasParticleEmitterResource()) ? comp.getParticleEmitterFilename() : "";
-		U32 newSelectedFilename = kMaxU32;
-
-		ImGui::SetNextItemWidth(-1.0f);
-		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
-		{
-			comp.setParticleEmitterFilename(filenames[newSelectedFilename]);
-		}
-	}
-
-	// Geometry type
-	{
-		dummyButton(0);
-
-		if(ImGui::BeginCombo("Geometry Type", kParticleEmitterGeometryTypeName[comp.getParticleGeometryType()]))
-		{
-			for(ParticleGeometryType n : EnumIterable<ParticleGeometryType>())
-			{
-				const Bool isSelected = (comp.getParticleGeometryType() == n);
-				if(ImGui::Selectable(kParticleEmitterGeometryTypeName[n], isSelected))
-				{
-					comp.setParticleGeometryType(n);
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(isSelected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
-	}
-}
-
-void EditorUi::lightComponent(LightComponent& comp)
-{
-	// Light type
-	if(ImGui::BeginCombo("Type", kLightComponentTypeNames[comp.getLightComponentType()]))
-	{
-		for(LightComponentType type : EnumIterable<LightComponentType>())
-		{
-			const Bool selected = type == comp.getLightComponentType();
-			if(ImGui::Selectable(kLightComponentTypeNames[type], selected))
-			{
-				comp.setLightComponentType(type);
-			}
-
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			if(selected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
-
-	// Diffuse color
-	Vec4 diffuseCol = comp.getDiffuseColor();
-	if(ImGui::InputFloat4("Diffuse Color", &diffuseCol[0]))
-	{
-		comp.setDiffuseColor(diffuseCol.max(0.01f));
-	}
-
-	// Shadow
-	Bool shadow = comp.getShadowEnabled();
-	if(ImGui::Checkbox("Shadow", &shadow))
-	{
-		comp.setShadowEnabled(shadow);
-	}
-
-	if(comp.getLightComponentType() == LightComponentType::kPoint)
-	{
-		// Radius
-		F32 radius = comp.getRadius();
-		if(ImGui::SliderFloat("Radius", &radius, 0.01f, 100.0f))
-		{
-			comp.setRadius(max(radius, 0.01f));
-		}
-	}
-	else if(comp.getLightComponentType() == LightComponentType::kSpot)
-	{
-		// Radius
-		F32 distance = comp.getDistance();
-		if(ImGui::SliderFloat("Distance", &distance, 0.01f, 100.0f))
-		{
-			comp.setDistance(max(distance, 0.01f));
-		}
-
-		// Inner & outter angles
-		Vec2 angles(comp.getInnerAngle(), comp.getOuterAngle());
-		angles[0] = toDegrees(angles[0]);
-		angles[1] = toDegrees(angles[1]);
-		if(ImGui::SliderFloat2("Inner & Outer Angles", &angles[0], 1.0f, 89.0f))
-		{
-			angles[0] = clamp(toRad(angles[0]), 1.0_degrees, 80.0_degrees);
-			angles[1] = clamp(toRad(angles[1]), angles[0], 89.0_degrees);
-
-			comp.setInnerAngle(angles[0]);
-			comp.setOuterAngle(angles[1]);
-		}
-	}
-	else
-	{
-		ANKI_ASSERT(comp.getLightComponentType() == LightComponentType::kDirectional);
-
-		// Day of month
-		I32 month, day;
-		F32 hour;
-		comp.getTimeOfDay(month, day, hour);
-		Bool fieldChanged = false;
-		if(ImGui::SliderInt("Month", &month, 0, 11))
-		{
-			fieldChanged = true;
-		}
-
-		if(ImGui::SliderInt("Day", &day, 0, 30))
-		{
-			fieldChanged = true;
-		}
-
-		if(ImGui::SliderFloat("Hour (0-24)", &hour, 0.0f, 24.0f))
-		{
-			fieldChanged = true;
-		}
-
-		if(fieldChanged)
-		{
-			comp.setDirectionFromTimeOfDay(month, day, hour);
-		}
-	}
-}
-
-void EditorUi::jointComponent(JointComponent& comp)
-{
-	if(!comp.isValid())
-	{
-		ImGui::SameLine();
-		ImGui::TextUnformatted(ICON_MDI_ALERT);
-		ImGui::SetItemTooltip("Component not valid");
-	}
-
-	// Joint type
-	if(ImGui::BeginCombo("Type", kJointComponentTypeName[comp.getJointType()]))
-	{
-		for(JointComponentyType type : EnumIterable<JointComponentyType>())
-		{
-			const Bool selected = type == comp.getJointType();
-			if(ImGui::Selectable(kBodyComponentCollisionShapeTypeNames[type], selected))
-			{
-				comp.setJointType(type);
-			}
-
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			if(selected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
-}
-
-void EditorUi::bodyComponent(BodyComponent& comp)
-{
-	if(!comp.isValid())
-	{
-		ImGui::SameLine();
-		ImGui::TextUnformatted(ICON_MDI_ALERT);
-		ImGui::SetItemTooltip("Component not valid");
-	}
-
-	// Shape type
-	if(ImGui::BeginCombo("Type", kBodyComponentCollisionShapeTypeNames[comp.getCollisionShapeType()]))
-	{
-		for(BodyComponentCollisionShapeType type : EnumIterable<BodyComponentCollisionShapeType>())
-		{
-			const Bool selected = type == comp.getCollisionShapeType();
-			if(ImGui::Selectable(kBodyComponentCollisionShapeTypeNames[type], selected))
-			{
-				comp.setCollisionShapeType(type);
-			}
-
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			if(selected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
-
-	// Mass
-	F32 mass = comp.getMass();
-	if(ImGui::SliderFloat("Mass", &mass, 0.0f, 100.0f))
-	{
-		comp.setMass(mass);
-	}
-
-	if(comp.getCollisionShapeType() == BodyComponentCollisionShapeType::kAabb)
-	{
-		Vec3 extend = comp.getBoxExtend();
-		if(ImGui::SliderFloat3("Box Extend", &extend[0], 0.01f, 100.0f))
-		{
-			comp.setBoxExtend(extend);
-		}
-	}
-	else if(comp.getCollisionShapeType() == BodyComponentCollisionShapeType::kSphere)
-	{
-		F32 radius = comp.getSphereRadius();
-		if(ImGui::SliderFloat("Radius", &radius, 0.01f, 100.0f))
-		{
-			comp.setSphereRadius(radius);
-		}
-	}
-}
-
-void EditorUi::decalComponent(DecalComponent& comp)
-{
-	if(!comp.isValid())
-	{
-		ImGui::SameLine();
-		ImGui::TextUnformatted(ICON_MDI_ALERT);
-		ImGui::SetItemTooltip("Component not valid");
-	}
-
-	ImGui::SeparatorText("Diffuse");
-
-	// Diffuse filename
-	{
-		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
-
-		const String currentFilename = (comp.hasDiffuseImageResource()) ? comp.getDiffuseImageFilename() : "";
-		U32 newSelectedFilename = kMaxU32;
-
-		ImGui::SetNextItemWidth(-1.0f);
-		comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
-		{
-			comp.setDiffuseImageFilename(filenames[newSelectedFilename]);
-		}
-	}
-
-	// Diffuse factor
-	ImGui::SetNextItemWidth(-1.0f);
-	F32 diffFactor = comp.getDiffuseBlendFactor();
-	if(ImGui::SliderFloat("##Factor0", &diffFactor, 0.0f, 1.0f))
-	{
-		comp.setDiffuseBlendFactor(diffFactor);
-	}
-	ImGui::SetItemTooltip("Blend Factor");
-
-	ImGui::SeparatorText("Roughness and Metallic");
-
-	// Roughness/metallic filename
-	{
-		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
-
-		const String currentFilename = (comp.hasRoughnessMetalnessImageResource()) ? comp.getRoughnessMetalnessImageFilename() : "";
-		U32 newSelectedFilename = kMaxU32;
-
-		ImGui::SetNextItemWidth(-1.0f);
-		comboWithFilter("##Filenames2", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-		if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
-		{
-			comp.setRoughnessMetalnessImageFilename(filenames[newSelectedFilename]);
-		}
-	}
-
-	// Roughness/metallic factor
-	ImGui::SetNextItemWidth(-1.0f);
-	F32 rmFactor = comp.getRoughnessMetalnessBlendFactor();
-	if(ImGui::SliderFloat("##Factor1", &rmFactor, 0.0f, 1.0f))
-	{
-		comp.setRoughnessMetalnessBlendFactor(rmFactor);
-	}
-	ImGui::SetItemTooltip("Blend Factor");
-}
-
-void EditorUi::cameraComponent(CameraComponent& comp)
-{
-	F32 near = comp.getNear();
-	if(ImGui::SliderFloat("Near", &near, 0.1f, 10.0f))
-	{
-		comp.setNear(near);
-	}
-
-	F32 far = comp.getFar();
-	if(ImGui::SliderFloat("Far", &far, 10.2f, 10000.0f))
-	{
-		comp.setFar(far);
-	}
-
-	F32 fovX = toDegrees(comp.getFovX());
-	if(ImGui::SliderFloat("FovX", &fovX, 10.0f, 200.0f))
-	{
-		comp.setFovX(toRad(fovX));
-	}
-
-	Bool fovYDirivedFromAspect = comp.getFovYDerivesByRendererAspect();
-	if(ImGui::Checkbox("FovX derived by aspect", &fovYDirivedFromAspect))
-	{
-		comp.setFovYDerivesByRendererAspect(fovYDirivedFromAspect);
-	}
-
-	if(!comp.getFovYDerivesByRendererAspect())
-	{
-		F32 fovY = toDegrees(comp.getFovY());
-		if(ImGui::SliderFloat("FovY", &fovY, 10.0f, 200.0f))
-		{
-			comp.setFovY(toRad(fovY));
-		}
-	}
-}
-
-void EditorUi::skyboxComponent(SkyboxComponent& comp)
-{
-	// Type
-	if(ImGui::BeginCombo("Type", kSkyboxComponentTypeNames[comp.getSkyboxComponentType()]))
-	{
-		for(SkyboxComponentType type : EnumIterable<SkyboxComponentType>())
-		{
-			const Bool selected = type == comp.getSkyboxComponentType();
-			if(ImGui::Selectable(kSkyboxComponentTypeNames[type], selected))
-			{
-				comp.setSkyboxComponentType(type);
-			}
-
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			if(selected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
-
-	if(comp.getSkyboxComponentType() == SkyboxComponentType::kSolidColor)
-	{
-		Vec3 color = comp.getSkySolidColor();
-		if(ImGui::InputFloat3("Solid Color", &color.x))
-		{
-			comp.setSkySolidColor(color);
-		}
-	}
-	else if(comp.getSkyboxComponentType() == SkyboxComponentType::kImage2D)
-	{
-		// Filenames combo
-		{
-			const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
-
-			const String currentFilename = (comp.hasSkyImageFilename()) ? comp.getSkyImageFilename() : "";
-			U32 newSelectedFilename = kMaxU32;
-
-			ImGui::SetNextItemWidth(-1.0f);
-			comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-			if(newSelectedFilename < filenames.getSize() && currentFilename != filenames[newSelectedFilename])
-			{
-				comp.setSkyImageFilename(filenames[newSelectedFilename]);
-			}
-		}
-
-		Vec3 bias = comp.getSkyImageColorBias();
-		if(ImGui::SliderFloat3("Image Color Bias", &bias.x, 0.0f, 1000.0f))
-		{
-			comp.setSkyImageColorBias(bias);
-		}
-
-		Vec3 scale = comp.getSkyImageColorScale();
-		if(ImGui::SliderFloat3("Image Color Scale", &scale.x, 0.0f, 1000.0f))
-		{
-			comp.setSkyImageColorScale(scale);
-		}
-	}
-
-	// Fog stuff:
-
-#define ANKI_INPUT(methodName, labelTxt) \
-	{ \
-		F32 value = comp.get##methodName(); \
-		if(ImGui::SliderFloat(labelTxt, &value, 0.0f, 1000.0f)) \
-		{ \
-			comp.set##methodName(value); \
-		} \
-	}
-
-	ImGui::TextUnformatted("Fog:");
-
-	ANKI_INPUT(MinFogDensity, "Min Density")
-	ANKI_INPUT(MaxFogDensity, "Max Density")
-	ANKI_INPUT(HeightOfMinFogDensity, "Height of Min Density")
-	ANKI_INPUT(HeightOfMaxFogDensity, "Height of Max Density")
-	ANKI_INPUT(FogScatteringCoefficient, "Scattering Coeff")
-	ANKI_INPUT(FogAbsorptionCoefficient, "Absorption Coeff")
-
-#undef ANKI_INPUT
-
-	Vec3 fogColor = comp.getFogDiffuseColor();
-	if(ImGui::SliderFloat3("Color", &fogColor.x, 0.0f, 100.0f))
-	{
-		comp.setFogDiffuseColor(fogColor);
-	}
 }
 
 void EditorUi::cVarsWindow()
@@ -1909,118 +1227,6 @@ void EditorUi::filter(ImGuiTextFilter& filter)
 	ImGui::PopItemFlag();
 }
 
-void EditorUi::dummyButton(I32 id)
-{
-	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.0f);
-	ImGui::PushID(id);
-	ImGui::Button(ICON_MDI_LOCK);
-	ImGui::PopID();
-	ImGui::PopStyleVar();
-	ImGui::SameLine();
-};
-
-template<typename TItemArray>
-void EditorUi::comboWithFilter(CString text, const TItemArray& items, CString selectedItemIn, U32& selectedItemOut, ImGuiTextFilter& filter)
-{
-	if(ImGui::BeginCombo(text.cstr(), selectedItemIn.cstr()))
-	{
-		if(ImGui::IsWindowAppearing())
-		{
-			ImGui::SetKeyboardFocusHere();
-			filter.Clear();
-		}
-
-		ImGui::SetNextItemWidth(-1.0f);
-		if(ImGui::InputTextWithHint("##Filter", ICON_MDI_MAGNIFY " Search incl,-excl", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf),
-									ImGuiInputTextFlags_EscapeClearsAll))
-		{
-			filter.Build();
-		}
-
-		for(U32 i = 0; i < items.getSize(); ++i)
-		{
-			CString item = items[i];
-			if(!filter.PassFilter(item.cstr()))
-			{
-				continue;
-			}
-
-			const Bool isSelected = (selectedItemIn == item);
-			if(ImGui::Selectable(item.cstr(), isSelected))
-			{
-				selectedItemOut = i;
-			}
-
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			if(isSelected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
-}
-
-Bool EditorUi::textEditorWindow(CString extraWindowTitle, Bool* pOpen, String& inout) const
-{
-	Bool save = false;
-
-	const Vec2 windowSize(600.0f, 800.0f);
-	ImGui::SetNextWindowSize(windowSize, ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowPos(Vec2(ImGui::GetMainViewport()->WorkSize) / 2.0f - windowSize / 2.0f, ImGuiCond_FirstUseEver);
-
-	const String title = String().sprintf("Text Editor: %s", extraWindowTitle.cstr());
-	if(ImGui::Begin(title.cstr(), pOpen))
-	{
-		if(ImGui::Button(ICON_MDI_CONTENT_SAVE " Save"))
-		{
-			save = true;
-		}
-		ImGui::SameLine();
-		if(pOpen && ImGui::Button(ICON_MDI_CLOSE " Close"))
-		{
-			*pOpen = false;
-		}
-
-		if(ImGui::IsWindowFocused() && Input::getSingleton().getKey(KeyCode::kEscape) && pOpen)
-		{
-			*pOpen = false;
-		}
-
-		DynamicArray<Char> buffer;
-		buffer.resize(max(inout.getLength() + 1, 1024_U32), '\0');
-
-		if(inout.getLength())
-		{
-			std::strncpy(buffer.getBegin(), inout.cstr(), inout.getLength());
-		}
-
-		auto replaceTabCallback = [](ImGuiInputTextCallbackData* data) -> int {
-			if(data->CursorPos > 0 && data->Buf[data->CursorPos - 1] == '\t')
-			{
-				data->DeleteChars(data->CursorPos - 1, 1);
-				data->InsertChars(data->CursorPos, "    ");
-				return 0;
-			}
-			else
-			{
-				return 0;
-			}
-		};
-
-		ImGui::PushFont(m_monospaceFont, 0.0f);
-		if(ImGui::InputTextMultiline("##", buffer.getBegin(), buffer.getSize(), Vec2(-1.0f),
-									 ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_CallbackEdit, replaceTabCallback))
-		{
-			inout = buffer.getBegin();
-		}
-		ImGui::PopFont();
-	}
-	ImGui::End();
-
-	return save;
-}
-
 void EditorUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 {
 	// Try to load first
@@ -2076,21 +1282,34 @@ void EditorUi::objectPicking()
 
 		if(res.m_sceneNodeUuid != 0)
 		{
-			SceneGraph::getSingleton().visitNodes([this, uuid = res.m_sceneNodeUuid](SceneNode& node) {
-				if(node.getUuid() == uuid)
+			for(const SceneGraphViewScene& sceneView : m_sceneGraphView.m_scenes)
+			{
+				Bool done = false;
+				for(U32 i = 0; i < sceneView.m_nodeNames.getSize(); ++i)
 				{
-					m_sceneHierarchyWindow.m_selectedNode = &node;
-					ANKI_LOGV("Selecting scene node: %s", node.getName().cstr());
-					return FunctorContinue::kStop;
+					if(sceneView.m_nodeUuids[i] == res.m_sceneNodeUuid)
+					{
+						m_sceneHierarchyWindow.m_selectedNode = sceneView.m_nodes[i];
+						m_sceneHierarchyWindow.m_selectedNodeUuid = sceneView.m_nodeUuids[i];
+						ANKI_ASSERT(m_sceneHierarchyWindow.m_selectedNodeUuid == m_sceneHierarchyWindow.m_selectedNode->getUuid());
+						m_sceneHierarchyWindow.m_onNextUpdateFocusOnSelectedNode = true;
+						ANKI_LOGV("Selecting scene node: %s", sceneView.m_nodes[i]->getName().cstr());
+						done = true;
+						break;
+					}
 				}
-				return FunctorContinue::kContinue;
-			});
+
+				if(done)
+				{
+					break;
+				}
+			}
 
 			m_objectPicking.m_translationAxisSelected = kMaxU32;
 			m_objectPicking.m_scaleAxisSelected = kMaxU32;
 			m_objectPicking.m_rotationAxisSelected = kMaxU32;
 		}
-		else if(res.isValid())
+		else if(res.isValid() && m_sceneHierarchyWindow.m_selectedNode)
 		{
 			// Clicked a gizmo
 
@@ -2151,13 +1370,14 @@ void EditorUi::objectPicking()
 		{
 			// Clicked on sky
 			m_sceneHierarchyWindow.m_selectedNode = nullptr;
+			m_sceneHierarchyWindow.m_selectedNodeUuid = 0;
 			m_objectPicking.m_translationAxisSelected = kMaxU32;
 			m_objectPicking.m_scaleAxisSelected = kMaxU32;
 			m_objectPicking.m_rotationAxisSelected = kMaxU32;
 		}
 	}
 
-	if(!m_mouseOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) > 1 && m_sceneHierarchyWindow.m_selectedNode)
+	if(!m_mouseOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) > 1 && m_sceneHierarchyWindow.selectedNodeValid())
 	{
 		// Possibly dragging
 
@@ -2276,7 +1496,7 @@ void EditorUi::objectPicking()
 		}
 	}
 
-	if(m_sceneHierarchyWindow.m_selectedNode)
+	if(m_sceneHierarchyWindow.selectedNodeValid())
 	{
 		Renderer::getSingleton().getDbg().enableGizmos(m_sceneHierarchyWindow.m_selectedNode->getWorldTransform(), true);
 	}
@@ -2284,21 +1504,6 @@ void EditorUi::objectPicking()
 	{
 		Renderer::getSingleton().getDbg().enableGizmos(Transform::getIdentity(), false);
 	}
-}
-
-DynamicArray<CString> EditorUi::gatherResourceFilenames(CString filenameContains)
-{
-	DynamicArray<CString> out;
-	ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString fname) {
-		if(fname.find(filenameContains) != CString::kNpos)
-		{
-			out.emplaceBack(fname);
-		}
-
-		return FunctorContinue::kContinue;
-	});
-
-	return out;
 }
 
 void EditorUi::handleInput()
@@ -2410,6 +1615,9 @@ void EditorUi::handleInput()
 			mover.setLocalRotation(Mat3(angles));
 		}
 	}
+
+	// Delete key deletes the selected node
+	deleteSelectedNode(input.getKey(KeyCode::kDelete) == 1 && m_sceneHierarchyWindow.m_selectedNode);
 }
 
 } // end namespace anki

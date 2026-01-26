@@ -371,8 +371,23 @@ void UiCanvas::handleInput()
 	io.MousePos.x = F32(mousePos.x);
 	io.MousePos.y = F32(mousePos.y);
 
-	io.MouseClicked[0] = in.getMouseButton(MouseButton::kLeft) == 1;
-	io.MouseDown[0] = in.getMouseButton(MouseButton::kLeft) > 0;
+	if(in.getMouseButton(MouseButton::kLeft) > 0)
+	{
+		io.AddMouseButtonEvent(0, true);
+	}
+	else if(in.getMouseButton(MouseButton::kLeft) < 0)
+	{
+		io.AddMouseButtonEvent(0, false);
+	}
+
+	if(in.getMouseButton(MouseButton::kRight) > 0)
+	{
+		io.AddMouseButtonEvent(1, true);
+	}
+	else if(in.getMouseButton(MouseButton::kRight) < 0)
+	{
+		io.AddMouseButtonEvent(1, false);
+	}
 
 	if(in.getMouseButton(MouseButton::kScrollUp) > 0)
 	{

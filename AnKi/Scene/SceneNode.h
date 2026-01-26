@@ -12,6 +12,8 @@
 
 namespace anki {
 
+class Scene;
+
 // Opaque data passed to the constructor
 class SceneNodeInitInfo
 {
@@ -114,6 +116,12 @@ public:
 		return m_nodeUuid;
 	}
 
+	ANKI_INTERNAL U32 getSceneUuid() const
+	{
+		ANKI_ASSERT(m_sceneUuid > 0);
+		return m_sceneUuid;
+	}
+
 	// Hierarchy manipulation //
 	// Changes in the hierarchy are deferred and won't be visible until the next frame
 
@@ -138,6 +146,21 @@ public:
 		return ConstWeakArray(m_children);
 	}
 
+	template<typename TFunc>
+	FunctorContinue visitAllChildren(TFunc func)
+	{
+		FunctorContinue cont = FunctorContinue::kContinue;
+		for(SceneNode* child : m_children)
+		{
+			cont = visitAllChildrenRecursive(child, func);
+			if(cont == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+		return cont;
+	}
+
 	void setParent(SceneNode* obj);
 
 	SceneNode* getParent() const
@@ -146,6 +169,14 @@ public:
 	}
 
 	// End hierarchy manipulation //
+
+	Scene& getScene()
+	{
+		const SceneNode* constThis = this;
+		return const_cast<Scene&>(constThis->getScene());
+	}
+
+	const Scene& getScene() const;
 
 	Bool isMarkedForDeletion() const
 	{
@@ -608,6 +639,26 @@ private:
 	SceneNode*& getHierarchyParent()
 	{
 		return m_parent;
+	}
+
+	template<typename TFunc>
+	FunctorContinue visitAllChildrenRecursive(SceneNode* node, TFunc func)
+	{
+		FunctorContinue cont = func(*node);
+
+		if(cont == FunctorContinue::kContinue)
+		{
+			for(SceneNode* child : node->m_children)
+			{
+				cont = visitAllChildrenRecursive(child, func);
+				if(cont == FunctorContinue::kStop)
+				{
+					break;
+				}
+			}
+		}
+
+		return cont;
 	}
 };
 

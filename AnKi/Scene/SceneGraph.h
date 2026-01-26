@@ -97,6 +97,11 @@ public:
 		return cont;
 	}
 
+	U32 getSceneNodeCount() const
+	{
+		return m_nodes.getSize();
+	}
+
 	Bool isEmpty() const
 	{
 		return m_nodes.getSize() == 0;
@@ -171,15 +176,18 @@ public:
 	// Scene manipulation //
 
 	template<typename TFunc>
-	void visitScenes(TFunc func)
+	FunctorContinue visitScenes(TFunc func)
 	{
+		FunctorContinue cont = FunctorContinue::kContinue;
 		for(Scene& scene : m_scenes)
 		{
-			if(func(scene) == FunctorContinue::kStop)
+			cont = func(scene);
+			if(cont == FunctorContinue::kStop)
 			{
 				break;
 			}
 		}
+		return cont;
 	}
 
 	Scene* newEmptyScene(CString name);
@@ -203,6 +211,16 @@ public:
 	Error loadScene(CString filename, Scene*& scene);
 
 	void deleteScene(Scene* scene);
+
+	U32 getSceneCount() const
+	{
+		return m_scenes.getSize();
+	}
+
+	const Scene& getSceneAt(U32 idx) const
+	{
+		return m_scenes[idx];
+	}
 
 	// End scene manipulation //
 
