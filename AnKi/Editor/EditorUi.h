@@ -10,6 +10,7 @@
 #include <AnKi/Editor/ParticleEditorUi.h>
 #include <AnKi/Editor/EditorUtils.h>
 #include <AnKi/Editor/SceneNodePropertiesUi.h>
+#include <AnKi/Editor/SceneHierarchyUi.h>
 #include <AnKi/Util/Function.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <filesystem>
@@ -80,12 +81,15 @@ private:
 
 	Bool m_showCVarEditorWindow = false;
 	Bool m_showConsoleWindow = true;
-	Bool m_showSceneNodePropsWindow = true;
-	Bool m_showSceneHierarcyWindow = true;
 	Bool m_showAssetsWindow = true;
 	Bool m_showDebugRtsWindow = false;
 	Bool m_quit = false;
 	Bool m_mouseOverAnyWindow = false; // Mouse is over one of the editor windows.
+
+	SceneNode* m_selectedNode = nullptr;
+	U32 m_selectedNodeUuid = 0;
+	Bool m_onNextUpdateFocusOnSelectedNode = false;
+	Bool m_showDeleteSceneNodeDialog = false;
 
 	ImageResourcePtr m_materialIcon;
 	ImageResourcePtr m_meshIcon;
@@ -93,6 +97,7 @@ private:
 	ImageViewerUi m_imageViewer;
 	ParticleEditorUi m_particlesEditor;
 	SceneNodePropertiesUi m_sceneNodePropertiesWindow;
+	SceneHierarchyUi m_sceneHierarchyWindow;
 
 	SceneGraphView m_sceneGraphView;
 
@@ -104,21 +109,6 @@ private:
 		U32 m_rotationAxisSelected = kMaxU32;
 		Vec3 m_pivotPoint;
 	} m_objectPicking;
-
-	class
-	{
-	public:
-		ImGuiTextFilter m_filter;
-		SceneNode* m_selectedNode = nullptr;
-		U32 m_selectedNodeUuid = 0;
-		Bool m_onNextUpdateFocusOnSelectedNode = false;
-		String m_selectedSceneName;
-
-		Bool selectedNodeValid() const
-		{
-			return m_selectedNode && m_selectedNode->getUuid() == m_selectedNodeUuid;
-		}
-	} m_sceneHierarchyWindow;
 
 	class
 	{
@@ -164,18 +154,15 @@ private:
 	void mainMenu();
 
 	// Windows
-	void sceneHierarchyWindow();
 	void cVarsWindow();
 	void consoleWindow();
 	void assetsWindow();
 	void debugRtsWindow();
 
-	void sceneNode(SceneNode& node);
 	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils
-	static void filter(ImGuiTextFilter& filter);
-	void deleteSelectedNode(Bool del); // Dialog. Can't be inside branches
+	void deleteSelectedNodeDialog(Bool del); // Dialog. Can't be inside branches
 
 	// Misc
 	static void loggerMessageHandler(void* ud, const LoggerMessageInfo& info);

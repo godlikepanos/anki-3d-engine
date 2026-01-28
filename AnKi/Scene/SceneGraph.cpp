@@ -702,6 +702,8 @@ Error SceneGraph::loadScene(CString filename, Scene*& scene)
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, script));
 		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
+		scene->m_filename = filename;
+
 		ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 		setActiveScene(&m_scenes[oldActiveScene]);
 
@@ -710,6 +712,8 @@ Error SceneGraph::loadScene(CString filename, Scene*& scene)
 
 	ResourceFilePtr file;
 	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, file));
+
+	scene->m_filename = filename;
 
 	TextSceneSerializer serializer(file.get());
 

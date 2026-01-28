@@ -124,4 +124,17 @@ DynamicArray<CString> gatherResourceFilenames(CString filenameContains)
 	return out;
 }
 
+void drawfilteredText(ImGuiTextFilter& filter)
+{
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_F, ImGuiInputFlags_Tooltip);
+	ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
+	if(ImGui::InputTextWithHint("##Filter", ICON_MDI_MAGNIFY " Search incl,-excl", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf),
+								ImGuiInputTextFlags_EscapeClearsAll))
+	{
+		filter.Build();
+	}
+	ImGui::PopItemFlag();
+}
+
 } // end namespace anki

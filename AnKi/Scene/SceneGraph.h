@@ -107,6 +107,12 @@ public:
 		return m_nodes.getSize() == 0;
 	}
 
+	// Get the filename associated with that scene. Mainly used by the editor
+	CString getFilename() const
+	{
+		return m_filename;
+	}
+
 	ANKI_INTERNAL U32 getNewNodeUuid() const
 	{
 		return m_nodesUuid.fetchAdd(1);
@@ -127,6 +133,8 @@ private:
 
 	static inline Atomic<U32> m_scenesUuid = {1};
 	U32 m_sceneUuid = 0;
+
+	SceneString m_filename;
 
 	U8 m_arrayIndex = kMaxU8; // Index in SceneGraph::m_scenes
 

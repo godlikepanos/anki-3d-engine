@@ -38,6 +38,9 @@ Bool textEditorWindow(CString windowTitle, Bool* pOpen, ImFont* textFont, String
 // Iterate all resource filenames and gather the filenames
 DynamicArray<CString> gatherResourceFilenames(CString filenameContains);
 
+// Draw a filter textbox
+void drawfilteredText(ImGuiTextFilter& filter);
+
 // Draws a combo box and adds a filter for search
 // Returns true if something was selected and in that case selectedItemOut has the selected item
 template<typename TItemArray>

@@ -235,6 +235,7 @@ void EditorUi::draw(UiCanvas& canvas)
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.0f;
 
 	// Do some pre-drawing work
+	m_showDeleteSceneNodeDialog = false;
 	m_sceneGraphView = gatherAllSceneNodes();
 	validateSelectedNode();
 	handleInput();
@@ -254,7 +255,6 @@ void EditorUi::draw(UiCanvas& canvas)
 
 	ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
-	sceneHierarchyWindow();
 	consoleWindow();
 	assetsWindow();
 	cVarsWindow();
@@ -263,12 +263,25 @@ void EditorUi::draw(UiCanvas& canvas)
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
 		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+		const Vec2 initialPos(viewportPos);
+		const Vec2 initialSize(400.0f, viewportSize.y - kConsoleHeight);
+
+		Bool deleteSelectedNode;
+		m_sceneHierarchyWindow.drawWindow(initialPos, initialSize, ImGuiWindowFlags_NoCollapse, m_onNextUpdateFocusOnSelectedNode, m_selectedNode,
+										  deleteSelectedNode);
+
+		m_onNextUpdateFocusOnSelectedNode = false;
+		m_showDeleteSceneNodeDialog = m_showDeleteSceneNodeDialog || deleteSelectedNode;
+	}
+
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
 		const F32 initialWidth = 500.0f;
 		const Vec2 initialPos(viewportSize.x - initialWidth, viewportPos.y);
 		const Vec2 initialSize(initialWidth, viewportSize.y - kConsoleHeight);
 
-		m_sceneNodePropertiesWindow.drawWindow(m_sceneHierarchyWindow.m_selectedNode, m_sceneGraphView, initialPos, initialSize,
-											   ImGuiWindowFlags_NoCollapse);
+		m_sceneNodePropertiesWindow.drawWindow(m_selectedNode, m_sceneGraphView, initialPos, initialSize, ImGuiWindowFlags_NoCollapse);
 	}
 
 	{
@@ -287,6 +300,8 @@ void EditorUi::draw(UiCanvas& canvas)
 		m_particlesEditor.drawWindow(canvas, initialPos, initialSize, 0);
 	}
 
+	deleteSelectedNodeDialog(m_showDeleteSceneNodeDialog);
+
 	ImGui::End();
 
 	ImGui::PopStyleVar();
@@ -300,7 +315,7 @@ void EditorUi::draw(UiCanvas& canvas)
 
 void EditorUi::validateSelectedNode()
 {
-	if(m_sceneHierarchyWindow.m_selectedNode == nullptr)
+	if(m_selectedNode == nullptr)
 	{
 		return;
 	}
@@ -310,8 +325,7 @@ void EditorUi::validateSelectedNode()
 	{
 		for(U32 i = 0; i < sceneView.m_nodeNames.getSize(); ++i)
 		{
-			if(sceneView.m_nodes[i] == m_sceneHierarchyWindow.m_selectedNode
-			   && sceneView.m_nodeUuids[i] == m_sceneHierarchyWindow.m_selectedNode->getUuid())
+			if(sceneView.m_nodes[i] == m_selectedNode && sceneView.m_nodeUuids[i] == m_selectedNode->getUuid())
 			{
 				found = true;
 				break;
@@ -321,12 +335,12 @@ void EditorUi::validateSelectedNode()
 
 	if(!found)
 	{
-		m_sceneHierarchyWindow.m_selectedNode = nullptr;
-		m_sceneHierarchyWindow.m_selectedNodeUuid = 0;
+		m_selectedNode = nullptr;
+		m_selectedNodeUuid = 0;
 	}
 }
 
-void EditorUi::deleteSelectedNode(Bool del)
+void EditorUi::deleteSelectedNodeDialog(Bool del)
 {
 	if(del)
 	{
@@ -337,11 +351,11 @@ void EditorUi::deleteSelectedNode(Bool del)
 
 	if(ImGui::BeginPopupModal("Delete Node?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		ImGui::Text("Delete node: %s", m_sceneHierarchyWindow.m_selectedNode->getName().cstr());
+		ImGui::Text("Delete node: %s", m_selectedNode->getName().cstr());
 
 		if(ImGui::Button("Yes"))
 		{
-			m_sceneHierarchyWindow.m_selectedNode->markForDeletion();
+			m_selectedNode->markForDeletion();
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -385,12 +399,12 @@ void EditorUi::mainMenu()
 
 				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " SceneNode Props"))
 				{
-					m_showSceneNodePropsWindow = true;
+					m_sceneNodePropertiesWindow.m_open = true;
 				}
 
 				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Scene Hierarchy"))
 				{
-					m_showSceneHierarcyWindow = true;
+					m_sceneHierarchyWindow.m_open = true;
 				}
 
 				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Assets"))
@@ -573,186 +587,6 @@ void EditorUi::mainMenu()
 	ImGui::End();
 }
 
-void EditorUi::sceneNode(SceneNode& node)
-{
-	auto& state = m_sceneHierarchyWindow;
-
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-	ImGui::PushID(I32(node.getUuid()));
-	ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_None;
-	treeFlags |= ImGuiTreeNodeFlags_OpenOnArrow
-				 | ImGuiTreeNodeFlags_OpenOnDoubleClick; // Standard opening mode as we are likely to want to add selection afterwards
-	treeFlags |= ImGuiTreeNodeFlags_NavLeftJumpsToParent; // Left arrow support
-	treeFlags |= ImGuiTreeNodeFlags_SpanFullWidth; // Span full width for easier mouse reach
-	treeFlags |= ImGuiTreeNodeFlags_DrawLinesToNodes; // Always draw hierarchy outlines
-
-	const Bool selected = &node == state.m_selectedNode;
-	if(selected)
-	{
-		ANKI_ASSERT(state.selectedNodeValid());
-		treeFlags |= ImGuiTreeNodeFlags_Selected;
-	}
-
-	if(!node.getChildrenCount())
-	{
-		treeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
-	}
-
-	String componentsString;
-	for(SceneComponentType sceneComponentType : EnumBitsIterable<SceneComponentType, SceneComponentTypeMask>(node.getSceneComponentMask()))
-	{
-		switch(sceneComponentType)
-		{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
-	case SceneComponentType::k##name: \
-		componentsString += ICON_MDI_##icon; \
-		break;
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-		default:
-			ANKI_ASSERT(0);
-		}
-	}
-
-	// If one if the children of this node is selected and we need to focus on it then open the tree thingy
-	if(state.m_onNextUpdateFocusOnSelectedNode)
-	{
-		node.visitAllChildren([&](SceneNode& child) {
-			if(&child == state.m_selectedNode)
-			{
-				ImGui::SetNextItemOpen(true);
-				return FunctorContinue::kStop;
-			}
-
-			return FunctorContinue::kContinue;
-		});
-	}
-
-	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s  %s", node.getName().cstr(), componentsString.cstr());
-
-	// Right click popup menu
-	{
-		if(ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
-		{
-			ImGui::OpenPopup("Scene Node");
-
-			if(!selected)
-			{
-				state.m_selectedNode = &node;
-				state.m_selectedNodeUuid = node.getUuid();
-			}
-		}
-
-		Bool delSceneNode = false;
-		if(ImGui::BeginPopup("Scene Node"))
-		{
-			if(ImGui::Button(ICON_MDI_DELETE_FOREVER " Delete"))
-			{
-				delSceneNode = true;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-		deleteSelectedNode(delSceneNode);
-	}
-
-	if(ImGui::IsItemClicked())
-	{
-		state.m_selectedNode = &node;
-		state.m_selectedNodeUuid = node.getUuid();
-	}
-
-	// Scroll and focus on the selected node
-	if(selected && state.m_onNextUpdateFocusOnSelectedNode)
-	{
-		ImGui::SetScrollHereY();
-		ImGui::SetItemDefaultFocus();
-
-		state.m_onNextUpdateFocusOnSelectedNode = false;
-	}
-
-	if(nodeOpen)
-	{
-		for(SceneNode* child : node.getChildren())
-		{
-			sceneNode(*child);
-		}
-
-		ImGui::TreePop();
-	}
-	ImGui::PopID();
-}
-
-void EditorUi::sceneHierarchyWindow()
-{
-	if(!m_showSceneHierarcyWindow)
-	{
-		return;
-	}
-
-	auto& state = m_sceneHierarchyWindow;
-
-	if(ImGui::GetFrameCount() > 1)
-	{
-		// Viewport is one frame delay so do that when frame >1
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
-		ImGui::SetNextWindowPos(viewportPos, ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(Vec2(400.0f, viewportSize.y - kConsoleHeight), ImGuiCond_FirstUseEver);
-	}
-
-	if(ImGui::Begin("Scene Hierarchy", &m_showSceneHierarcyWindow, ImGuiWindowFlags_NoCollapse))
-	{
-		// Scene selector
-		if(state.m_selectedSceneName.isEmpty())
-		{
-			state.m_selectedSceneName = SceneGraph::getSingleton().getActiveScene().getName();
-		}
-
-		if(ImGui::BeginCombo("Scene", state.m_selectedSceneName.cstr()))
-		{
-			SceneGraph::getSingleton().visitScenes([&](Scene& scene) {
-				const Bool isSelected = (scene.getName() == state.m_selectedSceneName);
-				if(ImGui::Selectable(scene.getName().cstr(), isSelected))
-				{
-					state.m_selectedSceneName = scene.getName();
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(isSelected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-
-				return FunctorContinue::kContinue;
-			});
-
-			ImGui::EndCombo();
-		}
-
-		filter(m_sceneHierarchyWindow.m_filter);
-
-		Scene& scene = *SceneGraph::getSingleton().tryFindScene(state.m_selectedSceneName);
-		if(ImGui::BeginChild("##tree", Vec2(0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_None))
-		{
-			if(ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
-			{
-				scene.visitNodes([this](SceneNode& node) {
-					if(!node.getParent() && m_sceneHierarchyWindow.m_filter.PassFilter(node.getName().cstr()))
-					{
-						sceneNode(node);
-					}
-					return FunctorContinue::kContinue;
-				});
-
-				ImGui::EndTable();
-			}
-		}
-		ImGui::EndChild();
-	}
-	ImGui::End();
-}
-
 void EditorUi::cVarsWindow()
 {
 	if(!m_showCVarEditorWindow)
@@ -776,7 +610,7 @@ void EditorUi::cVarsWindow()
 
 	if(ImGui::Begin("CVars Editor", &m_showCVarEditorWindow, 0))
 	{
-		filter(m_cvarsEditorWindow.m_filter);
+		drawfilteredText(m_cvarsEditorWindow.m_filter);
 
 		if(ImGui::BeginChild("##Child", Vec2(0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened))
 		{
@@ -971,7 +805,7 @@ void EditorUi::consoleWindow()
 		}
 
 		// Search log
-		filter(state.m_logFilter);
+		drawfilteredText(state.m_logFilter);
 
 		// Log
 		{
@@ -1129,7 +963,7 @@ void EditorUi::assetsWindow()
 					ImGui::SameLine();
 				}
 
-				filter(state.m_fileFilter);
+				drawfilteredText(state.m_fileFilter);
 
 				if(ImGui::BeginChild("RightBottom", Vec2(-1.0f, -1.0f), 0))
 				{
@@ -1214,19 +1048,6 @@ void EditorUi::assetsWindow()
 	ImGui::End();
 }
 
-void EditorUi::filter(ImGuiTextFilter& filter)
-{
-	ImGui::SetNextItemWidth(-FLT_MIN);
-	ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_F, ImGuiInputFlags_Tooltip);
-	ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
-	if(ImGui::InputTextWithHint("##Filter", ICON_MDI_MAGNIFY " Search incl,-excl", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf),
-								ImGuiInputTextFlags_EscapeClearsAll))
-	{
-		filter.Build();
-	}
-	ImGui::PopItemFlag();
-}
-
 void EditorUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 {
 	// Try to load first
@@ -1289,10 +1110,9 @@ void EditorUi::objectPicking()
 				{
 					if(sceneView.m_nodeUuids[i] == res.m_sceneNodeUuid)
 					{
-						m_sceneHierarchyWindow.m_selectedNode = sceneView.m_nodes[i];
-						m_sceneHierarchyWindow.m_selectedNodeUuid = sceneView.m_nodeUuids[i];
-						ANKI_ASSERT(m_sceneHierarchyWindow.m_selectedNodeUuid == m_sceneHierarchyWindow.m_selectedNode->getUuid());
-						m_sceneHierarchyWindow.m_onNextUpdateFocusOnSelectedNode = true;
+						m_selectedNode = sceneView.m_nodes[i];
+						m_selectedNodeUuid = sceneView.m_nodeUuids[i];
+						m_onNextUpdateFocusOnSelectedNode = true;
 						ANKI_LOGV("Selecting scene node: %s", sceneView.m_nodes[i]->getName().cstr());
 						done = true;
 						break;
@@ -1309,11 +1129,11 @@ void EditorUi::objectPicking()
 			m_objectPicking.m_scaleAxisSelected = kMaxU32;
 			m_objectPicking.m_rotationAxisSelected = kMaxU32;
 		}
-		else if(res.isValid() && m_sceneHierarchyWindow.m_selectedNode)
+		else if(res.isValid() && m_selectedNode)
 		{
 			// Clicked a gizmo
 
-			const Transform& nodeTrf = m_sceneHierarchyWindow.m_selectedNode->getLocalTransform();
+			const Transform& nodeTrf = m_selectedNode->getLocalTransform();
 			const Vec3 nodeOrigin = nodeTrf.getOrigin().xyz;
 			Array<Vec3, 3> rotationAxis;
 			rotationAxis[0] = nodeTrf.getRotation().getXAxis();
@@ -1369,19 +1189,19 @@ void EditorUi::objectPicking()
 		else
 		{
 			// Clicked on sky
-			m_sceneHierarchyWindow.m_selectedNode = nullptr;
-			m_sceneHierarchyWindow.m_selectedNodeUuid = 0;
+			m_selectedNode = nullptr;
+			m_selectedNodeUuid = 0;
 			m_objectPicking.m_translationAxisSelected = kMaxU32;
 			m_objectPicking.m_scaleAxisSelected = kMaxU32;
 			m_objectPicking.m_rotationAxisSelected = kMaxU32;
 		}
 	}
 
-	if(!m_mouseOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) > 1 && m_sceneHierarchyWindow.selectedNodeValid())
+	if(!m_mouseOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) > 1 && m_selectedNode)
 	{
 		// Possibly dragging
 
-		const Transform& nodeTrf = m_sceneHierarchyWindow.m_selectedNode->getLocalTransform();
+		const Transform& nodeTrf = m_selectedNode->getLocalTransform();
 		Array<Vec3, 3> rotationAxis;
 		rotationAxis[0] = nodeTrf.getRotation().getXAxis();
 		rotationAxis[1] = nodeTrf.getRotation().getYAxis();
@@ -1400,7 +1220,7 @@ void EditorUi::objectPicking()
 			{
 				newPosition[i] = round(newPosition[i] / m_toolbox.m_scaleTranslationSnapping) * m_toolbox.m_scaleTranslationSnapping;
 			}
-			m_sceneHierarchyWindow.m_selectedNode->setLocalOrigin(newPosition);
+			m_selectedNode->setLocalOrigin(newPosition);
 
 			// Update the pivot
 			const Vec3 moveDiff = newPosition - oldPosition; // Move the pivot as you moved the node origin
@@ -1422,7 +1242,7 @@ void EditorUi::objectPicking()
 
 			Vec3 scale = nodeTrf.getScale().xyz;
 			scale[axis] = max(newAxisScale, m_toolbox.m_scaleTranslationSnapping);
-			m_sceneHierarchyWindow.m_selectedNode->setLocalScale(scale);
+			m_selectedNode->setLocalScale(scale);
 
 			// Update the pivot
 			const F32 adjustedMoveDistance = newAxisScale - oldAxisScale;
@@ -1472,15 +1292,15 @@ void EditorUi::objectPicking()
 				// Apply the angle
 				if(m_objectPicking.m_rotationAxisSelected == 0)
 				{
-					m_sceneHierarchyWindow.m_selectedNode->rotateLocalX(angle);
+					m_selectedNode->rotateLocalX(angle);
 				}
 				else if(m_objectPicking.m_rotationAxisSelected == 1)
 				{
-					m_sceneHierarchyWindow.m_selectedNode->rotateLocalY(angle);
+					m_selectedNode->rotateLocalY(angle);
 				}
 				else
 				{
-					m_sceneHierarchyWindow.m_selectedNode->rotateLocalZ(angle);
+					m_selectedNode->rotateLocalZ(angle);
 				}
 
 				// Use the snapped angle to adjust the pivot point
@@ -1496,9 +1316,9 @@ void EditorUi::objectPicking()
 		}
 	}
 
-	if(m_sceneHierarchyWindow.selectedNodeValid())
+	if(m_selectedNode)
 	{
-		Renderer::getSingleton().getDbg().enableGizmos(m_sceneHierarchyWindow.m_selectedNode->getWorldTransform(), true);
+		Renderer::getSingleton().getDbg().enableGizmos(m_selectedNode->getWorldTransform(), true);
 	}
 	else
 	{
@@ -1617,7 +1437,7 @@ void EditorUi::handleInput()
 	}
 
 	// Delete key deletes the selected node
-	deleteSelectedNode(input.getKey(KeyCode::kDelete) == 1 && m_sceneHierarchyWindow.m_selectedNode);
+	m_showDeleteSceneNodeDialog = m_showDeleteSceneNodeDialog || (input.getKey(KeyCode::kDelete) == 1 && m_selectedNode);
 }
 
 } // end namespace anki
