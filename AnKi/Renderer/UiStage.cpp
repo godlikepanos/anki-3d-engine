@@ -94,8 +94,12 @@ void UiStage::drawUi(CommandBuffer& cmdb)
 		return;
 	}
 
+	cmdb.pushDebugMarker("UI", Vec3(1.0f, 1.0f, 0.0f));
+
 	ANKI_TRACE_SCOPED_EVENT(Ui);
 	m_canvas->appendGraphicsCommands(cmdb);
+
+	cmdb.popDebugMarker();
 }
 
 } // end namespace anki

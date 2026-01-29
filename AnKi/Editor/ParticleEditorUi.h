@@ -15,7 +15,7 @@ class ParticleEditorUi
 public:
 	void open(const ParticleEmitterResource2& resource);
 
-	void drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
+	void drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
 
 private:
 	class Prop

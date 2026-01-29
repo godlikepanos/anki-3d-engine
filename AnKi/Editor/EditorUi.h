@@ -11,6 +11,7 @@
 #include <AnKi/Editor/EditorUtils.h>
 #include <AnKi/Editor/SceneNodePropertiesUi.h>
 #include <AnKi/Editor/SceneHierarchyUi.h>
+#include <AnKi/Editor/AssetBrowserUi.h>
 #include <AnKi/Util/Function.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <filesystem>
@@ -81,7 +82,6 @@ private:
 
 	Bool m_showCVarEditorWindow = false;
 	Bool m_showConsoleWindow = true;
-	Bool m_showAssetsWindow = true;
 	Bool m_showDebugRtsWindow = false;
 	Bool m_quit = false;
 	Bool m_mouseOverAnyWindow = false; // Mouse is over one of the editor windows.
@@ -91,13 +91,9 @@ private:
 	Bool m_onNextUpdateFocusOnSelectedNode = false;
 	Bool m_showDeleteSceneNodeDialog = false;
 
-	ImageResourcePtr m_materialIcon;
-	ImageResourcePtr m_meshIcon;
-
-	ImageViewerUi m_imageViewer;
-	ParticleEditorUi m_particlesEditor;
 	SceneNodePropertiesUi m_sceneNodePropertiesWindow;
 	SceneHierarchyUi m_sceneHierarchyWindow;
+	AssetBrowserUi m_assetBrowserWindow;
 
 	SceneGraphView m_sceneGraphView;
 
@@ -128,19 +124,6 @@ private:
 	class
 	{
 	public:
-		const AssetPath* m_pathSelected = nullptr;
-		DynamicArray<AssetPath> m_assetPaths;
-
-		DynamicArray<ImageCacheEntry> m_imageCache;
-
-		ImGuiTextFilter m_fileFilter;
-
-		I32 m_cellSize = 8; // Icon size
-	} m_assetsWindow;
-
-	class
-	{
-	public:
 		Bool m_disableTonemapping = false;
 	} m_debugRtsWindow;
 
@@ -156,10 +139,7 @@ private:
 	// Windows
 	void cVarsWindow();
 	void consoleWindow();
-	void assetsWindow();
 	void debugRtsWindow();
-
-	void dirTree(const AssetPath& path);
 
 	// Widget/UI utils
 	void deleteSelectedNodeDialog(Bool del); // Dialog. Can't be inside branches
@@ -168,7 +148,6 @@ private:
 	static void loggerMessageHandler(void* ud, const LoggerMessageInfo& info);
 	static void listDir(const std::filesystem::path& rootPath, const std::filesystem::path& parentPath, AssetPath& parent, U32& id);
 	static void gatherAssets(DynamicArray<AssetPath>& paths);
-	void loadImageToCache(CString fname, ImageResourcePtr& img);
 	void objectPicking();
 	void handleInput();
 	void validateSelectedNode();

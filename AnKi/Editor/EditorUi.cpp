@@ -117,11 +117,6 @@ static Bool projectNdcToPlane(Vec2 ndc, Plane plane, Vec3& point)
 EditorUi::EditorUi()
 {
 	Logger::getSingleton().addMessageHandler(this, loggerMessageHandler);
-
-	gatherAssets(m_assetsWindow.m_assetPaths);
-
-	ANKI_CHECKF(ResourceManager::getSingleton().loadResource("EngineAssets/Editor/Material.png", m_materialIcon));
-	ANKI_CHECKF(ResourceManager::getSingleton().loadResource("EngineAssets/Editor/Mesh.png", m_meshIcon));
 }
 
 EditorUi::~EditorUi()
@@ -256,7 +251,6 @@ void EditorUi::draw(UiCanvas& canvas)
 	ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
 	consoleWindow();
-	assetsWindow();
 	cVarsWindow();
 	debugRtsWindow();
 
@@ -286,18 +280,11 @@ void EditorUi::draw(UiCanvas& canvas)
 
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
-		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+		const Vec2 initialSize = Vec2(viewportSize.x / 2.0f, kConsoleHeight);
+		const Vec2 initialPos = Vec2(viewportSize.x / 2.0f, viewportPos.y + viewportSize.y - initialSize.y);
 
-		m_imageViewer.drawWindow(canvas, initialPos, initialSize, 0);
-	}
-
-	{
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 initialSize = Vec2(800.0f, 600.0f);
-		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
-
-		m_particlesEditor.drawWindow(canvas, initialPos, initialSize, 0);
+		m_assetBrowserWindow.drawWindow(initialSize, initialPos, ImGuiWindowFlags_NoCollapse);
 	}
 
 	deleteSelectedNodeDialog(m_showDeleteSceneNodeDialog);
@@ -409,7 +396,7 @@ void EditorUi::mainMenu()
 
 				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Assets"))
 				{
-					m_showAssetsWindow = true;
+					m_assetBrowserWindow.m_open = true;
 				}
 
 				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " CVars Editor"))
@@ -848,251 +835,6 @@ void EditorUi::consoleWindow()
 	}
 
 	ImGui::End();
-}
-
-void EditorUi::dirTree(const AssetPath& path)
-{
-	auto& state = m_assetsWindow;
-
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-
-	ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_None;
-	treeFlags |= ImGuiTreeNodeFlags_OpenOnArrow
-				 | ImGuiTreeNodeFlags_OpenOnDoubleClick; // Standard opening mode as we are likely to want to add selection afterwards
-	treeFlags |= ImGuiTreeNodeFlags_NavLeftJumpsToParent; // Left arrow support
-	treeFlags |= ImGuiTreeNodeFlags_SpanFullWidth; // Span full width for easier mouse reach
-	treeFlags |= ImGuiTreeNodeFlags_DrawLinesToNodes; // Always draw hierarchy outlines
-
-	if(state.m_pathSelected == &path)
-	{
-		treeFlags |= ImGuiTreeNodeFlags_Selected;
-	}
-
-	const Bool hasChildren = path.m_children.getSize();
-	if(!hasChildren)
-	{
-		treeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
-	}
-
-	ImGui::PushID(path.m_id);
-	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s", path.m_dirname.cstr());
-	ImGui::PopID();
-	ImGui::SetItemTooltip("%s", path.m_dirname.cstr());
-
-	if(ImGui::IsItemFocused())
-	{
-		state.m_pathSelected = &path;
-	}
-
-	if(nodeOpen)
-	{
-		for(const AssetPath& p : path.m_children)
-		{
-			dirTree(p);
-		}
-
-		ImGui::TreePop();
-	}
-}
-
-void EditorUi::assetsWindow()
-{
-	if(!m_showAssetsWindow)
-	{
-		return;
-	}
-
-	auto& state = m_assetsWindow;
-
-	if(ImGui::GetFrameCount() > 1)
-	{
-		// Viewport is one frame delay so do that when frame >1
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
-		const Vec2 initialSize = Vec2(viewportSize.x / 2.0f, kConsoleHeight);
-		const Vec2 initialPos = Vec2(viewportSize.x / 2.0f, viewportPos.y + viewportSize.y - initialSize.y);
-		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowPos(initialPos, ImGuiCond_FirstUseEver);
-	}
-
-	if(ImGui::Begin("Assets", &m_showAssetsWindow, ImGuiWindowFlags_NoCollapse))
-	{
-		// Left side
-		{
-			if(ImGui::BeginChild("Left", Vec2(300.0f, -1.0f), ImGuiChildFlags_ResizeX | ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened))
-			{
-				if(ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
-				{
-					for(const AssetPath& p : state.m_assetPaths)
-					{
-						dirTree(p);
-					}
-
-					ImGui::EndTable();
-				}
-			}
-			ImGui::EndChild();
-		} // Left side
-
-		ImGui::SameLine();
-
-		// Right side
-		{
-			// Use the filter to gather the files
-			DynamicArray<const AssetFile*> filteredFiles;
-			if(state.m_pathSelected)
-			{
-				for(const AssetFile& f : state.m_pathSelected->m_files)
-				{
-					if(state.m_fileFilter.PassFilter(f.m_basename.cstr()))
-					{
-						filteredFiles.emplaceBack(&f);
-					}
-				}
-			}
-
-			if(ImGui::BeginChild("Right", Vec2(-1.0f, -1.0f), 0))
-			{
-				// Increase/decrease icon size
-				{
-					ImGui::TextUnformatted("Icon Size");
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(64.0f);
-					ImGui::SliderInt("##Icon Size", &state.m_cellSize, 5, 11, "%d", ImGuiSliderFlags_AlwaysClamp);
-					ImGui::SameLine();
-				}
-
-				drawfilteredText(state.m_fileFilter);
-
-				if(ImGui::BeginChild("RightBottom", Vec2(-1.0f, -1.0f), 0))
-				{
-					const F32 cellWidth = F32(state.m_cellSize) * 16;
-					const U32 columnCount = U32(ImGui::GetContentRegionAvail().x / cellWidth);
-					ImGui::SetNextItemWidth(-1.0f);
-					const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter
-												  | ImGuiTableFlags_BordersV | ImGuiTableFlags_ContextMenuInBody;
-					if(filteredFiles.getSize() && ImGui::BeginTable("Grid", columnCount, flags))
-					{
-						const U32 rowCount = (filteredFiles.getSize() + columnCount - 1) / columnCount;
-
-						for(U32 row = 0; row < rowCount; ++row)
-						{
-							ImGui::TableNextRow();
-							for(U32 column = 0; column < columnCount; ++column)
-							{
-								ImGui::TableNextColumn();
-
-								const U32 idx = row * columnCount + column;
-								if(idx < filteredFiles.getSize())
-								{
-									const AssetFile& file = *filteredFiles[idx];
-
-									ImGui::PushID(idx);
-									if(file.m_type == AssetFileType::kMaterial)
-									{
-										ImTextureID id;
-										id.m_texture = &m_materialIcon->getTexture();
-										ImGui::ImageButton("##", id, Vec2(cellWidth));
-									}
-									else if(file.m_type == AssetFileType::kMesh)
-									{
-										ImTextureID id;
-										id.m_texture = &m_meshIcon->getTexture();
-										ImGui::ImageButton("##", id, Vec2(cellWidth));
-									}
-									else if(file.m_type == AssetFileType::kTexture)
-									{
-										ImageResourcePtr img;
-										loadImageToCache(file.m_filename, img);
-										ImTextureID id;
-										id.m_texture = &img->getTexture();
-										id.m_textureSubresource = TextureSubresourceDesc::all();
-										if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
-										{
-											m_imageViewer.m_image = img;
-											m_imageViewer.m_open = true;
-										}
-									}
-									else if(file.m_type == AssetFileType::kParticleEmitter)
-									{
-										ImGui::PushFont(nullptr, cellWidth - 1.0f);
-										if(ImGui::Button(ICON_MDI_CREATION, Vec2(cellWidth)))
-										{
-											ParticleEmitterResource2Ptr rsrc;
-											ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_filename, rsrc));
-											m_particlesEditor.open(*rsrc);
-										}
-										ImGui::PopFont();
-									}
-									ImGui::PopID();
-
-									ImGui::TextWrapped("%s", file.m_basename.cstr());
-									ImGui::SetItemTooltip("%s", file.m_filename.cstr());
-								}
-							}
-						}
-
-						ImGui::EndTable();
-					}
-					else
-					{
-						ImGui::TextUnformatted("Empty");
-					}
-				}
-				ImGui::EndChild();
-			}
-			ImGui::EndChild();
-		} // Right side
-	}
-	ImGui::End();
-}
-
-void EditorUi::loadImageToCache(CString fname, ImageResourcePtr& img)
-{
-	// Try to load first
-	ANKI_CHECKF(ResourceManager::getSingleton().loadResource(fname, img));
-
-	// Update the cache
-	const U32 crntFrame = ImGui::GetFrameCount();
-	Bool entryFound = false;
-	DynamicArray<ImageCacheEntry>& cache = m_assetsWindow.m_imageCache;
-	for(ImageCacheEntry& entry : cache)
-	{
-		if(entry.m_image->getUuid() == img->getUuid())
-		{
-			entry.m_lastSeenInFrame = crntFrame;
-			entryFound = true;
-			break;
-		}
-	}
-
-	if(!entryFound)
-	{
-		cache.emplaceBack(ImageCacheEntry{img, crntFrame});
-	}
-
-	// Try to remove stale entries
-	const U32 frameInactivityCount = 60 * 30; // ~30"
-	while(true)
-	{
-		Bool foundStaleEntry = false;
-		for(auto it = cache.getBegin(); it != cache.getEnd(); ++it)
-		{
-			ANKI_ASSERT(crntFrame >= it->m_lastSeenInFrame);
-			if(crntFrame - it->m_lastSeenInFrame > frameInactivityCount)
-			{
-				cache.erase(it);
-				foundStaleEntry = true;
-				break;
-			}
-		}
-
-		if(!foundStaleEntry)
-		{
-			break;
-		}
-	}
 }
 
 void EditorUi::objectPicking()

@@ -38,7 +38,6 @@ VertOut main(VertIn input)
 	VertOut output;
 
 	output.m_uv = input.m_uv;
-	output.m_uv.y = 1.0 - output.m_uv.y;
 	output.m_color = input.m_color;
 
 	const Vec2 pos = g_consts.m_transform.xy * input.m_position + g_consts.m_transform.zw;

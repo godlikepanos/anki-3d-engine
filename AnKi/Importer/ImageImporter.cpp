@@ -246,32 +246,43 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 	}
 
 	// Resize
-	I ok;
 	ImporterDynamicArray<U8> outPixels;
+	stbir_pixel_layout layout;
+	switch(channelCount)
+	{
+	case 1:
+		layout = STBIR_1CHANNEL;
+		break;
+	case 3:
+		layout = STBIR_RGB;
+		break;
+	case 4:
+		layout = STBIR_RGBA;
+		break;
+	default:
+		ANKI_IMPORTER_LOGE("Can't handle channel count of %d", channelCount);
+		return Error::kUserData;
+	}
+
 	if(!hdr)
 	{
 		outPixels.resize(outWidth * outHeight * channelCount);
-		ok = stbir_resize_uint8(static_cast<const U8*>(inPixels), inWidth, inHeight, 0, outPixels.getBegin(), outWidth, outHeight, 0, channelCount);
+		stbir_resize_uint8_linear(static_cast<const U8*>(inPixels), inWidth, inHeight, 0, outPixels.getBegin(), outWidth, outHeight, 0, layout);
 	}
 	else
 	{
 		outPixels.resize(outWidth * outHeight * channelCount * sizeof(F32));
-		ok = stbir_resize_float(static_cast<const F32*>(inPixels), inWidth, inHeight, 0, reinterpret_cast<F32*>(outPixels.getBegin()), outWidth,
-								outHeight, 0, channelCount);
+		stbir_resize_float_linear(static_cast<const F32*>(inPixels), inWidth, inHeight, 0, reinterpret_cast<F32*>(outPixels.getBegin()), outWidth,
+								  outHeight, 0, layout);
 	}
 
 	stbi_image_free(inPixels);
-
-	if(!ok)
-	{
-		ANKI_IMPORTER_LOGE("stbir_resize_xxx() failed to resize the image: %s", inImageFilename.cstr());
-		return Error::kFunctionFailed;
-	}
 
 	// Store
 	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 
+	I32 ok = 1;
 	if(!hdr)
 	{
 		ok = stbi_write_png(tmpFilename.cstr(), outWidth, outHeight, channelCount, outPixels.getBegin(), 0);

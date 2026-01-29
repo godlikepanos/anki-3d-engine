@@ -40,7 +40,7 @@ private:
 		ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
 		ImGui::SetWindowSize(canvas.getSizef());
 
-		m_ui.drawWindow(canvas, Vec2(0.0f), canvas.getSizef(), ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+		m_ui.drawWindow(Vec2(0.0f), canvas.getSizef(), ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
 		ImGui::PopFont();
 	}
@@ -60,6 +60,7 @@ public:
 	Error userPreInit() override
 	{
 		g_cvarWindowFullscreen = 0;
+		g_cvarWindowBorderless = 0;
 		g_cvarRsrcDataPaths = ANKI_SOURCE_DIRECTORY;
 
 		return Error::kNone;
@@ -67,6 +68,9 @@ public:
 
 	Error userPostInit() override
 	{
+		Scene* scene = SceneGraph::getSingleton().newEmptyScene("Temp");
+		SceneGraph::getSingleton().setActiveScene(scene);
+
 		// Load the texture
 		ImageResourcePtr image;
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(m_imageFilename, image, false));

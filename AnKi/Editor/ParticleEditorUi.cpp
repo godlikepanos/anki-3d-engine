@@ -23,7 +23,7 @@ void ParticleEditorUi::open(const ParticleEmitterResource2& resource)
 	m_open = true;
 }
 
-void ParticleEditorUi::drawWindow([[maybe_unused]] UiCanvas& canvas, Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
+void ParticleEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
 {
 	if(!m_open)
 	{

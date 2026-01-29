@@ -17,7 +17,7 @@ public:
 
 	ImageViewerUi();
 
-	void drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
+	void drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
 
 private:
 	ShaderProgramResourcePtr m_imageProgram;

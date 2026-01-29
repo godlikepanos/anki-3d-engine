@@ -26,7 +26,7 @@ ImageViewerUi::ImageViewerUi()
 	}
 }
 
-void ImageViewerUi::drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
+void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
 {
 	if(!m_open)
 	{
@@ -248,7 +248,7 @@ void ImageViewerUi::drawWindow(UiCanvas& canvas, Vec2 initialPos, Vec2 initialSi
 							auto toWindow = [&](Vec2 in) {
 								in = in * 0.5f + 0.5f;
 								in.y = 1.0f - in.y;
-								in *= canvas.getSizef();
+								in *= ImGui::GetMainViewport()->WorkSize;
 								return in;
 							};
 
