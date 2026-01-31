@@ -57,7 +57,7 @@ void DescriptorAllocator::createNewBlock()
 {
 	ANKI_TRACE_SCOPED_EVENT(GrDescriptorSetCreate);
 
-	const Bool rtEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rtEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing;
 
 	Array<VkDescriptorPoolSize, g_dsAllocatorConsts.m_descriptorCount.getSize()> poolSizes;
 

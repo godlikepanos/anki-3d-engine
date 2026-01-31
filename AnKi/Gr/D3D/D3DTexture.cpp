@@ -575,7 +575,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 	stages = {};
 	accesses = {};
 	const Bool depthStencil = !!m_aspect;
-	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracing;
 
 	if(depthStencil)
 	{

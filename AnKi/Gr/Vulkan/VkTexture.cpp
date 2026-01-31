@@ -294,7 +294,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 	stages = 0;
 	accesses = 0;
 	const Bool depthStencil = !!m_aspect;
-	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracing;
 
 	if(!!(usage & TextureUsageBit::kSrvGeometry))
 	{

@@ -138,7 +138,7 @@ U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourc
 
 Error ShaderProgramResourceSystem::init()
 {
-	if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
 	{
 		return Error::kNone;
 	}

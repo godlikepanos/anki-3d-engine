@@ -20,7 +20,7 @@ void UnifiedGeometryBuffer::init()
 
 	BufferUsageBit buffUsage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kCopyDestination | BufferUsageBit::kAllSrv;
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
 	{
 		buffUsage |= BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructure;
 	}

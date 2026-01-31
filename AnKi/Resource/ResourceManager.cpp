@@ -67,7 +67,7 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 	ShaderProgramResourceSystem::allocateSingleton();
 	ANKI_CHECK(ShaderProgramResourceSystem::getSingleton().init());
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
 	{
 		AccelerationStructureScratchAllocator::allocateSingleton();
 	}

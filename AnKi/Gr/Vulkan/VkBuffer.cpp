@@ -294,7 +294,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 {
-	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracing;
 	VkPipelineStageFlags stageMask = 0;
 
 	if(!!(usage & BufferUsageBit::kAllIndirect))

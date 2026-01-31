@@ -196,7 +196,7 @@ D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
 		return D3D12_BARRIER_SYNC_NONE;
 	}
 
-	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracing;
 	D3D12_BARRIER_SYNC sync = {};
 
 	if(!!(usage & BufferUsageBit::kAllIndirect))

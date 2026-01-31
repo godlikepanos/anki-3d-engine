@@ -32,9 +32,6 @@ class AccelerationStructureInitInfo;
 class GrUpscalerInitInfo;
 class PipelineQueryInitInfo;
 
-/// @addtogroup graphics
-/// @{
-
 ANKI_CVAR(BoolCVar, Gr, Validation, false, "Enable or not validation")
 ANKI_CVAR(BoolCVar, Gr, GpuValidation, false, "Enable or not GPU validation")
 ANKI_CVAR(BoolCVar, Gr, Vsync, false, "Enable or not vsync")
@@ -96,7 +93,7 @@ constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
 constexpr U32 kMaxFastConstantsSize = 256; ///< Push/root constants size.
 
-/// The number of commands in a command buffer that make it a small batch command buffer.
+// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
 
 // Smart pointers
@@ -129,7 +126,7 @@ using GrObjectInternalPtr = IntrusivePtr<GrObject, GrObjectDeleterInternal>;
 	template<typename T, typename... TArgs> \
 	friend void callConstructor(T& p, TArgs&&... args);
 
-/// Shader block information.
+// Shader block information.
 class ShaderVariableBlockInfo
 {
 public:
@@ -137,14 +134,14 @@ public:
 
 	I16 m_arraySize = -1; ///< Number of elements.
 
-	/// Stride between the each array element if the variable is array.
+	// Stride between the each array element if the variable is array.
 	I16 m_arrayStride = -1;
 
-	/// Identifying the stride between columns of a column-major matrix or rows of a row-major matrix.
+	// Identifying the stride between columns of a column-major matrix or rows of a row-major matrix.
 	I16 m_matrixStride = -1;
 };
 
-/// Knowing the vendor allows some optimizations
+// Knowing the vendor allows some optimizations
 enum class GpuVendor : U8
 {
 	kUnknown,
@@ -158,90 +155,67 @@ enum class GpuVendor : U8
 
 inline constexpr Array<CString, U(GpuVendor::kCount)> kGPUVendorStrings = {"unknown", "ARM", "nVidia", "AMD", "Intel", "Qualcomm"};
 
-/// Device capabilities.
+// Device capabilities.
 ANKI_BEGIN_PACKED_STRUCT
 class GpuDeviceCapabilities
 {
 public:
-	/// The alignment of offsets when bounding constant buffers.
-	U32 m_constantBufferBindOffsetAlignment = kMaxU32;
+	U32 m_constantBufferBindOffsetAlignment = kMaxU32; // The alignment of offsets when bounding constant buffers
 
-	/// The alignment of offsets when bounding structured buffers.
-	U32 m_structuredBufferBindOffsetAlignment = kMaxU32;
+	U32 m_structuredBufferBindOffsetAlignment = kMaxU32; // The alignment of offsets when bounding structured buffers
 
-	/// The alignment of offsets when bounding texture buffers.
-	U32 m_texelBufferBindOffsetAlignment = kMaxU32;
+	U32 m_texelBufferBindOffsetAlignment = kMaxU32; // The alignment of offsets when bounding texture buffers.
 
-	/// Max push/root constant size.
-	PtrSize m_fastConstantsSize = 128;
+	PtrSize m_fastConstantsSize = 128; // Max push/root constant size
 
-	/// The max combined size of shared variables (with paddings) in compute shaders.
-	PtrSize m_computeSharedMemorySize = 16_KB;
+	PtrSize m_computeSharedMemorySize = 16_KB; // The max combined size of shared variables (with paddings) in compute shaders
 
-	/// Each SBT record should be a multiple of this.
-	U32 m_sbtRecordAlignment = kMaxU32;
+	U32 m_sbtRecordAlignment = kMaxU32; // Each SBT record should be a multiple of this
 
-	/// The size of a shader group handle that will be placed inside an SBT record.
-	U32 m_shaderGroupHandleSize = 0;
+	U32 m_shaderGroupHandleSize = 0; // The size of a shader group handle that will be placed inside an SBT record
 
-	/// Min subgroup size of the GPU.
-	U32 m_minWaveSize = 0;
+	U32 m_minWaveSize = 0; // Min subgroup size of the GPU
 
-	/// Max subgroup size of the GPU.
-	U32 m_maxWaveSize = 0;
+	U32 m_maxWaveSize = 0; // Max subgroup size of the GPU
 
-	/// Min size of a texel in the shading rate image.
-	U32 m_minShadingRateImageTexelSize = 0;
+	U32 m_minShadingRateImageTexelSize = 0; // Min size of a texel in the shading rate image
 
-	/// The max number of drawcalls in draw indirect count calls.
-	U32 m_maxDrawIndirectCount = 0;
+	U32 m_maxDrawIndirectCount = 0; // The max number of drawcalls in draw indirect count calls
 
-	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::kUnknown;
 
-	/// Descrete or integrated GPU.
-	Bool m_discreteGpu = false;
-
-	/// API version.
 	U8 m_minorApiVersion = 0;
 
-	/// API version.
 	U8 m_majorApiVersion = 0;
 
-	/// Align structured buffers using the structure's size and not the m_storageBufferBindOffsetAlignment.
-	Bool m_structuredBufferNaturalAlignment = false;
+	Bool m_discreteGpu : 1 = false;
 
-	/// RT.
-	Bool m_rayTracingEnabled = false;
+	// If trye align structured buffers using the structure's size and not the m_structuredBufferBindOffsetAlignment
+	Bool m_structuredBufferNaturalAlignment : 1 = false;
 
-	/// VRS.
-	Bool m_vrs = false;
+	Bool m_rayTracing : 1 = false;
 
-	/// Supports or not 24bit, 48bit or 96bit texture formats.
-	Bool m_unalignedBbpTextureFormats = false;
+	Bool m_vrs : 1 = false; // Variable rate sahding
 
-	/// DLSS.
-	Bool m_dlss = false;
+	Bool m_unalignedBbpTextureFormats : 1 = false; // Supports or not 24bit, 48bit or 96bit texture formats.
 
-	/// Mesh shaders.
-	Bool m_meshShaders = false;
+	Bool m_dlss : 1 = false;
 
-	/// Can create PipelineQuery objects.
-	Bool m_pipelineQuery = false;
+	Bool m_meshShaders : 1 = false;
 
-	/// Has access to barycentrics.
-	Bool m_barycentrics = false;
+	Bool m_pipelineQuery : 1 = false; // Can create PipelineQuery objects
 
-	/// WorkGraphs
-	Bool m_workGraphs = false;
+	Bool m_barycentrics : 1 = false;
+
+	Bool m_workGraphs : 1 = false;
 };
 ANKI_END_PACKED_STRUCT
 
-/// The type of the allocator for heap allocations
+// The type of the allocator for heap allocations
 template<typename T>
 using GrAllocator = HeapAllocator<T>;
 
-/// The base of all init infos for GR.
+// The base of all init infos for GR.
 class GrBaseInitInfo
 {
 public:
@@ -388,7 +362,7 @@ enum class VertexStepRate : U8
 	kCount
 };
 
-/// A way to distinguish the aspect of a depth stencil texture.
+// A way to distinguish the aspect of a depth stencil texture.
 enum class DepthStencilAspectBit : U8
 {
 	kNone = 0,
@@ -398,8 +372,8 @@ enum class DepthStencilAspectBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectBit)
 
-/// Pixel or vertex format.
-/// WARNING: Keep it the same as vulkan (one conversion less).
+// Pixel or vertex format.
+// WARNING: Keep it the same as vulkan (one conversion less).
 enum class Format : U32
 {
 	kNone = 0,
@@ -410,7 +384,7 @@ enum class Format : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
 
-/// Contains info for a specific Format.
+// Contains info for a specific Format.
 class FormatInfo
 {
 public:
@@ -444,16 +418,16 @@ public:
 	}
 };
 
-/// Get info for a specific Format.
+// Get info for a specific Format.
 ANKI_PURE FormatInfo getFormatInfo(Format fmt);
 
-/// Compute the size in bytes of a texture surface surface.
+// Compute the size in bytes of a texture surface surface.
 ANKI_PURE PtrSize computeSurfaceSize(U32 width, U32 height, Format fmt);
 
-/// Compute the size in bytes of the texture volume.
+// Compute the size in bytes of the texture volume.
 ANKI_PURE PtrSize computeVolumeSize(U32 width, U32 height, U32 depth, Format fmt);
 
-/// Texture type.
+// Texture type.
 enum class TextureType : U8
 {
 	k1D,
@@ -470,7 +444,7 @@ inline Bool textureTypeIsCube(const TextureType t)
 	return t == TextureType::kCube || t == TextureType::kCubeArray;
 }
 
-/// Texture usage hints. They are very important.
+// Texture usage hints. They are very important.
 enum class TextureUsageBit : U32
 {
 	kNone = 0,
@@ -636,7 +610,7 @@ public:
 
 ANKI_PURE const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type);
 
-/// Occlusion query result bit.
+// Occlusion query result bit.
 enum class OcclusionQueryResultBit : U8
 {
 	kNotAvailable = 1 << 0,
@@ -645,7 +619,7 @@ enum class OcclusionQueryResultBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OcclusionQueryResultBit)
 
-/// Occlusion query result.
+// Occlusion query result.
 enum class OcclusionQueryResult : U8
 {
 	kNotAvailable,
@@ -653,14 +627,14 @@ enum class OcclusionQueryResult : U8
 	kNotVisible
 };
 
-/// Timestamp query result.
+// Timestamp query result.
 enum class TimestampQueryResult : U8
 {
 	kNotAvailable,
 	kAvailable
 };
 
-/// Pipeline query result.
+// Pipeline query result.
 enum class PipelineQueryResult : U8
 {
 	kNotAvailable,
@@ -673,7 +647,7 @@ enum class PipelineQueryType : U8
 	kCount
 };
 
-/// Attachment load operation.
+// Attachment load operation.
 enum class RenderTargetLoadOperation : U8
 {
 	kLoad,
@@ -681,18 +655,18 @@ enum class RenderTargetLoadOperation : U8
 	kDontCare
 };
 
-/// Attachment store operation.
+// Attachment store operation.
 enum class RenderTargetStoreOperation : U8
 {
 	kStore,
 	kDontCare
 };
 
-/// Buffer usage modes.
-/// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry stages) and finaly pixel.
-/// The compute from the consists of the following: indirect and compute.
-/// The trace rays from the: indirect and trace_rays
-/// !!WARNING!! If you change this remember to change PrivateBufferUsageBit.
+// Buffer usage modes.
+// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry stages) and finaly pixel.
+// The compute from the consists of the following: indirect and compute.
+// The trace rays from the: indirect and trace_rays
+// !!WARNING!! If you change this remember to change PrivateBufferUsageBit.
 enum class BufferUsageBit : U64
 {
 	kNone = 0,
@@ -750,7 +724,7 @@ enum class BufferUsageBit : U64
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
 
-/// Buffer access when mapped.
+// Buffer access when mapped.
 enum class BufferMapAccessBit : U8
 {
 	kNone = 0,
@@ -760,7 +734,7 @@ enum class BufferMapAccessBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit)
 
-/// Index buffer's index type.
+// Index buffer's index type.
 enum class IndexType : U8
 {
 	kU16,
@@ -774,7 +748,7 @@ inline U32 getIndexSize(IndexType type)
 	return 2u << U32(type);
 }
 
-/// Acceleration structure type.
+// Acceleration structure type.
 enum class AccelerationStructureType : U8
 {
 	kTopLevel,
@@ -800,7 +774,7 @@ enum class AccelerationStructureUsageBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
 
-/// VRS rates.
+// VRS rates.
 enum class VrsRate : U8
 {
 	k1x1, ///< Disable VRS. Always supported.
@@ -860,7 +834,7 @@ enum class VertexAttributeSemanticBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemanticBit)
 
-/// This matches D3D.
+// This matches D3D.
 enum class DescriptorType : U8
 {
 	kConstantBuffer,
@@ -939,7 +913,7 @@ public:
 
 	DescriptorType m_type = DescriptorType::kCount;
 
-	/// Order the bindings. THIS IS IMPORTANT because the backends expect them in a specific order.
+	// Order the bindings. THIS IS IMPORTANT because the backends expect them in a specific order.
 	Bool operator<(const ShaderReflectionBinding& b) const
 	{
 		const HlslResourceType ahlsl = descriptorTypeToHlslResourceType(m_type);
@@ -978,7 +952,7 @@ ANKI_BEGIN_PACKED_STRUCT
 class ShaderReflectionDescriptorRelated
 {
 public:
-	/// The D3D backend expects bindings inside a space need to be ordered by HLSL type and then by register.
+	// The D3D backend expects bindings inside a space need to be ordered by HLSL type and then by register.
 	Array2d<ShaderReflectionBinding, kMaxRegisterSpaces, kMaxBindingsPerRegisterSpace> m_bindings;
 
 	Array<U8, kMaxRegisterSpaces> m_bindingCounts = {};
@@ -1058,13 +1032,13 @@ public:
 #endif
 	}
 
-	/// Combine shader reflection.
+	// Combine shader reflection.
 	static Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c);
 
 	StringList toString() const;
 };
 
-/// Clear values for textures or attachments.
+// Clear values for textures or attachments.
 class ClearValue
 {
 private:
@@ -1112,13 +1086,13 @@ public:
 	U32 m_depth = kMaxU32;
 };
 
-/// Compute max number of mipmaps for a 2D texture.
+// Compute max number of mipmaps for a 2D texture.
 U8 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1);
 
-/// Compute max number of mipmaps for a 3D texture.
+// Compute max number of mipmaps for a 3D texture.
 U8 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip = 1);
 
-/// Visit a SPIR-V binary.
+// Visit a SPIR-V binary.
 template<typename TArray, typename TFunc>
 static void visitSpirv(TArray spv, TFunc func)
 {
@@ -1139,6 +1113,5 @@ static void visitSpirv(TArray spv, TFunc func)
 
 	ANKI_ASSERT(it == spv.getEnd());
 }
-/// @}
 
 } // end namespace anki

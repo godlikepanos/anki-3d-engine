@@ -79,7 +79,7 @@ void ProbeReflections::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderReflectionsRt;
 	if(bRtReflections)
 	{
 		return;

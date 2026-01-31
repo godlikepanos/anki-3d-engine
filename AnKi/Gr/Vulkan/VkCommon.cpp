@@ -284,7 +284,7 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
 
-	const Bool rt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing;
 
 	if(!!(usageMask & BufferUsageBit::kAllConstant))
 	{

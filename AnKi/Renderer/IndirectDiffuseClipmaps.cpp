@@ -678,15 +678,18 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 			pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		}
 
+		const TextureUsageBit readUsage = (g_cvarRenderIdcInlineRt) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvDispatchRays;
+		const TextureUsageBit writeUsage = (g_cvarRenderIdcInlineRt) ? TextureUsageBit::kUavCompute : TextureUsageBit::kUavDispatchRays;
+
 		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
-			pass.newTextureDependency(irradianceVolumes[clipmap], TextureUsageBit::kSrvDispatchRays);
-			pass.newTextureDependency(probeValidityVolumes[clipmap], TextureUsageBit::kSrvDispatchRays);
-			pass.newTextureDependency(distanceMomentsVolumes[clipmap], TextureUsageBit::kSrvDispatchRays);
+			pass.newTextureDependency(irradianceVolumes[clipmap], readUsage);
+			pass.newTextureDependency(probeValidityVolumes[clipmap], readUsage);
+			pass.newTextureDependency(distanceMomentsVolumes[clipmap], readUsage);
 		}
 
-		pass.newTextureDependency(lowRezRt, TextureUsageBit::kUavDispatchRays);
-		setRgenSpace2Dependencies(pass);
+		pass.newTextureDependency(lowRezRt, writeUsage);
+		setRgenSpace2Dependencies(pass, g_cvarRenderIdcInlineRt);
 
 		pass.setWork([this, sbtBuffer, lowRezRt](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

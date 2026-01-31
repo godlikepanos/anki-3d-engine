@@ -537,16 +537,16 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		if(g_cvarGrRayTracing && options5.RaytracingTier != D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGW("Raytracing can't be enabled. Not supported");
-			m_capabilities.m_rayTracingEnabled = false;
+			m_capabilities.m_rayTracing = false;
 		}
 		else if(g_cvarGrRayTracing && options5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGV("Raytracing supported");
-			m_capabilities.m_rayTracingEnabled = true;
+			m_capabilities.m_rayTracing = true;
 		}
 		else
 		{
-			m_capabilities.m_rayTracingEnabled = false;
+			m_capabilities.m_rayTracing = false;
 		}
 
 		m_capabilities.m_minWaveSize = options1.WaveLaneCountMin;

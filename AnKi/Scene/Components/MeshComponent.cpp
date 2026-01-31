@@ -136,7 +136,7 @@ void MeshComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool
 
 			meshLod.m_lod = l;
 
-			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
 			{
 				const U64 address = mesh.getBottomLevelAccelerationStructure(l, submeshIdx)->getGpuAddress();
 				memcpy(&meshLod.m_blasAddress[0], &address, sizeof(meshLod.m_blasAddress));

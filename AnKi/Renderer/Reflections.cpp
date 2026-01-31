@@ -27,7 +27,7 @@ Error Reflections::init()
 {
 	ANKI_CHECK(RtMaterialFetchRendererObject::init());
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderReflectionsRt;
 	const Bool bSsrSamplesGBuffer = bRtReflections;
 
 	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer},
@@ -135,7 +135,7 @@ void Reflections::populateRenderGraph()
 {
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_cvarRenderReflectionsRt;
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderReflectionsRt;
 
 	// Create or import render targets
 	RenderTargetHandle mainRt;

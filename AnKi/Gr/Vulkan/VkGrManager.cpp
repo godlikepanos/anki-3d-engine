@@ -803,7 +803,7 @@ Error GrManagerImpl::initDevice()
 			{
 				m_extensions |= VulkanExtensions::kKHR_ray_tracing;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
-				m_capabilities.m_rayTracingEnabled = true;
+				m_capabilities.m_rayTracing = true;
 			}
 			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && g_cvarGrRayTracing)
 			{

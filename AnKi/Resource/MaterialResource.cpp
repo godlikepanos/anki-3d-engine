@@ -208,7 +208,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 		}
 		else if(t.m_name.getBegin() == CString("RtMaterialFetch"))
 		{
-			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
 			{
 				m_techniquesMask |= RenderingTechniqueBit::kRtMaterialFetch;
 			}

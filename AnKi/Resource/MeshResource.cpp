@@ -72,7 +72,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	String basename;
 	getFilepathFilename(filename, basename);
 
-	const Bool rayTracingEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rayTracingEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing;
 
 	if(async)
 	{
@@ -332,7 +332,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		}
 	}
 
-	if(gr.getDeviceCapabilities().m_rayTracingEnabled)
+	if(gr.getDeviceCapabilities().m_rayTracing)
 	{
 		// Build BLASes
 
