@@ -12,12 +12,12 @@ using namespace anki;
 template<typename Vec>
 void operatorsSame()
 {
-	const U size = Vec::kComponentCount;
+	const U32 size = Vec::kComponentCount;
 	using T = typename Vec::Scalar;
 
 	Vec a, b;
 	Array<T, size> add, sub, mul, div;
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		T v0 = T(F64(i * 10) / 2.0 + 1.0);
 		T v1 = T(F64(i * 1000) / 5.123 + 1.0);
@@ -34,7 +34,7 @@ void operatorsSame()
 	Vec d = a - b;
 	Vec e = a * b;
 	Vec f = a / b;
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		ANKI_TEST_EXPECT_EQ(c[i], add[i]);
 		ANKI_TEST_EXPECT_EQ(d[i], sub[i]);
@@ -50,7 +50,7 @@ void operatorsSame()
 	e *= b;
 	f = a;
 	f /= b;
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		ANKI_TEST_EXPECT_EQ(c[i], add[i]);
 		ANKI_TEST_EXPECT_EQ(d[i], sub[i]);
@@ -63,12 +63,12 @@ void operatorsSame()
 template<typename Vec>
 void dot()
 {
-	const U size = Vec::kComponentCount;
+	const U32 size = Vec::kComponentCount;
 	using T = typename Vec::Scalar;
 	T res = 0;
 	Vec vec;
 
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		T x = T(i * 666 + 1);
 
@@ -84,11 +84,11 @@ template<typename Vec>
 void length()
 {
 	using T = typename Vec::Scalar;
-	U size = Vec::kComponentCount;
+	U32 size = Vec::kComponentCount;
 	Vec vec;
 	T res = 0;
 
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		T x = T(i * 666);
 
@@ -107,7 +107,7 @@ void length()
 	{
 		auto a = vec / res;
 		auto b = vec.normalize();
-		for(U i = 0; i < size; i++)
+		for(U32 i = 0; i < size; i++)
 		{
 			ANKI_TEST_EXPECT_NEAR(a[i], b[i], 0.0001);
 		}
@@ -117,11 +117,11 @@ void length()
 template<typename Vec>
 void comparision()
 {
-	U size = Vec::kComponentCount;
+	U32 size = Vec::kComponentCount;
 	using Scalar = typename Vec::Scalar;
 	Vec a, a1, b;
 
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		a[i] = Scalar(i * 666);
 		a1[i] = a[i];
@@ -260,12 +260,12 @@ ANKI_TEST(Math, VecExtras)
 template<typename Mat>
 void matOperatorsSame()
 {
-	const U size = Mat::kSize;
+	const U32 size = Mat::kSize;
 	using T = typename Mat::Scalar;
 
 	Mat a, b;
 	Array<T, size> add, sub;
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		T v0 = T(i * 10 / 2);
 		T v1 = T(F64(i * 1000) / 5.123);
@@ -278,7 +278,7 @@ void matOperatorsSame()
 
 	Mat c = a + b;
 	Mat d = a - b;
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		ANKI_TEST_EXPECT_EQ(c[i], add[i]);
 		ANKI_TEST_EXPECT_EQ(d[i], sub[i]);
@@ -288,7 +288,7 @@ void matOperatorsSame()
 	c += b;
 	d = a;
 	d -= b;
-	for(U i = 0; i < size; i++)
+	for(U32 i = 0; i < size; i++)
 	{
 		ANKI_TEST_EXPECT_EQ(c[i], add[i]);
 		ANKI_TEST_EXPECT_EQ(d[i], sub[i]);
@@ -301,7 +301,7 @@ Mat getNonEmptyMat(typename Mat::Scalar offset = 0)
 {
 	Mat out;
 
-	for(U i = 0; i < Mat::kSize; i++)
+	for(U32 i = 0; i < Mat::kSize; i++)
 	{
 		out[i] = typename Mat::Scalar(i) + offset;
 	}
@@ -335,18 +335,18 @@ void transpose()
 	Mat a = getNonEmptyMat<Mat>();
 	Mat b = a.transpose();
 
-	for(U j = 0; j < Mat::kRowCount; j++)
+	for(U32 j = 0; j < Mat::kRowCount; j++)
 	{
-		for(U i = 0; i < Mat::kColumnCount; i++)
+		for(U32 i = 0; i < Mat::kColumnCount; i++)
 		{
 			ANKI_TEST_EXPECT_EQ(a(j, i), b(i, j));
 		}
 	}
 
 	b.transposeRotationPart();
-	for(U j = 0; j < 3; j++)
+	for(U32 j = 0; j < 3; j++)
 	{
-		for(U i = 0; i < 3; i++)
+		for(U32 i = 0; i < 3; i++)
 		{
 			ANKI_TEST_EXPECT_EQ(a(j, i), b(j, i));
 		}
@@ -361,17 +361,17 @@ void matVecMul()
 
 	Mat m = getNonEmptyMat<Mat>();
 	VecIn v;
-	for(U i = 0; i < VecIn::kSize; i++)
+	for(U32 i = 0; i < VecIn::kSize; i++)
 	{
 		v[i] = i;
 	}
 
 	VecOut out = m * v;
 	VecOut out1;
-	for(U j = 0; j < Mat::kRowCount; j++)
+	for(U32 j = 0; j < Mat::kRowCount; j++)
 	{
 		T sum = 0;
-		for(U i = 0; i < Mat::kColumnCount; i++)
+		for(U32 i = 0; i < Mat::kColumnCount; i++)
 		{
 			sum += m(j, i) * v[j];
 		}

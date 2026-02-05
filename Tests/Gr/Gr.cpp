@@ -2243,7 +2243,7 @@ ANKI_TEST(Gr, RayQuery)
 	commonInit();
 
 	{
-		if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+		if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
 		{
 			ANKI_TEST_LOGF("Test can't run without ray tracing");
 		}
@@ -2517,7 +2517,7 @@ ANKI_TEST(Gr, RayTracingPipeline)
 	commonInit();
 
 	{
-		if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+		if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
 		{
 			ANKI_TEST_LOGF("Test can't run without ray tracing");
 		}
@@ -3003,7 +3003,7 @@ ANKI_TEST(Gr, RayGen)
 #if 0
 	COMMON_BEGIN();
 
-	const Bool useRayTracing = g_gr->getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool useRayTracing = g_gr->getDeviceCapabilities().m_rayTracing;
 	if(!useRayTracing)
 	{
 		ANKI_TEST_LOGW("Ray tracing not supported");
