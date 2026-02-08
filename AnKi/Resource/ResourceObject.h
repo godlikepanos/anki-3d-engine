@@ -58,11 +58,13 @@ public:
 		return m_refcount.load();
 	}
 
+#if ANKI_WITH_EDITOR
 	// If true the resource has changed in the filesystem and this one is an obsolete version
 	Bool isObsolete() const
 	{
 		return m_isObsolete.load() != 0;
 	}
+#endif
 
 protected:
 	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
@@ -73,7 +75,9 @@ protected:
 
 private:
 	mutable Atomic<I32> m_refcount = {0};
+#if ANKI_WITH_EDITOR
 	mutable Atomic<U32> m_isObsolete = {0}; // If the file of the resource changed in the filesystem then this flag is 1
+#endif
 	U32 m_uuid = 0;
 	ResourceString m_fname; // Unique resource name
 };

@@ -10,6 +10,8 @@
 
 namespace anki {
 
+#if ANKI_WITH_EDITOR
+
 // Contains the Editor UI. If the UI is visible then it steals the input so otheres need to disable input handling.
 class EditorUiNode : public SceneNode
 {
@@ -21,5 +23,7 @@ public:
 private:
 	void update(SceneNodeUpdateInfo& info) override;
 };
+
+#endif // #if ANKI_WITH_EDITOR
 
 } // end namespace anki

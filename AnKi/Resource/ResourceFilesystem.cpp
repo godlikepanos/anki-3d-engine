@@ -230,65 +230,30 @@ ResourceFilesystem::~ResourceFilesystem()
 
 Error ResourceFilesystem::init()
 {
-	ResourceStringList paths;
-	paths.splitString(g_cvarRsrcDataPaths, ':');
+	return refreshAll();
+}
 
-	// Workaround the fact that : is used in drives in Windows
-#if ANKI_OS_WINDOWS
-	ResourceStringList paths2;
-	ResourceStringList::Iterator it = paths.getBegin();
-	while(it != paths.getEnd())
+Error ResourceFilesystem::addNewPath(CString filepath_, const ResourceStringList& includedStrings, const ResourceStringList& excludedStrings)
+{
+	if(filepath_.isEmpty())
 	{
-		const ResourceString& s = *it;
-		ResourceStringList::Iterator it2 = it + 1;
-		if(s.getLength() == 1 && (s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z') && it2 != paths.getEnd())
-		{
-			paths2.pushBackSprintf("%s:%s", s.cstr(), it2->cstr());
-			++it;
-		}
-		else
-		{
-			paths2.pushBack(s);
-		}
-
-		++it;
-	}
-
-	paths.destroy();
-	paths = std::move(paths2);
-#endif
-
-	if(paths.getSize() < 1)
-	{
-		ANKI_RESOURCE_LOGE("Config option \"g_cvarRsrcDataPaths\" is empty");
+		ANKI_RESOURCE_LOGE("Empty path");
 		return Error::kUserData;
 	}
 
-	ANKI_RESOURCE_LOGI("%s value: %s", g_cvarRsrcDataPaths.getName().cstr(), CString(g_cvarRsrcDataPaths).cstr());
-
-	for(const auto& path : paths)
+	// Remove the last /
+	ResourceString filepath2;
+	CString filepath;
+	if(filepath_[filepath_.getLength() - 1] == '/')
 	{
-		ResourceStringList includedStrings;
-		ResourceStringList excludedStrings;
-		ResourceString actualPath;
-		ANKI_CHECK(tokenizePath(path, actualPath, includedStrings, excludedStrings));
-
-		ANKI_CHECK(addNewPath(actualPath, includedStrings, excludedStrings));
+		filepath2 = ResourceString(filepath_.getBegin(), filepath_.getEnd() - 1);
+		filepath = filepath2;
+	}
+	else
+	{
+		filepath = filepath_;
 	}
 
-#if ANKI_OS_ANDROID
-	// Add the external storage
-	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, {}, {}));
-
-	// ...and then the apk assets
-	ANKI_CHECK(addNewPath(".apk assets", {}, {}));
-#endif
-
-	return Error::kNone;
-}
-
-Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList& includedStrings, const ResourceStringList& excludedStrings)
-{
 	ANKI_RESOURCE_LOGV("Adding new resource path: %s", filepath.cstr());
 
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
@@ -340,7 +305,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 	};
 
 	PtrSize pos;
-	Path path;
+	DataPath path;
 	if((pos = filepath.find(archiveExtension)) != CString::kNpos && pos == filepath.getLength() - archiveExtension.getLength())
 	{
 		// It's an archive
@@ -442,14 +407,14 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 			++count;
 		}
 
-		m_paths.emplaceFront(std::move(path));
+		m_dataPaths.emplaceFront(std::move(path));
 
 		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
 	}
 
-	if(false && m_paths.getSize())
+	if(false && m_dataPaths.getSize())
 	{
-		for(const FileInfo& s : m_paths.getFront().m_files)
+		for(const FileInfo& s : m_dataPaths.getFront().m_files)
 		{
 			printf("%s\n", s.m_filename.cstr());
 		}
@@ -485,7 +450,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	const U64 filenameHash = filename.computeHash();
 
 	// Search for the fname in reverse order
-	for(const Path& p : m_paths)
+	for(const DataPath& p : m_dataPaths)
 	{
 		for(const FileInfo& fsfile : p.m_files)
 		{
@@ -541,14 +506,17 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	} // end for all paths
 
 #if !ANKI_OS_ANDROID
+
+#	if ANKI_WITH_EDITOR
 	// File not found? On Win/Linux try to find it outside the resource dirs
 	if(!rfile)
 	{
 		CResourceFile* file = newInstance<CResourceFile>(ResourceMemoryPool::getSingleton());
 		rfile = file;
 		ANKI_CHECK(file->m_file.open(filename, FileOpenFlag::kRead));
-		ANKI_RESOURCE_LOGW("Loading resource outside the resource paths/archives. This is only OK for tools and debugging: %s", filename.cstr());
 	}
+#	endif
+
 #else
 	if(!rfile)
 	{
@@ -565,7 +533,7 @@ ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) co
 	ResourceString out;
 	const U64 filenameHash = filename.computeHash();
 	Bool found = false;
-	for(const Path& p : m_paths)
+	for(const DataPath& p : m_dataPaths)
 	{
 		for(const FileInfo& fsfile : p.m_files)
 		{
@@ -590,6 +558,15 @@ ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) co
 		}
 	}
 
+#if ANKI_WITH_EDITOR
+	if(!found)
+	{
+		// Assume it's not file in a resource dir
+		out = filename;
+		found = fileExists(filename);
+	}
+#endif
+
 	ANKI_ASSERT(found);
 	return out;
 }
@@ -605,6 +582,86 @@ U64 ResourceFilesystem::getFileUpdateTime(ResourceFilename filename) const
 
 	const auto timeOfUpdate = std::filesystem::last_write_time(stdpath);
 	return std::chrono::time_point_cast<std::chrono::milliseconds>(timeOfUpdate).time_since_epoch().count();
+}
+
+Error ResourceFilesystem::refreshAll()
+{
+	m_dataPaths.destroy();
+
+	ResourceStringList paths;
+	paths.splitString(g_cvarRsrcDataPaths, ':');
+
+	// Workaround the fact that : is used in drives in Windows
+#if ANKI_OS_WINDOWS
+	ResourceStringList paths2;
+	ResourceStringList::Iterator it = paths.getBegin();
+	while(it != paths.getEnd())
+	{
+		const ResourceString& s = *it;
+		ResourceStringList::Iterator it2 = it + 1;
+		if(s.getLength() == 1 && (s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z') && it2 != paths.getEnd())
+		{
+			paths2.pushBackSprintf("%s:%s", s.cstr(), it2->cstr());
+			++it;
+		}
+		else
+		{
+			paths2.pushBack(s);
+		}
+
+		++it;
+	}
+
+	paths.destroy();
+	paths = std::move(paths2);
+#endif
+
+	if(paths.getSize() < 1)
+	{
+		ANKI_RESOURCE_LOGE("Config option \"%s\" is empty", g_cvarRsrcDataPaths.getName().cstr());
+		return Error::kUserData;
+	}
+
+	ANKI_RESOURCE_LOGI("%s value: %s", g_cvarRsrcDataPaths.getName().cstr(), CString(g_cvarRsrcDataPaths).cstr());
+
+	for(const auto& path : paths)
+	{
+		ResourceStringList includedStrings;
+		ResourceStringList excludedStrings;
+		ResourceString actualPath;
+		ANKI_CHECK(tokenizePath(path, actualPath, includedStrings, excludedStrings));
+
+		ANKI_CHECK(addNewPath(actualPath, includedStrings, excludedStrings));
+	}
+
+#if ANKI_OS_ANDROID
+	// Add the external storage
+	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, {}, {}));
+
+	// ...and then the apk assets
+	ANKI_CHECK(addNewPath(".apk assets", {}, {}));
+#endif
+
+	return Error::kNone;
+}
+
+ResourceString ResourceFilesystem::printTree() const
+{
+	ResourceStringList list;
+
+	iterateAllDataPaths([&, this](CString path) {
+		list.pushBack(path);
+		iterateFilenamesInDataPath(path, [&](CString filename) {
+			list.pushBackSprintf("\t%s", filename.cstr());
+			return FunctorContinue::kContinue;
+		});
+
+		return FunctorContinue::kContinue;
+	});
+
+	ResourceString out;
+	list.join("\n", out);
+	return out;
 }
 
 } // end namespace anki

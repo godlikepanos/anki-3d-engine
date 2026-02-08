@@ -9,6 +9,8 @@
 
 namespace anki {
 
+#if ANKI_WITH_EDITOR
+
 EditorUiNode::EditorUiNode(const SceneNodeInitInfo& inf)
 	: SceneNode(inf)
 {
@@ -30,5 +32,7 @@ void EditorUiNode::update(SceneNodeUpdateInfo& info)
 	getFirstComponentOfType<UiComponent>().setEnabled(g_cvarCoreShowEditor);
 	m_editorUi.m_dt = info.m_dt;
 }
+
+#endif // #if ANKI_WITH_EDITOR
 
 } // end namespace anki

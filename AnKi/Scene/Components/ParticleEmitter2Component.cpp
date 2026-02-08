@@ -234,6 +234,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 
 	ParticleEmitterQuadGeometry::getSingleton().tryUploadToGpuScene();
 
+#if ANKI_WITH_EDITOR
 	if(info.m_checkForResourceUpdates) [[unlikely]]
 	{
 		if(m_resource->isObsolete()) [[unlikely]]
@@ -255,6 +256,7 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 			}
 		}
 	}
+#endif
 
 	if(!m_anyDirty) [[likely]]
 	{

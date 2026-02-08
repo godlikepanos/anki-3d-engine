@@ -5,7 +5,7 @@
 
 #include <AnKi/Editor/AssetBrowserUi.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <filesystem>
+#include <AnKi/Util/Filesystem.h>
 
 namespace anki {
 
@@ -19,93 +19,22 @@ enum class AssetFileType : U32
 	kParticleEmitter
 };
 
-class AssetFile
+class AssetBrowserUi::AssetFile
 {
 public:
 	String m_basename;
-	String m_filename;
+	String m_fullFilename;
 	AssetFileType m_type = AssetFileType::kNone;
 };
 
-class AssetPath
+class AssetBrowserUi::AssetDir
 {
 public:
 	String m_dirname;
-	DynamicArray<AssetPath> m_children;
+	DynamicArray<AssetDir> m_children;
 	DynamicArray<AssetFile> m_files;
 	U32 m_id = 0;
 };
-
-static void listDir(const std::filesystem::path& rootPath, const std::filesystem::path& parentPath, AssetPath& parent, U32& id)
-{
-	for(const auto& entry : std::filesystem::directory_iterator(parentPath))
-	{
-		if(entry.is_directory())
-		{
-			AssetPath& p = *parent.m_children.emplaceBack();
-			const std::filesystem::path rpath = std::filesystem::relative(entry, parentPath);
-			p.m_dirname = rpath.string().c_str();
-			p.m_id = id++;
-
-			listDir(rootPath, entry, p, id);
-		}
-		else if(entry.is_regular_file())
-		{
-			const String extension = entry.path().extension().string().c_str();
-			AssetFile file;
-			if(extension == ".ankitex")
-			{
-				file.m_type = AssetFileType::kTexture;
-			}
-			else if(extension == ".ankimtl")
-			{
-				file.m_type = AssetFileType::kMaterial;
-			}
-			else if(extension == ".ankimesh")
-			{
-				file.m_type = AssetFileType::kMesh;
-			}
-			else if(extension == ".ankipart")
-			{
-				file.m_type = AssetFileType::kParticleEmitter;
-			}
-
-			if(file.m_type != AssetFileType::kNone)
-			{
-				String rpath = std::filesystem::relative(entry.path(), rootPath).string().c_str();
-				if(rpath.isEmpty())
-				{
-					// Sometimes it happens with paths that have links, ignore for now
-					continue;
-				}
-
-				rpath.replaceAll("\\", "/");
-
-				const String basefname = entry.path().filename().string().c_str();
-
-				file.m_basename = basefname;
-				file.m_filename = rpath;
-
-				parent.m_files.emplaceBack(file);
-			}
-		}
-	}
-};
-
-static void buildAssetStructure(DynamicArray<AssetPath>& paths)
-{
-	U32 id = 0;
-	ResourceFilesystem::getSingleton().iterateAllResourceBasePaths([&](CString pathname) {
-		AssetPath& path = *paths.emplaceBack();
-		path.m_dirname = pathname;
-		path.m_id = id++;
-
-		std::filesystem::path stdpath(pathname.cstr());
-		listDir(stdpath, stdpath, path, id);
-
-		return FunctorContinue::kContinue;
-	});
-}
 
 AssetBrowserUi::AssetBrowserUi()
 {
@@ -117,7 +46,87 @@ AssetBrowserUi::~AssetBrowserUi()
 {
 }
 
-void AssetBrowserUi::dirTree(const AssetPath& path)
+void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
+{
+	dirs.destroy();
+
+	U32 id = 0;
+	ResourceFilesystem::getSingleton().iterateAllDataPaths([&](CString dataPath) {
+		// Create root dir for the data path
+		AssetDir& dir = *dirs.emplaceBack();
+		dir.m_dirname = dataPath;
+		dir.m_id = id++;
+
+		ResourceFilesystem::getSingleton().iterateFilenamesInDataPath(dataPath, [&](CString filename) {
+			StringList dirNames;
+			dirNames.splitString(filename, '/');
+
+			// Don't need the file
+			String basename = dirNames.getBack();
+			dirNames.popBack();
+
+			// Create the dirs recursively
+			AssetDir* crntDir = &dir;
+			for(CString dirName : dirNames)
+			{
+				Bool dirFound = false;
+				for(AssetDir& childDir : crntDir->m_children)
+				{
+					if(childDir.m_dirname == dirName)
+					{
+						dirFound = true;
+						crntDir = &childDir;
+						break;
+					}
+				}
+
+				if(!dirFound)
+				{
+					AssetDir* newDir = crntDir->m_children.emplaceBack();
+					newDir->m_dirname = dirName;
+					newDir->m_id = id++;
+
+					crntDir = newDir;
+				}
+			}
+
+			// Create the file
+			String extension;
+			getFilepathExtension(basename, extension);
+			AssetFileType filetype = AssetFileType::kNone;
+			if(extension == "ankitex" || extension == "png")
+			{
+				filetype = AssetFileType::kTexture;
+			}
+			else if(extension == "ankimtl")
+			{
+				filetype = AssetFileType::kMaterial;
+			}
+			else if(extension == "ankimesh")
+			{
+				filetype = AssetFileType::kMesh;
+			}
+			else if(extension == "ankipart")
+			{
+				filetype = AssetFileType::kParticleEmitter;
+			}
+
+			if(filetype != AssetFileType::kNone)
+			{
+				AssetFile* file = crntDir->m_files.emplaceBack();
+				file->m_fullFilename = String(dataPath) + "/" + filename;
+				file->m_basename = basename;
+				file->m_type = filetype;
+			}
+
+			return FunctorContinue::kContinue;
+		});
+
+		return FunctorContinue::kContinue;
+	});
+}
+
+void AssetBrowserUi::dirTree(const AssetDir& dir)
 {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
@@ -129,30 +138,32 @@ void AssetBrowserUi::dirTree(const AssetPath& path)
 	treeFlags |= ImGuiTreeNodeFlags_SpanFullWidth; // Span full width for easier mouse reach
 	treeFlags |= ImGuiTreeNodeFlags_DrawLinesToNodes; // Always draw hierarchy outlines
 
-	if(m_pathSelected == &path)
+	if(m_selectedPathDirname == dir.m_dirname)
 	{
+		m_runCtx.m_selectedDir = &dir;
 		treeFlags |= ImGuiTreeNodeFlags_Selected;
 	}
 
-	const Bool hasChildren = path.m_children.getSize();
+	const Bool hasChildren = dir.m_children.getSize();
 	if(!hasChildren)
 	{
 		treeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
 	}
 
-	ImGui::PushID(path.m_id);
-	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s", path.m_dirname.cstr());
+	ImGui::PushID(dir.m_id);
+	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s", dir.m_dirname.cstr());
 	ImGui::PopID();
-	ImGui::SetItemTooltip("%s", path.m_dirname.cstr());
+	ImGui::SetItemTooltip("%s", dir.m_dirname.cstr());
 
 	if(ImGui::IsItemFocused())
 	{
-		m_pathSelected = &path;
+		m_runCtx.m_selectedDir = &dir;
+		m_selectedPathDirname = dir.m_dirname;
 	}
 
 	if(nodeOpen)
 	{
-		for(const AssetPath& p : path.m_children)
+		for(const AssetDir& p : dir.m_children)
 		{
 			dirTree(p);
 		}
@@ -215,9 +226,13 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		return;
 	}
 
-	if(m_assetPaths.getSize() == 0)
+	m_runCtx = {};
+
+	if(m_assetPaths.getSize() == 0 || m_refreshAssetsPathsNextTime)
 	{
+		ANKI_CHECKF(ResourceFilesystem::getSingleton().refreshAll());
 		buildAssetStructure(m_assetPaths);
+		m_refreshAssetsPathsNextTime = false;
 	}
 
 	{
@@ -236,6 +251,8 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		m_particleEditorWindow.drawWindow(initialPos, initialSize, 0);
 	}
 
+	rightClickMenuDialog();
+
 	if(ImGui::GetFrameCount() > 1)
 	{
 		// Viewport is one frame delay so do that when frame >1
@@ -251,7 +268,7 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 			{
 				if(ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
 				{
-					for(const AssetPath& p : m_assetPaths)
+					for(const AssetDir& p : m_assetPaths)
 					{
 						dirTree(p);
 					}
@@ -268,9 +285,9 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		{
 			// Use the filter to gather the files
 			DynamicArray<const AssetFile*> filteredFiles;
-			if(m_pathSelected)
+			if(m_runCtx.m_selectedDir)
 			{
-				for(const AssetFile& f : m_pathSelected->m_files)
+				for(const AssetFile& f : m_runCtx.m_selectedDir->m_files)
 				{
 					if(m_fileFilter.PassFilter(f.m_basename.cstr()))
 					{
@@ -290,82 +307,20 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 					ImGui::SameLine();
 				}
 
+				// Refresh tree
+				if(ImGui::Button(ICON_MDI_REFRESH))
+				{
+					m_refreshAssetsPathsNextTime = true;
+				}
+				ImGui::SameLine();
+
+				// Filter
 				drawfilteredText(m_fileFilter);
 
+				// Contents
 				if(ImGui::BeginChild("RightBottom", Vec2(-1.0f, -1.0f), 0))
 				{
-					const F32 cellWidth = F32(m_cellSize) * 16;
-					const U32 columnCount = U32(ImGui::GetContentRegionAvail().x / cellWidth);
-					ImGui::SetNextItemWidth(-1.0f);
-					const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter
-												  | ImGuiTableFlags_BordersV | ImGuiTableFlags_ContextMenuInBody;
-					if(filteredFiles.getSize() && ImGui::BeginTable("Grid", columnCount, flags))
-					{
-						const U32 rowCount = (filteredFiles.getSize() + columnCount - 1) / columnCount;
-
-						for(U32 row = 0; row < rowCount; ++row)
-						{
-							ImGui::TableNextRow();
-							for(U32 column = 0; column < columnCount; ++column)
-							{
-								ImGui::TableNextColumn();
-
-								const U32 idx = row * columnCount + column;
-								if(idx < filteredFiles.getSize())
-								{
-									const AssetFile& file = *filteredFiles[idx];
-
-									ImGui::PushID(idx);
-									if(file.m_type == AssetFileType::kMaterial)
-									{
-										ImTextureID id;
-										id.m_texture = &m_materialIcon->getTexture();
-										ImGui::ImageButton("##", id, Vec2(cellWidth));
-									}
-									else if(file.m_type == AssetFileType::kMesh)
-									{
-										ImTextureID id;
-										id.m_texture = &m_meshIcon->getTexture();
-										ImGui::ImageButton("##", id, Vec2(cellWidth));
-									}
-									else if(file.m_type == AssetFileType::kTexture)
-									{
-										ImageResourcePtr img;
-										loadImageToCache(file.m_filename, img);
-										ImTextureID id;
-										id.m_texture = &img->getTexture();
-										id.m_textureSubresource = TextureSubresourceDesc::all();
-										if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
-										{
-											m_imageViewerWindow.m_image = img;
-											m_imageViewerWindow.m_open = true;
-										}
-									}
-									else if(file.m_type == AssetFileType::kParticleEmitter)
-									{
-										ImGui::PushFont(nullptr, cellWidth - 1.0f);
-										if(ImGui::Button(ICON_MDI_CREATION, Vec2(cellWidth)))
-										{
-											ParticleEmitterResource2Ptr rsrc;
-											ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_filename, rsrc));
-											m_particleEditorWindow.open(*rsrc);
-										}
-										ImGui::PopFont();
-									}
-									ImGui::PopID();
-
-									ImGui::TextWrapped("%s", file.m_basename.cstr());
-									ImGui::SetItemTooltip("%s", file.m_filename.cstr());
-								}
-							}
-						}
-
-						ImGui::EndTable();
-					}
-					else
-					{
-						ImGui::TextUnformatted("Empty");
-					}
+					iconsChild(filteredFiles);
 				}
 				ImGui::EndChild();
 			}
@@ -373,6 +328,124 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		} // Right side
 	}
 	ImGui::End();
+}
+
+void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
+{
+	const F32 cellWidth = F32(m_cellSize) * 16;
+	const U32 columnCount = U32(ImGui::GetContentRegionAvail().x / cellWidth);
+	ImGui::SetNextItemWidth(-1.0f);
+	const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter
+								  | ImGuiTableFlags_BordersV | ImGuiTableFlags_ContextMenuInBody;
+	if(filteredFiles.getSize() && ImGui::BeginTable("Grid", columnCount, flags))
+	{
+		const U32 rowCount = (filteredFiles.getSize() + columnCount - 1) / columnCount;
+
+		for(U32 row = 0; row < rowCount; ++row)
+		{
+			ImGui::TableNextRow();
+			for(U32 column = 0; column < columnCount; ++column)
+			{
+				ImGui::TableNextColumn();
+
+				const U32 idx = row * columnCount + column;
+				if(idx < filteredFiles.getSize())
+				{
+					const AssetFile& file = *filteredFiles[idx];
+
+					ImGui::PushID(idx);
+					if(file.m_type == AssetFileType::kMaterial)
+					{
+						ImTextureID id;
+						id.m_texture = &m_materialIcon->getTexture();
+						ImGui::ImageButton("##", id, Vec2(cellWidth));
+					}
+					else if(file.m_type == AssetFileType::kMesh)
+					{
+						ImTextureID id;
+						id.m_texture = &m_meshIcon->getTexture();
+						ImGui::ImageButton("##", id, Vec2(cellWidth));
+					}
+					else if(file.m_type == AssetFileType::kTexture)
+					{
+						ImageResourcePtr img;
+						loadImageToCache(file.m_fullFilename, img);
+						ImTextureID id;
+						id.m_texture = &img->getTexture();
+						id.m_textureSubresource = TextureSubresourceDesc::all();
+						if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
+						{
+							m_imageViewerWindow.m_image = img;
+							m_imageViewerWindow.m_open = true;
+						}
+					}
+					else if(file.m_type == AssetFileType::kParticleEmitter)
+					{
+						ImGui::PushFont(nullptr, cellWidth - 1.0f);
+						if(ImGui::Button(ICON_MDI_CREATION, Vec2(cellWidth)))
+						{
+							ParticleEmitterResource2Ptr rsrc;
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilename, rsrc));
+							m_particleEditorWindow.open(*rsrc);
+						}
+						ImGui::PopFont();
+					}
+					ImGui::PopID();
+
+					// Right click
+					if(ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
+					{
+						m_selectedFileFilename = file.m_fullFilename;
+						m_showRightClockMenuDialog = true;
+					}
+
+					if(m_selectedFileFilename == file.m_fullFilename)
+					{
+						m_runCtx.m_selectedFile = &file;
+					}
+
+					ImGui::TextWrapped("%s", file.m_basename.cstr());
+					ImGui::SetItemTooltip("%s", file.m_fullFilename.cstr());
+				}
+			}
+		}
+
+		ImGui::EndTable();
+	}
+	else
+	{
+		ImGui::TextUnformatted("Empty");
+	}
+}
+
+void AssetBrowserUi::rightClickMenuDialog()
+{
+	if(m_showRightClockMenuDialog)
+	{
+		ImGui::OpenPopup("Right Click");
+		m_showRightClockMenuDialog = false;
+	}
+
+	if(ImGui::BeginPopup("Right Click"))
+	{
+		if(ImGui::Button(ICON_MDI_DELETE_FOREVER " Delete"))
+		{
+			if(removeFile(m_selectedFileFilename))
+			{
+				ANKI_LOGE("Failed to remove file: %s", m_selectedFileFilename.cstr());
+			}
+
+			m_refreshAssetsPathsNextTime = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+	else
+	{
+		// Diselect the file
+		m_selectedFileFilename.destroy();
+	}
 }
 
 } // end namespace anki

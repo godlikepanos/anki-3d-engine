@@ -192,10 +192,12 @@ Error App::init()
 {
 	StatsSet::getSingleton().initFromMainThread();
 
+#if ANKI_WITH_EDITOR
 	if(g_cvarCoreShowEditor)
 	{
 		g_cvarRsrcTrackFileUpdates = true;
 	}
+#endif
 
 	ANKI_CHECK(initDirs());
 
@@ -323,17 +325,21 @@ Error App::init()
 	// Scene
 	//
 	ANKI_CHECK(SceneGraph::allocateSingleton().init(m_allocCallback, m_allocUserData));
+#if ANKI_WITH_EDITOR
 	SceneGraph::getSingleton().pause(g_cvarCoreShowEditor);
+#endif
 
 	GrManager::getSingleton().finish();
 	ANKI_CORE_LOGI("Application initialized");
 
+#if ANKI_WITH_EDITOR
 	if(g_cvarCoreShowEditor)
 	{
 		SceneGraph::getSingleton().setCheckForResourceUpdates(true);
 		Renderer::getSingleton().getDbg().getOptions().m_sceneGraphIcons = true;
 		Renderer::getSingleton().getDbg().getOptions().m_objectPicking = true;
 	}
+#endif
 
 	return Error::kNone;
 }

@@ -18,7 +18,7 @@ ANKI_CVAR(NumericCVar<U32>, Window, Fullscreen, 1, 0, 2, "0: windowed, 1: border
 ANKI_CVAR(BoolCVar, Window, Maximized, false, "Maximize")
 ANKI_CVAR(BoolCVar, Window, Borderless, true, "Borderless")
 
-/// Native window.
+// Native window.
 class NativeWindow : public MakeSingletonPtr<NativeWindow>
 {
 	template<typename>

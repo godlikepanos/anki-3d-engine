@@ -27,4 +27,9 @@ elseif(WINDOWS)
 endif()
 
 target_compile_definitions(AnKiCore PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(AnKiCore AnKiResource AnKiUi AnKiRenderer AnKiGr AnKiUtil AnKiPhysics AnKiScript AnKiWindow AnKiEditorLib ${extra_libs})
+
+if(ANKI_WITH_EDITOR)
+	set(extra_libs ${extra_libs} AnKiEditorLib)
+endif()
+
+target_link_libraries(AnKiCore AnKiResource AnKiUi AnKiRenderer AnKiGr AnKiUtil AnKiPhysics AnKiScript AnKiWindow ${extra_libs})

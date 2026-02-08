@@ -13,7 +13,6 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Collision.h>
-#include <filesystem>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
 
 namespace anki {
@@ -122,77 +121,6 @@ EditorUi::EditorUi()
 EditorUi::~EditorUi()
 {
 	Logger::getSingleton().removeMessageHandler(this, loggerMessageHandler);
-}
-
-void EditorUi::listDir(const std::filesystem::path& rootPath, const std::filesystem::path& parentPath, AssetPath& parent, U32& id)
-{
-	for(const auto& entry : std::filesystem::directory_iterator(parentPath))
-	{
-		if(entry.is_directory())
-		{
-			AssetPath& p = *parent.m_children.emplaceBack();
-			const std::filesystem::path rpath = std::filesystem::relative(entry, parentPath);
-			p.m_dirname = rpath.string().c_str();
-			p.m_id = id++;
-
-			listDir(rootPath, entry, p, id);
-		}
-		else if(entry.is_regular_file())
-		{
-			const String extension = entry.path().extension().string().c_str();
-			AssetFile file;
-			if(extension == ".ankitex")
-			{
-				file.m_type = AssetFileType::kTexture;
-			}
-			else if(extension == ".ankimtl")
-			{
-				file.m_type = AssetFileType::kMaterial;
-			}
-			else if(extension == ".ankimesh")
-			{
-				file.m_type = AssetFileType::kMesh;
-			}
-			else if(extension == ".ankipart")
-			{
-				file.m_type = AssetFileType::kParticleEmitter;
-			}
-
-			if(file.m_type != AssetFileType::kNone)
-			{
-				String rpath = std::filesystem::relative(entry.path(), rootPath).string().c_str();
-				if(rpath.isEmpty())
-				{
-					// Sometimes it happens with paths that have links, ignore for now
-					continue;
-				}
-
-				rpath.replaceAll("\\", "/");
-
-				const String basefname = entry.path().filename().string().c_str();
-
-				file.m_basename = basefname;
-				file.m_filename = rpath;
-
-				parent.m_files.emplaceBack(file);
-			}
-		}
-	}
-};
-
-void EditorUi::gatherAssets(DynamicArray<AssetPath>& paths)
-{
-	U32 id = 0;
-	ResourceFilesystem::getSingleton().iterateAllResourceBasePaths([&](CString pathname) {
-		AssetPath& path = *paths.emplaceBack();
-		path.m_dirname = pathname;
-		path.m_id = id++;
-
-		std::filesystem::path stdpath(pathname.cstr());
-		listDir(stdpath, stdpath, path, id);
-
-		return FunctorContinue::kContinue;
-	});
 }
 
 void EditorUi::loggerMessageHandler(void* ud, const LoggerMessageInfo& info)

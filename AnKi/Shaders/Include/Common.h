@@ -417,6 +417,8 @@ struct DrawIndirectArgs
 	{
 	}
 
+	DrawIndirectArgs& operator=(const DrawIndirectArgs&) = default;
+
 	Bool operator==(const DrawIndirectArgs& b) const
 	{
 		return m_vertexCount == b.m_vertexCount && m_instanceCount == b.m_instanceCount && m_firstVertex == b.m_firstVertex

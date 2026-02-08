@@ -23,6 +23,7 @@
 #define ANKI_STATS_ENABLED ${_ANKI_STATS_ENABLED}
 #define ANKI_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 #define ANKI_DLSS ${_ANKI_DLSS_ENABLED}
+#define ANKI_WITH_EDITOR ${_ANKI_WITH_EDITOR}
 
 // Compiler
 #if defined(__clang__)
@@ -260,6 +261,12 @@ inline constexpr const char* kAnKiBuildConfigString =
 ", stats ON"
 #else
 ", stats OFF"
+#endif
+
+#if ANKI_WITH_EDITOR
+", editor ON"
+#else
+", editor OFF"
 #endif
 ;
 }

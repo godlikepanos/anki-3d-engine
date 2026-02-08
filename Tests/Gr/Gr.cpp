@@ -3975,8 +3975,8 @@ float4 main(VertOut i) : SV_TARGET0
 		U32 count = maxDraws;
 		BufferPtr indirectCount = createBuffer(BufferUsageBit::kIndirectDraw, ConstWeakArray<U32>(&count, 1), "indirect count");
 
-		const U kIterationCount = 200;
-		U iterations = kIterationCount;
+		const U32 kIterationCount = 200;
+		U32 iterations = kIterationCount;
 		while(iterations--)
 		{
 			HighRezTimer timer;

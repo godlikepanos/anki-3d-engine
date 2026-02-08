@@ -79,7 +79,8 @@ public:
 
 using ResourceFilePtr = IntrusivePtr<ResourceFile, ResourceFileDeleter>;
 
-// Resource filesystem.
+// Resource filesystem. It's a collection of a number of data paths (see DataPaths CVar) and every data path contains files. Data paths can be
+// archives or directories
 class ResourceFilesystem : public MakeSingleton<ResourceFilesystem>
 {
 public:
@@ -94,7 +95,6 @@ public:
 	Error init();
 
 	// Search the path list to find the file. Then open the file for reading.
-	// Thread-safe.
 	Error openFile(ResourceFilename filename, ResourceFilePtr& file) const;
 
 	// Return some sort of time a file was last updated. This time is opaque and it's increasing with every update. Only works for filesystem files
@@ -103,34 +103,79 @@ public:
 	// Take the filename (which is relative) and return the full path of the file. Only works for filesystem files
 	ResourceString getFileFullPath(ResourceFilename filename) const;
 
+	// Refresh the whole tree.
+	Error refreshAll();
+
+	// Print the whole dree tree.
+	ResourceString printTree() const;
+
 	// Iterate all the filenames from all paths provided.
 	template<typename TFunc>
-	void iterateAllFilenames(TFunc func) const
+	FunctorContinue iterateAllFilenames(TFunc func) const
 	{
-		for(const Path& path : m_paths)
+		FunctorContinue cont = FunctorContinue::kContinue;
+		for(const DataPath& path : m_dataPaths)
 		{
 			for(const FileInfo& file : path.m_files)
 			{
-				if(func(file.m_filename.toCString()) == FunctorContinue::kStop)
+				cont = func(file.m_filename.toCString());
+				if(cont == FunctorContinue::kStop)
 				{
 					break;
 				}
 			}
 		}
+		return cont;
 	}
 
 	// Iterate paths in the DataPaths CVar
 	template<typename TFunc>
-	void iterateAllResourceBasePaths(TFunc func) const
+	FunctorContinue iterateAllDataPaths(TFunc func) const
 	{
-		for(const Path& path : m_paths)
+		FunctorContinue cont = FunctorContinue::kContinue;
+		for(const DataPath& path : m_dataPaths)
 		{
-			const FunctorContinue cont = func(path.m_path);
+			cont = func(path.m_path);
 			if(cont == FunctorContinue::kStop)
 			{
 				break;
 			}
 		}
+		return cont;
+	}
+
+	// Iterate all filenames in a specific data path
+	template<typename TFunc>
+	FunctorContinue iterateFilenamesInDataPath(ResourceString dataPath, TFunc func) const
+	{
+		const DataPath* pDataPath = nullptr;
+		for(const DataPath& path : m_dataPaths)
+		{
+			if(path.m_path == dataPath)
+			{
+				pDataPath = &path;
+				break;
+			}
+		}
+
+		FunctorContinue cont = FunctorContinue::kContinue;
+		if(pDataPath)
+		{
+			for(const FileInfo& file : pDataPath->m_files)
+			{
+				cont = func(file.m_filename.toCString());
+				if(cont == FunctorContinue::kStop)
+				{
+					break;
+				}
+			}
+		}
+		else
+		{
+			ANKI_RESOURCE_LOGE("Data path not found: %s", dataPath.cstr());
+		}
+
+		return cont;
 	}
 
 #if !ANKI_TESTS
@@ -143,7 +188,7 @@ private:
 		U64 m_filenameHash = 0;
 	};
 
-	class Path
+	class DataPath
 	{
 	public:
 		ResourceDynamicArray<FileInfo> m_files; // Files inside the directory.
@@ -151,18 +196,18 @@ private:
 		Bool m_isArchive = false;
 		Bool m_isSpecial = false;
 
-		Path() = default;
+		DataPath() = default;
 
-		Path(const Path&) = delete; // Non-copyable
+		DataPath(const DataPath&) = delete; // Non-copyable
 
-		Path(Path&& b)
+		DataPath(DataPath&& b)
 		{
 			*this = std::move(b);
 		}
 
-		Path& operator=(const Path&) = delete; // Non-copyable
+		DataPath& operator=(const DataPath&) = delete; // Non-copyable
 
-		Path& operator=(Path&& b)
+		DataPath& operator=(DataPath&& b)
 		{
 			m_files = std::move(b.m_files);
 			m_path = std::move(b.m_path);
@@ -172,8 +217,7 @@ private:
 		}
 	};
 
-	ResourceList<Path> m_paths;
-	ResourceString m_cacheDir;
+	ResourceList<DataPath> m_dataPaths;
 
 	// Add a filesystem path or an archive. The path is read-only.
 	Error addNewPath(CString path, const ResourceStringList& includeStrings, const ResourceStringList& excludedStrings);

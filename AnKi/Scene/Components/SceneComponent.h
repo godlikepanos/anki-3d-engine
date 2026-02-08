@@ -77,16 +77,26 @@ public:
 	const Second m_currentTime;
 	const Second m_dt;
 	const Bool m_forceUpdateSceneBounds : 1;
+#if ANKI_WITH_EDITOR
 	const Bool m_checkForResourceUpdates : 1;
+#endif
 	const Bool m_paused : 1;
 	StackMemoryPool* m_framePool = nullptr;
 
-	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds, Bool checkForResourceUpdates, Bool paused)
+	SceneComponentUpdateInfo(Second prevTime, Second crntTime, Bool forceUpdateSceneBounds
+#if ANKI_WITH_EDITOR
+							 ,
+							 Bool checkForResourceUpdates
+#endif
+							 ,
+							 Bool paused)
 		: m_previousTime(prevTime)
 		, m_currentTime(crntTime)
 		, m_dt(crntTime - prevTime)
 		, m_forceUpdateSceneBounds(forceUpdateSceneBounds)
+#if ANKI_WITH_EDITOR
 		, m_checkForResourceUpdates(checkForResourceUpdates)
+#endif
 		, m_paused(paused)
 	{
 	}

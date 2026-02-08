@@ -12,9 +12,6 @@
 
 namespace anki {
 
-class AssetFile;
-class AssetPath;
-
 class AssetBrowserUi
 {
 public:
@@ -27,6 +24,9 @@ public:
 	void drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWindowFlags windowFlags);
 
 private:
+	class AssetFile;
+	class AssetDir;
+
 	class ImageCacheEntry
 	{
 	public:
@@ -34,8 +34,12 @@ private:
 		U32 m_lastSeenInFrame = 0;
 	};
 
-	const AssetPath* m_pathSelected = nullptr;
-	DynamicArray<AssetPath> m_assetPaths;
+	DynamicArray<AssetDir> m_assetPaths;
+	Bool m_refreshAssetsPathsNextTime = true;
+
+	String m_selectedPathDirname;
+	String m_selectedFileFilename;
+	Bool m_showRightClockMenuDialog = false;
 
 	DynamicArray<ImageCacheEntry> m_imageCache;
 
@@ -49,9 +53,22 @@ private:
 	ParticleEditorUi m_particleEditorWindow;
 	ImageViewerUi m_imageViewerWindow;
 
-	void dirTree(const AssetPath& path); // Like the "tree" command
+	class
+	{
+	public:
+		const AssetDir* m_selectedDir = nullptr;
+		const AssetFile* m_selectedFile = nullptr;
+	} m_runCtx;
+
+	void dirTree(const AssetDir& dir); // Like the "tree" command
 
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
+
+	void iconsChild(ConstWeakArray<const AssetFile*> filteredFiles);
+
+	void rightClickMenuDialog();
+
+	static void buildAssetStructure(DynamicArray<AssetDir>& dirs);
 };
 
 } // end namespace anki

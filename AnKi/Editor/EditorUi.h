@@ -146,8 +146,6 @@ private:
 
 	// Misc
 	static void loggerMessageHandler(void* ud, const LoggerMessageInfo& info);
-	static void listDir(const std::filesystem::path& rootPath, const std::filesystem::path& parentPath, AssetPath& parent, U32& id);
-	static void gatherAssets(DynamicArray<AssetPath>& paths);
 	void objectPicking();
 	void handleInput();
 	void validateSelectedNode();

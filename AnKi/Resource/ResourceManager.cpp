@@ -72,7 +72,9 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 		AccelerationStructureScratchAllocator::allocateSingleton();
 	}
 
+#if ANKI_WITH_EDITOR
 	m_trackFileUpdateTimes = g_cvarRsrcTrackFileUpdates;
+#endif
 
 	return Error::kNone;
 }
@@ -120,7 +122,11 @@ Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool 
 	{
 		LockGuard lock(entry->m_mtx);
 
-		if(entry->m_resources.getSize() == 0 || entry->m_resources.getBack()->isObsolete())
+		if(entry->m_resources.getSize() == 0
+#if ANKI_WITH_EDITOR
+		   || entry->m_resources.getBack()->isObsolete()
+#endif
+		)
 		{
 			// Resource hasn't been loaded or it needs update, load it
 
@@ -144,10 +150,12 @@ Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool 
 			{
 				entry->m_resources.emplaceBack(rsrc);
 
+#if ANKI_WITH_EDITOR
 				if(m_trackFileUpdateTimes)
 				{
 					entry->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
 				}
+#endif
 			}
 		}
 		else
@@ -204,6 +212,7 @@ void ResourceManager::freeResource(T* ptr)
 	template void ResourceManager::freeResource<className>(className * ptr);
 #include <AnKi/Resource/Resources.def.h>
 
+#if ANKI_WITH_EDITOR
 template<typename T>
 void ResourceManager::refreshFileUpdateTimesInternal()
 {
@@ -241,8 +250,9 @@ void ResourceManager::refreshFileUpdateTimes()
 		return;
 	}
 
-#define ANKI_INSTANTIATE_RESOURCE(className) refreshFileUpdateTimesInternal<className>();
-#include <AnKi/Resource/Resources.def.h>
+#	define ANKI_INSTANTIATE_RESOURCE(className) refreshFileUpdateTimesInternal<className>();
+#	include <AnKi/Resource/Resources.def.h>
 }
+#endif // #if ANKI_WITH_EDITOR
 
 } // end namespace anki

@@ -126,3 +126,23 @@ jobs:
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release --target Sponza
+
+  No_Editor:
+    name: "No Editor"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Update packages
+      run: sudo apt update; sudo apt upgrade
+
+    - name: Install dependencies
+      run: sudo apt install libsdl2-dev
+
+    - name: Clone
+      uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON -DANKI_WITH_EDITOR=OFF
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Debug

@@ -331,6 +331,7 @@ public:
 		return m_paused;
 	}
 
+#if ANKI_WITH_EDITOR
 	// If enable is true the components will be checking for updates of resources. Useful for the editor resource updates. It has a perf hit so it
 	// should be enabled only by the editor
 	void setCheckForResourceUpdates(Bool enable)
@@ -338,6 +339,7 @@ public:
 		forbidCallOnUpdate();
 		m_checkForResourceUpdates = enable;
 	}
+#endif
 
 private:
 	class UpdateSceneNodesCtx;
@@ -364,7 +366,6 @@ private:
 
 	SceneNode* m_mainCamNode = nullptr;
 	SceneNode* m_defaultMainCamNode = nullptr;
-	SceneNode* m_editorUiNode = nullptr;
 
 	EventManager m_events;
 
@@ -383,7 +384,9 @@ private:
 		SpinLock m_mtx;
 	} m_deferredOps;
 
+#if ANKI_WITH_EDITOR
 	Bool m_checkForResourceUpdates = false; // If true the components will have to re-check their resources for updates
+#endif
 
 	Bool m_paused = true; // If true the game-loop is paused
 

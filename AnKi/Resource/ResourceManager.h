@@ -26,7 +26,9 @@ class ShaderProgramResourceSystem;
 class AccelerationStructureScratchAllocator;
 
 ANKI_CVAR(NumericCVar<PtrSize>, Rsrc, TransferScratchMemorySize, 256_MB, 1_MB, 4_GB, "Memory that is used fot texture and buffer uploads")
+#if ANKI_WITH_EDITOR
 ANKI_CVAR(BoolCVar, Rsrc, TrackFileUpdates, false, "If true the resource manager is able to track file update times")
+#endif
 
 // Resource manager. It holds a few global variables
 class ResourceManager : public MakeSingleton<ResourceManager>
@@ -46,9 +48,11 @@ public:
 	template<typename T>
 	Error loadResource(CString filename, ResourcePtr<T>& out, Bool async = true);
 
+#if ANKI_WITH_EDITOR
 	// Iterate all loaded resource and check if the files have been updated since they were loaded.
 	// Note: Thread-safe against itself, loadResource() and freeResource()
 	void refreshFileUpdateTimes();
+#endif
 
 	// Internals:
 
@@ -66,7 +70,9 @@ private:
 		public:
 			DynamicArray<Type*> m_resources; // Hosts multiple versions of a resource. The last element is the newest
 			SpinLock m_mtx;
+#if ANKI_WITH_EDITOR
 			U64 m_fileUpdateTime = 0;
+#endif
 		};
 
 		ResourceHashMap<CString, U32> m_map;
@@ -95,14 +101,18 @@ public \
 
 	Atomic<U32> m_uuid = {1};
 
+#if ANKI_WITH_EDITOR
 	Bool m_trackFileUpdateTimes = false;
+#endif
 
 	ResourceManager();
 
 	~ResourceManager();
 
+#if ANKI_WITH_EDITOR
 	template<typename T>
 	void refreshFileUpdateTimesInternal();
+#endif
 };
 
 } // end namespace anki

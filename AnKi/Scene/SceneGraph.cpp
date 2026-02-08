@@ -142,12 +142,13 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 
 		newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
 
+#if ANKI_WITH_EDITOR
 		if(g_cvarCoreShowEditor)
 		{
 			EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
 			editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
-			m_editorUiNode = editorNode;
 		}
+#endif
 
 		scene->m_immutable = true;
 	}
@@ -380,7 +381,12 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 	UpdateSceneNodesCtx::PerThread& thread = ctx.m_perThread[tid];
 
 	// Components update
-	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds, m_checkForResourceUpdates,
+	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds
+#if ANKI_WITH_EDITOR
+												 ,
+												 m_checkForResourceUpdates
+#endif
+												 ,
 												 m_paused);
 	componentUpdateInfo.m_framePool = &m_framePool;
 	U32 sceneComponentUpdatedCount = 0;

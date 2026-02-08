@@ -140,6 +140,7 @@ option(ANKI_BUILD_TOOLS "Build tools" ON)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
 option(ANKI_BUILD_SANDBOX "Build sandbox application" ON)
 option(ANKI_BUILD_SAMPLES "Build sample applications" ON)
+option(ANKI_WITH_EDITOR "Enable the editor" ON)
 
 option(ANKI_STRIP "Strip the symbols from the executables" OFF)
 
@@ -411,6 +412,12 @@ if(ANKI_SIMD)
 	set(_ANKI_ENABLE_SIMD 1)
 else()
 	set(_ANKI_ENABLE_SIMD 0)
+endif()
+
+if(ANKI_WITH_EDITOR)
+	set(_ANKI_WITH_EDITOR 1)
+else()
+	set(_ANKI_WITH_EDITOR 0)
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")

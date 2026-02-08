@@ -1,4 +1,6 @@
 add_subdirectory(GltfImporter)
 add_subdirectory(Shader)
-add_subdirectory(Image)
-add_subdirectory(Editor)
+
+if(ANKI_WITH_EDITOR)
+	add_subdirectory(Image)
+endif()
