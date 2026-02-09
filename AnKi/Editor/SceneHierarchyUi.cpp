@@ -52,7 +52,7 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 				ImGui::EndCombo();
 			}
 
-			ImGui::SetItemTooltip("Change active scene name");
+			ImGui::SetItemTooltip("Change active scene");
 
 			if(newActiveScene)
 			{
@@ -60,37 +60,14 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			}
 		}
 
-		// New scene and make it active
-		ImGui::SameLine();
-		if(ImGui::Button(ICON_MDI_PLUS_BOX))
-		{
-			Scene* scene = SceneGraph::getSingleton().newEmptyScene(String().sprintf("NewScene.%u", m_nextNewSceneIndexInName++));
-			SceneGraph::getSingleton().setActiveScene(scene);
-		}
-		ImGui::SetItemTooltip("New scene");
-
 		// Delete active scene
 		ImGui::SameLine();
 		if(ImGui::Button(ICON_MDI_MINUS_BOX))
 		{
 			SceneGraph::getSingleton().deleteScene(&SceneGraph::getSingleton().getActiveScene());
 		}
-		ImGui::SetItemTooltip("Delete scene");
-
-		// Rename scene
-		ImGui::SeparatorText("Scene Controls");
-		{
-			Array<Char, kMaxTextInputLen> sceneName;
-			std::strncpy(sceneName.getBegin(), SceneGraph::getSingleton().getActiveScene().getName().cstr(), sceneName.getSize());
-			if(ImGui::InputText("Name", sceneName.getBegin(), sceneName.getSize()))
-			{
-				SceneGraph::getSingleton().renameScene(SceneGraph::getSingleton().getActiveScene(), sceneName.getBegin());
-			}
-			ImGui::SetItemTooltip("Rename scene");
-		}
 
 		// Scene node filter
-		ImGui::SeparatorText("Scene Nodes");
 		drawfilteredText(m_nodeNamesFilter);
 
 		// Do the node tree

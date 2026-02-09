@@ -56,12 +56,25 @@ ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Scene, SceneMemoryPool)
 		return ok; \
 	})
 
+enum class GlobalRegistryRecordType : U32
+{
+	kSceneNode,
+
+	kCount,
+	kFirst = 0
+};
+
 class GlobalRegistryRecord : public IntrusiveListEnabled<GlobalRegistryRecord>
 {
 public:
 	const Char* m_name;
+	GlobalRegistryRecordType m_type;
 
-	GlobalRegistryRecord(const Char* name);
+	GlobalRegistryRecord(const Char* name, GlobalRegistryRecordType type);
+
+	GlobalRegistryRecord(const GlobalRegistryRecord&) = delete;
+
+	GlobalRegistryRecord& operator=(const GlobalRegistryRecord&) = delete;
 };
 
 // It's used to register global variables (like functions) uppon initialization. Then the records that can be retrieved using their name
@@ -82,6 +95,21 @@ public:
 		return rec;
 	}
 
+	template<typename TFunc>
+	FunctorContinue iterateRecords(TFunc func) const
+	{
+		FunctorContinue cont = FunctorContinue::kContinue;
+		for(const GlobalRegistryRecord& it : m_records)
+		{
+			cont = func(it);
+			if(cont == FunctorContinue::kStop)
+			{
+				break;
+			}
+		}
+		return cont;
+	}
+
 private:
 	IntrusiveList<GlobalRegistryRecord> m_records;
 
@@ -99,9 +127,11 @@ private:
 	}
 };
 
-inline GlobalRegistryRecord::GlobalRegistryRecord(const Char* name)
+inline GlobalRegistryRecord::GlobalRegistryRecord(const Char* name, GlobalRegistryRecordType type)
 	: m_name(name)
+	, m_type(type)
 {
+	ANKI_ASSERT(type < GlobalRegistryRecordType::kCount);
 	GlobalRegistry::getSingleton().registerRecord(this);
 }
 

@@ -36,40 +36,6 @@ private:
 	static constexpr F32 kMargin = 4.0f;
 	static constexpr F32 kConsoleHeight = 400.0f;
 
-	enum class AssetFileType : U32
-	{
-		kNone,
-		kTexture,
-		kMaterial,
-		kMesh,
-		kLua,
-		kParticleEmitter
-	};
-
-	class AssetFile
-	{
-	public:
-		String m_basename;
-		String m_filename;
-		AssetFileType m_type = AssetFileType::kNone;
-	};
-
-	class AssetPath
-	{
-	public:
-		String m_dirname;
-		DynamicArray<AssetPath> m_children;
-		DynamicArray<AssetFile> m_files;
-		U32 m_id = 0;
-	};
-
-	class ImageCacheEntry
-	{
-	public:
-		ImageResourcePtr m_image;
-		U32 m_lastSeenInFrame = 0;
-	};
-
 	UiCanvas* m_canvas = nullptr;
 
 	ImFont* m_font = nullptr;
@@ -84,7 +50,7 @@ private:
 
 	SceneNode* m_selectedNode = nullptr;
 	U32 m_selectedNodeUuid = 0;
-	Bool m_onNextUpdateFocusOnSelectedNode = false;
+	U8 m_onNextUpdateFocusOnSelectedNode = 0; // It's a number because we want ask for focus for a few frames due to some deferred ops
 	Bool m_showDeleteSceneNodeDialog = false;
 
 	SceneNodePropertiesUi m_sceneNodePropertiesWindow;
@@ -92,6 +58,9 @@ private:
 	AssetBrowserUi m_assetBrowserWindow;
 
 	SceneGraphView m_sceneGraphView;
+
+	U32 m_newNodeNextIndex = 0;
+	U32 m_nextNewSceneIndexInName = 0;
 
 	class
 	{

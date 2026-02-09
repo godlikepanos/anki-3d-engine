@@ -24,8 +24,6 @@ public:
 private:
 	ImGuiTextFilter m_nodeNamesFilter;
 
-	U32 m_nextNewSceneIndexInName = 0;
-
 	void doSceneNode(Bool focusOnSelectedNode, SceneNode& node, SceneNode*& selectedNode, Bool& deleteSelectedNode);
 };
 

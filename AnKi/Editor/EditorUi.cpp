@@ -189,10 +189,10 @@ void EditorUi::draw(UiCanvas& canvas)
 		const Vec2 initialSize(400.0f, viewportSize.y - kConsoleHeight);
 
 		Bool deleteSelectedNode;
-		m_sceneHierarchyWindow.drawWindow(initialPos, initialSize, ImGuiWindowFlags_NoCollapse, m_onNextUpdateFocusOnSelectedNode, m_selectedNode,
+		m_sceneHierarchyWindow.drawWindow(initialPos, initialSize, ImGuiWindowFlags_NoCollapse, !!m_onNextUpdateFocusOnSelectedNode, m_selectedNode,
 										  deleteSelectedNode);
 
-		m_onNextUpdateFocusOnSelectedNode = false;
+		m_onNextUpdateFocusOnSelectedNode = (m_onNextUpdateFocusOnSelectedNode > 0) ? m_onNextUpdateFocusOnSelectedNode - 1 : 0;
 		m_showDeleteSceneNodeDialog = m_showDeleteSceneNodeDialog || deleteSelectedNode;
 	}
 
@@ -405,6 +405,49 @@ void EditorUi::mainMenu()
 				}
 
 				ImGui::EndDisabled();
+
+				ImGui::EndMenu();
+			}
+
+			if(ImGui::BeginMenu(ICON_MDI_PLUS_BOX " New"))
+			{
+				if(ImGui::MenuItem("SceneNode"))
+				{
+					SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("NewNode.%u", m_newNodeNextIndex++));
+					if(node)
+					{
+						node->setLocalTransform(SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform());
+						node->moveLocalZ(-2.0f);
+						node->setLocalRotation(Mat3::getIdentity());
+						node->setLocalScale(Vec3(1.0f));
+						m_selectedNode = node;
+						m_selectedNodeUuid = node->getUuid();
+						m_onNextUpdateFocusOnSelectedNode = 2; // Will focus on the next frame
+					}
+				}
+
+				// Do the other node classes
+				GlobalRegistry::getSingleton().iterateRecords([&](const GlobalRegistryRecord& rec) {
+					if(rec.m_type != GlobalRegistryRecordType::kSceneNode)
+					{
+						return FunctorContinue::kContinue;
+					}
+
+					if(ImGui::MenuItem(rec.m_name))
+					{
+						// TODO
+					}
+
+					return FunctorContinue::kContinue;
+				});
+
+				// Scene
+				ImGui::Separator();
+				if(ImGui::MenuItem("Empty Scene"))
+				{
+					Scene* scene = SceneGraph::getSingleton().newEmptyScene(String().sprintf("NewScene.%u", m_nextNewSceneIndexInName++));
+					SceneGraph::getSingleton().setActiveScene(scene);
+				}
 
 				ImGui::EndMenu();
 			}
@@ -782,7 +825,7 @@ void EditorUi::objectPicking()
 					{
 						m_selectedNode = sceneView.m_nodes[i];
 						m_selectedNodeUuid = sceneView.m_nodeUuids[i];
-						m_onNextUpdateFocusOnSelectedNode = true;
+						m_onNextUpdateFocusOnSelectedNode = 1;
 						ANKI_LOGV("Selecting scene node: %s", sceneView.m_nodes[i]->getName().cstr());
 						done = true;
 						break;

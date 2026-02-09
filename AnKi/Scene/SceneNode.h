@@ -37,7 +37,7 @@ public:
 	ConstructCallback m_constructCallback = nullptr;
 
 	SceneNodeRegistryRecord(const Char* className, GetClassSizeCallback getClassSizeCallback, ConstructCallback constructCallback)
-		: GlobalRegistryRecord(className)
+		: GlobalRegistryRecord(className, GlobalRegistryRecordType::kSceneNode)
 		, m_getClassSizeCallback(getClassSizeCallback)
 		, m_constructCallback(constructCallback)
 	{
