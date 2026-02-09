@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include <AnKi/Ui.h>
+#include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Scene/Common.h>
-#include <AnKi/Editor/EditorUtils.h>
 
 namespace anki {
 
 // Builds a window that has the properties of a scene node, its components etc etc.
-class SceneNodePropertiesUi
+class SceneNodePropertiesUi : public EditorUiBase
 {
 public:
 	Bool m_open = true;
@@ -20,8 +19,6 @@ public:
 	void drawWindow(SceneNode* node, const SceneGraphView& sceneView, Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
 
 private:
-	static constexpr U32 kMaxTextInputLen = 256;
-
 	SceneComponentType m_selectedSceneComponentType = SceneComponentType::kFirst;
 	Bool m_uniformScale = false;
 

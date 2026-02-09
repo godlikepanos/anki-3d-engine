@@ -151,6 +151,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 #endif
 
 		scene->m_immutable = true;
+		scene->m_canDelete = false;
 	}
 
 	return Error::kNone;
@@ -980,6 +981,12 @@ void SceneGraph::deleteScene(Scene* scene)
 
 	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
+	if(!scene->m_canDelete)
+	{
+		ANKI_LOGE("Scene can't be deleted: %s", scene->m_name.cstr());
+		return;
+	}
+
 	if(scene->m_arrayIndex == m_activeSceneIndex)
 	{
 		m_activeSceneIndex = tryFindScene("_DefaultScene")->m_arrayIndex;
@@ -1002,9 +1009,11 @@ void SceneGraph::deleteScene(Scene* scene)
 		deleteInstance(SceneMemoryPool::getSingleton(), node);
 	}
 
+	Array<Char, 32> sceneName;
+	strncpy(sceneName.getBegin(), scene->m_name.cstr(), sceneName.getSize());
 	m_scenes.erase(scene->m_arrayIndex);
 
-	ANKI_SCENE_LOGI("Unloaded scene %s in %fms", scene->m_name.cstr(), F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
+	ANKI_SCENE_LOGI("Unloaded scene %s in %fms", sceneName.getBegin(), F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 }
 
 } // end namespace anki

@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include <AnKi/Ui.h>
+#include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Scene/Common.h>
-#include <AnKi/Editor/EditorUtils.h>
 
 namespace anki {
 
 // Draws the scene hierarchy with the list of all the nodes
-class SceneHierarchyUi
+class SceneHierarchyUi : public EditorUiBase
 {
 public:
 	Bool m_open = true;
@@ -25,7 +24,7 @@ public:
 private:
 	ImGuiTextFilter m_nodeNamesFilter;
 
-	U32 m_selectedSceneUuid = 0;
+	U32 m_nextNewSceneIndexInName = 0;
 
 	void doSceneNode(Bool focusOnSelectedNode, SceneNode& node, SceneNode*& selectedNode, Bool& deleteSelectedNode);
 };

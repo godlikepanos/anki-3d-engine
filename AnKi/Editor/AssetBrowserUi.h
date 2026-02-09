@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include <AnKi/Ui.h>
-#include <AnKi/Editor/EditorUtils.h>
+#include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Editor/ParticleEditorUi.h>
 #include <AnKi/Editor/ImageViewerUi.h>
 
 namespace anki {
 
-class AssetBrowserUi
+class AssetBrowserUi : public EditorUiBase
 {
 public:
 	Bool m_open = true;

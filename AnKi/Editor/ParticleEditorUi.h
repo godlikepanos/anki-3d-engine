@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <AnKi/Ui.h>
+#include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Resource/ParticleEmitterResource2.h>
 
 namespace anki {
 
-class ParticleEditorUi
+class ParticleEditorUi : public EditorUiBase
 {
 public:
 	void open(const ParticleEmitterResource2& resource);

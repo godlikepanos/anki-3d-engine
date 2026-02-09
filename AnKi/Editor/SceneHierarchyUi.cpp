@@ -28,30 +28,16 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 	{
 		// Scene selector
 		{
-			String selectedSceneName;
-			SceneGraph::getSingleton().visitScenes([&](const Scene& scene) {
-				if(scene.getSceneUuid() == m_selectedSceneUuid)
-				{
-					selectedSceneName = scene.getName();
-					return FunctorContinue::kStop;
-				}
+			const Scene& activeScene = SceneGraph::getSingleton().getActiveScene();
+			Scene* newActiveScene = nullptr;
 
-				return FunctorContinue::kContinue;
-			});
-
-			if(selectedSceneName.isEmpty())
-			{
-				selectedSceneName = SceneGraph::getSingleton().getActiveScene().getName();
-				m_selectedSceneUuid = SceneGraph::getSingleton().getActiveScene().getSceneUuid();
-			}
-
-			if(ImGui::BeginCombo("Scene", selectedSceneName.cstr()))
+			if(ImGui::BeginCombo("##Scene", activeScene.getName().cstr()))
 			{
 				SceneGraph::getSingleton().visitScenes([&](Scene& scene) {
-					const Bool isSelected = (scene.getSceneUuid() == m_selectedSceneUuid);
+					const Bool isSelected = (&scene == &activeScene);
 					if(ImGui::Selectable(scene.getName().cstr(), isSelected))
 					{
-						m_selectedSceneUuid = scene.getSceneUuid();
+						newActiveScene = &scene;
 					}
 
 					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -65,27 +51,54 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 
 				ImGui::EndCombo();
 			}
+
+			ImGui::SetItemTooltip("Change active scene name");
+
+			if(newActiveScene)
+			{
+				SceneGraph::getSingleton().setActiveScene(newActiveScene);
+			}
 		}
 
+		// New scene and make it active
+		ImGui::SameLine();
+		if(ImGui::Button(ICON_MDI_PLUS_BOX))
+		{
+			Scene* scene = SceneGraph::getSingleton().newEmptyScene(String().sprintf("NewScene.%u", m_nextNewSceneIndexInName++));
+			SceneGraph::getSingleton().setActiveScene(scene);
+		}
+		ImGui::SetItemTooltip("New scene");
+
+		// Delete active scene
+		ImGui::SameLine();
+		if(ImGui::Button(ICON_MDI_MINUS_BOX))
+		{
+			SceneGraph::getSingleton().deleteScene(&SceneGraph::getSingleton().getActiveScene());
+		}
+		ImGui::SetItemTooltip("Delete scene");
+
+		// Rename scene
+		ImGui::SeparatorText("Scene Controls");
+		{
+			Array<Char, kMaxTextInputLen> sceneName;
+			std::strncpy(sceneName.getBegin(), SceneGraph::getSingleton().getActiveScene().getName().cstr(), sceneName.getSize());
+			if(ImGui::InputText("Name", sceneName.getBegin(), sceneName.getSize()))
+			{
+				SceneGraph::getSingleton().renameScene(SceneGraph::getSingleton().getActiveScene(), sceneName.getBegin());
+			}
+			ImGui::SetItemTooltip("Rename scene");
+		}
+
+		// Scene node filter
+		ImGui::SeparatorText("Scene Nodes");
 		drawfilteredText(m_nodeNamesFilter);
 
-		// Do the nodes
-		Scene* scene = nullptr;
-		SceneGraph::getSingleton().visitScenes([&](Scene& scene_) {
-			if(scene_.getSceneUuid() == m_selectedSceneUuid)
-			{
-				scene = &scene_;
-				return FunctorContinue::kStop;
-			}
-
-			return FunctorContinue::kContinue;
-		});
-
+		// Do the node tree
 		if(ImGui::BeginChild("##tree", Vec2(0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_None))
 		{
 			if(ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
 			{
-				scene->visitNodes([&](SceneNode& node) {
+				SceneGraph::getSingleton().getActiveScene().visitNodes([&](SceneNode& node) {
 					if(!node.getParent() && m_nodeNamesFilter.PassFilter(node.getName().cstr()))
 					{
 						doSceneNode(focusOnSelectedNode, node, selectedNode, deleteSelectedNode);

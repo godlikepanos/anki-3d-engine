@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <AnKi/Ui.h>
+#include <AnKi/Editor/EditorCommon.h>
 
 namespace anki {
 
-class ImageViewerUi
+class ImageViewerUi : public EditorUiBase
 {
 public:
 	ImageResourcePtr m_image;

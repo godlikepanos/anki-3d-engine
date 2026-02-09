@@ -138,7 +138,8 @@ private:
 
 	U8 m_arrayIndex = kMaxU8; // Index in SceneGraph::m_scenes
 
-	Bool m_immutable = false; // Can't add or remove nodes from it
+	Bool m_immutable : 1 = false; // Can't add or remove nodes from it
+	Bool m_canDelete : 1 = true;
 };
 
 // The scene graph that  all the scene entities
@@ -229,6 +230,29 @@ public:
 	{
 		return m_scenes[idx];
 	}
+
+#if ANKI_WITH_EDITOR
+	void renameScene(Scene& scene, CString name)
+	{
+		forbidCallOnUpdate();
+
+		if(name.getLength() == 0)
+		{
+			ANKI_SCENE_LOGE("Can't set empty name to scene");
+			return;
+		}
+
+		Scene* other = tryFindScene(name);
+		if(other == nullptr)
+		{
+			scene.m_name = name;
+		}
+		else
+		{
+			ANKI_SCENE_LOGE("Can't rename scene %s to %s. Scene with the same name exists", scene.m_name.cstr(), name.cstr());
+		}
+	}
+#endif
 
 	// End scene manipulation //
 

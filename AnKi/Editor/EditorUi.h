@@ -6,15 +6,12 @@
 #pragma once
 
 #include <AnKi/Ui.h>
-#include <AnKi/Editor/ImageViewerUi.h>
-#include <AnKi/Editor/ParticleEditorUi.h>
-#include <AnKi/Editor/EditorUtils.h>
+#include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Editor/SceneNodePropertiesUi.h>
 #include <AnKi/Editor/SceneHierarchyUi.h>
 #include <AnKi/Editor/AssetBrowserUi.h>
 #include <AnKi/Util/Function.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <filesystem>
 
 namespace anki {
 
@@ -24,7 +21,7 @@ class SceneNode;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 // A class that builds the editor UI and manipulates the scene directly.
-class EditorUi
+class EditorUi : public EditorUiBase
 {
 public:
 	Second m_dt = 0.0f;
@@ -38,7 +35,6 @@ public:
 private:
 	static constexpr F32 kMargin = 4.0f;
 	static constexpr F32 kConsoleHeight = 400.0f;
-	static constexpr U32 kMaxTextInputLen = 256;
 
 	enum class AssetFileType : U32
 	{

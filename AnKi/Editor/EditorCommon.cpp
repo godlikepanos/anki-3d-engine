@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Editor/EditorUtils.h>
+#include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Window/Input.h>
 
 namespace anki {
 
-SceneGraphView gatherAllSceneNodes()
+EditorUiBase::SceneGraphView EditorUiBase::gatherAllSceneNodes()
 {
 	SceneGraphView view;
 
@@ -41,7 +41,7 @@ SceneGraphView gatherAllSceneNodes()
 	return view;
 }
 
-Bool textEditorWindow(CString windowTitle, Bool* pOpen, ImFont* textFont, String& inout)
+Bool EditorUiBase::textEditorWindow(CString windowTitle, Bool* pOpen, ImFont* textFont, String& inout)
 {
 	Bool save = false;
 
@@ -109,7 +109,7 @@ Bool textEditorWindow(CString windowTitle, Bool* pOpen, ImFont* textFont, String
 	return save;
 }
 
-DynamicArray<CString> gatherResourceFilenames(CString filenameContains)
+DynamicArray<CString> EditorUiBase::gatherResourceFilenames(CString filenameContains)
 {
 	DynamicArray<CString> out;
 	ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString fname) {
@@ -124,7 +124,7 @@ DynamicArray<CString> gatherResourceFilenames(CString filenameContains)
 	return out;
 }
 
-void drawfilteredText(ImGuiTextFilter& filter)
+void EditorUiBase::drawfilteredText(ImGuiTextFilter& filter)
 {
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_F, ImGuiInputFlags_Tooltip);
