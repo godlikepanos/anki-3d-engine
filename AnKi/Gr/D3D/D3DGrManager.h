@@ -10,11 +10,9 @@
 #include <AnKi/Gr/D3D/D3DFence.h>
 #include <AnKi/Gr/D3D/D3DSwapchainFactory.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Util/BlockArray.h>
 
 namespace anki {
-
-/// @addtogroup directx
-/// @{
 
 class D3DCapabilities
 {
@@ -22,7 +20,7 @@ public:
 	Bool m_rebar = false;
 };
 
-/// DX implementation of GrManager.
+// DX implementation of GrManager.
 class GrManagerImpl : public GrManager
 {
 	friend class GrManager;
@@ -65,21 +63,53 @@ public:
 		return *m_zeroBuffer;
 	}
 
-	/// @note It's thread-safe.
+	// Node: It's thread-safe.
 	void releaseObject(GrObject* object)
 	{
 		ANKI_ASSERT(object);
 		LockGuard lock(m_globalMtx);
-		m_frames[m_crntFrame].m_objectsMarkedForDeletion.emplaceBack(object);
+		releaseObjectDeleteLoop(object);
 	}
 
-	void releaseObjectDeleteLoop(GrObject* object)
-	{
-		ANKI_ASSERT(object);
-		m_frames[m_crntFrame].m_objectsMarkedForDeletion.emplaceBack(object);
-	}
+	void releaseObjectDeleteLoop(GrObject* object);
 
 private:
+	// Contains objects that are marked for deletion
+	class CleanupGroup
+	{
+	public:
+		Array<MicroFencePtr, U32(GpuQueueType::kCount)> m_fences;
+		GrDynamicArray<GrObject*> m_objectsMarkedForDeletion;
+		Bool m_finalized = false;
+
+		~CleanupGroup()
+		{
+			ANKI_ASSERT(m_objectsMarkedForDeletion.getSize() == 0);
+		}
+
+		Bool canDelete() const
+		{
+			if(m_fences[GpuQueueType::kGeneral] && !m_fences[GpuQueueType::kGeneral]->signaled())
+			{
+				return false;
+			}
+
+			if(m_fences[GpuQueueType::kCompute] && !m_fences[GpuQueueType::kCompute]->signaled())
+			{
+				return false;
+			}
+
+			return true;
+		}
+	};
+
+	GrBlockArray<CleanupGroup> m_cleanupGroups;
+	U32 m_activeCleanupGroup = kMaxU32;
+
+	Array<MicroFencePtr, U32(GpuQueueType::kCount) + 1> m_crntFences;
+
+	MicroSwapchainPtr m_crntSwapchain;
+
 	ID3D12DeviceX* m_device = nullptr;
 	Array<ID3D12CommandQueue*, U32(GpuQueueType::kCount)> m_queues = {};
 
@@ -87,24 +117,9 @@ private:
 
 	Mutex m_globalMtx;
 
-	MicroSwapchainPtr m_crntSwapchain;
-
-	class PerFrame
-	{
-	public:
-		GrDynamicArray<MicroFencePtr> m_fences;
-
-		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
-
-		GrDynamicArray<GrObject*> m_objectsMarkedForDeletion;
-	};
-
-	Array<PerFrame, kMaxFramesInFlight> m_frames;
-	U8 m_crntFrame = 0;
-
 	D3DCapabilities m_d3dCapabilities;
 
-	BufferInternalPtr m_zeroBuffer; ///< Used in CommandBuffer::zeroBuffer
+	BufferInternalPtr m_zeroBuffer; // Used in CommandBuffer::zeroBuffer
 
 	U64 m_timestampFrequency = 0;
 
@@ -122,21 +137,7 @@ private:
 
 	void finishInternal();
 
-	void deleteObjectsMarkedForDeletion()
-	{
-		ANKI_TRACE_FUNCTION();
-		PerFrame& frame = m_frames[m_crntFrame];
-		while(!frame.m_objectsMarkedForDeletion.isEmpty())
-		{
-			GrDynamicArray<GrObject*> objects = std::move(frame.m_objectsMarkedForDeletion);
-
-			for(GrObject* obj : objects)
-			{
-				deleteInstance(GrMemoryPool::getSingleton(), obj);
-			}
-		}
-	}
+	void deleteObjectsMarkedForDeletion();
 };
-/// @}
 
 } // end namespace anki

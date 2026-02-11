@@ -43,7 +43,7 @@ static Mutex g_dxcLibMtx;
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			errorMessage.sprintf("DXC function failed (HRESULT: %d): %s", rez, #x); \
+			errorMessage.sprintf("DXC function failed (HRESULT: %ld): %s", rez, #x); \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)
@@ -520,7 +520,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			ANKI_DXC_CHECK(dxRefl->GetInputParameterDesc(i, &in));
 
 			VertexAttributeSemantic a = VertexAttributeSemantic::kCount;
-#	define ANKI_ATTRIB_NAME(x, idx) CString(in.SemanticName) == #    x&& in.SemanticIndex == idx
+#	define ANKI_ATTRIB_NAME(x, idx) (CString(in.SemanticName) == #    x && in.SemanticIndex == idx)
 			if(ANKI_ATTRIB_NAME(POSITION, 0))
 			{
 				a = VertexAttributeSemantic::kPosition;

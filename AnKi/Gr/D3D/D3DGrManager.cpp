@@ -190,33 +190,7 @@ GrManagerImpl::~GrManagerImpl()
 void GrManagerImpl::beginFrameInternal()
 {
 	ANKI_TRACE_FUNCTION();
-
 	LockGuard<Mutex> lock(m_globalMtx);
-
-	// Do that at begin frame, ALWAYS
-	m_crntFrame = (m_crntFrame + 1) % m_frames.getSize();
-	PerFrame& frame = m_frames[m_crntFrame];
-
-	// Wait for the oldest frame because we don't want to start the new one too early
-	{
-		ANKI_TRACE_SCOPED_EVENT(WaitFences);
-		for(MicroFencePtr& fence : frame.m_fences)
-		{
-			if(fence)
-			{
-				const Bool signaled = fence->clientWait(kMaxSecond);
-				if(!signaled)
-				{
-					ANKI_D3D_LOGF("Timeout detected");
-				}
-			}
-		}
-	}
-
-	frame.m_fences.destroy();
-	frame.m_queueWroteToSwapchainImage = GpuQueueType::kCount;
-
-	// Clear garbage
 	deleteObjectsMarkedForDeletion();
 }
 
@@ -235,14 +209,14 @@ void GrManagerImpl::endFrameInternal()
 
 	m_crntSwapchain->m_swapchain->Present((g_cvarGrVsync) ? 1 : 0, (g_cvarGrVsync) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
 
-	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance("Present");
-	presentFence->getImplementation().gpuSignal(GpuQueueType::kGeneral); // Only general can present
+	MicroFencePtr presentFence = FenceFactory::getSingleton().newFence("Present");
+	presentFence->gpuSignal(GpuQueueType::kGeneral); // Only general can present
 
 	LockGuard lock(m_globalMtx);
 
-	auto& crntFrame = m_frames[m_crntFrame];
+	deleteObjectsMarkedForDeletion();
 
-	crntFrame.m_fences.emplaceBack(presentFence);
+	m_crntFences[GpuQueueType::kGeneral] = presentFence;
 
 	DescriptorFactory::getSingleton().endFrame();
 }
@@ -252,7 +226,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 	ANKI_TRACE_FUNCTION();
 
 	// First thing, create a fence
-	MicroFencePtr fence = FenceFactory::getSingleton().newInstance("Submit");
+	MicroFencePtr fence = FenceFactory::getSingleton().newFence("Submit");
 
 	// Gather command lists
 	GrDynamicArray<ID3D12CommandList*> d3dCmdLists;
@@ -280,14 +254,14 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 	for(Fence* fence : waitFences)
 	{
 		FenceImpl& impl = static_cast<FenceImpl&>(*fence);
-		impl.m_fence->getImplementation().gpuWait(queueType);
+		impl.m_fence->gpuWait(queueType);
 	}
 
 	// Submit command lists
 	m_queues[queueType]->ExecuteCommandLists(d3dCmdLists.getSize(), d3dCmdLists.getBegin());
 
 	// Signal fence
-	fence->getImplementation().gpuSignal(queueType);
+	fence->gpuSignal(queueType);
 
 	if(signalFence)
 	{
@@ -297,30 +271,19 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 	}
 
 	LockGuard lock(m_globalMtx);
-	PerFrame& frame = m_frames[m_crntFrame];
 
-	frame.m_fences.emplaceBack(fence.get());
-
-	// Throttle the number of fences
-	Bool fencesThrottled = false;
-	while(frame.m_fences.getSize() > 64)
+	// New submit so we need to finalize all groups. Following deletes will create a new group with the newely created fence
+	for(CleanupGroup& group : m_cleanupGroups)
 	{
-		fencesThrottled = true;
-		auto it = frame.m_fences.getBegin();
-		for(; it != frame.m_fences.getEnd(); ++it)
-		{
-			if((*it)->signaled())
-			{
-				frame.m_fences.erase(it);
-				break;
-			}
-		}
+		group.m_finalized = true;
 	}
+	m_activeCleanupGroup = kMaxU32;
 
-	if(fencesThrottled)
-	{
-		ANKI_D3D_LOGV("Had to throttle the number of fences");
-	}
+	// Do cleanup as well
+	deleteObjectsMarkedForDeletion();
+
+	// Store the last fence
+	m_crntFences[queueType] = fence;
 }
 
 void GrManagerImpl::finishInternal()
@@ -332,34 +295,27 @@ void GrManagerImpl::finishInternal()
 	{
 		for(GpuQueueType qType : EnumIterable<GpuQueueType>())
 		{
-			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-			fence->getImplementation().gpuSignal(qType);
+			MicroFencePtr fence = FenceFactory::getSingleton().newFence();
+			fence->gpuSignal(qType);
 			fence->clientWait(kMaxSecond);
 		}
 	}
 
-	for(PerFrame& frame : m_frames)
+	for(MicroFencePtr& fence : m_crntFences)
 	{
-		for(MicroFencePtr& fence : frame.m_fences)
+		if(fence)
 		{
 			const Bool signaled = fence->clientWait(kMaxSecond);
 			if(!signaled)
 			{
 				ANKI_D3D_LOGF("Timeout detected");
 			}
+			fence.reset(nullptr);
 		}
-
-		frame.m_fences.destroy();
 	}
 
 	// Since we waited for the GPU do a cleanup as well
-	const U8 oldFrame = m_crntFrame;
-	for(U8 frame = 0; frame < m_frames.getSize(); ++frame)
-	{
-		m_crntFrame = frame;
-		deleteObjectsMarkedForDeletion();
-	}
-	m_crntFrame = oldFrame;
+	deleteObjectsMarkedForDeletion();
 }
 
 Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
@@ -617,11 +573,22 @@ void GrManagerImpl::destroy()
 	m_crntSwapchain.reset(nullptr);
 	SwapchainFactory::freeSingleton();
 
-	for(U8 frame = 0; frame < m_frames.getSize(); ++frame)
+	for(auto it = m_cleanupGroups.getBegin(); it != m_cleanupGroups.getEnd(); ++it)
 	{
-		m_crntFrame = frame;
-		deleteObjectsMarkedForDeletion();
+		it->m_finalized = false;
+		m_activeCleanupGroup = it.getArrayIndex();
+
+		while(it->m_objectsMarkedForDeletion.getSize())
+		{
+			GrDynamicArray<GrObject*> arr = std::move(it->m_objectsMarkedForDeletion);
+
+			for(GrObject* obj : arr)
+			{
+				deleteInstance(GrMemoryPool::getSingleton(), obj);
+			}
+		}
 	}
+	m_cleanupGroups.destroy();
 
 	// Destroy systems
 	PrimitivesPassedClippingFactory::freeSingleton();
@@ -678,6 +645,67 @@ void GrManagerImpl::invokeDred() const
 			}
 		}
 	} while(false);
+}
+
+void GrManagerImpl::releaseObjectDeleteLoop(GrObject* object)
+{
+	ANKI_ASSERT(object);
+	CleanupGroup* group;
+	if(m_activeCleanupGroup == kMaxU32)
+	{
+		auto it = m_cleanupGroups.emplace();
+		group = &*it;
+		group->m_fences[GpuQueueType::kGeneral] = m_crntFences[GpuQueueType::kGeneral];
+		group->m_fences[GpuQueueType::kCompute] = m_crntFences[GpuQueueType::kCompute];
+		m_activeCleanupGroup = it.getArrayIndex();
+	}
+	else
+	{
+		group = &m_cleanupGroups[m_activeCleanupGroup];
+	}
+
+	ANKI_ASSERT(!group->m_finalized);
+	group->m_objectsMarkedForDeletion.emplaceBack(object);
+}
+
+void GrManagerImpl::deleteObjectsMarkedForDeletion()
+{
+	ANKI_TRACE_FUNCTION();
+
+	// Object cleanup
+	Array<U32, 8> cleanupGroups;
+	U32 cleanupGroupCount = 0;
+
+	for(auto it = m_cleanupGroups.getBegin(); it != m_cleanupGroups.getEnd(); ++it)
+	{
+		if(it.getArrayIndex() != m_activeCleanupGroup && cleanupGroupCount < cleanupGroups.getSize() && it->canDelete())
+		{
+			cleanupGroups[cleanupGroupCount++] = it.getArrayIndex();
+		}
+	}
+
+	for(U32 i = 0; i < cleanupGroupCount; ++i)
+	{
+		const U32 idx = cleanupGroups[i];
+
+		const U32 crntActiveGroup = m_activeCleanupGroup;
+		m_activeCleanupGroup = idx;
+
+		m_cleanupGroups[idx].m_finalized = false;
+
+		while(m_cleanupGroups[idx].m_objectsMarkedForDeletion.getSize())
+		{
+			GrDynamicArray<GrObject*> arr = std::move(m_cleanupGroups[idx].m_objectsMarkedForDeletion);
+
+			for(GrObject* obj : arr)
+			{
+				deleteInstance(GrMemoryPool::getSingleton(), obj);
+			}
+		}
+
+		m_cleanupGroups.erase(idx);
+		m_activeCleanupGroup = crntActiveGroup; // Restore
+	}
 }
 
 } // end namespace anki

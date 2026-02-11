@@ -8,14 +8,33 @@
 
 namespace anki {
 
-void MicroFenceImpl::gpuSignal(GpuQueueType queue)
+void MicroFence::gpuSignal(GpuQueueType queue)
 {
 	ANKI_D3D_CHECKF(getGrManagerImpl().getCommandQueue(queue).Signal(m_fence, m_value.fetchAdd(1) + 1));
 }
 
-void MicroFenceImpl::gpuWait(GpuQueueType queue)
+void MicroFence::gpuWait(GpuQueueType queue)
 {
 	ANKI_D3D_CHECKF(getGrManagerImpl().getCommandQueue(queue).Wait(m_fence, m_value.load()));
+}
+
+MicroFencePtr FenceFactory::newFence(CString name)
+{
+	MicroFence* fence = m_recycler.findToReuse();
+
+	if(fence == nullptr)
+	{
+		fence = newInstance<MicroFence>(GrMemoryPool::getSingleton());
+	}
+	else
+	{
+		fence->reset();
+	}
+
+	ANKI_ASSERT(fence->getRefcount() == 0);
+
+	fence->setName(name);
+	return MicroFencePtr(fence);
 }
 
 Fence* Fence::newInstance()

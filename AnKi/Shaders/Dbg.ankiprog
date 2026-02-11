@@ -412,7 +412,7 @@ RWStructuredBuffer<U32> g_lodAndRenderableIndices : register(u2);
 #endif
 
 // ===========================================================================
-// RenderablesRenderPicking                                                         =
+// RenderablesRenderPicking                                                  =
 // ===========================================================================
 #if ANKI_TECHNIQUE_RenderablesRenderPicking
 

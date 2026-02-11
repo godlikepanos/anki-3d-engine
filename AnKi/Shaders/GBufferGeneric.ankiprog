@@ -92,7 +92,9 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
+#if SW_MESHLETS
 	UVec4 m_instanceData : MISC0;
+#endif
 };
 
 struct VertOut

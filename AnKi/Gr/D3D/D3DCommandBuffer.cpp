@@ -1083,7 +1083,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	return Error::kNone;
 }
 
-void CommandBufferImpl::postSubmitWork(D3DMicroFence* fence)
+void CommandBufferImpl::postSubmitWork(MicroFence* fence)
 {
 	for(const TimestampQueryInternalPtr& q : m_timestampQueries)
 	{

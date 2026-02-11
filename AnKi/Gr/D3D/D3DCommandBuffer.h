@@ -37,7 +37,7 @@ public:
 		return *m_mcmdb;
 	}
 
-	void postSubmitWork(D3DMicroFence* fence);
+	void postSubmitWork(MicroFence* fence);
 
 private:
 	D3D12GraphicsCommandListX* m_cmdList = nullptr; // Cache it.

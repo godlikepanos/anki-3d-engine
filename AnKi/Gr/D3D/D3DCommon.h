@@ -58,7 +58,7 @@ void invokeDred();
 			{ \
 				invokeDred(); \
 			} \
-			ANKI_D3D_LOGF("D3D function failed (HRESULT: 0x%X message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGF("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
 		} \
 	} while(0)
 
@@ -68,7 +68,7 @@ void invokeDred();
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGE("D3D function failed (HRESULT: 0x%X message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGE("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
 			if(rez == DXGI_ERROR_DEVICE_REMOVED) \
 			{ \
 				invokeDred(); \
@@ -136,7 +136,7 @@ ID3D12DeviceX& getDevice();
 
 GrManagerImpl& getGrManagerImpl();
 
-inline [[nodiscard]] D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE convertLoadOp(RenderTargetLoadOperation ak)
+[[nodiscard]] inline D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE convertLoadOp(RenderTargetLoadOperation ak)
 {
 	D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE out;
 	switch(ak)
@@ -155,7 +155,7 @@ inline [[nodiscard]] D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE convertLoadOp(Rende
 	return out;
 }
 
-inline [[nodiscard]] D3D12_RENDER_PASS_ENDING_ACCESS_TYPE convertStoreOp(RenderTargetStoreOperation ak)
+[[nodiscard]] inline D3D12_RENDER_PASS_ENDING_ACCESS_TYPE convertStoreOp(RenderTargetStoreOperation ak)
 {
 	D3D12_RENDER_PASS_ENDING_ACCESS_TYPE out;
 	switch(ak)
@@ -173,7 +173,7 @@ inline [[nodiscard]] D3D12_RENDER_PASS_ENDING_ACCESS_TYPE convertStoreOp(RenderT
 
 [[nodiscard]] D3D12_FILTER convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, CompareOperation compareOp, U32 anisotropy);
 
-inline [[nodiscard]] D3D12_TEXTURE_ADDRESS_MODE convertSamplingAddressing(SamplingAddressing addr)
+[[nodiscard]] inline D3D12_TEXTURE_ADDRESS_MODE convertSamplingAddressing(SamplingAddressing addr)
 {
 	D3D12_TEXTURE_ADDRESS_MODE out = {};
 	switch(addr)
@@ -195,7 +195,7 @@ inline [[nodiscard]] D3D12_TEXTURE_ADDRESS_MODE convertSamplingAddressing(Sampli
 	return out;
 }
 
-inline [[nodiscard]] D3D12_COMPARISON_FUNC convertComparisonFunc(CompareOperation comp)
+[[nodiscard]] inline D3D12_COMPARISON_FUNC convertComparisonFunc(CompareOperation comp)
 {
 	D3D12_COMPARISON_FUNC out = {};
 
@@ -232,7 +232,7 @@ inline [[nodiscard]] D3D12_COMPARISON_FUNC convertComparisonFunc(CompareOperatio
 	return out;
 }
 
-inline [[nodiscard]] D3D12_PRIMITIVE_TOPOLOGY_TYPE convertPrimitiveTopology(PrimitiveTopology top)
+[[nodiscard]] inline D3D12_PRIMITIVE_TOPOLOGY_TYPE convertPrimitiveTopology(PrimitiveTopology top)
 {
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE out = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 
@@ -254,7 +254,7 @@ inline [[nodiscard]] D3D12_PRIMITIVE_TOPOLOGY_TYPE convertPrimitiveTopology(Prim
 	return out;
 }
 
-inline [[nodiscard]] D3D_PRIMITIVE_TOPOLOGY convertPrimitiveTopology2(PrimitiveTopology top)
+[[nodiscard]] inline D3D_PRIMITIVE_TOPOLOGY convertPrimitiveTopology2(PrimitiveTopology top)
 {
 	D3D_PRIMITIVE_TOPOLOGY out = {};
 
@@ -285,7 +285,7 @@ inline [[nodiscard]] D3D_PRIMITIVE_TOPOLOGY convertPrimitiveTopology2(PrimitiveT
 	return out;
 }
 
-inline [[nodiscard]] D3D12_BLEND convertBlendFactor(BlendFactor f)
+[[nodiscard]] inline D3D12_BLEND convertBlendFactor(BlendFactor f)
 {
 	D3D12_BLEND out = {};
 
@@ -355,7 +355,7 @@ inline [[nodiscard]] D3D12_BLEND convertBlendFactor(BlendFactor f)
 	return out;
 }
 
-inline [[nodiscard]] D3D12_BLEND_OP convertBlendOperation(BlendOperation b)
+[[nodiscard]] inline D3D12_BLEND_OP convertBlendOperation(BlendOperation b)
 {
 	D3D12_BLEND_OP out = {};
 
@@ -383,7 +383,7 @@ inline [[nodiscard]] D3D12_BLEND_OP convertBlendOperation(BlendOperation b)
 	return out;
 }
 
-inline [[nodiscard]] D3D12_COMPARISON_FUNC convertCompareOperation(CompareOperation c)
+[[nodiscard]] inline D3D12_COMPARISON_FUNC convertCompareOperation(CompareOperation c)
 {
 	D3D12_COMPARISON_FUNC out = {};
 
@@ -420,7 +420,7 @@ inline [[nodiscard]] D3D12_COMPARISON_FUNC convertCompareOperation(CompareOperat
 	return out;
 }
 
-inline [[nodiscard]] D3D12_STENCIL_OP convertStencilOperation(StencilOperation o)
+[[nodiscard]] inline D3D12_STENCIL_OP convertStencilOperation(StencilOperation o)
 {
 	D3D12_STENCIL_OP out = {};
 
@@ -457,7 +457,7 @@ inline [[nodiscard]] D3D12_STENCIL_OP convertStencilOperation(StencilOperation o
 	return out;
 }
 
-inline [[nodiscard]] D3D12_FILL_MODE convertFillMode(FillMode f)
+[[nodiscard]] inline D3D12_FILL_MODE convertFillMode(FillMode f)
 {
 	D3D12_FILL_MODE out = {};
 

@@ -122,7 +122,7 @@ Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 	return available;
 }
 
-void QueryFactory::postSubmitWork(QueryHandle handle, D3DMicroFence* fence)
+void QueryFactory::postSubmitWork(QueryHandle handle, MicroFence* fence)
 {
 	ANKI_ASSERT(handle.isValid() && handle.m_type == m_type && fence);
 

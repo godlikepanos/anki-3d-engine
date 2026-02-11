@@ -1249,6 +1249,7 @@ void GrManagerImpl::beginFrameInternal()
 	LockGuard<Mutex> lock(m_globalMtx);
 	++m_frame;
 	deleteObjectsMarkedForDeletion();
+	m_queueWroteToSwapchainImage = GpuQueueType::kCount;
 }
 
 TexturePtr GrManagerImpl::acquireNextPresentableTexture()
