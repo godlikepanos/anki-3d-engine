@@ -69,8 +69,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	LoadContext* ctx;
 	LoadContext localCtx(this);
 
-	String basename;
-	getFilepathFilename(filename, basename);
+	const String basename = anki::getFilename(filename);
 
 	const Bool rayTracingEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing;
 

@@ -12,7 +12,7 @@ namespace anki {
 
 static constexpr U kMaxPathLen = MAX_PATH - 1;
 
-Bool fileExists(const CString& filename)
+Bool fileExists(CString filename)
 {
 	DWORD dwAttrib = GetFileAttributesA(&filename[0]);
 

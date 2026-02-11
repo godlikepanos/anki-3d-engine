@@ -91,8 +91,7 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			}
 
 			// Create the file
-			String extension;
-			getFilepathExtension(basename, extension);
+			const String extension = getFileExtension(basename);
 			AssetFileType filetype = AssetFileType::kNone;
 			if(extension == "ankitex" || extension == "png")
 			{
@@ -251,6 +250,14 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		m_particleEditorWindow.drawWindow(initialPos, initialSize, 0);
 	}
 
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 initialSize = Vec2(800.0f, 600.0f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_materialEditorWindow.drawWindow(initialPos, initialSize, 0);
+	}
+
 	rightClickMenuDialog();
 
 	if(ImGui::GetFrameCount() > 1)
@@ -358,7 +365,12 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 					{
 						ImTextureID id;
 						id.m_texture = &m_materialIcon->getTexture();
-						ImGui::ImageButton("##", id, Vec2(cellWidth));
+						if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
+						{
+							MaterialResourcePtr rsrc;
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilename, rsrc));
+							m_materialEditorWindow.open(*rsrc);
+						}
 					}
 					else if(file.m_type == AssetFileType::kMesh)
 					{

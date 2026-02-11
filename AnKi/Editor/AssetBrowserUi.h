@@ -7,6 +7,7 @@
 
 #include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Editor/ParticleEditorUi.h>
+#include <AnKi/Editor/MaterialEditorUi.h>
 #include <AnKi/Editor/ImageViewerUi.h>
 
 namespace anki {
@@ -50,6 +51,7 @@ private:
 	ImageResourcePtr m_meshIcon;
 
 	ParticleEditorUi m_particleEditorWindow;
+	MaterialEditorUi m_materialEditorWindow;
 	ImageViewerUi m_imageViewerWindow;
 
 	class

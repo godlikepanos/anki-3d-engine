@@ -235,25 +235,22 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 	ParticleEmitterQuadGeometry::getSingleton().tryUploadToGpuScene();
 
 #if ANKI_WITH_EDITOR
-	if(info.m_checkForResourceUpdates) [[unlikely]]
+	if(info.m_checkForResourceUpdates && m_resource->isObsolete()) [[unlikely]]
 	{
-		if(m_resource->isObsolete()) [[unlikely]]
+		ANKI_SCENE_LOGV("Particle emitter resource is obsolete. Will reload it");
+		BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> fname(info.m_framePool);
+		fname = m_resource->getFilename();
+		ParticleEmitterResource2Ptr oldVersion = m_resource;
+		m_resource.reset(nullptr);
+		if(ResourceManager::getSingleton().loadResource(fname, m_resource))
 		{
-			ANKI_SCENE_LOGV("Particle emitter resource is obsolete. Will reload it");
-			BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> fname(info.m_framePool);
-			fname = m_resource->getFilename();
-			ParticleEmitterResource2Ptr oldVersion = m_resource;
-			m_resource.reset(nullptr);
-			if(ResourceManager::getSingleton().loadResource(fname, m_resource))
-			{
-				ANKI_SCENE_LOGE("Can't update the particle resource. Ignoring the load");
-				m_resource = oldVersion;
-			}
-			else
-			{
-				m_anyDirty = true;
-				ANKI_ASSERT(!m_resource->isObsolete());
-			}
+			ANKI_SCENE_LOGE("Can't update the particle resource. Ignoring the load");
+			m_resource = oldVersion;
+		}
+		else
+		{
+			m_anyDirty = true;
+			ANKI_ASSERT(!m_resource->isObsolete());
 		}
 	}
 #endif

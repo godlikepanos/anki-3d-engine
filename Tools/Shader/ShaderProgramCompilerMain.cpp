@@ -299,7 +299,7 @@ int myMain(int argc, char** argv)
 
 	if(info.m_outFname.isEmpty())
 	{
-		getFilepathFilename(info.m_inputFname, info.m_outFname);
+		info.m_outFname = getFilename(info.m_inputFname);
 		info.m_outFname += "bin";
 	}
 

@@ -19,7 +19,7 @@ void ParticleEditorUi::open(const ParticleEmitterResource2& resource)
 	}
 
 	rebuildCache(resource);
-	m_filename = ResourceFilesystem::getSingleton().getFileFullPath(resource.getFilename());
+	m_filepath = ResourceFilesystem::getSingleton().getFileFullPath(resource.getFilename());
 	m_open = true;
 }
 
@@ -160,18 +160,16 @@ void ParticleEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 
 void ParticleEditorUi::gatherParticlePrograms()
 {
-	ResourceFilesystem::getSingleton().iterateAllFilenames([this](CString filename) {
-		String ext;
-		getFilepathExtension(filename, ext);
-		const CString extension = "ankiprogbin";
-		if(ext == extension)
+	ResourceFilesystem::getSingleton().iterateAllFilenames([this](CString filepath) {
+		const String ext = getFileExtension(filepath);
+		if(ext == "ankiprogbin")
 		{
 			ResourceFilePtr file;
 			ShaderBinary* binary = nullptr;
-			if(ResourceFilesystem::getSingleton().openFile(filename, file)
+			if(ResourceFilesystem::getSingleton().openFile(filepath, file)
 			   || deserializeShaderBinaryFromAnyFile(*file, binary, DefaultMemoryPool::getSingleton()))
 			{
-				ANKI_LOGE("Failed to load particles file. Ignoring this file: %s", filename.cstr());
+				ANKI_LOGE("Failed to load particles file. Ignoring this file: %s", filepath.cstr());
 			}
 			else
 			{
@@ -179,13 +177,10 @@ void ParticleEditorUi::gatherParticlePrograms()
 				{
 					if(CString(strct.m_name.getBegin()).find("AnKiParticleEmitterProperties") == 0)
 					{
-						String basename;
-						getFilepathFilename(filename, basename);
-						ANKI_ASSERT(basename.getLength() > extension.getLength() + 1);
-						basename = String(basename.getBegin(), basename.getBegin() + basename.getLength() - extension.getLength() - 1);
+						const String basename = getBasename(filepath);
 
 						ParticleProgram& prog = *m_programs.emplaceBack();
-						prog.m_filename = filename;
+						prog.m_filepath = filepath;
 						prog.m_name = basename;
 						prog.m_props.resize(strct.m_members.getSize());
 
@@ -222,11 +217,7 @@ void ParticleEditorUi::rebuildCache(const ParticleEmitterResource2& rsrc)
 {
 	m_commonProps = rsrc.getCommonProperties();
 
-	m_currentlySelectedProgram = rsrc.getShaderProgramResource().getFilename();
-	getFilepathFilename(m_currentlySelectedProgram, m_currentlySelectedProgram);
-	const CString extension = "ankiprogbin";
-	m_currentlySelectedProgram = String(m_currentlySelectedProgram.getBegin(),
-										m_currentlySelectedProgram.getBegin() + m_currentlySelectedProgram.getLength() - (extension.getLength() + 1));
+	m_currentlySelectedProgram = getBasename(rsrc.getShaderProgramResource().getFilename());
 
 	m_otherProps.resize(rsrc.getOtherProperties().getSize());
 	for(U32 i = 0; i < m_otherProps.getSize(); ++i)
@@ -280,7 +271,7 @@ void ParticleEditorUi::rebuildCache(CString particleProgramName)
 Error ParticleEditorUi::saveCache()
 {
 	File file;
-	ANKI_CHECK(file.open(m_filename, FileOpenFlag::kWrite));
+	ANKI_CHECK(file.open(m_filepath, FileOpenFlag::kWrite));
 
 	ANKI_CHECK(file.writeText("<particleEmitter>\n"));
 

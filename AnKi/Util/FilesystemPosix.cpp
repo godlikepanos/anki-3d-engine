@@ -35,7 +35,7 @@
 
 namespace anki {
 
-Bool fileExists(const CString& filename)
+Bool fileExists(CString filename)
 {
 	struct stat s;
 	if(stat(filename.cstr(), &s) == 0)

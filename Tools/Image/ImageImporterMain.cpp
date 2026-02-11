@@ -275,10 +275,9 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 	{
 		CString infname = cleanup.m_inputFilenames[0];
 
-		String ext;
-		getFilepathExtension(infname, ext);
+		const String ext = getFileExtension(infname);
 
-		getFilepathFilename(infname, cleanup.m_outFilename);
+		cleanup.m_outFilename = getFilename(infname);
 		if(ext.getLength() > 0)
 		{
 			cleanup.m_outFilename.replaceAll(ext, "ankitex");

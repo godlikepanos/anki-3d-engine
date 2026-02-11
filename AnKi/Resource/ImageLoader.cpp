@@ -545,8 +545,7 @@ Error ImageLoader::load(const CString& filename, U32 maxImageSize)
 Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize)
 {
 	// get the extension
-	String ext;
-	getFilepathExtension(filename, ext);
+	const String ext = getFileExtension(filename);
 
 	if(ext.isEmpty())
 	{

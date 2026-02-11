@@ -129,8 +129,7 @@ U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourc
 {
 	ANKI_ASSERT(resourceFilename.getLength() > 0);
 	ANKI_ASSERT(groupType < RayTracingShaderGroupType::kCount);
-	String basename;
-	getFilepathFilename(resourceFilename, basename);
+	const String basename = getFilename(resourceFilename);
 	U64 hash = appendHash(basename.cstr(), basename.getLength(), mutationHash);
 	hash = appendHash(&groupType, sizeof(groupType), hash);
 	return hash;
@@ -163,8 +162,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 	Error err = Error::kNone;
 	ResourceFilesystem::getSingleton().iterateAllFilenames([&](CString filename) {
 		// Check file extension
-		String extension;
-		getFilepathExtension(filename, extension);
+		const String extension = getFileExtension(filename);
 		const Char binExtension[] = "ankiprogbin";
 		if(extension.getLength() != sizeof(binExtension) - 1 || extension != binExtension)
 		{
@@ -200,8 +198,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 		}
 
 		// Create the program name
-		String progName;
-		getFilepathFilename(filename, progName);
+		const String progName = getFilename(filename);
 
 		for(const ShaderBinaryTechnique& technique : binary->m_techniques)
 		{

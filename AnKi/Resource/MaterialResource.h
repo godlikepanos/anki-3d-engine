@@ -158,6 +158,13 @@ private:
 	}
 };
 
+class PartialMutation
+{
+public:
+	const ShaderBinaryMutator* m_mutator = nullptr;
+	MutatorValue m_value = -1;
+};
+
 // Material resource.
 //
 // Material XML file format:
@@ -217,14 +224,18 @@ public:
 
 	Bool isLoaded() const;
 
-private:
-	class PartialMutation
+	const ShaderProgramResource& getShaderProgramResource() const
 	{
-	public:
-		const ShaderBinaryMutator* m_mutator;
-		MutatorValue m_value;
-	};
+		return *m_prog;
+	}
 
+	// Return the mutation except the builtins
+	ConstWeakArray<PartialMutation> getPartialMutation() const
+	{
+		return m_partialMutation;
+	}
+
+private:
 	enum class ShaderTechniqueBit : U8
 	{
 		kNone = 0,
@@ -236,10 +247,10 @@ private:
 
 	ShaderProgramResourcePtr m_prog;
 
-	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2, 2> m_variantMatrix; ///< [technique][skinned][vel][meshletRendering]
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2, 2> m_variantMatrix; // [technique][skinned][vel][meshletRendering]
 	mutable RWMutex m_variantMatrixMtx;
 
-	ResourceDynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
+	ResourceDynamicArray<PartialMutation> m_partialMutation; // Only with the non-builtins.
 
 	ResourceDynamicArray<MaterialVariable> m_vars;
 

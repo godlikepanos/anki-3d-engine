@@ -193,8 +193,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 	if(!!(info.m_shaderTypes & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
-		String fname;
-		getFilepathFilename(getFilename(), fname);
+		const String fname = anki::getFilename(getFilename());
 
 		ResourceString progName;
 		progName.sprintf("%s var%05u", fname.cstr(), binaryVariantIdx);

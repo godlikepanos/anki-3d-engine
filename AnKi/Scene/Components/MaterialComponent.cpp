@@ -160,6 +160,27 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	const Bool movedLastFrame = m_movedLastFrame;
 	m_movedLastFrame = moved;
 
+#if ANKI_WITH_EDITOR
+	if(info.m_checkForResourceUpdates && m_resource->isObsolete()) [[unlikely]]
+	{
+		ANKI_SCENE_LOGV("Material resource is obsolete. Will reload it");
+		BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> fname(info.m_framePool);
+		fname = m_resource->getFilename();
+		MaterialResourcePtr oldVersion = m_resource;
+		m_resource.reset(nullptr);
+		if(ResourceManager::getSingleton().loadResource(fname, m_resource))
+		{
+			ANKI_SCENE_LOGE("Can't update the material resource. Ignoring the load");
+			m_resource = oldVersion;
+		}
+		else
+		{
+			m_anyDirty = true;
+			ANKI_ASSERT(!m_resource->isObsolete());
+		}
+	}
+#endif
+
 	Bool dirty = m_anyDirty || moved != movedLastFrame;
 
 	const Bool prioritizeEmitter = !!m_emitterComponent;

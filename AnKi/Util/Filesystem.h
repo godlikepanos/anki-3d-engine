@@ -11,18 +11,22 @@
 namespace anki {
 
 // Return true if a file exists
-Bool fileExists(const CString& filename);
+Bool fileExists(CString filepath);
 
 // Get path extension.
-void getFilepathExtension(const CString& filename, String& out);
+String getFileExtension(CString filepath);
 
 // Get path filename.
 // On path/to/file.ext return file.ext
-void getFilepathFilename(const CString& filename, String& out);
+String getFilename(CString filepath);
+
+// Get the basename of a file.
+// On path/to/file.ext return file
+String getBasename(CString filepath);
 
 // Get base path.
 // On path/to/file.ext return path/to
-void getParentFilepath(const CString& filename, String& out);
+String getParentFilepath(CString filepath);
 
 // Return true if directory exists?
 Bool directoryExists(const CString& dir);

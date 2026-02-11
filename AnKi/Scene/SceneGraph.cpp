@@ -696,8 +696,7 @@ Error SceneGraph::loadScene(CString filename, Scene*& scene)
 
 	ANKI_LOGI("Loading scene: %s", filename.cstr());
 
-	String extension;
-	getFilepathExtension(filename, extension);
+	const String extension = getFileExtension(filename);
 
 	if(extension == "lua")
 	{

@@ -17,8 +17,7 @@ ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script)
 	: Event(startTime, duration)
 {
 	// Do the rest
-	String extension;
-	getFilepathExtension(script, extension);
+	const String extension = getFileExtension(script);
 
 	if(!extension.isEmpty() && extension == "lua")
 	{

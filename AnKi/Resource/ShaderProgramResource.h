@@ -20,10 +20,7 @@ namespace anki {
 // Forward
 class ShaderProgramResourceVariantInitInfo;
 
-/// @addtogroup resource
-/// @{
-
-/// Shader program resource variant.
+// Shader program resource variant.
 class ShaderProgramResourceVariant
 {
 	friend class ShaderProgramResource;
@@ -33,13 +30,13 @@ public:
 
 	~ShaderProgramResourceVariant();
 
-	/// @note On ray tracing program resources it points to the actual ray tracing program that contains everything.
+	// On ray tracing program resources it points to the actual ray tracing program that contains everything.
 	ShaderProgram& getProgram() const
 	{
 		return *m_prog;
 	}
 
-	/// Only for hit ray tracing programs.
+	// Only for hit ray tracing programs.
 	U32 getShaderGroupHandleIndex() const
 	{
 		ANKI_ASSERT(m_shaderGroupHandleIndex < kMaxU32);
@@ -48,7 +45,7 @@ public:
 
 private:
 	ShaderProgramPtr m_prog;
-	U32 m_shaderGroupHandleIndex = kMaxU32; ///< Cache the index of the handle here.
+	U32 m_shaderGroupHandleIndex = kMaxU32; // Cache the index of the handle here.
 };
 
 class ShaderProgramResourceVariantInitInfo
@@ -71,7 +68,7 @@ public:
 
 	ShaderProgramResourceVariantInitInfo& addMutation(CString name, MutatorValue t);
 
-	/// Request a non default technique and specific shaders.
+	// Request a non default technique and specific shaders.
 	void requestTechniqueAndTypes(ShaderTypeBit types, CString technique = "Unnamed")
 	{
 		ANKI_ASSERT(types != ShaderTypeBit::kNone);
@@ -92,14 +89,14 @@ private:
 
 	ShaderProgramResourcePtr m_ptr;
 
-	Array<MutatorValue, kMaxMutators> m_mutation; ///< The order of storing the values is important. It will be hashed.
+	Array<MutatorValue, kMaxMutators> m_mutation; // The order of storing the values is important. It will be hashed.
 	BitSet<kMaxMutators> m_setMutators = {false};
 
 	Array<Array<Char, kMaxTechniqueNameLength + 1>, U32(ShaderType::kCount)> m_techniqueNames = {};
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 };
 
-/// Shader program resource. It loads special AnKi programs.
+// Shader program resource. It loads special AnKi programs.
 class ShaderProgramResource : public ResourceObject
 {
 public:
@@ -110,10 +107,10 @@ public:
 
 	~ShaderProgramResource();
 
-	/// Load the resource.
+	// Load the resource.
 	Error load(const ResourceFilename& filename, Bool async);
 
-	/// Try to find a mutator.
+	// Try to find a mutator.
 	const ShaderBinaryMutator* tryFindMutator(CString name) const
 	{
 		for(const ShaderBinaryMutator& m : m_binary->m_mutators)
@@ -131,8 +128,8 @@ public:
 		return *m_binary;
 	}
 
-	/// Get or create a graphics shader program variant. If returned variant is nullptr then it means that the mutation is skipped and thus incorrect.
-	/// @note It's thread-safe.
+	// Get or create a graphics shader program variant. If returned variant is nullptr then it means that the mutation is skipped and thus incorrect.
+	// It's thread-safe.
 	void getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const;
 
 private:
@@ -165,6 +162,5 @@ inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInf
 	m_setMutators.set(mutatorIdx);
 	return *this;
 }
-/// @}
 
 } // end namespace anki

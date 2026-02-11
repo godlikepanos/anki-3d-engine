@@ -58,8 +58,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 	ImageLoader& loader = ctx->m_loader;
 
-	String filenameExt;
-	getFilepathFilename(filename, filenameExt);
+	const String filenameExt = anki::getFilename(filename);
 
 	TextureInitInfo init(filenameExt);
 	init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kCopyDestination;

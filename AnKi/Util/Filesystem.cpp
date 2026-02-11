@@ -8,9 +8,10 @@
 
 namespace anki {
 
-void getFilepathExtension(const CString& filename, String& out)
+String getFileExtension(CString filepath)
 {
-	const Char* pc = std::strrchr(filename.cstr(), '.');
+	const Char* pc = std::strrchr(filepath.cstr(), '.');
+	String out;
 
 	if(pc == nullptr)
 	{
@@ -24,21 +25,24 @@ void getFilepathExtension(const CString& filename, String& out)
 			out = pc;
 		}
 	}
+
+	return out;
 }
 
-void getFilepathFilename(const CString& filename, String& out)
+String getFilename(CString filepath)
 {
-	const Char* pc1 = std::strrchr(filename.cstr(), '/');
+	const Char* pc1 = std::strrchr(filepath.cstr(), '/');
 #if ANKI_OS_WINDOWS
-	const Char* pc2 = std::strrchr(filename.cstr(), '\\');
+	const Char* pc2 = std::strrchr(filepath.cstr(), '\\');
 #else
 	const Char* pc2 = pc1;
 #endif
 	const Char* pc = (pc1 > pc2) ? pc1 : pc2;
 
+	String out;
 	if(pc == nullptr)
 	{
-		out = filename;
+		out = filepath;
 	}
 	else
 	{
@@ -48,27 +52,51 @@ void getFilepathFilename(const CString& filename, String& out)
 			out = pc;
 		}
 	}
+
+	return out;
 }
 
-void getParentFilepath(const CString& filename, String& out)
+String getBasename(CString filepath)
 {
-	const Char* pc1 = std::strrchr(filename.cstr(), '/');
+	const String ext = getFileExtension(filepath);
+
+	String filename = getFilename(filepath);
+
+	String out;
+	if(!ext.isEmpty() && ext.getLength() < filename.getLength())
+	{
+		out = String(filename.getBegin(), filename.getBegin() + filename.getLength() - ext.getLength() - 1);
+	}
+	else
+	{
+		out = std::move(filename);
+	}
+
+	return out;
+}
+
+String getParentFilepath(CString filepath)
+{
+	const Char* pc1 = std::strrchr(filepath.cstr(), '/');
 #if ANKI_OS_WINDOWS
-	const Char* pc2 = std::strrchr(filename.cstr(), '\\');
+	const Char* pc2 = std::strrchr(filepath.cstr(), '\\');
 #else
 	const Char* pc2 = pc1;
 #endif
 
 	const Char* pc = (pc1 > pc2) ? pc1 : pc2;
+	String out;
 
 	if(pc == nullptr)
 	{
-		out = "";
+		// Do nothing
 	}
 	else
 	{
-		out = String(filename.cstr(), pc);
+		out = String(filepath.cstr(), pc);
 	}
+
+	return out;
 }
 
 Error removeFile(const CString& filename)

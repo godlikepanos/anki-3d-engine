@@ -5,7 +5,7 @@
 
 // ShaderVariableDataType defines
 
-// ANKI_SVDT_MACRO(const, varType, baseType, rowCount, columnCount, isIntegralType)
+// ANKI_SVDT_MACRO(varType, baseType, rowCount, columnCount, isIntegralType)
 #if defined(ANKI_SVDT_MACRO)
 ANKI_SVDT_MACRO(I8, I8, 1, 1, true)
 ANKI_SVDT_MACRO(U8, U8, 1, 1, true)

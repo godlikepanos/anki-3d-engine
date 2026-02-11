@@ -52,7 +52,7 @@ private:
 	class ParticleProgram
 	{
 	public:
-		String m_filename;
+		String m_filepath;
 		String m_name;
 		DynamicArray<Prop> m_props;
 	};
@@ -61,7 +61,7 @@ private:
 
 	DynamicArray<ParticleProgram> m_programs;
 
-	String m_filename;
+	String m_filepath;
 
 	// Cache begin. The UI will manipulate this cache because the resource is immutable
 	String m_currentlySelectedProgram;

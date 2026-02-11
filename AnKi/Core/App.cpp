@@ -286,8 +286,7 @@ Error App::init()
 	String executableFname;
 	ANKI_CHECK(getApplicationPath(executableFname));
 	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
-	String extraPaths;
-	getParentFilepath(executableFname, extraPaths);
+	String extraPaths = getParentFilepath(executableFname);
 	extraPaths += "|ankiprogbin"; // Shaders
 	extraPaths += ":" ANKI_SOURCE_DIRECTORY "|EngineAssets,!AndroidProject"; // EngineAssets
 	extraPaths += ":";
