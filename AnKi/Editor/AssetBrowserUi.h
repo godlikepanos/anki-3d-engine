@@ -37,9 +37,9 @@ private:
 	DynamicArray<AssetDir> m_assetPaths;
 	Bool m_refreshAssetsPathsNextTime = true;
 
-	String m_selectedPathDirname;
+	String m_selectedDirPath;
 	String m_selectedFilepath;
-	Bool m_showRightClockMenuDialog = false;
+	Bool m_showRightClickMenuDialog = false;
 
 	DynamicArray<ImageCacheEntry> m_imageCache;
 
@@ -53,6 +53,8 @@ private:
 	ParticleEditorUi m_particleEditorWindow;
 	MaterialEditorUi m_materialEditorWindow;
 	ImageViewerUi m_imageViewerWindow;
+
+	U32 m_newMaterialIndex = 0;
 
 	class
 	{
@@ -69,8 +71,15 @@ private:
 
 	void rightClickMenuDialog();
 
+	void drawMenu();
+
 	static void buildAssetStructure(DynamicArray<AssetDir>& dirs);
 	static void sortFilesRecursively(AssetDir& root);
+
+	void setSelected();
+
+	template<typename TFunc, typename TFunc2>
+	FunctorContinue visitTree(AssetDir& dir, TFunc dirFunc, TFunc2 fileFunc);
 };
 
 } // end namespace anki
