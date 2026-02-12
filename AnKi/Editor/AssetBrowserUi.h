@@ -38,7 +38,7 @@ private:
 	Bool m_refreshAssetsPathsNextTime = true;
 
 	String m_selectedPathDirname;
-	String m_selectedFileFilename;
+	String m_selectedFilepath;
 	Bool m_showRightClockMenuDialog = false;
 
 	DynamicArray<ImageCacheEntry> m_imageCache;
@@ -70,6 +70,7 @@ private:
 	void rightClickMenuDialog();
 
 	static void buildAssetStructure(DynamicArray<AssetDir>& dirs);
+	static void sortFilesRecursively(AssetDir& root);
 };
 
 } // end namespace anki

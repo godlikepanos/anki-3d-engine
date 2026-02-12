@@ -22,9 +22,29 @@ enum class AssetFileType : U32
 class AssetBrowserUi::AssetFile
 {
 public:
-	String m_basename;
-	String m_fullFilename;
+	String m_filename;
+	String m_fullFilepath;
 	AssetFileType m_type = AssetFileType::kNone;
+
+	AssetFile() = default;
+
+	AssetFile(const AssetFile&) = delete;
+
+	AssetFile(AssetFile&& b)
+	{
+		*this = std::move(b);
+	}
+
+	AssetFile& operator=(const AssetFile&) = delete;
+
+	AssetFile& operator=(AssetFile&& b)
+	{
+		m_filename = std::move(b.m_filename);
+		m_fullFilepath = std::move(b.m_fullFilepath);
+		m_type = b.m_type;
+		b.m_type = AssetFileType::kNone;
+		return *this;
+	}
 };
 
 class AssetBrowserUi::AssetDir
@@ -34,6 +54,27 @@ public:
 	DynamicArray<AssetDir> m_children;
 	DynamicArray<AssetFile> m_files;
 	U32 m_id = 0;
+
+	AssetDir() = default;
+
+	AssetDir(const AssetDir&) = delete;
+
+	AssetDir(AssetDir&& b)
+	{
+		*this = std::move(b);
+	}
+
+	AssetDir& operator=(const AssetDir&) = delete;
+
+	AssetDir& operator=(AssetDir&& b)
+	{
+		m_dirname = std::move(b.m_dirname);
+		m_children = std::move(b.m_children);
+		m_files = std::move(b.m_files);
+		m_id = b.m_id;
+		b.m_id = 0;
+		return *this;
+	}
 };
 
 AssetBrowserUi::AssetBrowserUi()
@@ -57,12 +98,12 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 		dir.m_dirname = dataPath;
 		dir.m_id = id++;
 
-		ResourceFilesystem::getSingleton().iterateFilenamesInDataPath(dataPath, [&](CString filename) {
+		ResourceFilesystem::getSingleton().iterateFilenamesInDataPath(dataPath, [&](CString filepath) {
 			StringList dirNames;
-			dirNames.splitString(filename, '/');
+			dirNames.splitString(filepath, '/');
 
 			// Don't need the file
-			String basename = dirNames.getBack();
+			const String filename = dirNames.getBack();
 			dirNames.popBack();
 
 			// Create the dirs recursively
@@ -91,7 +132,7 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			}
 
 			// Create the file
-			const String extension = getFileExtension(basename);
+			const String extension = getFileExtension(filename);
 			AssetFileType filetype = AssetFileType::kNone;
 			if(extension == "ankitex" || extension == "png")
 			{
@@ -113,8 +154,8 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			if(filetype != AssetFileType::kNone)
 			{
 				AssetFile* file = crntDir->m_files.emplaceBack();
-				file->m_fullFilename = String(dataPath) + "/" + filename;
-				file->m_basename = basename;
+				file->m_fullFilepath = String(dataPath) + "/" + filepath;
+				file->m_filename = filename;
 				file->m_type = filetype;
 			}
 
@@ -123,6 +164,27 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 
 		return FunctorContinue::kContinue;
 	});
+
+	for(AssetDir& dir : dirs)
+	{
+		sortFilesRecursively(dir);
+	}
+}
+
+void AssetBrowserUi::sortFilesRecursively(AssetDir& root)
+{
+	std::sort(root.m_files.getBegin(), root.m_files.getEnd(), [](const AssetFile& a, const AssetFile& b) {
+		return a.m_filename < b.m_filename;
+	});
+
+	std::sort(root.m_children.getBegin(), root.m_children.getEnd(), [](const AssetDir& a, const AssetDir& b) {
+		return a.m_dirname < b.m_dirname;
+	});
+
+	for(AssetDir& child : root.m_children)
+	{
+		sortFilesRecursively(child);
+	}
 }
 
 void AssetBrowserUi::dirTree(const AssetDir& dir)
@@ -258,8 +320,6 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		m_materialEditorWindow.drawWindow(initialPos, initialSize, 0);
 	}
 
-	rightClickMenuDialog();
-
 	if(ImGui::GetFrameCount() > 1)
 	{
 		// Viewport is one frame delay so do that when frame >1
@@ -296,7 +356,7 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 			{
 				for(const AssetFile& f : m_runCtx.m_selectedDir->m_files)
 				{
-					if(m_fileFilter.PassFilter(f.m_basename.cstr()))
+					if(m_fileFilter.PassFilter(f.m_filename.cstr()))
 					{
 						filteredFiles.emplaceBack(&f);
 					}
@@ -335,6 +395,8 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		} // Right side
 	}
 	ImGui::End();
+
+	rightClickMenuDialog();
 }
 
 void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
@@ -368,7 +430,7 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 						if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
 						{
 							MaterialResourcePtr rsrc;
-							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilename, rsrc));
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilepath, rsrc));
 							m_materialEditorWindow.open(*rsrc);
 						}
 					}
@@ -381,7 +443,7 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 					else if(file.m_type == AssetFileType::kTexture)
 					{
 						ImageResourcePtr img;
-						loadImageToCache(file.m_fullFilename, img);
+						loadImageToCache(file.m_fullFilepath, img);
 						ImTextureID id;
 						id.m_texture = &img->getTexture();
 						id.m_textureSubresource = TextureSubresourceDesc::all();
@@ -397,7 +459,7 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 						if(ImGui::Button(ICON_MDI_CREATION, Vec2(cellWidth)))
 						{
 							ParticleEmitterResource2Ptr rsrc;
-							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilename, rsrc));
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilepath, rsrc));
 							m_particleEditorWindow.open(*rsrc);
 						}
 						ImGui::PopFont();
@@ -407,17 +469,17 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 					// Right click
 					if(ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
 					{
-						m_selectedFileFilename = file.m_fullFilename;
+						m_selectedFilepath = file.m_fullFilepath;
 						m_showRightClockMenuDialog = true;
 					}
 
-					if(m_selectedFileFilename == file.m_fullFilename)
+					if(m_selectedFilepath == file.m_fullFilepath)
 					{
 						m_runCtx.m_selectedFile = &file;
 					}
 
-					ImGui::TextWrapped("%s", file.m_basename.cstr());
-					ImGui::SetItemTooltip("%s", file.m_fullFilename.cstr());
+					ImGui::TextWrapped("%s", file.m_filename.cstr());
+					ImGui::SetItemTooltip("%s", file.m_fullFilepath.cstr());
 				}
 			}
 		}
@@ -440,15 +502,41 @@ void AssetBrowserUi::rightClickMenuDialog()
 
 	if(ImGui::BeginPopup("Right Click"))
 	{
+		// Delete file
 		if(ImGui::Button(ICON_MDI_DELETE_FOREVER " Delete"))
 		{
-			if(removeFile(m_selectedFileFilename))
+			if(removeFile(m_selectedFilepath))
 			{
-				ANKI_LOGE("Failed to remove file: %s", m_selectedFileFilename.cstr());
+				ANKI_LOGE("Failed to remove file: %s", m_selectedFilepath.cstr());
 			}
 
 			m_refreshAssetsPathsNextTime = true;
 			ImGui::CloseCurrentPopup();
+		}
+
+		// Rename file
+		Array<Char, kMaxTextInputLen> name;
+		strncpy(name.getBegin(), m_runCtx.m_selectedFile->m_filename.cstr(), name.getSize());
+		if(ImGui::InputText("Rename", name.getBegin(), name.getSize()))
+		{
+			CString newName(name.getBegin());
+			if(newName.getLength())
+			{
+				String newFilepath = getParentFilepath(m_runCtx.m_selectedFile->m_fullFilepath);
+				newFilepath += "/";
+				newFilepath += newName;
+
+				ANKI_LOGV("Will rename %s to %s", m_runCtx.m_selectedFile->m_fullFilepath.cstr(), newFilepath.cstr());
+				if(renameFile(m_runCtx.m_selectedFile->m_fullFilepath, newFilepath))
+				{
+					ANKI_LOGE("Renaming failed");
+				}
+				else
+				{
+					m_refreshAssetsPathsNextTime = true;
+					m_selectedFilepath = newFilepath;
+				}
+			}
 		}
 
 		ImGui::EndPopup();
@@ -456,7 +544,7 @@ void AssetBrowserUi::rightClickMenuDialog()
 	else
 	{
 		// Diselect the file
-		m_selectedFileFilename.destroy();
+		m_selectedFilepath.destroy();
 	}
 }
 

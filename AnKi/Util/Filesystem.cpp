@@ -5,6 +5,7 @@
 
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/HighRezTimer.h>
+#include <filesystem>
 
 namespace anki {
 
@@ -105,6 +106,19 @@ Error removeFile(const CString& filename)
 	if(err)
 	{
 		ANKI_UTIL_LOGE("Couldn't delete file (%s): %s", strerror(errno), filename.cstr());
+		return Error::kFunctionFailed;
+	}
+
+	return Error::kNone;
+}
+
+Error renameFile(CString oldFilepath, CString newFilepath)
+{
+	std::error_code err;
+	std::filesystem::rename(oldFilepath.cstr(), newFilepath.cstr(), err);
+	if(err)
+	{
+		ANKI_UTIL_LOGE("Renaming %s to %s failed", oldFilepath.cstr(), newFilepath.cstr());
 		return Error::kFunctionFailed;
 	}
 

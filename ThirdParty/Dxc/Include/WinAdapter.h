@@ -346,7 +346,7 @@ typedef const void *LPCVOID;
 
 typedef std::nullptr_t nullptr_t;
 
-typedef signed int HRESULT;
+typedef long HRESULT;
 
 //===--------------------- Handle Types -----------------------------------===//
 

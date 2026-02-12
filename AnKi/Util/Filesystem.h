@@ -31,6 +31,8 @@ String getParentFilepath(CString filepath);
 // Return true if directory exists?
 Bool directoryExists(const CString& dir);
 
+Error renameFile(CString oldFilepath, CString newFilepath);
+
 class WalkDirectoryArgs
 {
 public:
