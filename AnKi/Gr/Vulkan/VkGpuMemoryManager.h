@@ -15,9 +15,6 @@ namespace anki {
 // Forward
 class GpuMemoryManager;
 
-/// @addtogroup vulkan
-/// @{
-
 class GpuMemoryManagerClassInfo
 {
 public:
@@ -25,8 +22,7 @@ public:
 	PtrSize m_chunkSize;
 };
 
-/// Implements the interface required by ClassAllocatorBuilder.
-/// @memberof GpuMemoryManager
+// Implements the interface required by ClassAllocatorBuilder.
 class GpuMemoryManagerChunk : public IntrusiveListEnabled<GpuMemoryManagerChunk>
 {
 public:
@@ -44,8 +40,7 @@ public:
 	void* m_class;
 };
 
-/// Implements the interface required by ClassAllocatorBuilder.
-/// @memberof GpuMemoryManager
+// Implements the interface required by ClassAllocatorBuilder.
 class GpuMemoryManagerInterface
 {
 public:
@@ -79,7 +74,7 @@ public:
 	void freeChunk(GpuMemoryManagerChunk* out);
 };
 
-/// The handle that is returned from GpuMemoryManager's allocations.
+// The handle that is returned from GpuMemoryManager's allocations.
 class GpuMemoryHandle
 {
 	friend class GpuMemoryManager;
@@ -87,6 +82,7 @@ class GpuMemoryHandle
 public:
 	VkDeviceMemory m_memory = VK_NULL_HANDLE;
 	PtrSize m_offset = kMaxPtrSize;
+	U8 m_memTypeIdx = kMaxU8;
 
 	explicit operator Bool() const
 	{
@@ -96,7 +92,6 @@ public:
 private:
 	GpuMemoryManagerChunk* m_chunk = nullptr;
 	PtrSize m_size = kMaxPtrSize;
-	U8 m_memTypeIdx = kMaxU8;
 
 	Bool isDedicated() const
 	{
@@ -104,7 +99,7 @@ private:
 	}
 };
 
-/// Dynamic GPU memory allocator for all types.
+// Dynamic GPU memory allocator for all types.
 class GpuMemoryManager : public MakeSingleton<GpuMemoryManager>
 {
 	friend class GpuMemoryManagerInterface;
@@ -126,18 +121,18 @@ public:
 
 	void getImageMemoryRequirements(VkImage image, VkMemoryDedicatedRequirementsKHR& dedicatedRequirements, VkMemoryRequirements2& requirements);
 
-	/// Allocate memory.
+	// Allocate memory.
 	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, GpuMemoryHandle& handle);
 
 	void allocateMemoryDedicated(U32 memTypeIdx, PtrSize size, VkImage image, GpuMemoryHandle& handle);
 
-	/// Free memory.
+	// Free memory.
 	void freeMemory(GpuMemoryHandle& handle);
 
-	/// Map memory.
+	// Map memory.
 	[[nodiscard]] void* getMappedAddress(GpuMemoryHandle& handle);
 
-	/// Find a suitable memory type.
+	// Find a suitable memory type.
 	U32 findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
 
 	void updateStats() const;
@@ -158,6 +153,5 @@ private:
 
 	void destroy();
 };
-/// @}
 
 } // end namespace anki

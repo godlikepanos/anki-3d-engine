@@ -82,6 +82,9 @@ public:
 	// Get the size of the acceleration structure if you are planning to supply a custom buffer.
 	PtrSize getAccelerationStructureMemoryRequirement(const AccelerationStructureInitInfo& init) const;
 
+	// Get the size of the texture if you are planning to supply a custom buffer
+	PtrSize getTextureMemoryRequirement(const TextureInitInfo& init) const;
+
 	ANKI_INTERNAL CString getCacheDirectory() const
 	{
 		return m_cacheDir.toCString();

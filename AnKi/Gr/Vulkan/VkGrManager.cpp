@@ -157,6 +157,13 @@ PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationS
 	return asSize + self.m_caps.m_asBufferAlignment;
 }
 
+PtrSize GrManager::getTextureMemoryRequirement(const TextureInitInfo& init) const
+{
+	PtrSize size;
+	TextureImpl::getMemoryRequirement(init, size);
+	return size;
+}
+
 GrManagerImpl::~GrManagerImpl()
 {
 	ANKI_VK_LOGI("Destroying Vulkan backend");

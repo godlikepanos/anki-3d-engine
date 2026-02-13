@@ -11,10 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup vulkan
-/// @{
-
-/// Buffer implementation
+// Buffer implementation
 class BufferImpl final : public Buffer
 {
 	friend class Buffer;
@@ -49,9 +46,14 @@ public:
 	VkBufferMemoryBarrier computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages,
 											 VkPipelineStageFlags& dstStages) const;
 
-	/// Only for texture buffers.
-	/// @note It's thread-safe
+	// Only for texture buffers.
+	// It's thread-safe
 	VkBufferView getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const;
+
+	const GpuMemoryHandle& getGpuMemoryHandle() const
+	{
+		return m_memHandle;
+	}
 
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
@@ -100,6 +102,5 @@ private:
 		return vkrange;
 	}
 };
-/// @}
 
 } // end namespace anki

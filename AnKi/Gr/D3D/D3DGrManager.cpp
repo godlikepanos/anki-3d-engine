@@ -108,6 +108,12 @@ PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationS
 	return asSize;
 }
 
+PtrSize GrManager::getTextureMemoryRequirement(const TextureInitInfo& init) const
+{
+	ANKI_ASSERT(!"TODO");
+	return 0;
+}
+
 Error GrManager::init(GrManagerInitInfo& inf)
 {
 	ANKI_D3D_SELF(GrManagerImpl);

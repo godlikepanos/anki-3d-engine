@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup vulkan
-/// @{
-
-/// Texture container.
+// Texture container.
 class TextureImpl final : public Texture
 {
 	friend class Texture;
@@ -59,11 +56,11 @@ public:
 		return (usage & m_usage) == usage;
 	}
 
-	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
+	// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
 	VkImageMemoryBarrier computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDesc& subresource,
 											VkPipelineStageFlags& srcStages, VkPipelineStageFlags& dstStages) const;
 
-	/// Predict the image layout.
+	// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage) const;
 
 	VkImageSubresourceRange computeVkImageSubresourceRange(const TextureSubresourceDesc& subresource) const
@@ -84,6 +81,8 @@ public:
 	{
 		return getTextureViewEntry(subresource).m_handle;
 	}
+
+	static void getMemoryRequirement(const TextureInitInfo& init, PtrSize& size);
 
 private:
 	class TextureViewEntry
@@ -134,7 +133,8 @@ private:
 	}
 
 	const TextureViewEntry& getTextureViewEntry(const TextureSubresourceDesc& subresource) const;
+
+	static VkImageCreateInfo calcVkImageCreateInfo(const TextureInitInfo& init);
 };
-/// @}
 
 } // end namespace anki

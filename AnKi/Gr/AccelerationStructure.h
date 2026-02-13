@@ -11,10 +11,6 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// @memberof AccelerationStructureInitInfo
 class BottomLevelAccelerationStructureInitInfo
 {
 public:
@@ -50,12 +46,11 @@ public:
 	}
 };
 
-/// @memberof AccelerationStructureInitInfo
 class TopLevelAccelerationStructureInitInfo
 {
 public:
 	U32 m_instanceCount = 0;
-	BufferView m_instancesBuffer; ///< Filled with AccelerationStructureInstance structs.
+	BufferView m_instancesBuffer; // Filled with AccelerationStructureInstance structs.
 
 	Bool isValid(Bool validateBuffers) const
 	{
@@ -77,8 +72,7 @@ public:
 	}
 };
 
-/// Acceleration struture init info.
-/// @memberof AccelerationStructure
+// Acceleration struture init info.
 class AccelerationStructureInitInfo : public GrBaseInitInfo
 {
 public:
@@ -86,7 +80,7 @@ public:
 	BottomLevelAccelerationStructureInitInfo m_bottomLevel;
 	TopLevelAccelerationStructureInitInfo m_topLevel;
 
-	BufferView m_accelerationStructureBuffer; ///< Optionaly supply the buffer of the AS.
+	BufferView m_accelerationStructureBuffer; // Optionaly supply the buffer of the AS.
 
 	AccelerationStructureInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
@@ -114,7 +108,7 @@ public:
 	}
 };
 
-/// Acceleration structure GPU object.
+// Acceleration structure GPU object.
 class AccelerationStructure : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -128,7 +122,7 @@ public:
 		return m_type;
 	}
 
-	/// Get the size of the scratch buffer used in building this AS.
+	// Get the size of the scratch buffer used in building this AS.
 	PtrSize getBuildScratchBufferSize() const
 	{
 		ANKI_ASSERT(m_scratchBufferSize != 0);
@@ -138,24 +132,20 @@ public:
 	U64 getGpuAddress() const;
 
 protected:
-	PtrSize m_scratchBufferSize = 0; ///< Contains more bytes than what the APIs report. This is done to avoid exposing the alignment.
+	PtrSize m_scratchBufferSize = 0; // Contains more bytes than what the APIs report. This is done to avoid exposing the alignment.
 	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 
-	/// Construct.
 	AccelerationStructure(CString name)
 		: GrObject(kClassType, name)
 	{
 	}
 
-	/// Destroy.
 	~AccelerationStructure()
 	{
 	}
 
 private:
-	/// Allocate and initialize a new instance.
 	[[nodiscard]] static AccelerationStructure* newInstance(const AccelerationStructureInitInfo& init);
 };
-/// @}
 
 } // end namespace anki

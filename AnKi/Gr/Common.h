@@ -87,11 +87,11 @@ ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Gr, GrMemoryPool)
 
 // Some constants
 constexpr U32 kMaxColorRenderTargets = 4;
-constexpr U32 kMaxRegisterSpaces = 3; ///< Groups that can be bound at the same time.
+constexpr U32 kMaxRegisterSpaces = 3; // Groups that can be bound at the same time.
 constexpr U32 kMaxBindingsPerRegisterSpace = 32;
-constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
+constexpr U32 kMaxFramesInFlight = 3; // Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
-constexpr U32 kMaxFastConstantsSize = 256; ///< Push/root constants size.
+constexpr U32 kMaxFastConstantsSize = 256; // Push/root constants size.
 
 // The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
@@ -130,9 +130,9 @@ using GrObjectInternalPtr = IntrusivePtr<GrObject, GrObjectDeleterInternal>;
 class ShaderVariableBlockInfo
 {
 public:
-	I16 m_offset = -1; ///< Offset inside the block
+	I16 m_offset = -1; // Offset inside the block
 
-	I16 m_arraySize = -1; ///< Number of elements.
+	I16 m_arraySize = -1; // Number of elements.
 
 	// Stride between the each array element if the variable is array.
 	I16 m_arrayStride = -1;
@@ -388,13 +388,13 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
 class FormatInfo
 {
 public:
-	U8 m_componentCount; ///< The number of components.
-	U8 m_texelSize; ///< The size of the texel. Only for incompressed, zero for compressed.
-	U8 m_blockWidth; ///< The width of the block size of compressed formats. Zero otherwise.
-	U8 m_blockHeight; ///< The height of the block size of compressed formats. Zero otherwise.
-	U8 m_blockSize; ///< The size of the block of a compressed format. Zero otherwise.
-	U8 m_shaderType; ///< It's 0 if the shader sees it as float, 1 if uint and 2 if signed int.
-	DepthStencilAspectBit m_depthStencil; ///< Depth/stencil mask.
+	U8 m_componentCount; // The number of components.
+	U8 m_texelSize; // The size of the texel. Only for incompressed, zero for compressed.
+	U8 m_blockWidth; // The width of the block size of compressed formats. Zero otherwise.
+	U8 m_blockHeight; // The height of the block size of compressed formats. Zero otherwise.
+	U8 m_blockSize; // The size of the block of a compressed format. Zero otherwise.
+	U8 m_shaderType; // It's 0 if the shader sees it as float, 1 if uint and 2 if signed int.
+	DepthStencilAspectBit m_depthStencil; // Depth/stencil mask.
 	const char* m_name;
 
 	Bool isDepthStencil() const
@@ -489,8 +489,8 @@ enum class SamplingFilter : U8
 {
 	kNearest,
 	kLinear,
-	kMin, ///< It calculates the min of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
-	kMax, ///< It calculates the max of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
+	kMin, // It calculates the min of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
+	kMax, // It calculates the max of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
 };
 
 enum class SamplingAddressing : U8
@@ -603,9 +603,9 @@ class ShaderVariableDataTypeInfo
 {
 public:
 	const Char* m_name;
-	U32 m_size; ///< Size of the type.
+	U32 m_size; // Size of the type.
 	Bool m_opaque;
-	Bool m_isIntegral; ///< If true is integral type. Else it's float.
+	Bool m_isIntegral; // If true is integral type. Else it's float.
 };
 
 ANKI_PURE const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type);
@@ -695,10 +695,12 @@ enum class BufferUsageBit : U64
 	kCopySource = 1ull << 17ull,
 	kCopyDestination = 1ull << 18ull,
 
-	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build or instances buffer in a TLAS build.
-	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a dispatchRays() command.
-	kAccelerationStructureBuildScratch = 1ull << 21ull, ///< Used in buildAccelerationStructureXXX commands.
-	kAccelerationStructure = 1ull << 22ull, ///< Will be used as AS.
+	kAccelerationStructureBuild = 1ull << 19ull, // Will be used as a position or index buffer in a BLAS build or instances buffer in a TLAS build.
+	kShaderBindingTable = 1ull << 20ull, // Will be used as SBT in a dispatchRays() command.
+	kAccelerationStructureBuildScratch = 1ull << 21ull, // Used in buildAccelerationStructureXXX commands.
+	kAccelerationStructure = 1ull << 22ull, // Will be used as AS.
+
+	kTexture = 1ull << 23ull, // Will be used as memory for a texture
 
 	// Derived
 	kAllConstant = kConstantGeometry | kConstantPixel | kConstantCompute | kConstantDispatchRays,
@@ -715,8 +717,8 @@ enum class BufferUsageBit : U64
 
 	kAllRayTracing = kAllDispatchRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch | kAccelerationStructure,
 	kAllRead = kAllConstant | kAllSrv | kAllUav | kVertexOrIndex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable
-			   | kAccelerationStructure,
-	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch | kAccelerationStructure,
+			   | kAccelerationStructure | kTexture,
+	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch | kAccelerationStructure | kTexture,
 
 	kAllShaderResource = kAllConstant | kAllSrv | kAllUav,
 
@@ -760,7 +762,7 @@ enum class AccelerationStructureUsageBit : U8
 {
 	kNone = 0,
 	kBuild = 1 << 0,
-	kAttach = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
+	kAttach = 1 << 1, // Attached to a TLAS. Only for BLAS.
 	kSrvGeometry = 1 << 2,
 	kSrvPixel = 1 << 3,
 	kSrvCompute = 1 << 4,
@@ -777,10 +779,10 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
 // VRS rates.
 enum class VrsRate : U8
 {
-	k1x1, ///< Disable VRS. Always supported.
-	k2x1, ///< Always supported.
+	k1x1, // Disable VRS. Always supported.
+	k2x1, // Always supported.
 	k1x2,
-	k2x2, ///< Always supported.
+	k2x2, // Always supported.
 	k4x2,
 	k2x4,
 	k4x4,
@@ -907,7 +909,7 @@ public:
 
 	union
 	{
-		U16 m_vkBinding = kMaxU16; ///< Filled by the VK backend.
+		U16 m_vkBinding = kMaxU16; // Filled by the VK backend.
 		U16 m_d3dStructuredBufferStride;
 	};
 
@@ -960,8 +962,8 @@ public:
 	U32 m_fastConstantsSize = 0;
 	U32 m_d3dShaderBindingTableRecordConstantsSize = 0;
 
-	Bool m_hasVkBindlessDescriptorSet = false; ///< Filled by the shader compiler.
-	U8 m_vkBindlessDescriptorSet = kMaxU8; ///< Filled by the VK backend.
+	Bool m_hasVkBindlessDescriptorSet = false; // Filled by the shader compiler.
+	U8 m_vkBindlessDescriptorSet = kMaxU8; // Filled by the VK backend.
 	Bool m_d3dHasDrawId = false;
 
 	void validate() const

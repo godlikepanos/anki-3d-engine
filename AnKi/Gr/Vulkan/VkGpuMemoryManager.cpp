@@ -321,7 +321,7 @@ void GpuMemoryManager::getImageMemoryRequirements(VkImage image, VkMemoryDedicat
 
 	if(requirements.memoryRequirements.size > kClasses.getBack().m_chunkSize)
 	{
-		// Allocation to big, force a dedicated allocation
+		// Allocation too big, force a dedicated allocation
 		dedicatedRequirements.prefersDedicatedAllocation = true;
 		dedicatedRequirements.requiresDedicatedAllocation = true;
 	}

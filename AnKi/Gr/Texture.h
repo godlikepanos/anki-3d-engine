@@ -5,29 +5,28 @@
 
 #pragma once
 
-#include <AnKi/Gr/GrObject.h>
+#include <AnKi/Gr/Buffer.h>
 
 namespace anki {
 
 // Forward
 class TextureSubresourceDesc;
 
-/// @addtogroup graphics
-/// @{
-
-/// Texture initializer.
+// Texture initializer.
 class TextureInitInfo : public GrBaseInitInfo
 {
 public:
 	U32 m_width = 0;
 	U32 m_height = 0;
-	U32 m_depth = 1; ///< Relevant only for 3D textures.
-	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
+	U32 m_depth = 1; // Relevant only for 3D textures.
+	U32 m_layerCount = 1; // Relevant only for texture arrays.
 
 	Format m_format = Format::kNone;
 
-	TextureUsageBit m_usage = TextureUsageBit::kNone; ///< How the texture will be used.
+	TextureUsageBit m_usage = TextureUsageBit::kNone; // How the texture will be used.
 	TextureType m_type = TextureType::k2D;
+
+	BufferView m_memoryBuffer; // Optionally provide the memory for the texture
 
 	U8 m_mipmapCount = 1;
 
@@ -101,7 +100,7 @@ public:
 	}
 };
 
-/// GPU texture.
+// GPU texture.
 class Texture : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -162,8 +161,8 @@ public:
 		return m_aspect;
 	}
 
-	/// Returns an index to be used for bindless access. Only for sampling.
-	/// @note It's thread-safe
+	// Returns an index to be used for bindless access. Only for sampling.
+	// It's thread-safe
 	U32 getOrCreateBindlessTextureIndex(const TextureSubresourceDesc& subresource);
 
 protected:
@@ -177,23 +176,23 @@ protected:
 	Format m_format = Format::kNone;
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 
-	/// Construct.
+	// Construct.
 	Texture(CString name)
 		: GrObject(kClassType, name)
 	{
 	}
 
-	/// Destroy.
+	// Destroy.
 	~Texture()
 	{
 	}
 
 private:
-	/// Allocate and initialize a new instance.
+	// Allocate and initialize a new instance.
 	[[nodiscard]] static Texture* newInstance(const TextureInitInfo& init);
 };
 
-/// Defines a part of a texture. This part can be a single surface or volume or the whole texture.
+// Defines a part of a texture. This part can be a single surface or volume or the whole texture.
 class TextureSubresourceDesc
 {
 public:
@@ -201,7 +200,7 @@ public:
 	U8 m_mipmap = 0;
 	U8 m_face = 0;
 
-	/// This flag doesn't mean the whole texture unless the m_aspect is equal to the aspect of the Texture.
+	// This flag doesn't mean the whole texture unless the m_aspect is equal to the aspect of the Texture.
 	Bool m_allSurfacesOrVolumes = true;
 
 	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::kNone;
@@ -238,7 +237,7 @@ public:
 		return TextureSubresourceDesc(mip, 0, 0, false, DepthStencilAspectBit::kNone);
 	}
 
-	/// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.
+	// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.
 	Bool overlapsWith(const TextureSubresourceDesc& b) const
 	{
 		return m_allSurfacesOrVolumes || b.m_allSurfacesOrVolumes || (m_mipmap == b.m_mipmap && m_face == b.m_face && m_layer == b.m_layer);
@@ -290,7 +289,7 @@ private:
 	}
 };
 
-/// Defines a part of a texture. This part can be a single surface or volume or the whole texture.
+// Defines a part of a texture. This part can be a single surface or volume or the whole texture.
 class TextureView
 {
 public:
@@ -338,7 +337,7 @@ public:
 		return *m_tex;
 	}
 
-	/// Returns true if the view contains all surfaces or volumes. It's orthogonal to depth stencil aspect.
+	// Returns true if the view contains all surfaces or volumes. It's orthogonal to depth stencil aspect.
 	[[nodiscard]] Bool isAllSurfacesOrVolumes() const
 	{
 		validate();
@@ -390,14 +389,14 @@ public:
 	[[nodiscard]] Bool isGoodForSampling() const
 	{
 		validate();
-		/// Can bound only one aspect at a time.
+		// Can bound only one aspect at a time.
 		return (m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepth
 				|| m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kStencil
 				|| m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
 			   && !!(m_tex->getTextureUsage() & TextureUsageBit::kAllSrv);
 	}
 
-	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTexture.
+	// Return true if the subresource can be used in CommandBuffer::copyBufferToTexture.
 	[[nodiscard]] Bool isGoodForCopyBufferToTexture() const
 	{
 		validate();
@@ -418,7 +417,7 @@ public:
 		return isSingleSurfaceOrVolume() && !!(m_tex->getTextureUsage() & TextureUsageBit::kAllRtvDsv);
 	}
 
-	/// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.
+	// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.
 	[[nodiscard]] Bool overlapsWith(const TextureView& b) const
 	{
 		validate();
@@ -460,6 +459,5 @@ private:
 		return singleSurfaceOrVolume;
 	}
 };
-/// @}
 
 } // end namespace anki

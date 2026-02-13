@@ -6,6 +6,7 @@
 #include <AnKi/Gr/Vulkan/VkTexture.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Gr/Vulkan/VkDescriptor.h>
+#include <AnKi/Gr/Vulkan/VkBuffer.h>
 
 namespace anki {
 
@@ -188,27 +189,19 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 	}
 }
 
-Error TextureImpl::initImage(const TextureInitInfo& init)
+VkImageCreateInfo TextureImpl::calcVkImageCreateInfo(const TextureInitInfo& init)
 {
-	// Check if format is supported
-	if(!imageSupported(init))
-	{
-		ANKI_VK_LOGE("TextureInitInfo contains a combination of parameters that it's not supported by the device. "
-					 "Texture format is %s",
-					 getFormatInfo(init.m_format).m_name);
-		return Error::kFunctionFailed;
-	}
+	ANKI_ASSERT(init.isValid());
 
-	// Contunue with the creation
 	VkImageCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	ci.flags = calcCreateFlags(init);
-	ci.imageType = convertTextureType(m_texType);
-	ci.format = m_vkFormat;
+	ci.imageType = convertTextureType(init.m_type);
+	ci.format = convertFormat(init.m_format);
 	ci.extent.width = init.m_width;
 	ci.extent.height = init.m_height;
 
-	switch(m_texType)
+	switch(init.m_type)
 	{
 	case TextureType::k1D:
 	case TextureType::k2D:
@@ -235,17 +228,55 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 		ANKI_ASSERT(0);
 	}
 
-	ci.mipLevels = m_mipCount;
+	if(init.m_type == TextureType::k3D)
+	{
+		ci.mipLevels = min(init.m_mipmapCount, computeMaxMipmapCount3d(init.m_width, init.m_height, init.m_depth));
+	}
+	else
+	{
+		ci.mipLevels = min(init.m_mipmapCount, computeMaxMipmapCount2d(init.m_width, init.m_height));
+	}
 
 	ci.samples = VK_SAMPLE_COUNT_1_BIT;
 	ci.tiling = VK_IMAGE_TILING_OPTIMAL;
 	ci.usage = convertTextureUsage(init.m_usage, init.m_format);
-	m_vkUsageFlags = ci.usage;
 	ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
 	ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 	ci.sharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
 	ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
+	return ci;
+}
+
+void TextureImpl::getMemoryRequirement(const TextureInitInfo& init, PtrSize& size)
+{
+	const VkImageCreateInfo ci = calcVkImageCreateInfo(init);
+
+	VkDeviceImageMemoryRequirements in = {};
+	in.sType = VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS;
+	in.pCreateInfo = &ci;
+
+	VkMemoryRequirements2 req = {};
+	req.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+
+	vkGetDeviceImageMemoryRequirements(getVkDevice(), &in, &req);
+
+	size = req.memoryRequirements.size + req.memoryRequirements.alignment;
+}
+
+Error TextureImpl::initImage(const TextureInitInfo& init)
+{
+	// Check if format is supported
+	if(!imageSupported(init))
+	{
+		ANKI_VK_LOGE("TextureInitInfo contains a combination of parameters that it's not supported by the device. "
+					 "Texture format is %s",
+					 getFormatInfo(init.m_format).m_name);
+		return Error::kFunctionFailed;
+	}
+
+	// Contunue with the creation
+	const VkImageCreateInfo ci = calcVkImageCreateInfo(init);
 	ANKI_VK_CHECK(vkCreateImage(getVkDevice(), &ci, nullptr, &m_imageHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_IMAGE, m_imageHandle);
 #if 0
@@ -271,19 +302,34 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 	ANKI_ASSERT(memIdx != kMaxU32);
 
-	// Allocate
-	if(!dedicatedRequirements.prefersDedicatedAllocation)
+	// Allocate and bind the memory
+	if(init.m_memoryBuffer)
 	{
-		GpuMemoryManager::getSingleton().allocateMemory(memIdx, requirements.memoryRequirements.size, U32(requirements.memoryRequirements.alignment),
-														m_memHandle);
+		const BufferImpl& buff = static_cast<const BufferImpl&>(init.m_memoryBuffer.getBuffer());
+		ANKI_ASSERT(buff.getGpuMemoryHandle().m_memTypeIdx == memIdx);
+
+		PtrSize offset = init.m_memoryBuffer.getOffset();
+		alignRoundUp(offset, requirements.memoryRequirements.alignment);
+		ANKI_ASSERT(offset + requirements.memoryRequirements.size <= init.m_memoryBuffer.getOffset() + init.m_memoryBuffer.getRange());
+
+		// Bind
+		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, buff.getGpuMemoryHandle().m_memory, offset));
 	}
 	else
 	{
-		GpuMemoryManager::getSingleton().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size, m_imageHandle, m_memHandle);
-	}
+		if(!dedicatedRequirements.prefersDedicatedAllocation)
+		{
+			GpuMemoryManager::getSingleton().allocateMemory(memIdx, requirements.memoryRequirements.size,
+															U32(requirements.memoryRequirements.alignment), m_memHandle);
+		}
+		else
+		{
+			GpuMemoryManager::getSingleton().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size, m_imageHandle, m_memHandle);
+		}
 
-	// Bind
-	ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
+		// Bind
+		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
+	}
 
 	return Error::kNone;
 }
