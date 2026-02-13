@@ -561,6 +561,12 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 	ANKI_TRACE_FUNCTION();
 	forbidCallOnUpdate();
 
+	if(!scene.m_canBeSaved)
+	{
+		ANKI_SCENE_LOGE("Scene can't be saved: %s", scene.m_name.cstr());
+		return Error::kUserData;
+	}
+
 	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
 	ANKI_LOGI("Saving scene: %s", filename.cstr());
@@ -575,9 +581,6 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 	ANKI_SERIALIZE(magic, 1);
 	U32 version = kSceneBinaryVersion;
 	ANKI_SERIALIZE(version, 1);
-
-	SceneString sceneName = scene.m_name;
-	ANKI_SERIALIZE(sceneName, 1);
 
 	// Count the serializable nodes
 	U32 serializableNodeCount = 0;
@@ -685,7 +688,7 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 	return Error::kNone;
 }
 
-Error SceneGraph::loadScene(CString filename, Scene*& scene)
+Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 {
 	ANKI_ASSERT(scene == nullptr);
 
@@ -694,21 +697,21 @@ Error SceneGraph::loadScene(CString filename, Scene*& scene)
 
 	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
-	ANKI_LOGI("Loading scene: %s", filename.cstr());
+	ANKI_LOGI("Loading scene: %s", filepath.cstr());
 
-	const String extension = getFileExtension(filename);
+	const String extension = getFileExtension(filepath);
 
 	if(extension == "lua")
 	{
-		scene = newEmptyScene("Level");
+		scene = newEmptyScene(getBasename(filepath));
 		const U32 oldActiveScene = m_activeSceneIndex;
 		setActiveScene(scene);
 
 		ScriptResourcePtr script;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, script));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(filepath, script));
 		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
-		scene->m_filename = filename;
+		scene->m_filepath = filepath;
 
 		ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 		setActiveScene(&m_scenes[oldActiveScene]);
@@ -717,9 +720,7 @@ Error SceneGraph::loadScene(CString filename, Scene*& scene)
 	}
 
 	ResourceFilePtr file;
-	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filename, file));
-
-	scene->m_filename = filename;
+	ANKI_CHECK(ResourceFilesystem::getSingleton().openFile(filepath, file));
 
 	TextSceneSerializer serializer(file.get());
 
@@ -740,9 +741,9 @@ Error SceneGraph::loadScene(CString filename, Scene*& scene)
 		return Error::kUserData;
 	}
 
-	SceneString sceneName;
-	ANKI_SERIALIZE(sceneName, 1);
-	scene = newEmptyScene(sceneName);
+	scene = newEmptyScene(getBasename(filepath));
+	scene->m_filepath = filepath;
+	scene->m_canBeSaved = true;
 
 	// Scene nodes
 	SceneNode::SerializeCommonArgs serializationArgs;

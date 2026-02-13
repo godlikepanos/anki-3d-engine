@@ -99,7 +99,7 @@ T getRandomRange(T min, T max) requires(std::is_integral<T>::value)
 {
 	ANKI_ASSERT(min <= max);
 	const U64 r = getRandom();
-	return T(r % U64(max - min + 1)) + min;
+	return T(r % U64(max - min)) + min;
 }
 
 /// Get min of two values.

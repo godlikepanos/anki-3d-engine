@@ -41,7 +41,7 @@ void MaterialEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 	}
 
 	Bool cacheDirty = false;
-	if(ImGui::Begin("Material Editor", &m_open, windowFlags))
+	if(ImGui::Begin(ICON_MDI_TEXT_BOX " Material Editor", &m_open, windowFlags))
 	{
 		if(ImGui::BeginChild("Toolbox", Vec2(0.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY,
 							 ImGuiWindowFlags_None))

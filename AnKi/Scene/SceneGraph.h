@@ -108,9 +108,9 @@ public:
 	}
 
 	// Get the filename associated with that scene. Mainly used by the editor
-	CString getFilename() const
+	CString getFilepath() const
 	{
-		return m_filename;
+		return m_filepath;
 	}
 
 	ANKI_INTERNAL U32 getNewNodeUuid() const
@@ -124,6 +124,16 @@ public:
 		return m_sceneUuid;
 	}
 
+	ANKI_INTERNAL Bool canBeSaved() const
+	{
+		return m_canBeSaved;
+	}
+
+	ANKI_INTERNAL void setCanBeSaved(Bool can)
+	{
+		m_canBeSaved = can;
+	}
+
 private:
 	SceneBlockArray<SceneNode*> m_nodes;
 
@@ -134,12 +144,13 @@ private:
 	static inline Atomic<U32> m_scenesUuid = {1};
 	U32 m_sceneUuid = 0;
 
-	SceneString m_filename;
+	SceneString m_filepath;
 
 	U8 m_arrayIndex = kMaxU8; // Index in SceneGraph::m_scenes
 
 	Bool m_immutable : 1 = false; // Can't add or remove nodes from it
 	Bool m_canDelete : 1 = true;
+	Bool m_canBeSaved : 1 = false;
 };
 
 // The scene graph that  all the scene entities
@@ -217,7 +228,7 @@ public:
 
 	Error saveScene(CString filename, Scene& scene);
 
-	Error loadScene(CString filename, Scene*& scene);
+	Error loadScene(CString filepath, Scene*& scene);
 
 	void deleteScene(Scene* scene);
 

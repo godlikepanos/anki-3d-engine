@@ -302,6 +302,17 @@ void EditorUi::mainMenu()
 				{
 					m_quit = true;
 				}
+
+				if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_ALL " Save All Scenes", "CTRL+ALT+S"))
+				{
+					saveScenes(false);
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE " Save Active Scene", "CTRL+S"))
+				{
+					saveScenes(true);
+				}
+
 				ImGui::EndMenu();
 			}
 
@@ -482,11 +493,6 @@ void EditorUi::mainMenu()
 
 			ImGui::EndMenuBar();
 		}
-
-		if(Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0 && Input::getSingleton().getKey(KeyCode::kQ) > 0)
-		{
-			m_quit = true;
-		}
 	}
 	ImGui::End();
 
@@ -497,12 +503,9 @@ void EditorUi::mainMenu()
 		{
 			if(ImGui::Button(ICON_MDI_CONTENT_SAVE_ALL))
 			{
-				if(SceneGraph::getSingleton().saveScene("./Scene.ankiscene", SceneGraph::getSingleton().getActiveScene()))
-				{
-					ANKI_LOGE("Failed to save scene");
-				}
+				saveScenes(false);
 			}
-			ImGui::SetItemTooltip("Save scene");
+			ImGui::SetItemTooltip("Save all scenes");
 
 			ImGui::SameLine();
 
@@ -1060,6 +1063,22 @@ void EditorUi::handleInput()
 	input.hideMouseCursor(false);
 	input.lockMouseWindowCenter(false);
 
+	if(Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0 && Input::getSingleton().getKey(KeyCode::kQ) > 0)
+	{
+		m_quit = true;
+	}
+
+	if(Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0 && Input::getSingleton().getKey(KeyCode::kS) == 1)
+	{
+		saveScenes(true);
+	}
+
+	if(Input::getSingleton().getKey(KeyCode::kLeftCtrl) > 0 && Input::getSingleton().getKey(KeyCode::kLeftShift) > 0
+	   && Input::getSingleton().getKey(KeyCode::kS) == 1)
+	{
+		saveScenes(false);
+	}
+
 	if(m_quit)
 	{
 		input.addEvent(InputEvent::kWindowClosed);
@@ -1151,6 +1170,46 @@ void EditorUi::handleInput()
 
 	// Delete key deletes the selected node
 	m_showDeleteSceneNodeDialog = m_showDeleteSceneNodeDialog || (input.getKey(KeyCode::kDelete) == 1 && m_selectedNode);
+}
+
+void EditorUi::saveScenes(Bool onlyActive)
+{
+	U32 scenesSaved = 0;
+	if(onlyActive)
+	{
+		Scene& activeScene = SceneGraph::getSingleton().getActiveScene();
+		if(SceneGraph::getSingleton().saveScene(activeScene.getFilepath(), activeScene))
+		{
+			ANKI_LOGE("Failed to save scene");
+		}
+		else
+		{
+			++scenesSaved;
+		}
+	}
+	else
+	{
+		SceneGraph::getSingleton().visitScenes([&](Scene& scene) {
+			if(scene.canBeSaved())
+			{
+				if(SceneGraph::getSingleton().saveScene(scene.getFilepath(), scene))
+				{
+					ANKI_LOGE("Failed to save scene");
+				}
+				else
+				{
+					++scenesSaved;
+				}
+			}
+			else
+			{
+				ANKI_LOGV("Skip saving scene: %s", scene.getName().cstr());
+			}
+			return FunctorContinue::kContinue;
+		});
+	}
+
+	ANKI_LOGI("%u scenes saved", scenesSaved);
 }
 
 } // end namespace anki

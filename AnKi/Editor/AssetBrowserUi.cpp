@@ -73,7 +73,8 @@ enum class AssetFileType : U32
 	kMaterial,
 	kMesh,
 	kLua,
-	kParticleEmitter
+	kParticleEmitter,
+	kScene
 };
 
 class AssetBrowserUi::AssetFile
@@ -211,6 +212,10 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			{
 				filetype = AssetFileType::kParticleEmitter;
 			}
+			else if(extension == "ankiscene")
+			{
+				filetype = AssetFileType::kScene;
+			}
 
 			if(filetype != AssetFileType::kNone)
 			{
@@ -347,15 +352,15 @@ void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWin
 		return;
 	}
 
-	m_runCtx = {};
-	setSelected();
-
 	if(m_assetPaths.getSize() == 0 || m_refreshAssetsPathsNextTime)
 	{
 		ANKI_CHECKF(ResourceFilesystem::getSingleton().refreshAll());
 		buildAssetStructure(m_assetPaths);
 		m_refreshAssetsPathsNextTime = false;
 	}
+
+	m_runCtx = {};
+	setSelected();
 
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
@@ -527,6 +532,24 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 						}
 						ImGui::PopFont();
 					}
+					else if(file.m_type == AssetFileType::kScene)
+					{
+						ImGui::PushFont(nullptr, cellWidth - 1.0f);
+						if(ImGui::Button(ICON_MDI_CURTAINS, Vec2(cellWidth)))
+						{
+							Scene* scene = nullptr;
+							if(SceneGraph::getSingleton().loadScene(file.m_fullFilepath, scene))
+							{
+								ANKI_LOGE("Failed to load scene: %s", file.m_fullFilepath.cstr());
+							}
+							else
+							{
+								SceneGraph::getSingleton().setActiveScene(scene);
+							}
+						}
+						ImGui::PopFont();
+					}
+
 					ImGui::PopID();
 
 					// Right click
@@ -580,7 +603,7 @@ void AssetBrowserUi::rightClickMenuDialog()
 		// Rename file
 		Array<Char, kMaxTextInputLen> name;
 		strncpy(name.getBegin(), m_runCtx.m_selectedFile->m_filename.cstr(), name.getSize());
-		if(ImGui::InputText("Rename", name.getBegin(), name.getSize()))
+		if(ImGui::InputText("Rename", name.getBegin(), name.getSize(), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			CString newName(name.getBegin());
 			if(newName.getLength())
@@ -655,6 +678,26 @@ void AssetBrowserUi::drawMenu()
 				{
 					ANKI_LOGE("Failed to create new particles: %s", filepath.cstr());
 				}
+
+				m_refreshAssetsPathsNextTime = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_CURTAINS " Scene"))
+			{
+				String filepath;
+				filepath.sprintf("%s/%04u.NewScene.ankiscene", m_runCtx.m_selectedDir->m_fullPath.cstr(), m_newMaterialIndex++);
+
+				String randomSceneName;
+				randomSceneName.sprintf("%u", U32(getRandom() % kMaxU32));
+				Scene* tempScene = SceneGraph::getSingleton().newEmptyScene(randomSceneName);
+				tempScene->setCanBeSaved(true);
+
+				if(SceneGraph::getSingleton().saveScene(filepath, *tempScene))
+				{
+					ANKI_LOGE("Failed to create new scene: %s", filepath.cstr());
+				}
+
+				SceneGraph::getSingleton().deleteScene(tempScene);
 
 				m_refreshAssetsPathsNextTime = true;
 			}

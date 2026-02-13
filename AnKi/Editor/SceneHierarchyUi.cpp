@@ -24,7 +24,7 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 	}
 
-	if(ImGui::Begin("Scene Hierarchy", &m_open, windowFlags))
+	if(ImGui::Begin(ICON_MDI_CURTAINS " Scene Hierarchy", &m_open, windowFlags))
 	{
 		// Scene selector
 		{

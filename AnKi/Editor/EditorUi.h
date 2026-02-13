@@ -114,6 +114,7 @@ private:
 	void objectPicking();
 	void handleInput();
 	void validateSelectedNode();
+	static void saveScenes(Bool onlyActive);
 };
 
 } // end namespace anki
