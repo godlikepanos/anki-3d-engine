@@ -1,0 +1,198 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <AnKi/GpuMemory/TextureMemoryPool.h>
+#include <AnKi/Gr/GrManager.h>
+#include <AnKi/Gr/Fence.h>
+
+namespace anki {
+
+static constexpr Array<PtrSize, 7> kMemoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB};
+
+class TextureMemoryPool::SLChunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<CoreMemoryPool>>
+{
+public:
+	BufferPtr m_buffer;
+};
+
+class TextureMemoryPool::SLInterface
+{
+public:
+	// Interface methods
+	U32 getClassCount() const
+	{
+		return kMemoryClasses.getSize();
+	}
+
+	void getClassInfo(U32 idx, PtrSize& size) const
+	{
+		size = kMemoryClasses[idx];
+	}
+
+	Error allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
+	{
+		return TextureMemoryPool::getSingleton().allocateChunk(newChunk, chunkSize);
+	}
+
+	void deleteChunk(SLChunk* chunk)
+	{
+		TextureMemoryPool::getSingleton().deleteChunk(chunk);
+	}
+
+	static constexpr PtrSize getMinSizeAlignment()
+	{
+		return 4;
+	}
+};
+
+Error TextureMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
+{
+	if(TextureMemoryPool::getSingleton().m_chunksCreated == g_cvarCoreTextureMemoryPoolMaxChunks)
+	{
+		ANKI_CORE_LOGE("Reached the max limit of memory chunks. Incrase %s", g_cvarCoreTextureMemoryPoolMaxChunks.getName().cstr());
+		return Error::kOutOfMemory;
+	}
+
+	BufferInitInfo buffInit("TexPoolChunk");
+	buffInit.m_size = g_cvarCoreTextureMemoryPoolChunkSize;
+	buffInit.m_usage = BufferUsageBit::kTexture;
+
+	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
+
+	newChunk = newInstance<SLChunk>(CoreMemoryPool::getSingleton());
+	newChunk->m_buffer = buff;
+
+	chunkSize = g_cvarCoreTextureMemoryPoolChunkSize;
+
+	++TextureMemoryPool::getSingleton().m_chunksCreated;
+
+	return Error::kNone;
+}
+
+void TextureMemoryPool::deleteChunk(SLChunk* chunk)
+{
+	if(chunk)
+	{
+		ANKI_CORE_LOGW("Will delete texture mem pool chunk and will serialize CPU and GPU");
+		GrManager::getSingleton().finish();
+		deleteInstance(GrMemoryPool::getSingleton(), chunk);
+
+		// Wait again to force delete the memory
+		GrManager::getSingleton().finish();
+
+		ANKI_ASSERT(TextureMemoryPool::getSingleton().m_chunksCreated > 0);
+		--TextureMemoryPool::getSingleton().m_chunksCreated;
+	}
+}
+
+void TextureMemoryPool::init()
+{
+	m_builder = newInstance<SLBuilder>(CoreMemoryPool::getSingleton());
+}
+
+TextureMemoryPool::~TextureMemoryPool()
+{
+	GrManager::getSingleton().finish();
+
+	throwGarbage(true);
+
+	deleteInstance(CoreMemoryPool::getSingleton(), m_builder);
+}
+
+TextureMemoryPoolAllocation TextureMemoryPool::allocate(PtrSize textureSize)
+{
+	LockGuard lock(m_mtx);
+
+	SLChunk* chunk;
+	PtrSize offset;
+	if(m_builder->allocate(textureSize, 1, chunk, offset))
+	{
+		ANKI_CORE_LOGF("Failed to allocate tex memory");
+	}
+
+	TextureMemoryPoolAllocation alloc;
+	alloc.m_chunk = chunk;
+	alloc.m_offset = offset;
+	alloc.m_size = textureSize;
+
+	m_allocatedSize += textureSize;
+
+	return alloc;
+}
+
+void TextureMemoryPool::deferredFree(TextureMemoryPoolAllocation& alloc)
+{
+	if(!alloc)
+	{
+		return;
+	}
+
+	LockGuard lock(m_mtx);
+
+	if(m_activeGarbage == kMaxU32)
+	{
+		m_activeGarbage = m_garbage.emplace().getArrayIndex();
+	}
+
+	m_garbage[m_activeGarbage].m_allocations.emplace(std::move(alloc));
+	ANKI_ASSERT(!alloc);
+}
+
+void TextureMemoryPool::endFrame(Fence* fence)
+{
+	ANKI_ASSERT(fence);
+
+	LockGuard lock(m_mtx);
+
+	throwGarbage(false);
+
+	// Set the new fence
+	if(m_activeGarbage != kMaxU32)
+	{
+		ANKI_ASSERT(m_garbage[m_activeGarbage].m_allocations.getSize());
+		ANKI_ASSERT(!m_garbage[m_activeGarbage].m_fence);
+		m_garbage[m_activeGarbage].m_fence.reset(fence);
+
+		m_activeGarbage = kMaxU32;
+	}
+}
+
+void TextureMemoryPool::throwGarbage(Bool all)
+{
+	Array<U32, 8> garbageToDelete;
+	U32 garbageToDeleteCount = 0;
+	for(auto it = m_garbage.getBegin(); it != m_garbage.getEnd(); ++it)
+	{
+		Garbage& garbage = *it;
+
+		if(all || (garbage.m_fence && garbage.m_fence->signaled()))
+		{
+			for(TextureMemoryPoolAllocation& alloc : garbage.m_allocations)
+			{
+				m_builder->free(static_cast<SLChunk*>(alloc.m_chunk), alloc.m_offset, alloc.m_size);
+
+				ANKI_ASSERT(m_allocatedSize >= alloc.m_size);
+				m_allocatedSize -= alloc.m_size;
+			}
+
+			garbageToDelete[garbageToDeleteCount++] = it.getArrayIndex();
+		}
+	}
+
+	for(U32 i = 0; i < garbageToDeleteCount; ++i)
+	{
+		m_garbage.erase(garbageToDelete[i]);
+	}
+}
+
+TextureMemoryPoolAllocation::operator BufferView() const
+{
+	ANKI_ASSERT(!(*this));
+	TextureMemoryPool::SLChunk* chunk = static_cast<TextureMemoryPool::SLChunk*>(m_chunk);
+
+	return BufferView(chunk->m_buffer.get(), m_offset, m_size);
+}
+
+} // end namespace anki

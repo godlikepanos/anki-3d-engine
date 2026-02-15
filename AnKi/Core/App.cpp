@@ -17,6 +17,7 @@
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/GpuReadbackMemoryPool.h>
+#include <AnKi/GpuMemory/TextureMemoryPool.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Core/MaliHwCounters.h>
@@ -165,6 +166,7 @@ void App::cleanup()
 	GpuVisibleTransientMemoryPool::freeSingleton();
 	UnifiedGeometryBuffer::freeSingleton();
 	GpuSceneBuffer::freeSingleton();
+	TextureMemoryPool::freeSingleton();
 	GpuReadbackMemoryPool::freeSingleton();
 	CoreThreadJobManager::freeSingleton();
 	MaliHwCounters::freeSingleton();
@@ -271,6 +273,7 @@ Error App::init()
 	RebarTransientMemoryPool::allocateSingleton().init();
 	GpuVisibleTransientMemoryPool::allocateSingleton();
 	GpuReadbackMemoryPool::allocateSingleton();
+	TextureMemoryPool::allocateSingleton();
 
 	//
 	// Physics
@@ -495,6 +498,7 @@ Error App::mainLoop()
 			GpuSceneBuffer::getSingleton().endFrame(renderFence.get());
 			GpuVisibleTransientMemoryPool::getSingleton().endFrame();
 			GpuReadbackMemoryPool::getSingleton().endFrame(renderFence.get());
+			TextureMemoryPool::getSingleton().endFrame(renderFence.get());
 
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();

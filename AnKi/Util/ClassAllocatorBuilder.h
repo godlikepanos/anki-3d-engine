@@ -10,40 +10,32 @@
 
 namespace anki {
 
-/// @addtogroup util_memory
-/// @{
-
-/// @memberof ClassAllocatorBuilder
 class ClassAllocatorBuilderStats
 {
 public:
 	PtrSize m_allocatedSize;
 	PtrSize m_inUseSize;
-	U32 m_chunkCount; ///< Can be assosiated with the number of allocations.
+	U32 m_chunkCount; // Can be assosiated with the number of allocations.
 };
 
-/// This is a convenience class used to build class memory allocators.
-/// @tparam TChunk This is the type of the internally allocated chunks. This should be having the following members:
-///                @code
-///                BitSet<SOME_UPPER_LIMIT> m_inUseSuballocations
-///                U32 m_suballocationCount;
-///                void* m_class;
-///                @endcode
-///                And should inherit from IntrusiveListEnabled<TChunk>
-/// @tparam TInterface This is the type of the interface that contains various info. Should have the following members:
-///                    @code
-///                    U32 getClassCount();
-///                    void getClassInfo(U32 classIdx, PtrSize& chunkSize, PtrSize& suballocationSize) const;
-///                    Error allocateChunk(U32 classIdx, Chunk*& chunk);
-///                    void freeChunk(TChunk* out);
-///                    @endcode
-/// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
-/// @tparam TMemoryPool The memory pool used in internal allocations.
+// This is a convenience class used to build class memory allocators.
+// TChunk: This is the type of the internally allocated chunks. This should be having the following members:
+//     BitSet<SOME_UPPER_LIMIT> m_inUseSuballocations
+//     U32 m_suballocationCount;
+//     void* m_class;
+//     And should inherit from IntrusiveListEnabled<TChunk>
+// TInterface: This is the type of the interface that contains various info. Should have the following members:
+//     U32 getClassCount();
+//     void getClassInfo(U32 classIdx, PtrSize& chunkSize, PtrSize& suballocationSize) const;
+//     Error allocateChunk(U32 classIdx, Chunk*& chunk);
+//     void freeChunk(TChunk* out);
+// TLock: This an optional lock. Can be a Mutex or SpinLock or some dummy class.
+// TMemoryPool: The memory pool used in internal allocations.
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 class ClassAllocatorBuilder
 {
 public:
-	/// Create.
+	// Create.
 	ClassAllocatorBuilder(const TMemoryPool& pool = TMemoryPool())
 		: m_classes(pool)
 	{
@@ -51,7 +43,7 @@ public:
 
 	ClassAllocatorBuilder(const ClassAllocatorBuilder&) = delete; // Non-copyable
 
-	/// Calls @a destroy().
+	// Calls destroy().
 	~ClassAllocatorBuilder()
 	{
 		destroy();
@@ -59,65 +51,65 @@ public:
 
 	ClassAllocatorBuilder& operator=(const ClassAllocatorBuilder&) = delete; // Non-copyable
 
-	/// Initialize it. Feel free to feedle with the TInterface before you do that.
+	// Initialize it. Feel free to feedle with the TInterface before you do that.
 	void init();
 
-	/// Destroy the allocator builder.
+	// Destroy the allocator builder.
 	void destroy();
 
-	/// Allocate memory.
-	/// @param size The size to allocate.
-	/// @param alignment The alignment of the returned address.
-	/// @param[out] chunk The chunk that the memory belongs to.
-	/// @param[out] offset The offset inside the chunk.
-	/// @note This is thread safe.
+	// Allocate memory.
+	// size: The size to allocate.
+	// alignment: The alignment of the returned address.
+	// chunk: The chunk that the memory belongs to.
+	// offset: The offset inside the chunk.
+	// This is thread safe.
 	Error allocate(PtrSize size, PtrSize alignment, TChunk*& chunk, PtrSize& offset);
 
-	/// Free memory.
-	/// @param chunk The chunk the allocation belongs to.
-	/// @param offset The memory offset inside the chunk.
+	// Free memory.
+	// chunk: The chunk the allocation belongs to.
+	// offset: The memory offset inside the chunk.
 	void free(TChunk* chunk, PtrSize offset);
 
-	/// Access the interface.
-	/// @note Not thread safe. Don't call it while calling allocate or free.
+	// Access the interface.
+	// Not thread safe. Don't call it while calling allocate or free.
 	TInterface& getInterface()
 	{
 		return m_interface;
 	}
 
-	/// Access the interface.
-	/// @note Not thread safe. Don't call it while calling allocate or free.
+	// Access the interface.
+	// Not thread safe. Don't call it while calling allocate or free.
 	const TInterface& getInterface() const
 	{
 		return m_interface;
 	}
 
-	/// Get some statistics.
-	/// @note It's thread-safe because it will lock. Don't overuse it.
+	// Get some statistics.
+	// It's thread-safe because it will lock. Don't overuse it.
 	void getStats(ClassAllocatorBuilderStats& stats) const;
 
 private:
-	/// A class of allocations. It's a list of memory chunks. Each chunk is dividied in suballocations.
+	// A class of allocations. It's a list of memory chunks. Each chunk is dividied in suballocations.
 	class Class
 	{
 	public:
-		/// The active chunks.
+		// The active chunks.
 		IntrusiveList<TChunk> m_chunkList;
 
-		/// The size of each chunk.
+		// The size of each chunk.
 		PtrSize m_chunkSize = 0;
 
-		/// The max size a suballocation can have.
+		// The max size a suballocation can have.
 		PtrSize m_suballocationSize = 0;
 
-		/// Lock.
+		// Lock.
 		mutable TLock m_mtx;
 	};
 
-	/// The interface as decribed in the class docs.
+	// The interface as decribed in the class docs.
 	TInterface m_interface;
 
-	/// All the classes.
+	// All the classes.
 	DynamicArray<Class, TMemoryPool> m_classes;
 
 	Class* findClass(PtrSize size, PtrSize alignment);
@@ -127,7 +119,6 @@ private:
 		return m_classes[0].m_chunkSize != 0;
 	}
 };
-/// @}
 
 } // end namespace anki
 

@@ -270,7 +270,7 @@ void SegregatedListsGpuMemoryPool::endFrame(Fence* fence)
 	{
 		Garbage& garbage = *it;
 
-		if(garbage.m_fence && garbage.m_fence->clientWait(0.0))
+		if(garbage.m_fence && garbage.m_fence->signaled())
 		{
 			for(SegregatedListsGpuMemoryPoolToken token : garbage.m_tokens)
 			{

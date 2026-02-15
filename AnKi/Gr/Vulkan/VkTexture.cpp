@@ -314,6 +314,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 		// Bind
 		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, buff.getGpuMemoryHandle().m_memory, offset));
+
+		m_placedMemory.reset(&init.m_memoryBuffer.getBuffer());
 	}
 	else
 	{

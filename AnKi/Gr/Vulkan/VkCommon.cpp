@@ -346,6 +346,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
 	}
 
+	if(!!(usageMask & BufferUsageBit::kTexture))
+	{
+		// Choose something close to that
+		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+	}
+
 	ANKI_ASSERT(out);
 
 	return out;

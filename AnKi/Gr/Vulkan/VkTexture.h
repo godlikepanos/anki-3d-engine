@@ -113,6 +113,8 @@ private:
 	mutable SpinLock m_usedForMtx;
 #endif
 
+	BufferInternalPtr m_placedMemory;
+
 	[[nodiscard]] static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
 
 	[[nodiscard]] Bool imageSupported(const TextureInitInfo& init);
