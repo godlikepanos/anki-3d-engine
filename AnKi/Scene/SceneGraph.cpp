@@ -134,10 +134,9 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 		RenderStateBucketContainer::allocateSingleton();
 
 		// Construct a few common nodes
-		if(g_cvarCoreDisplayStats > 0)
+		if(ANKI_STATS_ENABLED)
 		{
-			StatsUiNode* statsNode = newSceneNode<StatsUiNode>("_StatsUi");
-			statsNode->setFpsOnly(g_cvarCoreDisplayStats == 1);
+			newSceneNode<StatsUiNode>("_StatsUi");
 		}
 
 		newSceneNode<DeveloperConsoleUiNode>("_DevConsole");

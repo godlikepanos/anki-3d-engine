@@ -309,7 +309,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 		ANKI_ASSERT(buff.getGpuMemoryHandle().m_memTypeIdx == memIdx);
 
 		PtrSize offset = init.m_memoryBuffer.getOffset();
-		alignRoundUp(offset, requirements.memoryRequirements.alignment);
+		alignRoundUp(requirements.memoryRequirements.alignment, offset);
 		ANKI_ASSERT(offset + requirements.memoryRequirements.size <= init.m_memoryBuffer.getOffset() + init.m_memoryBuffer.getRange());
 
 		// Bind

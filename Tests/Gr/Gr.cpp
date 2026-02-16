@@ -2714,7 +2714,7 @@ RWTexture2D<float4> g_uav : register(u0);
 			const Array<Vec3, 4> colors = {Vec3(0.0f), Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f), Vec3(1.0f, 0.0f, 0.0f)};
 
 			DynamicArray<U8> sbtData;
-			sbtData.resize(copyHandles.getSize() * sbtRecordSize, 0);
+			sbtData.resize(copyHandles.getSize() * sbtRecordSize, 0_U8);
 
 			U32 count = 0;
 			for(U32 handleIdx : copyHandles)

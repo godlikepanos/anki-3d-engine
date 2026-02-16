@@ -47,7 +47,7 @@ static void labelBytes(PtrSize val, CString name)
 	ImGui::TextUnformatted(timestamp.cstr());
 }
 
-class StatsUiNode::Value
+class StatsUi::Value
 {
 public:
 	F64 m_avg = 0.0;
@@ -65,31 +65,23 @@ public:
 	}
 };
 
-StatsUiNode::StatsUiNode(const SceneNodeInitInfo& inf)
-	: SceneNode(inf)
+StatsUi::StatsUi()
 {
-	UiComponent* uic = newComponent<UiComponent>();
-	uic->init(
-		[](UiCanvas& canvas, void* ud) {
-			static_cast<StatsUiNode*>(ud)->draw(canvas);
-		},
-		this);
-
 	if(StatsSet::getSingleton().getCounterCount())
 	{
 		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
 	}
 }
 
-StatsUiNode::~StatsUiNode()
+StatsUi::~StatsUi()
 {
 }
 
-void StatsUiNode::draw(UiCanvas& canvas)
+void StatsUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
 {
-	if(!m_font)
+	if(!m_open)
 	{
-		m_font = canvas.addFont("EngineAssets/UbuntuMonoRegular.ttf");
+		return;
 	}
 
 	Bool flush = false;
@@ -100,74 +92,126 @@ void StatsUiNode::draw(UiCanvas& canvas)
 	}
 	++m_bufferedFrames;
 
-	ImGui::PushFont(m_font, 24.0f);
-
-	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
-	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
-
-	if(ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+	if(ImGui::GetFrameCount() > 1)
 	{
-		ImGui::SetWindowPos(Vec2(5.0f, 5.0f));
-		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
+		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(initialPos, ImGuiCond_FirstUseEver);
+	}
 
-		if(!m_fpsOnly)
+	if(ImGui::Begin("Stats", &m_open, windowFlags))
+	{
+		StatCategory category = StatCategory::kCount;
+		U32 count = 0;
+		StatsSet::getSingleton().iterateStats(
+			[&](StatCategory c, const Char* name, U64 value, StatFlag flags) {
+				if(category != c)
+				{
+					category = c;
+					ImGui::SeparatorText(kStatCategoryTexts[c].cstr());
+
+					// Hack
+					if(c == StatCategory::kMisc)
+					{
+						ImGui::Text("Frame: %zu", GlobalFrameIndex::getSingleton().m_value);
+					}
+				}
+
+				if(!!(flags & StatFlag::kBytes))
+				{
+					labelBytes(value, name);
+				}
+				else
+				{
+					ImGui::Text("%s: %zu", name, value);
+				}
+
+				++count;
+			},
+			[&](StatCategory c, const Char* name, F64 value, StatFlag flags) {
+				if(category != c)
+				{
+					category = c;
+					ImGui::SeparatorText(kStatCategoryTexts[c].cstr());
+				}
+
+				if(!!(flags & StatFlag::kShowAverage))
+				{
+					m_averageValues[count].update(value, flush);
+					value = m_averageValues[count].m_avg;
+				}
+
+				ImGui::Text("%s: %f", name, value);
+				++count;
+			});
+	}
+	ImGui::End();
+}
+
+StatsUiNode::StatsUiNode(const SceneNodeInitInfo& inf)
+	: SceneNode(inf)
+{
+	UiComponent* uic = newComponent<UiComponent>();
+	uic->init(
+		[](UiCanvas& canvas, void* ud) {
+			static_cast<StatsUiNode*>(ud)->draw(canvas);
+		},
+		this);
+
+	uic->setEnabled(g_cvarCoreDisplayStats > 0);
+	m_statsUi.m_open = true;
+
+	setSerialization(false);
+	setUpdateOnPause(true);
+}
+
+StatsUiNode::~StatsUiNode()
+{
+}
+
+void StatsUiNode::update([[maybe_unused]] SceneNodeUpdateInfo& info)
+{
+	getFirstComponentOfType<UiComponent>().setEnabled(g_cvarCoreDisplayStats > 0);
+	m_fpsOnly = g_cvarCoreDisplayStats == 1;
+}
+
+void StatsUiNode::draw(UiCanvas& canvas)
+{
+	if(!m_font)
+	{
+		m_font = canvas.addFont("EngineAssets/UbuntuMonoRegular.ttf");
+	}
+
+	ImGui::PushFont(m_font, 24.0f);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, Vec4(0.0, 0.0, 0.0, 0.3f));
+
+	const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+	const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+	const Vec2 initialPos(viewportPos);
+	const Vec2 initialSize(500.0f, viewportSize.y - 20.0f);
+
+	if(!m_fpsOnly)
+	{
+		m_statsUi.drawWindow(initialPos, initialSize, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+	}
+	else
+	{
+		if(ImGui::GetFrameCount() > 1)
 		{
-			StatCategory category = StatCategory::kCount;
-			U32 count = 0;
-			StatsSet::getSingleton().iterateStats(
-				[&](StatCategory c, const Char* name, U64 value, StatFlag flags) {
-					if(category != c)
-					{
-						category = c;
-						ImGui::Text("-- %s --", kStatCategoryTexts[c].cstr());
-
-						// Hack
-						if(c == StatCategory::kMisc)
-						{
-							ImGui::Text("Frame: %zu", GlobalFrameIndex::getSingleton().m_value);
-						}
-					}
-
-					if(!!(flags & StatFlag::kBytes))
-					{
-						labelBytes(value, name);
-					}
-					else
-					{
-						ImGui::Text("%s: %zu", name, value);
-					}
-
-					++count;
-				},
-				[&](StatCategory c, const Char* name, F64 value, StatFlag flags) {
-					if(category != c)
-					{
-						category = c;
-						ImGui::Text("-- %s --", kStatCategoryTexts[c].cstr());
-					}
-
-					if(!!(flags & StatFlag::kShowAverage))
-					{
-						m_averageValues[count].update(value, flush);
-						value = m_averageValues[count].m_avg;
-					}
-
-					ImGui::Text("%s: %f", name, value);
-					++count;
-				});
+			ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowPos(initialPos, ImGuiCond_FirstUseEver);
 		}
-		else
+
+		if(ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			const Second maxTime = max(g_svarCpuTotalTime.getValue<F64>(), g_svarRendererGpuTime.getValue<F64>()) / 1000.0;
 			const F32 fps = F32(1.0 / maxTime);
 			const Bool cpuBound = g_svarCpuTotalTime.getValue<F64>() > g_svarRendererGpuTime.getValue<F64>();
 			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f", fps);
 		}
+		ImGui::End();
 	}
 
-	ImGui::End();
-	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
-
+	ImGui::PopStyleColor();
 	ImGui::PopFont();
 }
 

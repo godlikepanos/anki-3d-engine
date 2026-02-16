@@ -9,6 +9,7 @@
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
 
@@ -29,7 +30,7 @@ void UiStage::buildUi()
 
 	ANKI_TRACE_SCOPED_EVENT(UiBuild);
 
-	if(SceneGraph::getSingleton().isPaused())
+	if(SceneGraph::getSingleton().isPaused() || g_cvarCoreDisplayStats > 0)
 	{
 		m_canvas->handleInput();
 	}

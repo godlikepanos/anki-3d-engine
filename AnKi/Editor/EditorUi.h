@@ -12,6 +12,7 @@
 #include <AnKi/Editor/AssetBrowserUi.h>
 #include <AnKi/Util/Function.h>
 #include <AnKi/Scene/SceneNode.h>
+#include <AnKi/Scene/StatsUiNode.h>
 
 namespace anki {
 
@@ -56,6 +57,7 @@ private:
 	SceneNodePropertiesUi m_sceneNodePropertiesWindow;
 	SceneHierarchyUi m_sceneHierarchyWindow;
 	AssetBrowserUi m_assetBrowserWindow;
+	StatsUi m_statsWindow;
 
 	SceneGraphView m_sceneGraphView;
 

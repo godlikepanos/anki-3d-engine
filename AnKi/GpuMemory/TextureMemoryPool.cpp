@@ -6,10 +6,14 @@
 #include <AnKi/GpuMemory/TextureMemoryPool.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Fence.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
-static constexpr Array<PtrSize, 7> kMemoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB};
+ANKI_SVAR(TextureMemoryPoolCapacity, StatCategory::kGpuMem, "Texture mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(TextureMemoryPoolUsedMemory, StatCategory::kGpuMem, "Texture mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+
+static constexpr Array<PtrSize, 8> kMemoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 256_MB};
 
 class TextureMemoryPool::SLChunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<CoreMemoryPool>>
 {
@@ -47,6 +51,20 @@ public:
 	}
 };
 
+TextureMemoryPool::TextureMemoryPool()
+{
+	m_builder = newInstance<SLBuilder>(CoreMemoryPool::getSingleton());
+}
+
+TextureMemoryPool::~TextureMemoryPool()
+{
+	GrManager::getSingleton().finish();
+
+	throwGarbage(true);
+
+	deleteInstance(CoreMemoryPool::getSingleton(), m_builder);
+}
+
 Error TextureMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
 {
 	if(TextureMemoryPool::getSingleton().m_chunksCreated == g_cvarCoreTextureMemoryPoolMaxChunks)
@@ -68,6 +86,8 @@ Error TextureMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
 
 	++TextureMemoryPool::getSingleton().m_chunksCreated;
 
+	g_svarTextureMemoryPoolCapacity.increment(U32(g_cvarCoreTextureMemoryPoolChunkSize));
+
 	return Error::kNone;
 }
 
@@ -77,28 +97,16 @@ void TextureMemoryPool::deleteChunk(SLChunk* chunk)
 	{
 		ANKI_CORE_LOGW("Will delete texture mem pool chunk and will serialize CPU and GPU");
 		GrManager::getSingleton().finish();
-		deleteInstance(GrMemoryPool::getSingleton(), chunk);
+		deleteInstance(CoreMemoryPool::getSingleton(), chunk);
 
 		// Wait again to force delete the memory
 		GrManager::getSingleton().finish();
 
 		ANKI_ASSERT(TextureMemoryPool::getSingleton().m_chunksCreated > 0);
 		--TextureMemoryPool::getSingleton().m_chunksCreated;
+
+		g_svarTextureMemoryPoolCapacity.decrement(U32(g_cvarCoreTextureMemoryPoolChunkSize));
 	}
-}
-
-void TextureMemoryPool::init()
-{
-	m_builder = newInstance<SLBuilder>(CoreMemoryPool::getSingleton());
-}
-
-TextureMemoryPool::~TextureMemoryPool()
-{
-	GrManager::getSingleton().finish();
-
-	throwGarbage(true);
-
-	deleteInstance(CoreMemoryPool::getSingleton(), m_builder);
 }
 
 TextureMemoryPoolAllocation TextureMemoryPool::allocate(PtrSize textureSize)
@@ -157,6 +165,8 @@ void TextureMemoryPool::endFrame(Fence* fence)
 
 		m_activeGarbage = kMaxU32;
 	}
+
+	g_svarTextureMemoryPoolUsedMemory.set(m_allocatedSize);
 }
 
 void TextureMemoryPool::throwGarbage(Bool all)
@@ -175,6 +185,8 @@ void TextureMemoryPool::throwGarbage(Bool all)
 
 				ANKI_ASSERT(m_allocatedSize >= alloc.m_size);
 				m_allocatedSize -= alloc.m_size;
+
+				alloc.reset();
 			}
 
 			garbageToDelete[garbageToDeleteCount++] = it.getArrayIndex();
@@ -189,7 +201,7 @@ void TextureMemoryPool::throwGarbage(Bool all)
 
 TextureMemoryPoolAllocation::operator BufferView() const
 {
-	ANKI_ASSERT(!(*this));
+	ANKI_ASSERT(!!(*this));
 	TextureMemoryPool::SLChunk* chunk = static_cast<TextureMemoryPool::SLChunk*>(m_chunk);
 
 	return BufferView(chunk->m_buffer.get(), m_offset, m_size);

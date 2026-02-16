@@ -13,8 +13,8 @@
 
 namespace anki {
 
-ANKI_CVAR2(NumericCVar<PtrSize>, Core, TextureMemoryPool, ChunkSize, 256_MB, 16_MB, 1_GB, "XXX")
-ANKI_CVAR2(NumericCVar<PtrSize>, Core, TextureMemoryPool, MaxChunks, 4, 1, 32, "XXX")
+ANKI_CVAR2(NumericCVar<PtrSize>, Core, TextureMemoryPool, ChunkSize, 256_MB, 16_MB, 1_GB, "Texture memory pool is allocated in chunks of this size")
+ANKI_CVAR2(NumericCVar<PtrSize>, Core, TextureMemoryPool, MaxChunks, 4, 1, 32, "Max number of chunks")
 
 class TextureMemoryPoolAllocation
 {
@@ -38,11 +38,9 @@ public:
 	{
 		ANKI_ASSERT(!(*this) && "Need to manually free this");
 		m_chunk = b.m_chunk;
-		b.m_chunk = nullptr;
 		m_offset = b.m_offset;
-		b.m_offset = kMaxPtrSize;
 		m_size = b.m_size;
-		b.m_size = 0;
+		b.reset();
 		return *this;
 	}
 
@@ -57,19 +55,24 @@ private:
 	void* m_chunk = nullptr; // Type is TextureMemoryPool::SLChunk
 	PtrSize m_offset = kMaxPtrSize;
 	PtrSize m_size = 0;
+
+	void reset()
+	{
+		m_chunk = nullptr;
+		m_offset = kMaxPtrSize;
+		m_size = 0;
+	}
 };
 
-// XXX
+// It's a texture memory allocator. It allocates Buffers and sub-allocates from them.
 class TextureMemoryPool : public MakeSingleton<TextureMemoryPool>
 {
 	friend class TextureMemoryPoolAllocation;
 
 public:
-	TextureMemoryPool() = default;
+	TextureMemoryPool();
 
 	~TextureMemoryPool();
-
-	void init();
 
 	// It's thread-safe
 	TextureMemoryPoolAllocation allocate(PtrSize textureSize);

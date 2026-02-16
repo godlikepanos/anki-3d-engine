@@ -212,7 +212,16 @@ void EditorUi::draw(UiCanvas& canvas)
 		const Vec2 initialSize = Vec2(viewportSize.x / 2.0f, kConsoleHeight);
 		const Vec2 initialPos = Vec2(viewportSize.x / 2.0f, viewportPos.y + viewportSize.y - initialSize.y);
 
-		m_assetBrowserWindow.drawWindow(initialSize, initialPos, ImGuiWindowFlags_NoCollapse);
+		m_assetBrowserWindow.drawWindow(initialPos, initialSize, ImGuiWindowFlags_NoCollapse);
+	}
+
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+		const Vec2 initialSize = Vec2(500.0f, viewportSize.y - 20.0f);
+		const Vec2 initialPos = Vec2((viewportSize.x - initialSize.x) / 2.0f, viewportPos.y);
+
+		m_statsWindow.drawWindow(initialPos, initialSize, 0);
 	}
 
 	deleteSelectedNodeDialog(m_showDeleteSceneNodeDialog);
@@ -346,6 +355,11 @@ void EditorUi::mainMenu()
 				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
 				{
 					m_showDebugRtsWindow = true;
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_CHART_BAR_STACKED " Stats"))
+				{
+					m_statsWindow.m_open = true;
 				}
 
 				ImGui::EndMenu();

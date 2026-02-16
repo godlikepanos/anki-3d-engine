@@ -7,16 +7,14 @@
 
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/Gr.h>
+#include <AnKi/GpuMemory/TextureMemoryPool.h>
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
 ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageSize, 1024u * 1024u, 4u, kMaxU32, "Max image size to load")
 
-/// Image resource class. It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs, PNGs, JPEG and
-/// AnKi's image format.
+// Image resource class. It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs, PNGs, JPEG and
+// AnKi's image format.
 class ImageResource : public ResourceObject
 {
 public:
@@ -27,10 +25,8 @@ public:
 
 	~ImageResource();
 
-	/// Load an image.
 	Error load(const ResourceFilename& filename, Bool async);
 
-	/// Get the texture.
 	Texture& getTexture() const
 	{
 		return *m_tex;
@@ -52,6 +48,7 @@ private:
 	class TexUploadTask;
 	class LoadingContext;
 
+	TextureMemoryPoolAllocation m_texAlloc;
 	TexturePtr m_tex;
 
 	Vec4 m_avgColor = Vec4(0.0f);
@@ -60,6 +57,5 @@ private:
 
 	Error loadAsync(LoadingContext& ctx) const;
 };
-/// @}
 
 } // end namespace anki

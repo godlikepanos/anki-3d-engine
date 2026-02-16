@@ -19,7 +19,7 @@ public:
 	ImageResourcePtr m_image;
 };
 
-/// Image upload async task.
+// Image upload async task.
 class ImageResource::TexUploadTask : public AsyncLoaderTask
 {
 public:
@@ -38,6 +38,8 @@ public:
 
 ImageResource::~ImageResource()
 {
+	m_tex.reset(nullptr);
+	TextureMemoryPool::getSingleton().deferredFree(m_texAlloc);
 }
 
 Error ImageResource::load(const ResourceFilename& filename, Bool async)
@@ -241,6 +243,9 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	m_pendingLoadedMips.setNonAtomically(init.m_mipmapCount);
 
 	// Create the texture
+	const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(init);
+	m_texAlloc = TextureMemoryPool::getSingleton().allocate(memReq);
+	init.m_memoryBuffer = m_texAlloc;
 	m_tex = GrManager::getSingleton().newTexture(init);
 
 	// Upload the data

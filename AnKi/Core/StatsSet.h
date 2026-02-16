@@ -13,10 +13,7 @@
 
 namespace anki {
 
-/// @addtogroup core
-/// @{
-
-/// Define a global stat variable.
+// Define a global stat variable.
 #define ANKI_SVAR(name, category, descr, ...) inline StatCounter g_svar##name(category, descr, StatFlag::kNone | __VA_ARGS__);
 
 enum class StatFlag : U16
@@ -52,14 +49,14 @@ enum class StatCategory : U8
 inline constexpr Array<CString, U32(StatCategory::kCount)> kStatCategoryTexts = {"Time",     "CPU memory", "GPU memory", "GPU misc",
 																				 "Renderer", "GFX API",    "Scene",      "Misc"};
 
-/// A stats counter.
+// A stats counter.
 class StatCounter
 {
 	friend class StatsSet;
 
 public:
-	/// Construct.
-	/// @param name Name of the counter. The object will share ownership of the pointer.
+	// Construct.
+	// name: Name of the counter. The object will share ownership of the pointer.
 	StatCounter(StatCategory category, const Char* name, StatFlag flags = StatFlag::kNone);
 
 	template<std::integral T>
@@ -275,7 +272,7 @@ private:
 #endif
 };
 
-/// A collection of stat counters.
+// A collection of stat counters.
 class StatsSet : public MakeSingletonSimple<StatsSet>
 {
 	friend class StatCounter;
@@ -292,7 +289,7 @@ public:
 #endif
 	}
 
-	/// @note Not thread-safe.
+	// Not thread-safe.
 	template<typename TFuncUint, typename TFuncFloat>
 	void iterateStats(TFuncUint funcUint, TFuncFloat funcFloat)
 	{
@@ -315,7 +312,7 @@ public:
 #endif
 	}
 
-	/// @note Not thread-safe.
+	// Not thread-safe.
 	void endFrame()
 #if ANKI_STATS_ENABLED
 		;
@@ -324,7 +321,7 @@ public:
 	}
 #endif
 
-	/// @note Thread-safe.
+	// Thread-safe.
 	U32 getCounterCount() const
 	{
 #if ANKI_STATS_ENABLED
@@ -378,6 +375,5 @@ inline void StatCounter::checkThread() const
 	}
 }
 #endif
-/// @}
 
 } // end namespace anki

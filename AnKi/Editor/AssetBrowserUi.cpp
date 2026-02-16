@@ -345,7 +345,7 @@ void AssetBrowserUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 	}
 }
 
-void AssetBrowserUi::drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWindowFlags windowFlags)
+void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, ImGuiWindowFlags windowFlags)
 {
 	if(!m_open)
 	{

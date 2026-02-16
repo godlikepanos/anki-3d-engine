@@ -21,7 +21,7 @@ public:
 
 	~AssetBrowserUi();
 
-	void drawWindow(Vec2 initialSize, Vec2 initialPosition, ImGuiWindowFlags windowFlags);
+	void drawWindow(Vec2 initialPosition, Vec2 initialSize, ImGuiWindowFlags windowFlags);
 
 private:
 	class AssetFile;
