@@ -157,6 +157,8 @@ private:
 	ShaderProgramPtr m_spatialReconstructGrProg;
 	ShaderProgramPtr m_bilateralDenoiseGrProg;
 
+	BufferView m_shaderGroupHandlesBuff;
+
 	ImageResourcePtr m_blueNoiseImg;
 
 	U32 m_sbtRecordSize = 0;

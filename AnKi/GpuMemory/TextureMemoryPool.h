@@ -7,6 +7,7 @@
 
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Gr/Buffer.h>
+#include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/SegregatedListsAllocatorBuilder.h>
 #include <AnKi/Util/BlockArray.h>
 #include <AnKi/Core/Common.h>
@@ -64,7 +65,7 @@ private:
 	}
 };
 
-// It's a texture memory allocator. It allocates Buffers and sub-allocates from them.
+// It's primarely a texture memory allocator. Sometimes we allocate non-texture memory though. It allocates Buffers and sub-allocates from them.
 class TextureMemoryPool : public MakeSingleton<TextureMemoryPool>
 {
 	friend class TextureMemoryPoolAllocation;
@@ -74,8 +75,24 @@ public:
 
 	~TextureMemoryPool();
 
+	// Generic allocation
 	// It's thread-safe
-	TextureMemoryPoolAllocation allocate(PtrSize textureSize);
+	TextureMemoryPoolAllocation allocate(PtrSize size, U32 alignment);
+
+	// Texture memory allocation. Supply the size returned by GrManager::getTextureMemoryRequirement
+	// It's thread-safe
+	TextureMemoryPoolAllocation allocate(PtrSize textureSize)
+	{
+		return allocate(textureSize, 1);
+	}
+
+	// It's thread-safe
+	template<typename T>
+	TextureMemoryPoolAllocation allocateStructuredBuffer(U32 count)
+	{
+		const U32 alignment = (m_structuredBufferNaturalAlignment) ? sizeof(T) : m_structuredBufferBindOffsetAlignment;
+		return allocate(count * sizeof(T), alignment);
+	}
 
 	// It's thread-safe
 	void deferredFree(TextureMemoryPoolAllocation& alloc);
@@ -102,7 +119,11 @@ private:
 	CoreBlockArray<Garbage, BlockArrayConfig<8>> m_garbage;
 	U32 m_activeGarbage = kMaxU32;
 
-	U32 m_chunksCreated = 0;
+	U16 m_chunksCreated = 0;
+
+	// Cache them
+	U16 m_structuredBufferNaturalAlignment : 1 = 0;
+	U16 m_structuredBufferBindOffsetAlignment : 15 = 0;
 
 	Error allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize);
 	void deleteChunk(SLChunk* chunk);

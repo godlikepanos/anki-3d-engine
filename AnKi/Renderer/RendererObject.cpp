@@ -176,9 +176,9 @@ Error RtMaterialFetchRendererObject::init()
 	return Error::kNone;
 }
 
-void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenHandleIdx, U32 missHandleIdx,
-																U32 sbtRecordSize, RenderGraphBuilder& rgraph, BufferHandle& sbtHandle,
-																BufferView& sbtBuffer)
+void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName, BufferView shaderGroupHandlesBuff, U32 raygenHandleIdx,
+																U32 missHandleIdx, U32 sbtRecordSize, RenderGraphBuilder& rgraph,
+																BufferHandle& sbtHandle, BufferView& sbtBuffer)
 {
 	AccelerationStructureVisibilityInfo asVis;
 	GpuVisibilityLocalLightsOutput lightVis;
@@ -201,7 +201,7 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 	rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
 	rpass.setWork([this, buildSbtIndirectArgsBuff = asVis.m_buildSbtIndirectArgsBuffer, sbtBuffer,
-				   visibleRenderableIndicesBuff = asVis.m_visibleRenderablesBuffer, lib = ShaderProgramPtr(library), sbtRecordSize, raygenHandleIdx,
+				   visibleRenderableIndicesBuff = asVis.m_visibleRenderablesBuffer, shaderGroupHandlesBuff, sbtRecordSize, raygenHandleIdx,
 				   missHandleIdx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(btBuild);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -210,7 +210,7 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 
 		cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
 		cmdb.bindSrv(1, 0, visibleRenderableIndicesBuff);
-		cmdb.bindSrv(2, 0, BufferView(&lib->getShaderGroupHandlesGpuBuffer()));
+		cmdb.bindSrv(2, 0, shaderGroupHandlesBuff);
 
 		cmdb.bindUav(0, 0, sbtBuffer);
 
@@ -228,37 +228,36 @@ void RtMaterialFetchRendererObject::buildShaderBindingTablePass(CString passName
 	});
 }
 
-void RtMaterialFetchRendererObject::patchShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenHandleIdx, U32 missHandleIdx,
-																U32 sbtRecordSize, RenderGraphBuilder& rgraph, BufferHandle sbtHandle,
-																BufferView sbtBuffer)
+void RtMaterialFetchRendererObject::patchShaderBindingTablePass(CString passName, BufferView shaderGroupHandlesBuff, U32 raygenHandleIdx,
+																U32 missHandleIdx, U32 sbtRecordSize, RenderGraphBuilder& rgraph,
+																BufferHandle sbtHandle, BufferView sbtBuffer)
 {
 	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass(passName);
 
 	rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
-	rpass.setWork(
-		[this, sbtBuffer, lib = ShaderProgramPtr(library), sbtRecordSize, raygenHandleIdx, missHandleIdx](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(btBuild);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	rpass.setWork([this, sbtBuffer, shaderGroupHandlesBuff, sbtRecordSize, raygenHandleIdx, missHandleIdx](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(btBuild);
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_sbtPatchGrProg.get());
+		cmdb.bindShaderProgram(m_sbtPatchGrProg.get());
 
-			cmdb.bindSrv(0, 0, BufferView(&lib->getShaderGroupHandlesGpuBuffer()));
+		cmdb.bindSrv(0, 0, shaderGroupHandlesBuff);
 
-			cmdb.bindUav(0, 0, sbtBuffer);
+		cmdb.bindUav(0, 0, sbtBuffer);
 
-			SbtBuildConstants consts = {};
-			ANKI_ASSERT(sbtRecordSize % 4 == 0);
-			consts.m_sbtRecordDwordSize = sbtRecordSize / 4;
-			const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-			ANKI_ASSERT(shaderHandleSize % 4 == 0);
-			consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
-			consts.m_raygenHandleIndex = raygenHandleIdx;
-			consts.m_missHandleIndex = missHandleIdx;
-			cmdb.setFastConstants(&consts, sizeof(consts));
+		SbtBuildConstants consts = {};
+		ANKI_ASSERT(sbtRecordSize % 4 == 0);
+		consts.m_sbtRecordDwordSize = sbtRecordSize / 4;
+		const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
+		ANKI_ASSERT(shaderHandleSize % 4 == 0);
+		consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
+		consts.m_raygenHandleIndex = raygenHandleIdx;
+		consts.m_missHandleIndex = missHandleIdx;
+		cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.dispatchCompute(1, 1, 1);
-		});
+		cmdb.dispatchCompute(1, 1, 1);
+	});
 }
 
 void RtMaterialFetchRendererObject::setRgenSpace2Dependencies(RenderPassBase& pass, Bool isComputeDispatch)

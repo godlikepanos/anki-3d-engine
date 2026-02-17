@@ -152,10 +152,10 @@ protected:
 	Error init();
 
 	// Build a pass that populates the shader binding table.
-	void buildShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
+	void buildShaderBindingTablePass(CString passName, BufferView shaderGroupHandlesBuff, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
 									 RenderGraphBuilder& rgraph, BufferHandle& sbtHandle, BufferView& sbtBuffer);
 
-	void patchShaderBindingTablePass(CString passName, ShaderProgram* library, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
+	void patchShaderBindingTablePass(CString passName, BufferView shaderGroupHandlesBuff, U32 raygenGroupIdx, U32 missGroupIdx, U32 sbtRecordSize,
 									 RenderGraphBuilder& rgraph, BufferHandle sbtHandle, BufferView sbtBuffer);
 
 	// Sets the the resources of space 2 in RtMaterialFetch.hlsl as dependencies on the given pass.

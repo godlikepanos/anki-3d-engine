@@ -119,11 +119,6 @@ ConstWeakArray<U8> ShaderProgram::getShaderGroupHandles() const
 	return static_cast<const ShaderProgramImpl&>(*this).getShaderGroupHandlesInternal();
 }
 
-Buffer& ShaderProgram::getShaderGroupHandlesGpuBuffer() const
-{
-	return static_cast<const ShaderProgramImpl&>(*this).getShaderGroupHandlesGpuBufferInternal();
-}
-
 ShaderProgramImpl::~ShaderProgramImpl()
 {
 	const Bool graphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
@@ -413,17 +408,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		const U32 handleArraySize = getGrManagerImpl().getDeviceCapabilities().m_shaderGroupHandleSize * groupCount;
 		m_rt.m_allHandles.resize(handleArraySize, 0_U8);
 		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getVkDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize, &m_rt.m_allHandles[0]));
-
-		// Upload RT handles
-		BufferInitInfo buffInit("RT handles");
-		buffInit.m_size = m_rt.m_allHandles.getSizeInBytes();
-		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		buffInit.m_usage = BufferUsageBit::kAllCompute & BufferUsageBit::kAllRead;
-		m_rt.m_allHandlesBuff = getGrManagerImpl().newBuffer(buffInit);
-
-		void* mapped = m_rt.m_allHandlesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
-		memcpy(mapped, m_rt.m_allHandles.getBegin(), m_rt.m_allHandles.getSizeInBytes());
-		m_rt.m_allHandlesBuff->unmap();
 
 		getGrManagerImpl().printPipelineShaderInfo(m_rt.m_ppline, getName());
 	}

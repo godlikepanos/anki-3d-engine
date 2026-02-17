@@ -31,13 +31,6 @@ ConstWeakArray<U8> ShaderProgram::getShaderGroupHandles() const
 	return self.m_rt.m_handlesCpuBuff;
 }
 
-Buffer& ShaderProgram::getShaderGroupHandlesGpuBuffer() const
-{
-	ANKI_D3D_SELF_CONST(ShaderProgramImpl);
-	ANKI_ASSERT(self.m_rt.m_handlesGpuBuff.isCreated());
-	return *self.m_rt.m_handlesGpuBuff;
-}
-
 ShaderProgramImpl::~ShaderProgramImpl()
 {
 	safeRelease(m_compute.m_pipelineState);
@@ -379,20 +372,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			}
 
 			ANKI_ASSERT(out == m_rt.m_handlesCpuBuff.getEnd());
-		}
-
-		// GPU handles
-		{
-			// Upload RT handles
-			BufferInitInfo buffInit("RT handles");
-			buffInit.m_size = m_rt.m_handlesCpuBuff.getSizeInBytes();
-			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kAllCompute & BufferUsageBit::kAllRead;
-			m_rt.m_handlesGpuBuff = getGrManagerImpl().newBuffer(buffInit);
-
-			void* mapped = m_rt.m_handlesGpuBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
-			memcpy(mapped, m_rt.m_handlesCpuBuff.getBegin(), m_rt.m_handlesCpuBuff.getSizeInBytes());
-			m_rt.m_handlesGpuBuff->unmap();
 		}
 	}
 

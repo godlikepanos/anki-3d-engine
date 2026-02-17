@@ -46,7 +46,6 @@ public:
 	{
 	public:
 		ID3D12StateObject* m_stateObject = nullptr;
-		BufferInternalPtr m_handlesGpuBuff;
 		GrDynamicArray<U8> m_handlesCpuBuff;
 	} m_rt;
 

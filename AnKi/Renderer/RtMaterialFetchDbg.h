@@ -35,6 +35,8 @@ public:
 	ShaderProgramResourcePtr m_missProg;
 	ShaderProgramPtr m_libraryGrProg;
 
+	BufferView m_shaderGroupHandlesBuff;
+
 	RenderTargetDesc m_rtDesc;
 
 	U32 m_sbtRecordSize = 0;

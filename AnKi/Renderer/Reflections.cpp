@@ -47,6 +47,8 @@ Error Reflections::init()
 		m_libraryGrProg.reset(&variant->getProgram());
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
+		m_shaderGroupHandlesBuff = variant->getShaderGroupHandlesBuffer();
+
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", m_missProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_missProg);
@@ -259,8 +261,8 @@ void Reflections::populateRenderGraph()
 	BufferView sbtBuffer;
 	if(bRtReflections && !g_cvarRenderReflectionsInlineRt)
 	{
-		buildShaderBindingTablePass("RtReflections: Build SBT", m_libraryGrProg.get(), m_rayGenShaderGroupIdx, m_missShaderGroupIdx, m_sbtRecordSize,
-									rgraph, sbtHandle, sbtBuffer);
+		buildShaderBindingTablePass("RtReflections: Build SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIdx, m_missShaderGroupIdx,
+									m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 	}
 
 	// Ray gen

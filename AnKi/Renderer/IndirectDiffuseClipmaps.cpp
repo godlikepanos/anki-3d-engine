@@ -313,6 +313,8 @@ Error IndirectDiffuseClipmaps::init()
 		const ShaderProgramResourceVariant* variant;
 		m_missProg->getOrCreateVariant(variantInitInfo, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
+
+		m_shaderGroupHandlesBuff = variant->getShaderGroupHandlesBuffer();
 	}
 
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
@@ -407,7 +409,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	BufferView sbtBuffer;
 	if(!g_cvarRenderIdcInlineRt)
 	{
-		buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[1],
+		buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIndices[1],
 									m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 	}
 
@@ -667,7 +669,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	{
 		if(!g_cvarRenderIdcInlineRt)
 		{
-			patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_rtLibraryGrProg.get(), m_rayGenShaderGroupIndices[0],
+			patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIndices[0],
 										m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 		}
 

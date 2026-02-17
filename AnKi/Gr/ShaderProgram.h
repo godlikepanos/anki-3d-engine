@@ -83,9 +83,6 @@ public:
 	/// RayTracingShaders::m_rayGenShaders. Then miss shaders follow with a similar rule. Then hit groups follow.
 	ConstWeakArray<U8> getShaderGroupHandles() const;
 
-	/// Same as getShaderGroupHandles but the data live in a GPU buffer.
-	Buffer& getShaderGroupHandlesGpuBuffer() const;
-
 	ShaderTypeBit getShaderTypes() const
 	{
 		return m_shaderTypes;

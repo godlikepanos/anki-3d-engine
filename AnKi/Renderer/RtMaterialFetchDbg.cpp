@@ -27,6 +27,8 @@ Error RtMaterialFetchDbg::init()
 		m_rtProg->getOrCreateVariant(variantInitInfo, variant);
 		m_libraryGrProg.reset(&variant->getProgram());
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
+
+		m_shaderGroupHandlesBuff = variant->getShaderGroupHandlesBuffer();
 	}
 
 	{
@@ -56,8 +58,8 @@ void RtMaterialFetchDbg::populateRenderGraph()
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
-	buildShaderBindingTablePass("RtMaterialFetchDbg: Build SBT", m_libraryGrProg.get(), m_rayGenShaderGroupIdx, m_missShaderGroupIdx, m_sbtRecordSize,
-								rgraph, sbtHandle, sbtBuffer);
+	buildShaderBindingTablePass("RtMaterialFetchDbg: Build SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIdx, m_missShaderGroupIdx,
+								m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 
 	// Ray gen
 	{

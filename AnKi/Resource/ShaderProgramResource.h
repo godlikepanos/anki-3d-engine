@@ -9,6 +9,7 @@
 #include <AnKi/ShaderCompiler/ShaderCompiler.h>
 #include <AnKi/Gr/BackendCommon/Functions.h>
 #include <AnKi/Gr/ShaderProgram.h>
+#include <AnKi/Gr/Buffer.h>
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/HashMap.h>
@@ -43,9 +44,16 @@ public:
 		return m_shaderGroupHandleIndex;
 	}
 
+	BufferView getShaderGroupHandlesBuffer() const
+	{
+		ANKI_ASSERT(!!m_shaderGroupHandlesBuff);
+		return m_shaderGroupHandlesBuff;
+	}
+
 private:
 	ShaderProgramPtr m_prog;
 	U32 m_shaderGroupHandleIndex = kMaxU32; // Cache the index of the handle here.
+	BufferView m_shaderGroupHandlesBuff;
 };
 
 class ShaderProgramResourceVariantInitInfo

@@ -54,6 +54,10 @@ public:
 TextureMemoryPool::TextureMemoryPool()
 {
 	m_builder = newInstance<SLBuilder>(CoreMemoryPool::getSingleton());
+
+	m_structuredBufferNaturalAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment;
+	m_structuredBufferBindOffsetAlignment =
+		GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment & ((1u << 15u) - 1u);
 }
 
 TextureMemoryPool::~TextureMemoryPool()
@@ -75,7 +79,7 @@ Error TextureMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
 
 	BufferInitInfo buffInit("TexPoolChunk");
 	buffInit.m_size = g_cvarCoreTextureMemoryPoolChunkSize;
-	buffInit.m_usage = BufferUsageBit::kTexture;
+	buffInit.m_usage = BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy;
 
 	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -109,13 +113,13 @@ void TextureMemoryPool::deleteChunk(SLChunk* chunk)
 	}
 }
 
-TextureMemoryPoolAllocation TextureMemoryPool::allocate(PtrSize textureSize)
+TextureMemoryPoolAllocation TextureMemoryPool::allocate(PtrSize size, U32 alignment)
 {
 	LockGuard lock(m_mtx);
 
 	SLChunk* chunk;
 	PtrSize offset;
-	if(m_builder->allocate(textureSize, 1, chunk, offset))
+	if(m_builder->allocate(size, alignment, chunk, offset))
 	{
 		ANKI_CORE_LOGF("Failed to allocate tex memory");
 	}
@@ -123,9 +127,9 @@ TextureMemoryPoolAllocation TextureMemoryPool::allocate(PtrSize textureSize)
 	TextureMemoryPoolAllocation alloc;
 	alloc.m_chunk = chunk;
 	alloc.m_offset = offset;
-	alloc.m_size = textureSize;
+	alloc.m_size = size;
 
-	m_allocatedSize += textureSize;
+	m_allocatedSize += size;
 
 	return alloc;
 }

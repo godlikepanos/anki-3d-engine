@@ -8,11 +8,14 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>
+#include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Gr/Fence.h>
 #include <AnKi/ShaderCompiler/ShaderCompiler.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Util/CVarSet.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 
 namespace anki {
 
@@ -413,6 +416,30 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			inf.m_rayTracingShaders.m_missShaders = missShaders;
 			inf.m_rayTracingShaders.m_hitGroups = initInfoHitGroups;
 			outLib.m_program = GrManager::getSingleton().newShaderProgram(inf);
+
+			// Upload the group handles
+			{
+				ConstWeakArray<U8> handlesMem = outLib.m_program->getShaderGroupHandles();
+				outLib.m_shaderGroupHandlesBuff =
+					TextureMemoryPool::getSingleton().allocateStructuredBuffer<U32>(U32(handlesMem.getSizeInBytes() / sizeof(U32)));
+				WeakArray<U8> tmpMem;
+				BufferView tmpBuff = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(U32(handlesMem.getSizeInBytes()), tmpMem);
+				memcpy(tmpMem.getBegin(), handlesMem.getBegin(), handlesMem.getSizeInBytes());
+
+				CommandBufferInitInfo buffInit("RT handles copy");
+				buffInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
+				CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(buffInit);
+				cmdb->copyBufferToBuffer(tmpBuff, outLib.m_shaderGroupHandlesBuff);
+				cmdb->endRecording();
+
+				FencePtr fence;
+				GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+				if(!fence->clientWait(kMaxSecond))
+				{
+					ANKI_RESOURCE_LOGE("GPU timeout detected");
+					return Error::kFunctionFailed;
+				}
+			}
 
 			++rtProgramCount;
 		}

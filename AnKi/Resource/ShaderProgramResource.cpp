@@ -293,6 +293,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 
 		// Set the group handle index
 		variant->m_shaderGroupHandleIndex = foundLib->getShaderGroupHandleIndex(getFilename(), mutationHash, groupType);
+		variant->m_shaderGroupHandlesBuff = foundLib->getShaderGroupHandlesBuffer();
 	}
 
 	return variant;

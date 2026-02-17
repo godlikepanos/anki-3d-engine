@@ -63,6 +63,8 @@ public:
 	RenderTargetDesc m_hitPosRtDesc;
 	RenderTargetDesc m_classTileMapRtDesc;
 
+	BufferView m_shaderGroupHandlesBuff;
+
 	// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
 	BufferPtr m_indirectArgsBuffer;
 

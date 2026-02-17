@@ -84,11 +84,6 @@ public:
 		return m_rt.m_allHandles;
 	}
 
-	Buffer& getShaderGroupHandlesGpuBufferInternal() const
-	{
-		return *m_rt.m_allHandlesBuff;
-	}
-
 private:
 	GrDynamicArray<ShaderInternalPtr> m_shaders;
 
@@ -114,7 +109,6 @@ private:
 		VkPipeline m_ppline = VK_NULL_HANDLE;
 		GrDynamicArray<U8> m_allHandles;
 		U32 m_missShaderCount = 0;
-		BufferInternalPtr m_allHandlesBuff;
 	} m_rt;
 
 	void rewriteSpirv(ShaderReflectionDescriptorRelated& refl, GrDynamicArray<GrDynamicArray<U32>>& rewrittenSpirvs);
