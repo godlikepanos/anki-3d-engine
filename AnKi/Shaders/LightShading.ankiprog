@@ -84,7 +84,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	// Indirect diffuse
 #	if INDIRECT_DIFFUSE_TEX
 	const HVec3 indirectCol = g_indirectDiffuseTex[coord];
-	outColor += indirectCol * gbuffer.m_diffuse / kPi;
+	outColor += indirectCol * gbuffer.m_diffuse;
 #	else
 	const HVec3 probeColor = sampleGiProbes<F16>(cluster, g_giProbes, bentNormal, worldPos, g_trilinearClampSampler);
 	outColor += probeColor * gbuffer.m_diffuse;
