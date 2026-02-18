@@ -1111,7 +1111,7 @@ Error GpuVisibilityAccelerationStructures::init()
 	inf.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kSrvCompute | BufferUsageBit::kCopyDestination;
 	m_counterBuffer = GrManager::getSingleton().newBuffer(inf);
 
-	zeroBuffer(m_counterBuffer.get());
+	zeroBuffer(BufferView(m_counterBuffer.get()));
 
 	return Error::kNone;
 }

@@ -55,9 +55,10 @@ TextureMemoryPool::TextureMemoryPool()
 {
 	m_builder = newInstance<SLBuilder>(CoreMemoryPool::getSingleton());
 
-	m_structuredBufferNaturalAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment;
-	m_structuredBufferBindOffsetAlignment =
-		GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment & ((1u << 15u) - 1u);
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+	{
+		m_structuredBufferBindOffsetAlignment = U16(GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment);
+	}
 }
 
 TextureMemoryPool::~TextureMemoryPool()
@@ -79,7 +80,7 @@ Error TextureMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
 
 	BufferInitInfo buffInit("TexPoolChunk");
 	buffInit.m_size = g_cvarCoreTextureMemoryPoolChunkSize;
-	buffInit.m_usage = BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy;
+	buffInit.m_usage = BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy | BufferUsageBit::kVertexOrIndex;
 
 	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
 

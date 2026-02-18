@@ -50,33 +50,24 @@ Error HzbGenerator::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HzbMaxDepth.ankiprogbin", m_maxDepthProg, m_maxDepthGrProg));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HzbMaxDepthProject.ankiprogbin", m_maxBoxProg, m_maxBoxGrProg));
 
+	U32 alignment;
 	if(GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
 	{
+		alignment = sizeof(U32);
 		m_counterBufferElementSize = sizeof(U32);
 	}
 	else
 	{
-		m_counterBufferElementSize = max<U32>(sizeof(U32), GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment);
+		alignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+		m_counterBufferElementSize = getAlignedRoundUp(alignment, U32(sizeof(U32)));
 	}
 
-	BufferInitInfo buffInit("HzbCounterBuffer");
-	buffInit.m_size = m_counterBufferElementSize * kCounterBufferElementCount;
-	buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
-	m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
-
-	// Zero counter buffer
-	zeroBuffer(m_counterBuffer.get());
+	m_counterBuffer = TextureMemoryPool::getSingleton().allocate(m_counterBufferElementSize * kCounterBufferElementCount, alignment);
+	zeroBuffer(m_counterBuffer);
 
 	// Boxes buffer
-	buffInit = BufferInitInfo("HzbBoxIndices");
-	buffInit.m_size = sizeof(kBoxIndices);
-	buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
-	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	m_boxIndexBuffer = GrManager::getSingleton().newBuffer(buffInit);
-
-	void* mappedMem = m_boxIndexBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
-	memcpy(mappedMem, kBoxIndices, sizeof(kBoxIndices));
-	m_boxIndexBuffer->unmap();
+	m_boxIndexBuffer = TextureMemoryPool::getSingleton().allocate(sizeof(kBoxIndices), sizeof(U16));
+	fillBuffer(ConstWeakArray<U8>(reinterpret_cast<const U8*>(kBoxIndices), sizeof(kBoxIndices)), m_boxIndexBuffer);
 
 	return Error::kNone;
 }
@@ -156,10 +147,9 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 				rgraphCtx.bindUav(1 + mip, 0, in.m_dstHzbRt, subresource);
 			}
 
-			cmdb.bindUav(0, 0,
-						 BufferView(m_counterBuffer.get())
-							 .incrementOffset((counterBufferElement + dispatch) * m_counterBufferElementSize)
-							 .setRange(sizeof(U32)));
+			cmdb.bindUav(
+				0, 0,
+				BufferView(m_counterBuffer).incrementOffset((counterBufferElement + dispatch) * m_counterBufferElementSize).setRange(sizeof(U32)));
 			rgraphCtx.bindSrv(0, 0, in.m_srcDepthRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
@@ -297,7 +287,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.bindIndexBuffer(BufferView(m_boxIndexBuffer.get()), IndexType::kU16);
+			cmdb.bindIndexBuffer(m_boxIndexBuffer, IndexType::kU16);
 
 			cmdb.drawIndexed(PrimitiveTopology::kTriangles, sizeof(kBoxIndices) / sizeof(kBoxIndices[0]), maxDepthRtSize.x * maxDepthRtSize.y);
 

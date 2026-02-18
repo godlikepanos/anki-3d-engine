@@ -21,19 +21,15 @@ Error GpuParticles::init()
 	CommandBufferInitInfo cmdbInit("Init particles");
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-	U32 count = 0;
 	for(auto& buff : m_scratchBuffers)
 	{
-		BufferInitInfo buffInit(generateTempPassName("GPU particles scratch #%u", count++));
-		buffInit.m_size = sizeof(ParticleSimulationScratch);
-		buffInit.m_usage = BufferUsageBit::kSrvCompute | BufferUsageBit::kCopyDestination;
-		buff = GrManager::getSingleton().newBuffer(buffInit);
+		buff = TextureMemoryPool::getSingleton().allocateStructuredBuffer<ParticleSimulationScratch>(1);
 
 		WeakArray<ParticleSimulationScratch> out;
 		const BufferView src = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer<ParticleSimulationScratch>(1, out);
 		out[0] = scratchTemplate;
 
-		cmdb->copyBufferToBuffer(src, BufferView(buff.get()));
+		cmdb->copyBufferToBuffer(src, buff);
 	}
 
 	cmdb->endRecording();
@@ -153,7 +149,7 @@ void GpuParticles::populateRenderGraph()
 
 			cmdb.bindUav(ANKI_PARTICLE_SIM_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
 			cmdb.bindUav(ANKI_PARTICLE_SIM_GPU_SCENE_PARTICLE_EMITTERS, 0, GpuSceneArrays::ParticleEmitter2::getSingleton().getBufferView());
-			cmdb.bindUav(ANKI_PARTICLE_SIM_SCRATCH, 0, BufferView(m_scratchBuffers[count++].get()));
+			cmdb.bindUav(ANKI_PARTICLE_SIM_SCRATCH, 0, m_scratchBuffers[count++]);
 			cmdb.bindUav(ANKI_PARTICLE_SIM_CPU_FEEDBACK, 0, readbackBuffer);
 
 			const U32 numthreads = GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize;

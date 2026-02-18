@@ -112,7 +112,9 @@ protected:
 	static Error loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg,
 								   CString technique = {}, ShaderTypeBit shaderTypes = ShaderTypeBit::kNone);
 
-	static void zeroBuffer(Buffer* buff);
+	static void zeroBuffer(BufferView buff);
+
+	static void fillBuffer(ConstWeakArray<U8> data, BufferView buff);
 
 	// Temp pass name.
 	static CString generateTempPassName(const Char* fmt, ...);

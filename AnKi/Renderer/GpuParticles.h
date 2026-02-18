@@ -7,6 +7,7 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Utils/Readback.h>
+#include <AnKi/GpuMemory/TextureMemoryPool.h>
 
 namespace anki {
 
@@ -21,7 +22,7 @@ public:
 	void populateRenderGraph();
 
 private:
-	RendererDynamicArray<BufferPtr> m_scratchBuffers;
+	RendererDynamicArray<TextureMemoryPoolAllocation> m_scratchBuffers;
 
 	class ReadbackData
 	{

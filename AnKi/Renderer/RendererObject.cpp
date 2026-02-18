@@ -107,18 +107,34 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 	return Error::kNone;
 }
 
-void RendererObject::zeroBuffer(Buffer* buff)
+void RendererObject::zeroBuffer(BufferView buff)
 {
 	CommandBufferInitInfo cmdbInit("Zero buffer");
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
-
-	cmdb->zeroBuffer(BufferView(buff));
+	cmdb->zeroBuffer(buff);
+	cmdb->endRecording();
 
 	FencePtr fence;
-	cmdb->endRecording();
 	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+	fence->clientWait(16.0_sec);
+}
 
+void RendererObject::fillBuffer(ConstWeakArray<U8> data, BufferView buff)
+{
+	WeakArray<U8> transientData;
+	BufferView transientBuff = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(data.getSize(), transientData);
+
+	memcpy(transientData.getBegin(), data.getBegin(), data.getSizeInBytes());
+
+	CommandBufferInitInfo cmdbInit("Fill buffer");
+	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+	cmdb->copyBufferToBuffer(transientBuff, buff);
+	cmdb->endRecording();
+
+	FencePtr fence;
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 	fence->clientWait(16.0_sec);
 }
 

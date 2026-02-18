@@ -90,8 +90,16 @@ public:
 	template<typename T>
 	TextureMemoryPoolAllocation allocateStructuredBuffer(U32 count)
 	{
-		const U32 alignment = (m_structuredBufferNaturalAlignment) ? sizeof(T) : m_structuredBufferBindOffsetAlignment;
+		const U32 alignment = (m_structuredBufferBindOffsetAlignment == kMaxU16) ? sizeof(T) : m_structuredBufferBindOffsetAlignment;
 		return allocate(count * sizeof(T), alignment);
+	}
+
+	// Allocate a vertex buffer.
+	// It's thread-safe
+	TextureMemoryPoolAllocation allocateFormat(Format format, U32 count)
+	{
+		const U32 texelSize = getFormatInfo(format).m_texelSize;
+		return allocate(texelSize * count, texelSize);
 	}
 
 	// It's thread-safe
@@ -121,9 +129,7 @@ private:
 
 	U16 m_chunksCreated = 0;
 
-	// Cache them
-	U16 m_structuredBufferNaturalAlignment : 1 = 0;
-	U16 m_structuredBufferBindOffsetAlignment : 15 = 0;
+	U16 m_structuredBufferBindOffsetAlignment = kMaxU16;
 
 	Error allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize);
 	void deleteChunk(SLChunk* chunk);

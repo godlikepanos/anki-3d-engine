@@ -54,12 +54,8 @@ Error DepthDownscale::initInternal()
 	// Counter buffer
 	if(preferCompute)
 	{
-		BufferInitInfo buffInit("Depth downscale counter buffer");
-		buffInit.m_size = sizeof(U32);
-		buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
-		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
-
-		zeroBuffer(m_counterBuffer.get());
+		m_counterBuffer = TextureMemoryPool::getSingleton().allocateStructuredBuffer<U32>(1);
+		zeroBuffer(m_counterBuffer);
 	}
 
 	return Error::kNone;
@@ -128,7 +124,7 @@ void DepthDownscale::populateRenderGraph()
 				rgraphCtx.bindUav(mip + 1, 0, m_runCtx.m_rt, surface);
 			}
 
-			cmdb.bindUav(0, 0, BufferView(m_counterBuffer.get(), 0, sizeof(U32)));
+			cmdb.bindUav(0, 0, m_counterBuffer);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
