@@ -80,7 +80,8 @@ Error TextureMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
 
 	BufferInitInfo buffInit("TexPoolChunk");
 	buffInit.m_size = g_cvarCoreTextureMemoryPoolChunkSize;
-	buffInit.m_usage = BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy | BufferUsageBit::kVertexOrIndex;
+	buffInit.m_usage = BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy | BufferUsageBit::kVertexOrIndex
+					   | BufferUsageBit::kAllIndirect | BufferUsageBit::kAllUav;
 
 	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
 

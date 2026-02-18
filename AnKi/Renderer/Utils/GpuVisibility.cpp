@@ -978,36 +978,38 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		m_counterBufferZeroingHandle = {};
 	}
 
+	U32 counterBufferElementAlignment;
 	U32 counterBufferElementSize;
 	if(GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
 	{
 		counterBufferElementSize = sizeof(GpuVisibilityNonRenderablesCounters);
+		counterBufferElementAlignment = sizeof(GpuVisibilityNonRenderablesCounters);
 	}
 	else
 	{
 		counterBufferElementSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment,
 													 U32(sizeof(GpuVisibilityNonRenderablesCounters)));
+		counterBufferElementAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
 	}
 
-	if(!m_counterBuffer.isCreated() || m_counterBufferOffset + counterBufferElementSize > m_counterBuffer->getSize()) [[unlikely]]
+	if(!m_counterBuffer || m_counterBufferOffset + counterBufferElementSize > BufferView(m_counterBuffer).getRange()) [[unlikely]]
 	{
 		// Counter buffer not created or not big enough, create a new one
 
-		BufferInitInfo buffInit("GpuVisibilityNonRenderablesCounters");
-		buffInit.m_size = (m_counterBuffer.isCreated()) ? m_counterBuffer->getSize() * 2 : counterBufferElementSize * kInitialCounterArraySize;
-		buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kSrvCompute | BufferUsageBit::kCopyDestination;
-		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
+		const PtrSize size = (m_counterBuffer) ? BufferView(m_counterBuffer).getRange() * 2 : counterBufferElementSize * kInitialCounterArraySize;
+		TextureMemoryPool::getSingleton().deferredFree(m_counterBuffer);
+		m_counterBuffer = TextureMemoryPool::getSingleton().allocate(size, counterBufferElementAlignment);
 
-		m_counterBufferZeroingHandle = rgraph.importBuffer(BufferView(m_counterBuffer.get()), buffInit.m_usage);
+		m_counterBufferZeroingHandle = rgraph.importBuffer(m_counterBuffer, BufferUsageBit::kNone);
 
 		NonGraphicsRenderPass& pass =
 			rgraph.newNonGraphicsRenderPass(generateTempPassName("Non-renderables vis: Clear counter buff: %s", in.m_passesName.cstr()));
 
 		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kUavCompute);
 
-		pass.setWork([counterBuffer = m_counterBuffer](RenderPassWorkContext& rgraph) {
+		pass.setWork([counterBuffer = BufferView(m_counterBuffer)](RenderPassWorkContext& rgraph) {
 			ANKI_TRACE_SCOPED_EVENT(GpuVisNonRenderablesSetup);
-			fillBuffer(*rgraph.m_commandBuffer, BufferView(counterBuffer.get()), 0);
+			fillBuffer(*rgraph.m_commandBuffer, counterBuffer, 0);
 		});
 
 		m_counterBufferOffset = 0;
@@ -1038,8 +1040,9 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	}
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
-				  visibleIndicesBuffHandle = out.m_visiblesBufferHandle, counterBuffer = m_counterBuffer, counterBufferOffset = m_counterBufferOffset,
-				  objCount, hzbRt = (in.m_hzbRt) ? *in.m_hzbRt : RenderTargetHandle()](RenderPassWorkContext& rgraph) {
+				  visibleIndicesBuffHandle = out.m_visiblesBufferHandle, counterBuffer = BufferView(m_counterBuffer),
+				  counterBufferOffset = m_counterBufferOffset, objCount,
+				  hzbRt = (in.m_hzbRt) ? *in.m_hzbRt : RenderTargetHandle()](RenderPassWorkContext& rgraph) {
 		ANKI_TRACE_SCOPED_EVENT(GpuVisNonRenderables);
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
@@ -1082,7 +1085,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		rgraph.bindUav(0, 0, visibleIndicesBuffHandle);
-		cmdb.bindUav(1, 0, BufferView(counterBuffer.get(), counterBufferOffset, sizeof(GpuVisibilityNonRenderablesCounters)));
+		cmdb.bindUav(1, 0, BufferView(counterBuffer).incrementOffset(counterBufferOffset).setRange(sizeof(GpuVisibilityNonRenderablesCounters)));
 
 		if(needsFeedback)
 		{
@@ -1106,12 +1109,8 @@ Error GpuVisibilityAccelerationStructures::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", {}, m_visibilityProg,
 								 m_zeroRemainingInstancesGrProg, "ZeroRemainingInstances"));
 
-	BufferInitInfo inf("GpuVisibilityAccelerationStructuresCounters");
-	inf.m_size = sizeof(U32) * 2;
-	inf.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kSrvCompute | BufferUsageBit::kCopyDestination;
-	m_counterBuffer = GrManager::getSingleton().newBuffer(inf);
-
-	zeroBuffer(BufferView(m_counterBuffer.get()));
+	m_counterBuffer = TextureMemoryPool::getSingleton().allocateStructuredBuffer<U32>(2);
+	zeroBuffer(m_counterBuffer);
 
 	return Error::kNone;
 }
@@ -1196,7 +1195,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 			cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 			cmdb.bindUav(0, 0, instancesBuff);
 			cmdb.bindUav(1, 0, visRenderablesBuff);
-			cmdb.bindUav(2, 0, BufferView(m_counterBuffer.get()));
+			cmdb.bindUav(2, 0, m_counterBuffer);
 			cmdb.bindUav(3, 0, zeroInstancesAndSbtBuildDispatchArgsBuff);
 
 			const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();

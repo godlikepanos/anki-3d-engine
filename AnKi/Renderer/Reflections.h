@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/GpuMemory/TextureMemoryPool.h>
 
 namespace anki {
 
@@ -66,7 +67,7 @@ public:
 	BufferView m_shaderGroupHandlesBuff;
 
 	// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
-	BufferPtr m_indirectArgsBuffer;
+	TextureMemoryPoolAllocation m_indirectArgsBuffer;
 
 	TexturePtr m_tex;
 	Array<TexturePtr, 2> m_momentsTextures;

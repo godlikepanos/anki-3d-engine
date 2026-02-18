@@ -104,30 +104,15 @@ Error Reflections::init()
 	m_classTileMapRtDesc.bake();
 
 	{
-		BufferInitInfo buffInit("ReflRayGenIndirectArgs");
-		buffInit.m_size = sizeof(DispatchIndirectArgs) * 2;
-		buffInit.m_usage = BufferUsageBit::kAllIndirect | BufferUsageBit::kUavCompute;
-		m_indirectArgsBuffer = GrManager::getSingleton().newBuffer(buffInit);
+		m_indirectArgsBuffer = TextureMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(2);
 
-		CommandBufferInitInfo cmdbInit("Init buffer");
-		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+		Array<DispatchIndirectArgs, 2> args;
+		args[0].m_threadGroupCountX = 0;
+		args[0].m_threadGroupCountY = args[0].m_threadGroupCountZ = 1;
+		args[1].m_threadGroupCountX = 0;
+		args[1].m_threadGroupCountY = args[1].m_threadGroupCountZ = 1;
 
-		U32 offset = 0;
-		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
-		offset += sizeof(U32);
-		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
-
-		offset += sizeof(U32) * 2;
-		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
-		offset += sizeof(U32);
-		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
-
-		FencePtr fence;
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-
-		fence->clientWait(16.0_sec);
+		fillBuffer(ConstWeakArray<U8>(reinterpret_cast<const U8*>(args.getBegin()), args.getSizeInBytes()), m_indirectArgsBuffer);
 	}
 
 	return Error::kNone;
@@ -163,7 +148,7 @@ void Reflections::populateRenderGraph()
 	const RenderTargetHandle hitPosAndDepthRt = rgraph.newRenderTarget(m_hitPosAndDepthRtDesc);
 	const RenderTargetHandle hitPosRt = rgraph.newRenderTarget(m_hitPosRtDesc);
 	const RenderTargetHandle classTileMapRt = rgraph.newRenderTarget(m_classTileMapRtDesc);
-	const BufferHandle indirectArgsHandle = rgraph.importBuffer(BufferView(m_indirectArgsBuffer.get()), BufferUsageBit::kNone);
+	const BufferHandle indirectArgsHandle = rgraph.importBuffer(m_indirectArgsBuffer, BufferUsageBit::kNone);
 
 	ReflectionConstants consts;
 	consts.m_ssrStepIncrement = g_cvarRenderReflectionsSsrStepIncrement;
@@ -190,7 +175,7 @@ void Reflections::populateRenderGraph()
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindUav(0, 0, classTileMapRt);
-			cmdb.bindUav(1, 0, BufferView(m_indirectArgsBuffer.get()));
+			cmdb.bindUav(1, 0, m_indirectArgsBuffer);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
@@ -246,7 +231,7 @@ void Reflections::populateRenderGraph()
 			rgraphCtx.bindUav(0, 0, transientRt1);
 			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
 			cmdb.bindUav(2, 0, pixelsFailedSsrBuff);
-			cmdb.bindUav(3, 0, BufferView(m_indirectArgsBuffer.get()));
+			cmdb.bindUav(3, 0, m_indirectArgsBuffer);
 
 			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
@@ -317,12 +302,12 @@ void Reflections::populateRenderGraph()
 
 			if(g_cvarRenderReflectionsInlineRt)
 			{
-				cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer.get()).incrementOffset(sizeof(DispatchIndirectArgs)));
+				cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer).incrementOffset(sizeof(DispatchIndirectArgs)));
 			}
 			else
 			{
 				cmdb.dispatchRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-										  BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(DispatchIndirectArgs)));
+										  BufferView(m_indirectArgsBuffer).setRange(sizeof(DispatchIndirectArgs)));
 			}
 		});
 	}
@@ -355,7 +340,7 @@ void Reflections::populateRenderGraph()
 			cmdb.bindSrv(1, 0, pixelsFailedSsrBuff);
 			cmdb.bindSrv(2, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
 			cmdb.bindSrv(3, 0, getClusterBinning().getClustersBuffer());
-			cmdb.bindSrv(4, 0, BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(U32)));
+			cmdb.bindSrv(4, 0, BufferView(m_indirectArgsBuffer).setRange(sizeof(U32)));
 
 			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 			if(getGeneratedSky().isEnabled())
@@ -378,7 +363,7 @@ void Reflections::populateRenderGraph()
 			rgraphCtx.bindUav(0, 0, transientRt1);
 			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
 
-			cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer.get()).incrementOffset(sizeof(DispatchIndirectArgs)));
+			cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer).incrementOffset(sizeof(DispatchIndirectArgs)));
 		});
 	}
 
