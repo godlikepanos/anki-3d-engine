@@ -7,7 +7,7 @@
 
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
-#include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
+#include <AnKi/Gr/Utils/SegregatedListsSingleBufferGpuMemoryPool.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Assert.h>
@@ -16,58 +16,7 @@ namespace anki {
 
 ANKI_CVAR(NumericCVar<PtrSize>, Core, GpuSceneInitialSize, 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene")
 
-class GpuSceneBufferAllocation
-{
-	friend class GpuSceneBuffer;
-
-public:
-	GpuSceneBufferAllocation() = default;
-
-	GpuSceneBufferAllocation(const GpuSceneBufferAllocation&) = delete;
-
-	GpuSceneBufferAllocation(GpuSceneBufferAllocation&& b)
-	{
-		*this = std::move(b);
-	}
-
-	~GpuSceneBufferAllocation();
-
-	GpuSceneBufferAllocation& operator=(const GpuSceneBufferAllocation&) = delete;
-
-	GpuSceneBufferAllocation& operator=(GpuSceneBufferAllocation&& b)
-	{
-		ANKI_ASSERT(!isValid() && "Forgot to delete");
-		m_token = b.m_token;
-		b.m_token = {};
-		return *this;
-	}
-
-	explicit operator Bool() const
-	{
-		return isValid();
-	}
-
-	Bool isValid() const
-	{
-		return m_token.m_offset != kMaxPtrSize;
-	}
-
-	// Get offset in the Unified Geometry Buffer buffer.
-	U32 getOffset() const
-	{
-		ANKI_ASSERT(isValid());
-		return U32(m_token.m_offset);
-	}
-
-	U32 getAllocatedSize() const
-	{
-		ANKI_ASSERT(isValid());
-		return U32(m_token.m_size);
-	}
-
-private:
-	SegregatedListsGpuMemoryPoolToken m_token;
-};
+using GpuSceneBufferAllocation = SegregatedListsSingleBufferGpuMemoryPoolAllocation;
 
 // Memory pool for the GPU scene.
 class GpuSceneBuffer : public MakeSingleton<GpuSceneBuffer>
@@ -84,9 +33,7 @@ public:
 
 	GpuSceneBufferAllocation allocate(PtrSize size, U32 alignment)
 	{
-		GpuSceneBufferAllocation alloc;
-		m_pool.allocate(size, alignment, alloc.m_token);
-		return alloc;
+		return m_pool.allocate(size, alignment);
 	}
 
 	template<typename T>
@@ -95,14 +42,12 @@ public:
 		const U32 alignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
 								  ? sizeof(T)
 								  : GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
-		GpuSceneBufferAllocation alloc;
-		m_pool.allocate(count * sizeof(T), alignment, alloc.m_token);
-		return alloc;
+		return m_pool.allocate(count * sizeof(T), alignment);
 	}
 
 	void deferredFree(GpuSceneBufferAllocation& alloc)
 	{
-		m_pool.deferredFree(alloc.m_token);
+		m_pool.deferredFree(alloc);
 	}
 
 	void endFrame(Fence* fence)
@@ -124,7 +69,7 @@ public:
 	}
 
 private:
-	SegregatedListsGpuMemoryPool m_pool;
+	SegregatedListsSingleBufferGpuMemoryPool m_pool;
 
 	GpuSceneBuffer() = default;
 
@@ -132,11 +77,6 @@ private:
 
 	void updateStats() const;
 };
-
-inline GpuSceneBufferAllocation::~GpuSceneBufferAllocation()
-{
-	GpuSceneBuffer::getSingleton().deferredFree(*this);
-}
 
 // Creates the copy jobs that will patch the GPU Scene.
 class GpuSceneMicroPatcher : public MakeSingleton<GpuSceneMicroPatcher>
@@ -170,7 +110,7 @@ public:
 	// See newCopy
 	void newCopy(const GpuSceneBufferAllocation& dest, PtrSize dataSize, const void* data)
 	{
-		ANKI_ASSERT(dataSize <= dest.getAllocatedSize());
+		ANKI_ASSERT(dataSize <= dest.getSize());
 		newCopy(dest.getOffset(), dataSize, data);
 	}
 
@@ -178,7 +118,7 @@ public:
 	template<typename T>
 	void newCopy(const GpuSceneBufferAllocation& dest, const T& value)
 	{
-		ANKI_ASSERT(sizeof(value) <= dest.getAllocatedSize());
+		ANKI_ASSERT(sizeof(value) <= dest.getSize());
 		newCopy(dest.getOffset(), sizeof(value), &value);
 	}
 

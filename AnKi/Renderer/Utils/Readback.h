@@ -42,12 +42,12 @@ public:
 	void readMostRecentData(const MultiframeReadbackToken& token, DynamicArray<T, TMemPool>& data) const
 	{
 		const U32 slot = findBestSlot(token);
-		if(slot != kMaxU32 && token.m_allocations[slot].isValid())
+		if(slot != kMaxU32 && token.m_allocations[slot])
 		{
 			const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
 
-			data.resize(allocation.getAllocatedSize() / sizeof(T));
-			memcpy(&data[0], static_cast<const U8*>(allocation.getMappedMemory()), allocation.getAllocatedSize());
+			data.resize(U32(allocation.getSize()) / sizeof(T));
+			memcpy(&data[0], static_cast<const U8*>(allocation.getMappedMemory()), allocation.getSize());
 		}
 		else
 		{
@@ -68,12 +68,12 @@ public:
 
 		GpuReadbackMemoryAllocation& allocation = token.m_allocations[token.m_slot];
 
-		if(allocation.isValid() && allocation.getAllocatedSize() != sizeof(T) * count)
+		if(allocation && allocation.getSize() != sizeof(T) * count)
 		{
 			GpuReadbackMemoryPool::getSingleton().deferredFree(allocation);
 		}
 
-		if(!allocation.isValid())
+		if(!allocation)
 		{
 			allocation = GpuReadbackMemoryPool::getSingleton().allocateStructuredBuffer<T>(count);
 		}
@@ -81,7 +81,7 @@ public:
 
 		token.m_slot = (token.m_slot + 1) % kMaxFramesInFlight;
 
-		return BufferView(&allocation.getBuffer(), allocation.getOffset(), sizeof(T) * count);
+		return BufferView(allocation).setRange(sizeof(T) * count);
 	}
 
 	/// Last thing to call in a frame.

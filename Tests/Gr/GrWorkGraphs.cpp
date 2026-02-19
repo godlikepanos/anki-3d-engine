@@ -807,7 +807,6 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 
 		DynamicArray<U32> initialWorkItems;
 		U32 finalValue = 0;
-		U32 workItemCount = 0;
 		{
 			initialWorkItems.resize(initialWorkItemCount);
 			for(U32 i = 0; i < initialWorkItems.getSize(); ++i)
@@ -826,8 +825,6 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 				initialWorkItems2.popBack();
 				const U32 level = workItem >> 16u;
 				const U32 payload = workItem & 0xFFFFu;
-
-				++workItemCount;
 
 				if(level == 0)
 				{

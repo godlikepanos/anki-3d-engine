@@ -23,7 +23,7 @@ void GpuSceneBuffer::init()
 
 	BufferUsageBit buffUsage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kCopyDestination;
 
-	m_pool.init(buffUsage, classes, poolSize, "GpuScene", true);
+	m_pool.init(buffUsage, classes, poolSize, "GpuScene");
 
 	// Allocate something dummy to force creating the GPU buffer
 	GpuSceneBufferAllocation alloc = allocate(16, 4);

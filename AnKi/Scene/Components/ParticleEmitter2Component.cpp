@@ -303,14 +303,14 @@ void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& upd
 
 		for(ParticleProperty prop : EnumIterable<ParticleProperty>())
 		{
-			emitter.m_particleStateSteamOffsets[U32(prop)] = m_gpuScene.m_particleStreams[prop].getOffset();
+			emitter.m_particleStateSteamOffsets[U32(prop)] = U32(m_gpuScene.m_particleStreams[prop].getOffset());
 		}
-		emitter.m_aliveParticleIndicesOffset = m_gpuScene.m_aliveParticleIndices.getOffset();
+		emitter.m_aliveParticleIndicesOffset = U32(m_gpuScene.m_aliveParticleIndices.getOffset());
 		emitter.m_particleCount = commonProps.m_particleCount;
 
 		emitter.m_emissionPeriod = commonProps.m_emissionPeriod;
 		emitter.m_particlesPerEmission = commonProps.m_particlesPerEmission;
-		emitter.m_particleEmitterPropertiesOffset = m_gpuScene.m_anKiParticleEmitterProperties.getOffset();
+		emitter.m_particleEmitterPropertiesOffset = U32(m_gpuScene.m_anKiParticleEmitterProperties.getOffset());
 
 		if(m_geomType == ParticleGeometryType::kMeshComponent)
 		{

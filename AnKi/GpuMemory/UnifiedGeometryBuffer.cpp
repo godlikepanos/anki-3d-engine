@@ -25,7 +25,7 @@ void UnifiedGeometryBuffer::init()
 		buffUsage |= BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructure;
 	}
 
-	m_pool.init(buffUsage, classes, poolSize, "UnifiedGeometry", false);
+	m_pool.init(buffUsage, classes, poolSize, "UnifiedGeometry");
 
 	// Allocate something dummy to force creating the GPU buffer
 	UnifiedGeometryBufferAllocation alloc = allocate(16, 4);

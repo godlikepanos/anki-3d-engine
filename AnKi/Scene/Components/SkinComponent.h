@@ -90,7 +90,7 @@ public:
 	ANKI_INTERNAL U32 getBoneTransformsGpuSceneOffset() const
 	{
 		ANKI_ASSERT(isValid());
-		return m_gpuSceneBoneTransforms.getOffset();
+		return U32(m_gpuSceneBoneTransforms.getOffset());
 	}
 
 	ANKI_INTERNAL Bool gpuSceneReallocationsThisFrame() const

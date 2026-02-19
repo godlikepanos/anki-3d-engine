@@ -264,7 +264,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			cmdb->copyBufferToBuffer(handle, lod.m_vertexBuffersAllocationToken[stream]);
 		}
 
-		if(lod.m_meshletBoundingVolumes.isValid())
+		if(lod.m_meshletBoundingVolumes)
 		{
 			// Indices
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];

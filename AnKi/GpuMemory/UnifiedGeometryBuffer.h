@@ -7,16 +7,12 @@
 
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
-#include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
+#include <AnKi/Gr/Utils/SegregatedListsSingleBufferGpuMemoryPool.h>
 
 namespace anki {
 
-/// @addtogroup gpu_memory
-/// @{
-
 ANKI_CVAR(NumericCVar<PtrSize>, Core, UnifiedGeometryBufferSize, 512_MB, 16_MB, 2_GB, "Global index and vertex buffer size")
 
-/// @memberof UnifiedGeometryBuffer
 class UnifiedGeometryBufferAllocation
 {
 	friend class UnifiedGeometryBuffer;
@@ -37,46 +33,45 @@ public:
 
 	UnifiedGeometryBufferAllocation& operator=(UnifiedGeometryBufferAllocation&& b)
 	{
-		ANKI_ASSERT(!isValid() && "Forgot to delete");
-		m_token = b.m_token;
+		ANKI_ASSERT(!(*this) && "Forgot to delete");
+		m_alloc = std::move(b.m_alloc);
 		m_fakeOffset = b.m_fakeOffset;
 		m_fakeAllocatedSize = b.m_fakeAllocatedSize;
-		b.m_token = {};
 		b.m_fakeAllocatedSize = 0;
 		b.m_fakeOffset = kMaxU32;
 		return *this;
 	}
 
-	operator BufferView() const;
-
-	/// This will return an exaggerated view compared to the above that it's properly aligned.
-	BufferView getCompleteBufferView() const;
-
-	Bool isValid() const
+	operator Bool() const
 	{
-		return m_token.m_offset != kMaxPtrSize;
+		return !!m_alloc;
 	}
 
-	/// Get offset in the Unified Geometry Buffer buffer.
+	operator BufferView() const;
+
+	// This will return an exaggerated view compared to the above that it's properly aligned.
+	BufferView getCompleteBufferView() const;
+
+	// Get offset in the Unified Geometry Buffer buffer.
 	U32 getOffset() const
 	{
-		ANKI_ASSERT(isValid());
+		ANKI_ASSERT(!!(*this));
 		return m_fakeOffset;
 	}
 
 	U32 getAllocatedSize() const
 	{
-		ANKI_ASSERT(isValid());
+		ANKI_ASSERT(!!(*this));
 		return m_fakeAllocatedSize;
 	}
 
 private:
-	SegregatedListsGpuMemoryPoolToken m_token;
-	U32 m_fakeOffset = kMaxU32; ///< In some allocations with weird alignments we need a different offset.
+	SegregatedListsSingleBufferGpuMemoryPoolAllocation m_alloc;
+	U32 m_fakeOffset = kMaxU32; // In some allocations with weird alignments we need a different offset.
 	U32 m_fakeAllocatedSize = 0;
 };
 
-/// Manages vertex and index memory for the WHOLE application.
+// Manages vertex and index memory for the WHOLE application.
 class UnifiedGeometryBuffer : public MakeSingleton<UnifiedGeometryBuffer>
 {
 	template<typename>
@@ -89,7 +84,7 @@ public:
 
 	void init();
 
-	/// The alignment doesn't need to be power of 2 unlike other allocators.
+	// The alignment doesn't need to be power of 2 unlike other allocators.
 	UnifiedGeometryBufferAllocation allocate(PtrSize size, U32 alignment)
 	{
 		ANKI_ASSERT(size && alignment);
@@ -99,19 +94,19 @@ public:
 		ANKI_ASSERT(fixedSize >= size);
 
 		UnifiedGeometryBufferAllocation out;
-		m_pool.allocate(fixedSize, fixedAlignment, out.m_token);
+		out.m_alloc = m_pool.allocate(fixedSize, fixedAlignment);
 
-		const U32 remainder = out.m_token.m_offset % alignment;
-		out.m_fakeOffset = U32(out.m_token.m_offset + (alignment - remainder));
+		const U32 remainder = out.m_alloc.getOffset() % alignment;
+		out.m_fakeOffset = U32(out.m_alloc.getOffset() + (alignment - remainder));
 		ANKI_ASSERT(isAligned(alignment, out.m_fakeOffset));
 
 		out.m_fakeAllocatedSize = U32(size);
-		ANKI_ASSERT(PtrSize(out.m_fakeOffset) + out.m_fakeAllocatedSize <= out.m_token.m_offset + out.m_token.m_size);
+		ANKI_ASSERT(PtrSize(out.m_fakeOffset) + out.m_fakeAllocatedSize <= out.m_alloc.getOffset() + out.m_alloc.getSize());
 
 		return out;
 	}
 
-	/// Allocate a vertex buffer.
+	// Allocate a vertex buffer.
 	UnifiedGeometryBufferAllocation allocateFormat(Format format, U32 count)
 	{
 		const U32 texelSize = getFormatInfo(format).m_texelSize;
@@ -120,7 +115,7 @@ public:
 
 	void deferredFree(UnifiedGeometryBufferAllocation& alloc)
 	{
-		m_pool.deferredFree(alloc.m_token);
+		m_pool.deferredFree(alloc.m_alloc);
 		alloc.m_fakeAllocatedSize = 0;
 		alloc.m_fakeOffset = kMaxU32;
 	}
@@ -144,7 +139,7 @@ public:
 	}
 
 private:
-	SegregatedListsGpuMemoryPool m_pool;
+	SegregatedListsSingleBufferGpuMemoryPool m_pool;
 
 	UnifiedGeometryBuffer() = default;
 
@@ -165,8 +160,7 @@ inline UnifiedGeometryBufferAllocation::operator BufferView() const
 
 inline BufferView UnifiedGeometryBufferAllocation::getCompleteBufferView() const
 {
-	return {&UnifiedGeometryBuffer::getSingleton().getBuffer(), m_token.m_offset, m_token.m_size};
+	return {&UnifiedGeometryBuffer::getSingleton().getBuffer(), m_alloc.getOffset(), m_alloc.getSize()};
 }
-/// @}
 
 } // end namespace anki

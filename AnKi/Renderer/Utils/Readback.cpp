@@ -15,12 +15,12 @@ U32 ReadbackManager::findBestSlot(const MultiframeReadbackToken& token) const
 
 	for(U32 i = 0; i < kMaxFramesInFlight; ++i)
 	{
-		if(token.m_frameIds[i] == earliestFrame && token.m_allocations[i].isValid())
+		if(token.m_frameIds[i] == earliestFrame && token.m_allocations[i])
 		{
 			bestSlot = i;
 			break;
 		}
-		else if(token.m_frameIds[i] < earliestFrame && token.m_allocations[i].isValid())
+		else if(token.m_frameIds[i] < earliestFrame && token.m_allocations[i])
 		{
 			secondBestSlot = i;
 		}
@@ -42,7 +42,7 @@ void ReadbackManager::readMostRecentData(const MultiframeReadbackToken& token, v
 	}
 
 	const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
-	dataOut = min(dataSize, PtrSize(allocation.getAllocatedSize()));
+	dataOut = min(dataSize, allocation.getSize());
 
 	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()), dataOut);
 }

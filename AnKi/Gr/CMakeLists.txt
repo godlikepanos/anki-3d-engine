@@ -8,7 +8,7 @@ set(backend_sources
 	Utils/StackGpuMemoryPool.cpp
 	BackendCommon/Functions.cpp
 	BackendCommon/GraphicsStateTracker.cpp
-	Utils/SegregatedListsGpuMemoryPool.cpp)
+	Utils/SegregatedListsSingleBufferGpuMemoryPool.cpp)
 
 set(backend_headers
 	AccelerationStructure.h
@@ -32,7 +32,7 @@ set(backend_headers
 	Utils/StackGpuMemoryPool.h
 	BackendCommon/Functions.h
 	BackendCommon/Format.def.h
-	Utils/SegregatedListsGpuMemoryPool.h)
+	Utils/SegregatedListsSingleBufferGpuMemoryPool.h)
 
 if(ARM)
 	set(cpu_arch "ARM64")

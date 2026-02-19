@@ -303,14 +303,13 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		ConstWeakArray<U8> preallocatedConsts = mtl.getPrefilledLocalConstants();
 
-		if(!m_gpuSceneConstants || m_gpuSceneConstants.getAllocatedSize() != preallocatedConsts.getSizeInBytes())
+		if(!m_gpuSceneConstants || m_gpuSceneConstants.getSize() != preallocatedConsts.getSizeInBytes())
 		{
 			GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneConstants);
 			m_gpuSceneConstants = GpuSceneBuffer::getSingleton().allocate(preallocatedConsts.getSizeInBytes(), 4);
 		}
 
-		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuSceneConstants.getOffset(), m_gpuSceneConstants.getAllocatedSize(),
-													 preallocatedConsts.getBegin());
+		GpuSceneMicroPatcher::getSingleton().newCopy(m_gpuSceneConstants.getOffset(), m_gpuSceneConstants.getSize(), preallocatedConsts.getBegin());
 	}
 
 	// Update renderable
@@ -319,7 +318,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		GpuSceneRenderable gpuRenderable = {};
 		gpuRenderable.m_worldTransformsIndex = movec.getGpuSceneTransformsIndex();
-		gpuRenderable.m_constantsOffset = m_gpuSceneConstants.getOffset();
+		gpuRenderable.m_constantsOffset = U32(m_gpuSceneConstants.getOffset());
 		gpuRenderable.m_meshLodsIndex =
 			(prioritizeEmitter) ? m_emitterComponent->getGpuSceneMeshLodIndex(m_submeshIdx) : m_meshComponent->getGpuSceneMeshLodsIndex(m_submeshIdx);
 		gpuRenderable.m_boneTransformsOffset = (m_skinComponent) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
