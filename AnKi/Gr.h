@@ -19,13 +19,3 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/RenderGraph.h>
 #include <AnKi/Gr/GrUpscaler.h>
-
-#include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
-
-/// @defgroup graphics Graphics API abstraction
-
-/// @defgroup opengl OpenGL backend
-/// @ingroup graphics
-
-/// @defgroup vulkan Vulkan backend
-/// @ingroup graphics

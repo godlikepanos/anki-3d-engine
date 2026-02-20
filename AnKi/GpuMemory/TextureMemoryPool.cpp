@@ -15,7 +15,7 @@ ANKI_SVAR(TextureMemoryPoolUsedMemory, StatCategory::kGpuMem, "Texture mem in us
 
 static constexpr Array<PtrSize, 8> kMemoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 256_MB};
 
-class TextureMemoryPool::SLChunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<CoreMemoryPool>>
+class TextureMemoryPool::SLChunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 {
 public:
 	BufferPtr m_buffer;
@@ -53,7 +53,7 @@ public:
 
 TextureMemoryPool::TextureMemoryPool()
 {
-	m_builder = newInstance<SLBuilder>(CoreMemoryPool::getSingleton());
+	m_builder = newInstance<SLBuilder>(DefaultMemoryPool::getSingleton());
 
 	if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
 	{
@@ -67,32 +67,32 @@ TextureMemoryPool::~TextureMemoryPool()
 
 	throwGarbage(true);
 
-	deleteInstance(CoreMemoryPool::getSingleton(), m_builder);
+	deleteInstance(DefaultMemoryPool::getSingleton(), m_builder);
 }
 
 Error TextureMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)
 {
-	if(TextureMemoryPool::getSingleton().m_chunksCreated == g_cvarCoreTextureMemoryPoolMaxChunks)
+	if(TextureMemoryPool::getSingleton().m_chunksCreated == g_cvarGpuMemTextureMemoryPoolMaxChunks)
 	{
-		ANKI_CORE_LOGE("Reached the max limit of memory chunks. Incrase %s", g_cvarCoreTextureMemoryPoolMaxChunks.getName().cstr());
+		ANKI_GPUMEM_LOGE("Reached the max limit of memory chunks. Incrase %s", g_cvarGpuMemTextureMemoryPoolMaxChunks.getName().cstr());
 		return Error::kOutOfMemory;
 	}
 
 	BufferInitInfo buffInit("TexPoolChunk");
-	buffInit.m_size = g_cvarCoreTextureMemoryPoolChunkSize;
+	buffInit.m_size = g_cvarGpuMemTextureMemoryPoolChunkSize;
 	buffInit.m_usage = BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy | BufferUsageBit::kVertexOrIndex
 					   | BufferUsageBit::kAllIndirect | BufferUsageBit::kAllUav;
 
 	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
 
-	newChunk = newInstance<SLChunk>(CoreMemoryPool::getSingleton());
+	newChunk = newInstance<SLChunk>(DefaultMemoryPool::getSingleton());
 	newChunk->m_buffer = buff;
 
-	chunkSize = g_cvarCoreTextureMemoryPoolChunkSize;
+	chunkSize = g_cvarGpuMemTextureMemoryPoolChunkSize;
 
 	++TextureMemoryPool::getSingleton().m_chunksCreated;
 
-	g_svarTextureMemoryPoolCapacity.increment(U32(g_cvarCoreTextureMemoryPoolChunkSize));
+	g_svarTextureMemoryPoolCapacity.increment(U32(g_cvarGpuMemTextureMemoryPoolChunkSize));
 
 	return Error::kNone;
 }
@@ -101,9 +101,9 @@ void TextureMemoryPool::deleteChunk(SLChunk* chunk)
 {
 	if(chunk)
 	{
-		ANKI_CORE_LOGW("Will delete texture mem pool chunk and will serialize CPU and GPU");
+		ANKI_GPUMEM_LOGW("Will delete texture mem pool chunk and will serialize CPU and GPU");
 		GrManager::getSingleton().finish();
-		deleteInstance(CoreMemoryPool::getSingleton(), chunk);
+		deleteInstance(DefaultMemoryPool::getSingleton(), chunk);
 
 		// Wait again to force delete the memory
 		GrManager::getSingleton().finish();
@@ -111,7 +111,7 @@ void TextureMemoryPool::deleteChunk(SLChunk* chunk)
 		ANKI_ASSERT(TextureMemoryPool::getSingleton().m_chunksCreated > 0);
 		--TextureMemoryPool::getSingleton().m_chunksCreated;
 
-		g_svarTextureMemoryPoolCapacity.decrement(U32(g_cvarCoreTextureMemoryPoolChunkSize));
+		g_svarTextureMemoryPoolCapacity.decrement(U32(g_cvarGpuMemTextureMemoryPoolChunkSize));
 	}
 }
 
@@ -123,7 +123,7 @@ TextureMemoryPoolAllocation TextureMemoryPool::allocate(PtrSize size, U32 alignm
 	PtrSize offset;
 	if(m_builder->allocate(size, alignment, chunk, offset))
 	{
-		ANKI_CORE_LOGF("Failed to allocate tex memory");
+		ANKI_GPUMEM_LOGF("Failed to allocate tex memory");
 	}
 
 	TextureMemoryPoolAllocation alloc;

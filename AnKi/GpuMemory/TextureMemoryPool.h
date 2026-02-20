@@ -5,17 +5,17 @@
 
 #pragma once
 
+#include <AnKi/GpuMemory/Common.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/SegregatedListsAllocatorBuilder.h>
 #include <AnKi/Util/BlockArray.h>
-#include <AnKi/Core/Common.h>
 
 namespace anki {
 
-ANKI_CVAR2(NumericCVar<PtrSize>, Core, TextureMemoryPool, ChunkSize, 256_MB, 16_MB, 1_GB, "Texture memory pool is allocated in chunks of this size")
-ANKI_CVAR2(NumericCVar<PtrSize>, Core, TextureMemoryPool, MaxChunks, 4, 1, 32, "Max number of chunks")
+ANKI_CVAR2(NumericCVar<PtrSize>, GpuMem, TextureMemoryPool, ChunkSize, 256_MB, 16_MB, 1_GB, "Texture memory pool is allocated in chunks of this size")
+ANKI_CVAR2(NumericCVar<PtrSize>, GpuMem, TextureMemoryPool, MaxChunks, 4, 1, 32, "Max number of chunks")
 
 class TextureMemoryPoolAllocation
 {
@@ -110,12 +110,12 @@ public:
 private:
 	class SLChunk;
 	class SLInterface;
-	using SLBuilder = SegregatedListsAllocatorBuilder<SLChunk, SLInterface, DummyMutex, SingletonMemoryPoolWrapper<CoreMemoryPool>>;
+	using SLBuilder = SegregatedListsAllocatorBuilder<SLChunk, SLInterface, DummyMutex, SingletonMemoryPoolWrapper<DefaultMemoryPool>>;
 
 	class Garbage
 	{
 	public:
-		CoreBlockArray<TextureMemoryPoolAllocation, BlockArrayConfig<16>> m_allocations;
+		BlockArray<TextureMemoryPoolAllocation, BlockArrayConfig<16>> m_allocations;
 		FencePtr m_fence;
 	};
 
@@ -124,7 +124,7 @@ private:
 
 	PtrSize m_allocatedSize = 0;
 
-	CoreBlockArray<Garbage, BlockArrayConfig<8>> m_garbage;
+	BlockArray<Garbage, BlockArrayConfig<8>> m_garbage;
 	U32 m_activeGarbage = kMaxU32;
 
 	U16 m_chunksCreated = 0;

@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <AnKi/Gr/Utils/SegregatedListsSingleBufferGpuMemoryPool.h>
+#include <AnKi/GpuMemory/Common.h>
+#include <AnKi/GpuMemory/SegregatedListsSingleBufferGpuMemoryPool.h>
 
 namespace anki {
 

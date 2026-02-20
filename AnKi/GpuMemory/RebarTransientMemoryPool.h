@@ -5,14 +5,13 @@
 
 #pragma once
 
+#include <AnKi/GpuMemory/Common.h>
 #include <AnKi/Util/CVarSet.h>
-#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Gr/Buffer.h>
-#include <AnKi/Gr/GrManager.h>
 
 namespace anki {
 
-ANKI_CVAR(NumericCVar<PtrSize>, Core, RebarGpuMemorySize, 24_MB, 1_MB, 1_GB, "ReBAR: always mapped GPU memory")
+ANKI_CVAR(NumericCVar<PtrSize>, GpuMem, RebarGpuMemorySize, 24_MB, 1_MB, 1_GB, "ReBAR: always mapped GPU memory")
 
 // Manages staging GPU memory.
 class RebarTransientMemoryPool : public MakeSingleton<RebarTransientMemoryPool>
@@ -43,7 +42,7 @@ public:
 	template<typename T>
 	BufferView allocateConstantBuffer(T*& mappedMem)
 	{
-		return allocate(sizeof(T), GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment, mappedMem);
+		return allocate(sizeof(T), m_constantBufferBindOffsetAlignment, mappedMem);
 	}
 
 	// See allocate()
@@ -83,6 +82,7 @@ private:
 	U8* m_mappedMem = nullptr; // Cache it
 	PtrSize m_bufferSize = 0; // Cache it
 	U32 m_structuredBufferAlignment = kMaxU32; // Cache it
+	U32 m_constantBufferBindOffsetAlignment = kMaxU32; // Cache it
 
 	Atomic<PtrSize> m_offset = {0};
 

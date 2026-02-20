@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Utils/SegregatedListsSingleBufferGpuMemoryPool.h>
+#include <AnKi/GpuMemory/SegregatedListsSingleBufferGpuMemoryPool.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {
 
-class SegregatedListsSingleBufferGpuMemoryPool::Chunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<GrMemoryPool>>
+class SegregatedListsSingleBufferGpuMemoryPool::Chunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 {
 };
 
@@ -68,10 +68,15 @@ void SegregatedListsSingleBufferGpuMemoryPool::init(BufferUsageBit gpuBufferUsag
 		m_classes[i] = classUpperSizes[i];
 	}
 
-	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
+	m_builder = newInstance<Builder>(DefaultMemoryPool::getSingleton());
 	m_builder->getInterface().m_parent = this;
 
 	m_allocatedSize = 0;
+
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+	{
+		m_structuredBufferBindOffsetAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+	}
 }
 
 void SegregatedListsSingleBufferGpuMemoryPool::destroy()
@@ -107,7 +112,7 @@ void SegregatedListsSingleBufferGpuMemoryPool::destroy()
 		}
 	}
 
-	deleteInstance(GrMemoryPool::getSingleton(), m_builder);
+	deleteInstance(DefaultMemoryPool::getSingleton(), m_builder);
 	m_gpuBuffer.reset(nullptr);
 
 	ANKI_ASSERT(m_chunk == nullptr);
@@ -119,13 +124,13 @@ Error SegregatedListsSingleBufferGpuMemoryPool::allocateChunk(Chunk*& newChunk, 
 
 	if(m_chunk == nullptr)
 	{
-		m_chunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
+		m_chunk = newInstance<Chunk>(DefaultMemoryPool::getSingleton());
 		newChunk = m_chunk;
 		chunkSize = m_gpuBuffer->getSize();
 	}
 	else
 	{
-		ANKI_GR_LOGE("Out of memory");
+		ANKI_GPUMEM_LOGE("Out of memory");
 		return Error::kOutOfMemory;
 	}
 
@@ -135,7 +140,7 @@ Error SegregatedListsSingleBufferGpuMemoryPool::allocateChunk(Chunk*& newChunk, 
 void SegregatedListsSingleBufferGpuMemoryPool::deleteChunk(Chunk* chunk)
 {
 	ANKI_ASSERT(m_chunk == chunk);
-	deleteInstance(GrMemoryPool::getSingleton(), chunk);
+	deleteInstance(DefaultMemoryPool::getSingleton(), chunk);
 	m_chunk = nullptr;
 }
 
@@ -151,7 +156,7 @@ SegregatedListsSingleBufferGpuMemoryPoolAllocation SegregatedListsSingleBufferGp
 	const Error err = m_builder->allocate(size, alignment, chunk, offset);
 	if(err)
 	{
-		ANKI_GR_LOGF("Failed to allocate memory");
+		ANKI_GPUMEM_LOGF("Failed to allocate memory");
 	}
 
 	SegregatedListsSingleBufferGpuMemoryPoolAllocation alloc;

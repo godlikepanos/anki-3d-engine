@@ -91,7 +91,7 @@ class XmlDocument;
 	using submoduleName##StringList = BaseStringList<submoduleName##MemPoolWrapper>; \
 	using submoduleName##XmlDocument = XmlDocument<submoduleName##MemPoolWrapper>; \
 	template<typename T, typename TConfig = BlockArrayDefaultConfig> \
-	using submoduleName##BlockArray = BlockArray<T, submoduleName##MemPoolWrapper, TConfig>; \
+	using submoduleName##BlockArray = BlockArray<T, TConfig, submoduleName##MemPoolWrapper>; \
 	template<typename T = U32> \
 	using submoduleName##DynamicBitSet = DynamicBitSet<submoduleName##MemPoolWrapper, T>;
 

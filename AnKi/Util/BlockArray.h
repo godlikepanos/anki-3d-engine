@@ -131,7 +131,7 @@ private:
 };
 
 // It's a type of dynamic array that unlike DynamicArray doesn't move elements around when it shrinks or grows the storage.
-template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TConfig = BlockArrayDefaultConfig>
+template<typename T, typename TConfig = BlockArrayDefaultConfig, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 class BlockArray
 {
 	template<typename, typename, typename>

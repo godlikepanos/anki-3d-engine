@@ -5,13 +5,13 @@
 
 #pragma once
 
+#include <AnKi/GpuMemory/Common.h>
+#include <AnKi/GpuMemory/SegregatedListsSingleBufferGpuMemoryPool.h>
 #include <AnKi/Util/CVarSet.h>
-#include <AnKi/Core/StatsSet.h>
-#include <AnKi/Gr/Utils/SegregatedListsSingleBufferGpuMemoryPool.h>
 
 namespace anki {
 
-ANKI_CVAR(NumericCVar<PtrSize>, Core, UnifiedGeometryBufferSize, 512_MB, 16_MB, 2_GB, "Global index and vertex buffer size")
+ANKI_CVAR(NumericCVar<PtrSize>, GpuMem, UnifiedGeometryBufferSize, 512_MB, 16_MB, 2_GB, "Global index and vertex buffer size")
 
 class UnifiedGeometryBufferAllocation
 {

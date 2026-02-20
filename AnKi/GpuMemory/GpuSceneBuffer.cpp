@@ -17,7 +17,7 @@ ANKI_SVAR(GpuSceneBufferFragmentation, StatCategory::kGpuMem, "GPU scene fragmen
 
 void GpuSceneBuffer::init()
 {
-	const PtrSize poolSize = g_cvarCoreGpuSceneInitialSize;
+	const PtrSize poolSize = g_cvarGpuMemGpuSceneSize;
 
 	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
 
@@ -67,7 +67,7 @@ Error GpuSceneMicroPatcher::init()
 	m_copyProgram->getOrCreateVariant(varInit, variant);
 	m_grProgram.reset(&variant->getProgram());
 
-	m_stackMemPool.init(CoreMemoryPool::getSingleton().getAllocationCallback(), CoreMemoryPool::getSingleton().getAllocationCallbackUserData(),
+	m_stackMemPool.init(DefaultMemoryPool::getSingleton().getAllocationCallback(), DefaultMemoryPool::getSingleton().getAllocationCallbackUserData(),
 						512_KB);
 
 	return Error::kNone;

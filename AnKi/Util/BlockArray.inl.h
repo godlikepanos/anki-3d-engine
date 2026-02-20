@@ -7,8 +7,8 @@
 
 namespace anki {
 
-template<typename T, typename TMemoryPool, typename TConfig>
-void BlockArray<T, TMemoryPool, TConfig>::destroy()
+template<typename T, typename TConfig, typename TMemoryPool>
+void BlockArray<T, TConfig, TMemoryPool>::destroy()
 {
 	for(U32 i = 0; i < m_blockStorages.getSize(); ++i)
 	{
@@ -32,9 +32,9 @@ void BlockArray<T, TMemoryPool, TConfig>::destroy()
 	m_endIndex = 0;
 }
 
-template<typename T, typename TMemoryPool, typename TConfig>
+template<typename T, typename TConfig, typename TMemoryPool>
 template<typename... TArgs>
-typename BlockArray<T, TMemoryPool, TConfig>::Iterator BlockArray<T, TMemoryPool, TConfig>::emplace(TArgs&&... args)
+typename BlockArray<T, TConfig, TMemoryPool>::Iterator BlockArray<T, TConfig, TMemoryPool>::emplace(TArgs&&... args)
 {
 	U32 localIdx = kMaxU32;
 	U32 blockIdx = kMaxU32;
@@ -84,8 +84,8 @@ typename BlockArray<T, TMemoryPool, TConfig>::Iterator BlockArray<T, TMemoryPool
 	return Iterator(this, idx);
 }
 
-template<typename T, typename TMemoryPool, typename TConfig>
-void BlockArray<T, TMemoryPool, TConfig>::erase(Iterator it)
+template<typename T, typename TConfig, typename TMemoryPool>
+void BlockArray<T, TConfig, TMemoryPool>::erase(Iterator it)
 {
 	const U32 idx = it.getArrayIndex();
 	const U32 localIdx = idx % kElementCountPerBlock;
@@ -132,8 +132,8 @@ void BlockArray<T, TMemoryPool, TConfig>::erase(Iterator it)
 	}
 }
 
-template<typename T, typename TMemoryPool, typename TConfig>
-BlockArray<T, TMemoryPool, TConfig>& BlockArray<T, TMemoryPool, TConfig>::operator=(const BlockArray& b)
+template<typename T, typename TConfig, typename TMemoryPool>
+BlockArray<T, TConfig, TMemoryPool>& BlockArray<T, TConfig, TMemoryPool>::operator=(const BlockArray& b)
 {
 	destroy();
 
@@ -172,8 +172,8 @@ BlockArray<T, TMemoryPool, TConfig>& BlockArray<T, TMemoryPool, TConfig>::operat
 	return *this;
 }
 
-template<typename T, typename TMemoryPool, typename TConfig>
-U32 BlockArray<T, TMemoryPool, TConfig>::getNextElementIndex(U32 crnt) const
+template<typename T, typename TConfig, typename TMemoryPool>
+U32 BlockArray<T, TConfig, TMemoryPool>::getNextElementIndex(U32 crnt) const
 {
 	ANKI_ASSERT(crnt < m_endIndex);
 
@@ -192,8 +192,8 @@ U32 BlockArray<T, TMemoryPool, TConfig>::getNextElementIndex(U32 crnt) const
 	return m_endIndex;
 }
 
-template<typename T, typename TMemoryPool, typename TConfig>
-void BlockArray<T, TMemoryPool, TConfig>::validate() const
+template<typename T, typename TConfig, typename TMemoryPool>
+void BlockArray<T, TConfig, TMemoryPool>::validate() const
 {
 	ANKI_ASSERT(m_blockStorages.getSize() == m_blockMetadatas.getSize());
 

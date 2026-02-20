@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <AnKi/GpuMemory/Common.h>
 #include <AnKi/Util/SegregatedListsAllocatorBuilder.h>
 #include <AnKi/Util/BlockArray.h>
 #include <AnKi/Gr/Buffer.h>
@@ -109,6 +110,14 @@ public:
 	// It's thread-safe.
 	SegregatedListsSingleBufferGpuMemoryPoolAllocation allocate(PtrSize size, U32 alignment);
 
+	// It's thread-safe.
+	template<typename T>
+	SegregatedListsSingleBufferGpuMemoryPoolAllocation allocateStructuredBuffer(U32 count)
+	{
+		const U32 alignment = (m_structuredBufferBindOffsetAlignment == kMaxU32) ? sizeof(T) : m_structuredBufferBindOffsetAlignment;
+		return allocate(count * sizeof(T), alignment);
+	}
+
 	// Free memory a few frames down the line.
 	// It's thread-safe.
 	void deferredFree(SegregatedListsSingleBufferGpuMemoryPoolAllocation& token);
@@ -137,9 +146,9 @@ public:
 private:
 	class BuilderInterface;
 	class Chunk;
-	using Builder = SegregatedListsAllocatorBuilder<Chunk, BuilderInterface, DummyMutex, SingletonMemoryPoolWrapper<GrMemoryPool>>;
+	using Builder = SegregatedListsAllocatorBuilder<Chunk, BuilderInterface, DummyMutex, SingletonMemoryPoolWrapper<DefaultMemoryPool>>;
 
-	GrDynamicArray<PtrSize> m_classes;
+	DynamicArray<PtrSize> m_classes;
 	mutable Mutex m_lock;
 
 	Builder* m_builder = nullptr;
@@ -148,14 +157,16 @@ private:
 	PtrSize m_allocatedSize = 0;
 	Chunk* m_chunk = nullptr; // The one and only chunk
 
+	U32 m_structuredBufferBindOffsetAlignment = kMaxU32;
+
 	class Garbage
 	{
 	public:
-		GrBlockArray<SegregatedListsSingleBufferGpuMemoryPoolAllocation, BlockArrayConfig<16>> m_tokens;
+		BlockArray<SegregatedListsSingleBufferGpuMemoryPoolAllocation, BlockArrayConfig<16>> m_tokens;
 		FencePtr m_fence;
 	};
 
-	GrBlockArray<Garbage, BlockArrayConfig<8>> m_garbage;
+	BlockArray<Garbage, BlockArrayConfig<8>> m_garbage;
 	U32 m_activeGarbage = kMaxU32;
 
 	Error allocateChunk(Chunk*& newChunk, PtrSize& chunkSize);

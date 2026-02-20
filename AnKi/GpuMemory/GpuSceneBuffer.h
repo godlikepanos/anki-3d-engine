@@ -5,16 +5,15 @@
 
 #pragma once
 
+#include <AnKi/GpuMemory/Common.h>
+#include <AnKi/GpuMemory/SegregatedListsSingleBufferGpuMemoryPool.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
-#include <AnKi/Gr/Utils/SegregatedListsSingleBufferGpuMemoryPool.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
-#include <AnKi/Gr/GrManager.h>
-#include <AnKi/Util/Assert.h>
 
 namespace anki {
 
-ANKI_CVAR(NumericCVar<PtrSize>, Core, GpuSceneInitialSize, 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene")
+ANKI_CVAR(NumericCVar<PtrSize>, GpuMem, GpuSceneSize, 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene")
 
 using GpuSceneBufferAllocation = SegregatedListsSingleBufferGpuMemoryPoolAllocation;
 
@@ -39,10 +38,7 @@ public:
 	template<typename T>
 	GpuSceneBufferAllocation allocateStructuredBuffer(U32 count)
 	{
-		const U32 alignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
-								  ? sizeof(T)
-								  : GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
-		return m_pool.allocate(count * sizeof(T), alignment);
+		return m_pool.allocateStructuredBuffer<T>(count);
 	}
 
 	void deferredFree(GpuSceneBufferAllocation& alloc)

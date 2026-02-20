@@ -5,10 +5,8 @@ set(backend_sources
 	GrObject.cpp
 	RenderGraph.cpp
 	ShaderProgram.cpp
-	Utils/StackGpuMemoryPool.cpp
 	BackendCommon/Functions.cpp
-	BackendCommon/GraphicsStateTracker.cpp
-	Utils/SegregatedListsSingleBufferGpuMemoryPool.cpp)
+	BackendCommon/GraphicsStateTracker.cpp)
 
 set(backend_headers
 	AccelerationStructure.h
@@ -29,10 +27,8 @@ set(backend_headers
 	TimestampQuery.h
 	PipelineQuery.h
 	GrUpscaler.h
-	Utils/StackGpuMemoryPool.h
 	BackendCommon/Functions.h
-	BackendCommon/Format.def.h
-	Utils/SegregatedListsSingleBufferGpuMemoryPool.h)
+	BackendCommon/Format.def.h)
 
 if(ARM)
 	set(cpu_arch "ARM64")

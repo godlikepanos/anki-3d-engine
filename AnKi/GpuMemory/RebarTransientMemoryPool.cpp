@@ -8,6 +8,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Fence.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
@@ -25,7 +26,7 @@ void RebarTransientMemoryPool::init()
 {
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	buffInit.m_size = g_cvarCoreRebarGpuMemorySize;
+	buffInit.m_size = g_cvarGpuMemRebarGpuMemorySize;
 	buffInit.m_usage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kVertexOrIndex
 					   | BufferUsageBit::kShaderBindingTable | BufferUsageBit::kAllIndirect | BufferUsageBit::kCopySource
 					   | BufferUsageBit::kAccelerationStructureBuild;
@@ -37,6 +38,8 @@ void RebarTransientMemoryPool::init()
 	{
 		m_structuredBufferAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
 	}
+
+	m_constantBufferBindOffsetAlignment = GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment;
 
 	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -84,12 +87,12 @@ BufferView RebarTransientMemoryPool::allocateInternal(PtrSize origSize, U32 alig
 
 		if(overlaps)
 		{
-			ANKI_CORE_LOGW("ReBAR has to wait for a fence. This means that the ReBAR buffer is not big enough. Increase the %s CVAR",
-						   g_cvarCoreRebarGpuMemorySize.getName().cstr());
+			ANKI_GPUMEM_LOGW("ReBAR has to wait for a fence. This means that the ReBAR buffer is not big enough. Increase the %s CVAR",
+							 g_cvarGpuMemRebarGpuMemorySize.getName().cstr());
 
 			if(!m_sliceFences[sliceIdx]->clientWait(kMaxSecond))
 			{
-				ANKI_CORE_LOGF("Timeout detected");
+				ANKI_GPUMEM_LOGF("Timeout detected");
 			}
 		}
 

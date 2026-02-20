@@ -5,17 +5,14 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
-#include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
+#include <AnKi/GpuMemory/Common.h>
+#include <AnKi/GpuMemory/StackGpuMemoryPool.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Buffer.h>
 
 namespace anki {
 
-/// @addtogroup gpu_memory
-/// @{
-
-/// GPU only transient memory. Used for temporary allocations. Allocations will get reset after each frame.
+// GPU only transient memory. Used for temporary allocations. Allocations will get reset after each frame.
 class GpuVisibleTransientMemoryPool : public MakeSingleton<GpuVisibleTransientMemoryPool>
 {
 	template<typename>
@@ -24,36 +21,27 @@ class GpuVisibleTransientMemoryPool : public MakeSingleton<GpuVisibleTransientMe
 public:
 	BufferView allocate(PtrSize size, PtrSize alignment)
 	{
-		PtrSize offset;
-		Buffer* buffer;
-		m_pool.allocate(size, alignment, offset, buffer);
-		return BufferView(buffer, offset, size);
+		return m_pool.allocate(size, alignment);
 	}
 
 	template<typename T>
 	BufferView allocateStructuredBuffer(U32 count)
 	{
-		return allocateStructuredBuffer(count, sizeof(T));
+		return m_pool.allocateStructuredBuffer<T>(count);
 	}
 
 	BufferView allocateStructuredBuffer(U32 count, U32 structureSize)
 	{
-		return allocate(PtrSize(structureSize * count), (m_structuredBufferAlignment == kMaxU32) ? structureSize : m_structuredBufferAlignment);
+		return m_pool.allocateStructuredBuffer(count, structureSize);
 	}
 
 	void endFrame();
 
 private:
 	StackGpuMemoryPool m_pool;
-	U32 m_structuredBufferAlignment = kMaxU32;
 
 	GpuVisibleTransientMemoryPool()
 	{
-		if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
-		{
-			m_structuredBufferAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
-		}
-
 		BufferUsageBit buffUsage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kIndirectDraw
 								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertexOrIndex | BufferUsageBit::kAllCopy
 								   | BufferUsageBit::kIndirectDispatchRays | BufferUsageBit::kShaderBindingTable;

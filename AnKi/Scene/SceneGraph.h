@@ -392,7 +392,7 @@ private:
 
 	mutable StackMemoryPool m_framePool;
 
-	BlockArray<Scene, SingletonMemoryPoolWrapper<SceneMemoryPool>, BlockArrayConfig<4>> m_scenes;
+	SceneBlockArray<Scene, BlockArrayConfig<4>> m_scenes;
 	U8 m_activeSceneIndex = 0;
 
 	SceneBlockArray<SceneNode*> m_updatableNodes;

@@ -5,6 +5,7 @@
 
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Gr/GrManager.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
@@ -14,7 +15,7 @@ ANKI_SVAR(UnifiedGeomBufferFragmentation, StatCategory::kGpuMem, "UGB fragmentat
 
 void UnifiedGeometryBuffer::init()
 {
-	const PtrSize poolSize = g_cvarCoreUnifiedGeometryBufferSize;
+	const PtrSize poolSize = g_cvarGpuMemUnifiedGeometryBufferSize;
 
 	const Array classes = {1_KB, 8_KB, 32_KB, 128_KB, 512_KB, 4_MB, 8_MB, 16_MB, poolSize};
 

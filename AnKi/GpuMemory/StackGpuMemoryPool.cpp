@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
+#include <AnKi/GpuMemory/StackGpuMemoryPool.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/GrManager.h>
 
@@ -29,7 +29,7 @@ public:
 	F64 m_scale = 0.0;
 	PtrSize m_bias = 0;
 	PtrSize m_allocatedMemory = 0;
-	GrString m_bufferName;
+	String m_bufferName;
 	BufferUsageBit m_bufferUsage = BufferUsageBit::kNone;
 	BufferMapAccessBit m_bufferMap = BufferMapAccessBit::kNone;
 	U8 m_chunkCount = 0;
@@ -64,13 +64,13 @@ public:
 	{
 		if(!m_allowToGrow && m_chunkCount > 0)
 		{
-			ANKI_GR_LOGE("Memory pool is not allowed to grow");
+			ANKI_GPUMEM_LOGE("Memory pool is not allowed to grow");
 			return Error::kOutOfMemory;
 		}
 
-		Chunk* chunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
+		Chunk* chunk = newInstance<Chunk>(DefaultMemoryPool::getSingleton());
 
-		GrString name;
+		String name;
 		name.sprintf("%s (chunk %u)", m_bufferName.cstr(), m_chunkCount);
 
 		BufferInitInfo buffInit(name);
@@ -102,7 +102,7 @@ public:
 		ANKI_ASSERT(m_allocatedMemory >= chunk->m_buffer->getSize());
 		m_allocatedMemory -= chunk->m_buffer->getSize();
 
-		deleteInstance(GrMemoryPool::getSingleton(), chunk);
+		deleteInstance(DefaultMemoryPool::getSingleton(), chunk);
 	}
 
 	void recycleChunk([[maybe_unused]] Chunk& out)
@@ -120,7 +120,7 @@ StackGpuMemoryPool::~StackGpuMemoryPool()
 {
 	if(m_builder)
 	{
-		deleteInstance(GrMemoryPool::getSingleton(), m_builder);
+		deleteInstance(DefaultMemoryPool::getSingleton(), m_builder);
 	}
 }
 
@@ -130,7 +130,7 @@ void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSi
 	ANKI_ASSERT(m_builder == nullptr);
 	ANKI_ASSERT(nextChunkGrowScale >= 1.0);
 
-	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
+	m_builder = newInstance<Builder>(DefaultMemoryPool::getSingleton());
 	BuilderInterface& inter = m_builder->getInterface();
 	inter.m_initialSize = initialSize;
 	inter.m_scale = nextChunkGrowScale;
@@ -139,6 +139,11 @@ void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSi
 	inter.m_bufferUsage = bufferUsage;
 	inter.m_bufferMap = bufferMapping;
 	inter.m_allowToGrow = allowToGrow;
+
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+	{
+		m_structuredBufferBindOffsetAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+	}
 }
 
 void StackGpuMemoryPool::reset()
@@ -146,22 +151,26 @@ void StackGpuMemoryPool::reset()
 	m_builder->reset();
 }
 
-void StackGpuMemoryPool::allocate(PtrSize size, PtrSize alignment, PtrSize& outOffset, Buffer*& buffer, void*& mappedMemory)
+StackGpuMemoryPoolAllocation StackGpuMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	Chunk* chunk;
 	PtrSize offset;
 	const Error err = m_builder->allocate(size, alignment, chunk, offset);
 	if(err)
 	{
-		ANKI_GR_LOGF("Allocation failed");
+		ANKI_GPUMEM_LOGF("Allocation failed");
 	}
 
-	outOffset = offset;
-	buffer = chunk->m_buffer.get();
+	StackGpuMemoryPoolAllocation alloc;
+	alloc.m_buffer = chunk->m_buffer.get();
+	alloc.m_offset = offset;
+	alloc.m_size = size;
 	if(chunk->m_mappedMemory)
 	{
-		mappedMemory = chunk->m_mappedMemory + offset;
+		alloc.m_mappedMemory = chunk->m_mappedMemory + offset;
 	}
+
+	return alloc;
 }
 
 PtrSize StackGpuMemoryPool::getAllocatedMemory() const
