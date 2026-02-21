@@ -125,7 +125,7 @@ private:
 		}
 	};
 
-	using BlockArray = BlockArray<Chunk, SingletonMemoryPoolWrapper<GrMemoryPool>, BlockArrayConfig<Chunk>>;
+	using BlockArray = GrBlockArray<Chunk, BlockArrayConfig<Chunk>>;
 
 	BlockArray m_chunkArray;
 	Mutex m_mtx;
