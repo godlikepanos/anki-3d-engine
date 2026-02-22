@@ -50,6 +50,19 @@ public:
 	}
 };
 
+SegregatedListsGpuMemoryPool::SegregatedListsGpuMemoryPool()
+{
+}
+
+SegregatedListsGpuMemoryPool::~SegregatedListsGpuMemoryPool()
+{
+	GrManager::getSingleton().finish();
+
+	throwGarbage(true);
+
+	deleteInstance(DefaultMemoryPool::getSingleton(), m_builder);
+}
+
 void SegregatedListsGpuMemoryPool::init(PtrSize bufferSize, U32 maxBuffers, CString bufferName, ConstWeakArray<PtrSize> classSizes,
 										BufferUsageBit bufferUsage, BufferMapAccessBit mapAccess)
 {
@@ -79,15 +92,6 @@ void SegregatedListsGpuMemoryPool::init(PtrSize bufferSize, U32 maxBuffers, CStr
 
 	m_bufferUsage = bufferUsage;
 	m_mapAccess = mapAccess;
-}
-
-SegregatedListsGpuMemoryPool::~SegregatedListsGpuMemoryPool()
-{
-	GrManager::getSingleton().finish();
-
-	throwGarbage(true);
-
-	deleteInstance(DefaultMemoryPool::getSingleton(), m_builder);
 }
 
 Error SegregatedListsGpuMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& chunkSize)

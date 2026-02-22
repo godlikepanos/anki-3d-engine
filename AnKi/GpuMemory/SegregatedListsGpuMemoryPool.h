@@ -70,7 +70,7 @@ class SegregatedListsGpuMemoryPool
 	friend class SegregatedListsGpuMemoryPoolAllocation;
 
 public:
-	SegregatedListsGpuMemoryPool() = default;
+	SegregatedListsGpuMemoryPool();
 
 	~SegregatedListsGpuMemoryPool();
 

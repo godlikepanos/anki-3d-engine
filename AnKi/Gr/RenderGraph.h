@@ -15,6 +15,7 @@
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/Function.h>
+#include <AnKi/GpuMemory/SegregatedListsGpuMemoryPool.h>
 
 namespace anki {
 
@@ -22,19 +23,13 @@ namespace anki {
 class RenderGraph;
 class RenderGraphBuilder;
 
-/// @addtogroup graphics
-/// @{
-
-/// @name RenderGraph constants
-/// @{
+// RenderGraph constants
 constexpr U32 kMaxRenderGraphPasses = 512;
-constexpr U32 kMaxRenderGraphRenderTargets = 128; ///< Max imported or not render targets in RenderGraph.
+constexpr U32 kMaxRenderGraphRenderTargets = 128; // Max imported or not render targets in RenderGraph.
 constexpr U32 kMaxRenderGraphBuffers = 256;
 constexpr U32 kMaxRenderGraphAccelerationStructures = 32;
-/// @}
 
-/// Render target handle used in the RenderGraph.
-/// @memberof RenderGraphBuilder
+// Render target handle used in the RenderGraph.
 class RenderGraphGrObjectHandle
 {
 	friend class RenderPassDependency;
@@ -62,26 +57,22 @@ private:
 	U32 m_idx = kMaxU32;
 };
 
-/// Render target (TexturePtr) handle.
-/// @memberof RenderGraphBuilder
+// Render target (TexturePtr) handle.
 class RenderTargetHandle : public RenderGraphGrObjectHandle
 {
 };
 
-/// Buffer handle.
-/// @memberof RenderGraphBuilder
+// Buffer handle.
 class BufferHandle : public RenderGraphGrObjectHandle
 {
 };
 
-/// AccelerationStructurePtr handle.
-/// @memberof RenderGraphBuilder
+// AccelerationStructurePtr handle.
 class AccelerationStructureHandle : public RenderGraphGrObjectHandle
 {
 };
 
-/// Describes the render target.
-/// @memberof RenderGraphBuilder
+// Describes the render target.
 class RenderTargetDesc : public TextureInitInfo
 {
 	friend class RenderGraphBuilder;
@@ -96,7 +87,7 @@ public:
 	{
 	}
 
-	/// Create an internal hash.
+	// Create an internal hash.
 	void bake()
 	{
 		ANKI_ASSERT(m_hash == 0);
@@ -112,8 +103,7 @@ private:
 	U64 m_hash = 0;
 };
 
-/// The only parameter of RenderPassWorkCallback.
-/// @memberof RenderGraph
+// The only parameter of RenderPassWorkCallback.
 class RenderPassWorkContext
 {
 	friend class RenderGraph;
@@ -180,15 +170,14 @@ private:
 	Texture& getTexture(RenderTargetHandle handle) const;
 };
 
-/// RenderGraph pass dependency.
-/// @memberof RenderGraphBuilder
+// RenderGraph pass dependency.
 class RenderPassDependency
 {
 	friend class RenderGraph;
 	friend class RenderPassBase;
 
 public:
-	/// Dependency to a texture subresource.
+	// Dependency to a texture subresource.
 	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource)
 		: m_texture({handle, usage, subresource})
 		, m_type(Type::kTexture)
@@ -250,8 +239,7 @@ private:
 	Type m_type;
 };
 
-/// The base of compute/transfer and graphics renderpasses for RenderGraph.
-/// @memberof RenderGraphBuilder
+// The base of compute/transfer and graphics renderpasses for RenderGraph.
 class RenderPassBase
 {
 	friend class RenderGraph;
@@ -337,13 +325,12 @@ protected:
 
 	void validateDep(const RenderPassDependency& dep);
 
-	/// Add a new consumer or producer dependency.
+	// Add a new consumer or producer dependency.
 	template<RenderPassDependency::Type kType>
 	void newDependency(const RenderPassDependency& dep);
 };
 
-/// Renderpass attachment info. Used in GraphicsRenderPass::setRenderpassInfo. It mirrors the RenderPass.
-/// @memberof GraphicsRenderPass
+// Renderpass attachment info. Used in GraphicsRenderPass::setRenderpassInfo. It mirrors the RenderPass.
 class GraphicsRenderPassTargetDesc
 {
 public:
@@ -366,8 +353,7 @@ public:
 	}
 };
 
-/// A graphics render pass for RenderGraph.
-/// @memberof RenderGraphBuilder
+// A graphics render pass for RenderGraph.
 class GraphicsRenderPass : public RenderPassBase
 {
 	friend class RenderGraphBuilder;
@@ -397,8 +383,7 @@ private:
 	Bool m_hasRenderpass = false;
 };
 
-/// A compute render pass for RenderGraph.
-/// @memberof RenderGraphBuilder
+// A compute render pass for RenderGraph.
 class NonGraphicsRenderPass : public RenderPassBase
 {
 	friend class RenderGraphBuilder;
@@ -410,8 +395,7 @@ public:
 	}
 };
 
-/// Builds the description of the frame's render passes and their interactions.
-/// @memberof RenderGraph
+// Builds the description of the frame's render passes and their interactions.
 class RenderGraphBuilder
 {
 	friend class RenderGraph;
@@ -425,28 +409,28 @@ public:
 
 	~RenderGraphBuilder();
 
-	/// Create a new graphics render pass.
+	// Create a new graphics render pass.
 	GraphicsRenderPass& newGraphicsRenderPass(CString name);
 
-	/// Create a new compute render pass.
+	// Create a new compute render pass.
 	NonGraphicsRenderPass& newNonGraphicsRenderPass(CString name);
 
-	/// Import an existing render target and let the render graph know about it's up-to-date usage.
+	// Import an existing render target and let the render graph know about it's up-to-date usage.
 	RenderTargetHandle importRenderTarget(Texture* tex, TextureUsageBit usage);
 
-	/// Import an existing render target and let the render graph find it's current usage by looking at the previous frame.
+	// Import an existing render target and let the render graph find it's current usage by looking at the previous frame.
 	RenderTargetHandle importRenderTarget(Texture* tex);
 
-	/// Get or create a new render target.
+	// Get or create a new render target.
 	RenderTargetHandle newRenderTarget(const RenderTargetDesc& initInf);
 
-	/// Import a buffer.
+	// Import a buffer.
 	BufferHandle importBuffer(const BufferView& buff, BufferUsageBit crntUsage);
 
-	/// Import an AS.
+	// Import an AS.
 	AccelerationStructureHandle importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit crntUsage);
 
-	/// Gather statistics.
+	// Gather statistics.
 	void setStatisticsEnabled(Bool gather)
 	{
 		m_gatherStatistics = gather;
@@ -473,7 +457,7 @@ private:
 		U64 m_hash = 0;
 		TextureInternalPtr m_importedTex;
 		TextureUsageBit m_importedLastKnownUsage = TextureUsageBit::kNone;
-		/// Derived by the deps of this RT and will be used to set its usage.
+		// Derived by the deps of this RT and will be used to set its usage.
 		TextureUsageBit m_usageDerivedByDeps = TextureUsageBit::kNone;
 		Bool m_importedAndUndefinedUsage = false;
 	};
@@ -502,24 +486,26 @@ private:
 	Bool m_gatherStatistics = false;
 };
 
-/// Statistics.
-/// @memberof RenderGraph
+// Statistics.
 class RenderGraphStatistics
 {
 public:
-	Second m_gpuTime; ///< Time spent in the GPU.
-	Second m_cpuStartTime; ///< Time the work was submited from the CPU (almost)
+	Second m_gpuTime; // Time spent in the GPU.
+	Second m_cpuStartTime; // Time the work was submited from the CPU (almost)
+
+	PtrSize m_gpuMemoryPoolCapacity; // Total GPU memory allocated by the rendergraph
+	PtrSize m_gpuMemoryUsed; // Memory currently in use
 };
 
-/// Accepts a descriptor of the frame's render passes and sets the dependencies between them.
-///
-/// The idea for the RenderGraph is to automate:
-/// - Synchronization (barriers, events etc) between passes.
-/// - Command buffer creation .
-/// - Render target creation (optional since textures can be imported as well).
-///
-/// It accepts a description of the frame's render passes (compute and graphics), compiles that description to calculate
-/// dependencies and then populates command buffers with the help of multiple RenderPassWorkCallback.
+// Accepts a descriptor of the frame's render passes and sets the dependencies between them.
+//
+// The idea for the RenderGraph is to automate:
+// - Synchronization (barriers, events etc) between passes.
+// - Command buffer creation .
+// - Render target creation (optional since textures can be imported as well).
+//
+// It accepts a description of the frame's render passes (compute and graphics), compiles that description to calculate
+// dependencies and then populates command buffers with the help of multiple RenderPassWorkCallback.
 class RenderGraph final : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -529,20 +515,20 @@ class RenderGraph final : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kRenderGraph;
 
-	/// 1st step.
+	// 1st step.
 	void compileNewGraph(const RenderGraphBuilder& descr, StackMemoryPool& pool);
 
-	/// 2nd step. Will call a number of RenderPassWorkCallback that populate command buffers and submit work.
+	// 2nd step. Will call a number of RenderPassWorkCallback that populate command buffers and submit work.
 	void recordAndSubmitCommandBuffers(FencePtr* optionalFence = nullptr);
 
-	/// 3rd step. Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
+	// 3rd step. Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
 	void reset();
 
-	/// [OPTIONAL] 4th step. Get some statistics.
+	// [OPTIONAL] 4th step. Get some statistics.
 	void getStatistics(RenderGraphStatistics& statistics);
 
 private:
-	static constexpr U kPeriodicCleanupEvery = 60; ///< How many frames between cleanups.
+	static constexpr U kPeriodicCleanupEvery = 60; // How many frames between cleanups.
 
 	// Forward declarations of internal classes.
 	class BakeContext;
@@ -555,22 +541,25 @@ private:
 	class BufferBarrier;
 	class ASBarrier;
 
-	/// Render targets of the same type+size+format.
+	// Render targets of the same type+size+format.
 	class RenderTargetCacheEntry
 	{
 	public:
 		GrDynamicArray<TextureInternalPtr> m_textures;
+		GrDynamicArray<SegregatedListsGpuMemoryPoolAllocation> m_texAllocations;
 		U32 m_texturesInUse = 0;
 	};
 
-	/// Info on imported render targets that are kept between runs.
+	// Info on imported render targets that are kept between runs.
 	class ImportedRenderTargetInfo
 	{
 	public:
-		GrDynamicArray<TextureUsageBit> m_surfOrVolLastUsages; ///< Last TextureUsageBit of the imported RT.
+		GrDynamicArray<TextureUsageBit> m_surfOrVolLastUsages; // Last TextureUsageBit of the imported RT.
 	};
 
-	GrHashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
+	SegregatedListsGpuMemoryPool m_texMemPool;
+
+	GrHashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; // Non-imported render targets.
 	GrHashMap<U64, ImportedRenderTargetInfo> m_importedRenderTargets;
 
 	BakeContext* m_ctx = nullptr;
@@ -596,13 +585,13 @@ private:
 	void initBatches();
 	void initGraphicsPasses(const RenderGraphBuilder& descr);
 	void setBatchBarriers(const RenderGraphBuilder& descr);
-	/// Switching from compute to graphics and the opposite in the same queue is not great for some GPUs (nVidia)
+	// Switching from compute to graphics and the opposite in the same queue is not great for some GPUs (nVidia)
 	void minimizeSubchannelSwitches();
 	void sortBatchPasses();
 
 	TextureInternalPtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
 
-	/// Every N number of frames clean unused cached items.
+	// Every N number of frames clean unused cached items.
 	void periodicCleanup();
 
 	ANKI_HOT static Bool passADependsOnB(const RenderPassBase& a, const RenderPassBase& b);
@@ -616,19 +605,16 @@ private:
 
 	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDesc& subresource, TextureUsageBit& usage) const;
 
-	/// @name Dump the dependency graph into a file.
-	/// @{
+	// Dump the dependency graph into a file.
 	Error dumpDependencyDotFile(const RenderGraphBuilder& descr, const BakeContext& ctx, CString path) const;
 	static GrString textureUsageToStr(StackMemoryPool& pool, TextureUsageBit usage);
 	static GrString bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit usage);
 	static GrString asUsageToStr(StackMemoryPool& pool, AccelerationStructureUsageBit usage);
-	/// @}
 
 	Texture& getTexture(RenderTargetHandle handle) const;
 	void getCachedBuffer(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 	AccelerationStructure* getAs(AccelerationStructureHandle handle) const;
 };
-/// @}
 
 } // end namespace anki
 

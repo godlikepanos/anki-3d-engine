@@ -59,6 +59,8 @@ namespace anki {
 
 ANKI_SVAR(PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
 ANKI_SVAR(RendererCpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(RenderGraphMemoryPoolCapacity, StatCategory::kGpuMem, "RenderGraph mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(RenderGraphMemoryPoolUsedMemory, StatCategory::kGpuMem, "RenderGraph mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -941,6 +943,8 @@ Error Renderer::render(FencePtr& fence)
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
 		g_svarRendererGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
+		g_svarRenderGraphMemoryPoolCapacity.set(rgraphStats.m_gpuMemoryPoolCapacity);
+		g_svarRenderGraphMemoryPoolUsedMemory.set(rgraphStats.m_gpuMemoryUsed);
 
 		if(rgraphStats.m_gpuTime > 0.0)
 		{

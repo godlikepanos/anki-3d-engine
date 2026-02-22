@@ -7,6 +7,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/Sampler.h>
+#include <AnKi/Gr/Fence.h>
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/BitSet.h>
@@ -24,13 +25,13 @@ static inline U32 getTextureSurfOrVolCount(const TextureInternalPtr& tex)
 	return tex->getMipmapCount() * tex->getLayerCount() * (textureTypeIsCube(tex->getTextureType()) ? 6 : 1);
 }
 
-/// Contains some extra things for render targets.
+// Contains some extra things for render targets.
 class RenderGraph::RT
 {
 public:
 	DynamicArray<TextureUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_surfOrVolUsages;
 	DynamicArray<U16, MemoryPoolPtrWrapper<StackMemoryPool>> m_lastBatchThatTransitionedIt;
-	TextureInternalPtr m_texture; ///< Hold a reference.
+	TextureInternalPtr m_texture; // Hold a reference.
 	Bool m_imported;
 
 	RT(StackMemoryPool* pool)
@@ -40,12 +41,12 @@ public:
 	}
 };
 
-/// Same as RT but for buffers.
+// Same as RT but for buffers.
 class RenderGraph::BufferRange
 {
 public:
 	BufferUsageBit m_usage;
-	BufferInternalPtr m_buffer; ///< Hold a reference.
+	BufferInternalPtr m_buffer; // Hold a reference.
 	PtrSize m_offset;
 	PtrSize m_range;
 };
@@ -54,10 +55,10 @@ class RenderGraph::AS
 {
 public:
 	AccelerationStructureUsageBit m_usage;
-	AccelerationStructurePtr m_as; ///< Hold a reference.
+	AccelerationStructurePtr m_as; // Hold a reference.
 };
 
-/// Pipeline barrier.
+// Pipeline barrier.
 class RenderGraph::TextureBarrier
 {
 public:
@@ -75,7 +76,7 @@ public:
 	}
 };
 
-/// Pipeline barrier.
+// Pipeline barrier.
 class RenderGraph::BufferBarrier
 {
 public:
@@ -91,7 +92,7 @@ public:
 	}
 };
 
-/// Pipeline barrier.
+// Pipeline barrier.
 class RenderGraph::ASBarrier
 {
 public:
@@ -107,7 +108,7 @@ public:
 	}
 };
 
-/// Contains some extra things the RenderPassBase cannot hold.
+// Contains some extra things the RenderPassBase cannot hold.
 class RenderGraph::Pass
 {
 public:
@@ -145,8 +146,8 @@ public:
 	}
 };
 
-/// A batch of render passes. These passes can run in parallel.
-/// @warning It's POD. Destructor won't be called.
+// A batch of render passes. These passes can run in parallel.
+// @warning It's POD. Destructor won't be called.
 class RenderGraph::Batch
 {
 public:
@@ -179,7 +180,7 @@ public:
 	}
 };
 
-/// The RenderGraph build context.
+// The RenderGraph build context.
 class RenderGraph::BakeContext
 {
 public:
@@ -205,6 +206,8 @@ public:
 RenderGraph::RenderGraph(CString name)
 	: GrObject(kClassType, name)
 {
+	const Array<PtrSize, 8> memoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 256_MB};
+	m_texMemPool.init(memoryClasses.getBack(), 32, "RenderGraph memory", memoryClasses, BufferUsageBit::kTexture);
 }
 
 RenderGraph::~RenderGraph()
@@ -326,11 +329,16 @@ TextureInternalPtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& i
 	{
 		// Create it
 
-		tex = GrManager::getSingleton().newTexture(initInf);
+		const PtrSize texSize = GrManager::getSingleton().getTextureMemoryRequirement(initInf);
+		SegregatedListsGpuMemoryPoolAllocation alloc = m_texMemPool.allocate(texSize, 1);
+		TextureInitInfo newTexInit = initInf;
+		newTexInit.m_memoryBuffer = alloc;
+
+		tex = GrManager::getSingleton().newTexture(newTexInit);
 
 		ANKI_ASSERT(entry->m_texturesInUse == entry->m_textures.getSize());
-		entry->m_textures.resize(entry->m_textures.getSize() + 1);
-		entry->m_textures[entry->m_textures.getSize() - 1] = tex;
+		entry->m_textures.emplaceBack(tex);
+		entry->m_texAllocations.emplaceBack(std::move(alloc));
 		++entry->m_texturesInUse;
 	}
 
@@ -1267,10 +1275,11 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 		pCmdbs[i] = cmdbs[i].get();
 	}
 
+	FencePtr fence;
 	const U32 firstGroupThatWroteToSwapchain2 = firstGroupThatWroteToSwapchain.getNonAtomically();
 	if(firstGroupThatWroteToSwapchain2 == 0 || firstGroupThatWroteToSwapchain2 == kMaxU32)
 	{
-		GrManager::getSingleton().submit(WeakArray(pCmdbs), {}, optionalFence, true);
+		GrManager::getSingleton().submit(WeakArray(pCmdbs), {}, &fence, true);
 	}
 	else
 	{
@@ -1279,8 +1288,15 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 		GrManager::getSingleton().submit(WeakArray(pCmdbs).subrange(0, firstGroupThatWroteToSwapchain2), {}, nullptr);
 
 		GrManager::getSingleton().submit(
-			WeakArray(pCmdbs).subrange(firstGroupThatWroteToSwapchain2, batchGroupCount - firstGroupThatWroteToSwapchain2), {}, optionalFence, true);
+			WeakArray(pCmdbs).subrange(firstGroupThatWroteToSwapchain2, batchGroupCount - firstGroupThatWroteToSwapchain2), {}, &fence, true);
 	}
+
+	if(optionalFence)
+	{
+		*optionalFence = fence;
+	}
+
+	m_texMemPool.endFrame(fence.get());
 }
 
 void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDesc& subresource, TextureUsageBit& usage) const
@@ -1314,22 +1330,27 @@ void RenderGraph::periodicCleanup()
 
 			// New array
 			GrDynamicArray<TextureInternalPtr> newArray;
+			GrDynamicArray<SegregatedListsGpuMemoryPoolAllocation> newAllocations;
 			if(entry.m_texturesInUse > 0)
 			{
 				newArray.resize(entry.m_texturesInUse);
+				newAllocations.resize(entry.m_texturesInUse);
 			}
 
 			// Populate the new array
 			for(U32 i = 0; i < newArray.getSize(); ++i)
 			{
 				newArray[i] = std::move(entry.m_textures[i]);
+				newAllocations[i] = std::move(entry.m_texAllocations[i]);
 			}
 
 			// Destroy the old array and the rest of the textures
 			entry.m_textures.destroy();
+			entry.m_texAllocations.destroy();
 
 			// Move new array
 			entry.m_textures = std::move(newArray);
+			entry.m_texAllocations = std::move(newAllocations);
 		}
 	}
 
@@ -1364,6 +1385,8 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics)
 		statistics.m_gpuTime = -1.0;
 		statistics.m_cpuStartTime = -1.0;
 	}
+
+	m_texMemPool.getStats(statistics.m_gpuMemoryUsed, statistics.m_gpuMemoryPoolCapacity);
 }
 
 #if ANKI_DBG_RENDER_GRAPH
