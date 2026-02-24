@@ -62,7 +62,7 @@ private:
 	ShaderProgramPtr m_exposureGrProg;
 	ShaderProgramPtr m_upscaleGrProg;
 
-	TexturePtr m_pyramidTex;
+	RendererTexture m_pyramidTex;
 
 	RenderTargetDesc m_exposureRtDesc;
 	RenderTargetDesc m_finalRtDesc;

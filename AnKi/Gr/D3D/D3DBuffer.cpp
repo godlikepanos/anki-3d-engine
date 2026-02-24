@@ -20,12 +20,11 @@ Buffer* Buffer::newInstance(const BufferInitInfo& init)
 	return impl;
 }
 
-void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
+void* Buffer::map(PtrSize offset, PtrSize range)
 {
 	ANKI_D3D_SELF(BufferImpl);
 
-	ANKI_ASSERT(access != BufferMapAccessBit::kNone);
-	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::kNone);
+	ANKI_ASSERT(!!m_access);
 	ANKI_ASSERT(!self.m_mapped);
 	ANKI_ASSERT(offset < m_size);
 	if(range == kMaxPtrSize)

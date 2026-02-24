@@ -61,8 +61,12 @@ ANKI_SVAR(PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag
 ANKI_SVAR(RendererCpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 ANKI_SVAR(RenderGraphMemoryPoolCapacity, StatCategory::kGpuMem, "RenderGraph mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 ANKI_SVAR(RenderGraphMemoryPoolUsedMemory, StatCategory::kGpuMem, "RenderGraph mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(RendererMemoryPoolCapacity, StatCategory::kGpuMem, "Renderer mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(RendererMemoryPoolUsedMemory, StatCategory::kGpuMem, "Renderer mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
-/// Generate a Halton jitter in [-0.5, 0.5]
+constexpr Array<PtrSize, 7> kGpuMemoryPoolClasses = {1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 288_MB};
+
+// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
 {
 	// Halton jitter
@@ -121,6 +125,10 @@ Error Renderer::init(const RendererInitInfo& inf)
 Error Renderer::initInternal(const RendererInitInfo& inf)
 {
 	RendererMemoryPool::allocateSingleton(inf.m_allocCallback, inf.m_allocCallbackUserData);
+
+	m_gpuMemPool.init(kGpuMemoryPoolClasses.getBack(), 32, "Renderer GPU memory", kGpuMemoryPoolClasses,
+					  BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy | BufferUsageBit::kVertexOrIndex
+						  | BufferUsageBit::kAllIndirect | BufferUsageBit::kAllUav);
 
 	m_framePool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 	m_frameCount = 0;
@@ -505,7 +513,7 @@ RenderTargetDesc Renderer::create2DRenderTargetDescription(U32 w, U32 h, Format 
 	return init;
 }
 
-TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage, const ClearValue& clearVal)
+RendererTexture Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage, const ClearValue& clearVal)
 {
 	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kRtvDsvWrite) || !!(inf.m_usage & TextureUsageBit::kUavCompute));
 
@@ -525,8 +533,24 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 		ANKI_ASSERT(!"Can't handle that");
 	}
 
+	// Allocate mem
+	TextureInitInfo newInf = inf;
+	const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(inf);
+	SegregatedListsGpuMemoryPoolAllocation alloc;
+	if(memReq <= kGpuMemoryPoolClasses.getBack())
+	{
+		alloc = m_gpuMemPool.allocate(memReq, 1);
+		newInf.m_memoryBuffer = alloc;
+	}
+	else
+	{
+		// Too big, prefer a dedicated allocation
+		ANKI_R_LOGV("Will force a dedicated allocation for RT: %s", inf.getName().cstr());
+		m_dedicatedAllocationSize += memReq;
+	}
+
 	// Create tex
-	TexturePtr tex = GrManager::getSingleton().newTexture(inf);
+	TexturePtr tex = GrManager::getSingleton().newTexture(newInf);
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
@@ -648,7 +672,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 	fence->clientWait(10.0_sec);
 
-	return tex;
+	RendererTexture rtex;
+	rtex.m_texture = std::move(tex);
+	rtex.m_allocation = std::move(alloc);
+	return rtex;
 }
 
 void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
@@ -934,6 +961,7 @@ Error Renderer::render(FencePtr& fence)
 	++m_frameCount;
 	m_prevMatrices = ctx.m_matrices;
 	m_readbackManager->endFrame(fence.get());
+	m_gpuMemPool.endFrame(fence.get());
 
 	// Stats
 	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
@@ -951,6 +979,12 @@ Error Renderer::render(FencePtr& fence)
 			// WARNING: The name of the event is somewhat special. Search it to see why
 			ANKI_TRACE_CUSTOM_EVENT(GpuFrameTime, rgraphStats.m_cpuStartTime, rgraphStats.m_gpuTime);
 		}
+
+		PtrSize allocatedSize;
+		PtrSize memoryCapacity;
+		m_gpuMemPool.getStats(allocatedSize, memoryCapacity);
+		g_svarRendererMemoryPoolCapacity.set(memoryCapacity + m_dedicatedAllocationSize);
+		g_svarRendererMemoryPoolUsedMemory.set(allocatedSize + m_dedicatedAllocationSize);
 	}
 
 	return Error::kNone;

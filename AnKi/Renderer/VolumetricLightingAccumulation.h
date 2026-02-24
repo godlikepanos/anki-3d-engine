@@ -54,7 +54,7 @@ private:
 	ShaderProgramPtr m_grProg;
 	ShaderProgramPtr m_debugGrProg;
 
-	Array<TexturePtr, 2> m_rtTextures;
+	Array<RendererTexture, 2> m_rtTextures;
 	ImageResourcePtr m_noiseImage;
 
 	RenderTargetDesc m_debugRtDesc;

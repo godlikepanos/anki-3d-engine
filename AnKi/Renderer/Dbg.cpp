@@ -448,7 +448,7 @@ Error Dbg::init()
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_boxLines.m_positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		Vec3* verts = static_cast<Vec3*>(m_boxLines.m_positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		Vec3* verts = static_cast<Vec3*>(m_boxLines.m_positionsBuff->map(0, kMaxPtrSize));
 
 		constexpr F32 kSize = 1.0f;
 		verts[0] = Vec3(kSize, kSize, kSize); // front top right
@@ -467,7 +467,7 @@ Error Dbg::init()
 		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 		buffInit.m_size = kIndexCount * sizeof(U16);
 		m_boxLines.m_indexBuff = GrManager::getSingleton().newBuffer(buffInit);
-		U16* indices = static_cast<U16*>(m_boxLines.m_indexBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		U16* indices = static_cast<U16*>(m_boxLines.m_indexBuff->map(0, kMaxPtrSize));
 
 		U c = 0;
 		indices[c++] = 0;
@@ -511,7 +511,7 @@ Error Dbg::init()
 		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 		m_debugPoint.m_positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		void* mapped = m_debugPoint.m_positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		void* mapped = m_debugPoint.m_positionsBuff->map(0, kMaxPtrSize);
 		memcpy(mapped, kCubePositions, sizeof(kCubePositions));
 		m_debugPoint.m_positionsBuff->unmap();
 	}
@@ -529,14 +529,14 @@ void Dbg::initGizmos()
 		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 		positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		void* mapped = positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		void* mapped = positionsBuff->map(0, kMaxPtrSize);
 		memcpy(mapped, positionsArray.getBegin(), positionsArray.getSizeInBytes());
 		positionsBuff->unmap();
 
 		buffInit.m_size = indicesArray.getSizeInBytes();
 		indicesBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		mapped = indicesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		mapped = indicesBuff->map(0, kMaxPtrSize);
 		memcpy(mapped, indicesArray.getBegin(), indicesArray.getSizeInBytes());
 		indicesBuff->unmap();
 	};

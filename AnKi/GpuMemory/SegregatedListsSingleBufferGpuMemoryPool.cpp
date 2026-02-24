@@ -58,7 +58,7 @@ void SegregatedListsSingleBufferGpuMemoryPool::init(BufferUsageBit gpuBufferUsag
 
 	if(map != BufferMapAccessBit::kNone)
 	{
-		m_mappedGpuBufferMemory = m_gpuBuffer->map(0, kMaxPtrSize, map);
+		m_mappedGpuBufferMemory = m_gpuBuffer->map(0, kMaxPtrSize);
 	}
 
 	ANKI_ASSERT(classUpperSizes.getSize() > 0);

@@ -141,7 +141,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_size = sizeof(U32) * 6;
 			indexBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-			void* mapped = indexBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			void* mapped = indexBuff->map(0, kMaxPtrSize);
 			const U32 indices[] = {0, 1, 2, 2, 1, 3};
 			memcpy(mapped, indices, sizeof(indices));
 			indexBuff->unmap();
@@ -155,7 +155,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
 			positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-			Vec4* mapped = static_cast<Vec4*>(positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+			Vec4* mapped = static_cast<Vec4*>(positionsBuff->map(0, kMaxPtrSize));
 
 			for(U32 t = 0; t < kTileCount; t++)
 			{
@@ -180,7 +180,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
 			colorsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-			Vec4* mapped = static_cast<Vec4*>(colorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+			Vec4* mapped = static_cast<Vec4*>(colorsBuff->map(0, kMaxPtrSize));
 
 			const Array<Vec4, kTileCount> colors = {Vec4(1.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 1.0f, 0.0f, 0.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
 													Vec4(1.0f, 1.0f, 0.0f, 0.0f)};
@@ -209,7 +209,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_size = sizeof(Meshlet) * kTileCount;
 			meshletsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-			Meshlet* mapped = static_cast<Meshlet*>(meshletsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+			Meshlet* mapped = static_cast<Meshlet*>(meshletsBuff->map(0, kMaxPtrSize));
 
 			for(U32 t = 0; t < kTileCount; t++)
 			{

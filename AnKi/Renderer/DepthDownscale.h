@@ -43,7 +43,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
-	TextureMemoryPoolAllocation m_counterBuffer;
+	SegregatedListsGpuMemoryPoolAllocation m_counterBuffer;
 
 	U8 m_mipCount = 0;
 

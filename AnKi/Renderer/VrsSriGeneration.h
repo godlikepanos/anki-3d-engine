@@ -52,8 +52,8 @@ public:
 	ShaderProgramResourcePtr m_downscaleProg;
 	ShaderProgramPtr m_downscaleGrProg;
 
-	TexturePtr m_sriTex;
-	TexturePtr m_downscaledSriTex;
+	RendererTexture m_sriTex;
+	RendererTexture m_downscaledSriTex;
 	Bool m_sriTexImportedOnce = false;
 
 	U8 m_sriTexelDimension = 16;

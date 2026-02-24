@@ -38,7 +38,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
-	Array<TexturePtr, 2> m_historyLenTextures;
+	Array<RendererTexture, 2> m_historyLenTextures;
 	Bool m_texturesImportedOnce = false;
 
 	class

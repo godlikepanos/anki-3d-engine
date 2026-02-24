@@ -137,7 +137,7 @@ inline BufferPtr createBuffer(BufferUsageBit usage, ConstWeakArray<T> data, CStr
 	BufferPtr copyBuff =
 		GrManager::getSingleton().newBuffer(BufferInitInfo(data.getSizeInBytes(), BufferUsageBit::kCopySource, BufferMapAccessBit::kWrite));
 
-	T* inData = static_cast<T*>(copyBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+	T* inData = static_cast<T*>(copyBuff->map(0, kMaxPtrSize));
 	for(U32 i = 0; i < data.getSize(); ++i)
 	{
 		inData[i] = data[i];
@@ -195,7 +195,7 @@ inline TexturePtr createTexture2d(const TextureInitInfo texInit_, ConstWeakArray
 
 	BufferPtr staging = GrManager::getSingleton().newBuffer(buffInit);
 
-	void* inData = staging->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+	void* inData = staging->map(0, kMaxPtrSize);
 	memcpy(inData, data.getBegin(), buffInit.m_size);
 	staging->unmap();
 
@@ -258,7 +258,7 @@ inline void readBuffer(BufferPtr buff, DynamicArray<T>& out)
 	ANKI_ASSERT((buff->getSize() % sizeof(T)) == 0);
 	out.resize(U32(buff->getSize() / sizeof(T)));
 
-	const void* data = tmpBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead);
+	const void* data = tmpBuff->map(0, kMaxPtrSize);
 	memcpy(out.getBegin(), data, buff->getSize());
 	tmpBuff->unmap();
 }

@@ -130,17 +130,17 @@ public:
 	}
 
 private:
-	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_radianceVolumes;
-	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
-	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
-	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
-	Array<TexturePtr, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
+	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_radianceVolumes;
+	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
+	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
+	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
+	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 
 	RenderTargetDesc m_rtResultRtDesc;
 	RenderTargetDesc m_lowRezRtDesc;
 	RenderTargetDesc m_fullRtDesc;
 
-	Array<TexturePtr, 2> m_irradianceRts;
+	Array<RendererTexture, 2> m_irradianceRts;
 
 	IndirectDiffuseClipmapConstants m_consts;
 

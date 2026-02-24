@@ -5,10 +5,9 @@
 
 #pragma once
 
+#include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 #include <AnKi/Gr/BackendCommon/Functions.h>
-#include <AnKi/Util/HashMap.h>
 
 namespace anki {
 
@@ -18,13 +17,6 @@ class TextureImpl final : public Texture
 	friend class Texture;
 
 public:
-	VkImage m_imageHandle = VK_NULL_HANDLE;
-
-	GpuMemoryHandle m_memHandle;
-
-	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
-	VkImageUsageFlags m_vkUsageFlags = 0;
-
 	TextureImpl(CString name)
 		: Texture(name)
 	{
@@ -84,6 +76,11 @@ public:
 
 	static void getMemoryRequirement(const TextureInitInfo& init, PtrSize& size);
 
+	VkImage getVkImage() const
+	{
+		return m_imageHandle;
+	}
+
 private:
 	class TextureViewEntry
 	{
@@ -105,6 +102,19 @@ private:
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(ViewClass)
 
+	VkImage m_imageHandle = VK_NULL_HANDLE;
+
+	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
+	[[maybe_unused]] VkImageUsageFlags m_vkUsageFlags = 0;
+
+	// Dedicated allocation
+	VkDeviceMemory m_deviceMem = 0;
+	PtrSize m_deviceMemSize = 0;
+	U32 m_memoryTypeIdx = kMaxU32;
+
+	// ... or placed resource
+	BufferInternalPtr m_placedBufer;
+
 	Array<GrDynamicArray<TextureViewEntry>, U32(ViewClass::kCount)> m_textureViews;
 	Array<TextureViewEntry, U32(ViewClass::kCount)> m_wholeTextureViews;
 
@@ -112,8 +122,6 @@ private:
 	mutable TextureUsageBit m_usedFor = TextureUsageBit::kNone;
 	mutable SpinLock m_usedForMtx;
 #endif
-
-	BufferInternalPtr m_placedMemory;
 
 	[[nodiscard]] static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
 

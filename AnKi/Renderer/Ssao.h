@@ -57,7 +57,7 @@ public:
 
 	RenderTargetDesc m_bentNormalsAndSsaoRtDescr;
 
-	Array<TexturePtr, 2> m_tex;
+	Array<RendererTexture, 2> m_tex;
 	Bool m_texImportedOnce = false;
 
 	ImageResourcePtr m_noiseImage;

@@ -7,6 +7,7 @@
 
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Gr/BackendCommon/Common.h>
+#include <AnKi/Core/StatsSet.h>
 
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
 // Do nothing
@@ -35,8 +36,8 @@ namespace anki {
 // Forward
 class GrManagerImpl;
 
-/// @addtogroup vulkan
-/// @{
+ANKI_SVAR(GpuDeviceMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (VRAM)", StatFlag::kBytes)
+ANKI_SVAR(GpuHostMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (CPU)", StatFlag::kBytes)
 
 #define ANKI_VK_LOGI(...) ANKI_LOG("VK", kNormal, __VA_ARGS__)
 #define ANKI_VK_LOGE(...) ANKI_LOG("VK", kError, __VA_ARGS__)
@@ -78,14 +79,12 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
 using VulkanQueueFamilies = Array<U32, U32(GpuQueueType::kCount)>;
 
-/// @name Constants
-/// @{
+// Constants
 constexpr U32 kDescriptorPoolInitialSize = 64;
 constexpr F32 kDescriptorPoolSizeScale = 2.0f;
-constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth of descriptors to buffer.
-/// @}
+constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; // How many frames worth of descriptors to buffer.
 
-/// Check if a vulkan function failed. It will abort on failure.
+// Check if a vulkan function failed. It will abort on failure.
 #define ANKI_VK_CHECKF(x) \
 	do \
 	{ \
@@ -96,7 +95,7 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth
 		} \
 	} while(0)
 
-/// Check if a vulkan function failed.
+// Check if a vulkan function failed.
 #define ANKI_VK_CHECK(x) \
 	do \
 	{ \
@@ -108,10 +107,10 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth
 		} \
 	} while(0)
 
-/// Convert compare op.
+// Convert compare op.
 [[nodiscard]] VkCompareOp convertCompareOp(CompareOperation ak);
 
-/// Convert format.
+// Convert format.
 [[nodiscard]] inline VkFormat convertFormat(const Format ak)
 {
 	ANKI_ASSERT(ak != Format::kNone);
@@ -119,7 +118,7 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth
 	return out;
 }
 
-/// Get format aspect mask.
+// Get format aspect mask.
 [[nodiscard]] inline DepthStencilAspectBit getImageAspectFromFormat(const Format ak)
 {
 	DepthStencilAspectBit out = DepthStencilAspectBit::kNone;
@@ -136,7 +135,7 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth
 	return out;
 }
 
-/// Convert image aspect.
+// Convert image aspect.
 [[nodiscard]] inline VkImageAspectFlags convertImageAspect(const DepthStencilAspectBit ak)
 {
 	VkImageAspectFlags out = 0;
@@ -158,34 +157,34 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth
 	return out;
 }
 
-/// Convert topology.
+// Convert topology.
 [[nodiscard]] VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
 
-/// Convert fill mode.
+// Convert fill mode.
 [[nodiscard]] VkPolygonMode convertFillMode(FillMode ak);
 
-/// Convert cull mode.
+// Convert cull mode.
 [[nodiscard]] VkCullModeFlags convertCullMode(FaceSelectionBit ak);
 
-/// Convert blend method.
+// Convert blend method.
 [[nodiscard]] VkBlendFactor convertBlendFactor(BlendFactor ak);
 
-/// Convert blend function.
+// Convert blend function.
 [[nodiscard]] VkBlendOp convertBlendOperation(BlendOperation ak);
 
-/// Convert color write mask.
+// Convert color write mask.
 [[nodiscard]] inline VkColorComponentFlags convertColorWriteMask(ColorBit ak)
 {
 	return static_cast<VkColorComponentFlags>(ak);
 }
 
-/// Convert load op.
+// Convert load op.
 [[nodiscard]] VkAttachmentLoadOp convertLoadOp(RenderTargetLoadOperation ak);
 
-/// Convert store op.
+// Convert store op.
 [[nodiscard]] VkAttachmentStoreOp convertStoreOp(RenderTargetStoreOperation ak);
 
-/// Convert buffer usage bitmask.
+// Convert buffer usage bitmask.
 [[nodiscard]] VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask);
 
 [[nodiscard]] VkImageType convertTextureType(TextureType ak);
@@ -336,6 +335,5 @@ void appendPNextList(TMain& struc, TPnext* pNext)
 	pNext->pNext = const_cast<void*>(struc.pNext);
 	struc.pNext = pNext;
 }
-/// @}
 
 } // end namespace anki

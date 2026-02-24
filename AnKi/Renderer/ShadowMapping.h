@@ -49,7 +49,7 @@ private:
 	static constexpr U32 kPointLightMaxTileAllocHierarchy = 1;
 	static constexpr U32 kSpotLightMaxTileAllocHierarchy = 1;
 
-	TexturePtr m_atlasTex; ///<  Size (m_tileResolution*m_tileCountBothAxis)^2
+	RendererTexture m_atlasTex; ///<  Size (m_tileResolution*m_tileCountBothAxis)^2
 	Bool m_rtImportedOnce = false;
 
 	U32 m_tileResolution = 0; ///< Tile resolution.

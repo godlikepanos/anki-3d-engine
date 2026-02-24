@@ -20,13 +20,12 @@ Buffer* Buffer::newInstance(const BufferInitInfo& init)
 	return impl;
 }
 
-void* Buffer::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAccessBit access)
+void* Buffer::map(PtrSize offset, PtrSize range)
 {
 	ANKI_VK_SELF(BufferImpl);
 
 	ANKI_ASSERT(self.isCreated());
-	ANKI_ASSERT(access != BufferMapAccessBit::kNone);
-	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::kNone);
+	ANKI_ASSERT(!!m_access);
 	ANKI_ASSERT(!self.m_mapped);
 	ANKI_ASSERT(offset < m_size);
 	if(range == kMaxPtrSize)
@@ -35,14 +34,15 @@ void* Buffer::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAcces
 	}
 	ANKI_ASSERT(offset + range <= m_size);
 
-	void* ptr = GpuMemoryManager::getSingleton().getMappedAddress(self.m_memHandle);
+	void* ptr;
+	ANKI_VK_CHECKF(vkMapMemory(getVkDevice(), self.m_deviceMem, offset, range, 0, &ptr));
 	ANKI_ASSERT(ptr);
 
 #if ANKI_ASSERTIONS_ENABLED
 	self.m_mapped = true;
 #endif
 
-	return static_cast<void*>(static_cast<U8*>(ptr) + offset);
+	return ptr;
 }
 
 void Buffer::unmap()
@@ -113,9 +113,18 @@ BufferImpl::~BufferImpl()
 		vkDestroyBuffer(getVkDevice(), m_handle, nullptr);
 	}
 
-	if(m_memHandle)
+	if(m_deviceMem)
 	{
-		GpuMemoryManager::getSingleton().freeMemory(m_memHandle);
+		vkFreeMemory(getVkDevice(), m_deviceMem, nullptr);
+
+		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		{
+			g_svarGpuDeviceMemoryAllocated.increment(m_actualSize);
+		}
+		else
+		{
+			g_svarGpuHostMemoryAllocated.increment(m_actualSize);
+		}
 	}
 }
 
@@ -182,7 +191,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			}
 		}
 
-		memIdx = GpuMemoryManager::getSingleton().findMemoryType(req.memoryTypeBits, prefer, avoid);
+		memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits, prefer, avoid);
 
 		// 2nd try: host & coherent
 		if(memIdx == kMaxU32)
@@ -201,7 +210,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 				}
 			}
 
-			memIdx = GpuMemoryManager::getSingleton().findMemoryType(req.memoryTypeBits, prefer, avoid);
+			memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits, prefer, avoid);
 		}
 	}
 	else if(!!(access & BufferMapAccessBit::kRead))
@@ -209,7 +218,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Read or read/write
 
 		// Cached & coherent
-		memIdx = GpuMemoryManager::getSingleton().findMemoryType(
+		memIdx = getGrManagerImpl().findMemoryType(
 			req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0);
 
 		// Fallback: Just cached
@@ -220,8 +229,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 				ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
 			}
 
-			memIdx = GpuMemoryManager::getSingleton().findMemoryType(req.memoryTypeBits,
-																	 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, 0);
+			memIdx =
+				getGrManagerImpl().findMemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, 0);
 		}
 	}
 	else
@@ -231,13 +240,12 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		ANKI_ASSERT(access == BufferMapAccessBit::kNone);
 
 		// Device only
-		memIdx = GpuMemoryManager::getSingleton().findMemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-																 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		// Fallback: Device with anything else
 		if(memIdx == kMaxU32)
 		{
-			memIdx = GpuMemoryManager::getSingleton().findMemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+			memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		}
 	}
 
@@ -247,27 +255,41 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		return Error::kFunctionFailed;
 	}
 
-	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
-	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
+	m_memoryTypeIdx = memIdx;
 
-	if(!!(access & BufferMapAccessBit::kRead) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
+	const VkMemoryPropertyFlags memoryFlags = props.memoryTypes[memIdx].propertyFlags;
+
+	if(!!(access & BufferMapAccessBit::kRead) && !(memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsInvalidate = true;
 	}
 
-	if(!!(access & BufferMapAccessBit::kWrite) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	if(!!(access & BufferMapAccessBit::kWrite) && !(memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsFlush = true;
 	}
 
 	// Allocate
-	const U32 alignment = U32(max(m_mappedMemoryRangeAlignment, req.alignment));
-	GpuMemoryManager::getSingleton().allocateMemory(memIdx, req.size, alignment, m_memHandle);
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.memoryTypeIndex = memIdx;
+	allocInfo.allocationSize = req.size;
+	ANKI_VK_CHECK(vkAllocateMemory(getVkDevice(), &allocInfo, nullptr, &m_deviceMem));
+
+	if(getGrManagerImpl().getMemoryProperties().memoryTypes[memIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+	{
+		g_svarGpuDeviceMemoryAllocated.increment(size);
+	}
+	else
+	{
+		g_svarGpuHostMemoryAllocated.increment(size);
+	}
 
 	// Bind mem to buffer
 	{
 		ANKI_TRACE_SCOPED_EVENT(VkBindObject);
-		ANKI_VK_CHECK(vkBindBufferMemory(getVkDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
+		ANKI_VK_CHECK(vkBindBufferMemory(getVkDevice(), m_handle, m_deviceMem, 0));
 	}
 
 	// Get GPU buffer address

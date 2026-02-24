@@ -10,11 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// Buffer init info.
-/// @memberof Buffer
+// Buffer init info
 class BufferInitInfo : public GrBaseInitInfo
 {
 public:
@@ -41,7 +37,7 @@ public:
 	}
 };
 
-/// GPU buffer.
+// GPU buffer.
 class Buffer : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -49,57 +45,55 @@ class Buffer : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kBuffer;
 
-	/// Return the size of the buffer.
+	// Return the size of the buffer.
 	PtrSize getSize() const
 	{
 		ANKI_ASSERT(m_size > 0);
 		return m_size;
 	}
 
-	/// Return the BufferUsageBit of the Buffer.
+	// Return the BufferUsageBit of the Buffer.
 	BufferUsageBit getBufferUsage() const
 	{
 		ANKI_ASSERT(!!m_usage);
 		return m_usage;
 	}
 
-	/// Return the BufferMapAccessBit of the Buffer.
+	// Return the BufferMapAccessBit of the Buffer.
 	BufferMapAccessBit getMapAccess() const
 	{
 		return m_access;
 	}
 
-	/// Map the buffer.
-	/// @param offset The starting offset.
-	/// @param range The range to map or kMaxPtrSize to map until the end.
-	/// @param access The access to the buffer.
-	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
+	// Map the buffer.
+	// offset: The starting offset.
+	// range: The range to map or kMaxPtrSize to map until the end.
+	void* map(PtrSize offset, PtrSize range);
 
-	/// Flush the buffer from the CPU caches. Call it to make the buffer memory available to the GPU.
-	/// @param offset The starting offset.
-	/// @param range The range to map or kMaxPtrSize to map until the end.
-	void flush(PtrSize offset, PtrSize range) const;
-
-	/// Invalidate the buffer from the CPU caches. Call it to ready the buffer to see GPU updates.
-	/// @param offset The starting offset.
-	/// @param range The range to map or kMaxPtrSize to map until the end.
-	void invalidate(PtrSize offset, PtrSize range) const;
-
-	/// Convenience map method.
-	/// @param offset The starting offset.
-	/// @param elementCount The number of T element sto map.
-	/// @param access The access to the buffer.
-	/// @return The array that was mapped.
+	// Convenience map method.
+	// offset: The starting offset.
+	// elementCount: The number of T element sto map.
+	// Return the array that was mapped.
 	template<typename T>
-	WeakArray<T, PtrSize> map(PtrSize offset, PtrSize elementCount, BufferMapAccessBit access)
+	WeakArray<T, PtrSize> map(PtrSize offset, PtrSize elementCount)
 	{
-		return WeakArray<T, PtrSize>(static_cast<T*>(map(offset, sizeof(T) * elementCount, access)), elementCount);
+		return WeakArray<T, PtrSize>(static_cast<T*>(map(offset, sizeof(T) * elementCount)), elementCount);
 	}
 
-	/// Unmap the buffer.
+	// Flush the buffer from the CPU caches. Call it to make the buffer memory available to the GPU.
+	// offset: The starting offset.
+	// range: The range to map or kMaxPtrSize to map until the end.
+	void flush(PtrSize offset, PtrSize range) const;
+
+	// Invalidate the buffer from the CPU caches. Call it to ready the buffer to see GPU updates.
+	// offset: The starting offset.
+	// range: The range to map or kMaxPtrSize to map until the end.
+	void invalidate(PtrSize offset, PtrSize range) const;
+
+	// Unmap the buffer.
 	void unmap();
 
-	/// Get the GPU adress of the buffer.
+	// Get the GPU adress of the buffer.
 	U64 getGpuAddress() const
 	{
 		ANKI_ASSERT(m_gpuAddress);
@@ -112,23 +106,20 @@ protected:
 	BufferMapAccessBit m_access = BufferMapAccessBit::kNone;
 	U64 m_gpuAddress = 0;
 
-	/// Construct.
 	Buffer(CString name)
 		: GrObject(kClassType, name)
 	{
 	}
 
-	/// Destroy.
 	~Buffer()
 	{
 	}
 
 private:
-	/// Allocate and initialize a new instance.
 	[[nodiscard]] static Buffer* newInstance(const BufferInitInfo& init);
 };
 
-/// A part of a buffer.
+// A part of a buffer.
 class BufferView
 {
 public:
@@ -251,6 +242,5 @@ private:
 		ANKI_ASSERT(m_offset + m_range <= m_buffer->getSize());
 	}
 };
-/// @}
 
 } // end namespace anki

@@ -40,7 +40,7 @@ void main()
 		buffInit.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
 		BufferPtr texBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize));
 		const Vec4 values(-1.0f, -0.25f, 0.1345f, 0.8952f);
 		for(U32 i = 0; i < 4; ++i)
 		{
@@ -66,7 +66,7 @@ void main()
 		GrManager::getSingleton().submit(cmdb.get());
 		GrManager::getSingleton().finish();
 
-		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
+		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, kMaxPtrSize));
 		for(U32 i = 0; i < 4; ++i)
 		{
 			ANKI_TEST_EXPECT_NEAR(values[i], (*inData)[i], 0.01f);

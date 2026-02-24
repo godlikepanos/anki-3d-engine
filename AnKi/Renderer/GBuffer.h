@@ -68,8 +68,8 @@ public:
 
 private:
 	Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
-	Array<TexturePtr, 2> m_depthRts;
-	TexturePtr m_hzbRt;
+	Array<RendererTexture, 2> m_depthRts;
+	RendererTexture m_hzbRt;
 
 	ShaderProgramResourcePtr m_visualizeProbeProg;
 	ShaderProgramPtr m_visualizeGiProbeGrProg;

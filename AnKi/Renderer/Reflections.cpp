@@ -104,7 +104,7 @@ Error Reflections::init()
 	m_classTileMapRtDesc.bake();
 
 	{
-		m_indirectArgsBuffer = TextureMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(2);
+		m_indirectArgsBuffer = getRenderer().getRendedererGpuMemoryPool().allocateStructuredBuffer<DispatchIndirectArgs>(2);
 
 		Array<DispatchIndirectArgs, 2> args;
 		args[0].m_threadGroupCountX = 0;

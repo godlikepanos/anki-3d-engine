@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/GpuMemory/TextureMemoryPool.h>
 
 namespace anki {
 
@@ -72,12 +71,12 @@ private:
 
 	// This class assumes that the populateRenderGraph and the populateRenderGraphDirectionalLight will be called once per frame
 	static constexpr U32 kCounterBufferElementCount = 2 + kMaxShadowCascades; ///< Two for the main pass and a few for shadow cascades
-	TextureMemoryPoolAllocation m_counterBuffer;
+	SegregatedListsGpuMemoryPoolAllocation m_counterBuffer;
 	U64 m_crntFrame = 0;
 	U32 m_counterBufferElementSize = 0;
 	U32 m_counterBufferCrntElementCount = 0;
 
-	TextureMemoryPoolAllocation m_boxIndexBuffer;
+	SegregatedListsGpuMemoryPoolAllocation m_boxIndexBuffer;
 
 	void populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, CString customName, RenderGraphBuilder& rgraph);
 };

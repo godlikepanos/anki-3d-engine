@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/GpuMemory/TextureMemoryPool.h>
 
 namespace anki {
 
@@ -67,10 +66,10 @@ public:
 	BufferView m_shaderGroupHandlesBuff;
 
 	// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
-	TextureMemoryPoolAllocation m_indirectArgsBuffer;
+	SegregatedListsGpuMemoryPoolAllocation m_indirectArgsBuffer;
 
-	TexturePtr m_tex;
-	Array<TexturePtr, 2> m_momentsTextures;
+	RendererTexture m_tex;
+	Array<RendererTexture, 2> m_momentsTextures;
 	Bool m_texImportedOnce = false;
 
 	U32 m_sbtRecordSize = 0;

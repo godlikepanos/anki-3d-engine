@@ -20,7 +20,6 @@
 #include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
 #include <AnKi/Gr/Vulkan/VkGrUpscaler.h>
 #include <AnKi/Gr/Vulkan/VkFence.h>
-#include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 #include <AnKi/Gr/Vulkan/VkDescriptor.h>
 
 #include <AnKi/Window/NativeWindow.h>
@@ -202,7 +201,6 @@ GrManagerImpl::~GrManagerImpl()
 	SemaphoreFactory::freeSingleton();
 	SamplerFactory::freeSingleton();
 
-	GpuMemoryManager::freeSingleton();
 	PipelineLayoutFactory2::freeSingleton();
 	BindlessDescriptorSet::freeSingleton();
 	PipelineCache::freeSingleton();
@@ -1184,8 +1182,6 @@ Error GrManagerImpl::initMemory()
 					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
 	}
 
-	GpuMemoryManager::allocateSingleton();
-
 	return Error::kNone;
 }
 
@@ -1361,8 +1357,6 @@ void GrManagerImpl::endFrameInternal()
 	}
 
 	deleteObjectsMarkedForDeletion();
-
-	GpuMemoryManager::getSingleton().updateStats();
 }
 
 void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence, Bool flushAndSerialize)
@@ -1763,6 +1757,44 @@ void GrManagerImpl::deleteObjectsMarkedForDeletion()
 		const U32 idx = acquireDatas[i];
 		m_acquireData.erase(idx);
 	}
+}
+
+U32 GrManagerImpl::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const
+{
+	U32 prefered = kMaxU32;
+
+	// Iterate all mem types
+	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; i++)
+	{
+		if(resourceMemTypeBits & (1u << i))
+		{
+			const VkMemoryPropertyFlags flags = m_memoryProperties.memoryTypes[i].propertyFlags;
+
+			if((flags & preferFlags) == preferFlags && (flags & avoidFlags) == 0)
+			{
+				// It's the candidate we want
+
+				if(prefered == kMaxU32)
+				{
+					prefered = i;
+				}
+				else
+				{
+					// On some Intel drivers there are identical memory types pointing to different heaps. Choose the biggest heap
+
+					const PtrSize crntHeapSize = m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[i].heapIndex].size;
+					const PtrSize prevHeapSize = m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[prefered].heapIndex].size;
+
+					if(crntHeapSize > prevHeapSize)
+					{
+						prefered = i;
+					}
+				}
+			}
+		}
+	}
+
+	return prefered;
 }
 
 VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

@@ -12,7 +12,9 @@ namespace anki {
 #if ANKI_ASSERTIONS_ENABLED
 void CVar::validateSetValue() const
 {
-	ANKI_ASSERT(Thread::getCurrentThreadId() == CVarSet::getSingleton().m_mainThreadHandle && "CVars can only be set by the main thread");
+	// Don't validate on Android because the thread that inits the global vars is not the same as the application's main thread
+	ANKI_ASSERT((Thread::getCurrentThreadId() == CVarSet::getSingleton().m_mainThreadHandle || ANKI_OS_ANDROID)
+				&& "CVars can only be set by the main thread");
 }
 #endif
 

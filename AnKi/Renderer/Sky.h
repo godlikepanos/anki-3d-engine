@@ -63,10 +63,10 @@ public:
 	static constexpr UVec2 kSkyLutSize{256, 256};
 	static constexpr UVec2 kEnvMapSize{64, 64};
 
-	TexturePtr m_transmittanceLut;
-	TexturePtr m_multipleScatteringLut;
-	TexturePtr m_skyLut;
-	TexturePtr m_envMap;
+	RendererTexture m_transmittanceLut;
+	RendererTexture m_multipleScatteringLut;
+	RendererTexture m_skyLut;
+	RendererTexture m_envMap;
 
 	Vec3 m_sunDir = Vec3(0.0f);
 	F32 m_sunPower = -100.0f;

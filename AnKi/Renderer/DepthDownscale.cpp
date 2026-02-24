@@ -54,7 +54,7 @@ Error DepthDownscale::initInternal()
 	// Counter buffer
 	if(preferCompute)
 	{
-		m_counterBuffer = TextureMemoryPool::getSingleton().allocateStructuredBuffer<U32>(1);
+		m_counterBuffer = getRenderer().getRendedererGpuMemoryPool().allocateStructuredBuffer<U32>(1);
 		zeroBuffer(m_counterBuffer);
 	}
 

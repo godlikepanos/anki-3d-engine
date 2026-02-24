@@ -997,8 +997,8 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		// Counter buffer not created or not big enough, create a new one
 
 		const PtrSize size = (m_counterBuffer) ? BufferView(m_counterBuffer).getRange() * 2 : counterBufferElementSize * kInitialCounterArraySize;
-		TextureMemoryPool::getSingleton().deferredFree(m_counterBuffer);
-		m_counterBuffer = TextureMemoryPool::getSingleton().allocate(size, counterBufferElementAlignment);
+		getRenderer().getRendedererGpuMemoryPool().deferredFree(m_counterBuffer);
+		m_counterBuffer = getRenderer().getRendedererGpuMemoryPool().allocate(size, counterBufferElementAlignment);
 
 		m_counterBufferZeroingHandle = rgraph.importBuffer(m_counterBuffer, BufferUsageBit::kNone);
 
@@ -1109,7 +1109,7 @@ Error GpuVisibilityAccelerationStructures::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", {}, m_visibilityProg,
 								 m_zeroRemainingInstancesGrProg, "ZeroRemainingInstances"));
 
-	m_counterBuffer = TextureMemoryPool::getSingleton().allocateStructuredBuffer<U32>(2);
+	m_counterBuffer = getRenderer().getRendedererGpuMemoryPool().allocateStructuredBuffer<U32>(2);
 	zeroBuffer(m_counterBuffer);
 
 	return Error::kNone;

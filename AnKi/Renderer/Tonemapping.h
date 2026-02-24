@@ -40,7 +40,7 @@ private:
 
 		// This is a 1x1 2 component texture where R is the exposure and G the average luminance. It's not tracked in
 		// rendergraph depedencies. We don't care to track it because it affects the eye adaptation.
-		TexturePtr m_exposureAndAvgLuminance1x1;
+		RendererTexture m_exposureAndAvgLuminance1x1;
 	} m_expAndAvgLum;
 
 	class

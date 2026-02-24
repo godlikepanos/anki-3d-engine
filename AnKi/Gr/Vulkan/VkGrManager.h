@@ -159,6 +159,9 @@ public:
 
 	void releaseObjectDeleteLoop(GrObject* object);
 
+	// Find a suitable memory type.
+	U32 findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
+
 private:
 	// Contains objects that are marked for deletion
 	class CleanupGroup

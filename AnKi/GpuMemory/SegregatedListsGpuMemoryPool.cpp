@@ -115,7 +115,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& c
 
 	if(!!m_mapAccess)
 	{
-		newChunk->m_mappedMemory = newChunk->m_buffer->map(0, kMaxPtrSize, m_mapAccess);
+		newChunk->m_mappedMemory = newChunk->m_buffer->map(0, kMaxPtrSize);
 	}
 
 	chunkSize = m_bufferSize;
@@ -241,15 +241,6 @@ void SegregatedListsGpuMemoryPool::getStats(PtrSize& allocatedSize, PtrSize& mem
 	memoryCapacity = PtrSize(m_chunksCreated) * m_bufferSize;
 }
 
-SegregatedListsGpuMemoryPoolAllocation::~SegregatedListsGpuMemoryPoolAllocation()
-{
-	if(*this)
-	{
-		SegregatedListsGpuMemoryPool::SLChunk& chunk = *static_cast<SegregatedListsGpuMemoryPool::SLChunk*>(m_chunk);
-		chunk.m_parent->deferredFree(*this);
-	}
-}
-
 SegregatedListsGpuMemoryPoolAllocation::operator BufferView() const
 {
 	ANKI_ASSERT(!!(*this));
@@ -264,6 +255,15 @@ void* SegregatedListsGpuMemoryPoolAllocation::getMappedMemory() const
 	ANKI_ASSERT(chunk.m_mappedMemory);
 
 	return static_cast<U8*>(chunk.m_mappedMemory) + m_offset;
+}
+
+void SegregatedListsGpuMemoryPoolAllocation::free()
+{
+	if(*this)
+	{
+		SegregatedListsGpuMemoryPool::SLChunk& chunk = *static_cast<SegregatedListsGpuMemoryPool::SLChunk*>(m_chunk);
+		chunk.m_parent->deferredFree(*this);
+	}
 }
 
 } // end namespace anki

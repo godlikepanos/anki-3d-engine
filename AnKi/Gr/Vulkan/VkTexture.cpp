@@ -105,9 +105,18 @@ TextureImpl::~TextureImpl()
 		vkDestroyImage(getVkDevice(), m_imageHandle, nullptr);
 	}
 
-	if(m_memHandle)
+	if(m_deviceMem)
 	{
-		GpuMemoryManager::getSingleton().freeMemory(m_memHandle);
+		vkFreeMemory(getVkDevice(), m_deviceMem, nullptr);
+
+		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		{
+			g_svarGpuDeviceMemoryAllocated.decrement(m_deviceMemSize);
+		}
+		else
+		{
+			g_svarGpuHostMemoryAllocated.decrement(m_deviceMemSize);
+		}
 	}
 }
 
@@ -284,20 +293,23 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 		   init.getName() ? init.getName().cstr() : "Unnamed");
 #endif
 
-	// Allocate memory
-	//
-	VkMemoryDedicatedRequirementsKHR dedicatedRequirements;
-	VkMemoryRequirements2 requirements;
-	GpuMemoryManager::getSingleton().getImageMemoryRequirements(m_imageHandle, dedicatedRequirements, requirements);
+	// Image requirements
+	VkImageMemoryRequirementsInfo2 imageRequirements = {};
+	imageRequirements.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
+	imageRequirements.image = m_imageHandle;
 
-	U32 memIdx = GpuMemoryManager::getSingleton().findMemoryType(requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-																 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	VkMemoryRequirements2 requirements = {};
+	requirements.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+
+	vkGetImageMemoryRequirements2(getVkDevice(), &imageRequirements, &requirements);
+
+	U32 memIdx = getGrManagerImpl().findMemoryType(requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+												   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
 	if(memIdx == kMaxU32)
 	{
-		memIdx =
-			GpuMemoryManager::getSingleton().findMemoryType(requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+		memIdx = getGrManagerImpl().findMemoryType(requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 	}
 
 	ANKI_ASSERT(memIdx != kMaxU32);
@@ -305,32 +317,43 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	// Allocate and bind the memory
 	if(init.m_memoryBuffer)
 	{
+		// Placed
+
 		const BufferImpl& buff = static_cast<const BufferImpl&>(init.m_memoryBuffer.getBuffer());
-		ANKI_ASSERT(buff.getGpuMemoryHandle().m_memTypeIdx == memIdx);
+		ANKI_ASSERT(buff.getMemoryTypeIndex() == memIdx);
 
 		PtrSize offset = init.m_memoryBuffer.getOffset();
 		alignRoundUp(requirements.memoryRequirements.alignment, offset);
 		ANKI_ASSERT(offset + requirements.memoryRequirements.size <= init.m_memoryBuffer.getOffset() + init.m_memoryBuffer.getRange());
 
-		// Bind
-		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, buff.getGpuMemoryHandle().m_memory, offset));
+		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, buff.getDeviceMemory(), offset));
 
-		m_placedMemory.reset(&init.m_memoryBuffer.getBuffer());
+		m_placedBufer.reset(&init.m_memoryBuffer.getBuffer());
 	}
 	else
 	{
-		if(!dedicatedRequirements.prefersDedicatedAllocation)
+		// Dedicated allocation
+
+		m_memoryTypeIdx = memIdx;
+
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.memoryTypeIndex = memIdx;
+		allocInfo.allocationSize = requirements.memoryRequirements.size;
+		ANKI_VK_CHECK(vkAllocateMemory(getVkDevice(), &allocInfo, nullptr, &m_deviceMem));
+
+		m_deviceMemSize = requirements.memoryRequirements.size;
+
+		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			GpuMemoryManager::getSingleton().allocateMemory(memIdx, requirements.memoryRequirements.size,
-															U32(requirements.memoryRequirements.alignment), m_memHandle);
+			g_svarGpuDeviceMemoryAllocated.increment(m_deviceMemSize);
 		}
 		else
 		{
-			GpuMemoryManager::getSingleton().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size, m_imageHandle, m_memHandle);
+			g_svarGpuHostMemoryAllocated.increment(m_deviceMemSize);
 		}
 
-		// Bind
-		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
+		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, m_deviceMem, 0));
 	}
 
 	return Error::kNone;

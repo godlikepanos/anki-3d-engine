@@ -6,16 +6,12 @@
 #pragma once
 
 #include <AnKi/Gr/GrUpscaler.h>
-#include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 
 // Ngx Sdk forward declarations
 struct NVSDK_NGX_Parameter;
 struct NVSDK_NGX_Handle;
 
 namespace anki {
-
-/// @addtogroup vulkan
-/// @{
 
 class DLSSRecommendedSettings
 {
@@ -37,8 +33,7 @@ public:
 
 	Error initInternal(const GrUpscalerInitInfo& initInfo);
 
-	/// @name DLSS data accessors
-	/// @{
+	// DLSS data accessors
 #if ANKI_DLSS
 	NVSDK_NGX_Parameter& getParameters() const
 	{
@@ -55,7 +50,6 @@ public:
 		return m_recommendedSettings;
 	}
 #endif
-	/// @}
 
 private:
 #if ANKI_DLSS
@@ -71,6 +65,5 @@ private:
 	Error createDlssFeature(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerQualityMode mode);
 #endif
 };
-/// @}
 
 } // end namespace anki

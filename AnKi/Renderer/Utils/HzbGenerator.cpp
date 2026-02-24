@@ -62,11 +62,11 @@ Error HzbGenerator::init()
 		m_counterBufferElementSize = getAlignedRoundUp(alignment, U32(sizeof(U32)));
 	}
 
-	m_counterBuffer = TextureMemoryPool::getSingleton().allocate(m_counterBufferElementSize * kCounterBufferElementCount, alignment);
+	m_counterBuffer = getRenderer().getRendedererGpuMemoryPool().allocate(m_counterBufferElementSize * kCounterBufferElementCount, alignment);
 	zeroBuffer(m_counterBuffer);
 
 	// Boxes buffer
-	m_boxIndexBuffer = TextureMemoryPool::getSingleton().allocate(sizeof(kBoxIndices), sizeof(U16));
+	m_boxIndexBuffer = getRenderer().getRendedererGpuMemoryPool().allocate(sizeof(kBoxIndices), sizeof(U16));
 	fillBuffer(ConstWeakArray<U8>(reinterpret_cast<const U8*>(kBoxIndices), sizeof(kBoxIndices)), m_boxIndexBuffer);
 
 	return Error::kNone;

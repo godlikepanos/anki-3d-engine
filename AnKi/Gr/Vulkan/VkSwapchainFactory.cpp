@@ -188,7 +188,7 @@ Error MicroSwapchain::initInternal()
 		ci.imageExtent.width = surfaceWidth;
 		ci.imageExtent.height = surfaceHeight;
 		ci.imageArrayLayers = 1;
-		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
 		ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 		ci.imageSharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;

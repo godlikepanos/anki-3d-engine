@@ -27,7 +27,10 @@ public:
 		*this = std::move(b);
 	}
 
-	~SegregatedListsGpuMemoryPoolAllocation();
+	~SegregatedListsGpuMemoryPoolAllocation()
+	{
+		free();
+	}
 
 	SegregatedListsGpuMemoryPoolAllocation& operator=(const SegregatedListsGpuMemoryPoolAllocation&) = delete;
 
@@ -49,6 +52,8 @@ public:
 	operator BufferView() const;
 
 	void* getMappedMemory() const;
+
+	void free();
 
 private:
 	PtrSize m_offset = kMaxPtrSize;

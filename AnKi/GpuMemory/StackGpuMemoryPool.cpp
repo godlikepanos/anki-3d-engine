@@ -83,7 +83,7 @@ public:
 
 		if(!!m_bufferMap)
 		{
-			chunk->m_mappedMemory = static_cast<U8*>(chunk->m_buffer->map(0, size, m_bufferMap));
+			chunk->m_mappedMemory = static_cast<U8*>(chunk->m_buffer->map(0, size));
 		}
 
 		out = chunk;

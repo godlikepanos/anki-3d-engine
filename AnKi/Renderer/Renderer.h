@@ -57,11 +57,11 @@ public:
 class DummyGpuResources
 {
 public:
-	TexturePtr m_texture2DSrv;
-	TexturePtr m_texture2DUintSrv;
-	TexturePtr m_texture3DSrv;
-	TexturePtr m_texture2DUav;
-	TexturePtr m_texture3DUav;
+	RendererTexture m_texture2DSrv;
+	RendererTexture m_texture2DUintSrv;
+	RendererTexture m_texture3DSrv;
+	RendererTexture m_texture2DUav;
+	RendererTexture m_texture3DUav;
 	BufferPtr m_buffer; // It's 1024 bytes
 };
 
@@ -144,8 +144,13 @@ public:
 	// Create the init info for a 2D texture that will be used as a render target.
 	[[nodiscard]] RenderTargetDesc create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name = {});
 
-	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
-														const ClearValue& clearVal = ClearValue());
+	[[nodiscard]] RendererTexture createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
+															 const ClearValue& clearVal = ClearValue());
+
+	SegregatedListsGpuMemoryPool& getRendedererGpuMemoryPool()
+	{
+		return m_gpuMemPool;
+	}
 
 	const RendererPrecreatedSamplers& getSamplers() const
 	{
@@ -229,6 +234,9 @@ private:
 #include <AnKi/Renderer/RendererObject.def.h>
 
 	StackMemoryPool m_framePool;
+
+	SegregatedListsGpuMemoryPool m_gpuMemPool;
+	PtrSize m_dedicatedAllocationSize = 0; // For stats
 
 	UVec2 m_internalResolution = UVec2(0u); // The resolution of all passes up until TAA.
 	UVec2 m_postProcessResolution = UVec2(0u); // The resolution of post processing and following passes.

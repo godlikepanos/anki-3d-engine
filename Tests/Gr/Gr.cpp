@@ -139,7 +139,7 @@ ANKI_TEST(Gr, SimpleCompute)
 
 		BufferPtr readBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		Vec4* inData = static_cast<Vec4*>(readBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		Vec4* inData = static_cast<Vec4*>(readBuff->map(0, kMaxPtrSize));
 		const Vec4 kValue(123.456f, -666.666f, 172.2f, -16.0f);
 		*inData = kValue;
 		readBuff->unmap();
@@ -183,7 +183,7 @@ void main()
 		signalFence->clientWait(kMaxSecond);
 
 		// Check results
-		Vec4* outData = static_cast<Vec4*>(writeBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
+		Vec4* outData = static_cast<Vec4*>(writeBuff->map(0, kMaxPtrSize));
 		ANKI_TEST_EXPECT_EQ(*outData, kValue);
 		writeBuff->unmap();
 	}
@@ -415,7 +415,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 		buffInit.m_size = sizeof(Vec4) * 4;
 		buffInit.m_usage = BufferUsageBit::kCopySource;
 		BufferPtr uploadBuff = GrManager::getSingleton().newBuffer(buffInit);
-		void* mappedMem = uploadBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		void* mappedMem = uploadBuff->map(0, kMaxPtrSize);
 		const Array<Vec4, 4> texelData = {Vec4(1.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 1.0f),
 										  Vec4(1.0f, 0.0f, 1.0f, 1.0f)};
 		memcpy(mappedMem, &texelData, sizeof(texelData));
@@ -2258,7 +2258,7 @@ ANKI_TEST(Gr, RayQuery)
 			init.m_size = sizeof(indices);
 			idxBuffer = GrManager::getSingleton().newBuffer(init);
 
-			void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			void* addr = idxBuffer->map(0, kMaxPtrSize);
 			memcpy(addr, &indices[0], sizeof(indices));
 			idxBuffer->unmap();
 		}
@@ -2274,7 +2274,7 @@ ANKI_TEST(Gr, RayQuery)
 			init.m_size = sizeof(verts);
 			vertBuffer = GrManager::getSingleton().newBuffer(init);
 
-			void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			void* addr = vertBuffer->map(0, kMaxPtrSize);
 			memcpy(addr, &verts[0], sizeof(verts));
 			vertBuffer->unmap();
 		}
@@ -2532,7 +2532,7 @@ ANKI_TEST(Gr, RayTracingPipeline)
 			init.m_size = sizeof(indices);
 			idxBuffer = GrManager::getSingleton().newBuffer(init);
 
-			void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			void* addr = idxBuffer->map(0, kMaxPtrSize);
 			memcpy(addr, &indices[0], sizeof(indices));
 			idxBuffer->unmap();
 		}
@@ -2548,7 +2548,7 @@ ANKI_TEST(Gr, RayTracingPipeline)
 			init.m_size = sizeof(verts);
 			vertBuffer = GrManager::getSingleton().newBuffer(init);
 
-			void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+			void* addr = vertBuffer->map(0, kMaxPtrSize);
 			memcpy(addr, &verts[0], sizeof(verts));
 			vertBuffer->unmap();
 		}
@@ -2901,7 +2901,7 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 	inf.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kSrvDispatchRays;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
-	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::kWrite);
+	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8);
 
 	//   7------6
 	//  /|     /|
@@ -2923,7 +2923,7 @@ float4 main(float4 svPosition : SV_POSITION) : SV_TARGET0
 
 	inf.m_size = sizeof(U16) * 36;
 	indexBuffer = gr.newBuffer(inf);
-	WeakArray<U16, PtrSize> indices = indexBuffer->map<U16>(0, 36, BufferMapAccessBit::kWrite);
+	WeakArray<U16, PtrSize> indices = indexBuffer->map<U16>(0, 36);
 	U32 t = 0;
 
 	// Top

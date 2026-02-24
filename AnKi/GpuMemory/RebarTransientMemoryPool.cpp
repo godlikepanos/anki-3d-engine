@@ -41,7 +41,7 @@ void RebarTransientMemoryPool::init()
 
 	m_constantBufferBindOffsetAlignment = GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment;
 
-	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize));
 
 	// Create the slice of the 1st frame
 	m_activeSliceMask.set(0);

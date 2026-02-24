@@ -737,7 +737,7 @@ void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& c
 	if(!texView.getDepthStencilAspect())
 	{
 		const VkImageSubresourceRange vkRange = tex.computeVkImageSubresourceRange(texView.getSubresource());
-		vkCmdClearColorImage(self.m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &vkRange);
+		vkCmdClearColorImage(self.m_handle, tex.getVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &vkRange);
 	}
 	else
 	{
@@ -788,7 +788,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	region.bufferImageHeight = 0;
 	region.bufferRowLength = 0;
 
-	vkCmdCopyBufferToImage(self.m_handle, static_cast<const BufferImpl&>(buff.getBuffer()).getHandle(), tex.m_imageHandle, layout, 1, &region);
+	vkCmdCopyBufferToImage(self.m_handle, static_cast<const BufferImpl&>(buff.getBuffer()).getHandle(), tex.getVkImage(), layout, 1, &region);
 }
 
 void CommandBuffer::zeroBuffer(const BufferView& buff)

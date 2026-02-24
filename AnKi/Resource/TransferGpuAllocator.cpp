@@ -18,7 +18,7 @@ Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSiz
 	BufferInitInfo bufferInit(size, BufferUsageBit::kCopySource, BufferMapAccessBit::kWrite, "Transfer");
 	out->m_buffer = GrManager::getSingleton().newBuffer(bufferInit);
 
-	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize);
 
 	return Error::kNone;
 }

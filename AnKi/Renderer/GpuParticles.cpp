@@ -23,7 +23,7 @@ Error GpuParticles::init()
 
 	for(auto& buff : m_scratchBuffers)
 	{
-		buff = TextureMemoryPool::getSingleton().allocateStructuredBuffer<ParticleSimulationScratch>(1);
+		buff = getRenderer().getRendedererGpuMemoryPool().allocateStructuredBuffer<ParticleSimulationScratch>(1);
 
 		WeakArray<ParticleSimulationScratch> out;
 		const BufferView src = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer<ParticleSimulationScratch>(1, out);

@@ -8,7 +8,6 @@
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Utils/Readback.h>
 #include <AnKi/Resource/RenderingKey.h>
-#include <AnKi/GpuMemory/TextureMemoryPool.h>
 
 namespace anki {
 
@@ -247,7 +246,7 @@ private:
 	static constexpr U32 kInitialCounterArraySize = 32;
 
 	BufferHandle m_counterBufferZeroingHandle;
-	TextureMemoryPoolAllocation m_counterBuffer; // A buffer containing multiple counters for atomic operations.
+	SegregatedListsGpuMemoryPoolAllocation m_counterBuffer; // A buffer containing multiple counters for atomic operations.
 	U64 m_lastFrameIdx = kMaxU64;
 	U32 m_counterBufferOffset = 0;
 };
@@ -302,7 +301,7 @@ private:
 	ShaderProgramPtr m_visibilityGrProg;
 	ShaderProgramPtr m_zeroRemainingInstancesGrProg;
 
-	TextureMemoryPoolAllocation m_counterBuffer; // A buffer containing multiple counters for atomic operations.
+	SegregatedListsGpuMemoryPoolAllocation m_counterBuffer; // A buffer containing multiple counters for atomic operations.
 
 #if ANKI_ASSERTIONS_ENABLED
 	U64 m_lastFrameIdx = kMaxU64;

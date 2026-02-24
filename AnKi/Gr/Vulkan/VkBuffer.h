@@ -5,8 +5,8 @@
 
 #pragma once
 
+#include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Gr/Buffer.h>
-#include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 #include <AnKi/Util/HashMap.h>
 
 namespace anki {
@@ -50,21 +50,28 @@ public:
 	// It's thread-safe
 	VkBufferView getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const;
 
-	const GpuMemoryHandle& getGpuMemoryHandle() const
+	VkDeviceMemory getDeviceMemory() const
 	{
-		return m_memHandle;
+		ANKI_ASSERT(m_deviceMem);
+		return m_deviceMem;
+	}
+
+	U32 getMemoryTypeIndex() const
+	{
+		ANKI_ASSERT(m_memoryTypeIdx < kMaxU32);
+		return m_memoryTypeIdx;
 	}
 
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
-	GpuMemoryHandle m_memHandle;
-	VkMemoryPropertyFlags m_memoryFlags = 0;
+	VkDeviceMemory m_deviceMem = 0;
 	PtrSize m_actualSize = 0;
-	PtrSize m_mappedMemoryRangeAlignment = 0; ///< Cache this value.
+	PtrSize m_mappedMemoryRangeAlignment = 0; // Cache this value.
+	U32 m_memoryTypeIdx = kMaxU32;
 	Bool m_needsFlush : 1 = false;
 	Bool m_needsInvalidate : 1 = false;
 
-	mutable GrHashMap<U64, VkBufferView> m_views; ///< Only for texture buffers.
+	mutable GrHashMap<U64, VkBufferView> m_views; // Only for texture buffers
 	mutable RWMutex m_viewsMtx;
 
 #if ANKI_ASSERTIONS_ENABLED
@@ -85,17 +92,16 @@ private:
 	{
 		// First the offset
 		ANKI_ASSERT(offset < m_size);
-		offset += m_memHandle.m_offset; // Move from buffer offset to memory offset
 		alignRoundDown(m_mappedMemoryRangeAlignment, offset);
 
 		// And the range
 		range = (range == kMaxPtrSize) ? m_actualSize : range;
 		alignRoundUp(m_mappedMemoryRangeAlignment, range);
-		ANKI_ASSERT(offset + range <= m_memHandle.m_offset + m_actualSize);
+		ANKI_ASSERT(offset + range <= m_actualSize);
 
 		VkMappedMemoryRange vkrange = {};
 		vkrange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		vkrange.memory = m_memHandle.m_memory;
+		vkrange.memory = m_deviceMem;
 		vkrange.offset = offset;
 		vkrange.size = range;
 
