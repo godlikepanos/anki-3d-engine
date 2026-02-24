@@ -81,6 +81,16 @@ public:
 		return m_imageHandle;
 	}
 
+	VkFormat getVkFormat() const
+	{
+		return m_vkFormat;
+	}
+
+	VkImageUsageFlags getVkImageUsageFlags() const
+	{
+		return m_vkUsageFlags;
+	}
+
 private:
 	class TextureViewEntry
 	{
@@ -105,7 +115,7 @@ private:
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
-	[[maybe_unused]] VkImageUsageFlags m_vkUsageFlags = 0;
+	VkImageUsageFlags m_vkUsageFlags = 0;
 
 	// Dedicated allocation
 	VkDeviceMemory m_deviceMem = 0;

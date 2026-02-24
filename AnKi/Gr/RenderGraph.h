@@ -22,6 +22,7 @@ namespace anki {
 // Forward
 class RenderGraph;
 class RenderGraphBuilder;
+class RenderPassWorkContext;
 
 // RenderGraph constants
 constexpr U32 kMaxRenderGraphPasses = 512;
@@ -103,142 +104,6 @@ private:
 	U64 m_hash = 0;
 };
 
-// The only parameter of RenderPassWorkCallback.
-class RenderPassWorkContext
-{
-	friend class RenderGraph;
-
-public:
-	CommandBuffer* m_commandBuffer = nullptr;
-
-	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
-
-	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDesc& subresource, Texture*& tex) const;
-
-	TextureView createTextureView(RenderTargetHandle handle, const TextureSubresourceDesc& subresource) const
-	{
-		Texture* tex;
-		getRenderTargetState(handle, subresource, tex);
-		return TextureView(tex, subresource);
-	}
-
-	void bindSrv(U32 reg, U32 space, RenderTargetHandle handle, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
-	{
-		Texture* tex;
-		getRenderTargetState(handle, subresource, tex);
-		m_commandBuffer->bindSrv(reg, space, TextureView(tex, subresource));
-	}
-
-	void bindUav(U32 reg, U32 space, RenderTargetHandle handle, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
-	{
-		Texture* tex;
-		getRenderTargetState(handle, subresource, tex);
-		m_commandBuffer->bindUav(reg, space, TextureView(tex, subresource));
-	}
-
-	void bindSrv(U32 reg, U32 space, BufferHandle handle)
-	{
-		Buffer* buff;
-		PtrSize offset, range;
-		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindSrv(reg, space, BufferView(buff, offset, range));
-	}
-
-	void bindUav(U32 reg, U32 space, BufferHandle handle)
-	{
-		Buffer* buff;
-		PtrSize offset, range;
-		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindUav(reg, space, BufferView(buff, offset, range));
-	}
-
-	void bindSrv(U32 reg, U32 space, AccelerationStructureHandle handle);
-
-	void bindConstantBuffer(U32 reg, U32 space, BufferHandle handle)
-	{
-		Buffer* buff;
-		PtrSize offset, range;
-		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindConstantBuffer(reg, space, BufferView(buff, offset, range));
-	}
-
-private:
-	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);
-	U32 m_passIdx ANKI_DEBUG_CODE(= kMaxU32);
-	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
-
-	Texture& getTexture(RenderTargetHandle handle) const;
-};
-
-// RenderGraph pass dependency.
-class RenderPassDependency
-{
-	friend class RenderGraph;
-	friend class RenderPassBase;
-
-public:
-	// Dependency to a texture subresource.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource)
-		: m_texture({handle, usage, subresource})
-		, m_type(Type::kTexture)
-	{
-		ANKI_ASSERT(handle.isValid());
-	}
-
-	RenderPassDependency(BufferHandle handle, BufferUsageBit usage)
-		: m_buffer({handle, usage})
-		, m_type(Type::kBuffer)
-	{
-		ANKI_ASSERT(handle.isValid());
-	}
-
-	RenderPassDependency(AccelerationStructureHandle handle, AccelerationStructureUsageBit usage)
-		: m_as({handle, usage})
-		, m_type(Type::kAccelerationStructure)
-	{
-		ANKI_ASSERT(handle.isValid());
-	}
-
-private:
-	class TextureInfo
-	{
-	public:
-		RenderTargetHandle m_handle;
-		TextureUsageBit m_usage;
-		TextureSubresourceDesc m_subresource = TextureSubresourceDesc::all();
-	};
-
-	class BufferInfo
-	{
-	public:
-		BufferHandle m_handle;
-		BufferUsageBit m_usage;
-	};
-
-	class ASInfo
-	{
-	public:
-		AccelerationStructureHandle m_handle;
-		AccelerationStructureUsageBit m_usage;
-	};
-
-	union
-	{
-		TextureInfo m_texture;
-		BufferInfo m_buffer;
-		ASInfo m_as;
-	};
-
-	enum class Type : U8
-	{
-		kBuffer,
-		kTexture,
-		kAccelerationStructure
-	};
-
-	Type m_type;
-};
-
 // The base of compute/transfer and graphics renderpasses for RenderGraph.
 class RenderPassBase
 {
@@ -252,25 +117,16 @@ public:
 		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource)
-	{
-		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, subresource));
-	}
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource);
 
 	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
-		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, TextureSubresourceDesc::all(aspect)));
+		newTextureDependency(handle, usage, TextureSubresourceDesc::all(aspect));
 	}
 
-	void newBufferDependency(BufferHandle handle, BufferUsageBit usage)
-	{
-		newDependency<RenderPassDependency::Type::kBuffer>(RenderPassDependency(handle, usage));
-	}
+	void newBufferDependency(BufferHandle handle, BufferUsageBit usage);
 
-	void newAccelerationStructureDependency(AccelerationStructureHandle handle, AccelerationStructureUsageBit usage)
-	{
-		newDependency<RenderPassDependency::Type::kAccelerationStructure>(RenderPassDependency(handle, usage));
-	}
+	void newAccelerationStructureDependency(AccelerationStructureHandle handle, AccelerationStructureUsageBit usage);
 
 	void setWritesToSwapchain()
 	{
@@ -284,15 +140,37 @@ protected:
 		kNonGraphics
 	};
 
+	class TextureDependency
+	{
+	public:
+		RenderTargetHandle m_handle;
+		TextureUsageBit m_usage;
+		TextureSubresourceDesc m_subresource = TextureSubresourceDesc::all();
+	};
+
+	class BufferDependency
+	{
+	public:
+		BufferHandle m_handle;
+		BufferUsageBit m_usage;
+	};
+
+	class ASDependency
+	{
+	public:
+		AccelerationStructureHandle m_handle;
+		AccelerationStructureUsageBit m_usage;
+	};
+
 	Type m_type;
 
 	RenderGraphBuilder* m_descr;
 
 	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
 
-	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_rtDeps;
-	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffDeps;
-	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_asDeps;
+	DynamicArray<TextureDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_rtDeps;
+	DynamicArray<BufferDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffDeps;
+	DynamicArray<ASDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_asDeps;
 
 	BitSet<kMaxRenderGraphRenderTargets, U64> m_readRtMask{false};
 	BitSet<kMaxRenderGraphRenderTargets, U64> m_writeRtMask{false};
@@ -320,14 +198,6 @@ protected:
 	{
 		m_name = (name.isEmpty()) ? "N/A" : name;
 	}
-
-	void fixSubresource(RenderPassDependency& dep) const;
-
-	void validateDep(const RenderPassDependency& dep);
-
-	// Add a new consumer or producer dependency.
-	template<RenderPassDependency::Type kType>
-	void newDependency(const RenderPassDependency& dep);
 };
 
 // Renderpass attachment info. Used in GraphicsRenderPass::setRenderpassInfo. It mirrors the RenderPass.
@@ -407,13 +277,31 @@ public:
 	{
 	}
 
-	~RenderGraphBuilder();
+	~RenderGraphBuilder()
+	{
+		for(RenderPassBase* pass : m_passes)
+		{
+			deleteInstance(*m_pool, pass);
+		}
+	}
 
 	// Create a new graphics render pass.
-	GraphicsRenderPass& newGraphicsRenderPass(CString name);
+	GraphicsRenderPass& newGraphicsRenderPass(CString name)
+	{
+		GraphicsRenderPass* pass = newInstance<GraphicsRenderPass>(*m_pool, this, m_pool);
+		pass->setName(name);
+		m_passes.emplaceBack(pass);
+		return *pass;
+	}
 
 	// Create a new compute render pass.
-	NonGraphicsRenderPass& newNonGraphicsRenderPass(CString name);
+	NonGraphicsRenderPass& newNonGraphicsRenderPass(CString name)
+	{
+		NonGraphicsRenderPass* pass = newInstance<NonGraphicsRenderPass>(*m_pool, this, m_pool);
+		pass->setName(name);
+		m_passes.emplaceBack(pass);
+		return *pass;
+	}
 
 	// Import an existing render target and let the render graph know about it's up-to-date usage.
 	RenderTargetHandle importRenderTarget(Texture* tex, TextureUsageBit usage);
@@ -598,7 +486,7 @@ private:
 
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
-	void setTextureBarrier(Batch& batch, const RenderPassDependency& consumer);
+	void setTextureBarrier(Batch& batch, const RenderPassBase::TextureDependency& consumer);
 
 	template<typename TFunc>
 	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDesc& subresource, TFunc func);
@@ -616,6 +504,85 @@ private:
 	AccelerationStructure* getAs(AccelerationStructureHandle handle) const;
 };
 
-} // end namespace anki
+// The only parameter of RenderPassWorkCallback.
+class RenderPassWorkContext
+{
+	friend class RenderGraph;
 
-#include <AnKi/Gr/RenderGraph.inl.h>
+public:
+	CommandBuffer* m_commandBuffer = nullptr;
+
+	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const
+	{
+		m_rgraph->getCachedBuffer(handle, buff, offset, range);
+	}
+
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDesc& subresource, Texture*& tex) const
+	{
+		TextureUsageBit usage;
+		m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
+		tex = &m_rgraph->getTexture(handle);
+	}
+
+	TextureView createTextureView(RenderTargetHandle handle, const TextureSubresourceDesc& subresource) const
+	{
+		Texture* tex;
+		getRenderTargetState(handle, subresource, tex);
+		return TextureView(tex, subresource);
+	}
+
+	void bindSrv(U32 reg, U32 space, RenderTargetHandle handle, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
+	{
+		Texture* tex;
+		getRenderTargetState(handle, subresource, tex);
+		m_commandBuffer->bindSrv(reg, space, TextureView(tex, subresource));
+	}
+
+	void bindUav(U32 reg, U32 space, RenderTargetHandle handle, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
+	{
+		Texture* tex;
+		getRenderTargetState(handle, subresource, tex);
+		m_commandBuffer->bindUav(reg, space, TextureView(tex, subresource));
+	}
+
+	void bindSrv(U32 reg, U32 space, BufferHandle handle)
+	{
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindSrv(reg, space, BufferView(buff, offset, range));
+	}
+
+	void bindUav(U32 reg, U32 space, BufferHandle handle)
+	{
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindUav(reg, space, BufferView(buff, offset, range));
+	}
+
+	void bindSrv(U32 reg, U32 space, AccelerationStructureHandle handle)
+	{
+		m_commandBuffer->bindSrv(reg, space, m_rgraph->getAs(handle));
+	}
+
+	void bindConstantBuffer(U32 reg, U32 space, BufferHandle handle)
+	{
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindConstantBuffer(reg, space, BufferView(buff, offset, range));
+	}
+
+private:
+	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);
+	U32 m_passIdx ANKI_DEBUG_CODE(= kMaxU32);
+	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
+
+	Texture& getTexture(RenderTargetHandle handle) const
+	{
+		return m_rgraph->getTexture(handle);
+	}
+};
+
+} // end namespace anki

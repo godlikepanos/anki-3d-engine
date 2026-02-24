@@ -46,7 +46,7 @@ Error QueryFactory::newQuery(QueryHandle& handle)
 		buffInit.m_size = kMaxQueriesPerQueryChunk * m_resultStructSize;
 		chunk.m_resultsBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
-		chunk.m_resultsBufferCpuAddr = static_cast<U64*>(chunk.m_resultsBuffer->map(0, buffInit.m_size, BufferMapAccessBit::kRead));
+		chunk.m_resultsBufferCpuAddr = static_cast<U64*>(chunk.m_resultsBuffer->map(0, buffInit.m_size));
 
 		const D3D12_QUERY_HEAP_DESC desc = {.Type = m_type, .Count = kMaxQueriesPerQueryChunk, .NodeMask = 0};
 		ANKI_D3D_CHECK(getDevice().CreateQueryHeap(&desc, IID_PPV_ARGS(&chunk.m_heap)));

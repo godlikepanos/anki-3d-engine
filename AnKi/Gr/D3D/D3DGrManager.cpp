@@ -560,7 +560,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		buffInit.m_usage = BufferUsageBit::kCopySource;
 		m_zeroBuffer = newBuffer(buffInit);
 
-		void* mapped = m_zeroBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		void* mapped = m_zeroBuffer->map(0, kMaxPtrSize);
 		memset(mapped, 0, buffInit.m_size);
 		m_zeroBuffer->unmap();
 	}

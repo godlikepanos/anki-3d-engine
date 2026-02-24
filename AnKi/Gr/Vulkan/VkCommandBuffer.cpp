@@ -883,10 +883,10 @@ static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureView& vi
 	const TextureImpl& tex = static_cast<const TextureImpl&>(view.getTexture());
 
 	const VkImageView imageView = tex.getImageView(view.getSubresource());
-	const VkFormat format = tex.m_vkFormat;
+	const VkFormat format = tex.getVkFormat();
 	const VkImage image = tex.m_imageHandle;
 	const VkImageSubresourceRange subresourceRange = tex.computeVkImageSubresourceRange(view.getSubresource());
-	const Bool isUAV = !!(tex.m_vkUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT);
+	const Bool isUAV = !!(tex.getVkImageUsageFlags() & VK_IMAGE_USAGE_STORAGE_BIT);
 
 	// TODO Not sure if I should pass the width,height of the image or the view
 	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format, tex.getWidth(), tex.getHeight(), isUAV);

@@ -25,6 +25,208 @@ static inline U32 getTextureSurfOrVolCount(const TextureInternalPtr& tex)
 	return tex->getMipmapCount() * tex->getLayerCount() * (textureTypeIsCube(tex->getTextureType()) ? 6 : 1);
 }
 
+void RenderPassBase::newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource)
+{
+	TextureDependency& newDep = *m_rtDeps.emplaceBack();
+	newDep.m_handle = handle;
+	newDep.m_subresource = subresource;
+	newDep.m_usage = usage;
+
+	// Sanitize a bit
+	const RenderGraphBuilder::RT& rt = m_descr->m_renderTargets[newDep.m_handle.m_idx];
+	if(newDep.m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
+	{
+		if(rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect())
+		{
+			newDep.m_subresource.m_depthStencilAspect = rt.m_importedTex->getDepthStencilAspect();
+		}
+		else if(!rt.m_importedTex.isCreated() && getFormatInfo(rt.m_initInfo.m_format).isDepthStencil())
+		{
+			newDep.m_subresource.m_depthStencilAspect = getFormatInfo(rt.m_initInfo.m_format).m_depthStencil;
+		}
+	}
+
+	if(!!(newDep.m_usage & TextureUsageBit::kAllRead))
+	{
+		m_readRtMask.set(newDep.m_handle.m_idx);
+	}
+
+	if(!!(newDep.m_usage & TextureUsageBit::kAllWrite))
+	{
+		m_writeRtMask.set(newDep.m_handle.m_idx);
+	}
+
+	// Try to derive the usage by that dep
+	m_descr->m_renderTargets[newDep.m_handle.m_idx].m_usageDerivedByDeps |= newDep.m_usage;
+
+	// Checks
+#if ANKI_ASSERTIONS_ENABLED
+	if((!rt.m_importedTex.isCreated() && !!getFormatInfo(rt.m_initInfo.m_format).m_depthStencil)
+	   || (rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect()))
+	{
+		ANKI_ASSERT(!!m_rtDeps.getBack().m_subresource.m_depthStencilAspect
+					&& "Dependencies of depth/stencil resources should have a valid DS aspect");
+	}
+#endif
+}
+
+void RenderPassBase::newBufferDependency(BufferHandle handle, BufferUsageBit usage)
+{
+	ANKI_ASSERT(!!(m_descr->m_buffers[handle.m_idx].m_importedBuff->getBufferUsage() & usage));
+
+	BufferDependency& dep = *m_buffDeps.emplaceBack();
+	dep.m_handle = handle;
+	dep.m_usage = usage;
+
+	if(!!(usage & BufferUsageBit::kAllRead))
+	{
+		m_readBuffMask.set(handle.m_idx);
+	}
+
+	if(!!(usage & BufferUsageBit::kAllWrite))
+	{
+		m_writeBuffMask.set(handle.m_idx);
+	}
+}
+
+void RenderPassBase::newAccelerationStructureDependency(AccelerationStructureHandle handle, AccelerationStructureUsageBit usage)
+{
+	ASDependency& dep = *m_asDeps.emplaceBack();
+	dep.m_handle = handle;
+	dep.m_usage = usage;
+
+	if(!!(usage & AccelerationStructureUsageBit::kAllRead))
+	{
+		m_readAsMask.set(handle.m_idx);
+	}
+
+	if(!!(usage & AccelerationStructureUsageBit::kAllWrite))
+	{
+		m_writeAsMask.set(handle.m_idx);
+	}
+}
+
+void GraphicsRenderPass::setRenderpassInfo(ConstWeakArray<GraphicsRenderPassTargetDesc> colorRts, const GraphicsRenderPassTargetDesc* depthStencilRt,
+										   const RenderTargetHandle* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
+{
+	m_colorRtCount = U8(colorRts.getSize());
+	for(U32 i = 0; i < m_colorRtCount; ++i)
+	{
+		m_rts[i].m_handle = colorRts[i].m_handle;
+		ANKI_ASSERT(!colorRts[i].m_subresource.m_depthStencilAspect);
+		m_rts[i].m_subresource = colorRts[i].m_subresource;
+		m_rts[i].m_loadOperation = colorRts[i].m_loadOperation;
+		m_rts[i].m_storeOperation = colorRts[i].m_storeOperation;
+		m_rts[i].m_clearValue = colorRts[i].m_clearValue;
+	}
+
+	if(depthStencilRt)
+	{
+		m_rts[kMaxColorRenderTargets].m_handle = depthStencilRt->m_handle;
+		ANKI_ASSERT(!!depthStencilRt->m_subresource.m_depthStencilAspect);
+		m_rts[kMaxColorRenderTargets].m_subresource = depthStencilRt->m_subresource;
+		m_rts[kMaxColorRenderTargets].m_loadOperation = depthStencilRt->m_loadOperation;
+		m_rts[kMaxColorRenderTargets].m_storeOperation = depthStencilRt->m_storeOperation;
+		m_rts[kMaxColorRenderTargets].m_stencilLoadOperation = depthStencilRt->m_stencilLoadOperation;
+		m_rts[kMaxColorRenderTargets].m_stencilStoreOperation = depthStencilRt->m_stencilStoreOperation;
+		m_rts[kMaxColorRenderTargets].m_clearValue = depthStencilRt->m_clearValue;
+	}
+
+	if(vrsRt)
+	{
+		m_rts[kMaxColorRenderTargets + 1].m_handle = *vrsRt;
+		m_vrsRtTexelSizeX = vrsRtTexelSizeX;
+		m_vrsRtTexelSizeY = vrsRtTexelSizeY;
+	}
+
+	m_hasRenderpass = true;
+}
+
+RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex, TextureUsageBit usage)
+{
+	for([[maybe_unused]] const RT& rt : m_renderTargets)
+	{
+		ANKI_ASSERT(rt.m_importedTex.tryGet() != tex && "Already imported");
+	}
+
+	RT& rt = *m_renderTargets.emplaceBack();
+	rt.m_importedTex.reset(tex);
+	rt.m_importedLastKnownUsage = usage;
+	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
+	rt.setName(tex->getName());
+
+	RenderTargetHandle out;
+	out.m_idx = m_renderTargets.getSize() - 1;
+	return out;
+}
+
+RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex)
+{
+	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::kNone);
+	m_renderTargets.getBack().m_importedAndUndefinedUsage = true;
+	return out;
+}
+
+RenderTargetHandle RenderGraphBuilder::newRenderTarget(const RenderTargetDesc& initInf)
+{
+	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDesc::bake");
+	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone && "Don't need to supply the usage. Render grap will find it");
+
+	for([[maybe_unused]] auto it : m_renderTargets)
+	{
+		ANKI_ASSERT(it.m_hash != initInf.m_hash && "There is another RT descriptor with the same hash. Rendergraph's RT recycler will get confused");
+	}
+
+	RT& rt = *m_renderTargets.emplaceBack();
+	rt.m_initInfo = initInf;
+	rt.m_hash = initInf.m_hash;
+	rt.m_importedLastKnownUsage = TextureUsageBit::kNone;
+	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
+	rt.setName(initInf.getName());
+
+	RenderTargetHandle out;
+	out.m_idx = m_renderTargets.getSize() - 1;
+	return out;
+}
+
+BufferHandle RenderGraphBuilder::importBuffer(const BufferView& buff, BufferUsageBit crntUsage)
+{
+	ANKI_ASSERT(buff.isValid());
+
+	for([[maybe_unused]] const BufferRsrc& bb : m_buffers)
+	{
+		ANKI_ASSERT(!buff.overlaps(BufferView(bb.m_importedBuff.get(), bb.m_offset, bb.m_range)) && "Range already imported");
+	}
+
+	BufferRsrc& b = *m_buffers.emplaceBack();
+	b.setName(buff.getBuffer().getName());
+	b.m_usage = crntUsage;
+	b.m_importedBuff.reset(&buff.getBuffer());
+	b.m_offset = buff.getOffset();
+	b.m_range = buff.getRange();
+
+	BufferHandle out;
+	out.m_idx = m_buffers.getSize() - 1;
+	return out;
+}
+
+AccelerationStructureHandle RenderGraphBuilder::importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit crntUsage)
+{
+	for([[maybe_unused]] const AS& a : m_as)
+	{
+		ANKI_ASSERT(a.m_importedAs.get() != as && "Already imported");
+	}
+
+	AS& a = *m_as.emplaceBack();
+	a.setName(as->getName());
+	a.m_importedAs.reset(as);
+	a.m_usage = crntUsage;
+
+	AccelerationStructureHandle handle;
+	handle.m_idx = m_as.getSize() - 1;
+	return handle;
+}
+
 // Contains some extra things for render targets.
 class RenderGraph::RT
 {
@@ -115,7 +317,7 @@ public:
 	// WARNING!!!!!: Whatever you put here needs manual destruction in RenderGraph::reset()
 	DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependsOn;
 
-	DynamicArray<RenderPassDependency::TextureInfo, MemoryPoolPtrWrapper<StackMemoryPool>> m_consumedTextures;
+	DynamicArray<RenderPassBase::TextureDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_consumedTextures;
 
 	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
 
@@ -360,27 +562,27 @@ Bool RenderGraph::passADependsOnB(const RenderPassBase& a, const RenderPassBase&
 		{
 			// There might be an overlap
 
-			for(const RenderPassDependency& aDep : a.m_rtDeps)
+			for(const RenderPassBase::TextureDependency& aDep : a.m_rtDeps)
 			{
-				if(!fullDep.get(aDep.m_texture.m_handle.m_idx))
+				if(!fullDep.get(aDep.m_handle.m_idx))
 				{
 					continue;
 				}
 
-				for(const RenderPassDependency& bDep : b.m_rtDeps)
+				for(const RenderPassBase::TextureDependency& bDep : b.m_rtDeps)
 				{
-					if(aDep.m_texture.m_handle != bDep.m_texture.m_handle)
+					if(aDep.m_handle != bDep.m_handle)
 					{
 						continue;
 					}
 
-					if(!((aDep.m_texture.m_usage | bDep.m_texture.m_usage) & TextureUsageBit::kAllWrite))
+					if(!((aDep.m_usage | bDep.m_usage) & TextureUsageBit::kAllWrite))
 					{
 						// Don't care about read to read deps
 						continue;
 					}
 
-					if(aDep.m_texture.m_subresource.overlapsWith(bDep.m_texture.m_subresource))
+					if(aDep.m_subresource.overlapsWith(bDep.m_subresource))
 					{
 						return true;
 					}
@@ -402,21 +604,21 @@ Bool RenderGraph::passADependsOnB(const RenderPassBase& a, const RenderPassBase&
 		{
 			// There might be an overlap
 
-			for(const RenderPassDependency& aDep : a.m_buffDeps)
+			for(const RenderPassBase::BufferDependency& aDep : a.m_buffDeps)
 			{
-				if(!fullDep.get(aDep.m_buffer.m_handle.m_idx))
+				if(!fullDep.get(aDep.m_handle.m_idx))
 				{
 					continue;
 				}
 
-				for(const RenderPassDependency& bDep : b.m_buffDeps)
+				for(const RenderPassBase::BufferDependency& bDep : b.m_buffDeps)
 				{
-					if(aDep.m_buffer.m_handle != bDep.m_buffer.m_handle)
+					if(aDep.m_handle != bDep.m_handle)
 					{
 						continue;
 					}
 
-					if(!((aDep.m_buffer.m_usage | bDep.m_buffer.m_usage) & BufferUsageBit::kAllWrite))
+					if(!((aDep.m_usage | bDep.m_usage) & BufferUsageBit::kAllWrite))
 					{
 						// Don't care about read to read deps
 						continue;
@@ -440,21 +642,21 @@ Bool RenderGraph::passADependsOnB(const RenderPassBase& a, const RenderPassBase&
 
 		if(fullDep)
 		{
-			for(const RenderPassDependency& aDep : a.m_asDeps)
+			for(const RenderPassBase::ASDependency& aDep : a.m_asDeps)
 			{
-				if(!fullDep.get(aDep.m_as.m_handle.m_idx))
+				if(!fullDep.get(aDep.m_handle.m_idx))
 				{
 					continue;
 				}
 
-				for(const RenderPassDependency& bDep : b.m_asDeps)
+				for(const RenderPassBase::ASDependency& bDep : b.m_asDeps)
 				{
-					if(aDep.m_as.m_handle != bDep.m_as.m_handle)
+					if(aDep.m_handle != bDep.m_handle)
 					{
 						continue;
 					}
 
-					if(!((aDep.m_as.m_usage | bDep.m_as.m_usage) & AccelerationStructureUsageBit::kAllWrite))
+					if(!((aDep.m_usage | bDep.m_usage) & AccelerationStructureUsageBit::kAllWrite))
 					{
 						// Don't care about read to read deps
 						continue;
@@ -613,13 +815,11 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 		outPass.m_consumedTextures.resize(inPass.m_rtDeps.getSize());
 		for(U32 depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
 		{
-			const RenderPassDependency& inDep = inPass.m_rtDeps[depIdx];
-			ANKI_ASSERT(inDep.m_type == RenderPassDependency::Type::kTexture);
+			const RenderPassBase::TextureDependency& inDep = inPass.m_rtDeps[depIdx];
+			RenderPassBase::TextureDependency& inf = outPass.m_consumedTextures[depIdx];
 
-			RenderPassDependency::TextureInfo& inf = outPass.m_consumedTextures[depIdx];
-
-			ANKI_ASSERT(sizeof(inf) == sizeof(inDep.m_texture));
-			memcpy(&inf, &inDep.m_texture, sizeof(inf));
+			ANKI_ASSERT(sizeof(inf) == sizeof(inDep));
+			memcpy(&inf, &inDep, sizeof(inf));
 		}
 
 		// Set dependencies by checking all previous subpasses.
@@ -774,17 +974,15 @@ void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubreso
 	}
 }
 
-void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& dep)
+void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassBase::TextureDependency& dep)
 {
-	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kTexture);
-
 	BakeContext& ctx = *m_ctx;
 	const U32 batchIdx = U32(&batch - &ctx.m_batches[0]);
-	const U32 rtIdx = dep.m_texture.m_handle.m_idx;
-	const TextureUsageBit depUsage = dep.m_texture.m_usage;
+	const U32 rtIdx = dep.m_handle.m_idx;
+	const TextureUsageBit depUsage = dep.m_usage;
 	RT& rt = ctx.m_rts[rtIdx];
 
-	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSubresourceDesc& subresource) {
+	iterateSurfsOrVolumes(*rt.m_texture, dep.m_subresource, [&](U32 surfOrVolIdx, const TextureSubresourceDesc& subresource) {
 		TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
 
 		const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & TextureUsageBit::kAllWrite);
@@ -844,16 +1042,16 @@ void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 			const RenderPassBase& pass = *descr.m_passes[passIdx];
 
 			// Do textures
-			for(const RenderPassDependency& dep : pass.m_rtDeps)
+			for(const RenderPassBase::TextureDependency& dep : pass.m_rtDeps)
 			{
 				setTextureBarrier(batch, dep);
 			}
 
 			// Do buffers
-			for(const RenderPassDependency& dep : pass.m_buffDeps)
+			for(const RenderPassBase::BufferDependency& dep : pass.m_buffDeps)
 			{
-				const U32 buffIdx = dep.m_buffer.m_handle.m_idx;
-				const BufferUsageBit depUsage = dep.m_buffer.m_usage;
+				const U32 buffIdx = dep.m_handle.m_idx;
+				const BufferUsageBit depUsage = dep.m_usage;
 				BufferUsageBit& crntUsage = ctx.m_buffers[buffIdx].m_usage;
 
 				const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & BufferUsageBit::kAllWrite);
@@ -895,10 +1093,10 @@ void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 			}
 
 			// Do AS
-			for(const RenderPassDependency& dep : pass.m_asDeps)
+			for(const RenderPassBase::ASDependency& dep : pass.m_asDeps)
 			{
-				const U32 asIdx = dep.m_as.m_handle.m_idx;
-				const AccelerationStructureUsageBit depUsage = dep.m_as.m_usage;
+				const U32 asIdx = dep.m_handle.m_idx;
+				const AccelerationStructureUsageBit depUsage = dep.m_usage;
 				AccelerationStructureUsageBit& crntUsage = ctx.m_as[asIdx].m_usage;
 
 				const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & AccelerationStructureUsageBit::kAllWrite);
@@ -1306,7 +1504,7 @@ void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const Te
 
 	for(U32 passIdx : batch.m_passIndices)
 	{
-		for(const RenderPassDependency::TextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
+		for(const RenderPassBase::TextureDependency& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
 		{
 			if(consumer.m_handle == handle && subresource.overlapsWith(consumer.m_subresource))
 			{
