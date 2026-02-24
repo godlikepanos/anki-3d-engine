@@ -455,7 +455,7 @@ private:
 	public:
 		TextureInitInfo m_initInfo;
 		U64 m_hash = 0;
-		TextureInternalPtr m_importedTex;
+		TexturePtr m_importedTex;
 		TextureUsageBit m_importedLastKnownUsage = TextureUsageBit::kNone;
 		// Derived by the deps of this RT and will be used to set its usage.
 		TextureUsageBit m_usageDerivedByDeps = TextureUsageBit::kNone;
@@ -466,7 +466,7 @@ private:
 	{
 	public:
 		BufferUsageBit m_usage;
-		BufferInternalPtr m_importedBuff;
+		BufferPtr m_importedBuff;
 		PtrSize m_offset;
 		PtrSize m_range;
 	};

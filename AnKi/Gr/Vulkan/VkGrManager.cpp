@@ -318,8 +318,8 @@ Error GrManagerImpl::initInstance()
 
 	// Create the instance
 	//
-	const U8 vulkanMinor = 1;
-	const U8 vulkanMajor = 3;
+	const U8 vulkanMinor = 3;
+	const U8 vulkanMajor = 1;
 
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
