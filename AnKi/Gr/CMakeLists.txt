@@ -18,7 +18,6 @@ set(backend_headers
 	GrObject.h
 	OcclusionQuery.h
 	RenderGraph.h
-	RenderGraph.inl.h
 	Sampler.h
 	Shader.h
 	ShaderProgram.h
