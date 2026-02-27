@@ -14,7 +14,10 @@ template<typename TMemoryPool, typename TElementType>
 class DynamicBitSet
 {
 public:
-	DynamicBitSet() = default;
+	DynamicBitSet(const TMemoryPool& pool = TMemoryPool())
+		: m_storage(pool)
+	{
+	}
 
 	DynamicBitSet(const DynamicBitSet& b)
 		: m_storage(b.m_storage)
@@ -64,13 +67,49 @@ public:
 		return (m_storage[index] & mask) != 0;
 	}
 
+	U32 getSetBitCount() const
+	{
+		U32 count = 0;
+		for(TElementType el : m_storage)
+		{
+			count += std::popcount(el);
+		}
+		return count;
+	}
+
+	template<typename TFunc>
+	FunctorContinue iterateSetBitsFromLeastSignificant(TFunc func) const
+	{
+		for(U32 i = 0; i < m_storage.getSize(); ++i)
+		{
+			TElementType bits = m_storage[i];
+			while(bits)
+			{
+				const U32 lsb = U32(std::countr_zero(bits));
+				const U32 bitIdx = lsb + (i * kElementBitCount);
+
+				const FunctorContinue cont = func(bitIdx);
+				if(cont == FunctorContinue::kStop)
+				{
+					return cont;
+				}
+
+				bits &= ~(TElementType(1) << TElementType(lsb));
+			}
+		}
+
+		return FunctorContinue::kContinue;
+	}
+
 private:
+	static const U32 kElementBitCount = sizeof(TElementType) * 8;
+
 	DynamicArray<TElementType, TMemoryPool> m_storage;
 
 	static void decode(U32 pos, U32& index, U32& bit)
 	{
-		index = pos / sizeof(TElementType);
-		bit = pos % sizeof(TElementType);
+		index = pos / kElementBitCount;
+		bit = pos % kElementBitCount;
 	}
 };
 

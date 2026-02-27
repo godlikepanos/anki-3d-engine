@@ -14,6 +14,7 @@
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/DynamicBitSet.h>
 #include <AnKi/Core/Common.h>
 
 namespace anki {
@@ -46,16 +47,6 @@ void RenderPassBase::newTextureDependency(RenderTargetHandle handle, TextureUsag
 		}
 	}
 
-	if(!!(newDep.m_usage & TextureUsageBit::kAllRead))
-	{
-		m_readRtMask.set(newDep.m_handle.m_idx);
-	}
-
-	if(!!(newDep.m_usage & TextureUsageBit::kAllWrite))
-	{
-		m_writeRtMask.set(newDep.m_handle.m_idx);
-	}
-
 	// Try to derive the usage by that dep
 	m_descr->m_renderTargets[newDep.m_handle.m_idx].m_usageDerivedByDeps |= newDep.m_usage;
 
@@ -77,16 +68,6 @@ void RenderPassBase::newBufferDependency(BufferHandle handle, BufferUsageBit usa
 	BufferDependency& dep = *m_buffDeps.emplaceBack();
 	dep.m_handle = handle;
 	dep.m_usage = usage;
-
-	if(!!(usage & BufferUsageBit::kAllRead))
-	{
-		m_readBuffMask.set(handle.m_idx);
-	}
-
-	if(!!(usage & BufferUsageBit::kAllWrite))
-	{
-		m_writeBuffMask.set(handle.m_idx);
-	}
 }
 
 void RenderPassBase::newAccelerationStructureDependency(AccelerationStructureHandle handle, AccelerationStructureUsageBit usage)
@@ -94,52 +75,42 @@ void RenderPassBase::newAccelerationStructureDependency(AccelerationStructureHan
 	ASDependency& dep = *m_asDeps.emplaceBack();
 	dep.m_handle = handle;
 	dep.m_usage = usage;
-
-	if(!!(usage & AccelerationStructureUsageBit::kAllRead))
-	{
-		m_readAsMask.set(handle.m_idx);
-	}
-
-	if(!!(usage & AccelerationStructureUsageBit::kAllWrite))
-	{
-		m_writeAsMask.set(handle.m_idx);
-	}
 }
 
 void GraphicsRenderPass::setRenderpassInfo(ConstWeakArray<GraphicsRenderPassTargetDesc> colorRts, const GraphicsRenderPassTargetDesc* depthStencilRt,
 										   const RenderTargetHandle* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
-	m_colorRtCount = U8(colorRts.getSize());
-	for(U32 i = 0; i < m_colorRtCount; ++i)
+	m_graphicsPassExtra->m_colorRtCount = U8(colorRts.getSize());
+	for(U32 i = 0; i < m_graphicsPassExtra->m_colorRtCount; ++i)
 	{
-		m_rts[i].m_handle = colorRts[i].m_handle;
+		m_graphicsPassExtra->m_rts[i].m_handle = colorRts[i].m_handle;
 		ANKI_ASSERT(!colorRts[i].m_subresource.m_depthStencilAspect);
-		m_rts[i].m_subresource = colorRts[i].m_subresource;
-		m_rts[i].m_loadOperation = colorRts[i].m_loadOperation;
-		m_rts[i].m_storeOperation = colorRts[i].m_storeOperation;
-		m_rts[i].m_clearValue = colorRts[i].m_clearValue;
+		m_graphicsPassExtra->m_rts[i].m_subresource = colorRts[i].m_subresource;
+		m_graphicsPassExtra->m_rts[i].m_loadOperation = colorRts[i].m_loadOperation;
+		m_graphicsPassExtra->m_rts[i].m_storeOperation = colorRts[i].m_storeOperation;
+		m_graphicsPassExtra->m_rts[i].m_clearValue = colorRts[i].m_clearValue;
 	}
 
 	if(depthStencilRt)
 	{
-		m_rts[kMaxColorRenderTargets].m_handle = depthStencilRt->m_handle;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_handle = depthStencilRt->m_handle;
 		ANKI_ASSERT(!!depthStencilRt->m_subresource.m_depthStencilAspect);
-		m_rts[kMaxColorRenderTargets].m_subresource = depthStencilRt->m_subresource;
-		m_rts[kMaxColorRenderTargets].m_loadOperation = depthStencilRt->m_loadOperation;
-		m_rts[kMaxColorRenderTargets].m_storeOperation = depthStencilRt->m_storeOperation;
-		m_rts[kMaxColorRenderTargets].m_stencilLoadOperation = depthStencilRt->m_stencilLoadOperation;
-		m_rts[kMaxColorRenderTargets].m_stencilStoreOperation = depthStencilRt->m_stencilStoreOperation;
-		m_rts[kMaxColorRenderTargets].m_clearValue = depthStencilRt->m_clearValue;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_subresource = depthStencilRt->m_subresource;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_loadOperation = depthStencilRt->m_loadOperation;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_storeOperation = depthStencilRt->m_storeOperation;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_stencilLoadOperation = depthStencilRt->m_stencilLoadOperation;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_stencilStoreOperation = depthStencilRt->m_stencilStoreOperation;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_clearValue = depthStencilRt->m_clearValue;
 	}
 
 	if(vrsRt)
 	{
-		m_rts[kMaxColorRenderTargets + 1].m_handle = *vrsRt;
-		m_vrsRtTexelSizeX = vrsRtTexelSizeX;
-		m_vrsRtTexelSizeY = vrsRtTexelSizeY;
+		m_graphicsPassExtra->m_rts[kMaxColorRenderTargets + 1].m_handle = *vrsRt;
+		m_graphicsPassExtra->m_vrsRtTexelSizeX = vrsRtTexelSizeX;
+		m_graphicsPassExtra->m_vrsRtTexelSizeY = vrsRtTexelSizeY;
 	}
 
-	m_hasRenderpass = true;
+	m_graphicsPassExtra->m_hasRenderpass = true;
 }
 
 RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex, TextureUsageBit usage)
@@ -233,12 +204,21 @@ class RenderGraph::RT
 public:
 	DynamicArray<TextureUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_surfOrVolUsages;
 	DynamicArray<U16, MemoryPoolPtrWrapper<StackMemoryPool>> m_lastBatchThatTransitionedIt;
+
+	// Depedencies in SoA
+	DynamicArray<U16, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependentPasses;
+	DynamicArray<TextureUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependencyUsages;
+	DynamicArray<TextureSubresourceDesc, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependencySubresources;
+
 	TextureInternalPtr m_texture; // Hold a reference.
 	Bool m_imported;
 
 	RT(StackMemoryPool* pool)
 		: m_surfOrVolUsages(pool)
 		, m_lastBatchThatTransitionedIt(pool)
+		, m_dependentPasses(pool)
+		, m_dependencyUsages(pool)
+		, m_dependencySubresources(pool)
 	{
 	}
 };
@@ -251,6 +231,16 @@ public:
 	BufferInternalPtr m_buffer; // Hold a reference.
 	PtrSize m_offset;
 	PtrSize m_range;
+
+	// Depedencies in SoA
+	DynamicArray<U16, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependentPasses;
+	DynamicArray<BufferUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependencyUsages;
+
+	BufferRange(StackMemoryPool* pool)
+		: m_dependentPasses(pool)
+		, m_dependencyUsages(pool)
+	{
+	}
 };
 
 class RenderGraph::AS
@@ -258,6 +248,16 @@ class RenderGraph::AS
 public:
 	AccelerationStructureUsageBit m_usage;
 	AccelerationStructurePtr m_as; // Hold a reference.
+
+	// Depedencies in SoA
+	DynamicArray<U16, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependentPasses;
+	DynamicArray<AccelerationStructureUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependencyUsages;
+
+	AS(StackMemoryPool* pool)
+		: m_dependentPasses(pool)
+		, m_dependencyUsages(pool)
+	{
+	}
 };
 
 // Pipeline barrier.
@@ -315,7 +315,8 @@ class RenderGraph::Pass
 {
 public:
 	// WARNING!!!!!: Whatever you put here needs manual destruction in RenderGraph::reset()
-	DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependsOn;
+
+	DynamicBitSet<MemoryPoolPtrWrapper<StackMemoryPool>> m_dependsOnPassMask;
 
 	DynamicArray<RenderPassBase::TextureDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_consumedTextures;
 
@@ -341,7 +342,7 @@ public:
 	Bool m_writesToSwapchain = false;
 
 	Pass(StackMemoryPool* pool)
-		: m_dependsOn(pool)
+		: m_dependsOnPassMask(pool)
 		, m_consumedTextures(pool)
 		, m_name(pool)
 	{
@@ -547,130 +548,6 @@ TextureInternalPtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& i
 	return tex;
 }
 
-Bool RenderGraph::passADependsOnB(const RenderPassBase& a, const RenderPassBase& b)
-{
-	// Render targets
-	{
-		// Compute the 3 types of dependencies
-		const BitSet<kMaxRenderGraphRenderTargets, U64> aReadBWrite = a.m_readRtMask & b.m_writeRtMask;
-		const BitSet<kMaxRenderGraphRenderTargets, U64> aWriteBRead = a.m_writeRtMask & b.m_readRtMask;
-		const BitSet<kMaxRenderGraphRenderTargets, U64> aWriteBWrite = a.m_writeRtMask & b.m_writeRtMask;
-
-		const BitSet<kMaxRenderGraphRenderTargets, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
-
-		if(fullDep.getAnySet())
-		{
-			// There might be an overlap
-
-			for(const RenderPassBase::TextureDependency& aDep : a.m_rtDeps)
-			{
-				if(!fullDep.get(aDep.m_handle.m_idx))
-				{
-					continue;
-				}
-
-				for(const RenderPassBase::TextureDependency& bDep : b.m_rtDeps)
-				{
-					if(aDep.m_handle != bDep.m_handle)
-					{
-						continue;
-					}
-
-					if(!((aDep.m_usage | bDep.m_usage) & TextureUsageBit::kAllWrite))
-					{
-						// Don't care about read to read deps
-						continue;
-					}
-
-					if(aDep.m_subresource.overlapsWith(bDep.m_subresource))
-					{
-						return true;
-					}
-				}
-			}
-		}
-	}
-
-	// Buffers
-	if(a.m_readBuffMask || a.m_writeBuffMask)
-	{
-		const BitSet<kMaxRenderGraphBuffers, U64> aReadBWrite = a.m_readBuffMask & b.m_writeBuffMask;
-		const BitSet<kMaxRenderGraphBuffers, U64> aWriteBRead = a.m_writeBuffMask & b.m_readBuffMask;
-		const BitSet<kMaxRenderGraphBuffers, U64> aWriteBWrite = a.m_writeBuffMask & b.m_writeBuffMask;
-
-		const BitSet<kMaxRenderGraphBuffers, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
-
-		if(fullDep.getAnySet())
-		{
-			// There might be an overlap
-
-			for(const RenderPassBase::BufferDependency& aDep : a.m_buffDeps)
-			{
-				if(!fullDep.get(aDep.m_handle.m_idx))
-				{
-					continue;
-				}
-
-				for(const RenderPassBase::BufferDependency& bDep : b.m_buffDeps)
-				{
-					if(aDep.m_handle != bDep.m_handle)
-					{
-						continue;
-					}
-
-					if(!((aDep.m_usage | bDep.m_usage) & BufferUsageBit::kAllWrite))
-					{
-						// Don't care about read to read deps
-						continue;
-					}
-
-					// TODO: Take into account the ranges
-					return true;
-				}
-			}
-		}
-	}
-
-	// AS
-	if(a.m_readAsMask || a.m_writeAsMask)
-	{
-		const BitSet<kMaxRenderGraphAccelerationStructures, U32> aReadBWrite = a.m_readAsMask & b.m_writeAsMask;
-		const BitSet<kMaxRenderGraphAccelerationStructures, U32> aWriteBRead = a.m_writeAsMask & b.m_readAsMask;
-		const BitSet<kMaxRenderGraphAccelerationStructures, U32> aWriteBWrite = a.m_writeAsMask & b.m_writeAsMask;
-
-		const BitSet<kMaxRenderGraphAccelerationStructures, U32> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
-
-		if(fullDep)
-		{
-			for(const RenderPassBase::ASDependency& aDep : a.m_asDeps)
-			{
-				if(!fullDep.get(aDep.m_handle.m_idx))
-				{
-					continue;
-				}
-
-				for(const RenderPassBase::ASDependency& bDep : b.m_asDeps)
-				{
-					if(aDep.m_handle != bDep.m_handle)
-					{
-						continue;
-					}
-
-					if(!((aDep.m_usage | bDep.m_usage) & AccelerationStructureUsageBit::kAllWrite))
-					{
-						// Don't care about read to read deps
-						continue;
-					}
-
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
 Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 {
 	Bool depends = false;
@@ -679,21 +556,22 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 	{
 		// Check if the deps of passIdx are all in a batch
 
-		for(const U32 depPassIdx : ctx.m_passes[passIdx].m_dependsOn)
-		{
+		ctx.m_passes[passIdx].m_dependsOnPassMask.iterateSetBitsFromLeastSignificant([&](U32 depPassIdx) {
 			if(!ctx.m_passIsInBatch.get(depPassIdx))
 			{
 				// Dependency pass is not in a batch
 				depends = true;
-				break;
+				return FunctorContinue::kStop;
 			}
-		}
+
+			return FunctorContinue::kContinue;
+		});
 	}
 	else
 	{
 		// First batch, check if passIdx depends on any pass
 
-		depends = ctx.m_passes[passIdx].m_dependsOn.getSize() != 0;
+		depends = ctx.m_passes[passIdx].m_dependsOnPassMask.getSetBitCount() != 0;
 	}
 
 	return depends;
@@ -769,7 +647,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& desc
 	}
 
 	// Buffers
-	ctx->m_buffers.resize(descr.m_buffers.getSize());
+	ctx->m_buffers.resize(descr.m_buffers.getSize(), &pool);
 	for(U32 buffIdx = 0; buffIdx < ctx->m_buffers.getSize(); ++buffIdx)
 	{
 		ctx->m_buffers[buffIdx].m_usage = descr.m_buffers[buffIdx].m_usage;
@@ -780,7 +658,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& desc
 	}
 
 	// AS
-	ctx->m_as.resize(descr.m_as.getSize());
+	ctx->m_as.resize(descr.m_as.getSize(), &pool);
 	for(U32 i = 0; i < descr.m_as.getSize(); ++i)
 	{
 		ctx->m_as[i].m_usage = descr.m_as[i].m_usage;
@@ -801,36 +679,148 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 	const U32 passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
 
+	StackMemoryPool* pool = ctx.m_as.getMemoryPool().m_pool;
+
 	ctx.m_passes.resizeStorage(passCount);
 	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
-		const RenderPassBase& inPass = *descr.m_passes[passIdx];
-		Pass& outPass = *ctx.m_passes.emplaceBack(ctx.m_as.getMemoryPool().m_pool);
+		const RenderPassBase& inPass = descr.m_passes[passIdx];
+		Pass& outPass = *ctx.m_passes.emplaceBack(pool);
 
 		outPass.m_callback = inPass.m_callback;
 		outPass.m_name = inPass.m_name;
 		outPass.m_writesToSwapchain = inPass.m_writesToSwapchain;
 
 		// Create consumer info
-		outPass.m_consumedTextures.resize(inPass.m_rtDeps.getSize());
-		for(U32 depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
-		{
-			const RenderPassBase::TextureDependency& inDep = inPass.m_rtDeps[depIdx];
-			RenderPassBase::TextureDependency& inf = outPass.m_consumedTextures[depIdx];
+		outPass.m_consumedTextures.resizeStorage(inPass.m_rtDeps.getSize());
 
-			ANKI_ASSERT(sizeof(inf) == sizeof(inDep));
-			memcpy(&inf, &inDep, sizeof(inf));
+		// Populate a new view of dependencies
+		for(const RenderPassBase::TextureDependency& dep : inPass.m_rtDeps)
+		{
+			RT& rt = ctx.m_rts[dep.m_handle.m_idx];
+			rt.m_dependentPasses.emplaceBack(U16(passIdx));
+			rt.m_dependencyUsages.emplaceBack(dep.m_usage);
+			rt.m_dependencySubresources.emplaceBack(dep.m_subresource);
+
+			outPass.m_consumedTextures.emplaceBack(dep);
 		}
 
-		// Set dependencies by checking all previous subpasses.
-		U32 prevPassIdx = passIdx;
-		while(prevPassIdx--)
+		for(const RenderPassBase::BufferDependency& dep : inPass.m_buffDeps)
 		{
-			const RenderPassBase& prevPass = *descr.m_passes[prevPassIdx];
+			BufferRange& buff = ctx.m_buffers[dep.m_handle.m_idx];
+			buff.m_dependentPasses.emplaceBack(U16(passIdx));
+			buff.m_dependencyUsages.emplaceBack(dep.m_usage);
+		}
 
-			if(passADependsOnB(inPass, prevPass))
+		for(const RenderPassBase::ASDependency& dep : inPass.m_asDeps)
+		{
+			AS& as = ctx.m_as[dep.m_handle.m_idx];
+			as.m_dependentPasses.emplaceBack(U16(passIdx));
+			as.m_dependencyUsages.emplaceBack(dep.m_usage);
+		}
+	}
+
+	// Find depedent passes using textures
+	for(const RT& rt : ctx.m_rts)
+	{
+		const U32 dependencyCount = rt.m_dependencyUsages.getSize();
+		for(U32 i = 1; i < dependencyCount; ++i)
+		{
+			const TextureUsageBit crntRtUsage = rt.m_dependencyUsages[i];
+			const TextureSubresourceDesc& crntSubresource = rt.m_dependencySubresources[i];
+			const Bool crntIsReadDep = !!(crntRtUsage & TextureUsageBit::kAllRead);
+			const Bool crntIsWriteDep = !!(crntRtUsage & TextureUsageBit::kAllWrite);
+
+			U32 j = i;
+			while(j--)
 			{
-				outPass.m_dependsOn.emplaceBack(prevPassIdx);
+				const TextureUsageBit prevRtUsage = rt.m_dependencyUsages[j];
+				const TextureSubresourceDesc& prevSubresource = rt.m_dependencySubresources[j];
+				const Bool prevIsReadDep = !!(prevRtUsage & TextureUsageBit::kAllRead);
+				const Bool prevIsWriteDep = !!(prevRtUsage & TextureUsageBit::kAllWrite);
+
+				const Bool crntReadPrevWrite = crntIsReadDep && prevIsWriteDep;
+				const Bool crntWritePrevRead = crntIsWriteDep && prevIsReadDep;
+				const Bool crntWritePrevWrite = crntIsWriteDep && prevIsWriteDep;
+
+				const Bool crntDependsOnPrev = crntReadPrevWrite || crntWritePrevRead || crntWritePrevWrite;
+				const Bool subresourcesOverlap = crntSubresource.overlapsWith(prevSubresource);
+
+				if(crntDependsOnPrev && subresourcesOverlap)
+				{
+					const U32 crntPassIdx = rt.m_dependentPasses[i];
+					const U32 prevPassIdx = rt.m_dependentPasses[j];
+
+					ctx.m_passes[crntPassIdx].m_dependsOnPassMask.setBit(prevPassIdx);
+				}
+			}
+		}
+	}
+
+	// Find depedent passes using buffers
+	for(const BufferRange& buff : ctx.m_buffers)
+	{
+		const U32 dependencyCount = buff.m_dependencyUsages.getSize();
+		for(U32 i = 1; i < dependencyCount; ++i)
+		{
+			const BufferUsageBit crntRtUsage = buff.m_dependencyUsages[i];
+			const Bool crntIsReadDep = !!(crntRtUsage & BufferUsageBit::kAllRead);
+			const Bool crntIsWriteDep = !!(crntRtUsage & BufferUsageBit::kAllWrite);
+
+			U32 j = i;
+			while(j--)
+			{
+				const BufferUsageBit prevRtUsage = buff.m_dependencyUsages[j];
+				const Bool prevIsReadDep = !!(prevRtUsage & BufferUsageBit::kAllRead);
+				const Bool prevIsWriteDep = !!(prevRtUsage & BufferUsageBit::kAllWrite);
+
+				const Bool crntReadPrevWrite = crntIsReadDep && prevIsWriteDep;
+				const Bool crntWritePrevRead = crntIsWriteDep && prevIsReadDep;
+				const Bool crntWritePrevWrite = crntIsWriteDep && prevIsWriteDep;
+
+				const Bool crntDependsOnPrev = crntReadPrevWrite || crntWritePrevRead || crntWritePrevWrite;
+
+				if(crntDependsOnPrev)
+				{
+					const U32 crntPassIdx = buff.m_dependentPasses[i];
+					const U32 prevPassIdx = buff.m_dependentPasses[j];
+
+					ctx.m_passes[crntPassIdx].m_dependsOnPassMask.setBit(prevPassIdx);
+				}
+			}
+		}
+	}
+
+	// Find depedent passes using acceleration structures
+	for(const AS& as : ctx.m_as)
+	{
+		const U32 dependencyCount = as.m_dependencyUsages.getSize();
+		for(U32 i = 1; i < dependencyCount; ++i)
+		{
+			const AccelerationStructureUsageBit crntRtUsage = as.m_dependencyUsages[i];
+			const Bool crntIsReadDep = !!(crntRtUsage & AccelerationStructureUsageBit::kAllRead);
+			const Bool crntIsWriteDep = !!(crntRtUsage & AccelerationStructureUsageBit::kAllWrite);
+
+			U32 j = i;
+			while(j--)
+			{
+				const AccelerationStructureUsageBit prevRtUsage = as.m_dependencyUsages[j];
+				const Bool prevIsReadDep = !!(prevRtUsage & AccelerationStructureUsageBit::kAllRead);
+				const Bool prevIsWriteDep = !!(prevRtUsage & AccelerationStructureUsageBit::kAllWrite);
+
+				const Bool crntReadPrevWrite = crntIsReadDep && prevIsWriteDep;
+				const Bool crntWritePrevRead = crntIsWriteDep && prevIsReadDep;
+				const Bool crntWritePrevWrite = crntIsWriteDep && prevIsWriteDep;
+
+				const Bool crntDependsOnPrev = crntReadPrevWrite || crntWritePrevRead || crntWritePrevWrite;
+
+				if(crntDependsOnPrev)
+				{
+					const U32 crntPassIdx = as.m_dependentPasses[i];
+					const U32 prevPassIdx = as.m_dependentPasses[j];
+
+					ctx.m_passes[crntPassIdx].m_dependsOnPassMask.setBit(prevPassIdx);
+				}
 			}
 		}
 	}
@@ -879,23 +869,24 @@ void RenderGraph::initGraphicsPasses(const RenderGraphBuilder& descr)
 
 	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
-		const RenderPassBase& baseInPass = *descr.m_passes[passIdx];
+		const RenderPassBase& baseInPass = descr.m_passes[passIdx];
 		Pass& outPass = ctx.m_passes[passIdx];
 
 		// Create command buffers and framebuffer
-		if(baseInPass.m_type == RenderPassBase::Type::kGraphics)
+		const Bool isGraphicsPass = baseInPass.m_graphicsPassExtra != nullptr;
+		if(isGraphicsPass)
 		{
 			const GraphicsRenderPass& inPass = static_cast<const GraphicsRenderPass&>(baseInPass);
 
-			if(inPass.m_hasRenderpass)
+			if(inPass.m_graphicsPassExtra->m_hasRenderpass)
 			{
 				outPass.m_beginRenderpassInfo.m_hasRenderpass = true;
-				outPass.m_beginRenderpassInfo.m_colorRtCount = inPass.m_colorRtCount;
+				outPass.m_beginRenderpassInfo.m_colorRtCount = inPass.m_graphicsPassExtra->m_colorRtCount;
 
 				// Init the usage bits
-				for(U32 i = 0; i < inPass.m_colorRtCount; ++i)
+				for(U32 i = 0; i < inPass.m_graphicsPassExtra->m_colorRtCount; ++i)
 				{
-					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_rts[i];
+					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_graphicsPassExtra->m_rts[i];
 					RenderTarget& outAttachment = outPass.m_beginRenderpassInfo.m_colorRts[i];
 
 					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, inAttachment.m_subresource, outAttachment.m_usage);
@@ -908,9 +899,9 @@ void RenderGraph::initGraphicsPasses(const RenderGraphBuilder& descr)
 					outAttachment.m_clearValue = inAttachment.m_clearValue;
 				}
 
-				if(!!inPass.m_rts[kMaxColorRenderTargets].m_subresource.m_depthStencilAspect)
+				if(!!inPass.m_graphicsPassExtra->m_rts[kMaxColorRenderTargets].m_subresource.m_depthStencilAspect)
 				{
-					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_rts[kMaxColorRenderTargets];
+					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_graphicsPassExtra->m_rts[kMaxColorRenderTargets];
 					RenderTarget& outAttachment = outPass.m_beginRenderpassInfo.m_dsRt;
 
 					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, inAttachment.m_subresource, outAttachment.m_usage);
@@ -925,16 +916,16 @@ void RenderGraph::initGraphicsPasses(const RenderGraphBuilder& descr)
 					outAttachment.m_clearValue = inAttachment.m_clearValue;
 				}
 
-				if(inPass.m_vrsRtTexelSizeX > 0)
+				if(inPass.m_graphicsPassExtra->m_vrsRtTexelSizeX > 0)
 				{
-					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_rts[kMaxColorRenderTargets + 1];
+					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_graphicsPassExtra->m_rts[kMaxColorRenderTargets + 1];
 
 					outPass.m_beginRenderpassInfo.m_vrsRt =
 						TextureView(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(), inAttachment.m_subresource);
 					outPass.m_beginRenderpassInfo.m_refs[kMaxColorRenderTargets + 1] = m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture;
 
-					outPass.m_beginRenderpassInfo.m_vrsTexelSizeX = inPass.m_vrsRtTexelSizeX;
-					outPass.m_beginRenderpassInfo.m_vrsTexelSizeY = inPass.m_vrsRtTexelSizeY;
+					outPass.m_beginRenderpassInfo.m_vrsTexelSizeX = inPass.m_graphicsPassExtra->m_vrsRtTexelSizeX;
+					outPass.m_beginRenderpassInfo.m_vrsTexelSizeY = inPass.m_graphicsPassExtra->m_vrsRtTexelSizeY;
 				}
 			}
 		}
@@ -1039,7 +1030,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 		// For all passes of that batch
 		for(U32 passIdx : batch.m_passIndices)
 		{
-			const RenderPassBase& pass = *descr.m_passes[passIdx];
+			const RenderPassBase& pass = descr.m_passes[passIdx];
 
 			// Do textures
 			for(const RenderPassBase::TextureDependency& dep : pass.m_rtDeps)
