@@ -26,6 +26,20 @@ static inline U32 getTextureSurfOrVolCount(const TextureInternalPtr& tex)
 	return tex->getMipmapCount() * tex->getLayerCount() * (textureTypeIsCube(tex->getTextureType()) ? 6 : 1);
 }
 
+template<typename T>
+static void allocateButNotConstructArray(StackMemoryPool& pool, U32 count, WeakArray<T>& out)
+{
+	if(count)
+	{
+		void* mem = pool.allocate(sizeof(T) * count, alignof(T));
+		out = {static_cast<T*>(mem), count};
+	}
+	else
+	{
+		out = {};
+	}
+}
+
 void RenderPassBase::newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource)
 {
 	TextureDependency& newDep = *m_rtDeps.emplaceBack();
@@ -202,7 +216,7 @@ AccelerationStructureHandle RenderGraphBuilder::importAccelerationStructure(Acce
 class RenderGraph::RT
 {
 public:
-	DynamicArray<TextureUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_surfOrVolUsages;
+	WeakArray<TextureUsageBit> m_surfOrVolUsages;
 	DynamicArray<U16, MemoryPoolPtrWrapper<StackMemoryPool>> m_lastBatchThatTransitionedIt;
 
 	// Depedencies in SoA
@@ -214,8 +228,7 @@ public:
 	Bool m_imported;
 
 	RT(StackMemoryPool* pool)
-		: m_surfOrVolUsages(pool)
-		, m_lastBatchThatTransitionedIt(pool)
+		: m_lastBatchThatTransitionedIt(pool)
 		, m_dependentPasses(pool)
 		, m_dependencyUsages(pool)
 		, m_dependencySubresources(pool)
@@ -318,7 +331,7 @@ public:
 
 	DynamicBitSet<MemoryPoolPtrWrapper<StackMemoryPool>> m_dependsOnPassMask;
 
-	DynamicArray<RenderPassBase::TextureDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_consumedTextures;
+	WeakArray<RenderPassBase::TextureDependency> m_consumedTextures;
 
 	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
 
@@ -343,7 +356,6 @@ public:
 
 	Pass(StackMemoryPool* pool)
 		: m_dependsOnPassMask(pool)
-		, m_consumedTextures(pool)
 		, m_name(pool)
 	{
 	}
@@ -387,21 +399,18 @@ public:
 class RenderGraph::BakeContext
 {
 public:
-	DynamicArray<Pass, MemoryPoolPtrWrapper<StackMemoryPool>> m_passes;
-	BitSet<kMaxRenderGraphPasses, U64> m_passIsInBatch{false};
+	WeakArray<Pass> m_passes;
+	DynamicBitSet<MemoryPoolPtrWrapper<StackMemoryPool>, U64> m_passIsInBatch;
 	DynamicArray<Batch, MemoryPoolPtrWrapper<StackMemoryPool>> m_batches;
-	DynamicArray<RT, MemoryPoolPtrWrapper<StackMemoryPool>> m_rts;
-	DynamicArray<BufferRange, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers;
-	DynamicArray<AS, MemoryPoolPtrWrapper<StackMemoryPool>> m_as;
+	WeakArray<RT> m_rts;
+	WeakArray<BufferRange> m_buffers;
+	WeakArray<AS> m_as;
 
 	Bool m_gatherStatistics = false;
 
 	BakeContext(StackMemoryPool* pool)
-		: m_passes(pool)
+		: m_passIsInBatch(pool)
 		, m_batches(pool)
-		, m_rts(pool)
-		, m_buffers(pool)
-		, m_as(pool)
 	{
 	}
 };
@@ -557,7 +566,7 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 		// Check if the deps of passIdx are all in a batch
 
 		ctx.m_passes[passIdx].m_dependsOnPassMask.iterateSetBitsFromLeastSignificant([&](U32 depPassIdx) {
-			if(!ctx.m_passIsInBatch.get(depPassIdx))
+			if(!ctx.m_passIsInBatch.getBit(depPassIdx))
 			{
 				// Dependency pass is not in a batch
 				depends = true;
@@ -585,10 +594,11 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& desc
 	BakeContext* ctx = anki::newInstance<BakeContext>(pool, &pool);
 
 	// Init the resources
-	ctx->m_rts.resizeStorage(descr.m_renderTargets.getSize());
+	allocateButNotConstructArray(pool, descr.m_renderTargets.getSize(), ctx->m_rts);
 	for(U32 rtIdx = 0; rtIdx < descr.m_renderTargets.getSize(); ++rtIdx)
 	{
-		RT& outRt = *ctx->m_rts.emplaceBack(&pool);
+		RT& outRt = ctx->m_rts[rtIdx];
+		callConstructor(outRt, &pool);
 		const RenderGraphBuilder::RT& inRt = descr.m_renderTargets[rtIdx];
 
 		const Bool imported = inRt.m_importedTex.isCreated();
@@ -615,7 +625,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& desc
 
 		// Init the usage
 		const U32 surfOrVolumeCount = getTextureSurfOrVolCount(outRt.m_texture);
-		outRt.m_surfOrVolUsages.resize(surfOrVolumeCount, TextureUsageBit::kNone);
+		outRt.m_surfOrVolUsages = {newArray<TextureUsageBit>(pool, surfOrVolumeCount, TextureUsageBit::kNone), surfOrVolumeCount};
 		if(imported && inRt.m_importedAndUndefinedUsage)
 		{
 			// Get the usage from previous frames
@@ -647,9 +657,10 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& desc
 	}
 
 	// Buffers
-	ctx->m_buffers.resize(descr.m_buffers.getSize(), &pool);
+	allocateButNotConstructArray(pool, descr.m_buffers.getSize(), ctx->m_buffers);
 	for(U32 buffIdx = 0; buffIdx < ctx->m_buffers.getSize(); ++buffIdx)
 	{
+		callConstructor(ctx->m_buffers[buffIdx], &pool);
 		ctx->m_buffers[buffIdx].m_usage = descr.m_buffers[buffIdx].m_usage;
 		ANKI_ASSERT(descr.m_buffers[buffIdx].m_importedBuff.isCreated());
 		ctx->m_buffers[buffIdx].m_buffer = descr.m_buffers[buffIdx].m_importedBuff;
@@ -658,9 +669,10 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& desc
 	}
 
 	// AS
-	ctx->m_as.resize(descr.m_as.getSize(), &pool);
+	allocateButNotConstructArray(pool, descr.m_as.getSize(), ctx->m_as);
 	for(U32 i = 0; i < descr.m_as.getSize(); ++i)
 	{
+		callConstructor(ctx->m_as[i], &pool);
 		ctx->m_as[i].m_usage = descr.m_as[i].m_usage;
 		ctx->m_as[i].m_as = descr.m_as[i].m_importedAs;
 		ANKI_ASSERT(ctx->m_as[i].m_as.isCreated());
@@ -679,22 +691,22 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 	const U32 passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
 
-	StackMemoryPool* pool = ctx.m_as.getMemoryPool().m_pool;
+	StackMemoryPool* pool = ctx.m_batches.getMemoryPool().m_pool;
 
-	ctx.m_passes.resizeStorage(passCount);
+	allocateButNotConstructArray(*pool, passCount, ctx.m_passes);
 	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
 		const RenderPassBase& inPass = descr.m_passes[passIdx];
-		Pass& outPass = *ctx.m_passes.emplaceBack(pool);
+		Pass& outPass = ctx.m_passes[passIdx];
+		callConstructor(outPass, pool);
 
 		outPass.m_callback = inPass.m_callback;
 		outPass.m_name = inPass.m_name;
 		outPass.m_writesToSwapchain = inPass.m_writesToSwapchain;
 
-		// Create consumer info
-		outPass.m_consumedTextures.resizeStorage(inPass.m_rtDeps.getSize());
-
 		// Populate a new view of dependencies
+		allocateButNotConstructArray(*pool, inPass.m_rtDeps.getSize(), outPass.m_consumedTextures);
+		U32 count = 0;
 		for(const RenderPassBase::TextureDependency& dep : inPass.m_rtDeps)
 		{
 			RT& rt = ctx.m_rts[dep.m_handle.m_idx];
@@ -702,7 +714,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 			rt.m_dependencyUsages.emplaceBack(dep.m_usage);
 			rt.m_dependencySubresources.emplaceBack(dep.m_subresource);
 
-			outPass.m_consumedTextures.emplaceBack(dep);
+			callConstructor(outPass.m_consumedTextures[count++], dep);
 		}
 
 		for(const RenderPassBase::BufferDependency& dep : inPass.m_buffDeps)
@@ -831,16 +843,16 @@ void RenderGraph::initBatches()
 	ANKI_TRACE_FUNCTION();
 	ANKI_ASSERT(m_ctx);
 
-	U passesAssignedToBatchCount = 0;
-	const U passCount = m_ctx->m_passes.getSize();
+	U32 passesAssignedToBatchCount = 0;
+	const U32 passCount = m_ctx->m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
 	while(passesAssignedToBatchCount < passCount)
 	{
-		Batch batch(m_ctx->m_as.getMemoryPool().m_pool);
+		Batch& batch = *m_ctx->m_batches.emplaceBack(m_ctx->m_batches.getMemoryPool().m_pool);
 
 		for(U32 i = 0; i < passCount; ++i)
 		{
-			if(!m_ctx->m_passIsInBatch.get(i) && !passHasUnmetDependencies(*m_ctx, i))
+			if(!m_ctx->m_passIsInBatch.getBit(i) && !passHasUnmetDependencies(*m_ctx, i))
 			{
 				// Add to the batch
 				++passesAssignedToBatchCount;
@@ -851,11 +863,9 @@ void RenderGraph::initBatches()
 		// Mark batch's passes done
 		for(U32 passIdx : batch.m_passIndices)
 		{
-			m_ctx->m_passIsInBatch.set(passIdx);
+			m_ctx->m_passIsInBatch.setBit(passIdx);
 			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize();
 		}
-
-		m_ctx->m_batches.emplaceBack(std::move(batch));
 	}
 }
 
@@ -1024,8 +1034,8 @@ void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 	// For all batches
 	for(Batch& batch : ctx.m_batches)
 	{
-		BitSet<kMaxRenderGraphBuffers, U64> buffHasBarrierMask(false);
-		BitSet<kMaxRenderGraphAccelerationStructures, U32> asHasBarrierMask(false);
+		DynamicBitSet<MemoryPoolPtrWrapper<StackMemoryPool>, U64> buffHasBarrierMask(ctx.m_batches.getMemoryPool());
+		DynamicBitSet<MemoryPoolPtrWrapper<StackMemoryPool>, U64> asHasBarrierMask(ctx.m_batches.getMemoryPool());
 
 		// For all passes of that batch
 		for(U32 passIdx : batch.m_passIndices)
@@ -1051,7 +1061,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 					continue;
 				}
 
-				const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
+				const Bool buffHasBarrier = buffHasBarrierMask.getBit(buffIdx);
 
 				if(!buffHasBarrier)
 				{
@@ -1060,7 +1070,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 					batch.m_bufferBarriersBefore.emplaceBack(buffIdx, crntUsage, depUsage);
 
 					crntUsage = depUsage;
-					buffHasBarrierMask.set(buffIdx);
+					buffHasBarrierMask.setBit(buffIdx);
 				}
 				else
 				{
@@ -1096,14 +1106,14 @@ void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 					continue;
 				}
 
-				const Bool asHasBarrierInThisBatch = asHasBarrierMask.get(asIdx);
+				const Bool asHasBarrierInThisBatch = asHasBarrierMask.getBit(asIdx);
 				if(!asHasBarrierInThisBatch)
 				{
 					// AS doesn't have a barrier in this batch, create a new one
 
 					batch.m_asBarriersBefore.emplaceBack(asIdx, crntUsage, depUsage);
 					crntUsage = depUsage;
-					asHasBarrierMask.set(asIdx);
+					asHasBarrierMask.setBit(asIdx);
 				}
 				else
 				{
@@ -1297,7 +1307,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	ANKI_ASSERT(m_ctx);
 
 	const U32 batchGroupCount = min(CoreThreadJobManager::getSingleton().getThreadCount(), m_ctx->m_batches.getSize());
-	StackMemoryPool* pool = m_ctx->m_rts.getMemoryPool().m_pool;
+	StackMemoryPool* pool = m_ctx->m_batches.getMemoryPool().m_pool;
 
 	DynamicArray<CommandBufferPtr, MemoryPoolPtrWrapper<StackMemoryPool>> cmdbs(pool);
 	cmdbs.resize(batchGroupCount);
