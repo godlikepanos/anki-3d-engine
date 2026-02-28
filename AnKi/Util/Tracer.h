@@ -14,12 +14,8 @@
 
 namespace anki {
 
-/// @addtogroup util_other
-/// @{
-
 #if ANKI_TRACING_ENABLED
 
-/// @memberof Tracer
 class TracerEventHandle
 {
 	friend class Tracer;
@@ -28,7 +24,6 @@ private:
 	Second m_start;
 };
 
-/// @memberof Tracer
 class TracerEvent
 {
 public:
@@ -42,7 +37,6 @@ public:
 	}
 };
 
-/// @memberof Tracer
 class TracerCounter
 {
 public:
@@ -55,11 +49,10 @@ public:
 	}
 };
 
-/// Tracer flush callback.
-/// @memberof Tracer
+// Tracer flush callback.
 using TracerFlushCallback = void (*)(void* userData, ThreadId tid, ConstWeakArray<TracerEvent> events, ConstWeakArray<TracerCounter> counters);
 
-/// Tracer.
+// Tracer.
 class Tracer : public MakeSingleton<Tracer>
 {
 	template<typename>
@@ -70,24 +63,24 @@ public:
 
 	Tracer& operator=(const Tracer&) = delete; // Non-copyable
 
-	/// Begin a new event.
-	/// @note It's thread-safe.
+	// Begin a new event.
+	// It's thread-safe.
 	[[nodiscard]] TracerEventHandle beginEvent(const char* eventName);
 
-	/// End the event that got started with beginEvent().
-	/// @note It's thread-safe.
+	// End the event that got started with beginEvent().
+	// It's thread-safe.
 	void endEvent(const char* eventName, TracerEventHandle event);
 
-	/// Add a custom event.
-	/// @note It's thread-safe.
+	// Add a custom event.
+	// It's thread-safe.
 	void addCustomEvent(const char* eventName, Second start, Second duration);
 
-	/// Increment a counter.
-	/// @note It's thread-safe.
+	// Increment a counter.
+	// It's thread-safe.
 	void incrementCounter(const char* counterName, U64 value);
 
-	/// Flush all counters and events and start clean. The callback will be called multiple times.
-	/// @note It's thread-safe.
+	// Flush all counters and events and start clean. The callback will be called multiple times.
+	// It's thread-safe.
 	void flush(TracerFlushCallback callback, void* callbackUserData);
 
 	Bool getEnabled() const
@@ -136,7 +129,7 @@ private:
 
 	static thread_local ThreadLocal* m_threadLocal;
 
-	/// The Tracer should know about all the ThreadLocal.
+	// The Tracer should know about all the ThreadLocal.
 	DynamicArray<ThreadLocal*, SingletonMemoryPoolWrapper<DefaultMemoryPool>> m_allThreadLocal;
 
 	Mutex m_allThreadLocalMtx;
@@ -153,15 +146,15 @@ private:
 
 	~Tracer();
 
-	/// Get the thread local ThreadLocal structure.
-	/// @note Thread-safe.
+	// Get the thread local ThreadLocal structure.
+	// Thread-safe.
 	ThreadLocal& getThreadLocal();
 
-	/// Get or create a new chunk.
+	// Get or create a new chunk.
 	Chunk& getOrCreateChunk(ThreadLocal& tlocal);
 };
 
-/// Scoped tracer event.
+// Scoped tracer event.
 class TracerScopedEvent
 {
 public:
@@ -192,6 +185,5 @@ private:
 #	define ANKI_TRACE_FUNCTION() ((void)0)
 #	define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
 #endif
-/// @}
 
 } // end namespace anki

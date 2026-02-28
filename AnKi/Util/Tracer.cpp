@@ -59,6 +59,12 @@ Tracer::~Tracer()
 	LockGuard<Mutex> lock(m_allThreadLocalMtx);
 	for(ThreadLocal* tlocal : m_allThreadLocal)
 	{
+		while(!tlocal->m_allChunks.isEmpty())
+		{
+			Chunk* chunk = tlocal->m_allChunks.popFront();
+			deleteInstance(DefaultMemoryPool::getSingleton(), chunk);
+		}
+
 		deleteInstance(DefaultMemoryPool::getSingleton(), tlocal);
 	}
 }
