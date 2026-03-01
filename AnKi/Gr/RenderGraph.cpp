@@ -864,7 +864,7 @@ void RenderGraph::initBatches()
 		for(U32 passIdx : batch.m_passIndices)
 		{
 			m_ctx->m_passIsInBatch.setBit(passIdx);
-			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize();
+			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize() - 1;
 		}
 	}
 }

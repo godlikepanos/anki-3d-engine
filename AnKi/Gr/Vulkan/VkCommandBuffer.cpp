@@ -884,7 +884,7 @@ static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureView& vi
 
 	const VkImageView imageView = tex.getImageView(view.getSubresource());
 	const VkFormat format = tex.getVkFormat();
-	const VkImage image = tex.m_imageHandle;
+	const VkImage image = tex.getVkImage();
 	const VkImageSubresourceRange subresourceRange = tex.computeVkImageSubresourceRange(view.getSubresource());
 	const Bool isUAV = !!(tex.getVkImageUsageFlags() & VK_IMAGE_USAGE_STORAGE_BIT);
 

@@ -271,10 +271,15 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	}
 
 	// Allocate
+	VkMemoryAllocateFlagsInfo allocFlags = {};
+	allocFlags.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+	allocFlags.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
 	VkMemoryAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.memoryTypeIndex = memIdx;
 	allocInfo.allocationSize = req.size;
+	appendPNextList(allocInfo, &allocFlags);
 	ANKI_VK_CHECK(vkAllocateMemory(getVkDevice(), &allocInfo, nullptr, &m_deviceMem));
 
 	if(getGrManagerImpl().getMemoryProperties().memoryTypes[memIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
