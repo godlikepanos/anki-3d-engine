@@ -339,16 +339,23 @@ Mat3x4 combineTransformations(Mat3x4 a_, Mat3x4 b_)
 }
 
 template<typename TMat>
-Vec3 extractScale(TMat trf)
+Vec3 extractScaleSquared(TMat trf)
 {
 	Vec3 scale;
 	[unroll] for(U32 i = 0; i < 3; ++i)
 	{
 		const Vec3 axis = Vec3(trf.m_row0[i], trf.m_row1[i], trf.m_row2[i]);
-		scale[i] = length(axis);
+		scale[i] = dot(axis, axis);
 	}
 
 	return scale;
+}
+
+template<typename TMat>
+Vec3 extractScale(TMat trf)
+{
+	const Vec3 scaleSq = extractScaleSquared(trf);
+	return sqrt(scaleSq);
 }
 
 #endif // defined(__HLSL_VERSION)

@@ -178,6 +178,17 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 
 	const Mat3x4 worldTransform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
 
+	// Transform the meshlet to world space
+	const Vec3 worldSphereCenter = mul(worldTransform, Vec4((meshletBoundingVol.m_aabbMin + meshletBoundingVol.m_aabbMax) / 2.0, 1.0));
+	const Vec3 scaleSq = extractScaleSquared(worldTransform);
+	const F32 worldSphereRadius = meshletBoundingVol.m_sphereRadius * sqrt(max3(scaleSq));
+
+	// Frustum test
+	if(!frustumTest(g_consts.m_clipPlanes, worldSphereCenter, worldSphereRadius))
+	{
+		return true;
+	}
+
 	const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
 	const Mat4 mvp = mul(g_consts.m_viewProjectionMatrix, wordTransform4);
 

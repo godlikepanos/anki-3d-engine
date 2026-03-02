@@ -77,6 +77,8 @@ struct GpuVisibilityMeshletConstants
 {
 	Mat4 m_viewProjectionMatrix;
 
+	Vec4 m_clipPlanes[6u];
+
 	Vec3 m_cameraPos;
 	U32 m_padding1;
 

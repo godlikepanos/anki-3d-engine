@@ -815,6 +815,13 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 					consts.m_cameraPos = lodReferencePoint;
 					consts.m_viewportSizef = Vec2(frustumTestData->m_finalRenderTargetSize);
 
+					Array<Plane, 6> planes;
+					extractClipPlanes(frustumTestData->m_viewProjMat, planes);
+					for(U32 i = 0; i < 6; ++i)
+					{
+						consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz, planes[i].getOffset());
+					}
+
 					cmdb.setFastConstants(&consts, sizeof(consts));
 				}
 
@@ -899,6 +906,12 @@ void GpuVisibility::populateRenderGraphStage3(FrustumGpuVisibilityInput& in, Gpu
 		consts.m_viewProjectionMatrix = in.m_viewProjectionMatrix;
 		consts.m_cameraPos = in.m_lodReferencePoint;
 		consts.m_viewportSizef = Vec2(in.m_viewportSize);
+		Array<Plane, 6> planes;
+		extractClipPlanes(in.m_viewProjectionMatrix, planes);
+		for(U32 i = 0; i < 6; ++i)
+		{
+			consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz, planes[i].getOffset());
+		}
 		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		cmdb.dispatchComputeIndirect(BufferView(stage1And2Mem.m_gpuVisIndirectDispatchArgs)

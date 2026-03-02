@@ -229,6 +229,7 @@ void projectAabb(Vec3 aabbMin, Vec3 aabbMax, Mat4 viewProjMat, out Vec2 minNdc, 
 	aabbEdgesClip[7] = aabbEdgesClip[6] + SZ;
 
 	aabbMinDepth = 1.0f;
+	F32 aabbMaxDepth = 0.0;
 	minNdc = 1000.0f;
 	maxNdc = -1000.0f;
 	[unroll] for(U32 i = 0; i < 8; ++i)
@@ -239,13 +240,19 @@ void projectAabb(Vec3 aabbMin, Vec3 aabbMax, Mat4 viewProjMat, out Vec2 minNdc, 
 		minNdc = min(minNdc, p.xy);
 		maxNdc = max(maxNdc, p.xy);
 		aabbMinDepth = min(aabbMinDepth, p.z);
+		aabbMaxDepth = max(aabbMaxDepth, p.z);
 	}
 
-	if(aabbMinDepth < 0.0)
+	if(aabbMinDepth < 0.0 && aabbMaxDepth > 0.0)
 	{
-		// Behind the camera so we can't be sure about our calculations
+		// Intersecting the near plane so we can't be sure about our calculations
 		minNdc = -1.0;
 		maxNdc = 1.0;
+	}
+	else if(aabbMinDepth < 0.0 && aabbMaxDepth < 0.0)
+	{
+		minNdc = -2.0;
+		maxNdc = -2.0;
 	}
 
 	aabbMinDepth = saturate(aabbMinDepth);
