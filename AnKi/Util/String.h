@@ -697,6 +697,11 @@ public:
 	/// Replace all occurrences of "from" with "to".
 	BaseString& replaceAll(CString from, CString to)
 	{
+		if(isEmpty()) [[unlikely]]
+		{
+			return *this;
+		}
+
 		BaseString tmp(toCString(), getMemoryPool());
 		const PtrSize fromLen = from.getLength();
 		const PtrSize toLen = to.getLength();

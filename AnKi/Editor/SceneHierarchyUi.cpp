@@ -64,7 +64,12 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 		ImGui::SameLine();
 		if(ImGui::Button(ICON_MDI_MINUS_BOX))
 		{
-			SceneGraph::getSingleton().deleteScene(&SceneGraph::getSingleton().getActiveScene());
+			Scene* activeScene = &SceneGraph::getSingleton().getActiveScene();
+			if(selectedNode && &selectedNode->getScene() == activeScene)
+			{
+				selectedNode = nullptr;
+			}
+			SceneGraph::getSingleton().deleteScene(activeScene);
 		}
 
 		// Scene node filter

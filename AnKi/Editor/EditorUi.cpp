@@ -436,7 +436,7 @@ void EditorUi::mainMenu()
 
 			if(ImGui::BeginMenu(ICON_MDI_PLUS_BOX " New"))
 			{
-				if(ImGui::MenuItem("SceneNode"))
+				if(ImGui::MenuItem(ICON_MDI_RESISTOR_NODES " SceneNode"))
 				{
 					SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("NewNode.%u", m_newNodeNextIndex++));
 					if(node)
@@ -465,14 +465,6 @@ void EditorUi::mainMenu()
 
 					return FunctorContinue::kContinue;
 				});
-
-				// Scene
-				ImGui::Separator();
-				if(ImGui::MenuItem("Empty Scene"))
-				{
-					Scene* scene = SceneGraph::getSingleton().newEmptyScene(String().sprintf("NewScene.%u", m_nextNewSceneIndexInName++));
-					SceneGraph::getSingleton().setActiveScene(scene);
-				}
 
 				ImGui::EndMenu();
 			}

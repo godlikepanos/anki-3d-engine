@@ -315,10 +315,14 @@ public:
 
 	Error write(CString name, CString value) final
 	{
-		return m_write.m_file->writeTextf("%s %s\n", name.cstr(), value.cstr());
+		SceneString newValue = value;
+		newValue.replaceAll(" ", "<sp>");
+		newValue.replaceAll("\n", "<nl>");
+		newValue.replaceAll("\t", "<tab>");
+		return m_write.m_file->writeTextf("%s %s\n", name.cstr(), newValue.cstr());
 	}
 
-	Error read([[maybe_unused]] CString name, [[maybe_unused]] SceneString& value) final
+	Error read(CString name, SceneString& value) final
 	{
 		SceneStringList tokens;
 		ANKI_CHECK(parseCurrentLine(tokens, name));
@@ -328,6 +332,9 @@ public:
 		{
 			value += str;
 		}
+		value.replaceAll("<sp>", " ");
+		value.replaceAll("<nl>", "\n");
+		value.replaceAll("<tab>", "\t");
 
 		return Error::kNone;
 	}

@@ -62,7 +62,6 @@ private:
 	SceneGraphView m_sceneGraphView;
 
 	U32 m_newNodeNextIndex = 0;
-	U32 m_nextNewSceneIndexInName = 0;
 
 	class
 	{

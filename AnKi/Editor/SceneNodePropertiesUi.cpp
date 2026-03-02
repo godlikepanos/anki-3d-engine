@@ -23,7 +23,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 	}
 
-	if(ImGui::Begin("SceneNode Props", &m_open, windowFlags) && node)
+	if(ImGui::Begin(ICON_MDI_RESISTOR_NODES " SceneNode Props", &m_open, windowFlags) && node)
 	{
 		I32 id = 0;
 
