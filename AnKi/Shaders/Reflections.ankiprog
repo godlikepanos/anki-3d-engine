@@ -209,6 +209,10 @@ ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 groupshared Vec4 g_viewHitPointAndSsrSuccess[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 groupshared Vec4 g_colorAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 
+constexpr U32 kDirectionDirBinCount = 6;
+groupshared U32 g_directionBins[kDirectionDirBinCount];
+groupshared U32 g_pixelsFailedSsrOffset;
+
 constexpr SampleClipmapFlag kSampleClipmapFlags =
 	kSampleClipmapFlagBiasSamplePointTowardsCamera | kSampleClipmapFlagInvalidProbeRejection | kSampleClipmapFlagBackfacingProbeRejection;
 
@@ -380,10 +384,33 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	}
 }
 
-// All calculations in view space
-[numthreads(NUM_THREADS_SQRT, NUM_THREADS_SQRT, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID,
-															  UVec2 svGroupThreadId : SV_GROUPTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
+// The indices returned are in a way that ensures some directional locality
+U32 dominantAxis(Vec3 d)
 {
+	const Vec3 absDir = abs(d);
+
+	if(absDir.x > absDir.y && absDir.x > absDir.z)
+	{
+		return (d.x > 0.0) ? 0 : 3;
+	}
+
+	if(absDir.y > absDir.z)
+	{
+		return (d.y > 0.0) ? 1 : 4;
+	}
+
+	return (d.z > 0.0) ? 2 : 5;
+}
+
+// All calculations in view space
+[numthreads(NUM_THREADS_SQRT, NUM_THREADS_SQRT, 1)] void main(COMPUTE_ARGS)
+{
+	if(svGroupIndex < kDirectionDirBinCount)
+	{
+		g_directionBins[svGroupIndex] = 0;
+	}
+	GroupMemoryBarrierWithGroupSync();
+
 	UVec2 halfViewportSize;
 	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
 
@@ -397,7 +424,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	{
 		g_colorAndPdfTex[realCoord] = 0.0;
 		g_hitPosAndDepthTex[realCoord] = 0.0;
-		return;
+		return; // Return is OK because it's uniform controll flow
 	}
 
 	const F32 depth = g_depthTex[logicalCoord].x;
@@ -425,7 +452,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		g_hitPosAndDepthTex[realCoord] = Vec4(worldHitPos, 1.0 - depth);
 		g_colorAndPdfTex[realCoord] = Vec4(col, kPdfForVeryRough);
 
-		return;
+		return; // Return is OK because it's uniform controll flow
 	}
 
 	// Read stuff
@@ -453,7 +480,16 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	Vec3 viewHitPoint;
 	F32 pdf;
 	Bool ssrSuccess;
-	if(bSampleGiProbes)
+	if(depth == 1.0)
+	{
+		// Sky
+		outColor = 0.0;
+		viewReflDir = 0.0;
+		viewHitPoint = 0.0;
+		pdf = 0.0;
+		ssrSuccess = true;
+	}
+	else if(bSampleGiProbes)
 	{
 		viewReflDir = reflect(-viewDir, viewNormal);
 
@@ -500,14 +536,6 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		GroupMemoryBarrierWithGroupSync();
 	}
 
-	if(depth == 1.0)
-	{
-		// Sky
-		g_colorAndPdfTex[realCoord] = 0.0;
-		g_hitPosAndDepthTex[realCoord] = 0.0;
-		return;
-	}
-
 	// Hallucinate if needed
 	if(!ssrSuccess && kSsrHallucinate)
 	{
@@ -544,8 +572,67 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		}
 	}
 
+	// Decide the direction bin
+	const Bool writeFailedPixel = !ssrSuccess && !kDebugSsr && depth != 1.0;
+	U32 offsetInPixelsFailedSsr = 0;
+	if(writeFailedPixel)
+	{
+		const Vec3 reflDirWorld = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0)).xyz;
+		const U32 directionBin = dominantAxis(reflDirWorld);
+
+		InterlockedAdd(g_directionBins[directionBin], 1, offsetInPixelsFailedSsr);
+	}
+
+	// Do a few things
+	GroupMemoryBarrierWithGroupSync();
+	if(svGroupIndex == 0)
+	{
+		// Prefix sum
+		[unroll] for(U32 i = 1; i < kDirectionDirBinCount; ++i)
+		{
+			g_directionBins[i] += g_directionBins[i - 1u];
+		}
+
+		// Set the RTP indirect command
+		const U32 pixelsFailedSsrCountInGroup = g_directionBins[kDirectionDirBinCount - 1];
+		InterlockedAdd(g_indirectArgs[0].m_threadGroupCountX, pixelsFailedSsrCountInGroup, g_pixelsFailedSsrOffset);
+
+		// Set the threadgroup count for Z for ReflectionProbeFallback
+		const U32 totalFailedCount = g_pixelsFailedSsrOffset + 1;
+		InterlockedMax(g_indirectArgs[1].m_threadGroupCountX, (totalFailedCount + (64 - 1)) / 64);
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
 	// Complete
-	if(ssrSuccess)
+	if(writeFailedPixel)
+	{
+		// Compute again to avoid reg pressure
+		const Vec3 reflDirWorld = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0)).xyz;
+
+		PixelFailedSsr failedPixel;
+		failedPixel.m_pixel = (realCoord.x << 16u) | realCoord.y;
+		failedPixel.m_reflectionDirAndRoughness = packSnorm4x8(Vec4(reflDirWorld, roughness));
+		failedPixel.m_pdf_f16_rayDirT_f16 = f32tof16(pdf) << 16u;
+		failedPixel.m_pdf_f16_rayDirT_f16 |= f32tof16(length(viewPos - viewHitPoint));
+
+		const U32 directionBin = dominantAxis(reflDirWorld); // Compute again to avoid reg pressure
+
+		U32 writeOffset = g_pixelsFailedSsrOffset + offsetInPixelsFailedSsr;
+		writeOffset += (directionBin == 0) ? 0 : g_directionBins[directionBin - 1];
+		SBUFF(g_pixelsFailedSsr, writeOffset) = failedPixel;
+	}
+	else if(!ssrSuccess && kDebugSsr)
+	{
+		g_colorAndPdfTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
+		g_hitPosAndDepthTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
+	}
+	else if(depth == 1.0)
+	{
+		g_colorAndPdfTex[realCoord] = 0.0;
+		g_hitPosAndDepthTex[realCoord] = 0.0;
+	}
+	else
 	{
 		// Write to the image
 
@@ -556,32 +643,6 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 		// Store depth in reverse for better precision
 		g_hitPosAndDepthTex[realCoord] = Vec4(worldHitPos, 1.0 - depth);
-	}
-	else
-	{
-		if(kDebugSsr)
-		{
-			g_colorAndPdfTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
-			g_hitPosAndDepthTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
-			return;
-		}
-
-		U32 writeOffset;
-		InterlockedAdd(g_indirectArgs[0].m_threadGroupCountX, 1u, writeOffset);
-
-		const Vec3 reflDirWorld = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0)).xyz;
-
-		PixelFailedSsr failedPixel;
-		failedPixel.m_pixel = (realCoord.x << 16u) | realCoord.y;
-		failedPixel.m_reflectionDirAndRoughness = packSnorm4x8(Vec4(reflDirWorld, roughness));
-		failedPixel.m_pdf_f16_rayDirT_f16 = f32tof16(pdf) << 16u;
-		failedPixel.m_pdf_f16_rayDirT_f16 |= f32tof16(length(viewPos - viewHitPoint));
-
-		SBUFF(g_pixelsFailedSsr, writeOffset) = failedPixel;
-
-		// Set the threadgroup count for Z for ReflectionProbeFallback
-		const U32 failedCount = writeOffset + 1;
-		InterlockedMax(g_indirectArgs[1].m_threadGroupCountX, (failedCount + (64 - 1)) / 64);
 	}
 }
 #endif
