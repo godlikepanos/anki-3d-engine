@@ -213,13 +213,13 @@ Vec4 doWork(Vec2 coord)
 		visibility += localVisibility;
 
 		// see "Algorithm 2 Extension that computes bent normals b."
+		// localBentNormal is in some identity space
 		const T t0 =
 			(T(6) * sin(h0 - n) - sin(T(3) * h0 - n) + T(6) * sin(h1 - n) - sin(T(3) * h1 - n) + T(16) * sin(n) - T(3) * (sin(h0 + n) + sin(h1 + n)))
 			/ T(12);
 		const T t1 = (-cos(T(3) * h0 - n) - cos(T(3) * h1 - n) + T(8) * cos(n) - T(3) * (cos(h0 + n) + cos(h1 + n))) / T(12);
-		vector<T, 3> localBentNormal = Vec3(directionVec.x * t0, directionVec.y * t0, F32(t1));
-		const Mat3 rot = rotationFromDirection(viewVec);
-		localBentNormal = mul(rot, localBentNormal) * projectedNormalVecLength;
+		vector<T, 3> localBentNormal = vector<T, 3>(directionVec.x * t0, directionVec.y * t0, F32(t1));
+		localBentNormal *= projectedNormalVecLength;
 		bentNormal += localBentNormal;
 	}
 
@@ -227,9 +227,11 @@ Vec4 doWork(Vec2 coord)
 	visibility = pow(visibility, T(g_consts.m_ssaoPower));
 
 	bentNormal = normalize(bentNormal);
-	bentNormal = mul(g_consts.m_viewToWorldMat, Vec4(bentNormal, 0.0));
+	Vec3 bentNormalF32 = bentNormal;
+	bentNormalF32 = mul(rotationFromDirection(viewVec), bentNormal); // Rotate towards the view
+	bentNormalF32 = mul(g_consts.m_viewToWorldMat, Vec4(bentNormalF32, 0.0));
 
-	return vector<T, 4>(bentNormal, visibility);
+	return vector<T, 4>(bentNormalF32, visibility);
 }
 
 #	if ANKI_COMPUTE_SHADER
