@@ -79,7 +79,11 @@ Vec3 main(VertOut input) : SV_TARGET0
 	{
 		const UVec4 val = g_integerTex.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
 		rgba = Vec4(uintToColor(val.x), 1.0);
+		break;
 	}
+	case DebugRenderTargetDrawStyle::kDiv2AddHalf:
+		rgba = rgba / 2.0 + 0.5;
+		break;
 	default:
 		break;
 	}

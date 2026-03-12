@@ -124,7 +124,8 @@ void Ssao::populateRenderGraph()
 
 			SsaoConstants& consts = *allocateAndBindConstants<SsaoConstants>(cmdb, 0, 0);
 			consts.m_radius = g_cvarRenderSsaoRadius;
-			consts.m_sampleCount = g_cvarRenderSsaoSampleCount;
+			consts.m_stepCountf = F32(g_cvarRenderSsaoStepCount);
+			consts.m_sliceCountf = F32(g_cvarRenderSsaoSliceCount);
 			consts.m_viewportSizef = Vec2(rez);
 			consts.m_unprojectionParameters = ctx.m_matrices.m_unprojectionParameters;
 			consts.m_projectionMat00 = ctx.m_matrices.m_projection(0, 0);

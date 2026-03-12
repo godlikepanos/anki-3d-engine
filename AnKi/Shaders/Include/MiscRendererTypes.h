@@ -234,8 +234,9 @@ struct VolumetricLightingConstants
 struct SsaoConstants
 {
 	F32 m_radius; // In meters.
-	U32 m_sampleCount;
-	Vec2 m_viewportSizef;
+	F32 m_stepCountf;
+	F32 m_sliceCountf;
+	F32 m_padding;
 
 	Vec4 m_unprojectionParameters;
 
@@ -244,9 +245,9 @@ struct SsaoConstants
 	F32 m_projectionMat22;
 	F32 m_projectionMat23;
 
-	Vec2 m_padding;
-	F32 m_ssaoPower;
+	Vec2 m_viewportSizef;
 	U32 m_frameCount;
+	F32 m_ssaoPower;
 
 	Mat3x4 m_viewMat;
 
@@ -270,6 +271,7 @@ enum class DebugRenderTargetDrawStyle
 	kAlphaOnly,
 	kRedOnly,
 	kIntegerTexture,
+	kDiv2AddHalf, // Takes the color and: col / 2 + 0.5
 
 	kCount,
 	kFirst = 0

@@ -9,25 +9,25 @@
 
 #include <AnKi/Shaders/FastMathFunctions.hlsl>
 
-/// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-/// Using reversebits instead of bitwise ops
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+// Using reversebits instead of bitwise ops
 F32 radicalInverseVdC(U32 bits)
 {
 	bits = reversebits(bits);
 	return F32(bits) * 2.3283064365386963e-10; // / 0x100000000
 }
 
-/// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 Vec2 hammersley2d(U32 i, U32 N)
 {
 	return Vec2(F32(i) / F32(N), radicalInverseVdC(i));
 }
 
-/// Stolen from Unreal
-/// Returns three elements with 16 random bits each (0-0xffff)
-///
-/// Use it like that:
-/// UVec3 seed = rand3DPCG16(UVec3(coord, frame % 8u));
+// Stolen from Unreal
+// Returns three elements with 16 random bits each (0-0xffff)
+//
+// Use it like that:
+// UVec3 seed = rand3DPCG16(UVec3(coord, frame % 8u));
 UVec3 rand3DPCG16(UVec3 v)
 {
 	v = v * 1664525u + 1013904223u;
@@ -42,11 +42,11 @@ UVec3 rand3DPCG16(UVec3 v)
 	return v >> 16u;
 }
 
-/// Stolen from Unreal
-/// It will return a uniform 2D point inside [0.0, 1.0]. For random use rand3DPCG16()
-///
-/// Use it like that:
-/// Vec2 randFactors = hammersleyRandom16(sample, sampleCount, rand3DPCG16(...));
+// Stolen from Unreal
+// It will return a uniform 2D point inside [0.0, 1.0]. For random use rand3DPCG16()
+//
+// Use it like that:
+// Vec2 randFactors = hammersleyRandom16(sample, sampleCount, rand3DPCG16(...));
 Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
 {
 	const F32 e1 = frac(F32(sampleIdx) / F32(sampleCount) + F32(random.x) * (1.0 / 65536.0));
@@ -54,11 +54,11 @@ Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
 	return Vec2(e1, e2);
 }
 
-/// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-/// From a uniform 2D point inside a circle get a 3D point in the surface of a hemisphere. It's oriented in the +Z. uv is in [0, 1]
-///
-/// Use it like that:
-/// Vec3 dir = hemisphereSampleCos(hammersleyRandom16(...));
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+// From a uniform 2D point inside a circle get a 3D point in the surface of a hemisphere. It's oriented in the +Z. uv is in [0, 1]
+//
+// Use it like that:
+// Vec3 dir = hemisphereSampleCos(hammersleyRandom16(...));
 Vec3 hemisphereSampleUniform(Vec2 uv)
 {
 	const F32 phi = uv.y * 2.0 * kPi;
@@ -67,8 +67,8 @@ Vec3 hemisphereSampleUniform(Vec2 uv)
 	return Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
 
-/// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-/// Same as hemisphereSampleUniform but it distributes points closer to the z axis
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+// Same as hemisphereSampleUniform but it distributes points closer to the z axis
 Vec3 hemisphereSampleCos(Vec2 uv)
 {
 	const F32 phi = uv.y * 2.0 * kPi;
@@ -77,7 +77,7 @@ Vec3 hemisphereSampleCos(Vec2 uv)
 	return Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
 
-/// PCG hash function.
+// PCG hash function.
 U32 hashPcg(U32 u)
 {
 	const U32 state = u * 747796405u + 2891336453u;
@@ -113,19 +113,28 @@ U32 hilbertIndex(U32 posX, U32 posY)
 	return index;
 }
 
-/// Taken from XeGTAO code
+// Taken from XeGTAO code
+// WARNING: Can't be F16 so don't bother
 Vec2 spatioTemporalNoise(UVec2 fragCoord, U32 temporalIdx)
 {
 	U32 index = hilbertIndex(fragCoord.x, fragCoord.y);
 	index += 288u * (temporalIdx % 64u);
-	return Vec2(frac(0.5f + index * Vec2(0.75487766624669276005f, 0.5698402909980532659114f)));
+	return Vec2(frac(0.5 + index * Vec2(0.75487766624669276005, 0.5698402909980532659114)));
 }
 
-/// Generates a point on the unit sphere. The frameIndex can be used as a randomizer. No need to modulate the frameIndex.
-/// Usage:
-/// for(U32 s = 0; s < 32; ++s) {
-///		Vec3 point = generateUniformPointOnSphere(s, 32, frameIndex);
-/// }
+// https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
+F32 interleavedGradientNoise(Vec2 pixelCoords, U32 frame)
+{
+	frame = frame % 64u; // need to periodically reset frame to avoid numerical issues
+	pixelCoords = pixelCoords + 5.588238 * F32(frame);
+	return fmod(52.9829189 * fmod(0.06711056 * pixelCoords.x + 0.00583715 * pixelCoords.y, 1.0), 1.0);
+}
+
+// Generates a point on the unit sphere. The frameIndex can be used as a randomizer. No need to modulate the frameIndex.
+// Usage:
+// for(U32 s = 0; s < 32; ++s) {
+//     Vec3 point = generateUniformPointOnSphere(s, 32, frameIndex);
+// }
 template<typename T, typename TInt>
 vector<T, 3> generateUniformPointOnSphere(TInt sampleIndex, TInt sampleCount, U32 frameIndex)
 {
@@ -148,7 +157,7 @@ vector<T, 3> generateUniformPointOnSphere(TInt sampleIndex, TInt sampleCount, U3
 	return normalize(vector<T, 3>(x, y, z));
 }
 
-/// Taken from SHforHLSL
+// Taken from SHforHLSL
 F32 sampleDirectionSpherePdf()
 {
 	return 1.0 / (kPi * 4.0);

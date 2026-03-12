@@ -11,7 +11,8 @@
 
 namespace anki {
 
-ANKI_CVAR2(NumericCVar<U32>, Render, Ssao, SampleCount, 4, 1, 1024, "SSAO sample count")
+ANKI_CVAR2(NumericCVar<U32>, Render, Ssao, StepCount, 2, 1, 1024, "SSAO step count")
+ANKI_CVAR2(NumericCVar<U32>, Render, Ssao, SliceCount, 2, 1, 1024, "SSAO slice count")
 ANKI_CVAR2(NumericCVar<F32>, Render, Ssao, Radius, 2.0f, 0.1f, 100.0f, "SSAO radius in meters")
 ANKI_CVAR2(BoolCVar, Render, Ssao, QuarterRez, ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez")
 ANKI_CVAR2(NumericCVar<F32>, Render, Ssao, Power, 1.5f, 0.1f, 100.0f, "SSAO power")
@@ -40,7 +41,7 @@ public:
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
 		handles[0] = m_runCtx.m_finalRt;
-		drawStyle = (rtName == "Ssao") ? DebugRenderTargetDrawStyle::kAlphaOnly : DebugRenderTargetDrawStyle::kPassthrough;
+		drawStyle = (rtName == "Ssao") ? DebugRenderTargetDrawStyle::kAlphaOnly : DebugRenderTargetDrawStyle::kDiv2AddHalf;
 	}
 
 	RenderTargetHandle getRt() const

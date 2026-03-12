@@ -38,6 +38,9 @@ RWTexture2D<Vec4> g_bentNormalsAndSsaoStorageTex : register(u0);
 
 ConstantBuffer<SsaoConstants> g_consts : register(b0);
 
+constexpr F32 kSampleDistributionPower = 2.0;
+constexpr F32 kFalloffRange = 0.615;
+
 Vec3 unproject(Vec2 ndc)
 {
 	const F32 d = g_depthTex.SampleLevel(g_linearAnyClampSampler, ndcToUv(ndc), 0.0).r;
@@ -50,120 +53,196 @@ Vec4 project(Vec4 p)
 									  p);
 }
 
-F16 computeFalloff(F16 len)
+F32 computeFalloff(F32 len)
 {
-	return sqrt(1.0 - min(1.0, len / F16(g_consts.m_radius)));
+	return sqrt(1.0 - min(1.0, len / F32(g_consts.m_radius)));
 }
 
-HVec4 doWork(Vec2 coord)
+// Based on XeGTAO
+template<typename T>
+Vec4 doWork(Vec2 coord)
 {
 	const Vec2 uv = (coord + 0.5) / g_consts.m_viewportSizef;
 
 	const Vec2 ndc = uvToNdc(uv);
-	const F32 depth = g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
-	const Vec3 Pc = cheapPerspectiveUnprojection(g_consts.m_unprojectionParameters, ndc, depth);
-	const HVec3 V = normalize(-Pc); // View vector
+
+	Vec3 posVS = unproject(ndc);
+	// Move center pixel slightly towards camera to avoid imprecision artifacts due to depth buffer imprecision
+	posVS.z *= 0.99999;
+
+	const vector<T, 3> viewVec = normalize(-posVS);
 
 	// Get noise
-#	if 1
-	const HVec2 noise2 = animateBlueNoise(g_noiseTex[UVec2(coord) % 64].xyz, g_consts.m_frameCount).yx;
-#	else
-	const HVec2 noise2 = spatioTemporalNoise(coord, g_consts.m_frameCount);
-#	endif
-
-	// Rand slice direction
-	const F16 randAng = noise2.x * kPi;
 #	if 0
-	const F16 aspect = g_consts.m_viewportSizef.x / g_consts.m_viewportSizef.y;
-	const HVec2 dir2d = normalize(Vec2(cos(randAng), sin(randAng)) * Vec2(1.0, aspect));
+	const vector<T, 2> noise2 = animateBlueNoise(g_noiseTex[UVec2(coord) % 64].xyz, g_consts.m_frameCount).yx;
 #	else
-	const HVec2 dir2d = Vec2(cos(randAng), sin(randAng));
+	const vector<T, 2> noise2 = spatioTemporalNoise(coord, g_consts.m_frameCount);
 #	endif
 
-	// Project the view normal to the slice
 	const Vec3 worldNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_linearAnyClampSampler, uv, 0.0));
-	const HVec3 viewNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
+	const vector<T, 3> viewspaceNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
 
-	const HVec3 directionVec = HVec3(dir2d, 0.0);
-	const HVec3 orthoDirectionVec = directionVec - (dot(directionVec, V) * V);
-	const HVec3 axisVec = normalize(cross(orthoDirectionVec, V));
-	const HVec3 projectedNormalVec = viewNormal - axisVec * dot(viewNormal, axisVec);
-	const F16 signNorm = (F32)sign(dot(orthoDirectionVec, projectedNormalVec));
-	const F16 projectedNormalVecLength = length(projectedNormalVec);
-	const F16 cosNorm = saturate(dot(projectedNormalVec, V) / projectedNormalVecLength);
-	const F16 n = -signNorm * fastAcos(cosNorm);
+	const T falloffFrom = g_consts.m_radius * (T(1) - T(kFalloffRange));
+	const T falloffMul = T(-1) / T(kFalloffRange);
+	const T falloffAdd = falloffFrom / T(kFalloffRange) + T(1);
 
 	// Find the projected radius
-	const Vec3 sphereLimit = Pc + Vec3(g_consts.m_radius, 0.0, 0.0);
+	const Vec3 sphereLimit = posVS + Vec3(g_consts.m_radius, 0.0, 0.0);
 	const Vec4 projSphereLimit = project(Vec4(sphereLimit, 1.0));
 	const Vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
-	const F16 projRadius = length(projSphereLimit2 - ndc);
+	const F32 screenspaceRadius = length(projSphereLimit2 - ndc) / 2.0 * g_consts.m_viewportSizef;
 
-	// Compute the inner integral (Slide 54)
-	const U32 stepCount = max(1u, g_consts.m_sampleCount / 2u);
+	T visibility = 0.0;
+	vector<T, 3> bentNormal = 0.0;
+	const T sliceCountf = g_consts.m_sliceCountf;
+	const T angleStep = kPi / sliceCountf;
 
-	const F16 lowHorizonCos1 = cos(n - kPi / 2.0);
-	const F16 lowHorizonCos2 = cos(n + kPi / 2.0);
-
-	F16 cosH1 = lowHorizonCos1;
-	F16 cosH2 = lowHorizonCos2;
-
-	for(U32 i = 0u; i < stepCount; ++i)
+	for(T slice = 0.0; slice < sliceCountf; ++slice)
 	{
-		const F16 stepBaseNoise = F16(i * stepCount) * 0.6180339887498948482;
-		const F16 stepNoise = frac(noise2.y + stepBaseNoise);
-		F16 s = (i + stepNoise) / F16(stepCount);
-		s *= s;
-		const Vec2 sampleOffset = dir2d * projRadius * s;
+		// Rand slice direction
+		const T phi = angleStep * (noise2.x + slice);
+		const T cosPhi = cos(phi);
+		const T sinPhi = sin(phi);
+#	if 1
+		const T aspect = g_consts.m_viewportSizef.x / g_consts.m_viewportSizef.y;
+		Vec2 omega = normalize(Vec2(cosPhi, -sinPhi) * Vec2(1.0, aspect));
+#	else
+		Vec2 omega = Vec2(cosPhi, -sinPhi);
+#	endif
 
-		// h1
-		const Vec3 Ps = unproject(ndc + sampleOffset);
-		const Vec3 Ds = Ps - Pc;
-		const F16 DsLen = length(Ds);
-		cosH1 = max(cosH1, lerp(lowHorizonCos1, dot(V, Ds) / DsLen, computeFalloff(DsLen)));
+		omega *= screenspaceRadius;
 
-		// h2
-		const Vec3 Pt = unproject(ndc - sampleOffset);
-		const Vec3 Dt = Pt - Pc;
-		const F16 DtLen = length(Dt);
-		cosH2 = max(cosH2, lerp(lowHorizonCos2, dot(V, Dt) / DtLen, computeFalloff(DtLen)));
+		// line 8 from the paper
+		const vector<T, 3> directionVec = vector<T, 3>(cosPhi, sinPhi, 0.0);
+
+		// line 9 from the paper
+		const vector<T, 3> orthoDirectionVec = directionVec - (dot(directionVec, viewVec) * viewVec);
+
+		// line 10 from the paper
+		// axisVec is orthogonal to directionVec and viewVec, used to define projectedNormal
+		const vector<T, 3> axisVec = normalize(cross(orthoDirectionVec, viewVec));
+
+		// alternative line 9 from the paper
+		// float3 orthoDirectionVec = cross( viewVec, axisVec );
+
+		// line 11 from the paper
+		const vector<T, 3> projectedNormalVec = viewspaceNormal - axisVec * dot(viewspaceNormal, axisVec);
+
+		// line 13 from the paper
+		const T signNorm = sign(dot(orthoDirectionVec, projectedNormalVec));
+
+		// line 14 from the paper
+		T projectedNormalVecLength = length(projectedNormalVec);
+		const T cosNorm = saturate(dot(projectedNormalVec, viewVec) / projectedNormalVecLength);
+
+		// line 15 from the paper
+		const T n = signNorm * fastAcos(cosNorm);
+
+		// this is a lower weight target; not using -1 as in the original paper because it is under horizon, so a 'weight' has different meaning based
+		// on the normal
+		const T lowHorizonCos0 = cos(n + T(kHalfPi));
+		const T lowHorizonCos1 = cos(n - T(kHalfPi));
+
+		// lines 17, 18 from the paper, manually unrolled the 'side' loop
+		T horizonCos0 = lowHorizonCos0;
+		T horizonCos1 = lowHorizonCos1;
+
+		const T stepsPerSlice = g_consts.m_stepCountf;
+		for(T step = 0.0; step < stepsPerSlice; ++step)
+		{
+			// R1 sequence (http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/)
+			const T stepBaseNoise = (slice + step * stepsPerSlice) * T(0.6180339887498948482); // <- this should unroll
+			const T stepNoise = frac(noise2.y + stepBaseNoise);
+
+			// approx line 20 from the paper, with added noise
+			T s = (step + stepNoise) / stepsPerSlice; // + (Vec2)1e-6f);
+
+			// additional distribution modifier
+			s = pow(s, T(kSampleDistributionPower));
+
+			// approx lines 21-22 from the paper, unrolled
+			Vec2 sampleOffset = s * omega;
+
+			// Snap to pixel center (more correct direction math, avoids artifacts due to sampling pos not matching depth texel center - messes up
+			// slope - but adds other artifacts due to them being pushed off the slice). Also use full precision for high res cases.
+			sampleOffset = round(sampleOffset) / g_consts.m_viewportSizef;
+
+			const Vec2 sampleScreenPos0 = uv + sampleOffset;
+			const Vec3 samplePos0 = unproject(uvToNdc(sampleScreenPos0));
+
+			const Vec2 sampleScreenPos1 = uv - sampleOffset;
+			const Vec3 samplePos1 = unproject(uvToNdc(sampleScreenPos1));
+
+			const Vec3 sampleDelta0 = (samplePos0 - posVS); // using F32 for sampleDelta causes precision issues
+			const Vec3 sampleDelta1 = (samplePos1 - posVS); // using F32 for sampleDelta causes precision issues
+			const F32 sampleDist0 = length(sampleDelta0);
+			const F32 sampleDist1 = length(sampleDelta1);
+
+			// approx lines 23, 24 from the paper, unrolled
+			vector<T, 3> sampleHorizonVec0 = vector<T, 3>(sampleDelta0 / sampleDist0);
+			vector<T, 3> sampleHorizonVec1 = vector<T, 3>(sampleDelta1 / sampleDist1);
+
+			// any sample out of radius should be discarded - also use fallof range for smooth transitions; this is a modified idea from "4.3
+			// Implementation details, Bounding the sampling area"
+			const T weight0 = saturate(sampleDist0 * falloffMul + falloffAdd);
+			const T weight1 = saturate(sampleDist1 * falloffMul + falloffAdd);
+
+			// sample horizon cos
+			T shc0 = dot(sampleHorizonVec0, viewVec);
+			T shc1 = dot(sampleHorizonVec1, viewVec);
+
+			// discard unwanted samples
+			shc0 = lerp(lowHorizonCos0, shc0, weight0);
+			shc1 = lerp(lowHorizonCos1, shc1, weight1);
+
+			horizonCos0 = max(horizonCos0, shc0);
+			horizonCos1 = max(horizonCos1, shc1);
+		}
+
+		// I can't figure out the slight overdarkening on high slopes, so I'm adding this fudge - in the training set, 0.05 is close (PSNR 21.34) to
+		// disabled (PSNR 21.45)
+		projectedNormalVecLength = lerp(projectedNormalVecLength, T(1), T(0.05));
+
+		// line ~27, unrolled
+		const T h0 = -fastAcos(horizonCos1);
+		const T h1 = fastAcos(horizonCos0);
+
+		const T iarc0 = (cosNorm + T(2) * h0 * sin(n) - cos(T(2) * h0 - n)) / T(4);
+		const T iarc1 = (cosNorm + T(2) * h1 * sin(n) - cos(T(2) * h1 - n)) / T(4);
+		const T localVisibility = projectedNormalVecLength * (iarc0 + iarc1);
+		visibility += localVisibility;
+
+		// see "Algorithm 2 Extension that computes bent normals b."
+		const T t0 =
+			(T(6) * sin(h0 - n) - sin(T(3) * h0 - n) + T(6) * sin(h1 - n) - sin(T(3) * h1 - n) + T(16) * sin(n) - T(3) * (sin(h0 + n) + sin(h1 + n)))
+			/ T(12);
+		const T t1 = (-cos(T(3) * h0 - n) - cos(T(3) * h1 - n) + T(8) * cos(n) - T(3) * (cos(h0 + n) + cos(h1 + n))) / T(12);
+		vector<T, 3> localBentNormal = Vec3(directionVec.x * t0, directionVec.y * t0, F32(t1));
+		const Mat3 rot = rotationFromDirection(viewVec);
+		localBentNormal = mul(rot, localBentNormal) * projectedNormalVecLength;
+		bentNormal += localBentNormal;
 	}
 
-	// Compute the h1 and h2
-	const F16 h1 = n + max(-fastAcos(cosH1) - n, -kPi / 2.0);
-	const F16 h2 = n + min(fastAcos(cosH2) - n, kPi / 2.0);
+	visibility /= sliceCountf;
+	visibility = pow(visibility, T(g_consts.m_ssaoPower));
 
-	// Compute the final value (Slide 61)
-	F16 Vd = -cos(2.0 * h1 - n) + cos(n) + 2.0 * h1 * sin(n);
-	Vd += -cos(2.0 * h2 - n) + cos(n) + 2.0 * h2 * sin(n);
-	Vd *= 0.25;
-	Vd *= projectedNormalVecLength;
-
-	// Apply power
-	Vd = pow(Vd, g_consts.m_ssaoPower);
-
-	// Compute bent normal: see "Algorithm 2 Extension that computes bent normals b."
-	const F16 t0 =
-		(6.0 * sin(h1 - n) - sin(3.0 * h1 - n) + 6.0 * sin(h2 - n) - sin(3.0 * h2 - n) + 16.0 * sin(n) - 3.0 * (sin(h1 + n) + sin(h2 + n))) / 12.0;
-	const F16 t1 = (-cos(3.0 * h1 - n) - cos(3.0 * h2 - n) + 8.0 * cos(n) - 3.0 * (cos(h1 + n) + cos(h2 + n))) / 12.0;
-	HVec3 bentNormal = HVec3(-dir2d.x * t0, -dir2d.y * t0, t1);
 	bentNormal = normalize(bentNormal);
 	bentNormal = mul(g_consts.m_viewToWorldMat, Vec4(bentNormal, 0.0));
 
-	return HVec4(bentNormal, Vd);
+	return vector<T, 4>(bentNormal, visibility);
 }
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	g_bentNormalsAndSsaoStorageTex[coord] = doWork(coord);
+	g_bentNormalsAndSsaoStorageTex[coord] = doWork<F32>(coord);
 }
 #	else
 Vec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 coord = floor(input.m_svPosition.xy);
-	return doWork(coord);
+	return doWork<F32>(coord);
 }
 #	endif
 #endif
