@@ -139,6 +139,95 @@ public:
 	}
 };
 
+class SubMutation
+{
+public:
+	CString m_mutatorName;
+	MutatorValue m_value;
+};
+
+// Wrapper on top of GR shader programs. Main use is hot reload.
+class RendererShaderProgram
+{
+public:
+	ANKI_NON_COPYABLE(RendererShaderProgram)
+	ANKI_NON_MOVABLE(RendererShaderProgram)
+
+	RendererShaderProgram() = default;
+
+	ShaderProgram& operator*() const
+	{
+		const_cast<RendererShaderProgram*>(this)->refresh();
+		return *m_grProgram;
+	}
+
+	ShaderProgram* operator->() const
+	{
+		const_cast<RendererShaderProgram*>(this)->refresh();
+		return m_grProgram.get();
+	}
+
+	ShaderProgram* get() const
+	{
+		const_cast<RendererShaderProgram*>(this)->refresh();
+		return m_grProgram.get();
+	}
+
+	Error load(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique = "", ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
+	{
+		return loadInternal(filepath, mutators, technique, shaderTypes, nullptr);
+	}
+
+protected:
+	Error loadInternal(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique, ShaderTypeBit shaderTypes,
+					   U32* shaderGroupHandleIndex);
+
+private:
+	ShaderProgramPtr m_grProgram;
+
+#if ANKI_WITH_EDITOR
+	class SubMutationInternal
+	{
+	public:
+		RendererString m_mutatorName;
+		MutatorValue m_value;
+	};
+
+	ShaderProgramResourcePtr m_resource;
+	RendererDynamicArray<SubMutationInternal> m_mutation;
+	ShaderTypeBit m_shaderTypeMask = ShaderTypeBit::kNone;
+	RendererString m_technique;
+	SpinLock m_lock;
+
+	// It's thread-safe
+	void refresh();
+#else
+	void refresh()
+	{
+	}
+#endif
+};
+
+// Same as RendererShaderProgram but contains some extra stuff related to ray tracing.
+class RendererRtShaderProgram : public RendererShaderProgram
+{
+public:
+	U32 getShaderGroupHandleIndex() const
+	{
+		ANKI_ASSERT(m_shaderGroupHandleIndex != kMaxU32);
+		return m_shaderGroupHandleIndex;
+	}
+
+	Error load(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique = "", ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
+	{
+		ANKI_ASSERT(!!(shaderTypes & ShaderTypeBit::kAllRayTracing));
+		return loadInternal(filepath, mutators, technique, shaderTypes, &m_shaderGroupHandleIndex);
+	}
+
+private:
+	U32 m_shaderGroupHandleIndex = kMaxU32;
+};
+
 // Choose the detail of a shadow cascade. 0 means high detail and >0 is progressively lower.
 inline U32 chooseDirectionalLightShadowCascadeDetail(U32 cascade)
 {

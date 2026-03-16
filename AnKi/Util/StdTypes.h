@@ -389,4 +389,12 @@ private:
 		x; \
 	})
 
+#define ANKI_NON_COPYABLE(className) \
+	className(const className&) = delete; \
+	className& operator=(const className&) = delete;
+
+#define ANKI_NON_MOVABLE(className) \
+	className(className&&) = delete; \
+	className& operator=(className&&) = delete;
+
 } // end namespace anki
