@@ -60,17 +60,14 @@ foreach(prog_fname ${prog_fnames})
 	add_custom_command(
 		OUTPUT ${bin_fname}
 		COMMAND ${CMAKE_COMMAND} -E env "ASAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/../../Tools/SanitizerBlacklist.txt" ${shader_compiler_bin} -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${extra_compiler_args} ${prog_fname}
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${out_dir}
+    	COMMAND ${CMAKE_COMMAND} -E copy ${bin_fname} ${out_dir}
 		DEPENDS ${shader_compiler_dep} ${prog_fname} ${deps}
 		COMMENT "Build ${prog_fname}")
 
 	add_custom_target(
 		${target_name} ALL
 		DEPENDS ${bin_fname})
-
-	add_custom_command(
-		TARGET ${target_name} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E make_directory ${out_dir}
-		COMMAND ${CMAKE_COMMAND} -E copy ${bin_fname} ${out_dir})
 
 	list(APPEND program_targets ${target_name})
 endforeach()
