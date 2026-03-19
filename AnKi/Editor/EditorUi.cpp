@@ -307,11 +307,6 @@ void EditorUi::mainMenu()
 		{
 			if(ImGui::BeginMenu(ICON_MDI_FOLDER_OUTLINE " File"))
 			{
-				if(ImGui::MenuItem(ICON_MDI_CLOSE_CIRCLE " Quit", "CTRL+Q"))
-				{
-					m_quit = true;
-				}
-
 				if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_ALL " Save All Scenes", "CTRL+ALT+S"))
 				{
 					saveScenes(false);
@@ -320,6 +315,16 @@ void EditorUi::mainMenu()
 				if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE " Save Active Scene", "CTRL+S"))
 				{
 					saveScenes(true);
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_REFRESH " Refresh Filesystem", "F5"))
+				{
+					ResourceManager::getSingleton().refreshFileUpdateTimes();
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_CLOSE_CIRCLE " Quit", "CTRL+Q"))
+				{
+					m_quit = true;
 				}
 
 				ImGui::EndMenu();
@@ -1083,6 +1088,11 @@ void EditorUi::handleInput()
 	   && Input::getSingleton().getKey(KeyCode::kS) == 1)
 	{
 		saveScenes(false);
+	}
+
+	if(Input::getSingleton().getKey(KeyCode::kF5) == 1)
+	{
+		ResourceManager::getSingleton().refreshFileUpdateTimes();
 	}
 
 	if(m_quit)

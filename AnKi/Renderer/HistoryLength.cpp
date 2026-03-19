@@ -23,7 +23,7 @@ Error HistoryLength::init()
 		m_historyLenTextures[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HistoryLength.ankiprogbin", m_prog, m_grProg));
+	ANKI_CHECK(m_grProg.load("ShaderBinaries/HistoryLength.ankiprogbin", {}));
 
 	return Error::kNone;
 }
