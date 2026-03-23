@@ -144,26 +144,30 @@ private:
 
 	IndirectDiffuseClipmapConstants m_consts;
 
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramResourcePtr m_missProg;
-	ShaderProgramPtr m_rtLibraryGrProg;
-	ShaderProgramPtr m_rtMaterialFetchInlineRtGrProg;
-	ShaderProgramPtr m_populateCachesGrProg;
-	ShaderProgramPtr m_computeIrradianceGrProg;
-	ShaderProgramPtr m_applyGiGrProg;
-	ShaderProgramPtr m_applyGiUsingInlineRtGrProg;
-	ShaderProgramPtr m_visProbesGrProg;
-	ShaderProgramPtr m_temporalDenoiseGrProg;
-	ShaderProgramPtr m_spatialReconstructGrProg;
-	ShaderProgramPtr m_bilateralDenoiseGrProg;
+	// Matches the RT_MATERIAL_FETCH_TYPE mutator
+	enum class RtMaterialFetchType
+	{
+		kApply, // The RtMaterialFetch that applies the screen-space RT (1st bounce)
+		kProbe, // The RtMaterialFetch that populates the probes (2nd bounce)
+		kCount
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(RtMaterialFetchType)
 
-	BufferView m_shaderGroupHandlesBuff;
+	Array<RendererRtShaderProgram, U32(RtMaterialFetchType::kCount)> m_rtMaterialFetchGrProg;
+	RendererRtShaderProgram m_missGrProg;
+	RendererShaderProgram m_rtMaterialFetchInlineRtGrProg;
+	RendererShaderProgram m_populateCachesGrProg;
+	RendererShaderProgram m_computeIrradianceGrProg;
+	RendererShaderProgram m_applyGiGrProg;
+	RendererShaderProgram m_applyGiUsingInlineRtGrProg;
+	RendererShaderProgram m_visProbesGrProg;
+	RendererShaderProgram m_temporalDenoiseGrProg;
+	RendererShaderProgram m_spatialReconstructGrProg;
+	RendererShaderProgram m_bilateralDenoiseGrProg;
 
 	ImageResourcePtr m_blueNoiseImg;
 
 	U32 m_sbtRecordSize = 0;
-	Array<U32, 2> m_rayGenShaderGroupIndices = {kMaxU32, kMaxU32};
-	U32 m_missShaderGroupIdx = kMaxU32;
 
 	Bool m_texturesImportedOnce = false;
 

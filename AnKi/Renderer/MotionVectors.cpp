@@ -14,7 +14,7 @@ namespace anki {
 
 Error MotionVectors::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/MotionVectors.ankiprogbin", m_prog, m_grProg));
+	ANKI_CHECK(m_grProg.load("ShaderBinaries/MotionVectors.ankiprogbin", {}));
 
 	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16_Sfloat, "MotionVectors");

@@ -9,7 +9,7 @@
 namespace anki {
 
 Error RendererShaderProgram::loadInternal(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique, ShaderTypeBit shaderTypes,
-										  U32* shaderGroupHandleIndex)
+										  U32* shaderGroupHandleIndex, BufferView* shaderGroupHandlesBuff)
 {
 	ShaderProgramResourcePtr rsrc;
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filepath, rsrc));
@@ -83,6 +83,12 @@ Error RendererShaderProgram::loadInternal(CString filepath, ConstWeakArray<SubMu
 	{
 		ANKI_ASSERT(!!(shaderTypes & ShaderTypeBit::kAllRayTracing));
 		*shaderGroupHandleIndex = variant->getShaderGroupHandleIndex();
+	}
+
+	if(shaderGroupHandlesBuff)
+	{
+		ANKI_ASSERT(!!(shaderTypes & ShaderTypeBit::kAllRayTracing));
+		*shaderGroupHandlesBuff = variant->getShaderGroupHandlesBuffer();
 	}
 
 #if ANKI_WITH_EDITOR

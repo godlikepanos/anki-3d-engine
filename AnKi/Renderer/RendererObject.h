@@ -96,13 +96,6 @@ protected:
 		return Error::kNone;
 	}
 
-	class SubMutation
-	{
-	public:
-		CString m_mutatorName;
-		MutatorValue m_value;
-	};
-
 	static Error loadShaderProgram(CString filename, std::initializer_list<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
 								   ShaderProgramPtr& grProg, CString technique = {}, ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
 	{

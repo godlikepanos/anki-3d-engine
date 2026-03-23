@@ -266,56 +266,34 @@ Error IndirectDiffuseClipmaps::init()
 		m_avgIrradianceVolumes[clipmap] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 	}
 
-	const Array<SubMutation, 6> mutation = {{{"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
-											 {"RADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_cvarRenderIdcRadianceOctMapSize)},
-											 {"IRRADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_cvarRenderIdcIrradianceOctMapSize)},
-											 {"RT_MATERIAL_FETCH_CLIPMAP", 0},
-											 {"SPATIAL_RECONSTRUCT_TYPE", !g_cvarRenderIdcApplyHighQuality},
-											 {"IRRADIANCE_USE_SH_L2", g_cvarRenderIdcUseSHL2}}};
+	Array<SubMutation, 6> mutation = {{{"RT_MATERIAL_FETCH_TYPE", 0}, // Keep it first
+									   {"GPU_WAVE_SIZE", MutatorValue(GrManager::getSingleton().getDeviceCapabilities().m_maxWaveSize)},
+									   {"RADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_cvarRenderIdcRadianceOctMapSize)},
+									   {"IRRADIANCE_OCTAHEDRON_MAP_SIZE", MutatorValue(g_cvarRenderIdcIrradianceOctMapSize)},
+									   {"SPATIAL_RECONSTRUCT_TYPE", !g_cvarRenderIdcApplyHighQuality},
+									   {"IRRADIANCE_USE_SH_L2", g_cvarRenderIdcUseSHL2}}};
 
 	constexpr CString kProgFname = "ShaderBinaries/IndirectDiffuseClipmaps.ankiprogbin";
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_applyGiGrProg, "Apply"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_visProbesGrProg, "VisualizeProbes"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_populateCachesGrProg, "PopulateCaches"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_computeIrradianceGrProg, "ComputeIrradiance"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_temporalDenoiseGrProg, "TemporalDenoise"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_spatialReconstructGrProg, "SpatialReconstruct"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_bilateralDenoiseGrProg, "BilateralDenoise"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_prog, m_applyGiUsingInlineRtGrProg, "ApplyInlineRt"));
+	ShaderProgramResourcePtr mainProgRsrc;
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(kProgFname, mainProgRsrc)); // Keep it alive to avoid reloading
 
-	for(MutatorValue rtMaterialFetchClipmap = 0; rtMaterialFetchClipmap < 2; ++rtMaterialFetchClipmap)
-	{
-		ShaderProgramResourcePtr tmpProg;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(kProgFname, tmpProg));
-		ANKI_ASSERT(tmpProg == m_prog);
+	ANKI_CHECK(m_applyGiGrProg.load(kProgFname, mutation, "Apply"));
+	ANKI_CHECK(m_visProbesGrProg.load(kProgFname, mutation, "VisualizeProbes"));
+	ANKI_CHECK(m_populateCachesGrProg.load(kProgFname, mutation, "PopulateCaches"));
+	ANKI_CHECK(m_computeIrradianceGrProg.load(kProgFname, mutation, "ComputeIrradiance"));
+	ANKI_CHECK(m_temporalDenoiseGrProg.load(kProgFname, mutation, "TemporalDenoise"));
+	ANKI_CHECK(m_spatialReconstructGrProg.load(kProgFname, mutation, "SpatialReconstruct"));
+	ANKI_CHECK(m_bilateralDenoiseGrProg.load(kProgFname, mutation, "BilateralDenoise"));
+	ANKI_CHECK(m_rtMaterialFetchInlineRtGrProg.load(kProgFname, mutation, "RtMaterialFetchInlineRt"));
+	ANKI_CHECK(m_applyGiUsingInlineRtGrProg.load(kProgFname, mutation, "ApplyInlineRt"));
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
-		for(const SubMutation& s : mutation)
-		{
-			variantInitInfo.addMutation(s.m_mutatorName, s.m_value);
-		}
+	mutation[0].m_value = MutatorValue(RtMaterialFetchType::kApply);
+	ANKI_CHECK(m_rtMaterialFetchGrProg[RtMaterialFetchType::kApply].load(kProgFname, mutation, "RtMaterialFetch", ShaderTypeBit::kRayGen));
 
-		variantInitInfo.addMutation("RT_MATERIAL_FETCH_CLIPMAP", rtMaterialFetchClipmap);
+	mutation[0].m_value = MutatorValue(RtMaterialFetchType::kProbe);
+	ANKI_CHECK(m_rtMaterialFetchGrProg[RtMaterialFetchType::kProbe].load(kProgFname, mutation, "RtMaterialFetch", ShaderTypeBit::kRayGen));
 
-		const ShaderProgramResourceVariant* variant;
-		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_rtLibraryGrProg.reset(&variant->getProgram());
-		m_rayGenShaderGroupIndices[rtMaterialFetchClipmap] = variant->getShaderGroupHandleIndex();
-	}
-
-	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", m_missProg));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_missProg);
-		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
-		const ShaderProgramResourceVariant* variant;
-		m_missProg->getOrCreateVariant(variantInitInfo, variant);
-		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
-
-		m_shaderGroupHandlesBuff = variant->getShaderGroupHandlesBuffer();
-	}
+	ANKI_CHECK(m_missGrProg.load("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", {}, "RtMaterialFetch", ShaderTypeBit::kMiss));
 
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
@@ -409,8 +387,10 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	BufferView sbtBuffer;
 	if(!g_cvarRenderIdcInlineRt)
 	{
-		buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIndices[1],
-									m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+		buildShaderBindingTablePass("IndirectDiffuseClipmaps: Build SBT",
+									m_rtMaterialFetchGrProg[RtMaterialFetchType::kProbe].getShaderGroupHandlesBuffer(),
+									m_rtMaterialFetchGrProg[RtMaterialFetchType::kProbe].getShaderGroupHandleIndex(),
+									m_missGrProg.getShaderGroupHandleIndex(), m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 	}
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
@@ -480,7 +460,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 						  partialUpdateProbeCount](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				cmdb.bindShaderProgram((g_cvarRenderIdcInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get() : m_rtLibraryGrProg.get());
+				cmdb.bindShaderProgram((g_cvarRenderIdcInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get()
+																 : m_rtMaterialFetchGrProg[RtMaterialFetchType::kProbe].get());
 
 				// More globals
 #include <AnKi/Shaders/Include/MaterialBindings.def.h>
@@ -669,11 +650,13 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	{
 		if(!g_cvarRenderIdcInlineRt)
 		{
-			patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIndices[0],
-										m_missShaderGroupIdx, m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+			patchShaderBindingTablePass("IndirectDiffuseClipmaps: Patch SBT",
+										m_rtMaterialFetchGrProg[RtMaterialFetchType::kApply].getShaderGroupHandlesBuffer(),
+										m_rtMaterialFetchGrProg[RtMaterialFetchType::kApply].getShaderGroupHandleIndex(),
+										m_missGrProg.getShaderGroupHandleIndex(), m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
 		}
 
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: RTApply");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Apply RT irradiance");
 
 		if(!g_cvarRenderIdcInlineRt)
 		{
@@ -716,7 +699,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 			}
 			else
 			{
-				cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
+				cmdb.bindShaderProgram(m_rtMaterialFetchGrProg[RtMaterialFetchType::kApply].get());
 
 				cmdb.dispatchRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1, width,
 								  height, 1);
@@ -727,7 +710,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	}
 	else
 	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Apply irradiance");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Apply simple irradiance");
 
 		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);

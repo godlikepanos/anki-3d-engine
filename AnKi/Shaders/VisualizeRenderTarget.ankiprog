@@ -48,7 +48,7 @@ Vec3 main(VertOut input) : SV_TARGET0
 	switch((DebugRenderTargetDrawStyle)g_consts.m_drawStyle)
 	{
 	case DebugRenderTargetDrawStyle::kTonemap:
-		rgba.xyz = reinhardTonemap(rgba.xyz);
+		rgba.xyz = tonemapReinhard(rgba.xyz);
 		break;
 	case DebugRenderTargetDrawStyle::kGBufferNormal:
 		rgba.xyz = unpackNormalFromGBuffer(rgba) / 2.0f + 0.5f;
@@ -66,7 +66,7 @@ Vec3 main(VertOut input) : SV_TARGET0
 	{
 		const Vec4 rt2 = g_inTex2.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
 		const Vec4 rt1 = rgba;
-		rgba.xyz = invertReinhardTonemap(Vec3(rt1.z, rt2.x, rt1.w));
+		rgba.xyz = invertTonemapReinhard(Vec3(rt1.z, rt2.x, rt1.w));
 		break;
 	}
 	case DebugRenderTargetDrawStyle::kAlphaOnly:

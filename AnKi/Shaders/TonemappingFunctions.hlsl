@@ -156,15 +156,15 @@ vector<T, 3> tonemap(vector<T, 3> color, T avgLum, T threshold)
 
 // https://graphicrants.blogspot.com/2013/12/tone-mapping.html
 template<typename T>
-vector<T, 3> reinhardTonemap(vector<T, 3> colour)
+vector<T, 3> tonemapReinhard(vector<T, 3> color)
 {
 	// rgb / (1 + max(rgb))
-	return colour / (T(1) + max(max(colour.r, colour.g), colour.b));
+	return color / (T(1) + max3(color));
 }
 
 template<typename T>
-vector<T, 3> invertReinhardTonemap(vector<T, 3> colour)
+vector<T, 3> invertTonemapReinhard(vector<T, 3> color)
 {
 	// rgb / (1 - max(rgb))
-	return colour / max(T(1.0 / 32768.0), T(1) - max(max(colour.r, colour.g), colour.b));
+	return color / max(T(1.0 / 32768.0), T(1) - max3(color));
 }

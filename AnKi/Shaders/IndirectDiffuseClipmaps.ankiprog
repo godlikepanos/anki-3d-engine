@@ -6,11 +6,11 @@
 #pragma anki mutator GPU_WAVE_SIZE 16 32 64
 #pragma anki mutator RADIANCE_OCTAHEDRON_MAP_SIZE 8 10 12 14 16 18 20
 #pragma anki mutator IRRADIANCE_OCTAHEDRON_MAP_SIZE 4 5 6
-#pragma anki mutator RT_MATERIAL_FETCH_CLIPMAP 0 1
+#pragma anki mutator RT_MATERIAL_FETCH_TYPE 0 1
 #pragma anki mutator SPATIAL_RECONSTRUCT_TYPE 0 1
 #pragma anki mutator IRRADIANCE_USE_SH_L2 0 1
 
-#pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_CLIPMAP SPATIAL_RECONSTRUCT_TYPE
+#pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_TYPE SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique RtMaterialFetchInlineRt comp mutators
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
 #pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_USE_SH_L2
@@ -32,6 +32,9 @@
 #include <AnKi/Shaders/TemporalAA.hlsl>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <ThirdParty/SHforHLSL/SH.hlsli>
+
+#define RT_MATERIAL_FETCH_TYPE_APPLY 0
+#define RT_MATERIAL_FETCH_TYPE_PROBES 1
 
 constexpr F32 kGaussianSigma = 0.55;
 constexpr F32 kMaxBilateralSamplesPerDirection = 5.0;
@@ -57,9 +60,9 @@ struct ProbeUpdateConsts
 };
 
 // ===========================================================================
-// RtMaterialFetch and RtMaterialFetchInlineRt                               =
+// RtMaterialFetch (Probes) and RtMaterialFetchInlineRt                      =
 // ===========================================================================
-#if(NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) && NOT_ZERO(RT_MATERIAL_FETCH_CLIPMAP)) || NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetchInlineRt)
+#if(ANKI_TECHNIQUE_RtMaterialFetch && RT_MATERIAL_FETCH_TYPE == RT_MATERIAL_FETCH_TYPE_PROBES) || ANKI_TECHNIQUE_RtMaterialFetchInlineRt
 
 #	define CLIPMAP_VOLUME
 #	define INCLUDE_ALL
@@ -536,7 +539,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 // ===========================================================================
 // RtMaterialFetch (Apply)                                                   =
 // ===========================================================================
-#if(ANKI_TECHNIQUE_RtMaterialFetch && !RT_MATERIAL_FETCH_CLIPMAP) || ANKI_TECHNIQUE_ApplyInlineRt
+#if(ANKI_TECHNIQUE_RtMaterialFetch && RT_MATERIAL_FETCH_TYPE == RT_MATERIAL_FETCH_TYPE_APPLY) || ANKI_TECHNIQUE_ApplyInlineRt
 
 #	define INCLUDE_ALL
 #	include <AnKi/Shaders/RtMaterialFetch.hlsl>
@@ -738,9 +741,18 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 		samples[maxLumaPixel.x][maxLumaPixel.y] *= avgLumaOf3 / maxLuma;
 	}
 
+	// Tonemap everything because bright pixels will contribute more even if they have less weight
+	[unroll] for(U32 x = 0; x < 2; ++x)
+	{
+		[unroll] for(U32 y = 0; y < 2; ++y)
+		{
+			samples[x][y] = tonemapReinhard(samples[x][y]);
+		}
+	}
+
 	// 0 is already filled, just write it
 	IVec2 coord = quarterCoord * 2;
-	TEX(g_outTex, coord) = Vec4(samples[0][0], 0.0);
+	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(samples[0][0]), 0.0);
 
 	// For 2 use 4 samples
 	coord = quarterCoord * 2 + 1;
@@ -752,7 +764,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	appendSample(refDepth, sampleDepths[1][1], samples[1][1], sampleSum, weightSum);
 	appendSample(refDepth, sampleDepths[0][1], samples[0][1], sampleSum, weightSum);
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_outTex, coord) = Vec4(sampleSum, 0.0);
+	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(sampleSum), 0.0);
 	const Vec3 sample2 = sampleSum;
 	const F32 depth2 = refDepth;
 
@@ -765,7 +777,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	appendSample(refDepth, sampleDepths[1][0], samples[1][0], sampleSum, weightSum, 1.0);
 	appendSample(refDepth, depth2, sample2, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_outTex, coord) = Vec4(sampleSum, 0.0);
+	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(sampleSum), 0.0);
 
 	// For 4 use 3 samples
 	coord = quarterCoord * 2 + IVec2(0, 1);
@@ -776,7 +788,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	appendSample(refDepth, sampleDepths[0][1], samples[0][1], sampleSum, weightSum, 1.0);
 	appendSample(refDepth, depth2, sample2, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_outTex, coord) = Vec4(sampleSum, 0.0);
+	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(sampleSum), 0.0);
 }
 
 void checkerboardReconstruct(IVec2 svDispatchThreadId)

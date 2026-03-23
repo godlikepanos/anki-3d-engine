@@ -191,7 +191,7 @@ VertOut main(VertIn input)
 
 #		if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 		const Vec3 localPos = obj.m_position;
-		output.m_colorScale = reinhardTonemap(obj.m_diffuseColor);
+		output.m_colorScale = tonemapReinhard(obj.m_diffuseColor);
 		output.m_textureIndex = obj.m_isSpotLight;
 #		elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 		const Vec3 localPos = obj.m_sphereCenter;

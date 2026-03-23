@@ -173,14 +173,14 @@ public:
 		return m_grProgram.get();
 	}
 
-	Error load(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique = "", ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
+	Error load(CString filepath, ConstWeakArray<SubMutation> mutators = {}, CString technique = "", ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
 	{
-		return loadInternal(filepath, mutators, technique, shaderTypes, nullptr);
+		return loadInternal(filepath, mutators, technique, shaderTypes, nullptr, nullptr);
 	}
 
 protected:
 	Error loadInternal(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique, ShaderTypeBit shaderTypes,
-					   U32* shaderGroupHandleIndex);
+					   U32* shaderGroupHandleIndex, BufferView* shaderGroupHandlesBuff);
 
 private:
 	ShaderProgramPtr m_grProgram;
@@ -218,13 +218,19 @@ public:
 		return m_shaderGroupHandleIndex;
 	}
 
-	Error load(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique = "", ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
+	BufferView getShaderGroupHandlesBuffer() const
+	{
+		return m_shaderGroupHandlesBuff;
+	}
+
+	Error load(CString filepath, ConstWeakArray<SubMutation> mutators = {}, CString technique = "", ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
 	{
 		ANKI_ASSERT(!!(shaderTypes & ShaderTypeBit::kAllRayTracing));
-		return loadInternal(filepath, mutators, technique, shaderTypes, &m_shaderGroupHandleIndex);
+		return loadInternal(filepath, mutators, technique, shaderTypes, &m_shaderGroupHandleIndex, &m_shaderGroupHandlesBuff);
 	}
 
 private:
+	BufferView m_shaderGroupHandlesBuff;
 	U32 m_shaderGroupHandleIndex = kMaxU32;
 };
 

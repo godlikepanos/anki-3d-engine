@@ -176,7 +176,7 @@ GBufferPixelOut packGBuffer(GbufferInfo<T> g)
 
 	const T packedSubsurfaceMetallic = packUnorm2ToUnorm1(vector<T, 2>(g.m_subsurface, g.m_metallic));
 
-	const vector<T, 3> tonemappedEmission = reinhardTonemap(g.m_emission);
+	const vector<T, 3> tonemappedEmission = tonemapReinhard(g.m_emission);
 
 	output.m_rt0 = vector<T, 4>(g.m_diffuse, packedSubsurfaceMetallic);
 	output.m_rt1 = vector<T, 4>(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);
@@ -236,7 +236,7 @@ void unpackGBufferNoVelocity(vector<T, 4> rt0, vector<T, 4> rt1, vector<T, 4> rt
 
 	g.m_roughness = unpackRoughnessFromGBuffer(rt1);
 	g.m_f0 = vector<T, 3>(rt1.y, rt1.y, rt1.y);
-	g.m_emission = invertReinhardTonemap(vector<T, 3>(rt1.z, rt2.x, rt1.w));
+	g.m_emission = invertTonemapReinhard(vector<T, 3>(rt1.z, rt2.x, rt1.w));
 
 	g.m_normal = signedOctDecode(rt2.yzw);
 
