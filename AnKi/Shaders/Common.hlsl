@@ -199,7 +199,8 @@ U32 checkBab(TBab bab, U32 offset)
 #define CHECK_TEXTURE_2(componentCount) \
 	CHECK_TEXTURE_1(Vec##componentCount) \
 	CHECK_TEXTURE_1(UVec##componentCount) \
-	CHECK_TEXTURE_1(IVec##componentCount)
+	CHECK_TEXTURE_1(IVec##componentCount) \
+	CHECK_TEXTURE_1(HVec##componentCount)
 
 #define CHECK_TEXTURE_3() \
 	CHECK_TEXTURE_2(2) \
@@ -207,7 +208,8 @@ U32 checkBab(TBab bab, U32 offset)
 	CHECK_TEXTURE_2(4) \
 	CHECK_TEXTURE_1(F32) \
 	CHECK_TEXTURE_1(U32) \
-	CHECK_TEXTURE_1(I32)
+	CHECK_TEXTURE_1(I32) \
+	CHECK_TEXTURE_1(F16)
 
 CHECK_TEXTURE_3()
 

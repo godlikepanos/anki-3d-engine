@@ -648,7 +648,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		final = irradiance;
 	}
 
-	TEX(g_colorAndPdfTex, svDispatchThreadId.xy) = Vec4(final, 0.0);
+	TEX(g_colorAndPdfTex, svDispatchThreadId.xy) = Vec4(final, 1.0 - depth); // Revert depth for better precision
 	// TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = lerp(TEX(g_colorAndPdfTex, DispatchRaysIndex().xy), Vec4(final, 0.0), 0.05);
 }
 #endif
@@ -657,7 +657,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 // SpatialReconstruct                                                        =
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_SpatialReconstruct)
-Texture2D<Vec3> g_inTex : register(t0);
+Texture2D<Vec4> g_inTex : register(t0);
 Texture2D<F32> g_depthTex : register(t1);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
@@ -688,105 +688,101 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	const IVec2 quarterViewportSize = viewportSize / 2;
 	const IVec2 quarterCoord = svDispatchThreadId; // Coord in quarter rez
 
-	// This is the pattern we are trying to fill
-	// +---+---+
-	// | 0 | 1 |
-	// +---+---+
-	// | 3 | 2 |
-	// +---+---+
+	// This thread fills the 0,a,b,c pixels and this is the pattern we are trying to fill. The numbered pixels are known values. The a,b and c will
+	// need to be reconstructed. The - are pixels we don't care, another thread will fill those.
+	// +---+---+---+---+
+	// | 0 | a | 1 | - |
+	// +---+---+---+---+
+	// | b | c | - | - |
+	// +---+---+---+---+
+	// | 2 | - | 3 | - |
+	// +---+---+---+---+
 
 	// Gather the color of the neighbours and their depth
-	Vec3 samples[2][2];
-	F32 sampleDepths[2][2];
+	Vec4 samplesAndDepth[4];
 	F32 maxLuma = 0.0;
-	IVec2 maxLumaPixel = 0;
-	[unroll] for(U32 x = 0; x < 2; ++x)
+	I32 maxLumaPixel = 0;
+	[unroll] for(I32 i = 0; i < 4; ++i)
 	{
-		[unroll] for(U32 y = 0; y < 2; ++y)
+		const I32 x = i % 2;
+		const I32 y = i / 2;
+
+		IVec2 coord = quarterCoord + IVec2(x, y);
+		coord = min(coord, quarterViewportSize - 1);
+
+		const Vec4 color = TEX(g_inTex, coord);
+		const F32 depth = 1.0 - color.w;
+
+		samplesAndDepth[i] = Vec4(color.xyz, depth);
+
+		const F32 luma = computeLuminance(color.xyz);
+		if(luma > maxLuma)
 		{
-			IVec2 coord = quarterCoord + IVec2(x, y);
-			coord = min(coord, quarterViewportSize - 1);
-			samples[x][y] = TEX(g_inTex, coord);
-
-			const F32 luma = computeLuminance(samples[x][y]);
-			if(luma > maxLuma)
-			{
-				maxLuma = luma;
-				maxLumaPixel = IVec2(x, y);
-			}
-
-			coord = quarterCoord * 2 + IVec2(x, y) * 2;
-			coord = min(coord, quarterViewportSize - 1);
-			sampleDepths[x][y] = TEX(g_depthTex, coord);
+			maxLuma = luma;
+			maxLumaPixel = i;
 		}
 	}
 
 	// Remove fireflies
 	F32 avgLumaOf3 = 0.0;
-	[unroll] for(U32 x = 0; x < 2; ++x)
+	[unroll] for(I32 i = 0; i < 4; ++i)
 	{
-		[unroll] for(U32 y = 0; y < 2; ++y)
+		if(maxLumaPixel != i)
 		{
-			if(any(maxLumaPixel != IVec2(x, y)))
-			{
-				const F32 luma = computeLuminance(samples[x][y]);
-				avgLumaOf3 += luma / 3.0;
-			}
+			const F32 luma = computeLuminance(samplesAndDepth[i].xyz);
+			avgLumaOf3 += luma / 3.0;
 		}
 	}
 
 	if(maxLuma > avgLumaOf3 * 5.0)
 	{
 		// Firefly, tone it down
-		samples[maxLumaPixel.x][maxLumaPixel.y] *= avgLumaOf3 / maxLuma;
-	}
-
-	// Tonemap everything because bright pixels will contribute more even if they have less weight
-	[unroll] for(U32 x = 0; x < 2; ++x)
-	{
-		[unroll] for(U32 y = 0; y < 2; ++y)
-		{
-			samples[x][y] = tonemapReinhard(samples[x][y]);
-		}
+		samplesAndDepth[maxLumaPixel].xyz *= avgLumaOf3 / maxLuma;
 	}
 
 	// 0 is already filled, just write it
 	IVec2 coord = quarterCoord * 2;
-	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(samples[0][0]), 0.0);
+	TEX(g_outTex, coord) = Vec4(samplesAndDepth[0].xyz, 0.0);
 
-	// For 2 use 4 samples
+	// Tonemap everything because bright pixels will contribute more even if they have less weight
+	[unroll] for(I32 i = 0; i < 4; ++i)
+	{
+		samplesAndDepth[i].xyz = tonemapReinhard(samplesAndDepth[i].xyz);
+	}
+
+	// For c use 4 samples
 	coord = quarterCoord * 2 + 1;
 	F32 refDepth = TEX(g_depthTex, coord);
 	Vec3 sampleSum = 0.0;
 	F32 weightSum = 0.0;
-	appendSample(refDepth, sampleDepths[0][0], samples[0][0], sampleSum, weightSum);
-	appendSample(refDepth, sampleDepths[1][0], samples[1][0], sampleSum, weightSum);
-	appendSample(refDepth, sampleDepths[1][1], samples[1][1], sampleSum, weightSum);
-	appendSample(refDepth, sampleDepths[0][1], samples[0][1], sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepth[0].w, samplesAndDepth[0].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepth[1].w, samplesAndDepth[1].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepth[2].w, samplesAndDepth[2].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepth[3].w, samplesAndDepth[3].xyz, sampleSum, weightSum);
 	normalizeSum(weightSum, sampleSum);
 	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(sampleSum), 0.0);
-	const Vec3 sample2 = sampleSum;
-	const F32 depth2 = refDepth;
+	const Vec3 sampleC = sampleSum;
+	const F32 depthC = refDepth;
 
-	// For 1 use 3 samples
+	// For a use 3 samples
 	coord = quarterCoord * 2 + IVec2(1, 0);
 	refDepth = TEX(g_depthTex, coord);
 	sampleSum = 0.0;
 	weightSum = 0.0;
-	appendSample(refDepth, sampleDepths[0][0], samples[0][0], sampleSum, weightSum, 1.0);
-	appendSample(refDepth, sampleDepths[1][0], samples[1][0], sampleSum, weightSum, 1.0);
-	appendSample(refDepth, depth2, sample2, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
+	appendSample(refDepth, samplesAndDepth[0].w, samplesAndDepth[0].xyz, sampleSum, weightSum, 1.0);
+	appendSample(refDepth, samplesAndDepth[1].w, samplesAndDepth[1].xyz, sampleSum, weightSum, 1.0);
+	appendSample(refDepth, depthC, sampleC, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
 	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(sampleSum), 0.0);
 
-	// For 4 use 3 samples
+	// For b use 3 samples
 	coord = quarterCoord * 2 + IVec2(0, 1);
 	refDepth = TEX(g_depthTex, coord);
 	sampleSum = 0.0;
 	weightSum = 0.0;
-	appendSample(refDepth, sampleDepths[0][0], samples[0][0], sampleSum, weightSum, 1.0);
-	appendSample(refDepth, sampleDepths[0][1], samples[0][1], sampleSum, weightSum, 1.0);
-	appendSample(refDepth, depth2, sample2, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
+	appendSample(refDepth, samplesAndDepth[0].w, samplesAndDepth[0].xyz, sampleSum, weightSum, 1.0);
+	appendSample(refDepth, samplesAndDepth[2].w, samplesAndDepth[2].xyz, sampleSum, weightSum, 1.0);
+	appendSample(refDepth, depthC, sampleC, sampleSum, weightSum, 0.5); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
 	TEX(g_outTex, coord) = Vec4(invertTonemapReinhard(sampleSum), 0.0);
 }
@@ -809,8 +805,10 @@ void checkerboardReconstruct(IVec2 svDispatchThreadId)
 		const IVec2 sampleCoord = toBeFilledCoord + offsets[i];
 		if(all(sampleCoord >= 0) && all(sampleCoord < viewportSize))
 		{
-			const F32 sampleDepth = TEX(g_depthTex, sampleCoord);
-			const Vec3 sample = TEX(g_inTex, IVec2(sampleCoord.x / 2, sampleCoord.y));
+			const Vec4 color = TEX(g_inTex, IVec2(sampleCoord.x / 2, sampleCoord.y));
+
+			const F32 sampleDepth = 1.0 - color.w;
+			const Vec3 sample = color.xyz;
 
 			appendSample(refDepth, sampleDepth, sample, toBeFilledColor, weightSum);
 

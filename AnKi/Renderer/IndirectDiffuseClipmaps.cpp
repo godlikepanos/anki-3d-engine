@@ -175,7 +175,7 @@ Error IndirectDiffuseClipmaps::init()
 
 	m_lowRezRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x / 2,
 																   getRenderer().getInternalResolution().y / (!g_cvarRenderIdcApplyHighQuality + 1),
-																   getRenderer().getHdrFormat(), "IndirectDiffuseClipmap: Apply rez");
+																   Format::kR16G16B16A16_Sfloat, "IndirectDiffuseClipmap: Apply rez");
 	m_lowRezRtDesc.bake();
 
 	m_fullRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
