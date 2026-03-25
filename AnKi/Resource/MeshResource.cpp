@@ -210,6 +210,10 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	GrManager& gr = GrManager::getSingleton();
 	TransferGpuAllocator& transferAlloc = TransferGpuAllocator::getSingleton();
 
+	// With GFXR enabled we can't do fwrite directly to mapped VkBuffer. So we need to first fwrite to a CPU buffer and copy that to the mapped
+	// VkBuffer
+	const Bool bGfxreconstruct = gr.getDeviceCapabilities().m_gfxReconstruct;
+
 	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1 + 3)> handles;
 	U32 handleCount = 0;
 
@@ -235,10 +239,25 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
 
 			ANKI_CHECK(transferAlloc.allocate(lod.m_indexBufferAllocationToken.getAllocatedSize(), handle));
-			void* data = handle.getMappedMemory();
-			ANKI_ASSERT(data);
 
-			ANKI_CHECK(loader.storeIndexBuffer(lodIdx, data, handle.getRange()));
+			void* dest;
+			ResourceDynamicArrayLarge<U8> cpuTransientData;
+			if(bGfxreconstruct)
+			{
+				cpuTransientData.resize(handle.getRange());
+				dest = cpuTransientData.getBegin();
+			}
+			else
+			{
+				dest = handle.getMappedMemory();
+			}
+
+			ANKI_CHECK(loader.storeIndexBuffer(lodIdx, dest, handle.getRange()));
+
+			if(bGfxreconstruct)
+			{
+				memcpy(handle.getMappedMemory(), cpuTransientData.getBegin(), handle.getRange());
+			}
 
 			cmdb->copyBufferToBuffer(handle, lod.m_indexBufferAllocationToken);
 		}
@@ -254,11 +273,26 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
 
 			ANKI_CHECK(transferAlloc.allocate(lod.m_vertexBuffersAllocationToken[stream].getAllocatedSize(), handle));
-			U8* data = static_cast<U8*>(handle.getMappedMemory());
-			ANKI_ASSERT(data);
+
+			void* dest;
+			ResourceDynamicArrayLarge<U8> cpuTransientData;
+			if(bGfxreconstruct)
+			{
+				cpuTransientData.resize(handle.getRange());
+				dest = cpuTransientData.getBegin();
+			}
+			else
+			{
+				dest = handle.getMappedMemory();
+			}
 
 			// Load to staging
-			ANKI_CHECK(loader.storeVertexBuffer(lodIdx, U32(stream), data, handle.getRange()));
+			ANKI_CHECK(loader.storeVertexBuffer(lodIdx, U32(stream), dest, handle.getRange()));
+
+			if(bGfxreconstruct)
+			{
+				memcpy(handle.getMappedMemory(), cpuTransientData.getBegin(), handle.getRange());
+			}
 
 			// Copy
 			cmdb->copyBufferToBuffer(handle, lod.m_vertexBuffersAllocationToken[stream]);
@@ -270,7 +304,25 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
 			const PtrSize primitivesSize = lod.m_meshletIndices.getAllocatedSize();
 			ANKI_CHECK(transferAlloc.allocate(primitivesSize, handle));
-			ANKI_CHECK(loader.storeMeshletIndicesBuffer(lodIdx, handle.getMappedMemory(), primitivesSize));
+
+			void* dest;
+			ResourceDynamicArrayLarge<U8> cpuTransientData;
+			if(bGfxreconstruct)
+			{
+				cpuTransientData.resize(handle.getRange());
+				dest = cpuTransientData.getBegin();
+			}
+			else
+			{
+				dest = handle.getMappedMemory();
+			}
+
+			ANKI_CHECK(loader.storeMeshletIndicesBuffer(lodIdx, dest, primitivesSize));
+
+			if(bGfxreconstruct)
+			{
+				memcpy(handle.getMappedMemory(), cpuTransientData.getBegin(), handle.getRange());
+			}
 
 			cmdb->copyBufferToBuffer(handle, lod.m_meshletIndices);
 

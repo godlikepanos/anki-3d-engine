@@ -208,6 +208,8 @@ public:
 	Bool m_barycentrics : 1 = false;
 
 	Bool m_workGraphs : 1 = false;
+
+	Bool m_gfxReconstruct : 1 = false; // True if running with GFXR enabled
 };
 ANKI_END_PACKED_STRUCT
 

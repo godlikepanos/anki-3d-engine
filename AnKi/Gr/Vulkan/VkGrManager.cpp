@@ -602,6 +602,29 @@ Error GrManagerImpl::initInstance()
 		m_physicalDevice = devs[chosenPhysDevIdx].m_pdev;
 	}
 
+	// Find if GFXR is enabled
+	{
+		U32 toolCount;
+		vkGetPhysicalDeviceToolPropertiesEXT(m_physicalDevice, &toolCount, nullptr);
+
+		if(toolCount)
+		{
+			GrDynamicArray<VkPhysicalDeviceToolPropertiesEXT> toolProps;
+			toolProps.resize(toolCount);
+
+			vkGetPhysicalDeviceToolPropertiesEXT(m_physicalDevice, &toolCount, toolProps.getBegin());
+
+			for(U32 i = 0; i < toolCount; ++i)
+			{
+				if(CString(toolProps[i].layer).find("gfxreconstruct") != CString::kNpos)
+				{
+					m_capabilities.m_gfxReconstruct = true;
+					ANKI_GR_LOGI("gfxreconstruct is enabled");
+				}
+			}
+		}
+	}
+
 	VkPhysicalDeviceProperties2 props2 = {};
 	props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	vkGetPhysicalDeviceProperties2(m_physicalDevice, &props2);
