@@ -20,7 +20,6 @@
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wimplicit-int-conversion"
 #	pragma GCC diagnostic ignored "-Wambiguous-reversed-operator"
-#	define __EMULATE_UUID
 #	include <ThirdParty/Dxc/Include/WinAdapter.h>
 #	pragma GCC diagnostic pop
 #endif
@@ -43,7 +42,7 @@ static Mutex g_dxcLibMtx;
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			errorMessage.sprintf("DXC function failed (HRESULT: %ld): %s", rez, #x); \
+			errorMessage.sprintf("DXC function failed (HRESULT: %d): %s", rez, #x); \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)
@@ -179,7 +178,7 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	if(spirv)
 	{
 		dxcArgs.push_back(L"-spirv");
-		dxcArgs.push_back(L"-fspv-target-env=vulkan1.1spirv1.4");
+		dxcArgs.push_back(L"-fspv-target-env=universal1.5");
 		// dxcArgs.push_back(L"-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
 
 		// Shift the bindings in order to identify the registers when doing reflection
