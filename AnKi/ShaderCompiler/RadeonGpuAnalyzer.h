@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup shader_compiler
-/// @{
-
-/// RGA output.
+// RGA output.
 class RgaOutput
 {
 public:
@@ -21,14 +18,15 @@ public:
 	U32 m_sgprCount = 0;
 	U32 m_isaSize = 0;
 
+	ShaderCompilerString m_isa;
+
 	String toString() const
 	{
 		return String().sprintf("VGPRs %u SGPRs %u ISA size %u", m_vgprCount, m_sgprCount, m_isaSize);
 	}
 };
 
-/// Run the mali offline compiler and get some info back.
+// Run the radeon GPU analyzer and get a few things back.
 Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out);
-/// @}
 
 } // end namespace anki

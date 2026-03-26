@@ -59,18 +59,23 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 	ShaderCompilerString analysisFilename;
 	analysisFilename.sprintf("%s/AnKiRgaOutAnalysis_%u.csv", tmpDir.cstr(), rand);
 
+	ShaderCompilerString isaFilename;
+	isaFilename.sprintf("%s/AnKiAmdIsa_%u.txt", tmpDir.cstr(), rand);
+
 	ShaderCompilerString stageStr = "--";
 	stageStr += getPipelineStageString(shaderType);
 
-	Array<CString, 8> args;
+	Array<CString, 10> args;
 	args[0] = "-s";
 	args[1] = "vk-spv-offline";
 	args[2] = "-c";
 	args[3] = kAmdAsic;
 	args[4] = "-a";
 	args[5] = analysisFilename;
-	args[6] = stageStr;
-	args[7] = spvFilename;
+	args[6] = "--isa";
+	args[7] = isaFilename;
+	args[8] = stageStr;
+	args[9] = spvFilename;
 
 	I32 exitCode;
 #if ANKI_OS_LINUX
@@ -102,6 +107,17 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 	outFilename.sprintf("%s/%s_AnKiRgaOutAnalysis_%u_%s.csv", tmpDir.cstr(), kAmdAsic, rand, getPipelineStageString(shaderType).cstr());
 
 	CleanupFile rgaFileCleanup(outFilename);
+
+	ShaderCompilerString isaOutFilename;
+	isaOutFilename.sprintf("%s/%s_AnKiAmdIsa_%u_%s.txt", tmpDir.cstr(), kAmdAsic, rand, getPipelineStageString(shaderType).cstr());
+
+	CleanupFile isaFileCleanup(isaOutFilename);
+
+	// Read the ISA
+	File isaFile;
+	ANKI_CHECK(isaFile.open(isaOutFilename, FileOpenFlag::kRead));
+	ANKI_CHECK(isaFile.readAllText(out.m_isa));
+	isaFile.close();
 
 	// Read the file
 	File analysisFile;

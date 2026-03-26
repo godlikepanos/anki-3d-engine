@@ -309,7 +309,8 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 			}
 		}
 
-		if(options.m_amdStats && !visitErr)
+		ShaderCompilerString amdIsa;
+		if((options.m_amdStats || options.m_writeAmdIsa) && !visitErr)
 		{
 			if(shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute
 			   || shaderType == ShaderType::kMesh)
@@ -326,6 +327,8 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 					lines.pushBackSprintf("AMD: %s  \n", rgaOut.toString().cstr());
 					rgaAverages[shaderType] = rgaAverages[shaderType] + rgaOut;
 					rgaMaxes[shaderType] = rgaMaxes[shaderType].max(rgaOut);
+
+					amdIsa = std::move(rgaOut.m_isa);
 				}
 			}
 		}
@@ -394,6 +397,12 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 			}
 
 			spvTextDestroy(text);
+		}
+
+		if(options.m_writeAmdIsa)
+		{
+			lines.pushBack("### AMD ISA\n");
+			lines.pushBackSprintf("```\n%s\n```\n", amdIsa.cstr());
 		}
 
 		++count;

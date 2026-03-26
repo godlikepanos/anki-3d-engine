@@ -16,6 +16,7 @@ class ShaderDumpOptions
 public:
 	Bool m_writeGlsl = true;
 	Bool m_writeSpirv = false;
+	Bool m_writeAmdIsa = false;
 	Bool m_maliStats = false;
 	Bool m_amdStats = false;
 };

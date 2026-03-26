@@ -14,14 +14,15 @@ using namespace anki;
 static const char* kUsage = R"(Dump the shader binary to stdout
 Usage: %s [options] input_shader_program_binary
 Options:
--stats <0|1>  : Print performance statistics for all shaders. Default 0
--binary <0|1> : Print the whole shader program binary. Default 1
--glsl <0|1>   : Print GLSL. Default 1
--spirv <0|1>  : Print SPIR-V. Default 0
--v            : Verbose log
+-stats <0|1>   : Print performance statistics for all shaders. Default 0
+-binary <0|1>  : Print the whole shader program binary. Default 1
+-glsl <0|1>    : Print GLSL. Default 1
+-spirv <0|1>   : Print SPIR-V. Default 0
+-amd-isa <0|1> : Print AMD ISA. Default 0
+-v             : Verbose log
 )";
 
-static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv, String& filename)
+static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv, Bool& amdIsa, String& filename)
 {
 	// Parse config
 	if(argv.getSize() < 2)
@@ -33,6 +34,7 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 	dumpBinary = true;
 	glsl = true;
 	spirv = false;
+	amdIsa = false;
 	filename = argv[argv.getSize() - 1];
 
 	for(U32 i = 1; i < argv.getSize() - 1; i++)
@@ -121,13 +123,34 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 				return Error::kUserData;
 			}
 		}
+		else if(CString(argv[i]) == "-amd-isa")
+		{
+			++i;
+			if(i >= argv.getSize())
+			{
+				return Error::kUserData;
+			}
+
+			if(CString(argv[i]) == "1")
+			{
+				amdIsa = true;
+			}
+			else if(CString(argv[i]) == "0")
+			{
+				amdIsa = false;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
+		}
 		else if(CString(argv[i]) == "-v")
 		{
 			Logger::getSingleton().enableVerbosity(true);
 		}
 	}
 
-	if(spirv || glsl)
+	if(spirv || glsl || amdIsa)
 	{
 		dumpBinary = true;
 	}
@@ -135,7 +158,7 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 	return Error::kNone;
 }
 
-Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spirv)
+Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spirv, Bool amdIsa)
 {
 	ShaderBinary* binary;
 	ANKI_CHECK(deserializeShaderBinaryFromFile(fname, binary, ShaderCompilerMemoryPool::getSingleton()));
@@ -156,6 +179,7 @@ Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spir
 		ShaderDumpOptions options;
 		options.m_writeGlsl = glsl;
 		options.m_writeSpirv = spirv;
+		options.m_writeAmdIsa = amdIsa;
 		options.m_maliStats = options.m_amdStats = bDumpStats;
 
 		ShaderCompilerString txt;
@@ -188,13 +212,14 @@ int myMain(int argc, char** argv)
 	Bool dumpBinary;
 	Bool glsl;
 	Bool spirv;
-	if(parseCommandLineArgs(WeakArray<char*>(argv, argc), dumpStats, dumpBinary, glsl, spirv, filename))
+	Bool amdIsa;
+	if(parseCommandLineArgs(WeakArray<char*>(argv, argc), dumpStats, dumpBinary, glsl, spirv, amdIsa, filename))
 	{
 		ANKI_LOGE(kUsage, argv[0]);
 		return 1;
 	}
 
-	const Error err = dump(filename, dumpStats, dumpBinary, glsl, spirv);
+	const Error err = dump(filename, dumpStats, dumpBinary, glsl, spirv, amdIsa);
 	if(err)
 	{
 		ANKI_LOGE("Can't dump due to an error. Bye");

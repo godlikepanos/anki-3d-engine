@@ -178,7 +178,7 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	if(spirv)
 	{
 		dxcArgs.push_back(L"-spirv");
-		dxcArgs.push_back(L"-fspv-target-env=universal1.5");
+		dxcArgs.push_back(L"-fspv-target-env=vulkan1.3");
 		// dxcArgs.push_back(L"-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
 
 		// Shift the bindings in order to identify the registers when doing reflection
