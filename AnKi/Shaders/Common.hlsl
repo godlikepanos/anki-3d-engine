@@ -16,6 +16,8 @@
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
+#define TVec vector
+
 // Common constants
 constexpr F32 kEpsilonF32 = 0.000001f;
 constexpr F16 kEpsilonF16 = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee

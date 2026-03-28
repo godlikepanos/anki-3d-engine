@@ -449,26 +449,27 @@ Bool skipOutOfBoundsInvocations(UVec2 groupSize, UVec2 threadCount, UVec2 svDisp
 }
 
 // Create a matrix from some direction.
-Mat3 rotationFromDirection(Vec3 zAxis)
+template<typename T>
+TMat3<T> rotationFromDirection(TVec<T, 3> zAxis)
 {
 #if 0
-	const Vec3 z = zAxis;
-	const Bool alignsWithXBasis = abs(z.x - 1.0) <= kEpsilonF32; // aka z == Vec3(1.0, 0.0, 0.0)
-	Vec3 x = (alignsWithXBasis) ? Vec3(0.0, 0.0, 1.0) : Vec3(1.0, 0.0, 0.0);
-	const Vec3 y = normalize(cross(x, z));
+	const TVec<T, 3> z = zAxis;
+	const Bool alignsWithXBasis = abs(z.x - T(1)) <= getEpsilon<T>(); // aka z == Vec3(1.0, 0.0, 0.0)
+	TVec<T, 3> x = (alignsWithXBasis) ? TVec<T, 3>(0.0, 0.0, 1.0) : TVec<T, 3>(1.0, 0.0, 0.0);
+	const TVec<T, 3> y = normalize(cross(x, z));
 	x = normalize(cross(z, y));
 #else
 	// http://jcgt.org/published/0006/01/01/
-	const Vec3 z = zAxis;
-	const F32 sign = (z.z >= 0.0) ? 1.0 : -1.0;
-	const F32 a = -1.0 / (sign + z.z);
-	const F32 b = z.x * z.y * a;
+	const TVec<T, 3> z = zAxis;
+	const T sign = (z.z >= T(0)) ? T(1) : T(-1);
+	const T a = T(-1) / (sign + z.z);
+	const T b = z.x * z.y * a;
 
-	const Vec3 x = Vec3(1.0 + sign * a * pow(z.x, 2.0), sign * b, -sign * z.x);
-	const Vec3 y = Vec3(b, sign + a * pow(z.y, 2.0), -z.y);
+	const TVec<T, 3> x = TVec<T, 3>(T(1) + sign * a * pow(z.x, T(2)), sign * b, -sign * z.x);
+	const TVec<T, 3> y = TVec<T, 3>(b, sign + a * pow(z.y, T(2)), -z.y);
 #endif
 
-	Mat3 o;
+	TMat3<T> o;
 	o.setColumns(x, y, z);
 	return o;
 }

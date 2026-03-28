@@ -180,7 +180,7 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 
 	// Transform the meshlet to world space
 	const Vec3 worldSphereCenter = mul(worldTransform, Vec4((meshletBoundingVol.m_aabbMin + meshletBoundingVol.m_aabbMax) / 2.0, 1.0));
-	const Vec3 scaleSq = extractScaleSquared(worldTransform);
+	const Vec3 scaleSq = worldTransform.extractScaleSquared();
 	const F32 worldSphereRadius = meshletBoundingVol.m_sphereRadius * sqrt(max3(scaleSq));
 
 	// Frustum test
@@ -223,7 +223,7 @@ Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume mesh
 		Vec3 coneDir = coneDirAndAng.xyz;
 		coneDir = mul(worldTransform, Vec4(coneDir, 0.0));
 
-		const Vec3 scale = extractScale(worldTransform);
+		const Vec3 scale = worldTransform.extractScale();
 		const F32 radius = meshletBoundingVol.m_sphereRadius * max3(scale);
 
 		// Using from meshoptimizer: dot(center - camera_position, cone_axis) >= cone_cutoff * length(center - camera_position) + radius

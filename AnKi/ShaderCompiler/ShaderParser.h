@@ -132,7 +132,7 @@ private:
 		ShaderCompilerDynamicArray<MutatorValue> m_partialMutation;
 	};
 
-	static constexpr U32 kMaxIncludeDepth = 8;
+	static constexpr U32 kMaxIncludeDepth = 16;
 
 	ShaderCompilerString m_fname;
 	ShaderCompilerFilesystemInterface* m_fsystem = nullptr;

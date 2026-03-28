@@ -60,7 +60,7 @@ F32 computeFalloff(F32 len)
 
 // Based on XeGTAO
 template<typename T>
-Vec4 doWork(Vec2 coord)
+TVec<T, 4> doWork(Vec2 coord)
 {
 	const Vec2 uv = (coord + 0.5) / g_consts.m_viewportSizef;
 
@@ -70,17 +70,17 @@ Vec4 doWork(Vec2 coord)
 	// Move center pixel slightly towards camera to avoid imprecision artifacts due to depth buffer imprecision
 	posVS.z *= 0.99999;
 
-	const vector<T, 3> viewVec = normalize(-posVS);
+	const TVec<T, 3> viewVec = normalize(-posVS);
 
 	// Get noise
 #	if 0
-	const vector<T, 2> noise2 = animateBlueNoise(g_noiseTex[UVec2(coord) % 64].xyz, g_consts.m_frameCount).yx;
+	const TVec<T, 2> noise2 = animateBlueNoise(g_noiseTex[UVec2(coord) % 64].xyz, g_consts.m_frameCount).yx;
 #	else
-	const vector<T, 2> noise2 = spatioTemporalNoise(coord, g_consts.m_frameCount);
+	const TVec<T, 2> noise2 = spatioTemporalNoise(coord, g_consts.m_frameCount);
 #	endif
 
 	const Vec3 worldNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_linearAnyClampSampler, uv, 0.0));
-	const vector<T, 3> viewspaceNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
+	const TVec<T, 3> viewspaceNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
 
 	const T falloffFrom = g_consts.m_radius * (T(1) - T(kFalloffRange));
 	const T falloffMul = T(-1) / T(kFalloffRange);
@@ -93,7 +93,7 @@ Vec4 doWork(Vec2 coord)
 	const F32 screenspaceRadius = length(projSphereLimit2 - ndc) / 2.0 * g_consts.m_viewportSizef;
 
 	T visibility = 0.0;
-	vector<T, 3> bentNormal = 0.0;
+	TVec<T, 3> bentNormal = 0.0;
 	const T sliceCountf = g_consts.m_sliceCountf;
 	const T angleStep = kPi / sliceCountf;
 
@@ -113,20 +113,20 @@ Vec4 doWork(Vec2 coord)
 		omega *= screenspaceRadius;
 
 		// line 8 from the paper
-		const vector<T, 3> directionVec = vector<T, 3>(cosPhi, sinPhi, 0.0);
+		const TVec<T, 3> directionVec = TVec<T, 3>(cosPhi, sinPhi, 0.0);
 
 		// line 9 from the paper
-		const vector<T, 3> orthoDirectionVec = directionVec - (dot(directionVec, viewVec) * viewVec);
+		const TVec<T, 3> orthoDirectionVec = directionVec - (dot(directionVec, viewVec) * viewVec);
 
 		// line 10 from the paper
 		// axisVec is orthogonal to directionVec and viewVec, used to define projectedNormal
-		const vector<T, 3> axisVec = normalize(cross(orthoDirectionVec, viewVec));
+		const TVec<T, 3> axisVec = normalize(cross(orthoDirectionVec, viewVec));
 
 		// alternative line 9 from the paper
 		// float3 orthoDirectionVec = cross( viewVec, axisVec );
 
 		// line 11 from the paper
-		const vector<T, 3> projectedNormalVec = viewspaceNormal - axisVec * dot(viewspaceNormal, axisVec);
+		const TVec<T, 3> projectedNormalVec = viewspaceNormal - axisVec * dot(viewspaceNormal, axisVec);
 
 		// line 13 from the paper
 		const T signNorm = sign(dot(orthoDirectionVec, projectedNormalVec));
@@ -179,8 +179,8 @@ Vec4 doWork(Vec2 coord)
 			const F32 sampleDist1 = length(sampleDelta1);
 
 			// approx lines 23, 24 from the paper, unrolled
-			vector<T, 3> sampleHorizonVec0 = vector<T, 3>(sampleDelta0 / sampleDist0);
-			vector<T, 3> sampleHorizonVec1 = vector<T, 3>(sampleDelta1 / sampleDist1);
+			TVec<T, 3> sampleHorizonVec0 = TVec<T, 3>(sampleDelta0 / sampleDist0);
+			TVec<T, 3> sampleHorizonVec1 = TVec<T, 3>(sampleDelta1 / sampleDist1);
 
 			// any sample out of radius should be discarded - also use fallof range for smooth transitions; this is a modified idea from "4.3
 			// Implementation details, Bounding the sampling area"
@@ -218,7 +218,7 @@ Vec4 doWork(Vec2 coord)
 			(T(6) * sin(h0 - n) - sin(T(3) * h0 - n) + T(6) * sin(h1 - n) - sin(T(3) * h1 - n) + T(16) * sin(n) - T(3) * (sin(h0 + n) + sin(h1 + n)))
 			/ T(12);
 		const T t1 = (-cos(T(3) * h0 - n) - cos(T(3) * h1 - n) + T(8) * cos(n) - T(3) * (cos(h0 + n) + cos(h1 + n))) / T(12);
-		vector<T, 3> localBentNormal = vector<T, 3>(directionVec.x * t0, directionVec.y * t0, F32(t1));
+		TVec<T, 3> localBentNormal = TVec<T, 3>(directionVec.x * t0, directionVec.y * t0, t1);
 		localBentNormal *= projectedNormalVecLength;
 		bentNormal += localBentNormal;
 	}
@@ -227,11 +227,10 @@ Vec4 doWork(Vec2 coord)
 	visibility = pow(visibility, T(g_consts.m_ssaoPower));
 
 	bentNormal = normalize(bentNormal);
-	Vec3 bentNormalF32 = bentNormal;
-	bentNormalF32 = mul(rotationFromDirection(viewVec), bentNormal); // Rotate towards the view
-	bentNormalF32 = mul(g_consts.m_viewToWorldMat, Vec4(bentNormalF32, 0.0));
+	bentNormal = mul(rotationFromDirection<T>(viewVec), bentNormal); // Rotate towards the view
+	bentNormal = mul(g_consts.m_viewToWorldMat, Vec4(bentNormal, 0.0));
 
-	return vector<T, 4>(bentNormalF32, visibility);
+	return TVec<T, 4>(bentNormal, visibility);
 }
 
 #	if ANKI_COMPUTE_SHADER
