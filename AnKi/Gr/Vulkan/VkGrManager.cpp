@@ -602,7 +602,7 @@ Error GrManagerImpl::initInstance()
 		m_physicalDevice = devs[chosenPhysDevIdx].m_pdev;
 	}
 
-	// Find if GFXR is enabled
+	// Find if GFXR or RenderDoc are enabled
 	{
 		U32 toolCount;
 		vkGetPhysicalDeviceToolPropertiesEXT(m_physicalDevice, &toolCount, nullptr);
@@ -614,12 +614,23 @@ Error GrManagerImpl::initInstance()
 
 			vkGetPhysicalDeviceToolPropertiesEXT(m_physicalDevice, &toolCount, toolProps.getBegin());
 
+			ANKI_GR_LOGV("Found the following %u Vulkan tools:", toolCount);
 			for(U32 i = 0; i < toolCount; ++i)
 			{
-				if(CString(toolProps[i].layer).find("gfxreconstruct") != CString::kNpos)
+				ANKI_GR_LOGV("\t %s", toolProps[i].name);
+			}
+
+			for(U32 i = 0; i < toolCount; ++i)
+			{
+				if(!CString(toolProps[i].layer).isEmpty() && CString(toolProps[i].layer).find("gfxreconstruct") != CString::kNpos)
 				{
 					m_capabilities.m_gfxReconstruct = true;
 					ANKI_GR_LOGI("gfxreconstruct is enabled");
+				}
+
+				if(!CString(toolProps[i].name).isEmpty() && CString(toolProps[i].name).find("RenderDoc") != CString::kNpos && !g_cvarGrDebugMarkers)
+				{
+					ANKI_GR_LOGE("Running in RenderDoc but debug markers are disabled");
 				}
 			}
 		}

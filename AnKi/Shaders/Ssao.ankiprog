@@ -5,13 +5,12 @@
 
 // Ground truth ambiend occlusion
 
-#pragma anki mutator SPATIAL_DENOISE_SAMPLE_COUNT 3 5 7 9
-#pragma anki mutator DENOISING_QUARTER_RESOLUTION 0 1
+#pragma anki mutator SSAO_16BIT 0 1
+#pragma anki mutator SSAO_QUARTER_REZ 0 1
 
-#pragma anki technique Ssao vert pixel comp mutators
-#pragma anki technique SsaoSpatialDenoiseHorizontal vert pixel comp
-#pragma anki technique SsaoSpatialDenoiseVertical vert pixel comp
-#pragma anki technique SsaoTemporalDenoise vert pixel comp
+#pragma anki technique Ssao vert pixel comp mutators SSAO_16BIT
+#pragma anki technique SsaoTemporalDenoise vert pixel comp mutators SSAO_QUARTER_REZ
+#pragma anki technique SsaoSpatialDenoise vert pixel comp mutators
 
 #include <AnKi/Shaders/QuadVert.hlsl>
 
@@ -33,7 +32,7 @@ SamplerState g_trilinearRepeatSampler : register(s0);
 SamplerState g_linearAnyClampSampler : register(s1);
 
 #	if ANKI_COMPUTE_SHADER
-RWTexture2D<Vec4> g_bentNormalsAndSsaoStorageTex : register(u0);
+RWTexture2D<Vec4> g_bentNormalsAndSsaoStorageUav : register(u0);
 #	endif
 
 ConstantBuffer<SsaoConstants> g_consts : register(b0);
@@ -51,11 +50,6 @@ Vec4 project(Vec4 p)
 {
 	return cheapPerspectiveProjection(g_consts.m_projectionMat00, g_consts.m_projectionMat11, g_consts.m_projectionMat22, g_consts.m_projectionMat23,
 									  p);
-}
-
-F32 computeFalloff(F32 len)
-{
-	return sqrt(1.0 - min(1.0, len / F32(g_consts.m_radius)));
 }
 
 // Based on XeGTAO
@@ -82,9 +76,9 @@ TVec<T, 4> doWork(Vec2 coord)
 	const Vec3 worldNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_linearAnyClampSampler, uv, 0.0));
 	const TVec<T, 3> viewspaceNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
 
-	const T falloffFrom = g_consts.m_radius * (T(1) - T(kFalloffRange));
-	const T falloffMul = T(-1) / T(kFalloffRange);
-	const T falloffAdd = falloffFrom / T(kFalloffRange) + T(1);
+	const F32 falloffFrom = g_consts.m_radius * (1.0 - kFalloffRange);
+	const F32 falloffMul = -1.0 / kFalloffRange;
+	const F32 falloffAdd = falloffFrom / kFalloffRange + 1.0;
 
 	// Find the projected radius
 	const Vec3 sphereLimit = posVS + Vec3(g_consts.m_radius, 0.0, 0.0);
@@ -237,13 +231,21 @@ TVec<T, 4> doWork(Vec2 coord)
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	g_bentNormalsAndSsaoStorageTex[coord] = doWork<F32>(coord);
+#		if SSAO_16BIT
+	g_bentNormalsAndSsaoStorageUav[coord] = doWork<F16>(coord);
+#		else
+	g_bentNormalsAndSsaoStorageUav[coord] = doWork<F32>(coord);
+#		endif
 }
 #	else
 Vec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 coord = floor(input.m_svPosition.xy);
+#		if SSAO_16BIT
+	return doWork<F16>(coord);
+#		else
 	return doWork<F32>(coord);
+#		endif
 }
 #	endif
 #endif
@@ -267,7 +269,7 @@ Texture2D<Vec4> g_historyLengthTex : register(t3);
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
 
 #	if ANKI_COMPUTE_SHADER
-RWTexture2D<Vec4> g_bentNormalsAndSsaoStorageTex : register(u0);
+RWTexture2D<Vec4> g_bentNormalsAndSsaoStorageUav : register(u0);
 #	endif
 
 HVec4 doWork(Vec2 coord)
@@ -279,13 +281,13 @@ HVec4 doWork(Vec2 coord)
 	const F16 minBlendFactor = 0.1;
 	const F16 maxBlendFactor = 0.9;
 
-	const F16 historyLen = g_historyLengthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x * kMaxHistoryLength;
+	const F16 historyLen = g_historyLengthTex[coord].x * kMaxHistoryLength;
 
 	F16 blendFactor = min(1.0, historyLen / 1.0);
 	blendFactor = lerp(maxBlendFactor, minBlendFactor, blendFactor);
 
 	Vec2 uv2 = uv;
-#	if !DENOISING_QUARTER_RESOLUTION
+#	if SSAO_QUARTER_REZ
 	uv2 /= 2.0;
 #	endif
 	HVec4 outColor = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv2, 0.0);
@@ -296,7 +298,7 @@ HVec4 doWork(Vec2 coord)
 	}
 	else
 	{
-		const Vec2 mv = g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0);
+		const Vec2 mv = g_motionVectorsTex[coord];
 		const Vec2 historyUv =
 			uv + mv
 			+ (g_globalRendererConsts.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConsts.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
@@ -314,7 +316,7 @@ HVec4 doWork(Vec2 coord)
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	g_bentNormalsAndSsaoStorageTex[coord] = doWork(coord);
+	g_bentNormalsAndSsaoStorageUav[coord] = doWork(coord);
 }
 #	else
 Vec4 main(VertOut input) : SV_TARGET0
@@ -328,28 +330,37 @@ Vec4 main(VertOut input) : SV_TARGET0
 // ===========================================================================
 // SSAO spatial denoise                                                      =
 // ===========================================================================
-#if(ANKI_TECHNIQUE_SsaoSpatialDenoiseHorizontal || ANKI_TECHNIQUE_SsaoSpatialDenoiseVertical) && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
+#if ANKI_TECHNIQUE_SsaoSpatialDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/BilateralFilter.hlsl>
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
-#	include <AnKi/Shaders/BilateralFilter.hlsl>
 
 SamplerState g_linearAnyClampSampler : register(s0);
 Texture2D<Vec4> g_bentNormalsAndSsaoTex : register(t0);
 Texture2D<Vec4> g_depthTex : register(t1);
 
 #	if ANKI_COMPUTE_SHADER
-RWTexture2D<Vec4> g_bentNormalsAndSsaoStorageTex : register(u0);
+RWTexture2D<Vec4> g_bentNormalsAndSsaoStorageUav : register(u0);
 #	endif
+
+struct Consts
+{
+	I32 m_halfSampleCount;
+	F32 m_padding0;
+	F32 m_padding1;
+	F32 m_padding2;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 F32 depthWeight(F32 refDepth, F32 sampleDepth)
 {
 	return calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
 }
 
-HVec4 doWork(Vec2 coord, Bool horizontal)
+HVec4 doWork(IVec2 coord)
 {
-	Vec2 viewport;
+	IVec2 viewport;
 	g_bentNormalsAndSsaoTex.GetDimensions(viewport.x, viewport.y);
 
 	// Sample ref
@@ -359,29 +370,31 @@ HVec4 doWork(Vec2 coord, Bool horizontal)
 		return 0.0;
 	}
 
-	F32 weightSum = depthWeight(0.0, 0.0); // Highest weight that this function can give
+	F16 weightSum = depthWeight(0.0, 0.0); // Highest weight that this function can give
 
 	HVec4 bentNormalAndSsao = g_bentNormalsAndSsaoTex[coord];
 	bentNormalAndSsao *= weightSum;
 
-	const F32 halfSampleCount = SPATIAL_DENOISE_SAMPLE_COUNT / 2;
-	for(F32 i = -halfSampleCount; i <= halfSampleCount; i += 1.0)
+	for(I32 x = -g_consts.m_halfSampleCount; x <= g_consts.m_halfSampleCount; ++x)
 	{
-		if(i == 0.0)
+		for(I32 y = -g_consts.m_halfSampleCount; y <= g_consts.m_halfSampleCount; ++y)
 		{
-			continue;
+			if(x == 0 && y == 0)
+			{
+				continue;
+			}
+
+			IVec2 newCoord = coord + IVec2(x, y);
+			newCoord = clamp(newCoord, 0, viewport - 1);
+
+			const HVec4 sampleColor = g_bentNormalsAndSsaoTex[newCoord];
+			const F32 sampleDepth = g_depthTex[newCoord].x;
+
+			const F16 weight = depthWeight(refDepth, sampleDepth);
+
+			bentNormalAndSsao += sampleColor * weight;
+			weightSum += weight;
 		}
-
-		Vec2 newCoord = coord + ((horizontal) ? Vec2(i, 0.0) : Vec2(0.0, i));
-		newCoord = clamp(newCoord, 0.0, viewport - 1.0);
-
-		const HVec4 sampleColor = g_bentNormalsAndSsaoTex[newCoord];
-		const F32 sampleDepth = g_depthTex[newCoord].x;
-
-		const F32 weight = depthWeight(refDepth, sampleDepth);
-
-		bentNormalAndSsao += sampleColor * weight;
-		weightSum += weight;
 	}
 
 	bentNormalAndSsao /= weightSum;
@@ -395,14 +408,14 @@ HVec4 doWork(Vec2 coord, Bool horizontal)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	g_bentNormalsAndSsaoStorageTex[coord] = doWork(coord, ANKI_TECHNIQUE_SsaoSpatialDenoiseHorizontal);
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	g_bentNormalsAndSsaoStorageUav[coord] = doWork(coord);
 }
 #	else
 Vec4 main(VertOut input) : SV_TARGET0
 {
-	const Vec2 coord = floor(input.m_svPosition.xy);
-	return doWork(coord, ANKI_TECHNIQUE_SsaoSpatialDenoiseHorizontal);
+	const UVec2 coord = input.m_svPosition.xy;
+	return doWork(coord);
 }
 #	endif
 #endif

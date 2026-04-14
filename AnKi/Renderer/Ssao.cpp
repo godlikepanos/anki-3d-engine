@@ -7,7 +7,6 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -15,7 +14,7 @@ namespace anki {
 
 Error Ssao::init()
 {
-	const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
+	const UVec2 rez = getRenderer().getInternalResolution();
 	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	{
@@ -31,14 +30,18 @@ Error Ssao::init()
 	m_bentNormalsAndSsaoRtDescr = getRenderer().create2DRenderTargetDescription(rez.x, rez.y, Format::kR8G8B8A8_Snorm, "Bent normals + SSAO temp");
 	m_bentNormalsAndSsaoRtDescr.bake();
 
-	const Array<SubMutation, 2> mutation = {{{"SPATIAL_DENOISE_SAMPLE_COUNT", MutatorValue(g_cvarRenderSsaoSpatialDenoiseSampleCout)},
-											 {"DENOISING_QUARTER_RESOLUTION", g_cvarRenderSsaoQuarterRez}}};
+	// Use 16bit only on Arm because that path increases the instruction count on AMD
+	Array<SubMutation, 2> mutation = {{{"SSAO_QUARTER_REZ", MutatorValue(g_cvarRenderSsaoQuarterRez)},
+									   {"SSAO_16BIT", GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm}}};
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", mutation, m_prog, m_grProg, "Ssao"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", mutation, m_prog, m_spatialDenoiseVerticalGrProg, "SsaoSpatialDenoiseVertical"));
-	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", mutation, m_prog, m_spatialDenoiseHorizontalGrProg, "SsaoSpatialDenoiseHorizontal"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", mutation, m_prog, m_tempralDenoiseGrProg, "SsaoTemporalDenoise"));
+	ANKI_CHECK(m_ssaoGrProg.load("ShaderBinaries/Ssao.ankiprogbin", mutation, "Ssao"));
+	ANKI_CHECK(m_spatialDenoiseGrProg.load("ShaderBinaries/Ssao.ankiprogbin", mutation, "SsaoSpatialDenoise"));
+
+	for(MutatorValue quarterRez = 0; quarterRez < 2; ++quarterRez)
+	{
+		mutation[0].m_value = quarterRez;
+		ANKI_CHECK(m_tempralDenoiseGrProgs[quarterRez].load("ShaderBinaries/Ssao.ankiprogbin", mutation, "SsaoTemporalDenoise"));
+	}
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
@@ -70,7 +73,6 @@ void Ssao::populateRenderGraph()
 	}
 
 	m_runCtx.m_finalRt = finalRt;
-	const RenderTargetHandle depthRt = (g_cvarRenderSsaoQuarterRez) ? getDepthDownscale().getRt() : getGBuffer().getDepthRt();
 
 	const RenderTargetHandle bentNormalsAndSsaoTempRt = rgraph.newRenderTarget(m_bentNormalsAndSsaoRtDescr);
 
@@ -103,7 +105,7 @@ void Ssao::populateRenderGraph()
 		}
 
 		ppass->newTextureDependency(getGBuffer().getColorRt(2), readUsage);
-		ppass->newTextureDependency(getDepthDownscale().getRt(), readUsage);
+		ppass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
 		ppass->newTextureDependency(finalRt, writeUsage);
 
 		ppass->setWork([this, finalRt](RenderPassWorkContext& rgraphCtx) {
@@ -111,16 +113,16 @@ void Ssao::populateRenderGraph()
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			RenderingContext& ctx = getRenderingContext();
 
-			cmdb.bindShaderProgram(m_grProg.get());
+			cmdb.bindShaderProgram(m_ssaoGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(2));
-			rgraphCtx.bindSrv(1, 0, getDepthDownscale().getRt());
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 
 			cmdb.bindSrv(2, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			const UVec2 rez = getRenderer().getInternalResolution() / 2u;
+			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
 
 			SsaoConstants& consts = *allocateAndBindConstants<SsaoConstants>(cmdb, 0, 0);
 			consts.m_radius = g_cvarRenderSsaoRadius;
@@ -178,7 +180,7 @@ void Ssao::populateRenderGraph()
 			ANKI_TRACE_SCOPED_EVENT(SsaoTemporalDenoise);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_tempralDenoiseGrProg.get());
+			cmdb.bindShaderProgram(m_tempralDenoiseGrProgs[U32(g_cvarRenderSsaoQuarterRez)].get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, finalRt);
@@ -188,7 +190,7 @@ void Ssao::populateRenderGraph()
 
 			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
-			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = getRenderer().getInternalResolution();
 
 			if(g_cvarRenderPreferCompute)
 			{
@@ -203,82 +205,40 @@ void Ssao::populateRenderGraph()
 		});
 	}
 
-	// Spatial denoise vertical
+	// Spatial denoise
 	{
 		RenderPassBase* ppass;
 
 		if(preferCompute)
 		{
-			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSAO spatial denoise vertical");
+			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSAO spatial denoise");
 			ppass = &pass;
 		}
 		else
 		{
-			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("SSAO spatial denoise vertical");
-			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(historyRt)});
-			ppass = &pass;
-		}
-
-		ppass->newTextureDependency(bentNormalsAndSsaoTempRt, readUsage);
-		ppass->newTextureDependency(depthRt, readUsage);
-		ppass->newTextureDependency(historyRt, writeUsage);
-
-		ppass->setWork([this, historyRt, bentNormalsAndSsaoTempRt, depthRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(SsaoSpatialDenoise);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_spatialDenoiseVerticalGrProg.get());
-
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindSrv(0, 0, bentNormalsAndSsaoTempRt);
-			rgraphCtx.bindSrv(1, 0, depthRt);
-
-			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
-
-			if(g_cvarRenderPreferCompute)
-			{
-				rgraphCtx.bindUav(0, 0, historyRt);
-				dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
-			}
-			else
-			{
-				cmdb.setViewport(0, 0, rez.x, rez.y);
-				drawQuad(cmdb);
-			}
-		});
-	}
-
-	// Spatial denoise horizontal
-	{
-		RenderPassBase* ppass;
-
-		if(preferCompute)
-		{
-			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSAO spatial denoise horizontal");
-			ppass = &pass;
-		}
-		else
-		{
-			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("SSAO spatial denoise horizontal");
+			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("SSAO spatial denoise");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(finalRt)});
 			ppass = &pass;
 		}
 
-		ppass->newTextureDependency(historyRt, readUsage);
-		ppass->newTextureDependency(depthRt, readUsage);
+		ppass->newTextureDependency(bentNormalsAndSsaoTempRt, readUsage);
+		ppass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
 		ppass->newTextureDependency(finalRt, writeUsage);
 
-		ppass->setWork([this, historyRt, finalRt, depthRt](RenderPassWorkContext& rgraphCtx) {
+		ppass->setWork([this, finalRt, bentNormalsAndSsaoTempRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SsaoSpatialDenoise);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_spatialDenoiseHorizontalGrProg.get());
+			cmdb.bindShaderProgram(m_spatialDenoiseGrProg.get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindSrv(0, 0, historyRt);
-			rgraphCtx.bindSrv(1, 0, depthRt);
+			rgraphCtx.bindSrv(0, 0, bentNormalsAndSsaoTempRt);
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 
-			const UVec2 rez = (g_cvarRenderSsaoQuarterRez) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = getRenderer().getInternalResolution();
+
+			const IVec4 consts(max(1, g_cvarRenderSsaoSpatialDenoiseSampleCount / 2));
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			if(g_cvarRenderPreferCompute)
 			{

@@ -17,7 +17,7 @@ ANKI_CVAR2(NumericCVar<F32>, Render, Ssao, Radius, 2.0f, 0.1f, 100.0f, "SSAO rad
 ANKI_CVAR2(BoolCVar, Render, Ssao, QuarterRez, ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez")
 ANKI_CVAR2(NumericCVar<F32>, Render, Ssao, Power, 1.5f, 0.1f, 100.0f, "SSAO power")
 ANKI_CVAR2(
-	NumericCVar<U8>, Render, Ssao, SpatialDenoiseSampleCout, (ANKI_PLATFORM_MOBILE) ? 3 : 9,
+	NumericCVar<U8>, Render, Ssao, SpatialDenoiseSampleCount, (ANKI_PLATFORM_MOBILE) ? 3 : 5,
 	[](U8 val) {
 		return val == 3 || val == 5 || val == 7 || val == 9;
 	},
@@ -50,11 +50,9 @@ public:
 	}
 
 public:
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-	ShaderProgramPtr m_spatialDenoiseVerticalGrProg;
-	ShaderProgramPtr m_spatialDenoiseHorizontalGrProg;
-	ShaderProgramPtr m_tempralDenoiseGrProg;
+	RendererShaderProgram m_ssaoGrProg;
+	Array<RendererShaderProgram, 2> m_tempralDenoiseGrProgs;
+	RendererShaderProgram m_spatialDenoiseGrProg;
 
 	RenderTargetDesc m_bentNormalsAndSsaoRtDescr;
 
