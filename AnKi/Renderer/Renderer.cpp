@@ -346,6 +346,7 @@ Error Renderer::populateRenderGraph()
 	m_gpuParticles->populateRenderGraph();
 	m_motionVectors->populateRenderGraph();
 	m_historyLength->populateRenderGraph();
+	m_ssao->populateRenderGraph();
 	m_depthDownscale->populateRenderGraph();
 	m_shadowMapping->populateRenderGraph();
 	m_clusterBinning->populateRenderGraph();
@@ -369,7 +370,6 @@ Error Renderer::populateRenderGraph()
 	m_shadowmapsResolve->populateRenderGraph();
 	m_volumetricFog->populateRenderGraph();
 	m_lensFlare->populateRenderGraph();
-	m_ssao->populateRenderGraph();
 	m_forwardShading->populateRenderGraph(); // This may feel out of place but it's only visibility. Keep it just before light shading
 	m_lightShading->populateRenderGraph();
 	if(getTemporalUpscaler().getEnabled())

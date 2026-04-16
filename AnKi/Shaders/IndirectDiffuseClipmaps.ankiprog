@@ -475,7 +475,7 @@ struct StoreBorderFunc
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_Apply)
 Texture2D<Vec4> g_depthTex : register(t0);
-Texture2D<Vec4> g_gbufferRt2 : register(t1);
+Texture2D<Vec4> g_bentNormalsTex : register(t1);
 
 Texture2D<Vec4> g_blueNoiseTex : register(t2);
 
@@ -510,7 +510,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	const Vec4 worldPos4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 normal = unpackNormalFromGBuffer(TEX(g_gbufferRt2, coord));
+	const Vec3 normal = TEX(g_bentNormalsTex, coord);
 
 	// Rand
 	UVec2 noiseTexSize;
@@ -586,8 +586,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 #	endif
 
 	const F32 depth = TEX(g_depthTex, fullCoord).x;
-	const Vec4 rt2 = TEX(g_gbufferRt2, fullCoord);
-	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+	const Vec3 worldNormal = TEX(g_gbufferRt2, fullCoord); // Bent normals
 
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;

@@ -11,6 +11,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/MotionVectors.h>
+#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
@@ -672,6 +673,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 			pass.newTextureDependency(probeValidityVolumes[clipmap], readUsage);
 			pass.newTextureDependency(distanceMomentsVolumes[clipmap], readUsage);
 		}
+		pass.newTextureDependency(getSsao().getRt(), readUsage);
 
 		pass.newTextureDependency(lowRezRt, writeUsage);
 		setRgenSpace2Dependencies(pass, g_cvarRenderIdcInlineRt);
@@ -683,6 +685,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 #include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
 			bindRgenSpace2Resources(rgraphCtx);
+			rgraphCtx.bindSrv(6, 2, getSsao().getRt());
 			rgraphCtx.bindUav(0, 2, lowRezRt);
 
 			const Array<Vec4, 3> consts = {Vec4(g_cvarRenderIdcFirstBounceRayDistance), {}, {}};
@@ -713,7 +716,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Apply simple irradiance");
 
 		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getSsao().getRt(), TextureUsageBit::kSrvCompute);
 		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 		{
 			pass.newTextureDependency(irradianceVolumes[i], TextureUsageBit::kSrvCompute);
@@ -729,7 +732,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 			cmdb.bindShaderProgram(m_applyGiGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(1, 0, getSsao().getRt());
 			cmdb.bindSrv(2, 0, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::firstSurface()));
 
 			rgraphCtx.bindUav(0, 0, lowRezRt);
