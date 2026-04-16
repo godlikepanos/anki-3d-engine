@@ -69,9 +69,7 @@ void HistoryLength::populateRenderGraph()
 		writeTexUsage = TextureUsageBit::kRtvDsvWrite;
 	}
 
-	pass->newTextureDependency(getGBuffer().getDepthRt(), readTexUsage);
-	pass->newTextureDependency(getGBuffer().getPreviousFrameDepthRt(), readTexUsage);
-	pass->newTextureDependency(getMotionVectors().getMotionVectorsRt(), readTexUsage);
+	pass->newTextureDependency(getMotionVectors().getAdjustedMotionVectorsRt(), readTexUsage);
 	pass->newTextureDependency(history, readTexUsage);
 	pass->newTextureDependency(current, writeTexUsage);
 
@@ -80,12 +78,8 @@ void HistoryLength::populateRenderGraph()
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
-		rgraphCtx.bindSrv(1, 0, getGBuffer().getPreviousFrameDepthRt());
-		rgraphCtx.bindSrv(2, 0, getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindSrv(3, 0, history);
-
-		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
+		rgraphCtx.bindSrv(0, 0, getMotionVectors().getAdjustedMotionVectorsRt());
+		rgraphCtx.bindSrv(1, 0, history);
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 

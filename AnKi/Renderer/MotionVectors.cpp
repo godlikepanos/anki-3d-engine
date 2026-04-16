@@ -16,9 +16,13 @@ Error MotionVectors::init()
 {
 	ANKI_CHECK(m_grProg.load("ShaderBinaries/MotionVectors.ankiprogbin", {}));
 
-	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(
+	m_motionVectorsRtDesc = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16_Sfloat, "MotionVectors");
-	m_motionVectorsRtDescr.bake();
+	m_motionVectorsRtDesc.bake();
+
+	m_adjustedMotionVectorsRtDesc = getRenderer().create2DRenderTargetDescription(
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16_Sfloat, "AdjMotionVectors");
+	m_adjustedMotionVectorsRtDesc.bake();
 
 	return Error::kNone;
 }
@@ -28,7 +32,8 @@ void MotionVectors::populateRenderGraph()
 	ANKI_TRACE_SCOPED_EVENT(MotionVectors);
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDescr);
+	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDesc);
+	m_runCtx.m_adjustedMotionVectorsRtHandle = rgraph.newRenderTarget(m_adjustedMotionVectorsRtDesc);
 
 	RenderPassBase* ppass;
 	TextureUsageBit readUsage;
@@ -44,12 +49,19 @@ void MotionVectors::populateRenderGraph()
 	else
 	{
 		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("MotionVectors");
-		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_motionVectorsRtHandle)});
+		pass.setRenderpassInfo(
+			{GraphicsRenderPassTargetDesc(m_runCtx.m_motionVectorsRtHandle), GraphicsRenderPassTargetDesc(m_runCtx.m_adjustedMotionVectorsRtHandle)});
 
 		readUsage = TextureUsageBit::kSrvPixel;
 		writeUsage = TextureUsageBit::kRtvDsvWrite;
 		ppass = &pass;
 	}
+
+	ppass->newTextureDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage);
+	ppass->newTextureDependency(m_runCtx.m_adjustedMotionVectorsRtHandle, writeUsage);
+	ppass->newTextureDependency(getGBuffer().getColorRt(3), readUsage);
+	ppass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
+	ppass->newTextureDependency(getGBuffer().getPreviousFrameDepthRt(), readUsage);
 
 	ppass->setWork([this](RenderPassWorkContext& rgraphCtx) -> void {
 		ANKI_TRACE_SCOPED_EVENT(MotionVectors);
@@ -58,26 +70,17 @@ void MotionVectors::populateRenderGraph()
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 		rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(3));
+		rgraphCtx.bindSrv(2, 0, getGBuffer().getPreviousFrameDepthRt());
 
-		class Constants
-		{
-		public:
-			Mat4 m_currentViewProjMat;
-			Mat4 m_currentInvViewProjMat;
-			Mat4 m_prevViewProjMat;
-		} * pc;
-		pc = allocateAndBindConstants<Constants>(cmdb, 0, 0);
-
-		pc->m_currentViewProjMat = ctx.m_matrices.m_viewProjection;
-		pc->m_currentInvViewProjMat = ctx.m_matrices.m_invertedViewProjection;
-		pc->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjection;
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
 		if(g_cvarRenderPreferCompute)
 		{
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_motionVectorsRtHandle);
+			rgraphCtx.bindUav(1, 0, m_runCtx.m_adjustedMotionVectorsRtHandle);
 		}
 
 		if(g_cvarRenderPreferCompute)
@@ -91,11 +94,6 @@ void MotionVectors::populateRenderGraph()
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		}
 	});
-
-	ppass->newTextureDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage);
-	ppass->newTextureDependency(getGBuffer().getColorRt(3), readUsage);
-	ppass->newTextureDependency(getGBuffer().getDepthRt(), readUsage);
-	ppass->newTextureDependency(getGBuffer().getPreviousFrameDepthRt(), readUsage);
 }
 
 } // end namespace anki

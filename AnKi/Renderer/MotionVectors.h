@@ -17,6 +17,7 @@ public:
 	MotionVectors()
 	{
 		registerDebugRenderTarget("MotionVectors");
+		registerDebugRenderTarget("AdjMotionVectors&Disocclusion");
 	}
 
 	Error init();
@@ -28,20 +29,27 @@ public:
 		return m_runCtx.m_motionVectorsRtHandle;
 	}
 
+	RenderTargetHandle getAdjustedMotionVectorsRt() const
+	{
+		return m_runCtx.m_adjustedMotionVectorsRtHandle;
+	}
+
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
 							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
 	{
-		handles[0] = m_runCtx.m_motionVectorsRtHandle;
+		handles[0] = (rtName == "MotionVectors") ? m_runCtx.m_motionVectorsRtHandle : m_runCtx.m_adjustedMotionVectorsRtHandle;
 	}
 
 private:
 	RendererShaderProgram m_grProg;
-	RenderTargetDesc m_motionVectorsRtDescr;
+	RenderTargetDesc m_motionVectorsRtDesc;
+	RenderTargetDesc m_adjustedMotionVectorsRtDesc;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_motionVectorsRtHandle;
+		RenderTargetHandle m_adjustedMotionVectorsRtHandle;
 	} m_runCtx;
 };
 

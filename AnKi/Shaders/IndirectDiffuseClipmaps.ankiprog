@@ -37,8 +37,10 @@
 #define RT_MATERIAL_FETCH_TYPE_PROBES 1
 
 constexpr F32 kGaussianSigma = 0.55;
-constexpr F32 kMaxBilateralSamplesPerDirection = 5.0;
+constexpr F32 kMaxBilateralSamplesPerDirection = 12.0;
+constexpr F32 kMinBilateralSamplesPerDirection = 1.0;
 constexpr Bool kLocalLightShadow = false;
+constexpr F32 kTemporalDenoiseBlendFactor = 0.025 * 2.0;
 
 struct ClipmapRegion
 {
@@ -477,7 +479,7 @@ Texture2D<Vec4> g_gbufferRt2 : register(t1);
 
 Texture2D<Vec4> g_blueNoiseTex : register(t2);
 
-RWTexture2D<Vec4> g_outTex : register(u0);
+RWTexture2D<Vec4> g_uav : register(u0);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -486,7 +488,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	Vec2 lowTextureSize;
-	g_outTex.GetDimensions(lowTextureSize.x, lowTextureSize.y);
+	g_uav.GetDimensions(lowTextureSize.x, lowTextureSize.y);
 
 	const UVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 #	if SPATIAL_RECONSTRUCT_TYPE == 0
@@ -532,7 +534,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 												g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, noise);
 	}
 
-	TEX(g_outTex, realSvDispatchThreadId) = Vec4(irradiance, 0.0);
+	TEX(g_uav, realSvDispatchThreadId) = Vec4(irradiance, 0.0);
 }
 #endif
 
@@ -663,7 +665,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 Texture2D<Vec4> g_inTex : register(t0);
 Texture2D<F32> g_depthTex : register(t1);
 
-RWTexture2D<Vec4> g_outTex : register(u0);
+RWTexture2D<Vec4> g_uav : register(u0);
 
 template<typename T>
 void appendSample(T refDepth, T sampleDepth, TVec<T, 3> sample, inout TVec<T, 3> sampleSum, inout T weightSum, T extraWeight = T(1))
@@ -690,7 +692,7 @@ template<typename T>
 void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 {
 	IVec2 viewportSize;
-	g_outTex.GetDimensions(viewportSize.x, viewportSize.y);
+	g_uav.GetDimensions(viewportSize.x, viewportSize.y);
 	const IVec2 quarterViewportSize = viewportSize / 2;
 	const IVec2 quarterCoord = svDispatchThreadId; // Coord in quarter rez
 
@@ -748,7 +750,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 
 	// 0 is already filled, just write it
 	IVec2 coord = quarterCoord * 2;
-	TEX(g_outTex, coord) = TVec<T, 4>(samplesAndDepth[0].xyz, T(0));
+	TEX(g_uav, coord) = TVec<T, 4>(samplesAndDepth[0].xyz, T(0));
 
 	// Tonemap everything because bright pixels will contribute more even if they have less weight
 	[unroll] for(I32 i = 0; i < 4; ++i)
@@ -766,7 +768,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	appendSample(refDepth, samplesAndDepth[2].w, samplesAndDepth[2].xyz, sampleSum, weightSum);
 	appendSample(refDepth, samplesAndDepth[3].w, samplesAndDepth[3].xyz, sampleSum, weightSum);
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_outTex, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
+	TEX(g_uav, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
 	const TVec<T, 3> sampleC = sampleSum;
 	const T depthC = refDepth;
 
@@ -779,7 +781,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	appendSample(refDepth, samplesAndDepth[1].w, samplesAndDepth[1].xyz, sampleSum, weightSum, T(1));
 	appendSample(refDepth, depthC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_outTex, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
+	TEX(g_uav, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
 
 	// For b use 3 samples
 	coord = quarterCoord * 2 + IVec2(0, 1);
@@ -790,14 +792,14 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	appendSample(refDepth, samplesAndDepth[2].w, samplesAndDepth[2].xyz, sampleSum, weightSum, T(1));
 	appendSample(refDepth, depthC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_outTex, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
+	TEX(g_uav, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
 }
 
 template<typename T>
 void checkerboardReconstruct(IVec2 svDispatchThreadId)
 {
 	IVec2 viewportSize;
-	g_outTex.GetDimensions(viewportSize.x, viewportSize.y);
+	g_uav.GetDimensions(viewportSize.x, viewportSize.y);
 
 	const IVec2 filledCoord = IVec2(svDispatchThreadId.x * 2 + (svDispatchThreadId.y & 1), svDispatchThreadId.y);
 	const IVec2 toBeFilledCoord = IVec2(svDispatchThreadId.x * 2 + ((svDispatchThreadId.y + 1) & 1), svDispatchThreadId.y);
@@ -821,13 +823,13 @@ void checkerboardReconstruct(IVec2 svDispatchThreadId)
 
 			if(all(sampleCoord == filledCoord))
 			{
-				TEX(g_outTex, filledCoord) = TVec<T, 4>(sample, T(0));
+				TEX(g_uav, filledCoord) = TVec<T, 4>(sample, T(0));
 			}
 		}
 	}
 
 	normalizeSum(weightSum, toBeFilledColor);
-	TEX(g_outTex, toBeFilledCoord) = TVec<T, 4>(toBeFilledColor, T(0));
+	TEX(g_uav, toBeFilledCoord) = TVec<T, 4>(toBeFilledColor, T(0));
 }
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
@@ -844,86 +846,77 @@ void checkerboardReconstruct(IVec2 svDispatchThreadId)
 // ===========================================================================
 // TemporalDenoise                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_TemporalDenoise)
-Texture2D<F32> g_historyLengthTex : register(t0);
-Texture2D<Vec2> g_motionVectorsTex : register(t1);
-Texture2D<Vec3> g_historyTex : register(t2);
-Texture2D<Vec4> g_currentTex : register(t3);
+#if ANKI_TECHNIQUE_TemporalDenoise
+Texture2D<Vec4> g_currentTex : register(t0);
+Texture2D<Vec4> g_historyTex : register(t1);
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t2);
+Texture2D<F32> g_depthTex : register(t3);
 
-RWTexture2D<Vec4> g_outTex : register(u0);
+RWTexture2D<Vec4> g_uav : register(u0);
 
 SamplerState g_linearAnyClampSampler : register(s0);
 
-ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
-
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 
-	const F32 minBlendFactor = 0.025;
-	const F32 maxBlendFactor = 0.9;
-
-	const F32 historyLen = TEX(g_historyLengthTex, coord) * kMaxHistoryLength;
-
-	F32 blendFactor = min(1.0, historyLen / 1.0);
-	blendFactor = lerp(maxBlendFactor, minBlendFactor, blendFactor);
+	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, coord);
+	const Bool disocclusion = all(mv == 1.0);
 
 	Vec3 outColor = TEX(g_currentTex, coord);
-	if(blendFactor > maxBlendFactor * 0.9)
+	if(disocclusion)
 	{
 		// Don't accumulate
 	}
 	else
 	{
 		Vec2 viewport;
-		g_historyLengthTex.GetDimensions(viewport.x, viewport.y);
+		g_uav.GetDimensions(viewport.x, viewport.y);
 
 		const Vec2 uv = (coord + 0.5) / viewport;
-		const Vec2 historyUv =
-			uv + TEX(g_motionVectorsTex, coord)
-			+ (g_globalRendererConsts.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConsts.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
+		const Vec2 historyUv = uv + mv;
 
 		const Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
 
-		outColor = lerp(history, outColor, blendFactor);
+		outColor = lerp(history, outColor, kTemporalDenoiseBlendFactor);
 	}
 
-	TEX(g_outTex, coord) = Vec4(outColor, historyLen);
+	const F32 depth = TEX(g_depthTex, coord);
+	TEX(g_uav, coord) = Vec4(outColor, 1.0 - depth); // Store reverse depth for better precision
 }
 #endif
 
 // ===========================================================================
 // BilateralDenoise                                                          =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_BilateralDenoise)
+#if ANKI_TECHNIQUE_BilateralDenoise
 Texture2D<Vec4> g_inTex : register(t0);
-Texture2D<F32> g_depthTex : register(t1);
+Texture2D<F32> g_historyLengthTex : register(t1);
 
-RWTexture2D<Vec4> g_outTex : register(u0);
+RWTexture2D<Vec4> g_uav : register(u0);
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	const IVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	IVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 	IVec2 viewport;
-	g_outTex.GetDimensions(viewport.x, viewport.y);
+	g_uav.GetDimensions(viewport.x, viewport.y);
 
-	if(any(coord >= viewport))
+	const Bool outOfBounds = any(coord >= viewport);
+	if(outOfBounds)
 	{
 		return;
 	}
 
-	const F32 refDepth = TEX(g_depthTex, coord);
+	const Vec4 rgba = TEX(g_inTex, coord);
+	const F32 refDepth = 1.0 - rgba.w;
 
 	F32 weightSum = calculateBilateralWeightDepth<F32>(0.0, 0.0, 1.0); // Highest weight that this function can give
-
-	const Vec4 rgba = TEX(g_inTex, coord);
-
-	const F32 historyLen = rgba.w;
-
 	Vec3 colorSum = rgba.xyz * weightSum;
 
-	const F32 blurFactor = 1.0 - min(1.0, historyLen / 12.0);
-	const I32 sampleCount = max(1.0, kMaxBilateralSamplesPerDirection * blurFactor);
+	const F32 historyLen = TEX(g_historyLengthTex, coord) * kMaxHistoryLength;
+
+	const F32 sampleCountf = lerp(F32(kMaxBilateralSamplesPerDirection), F32(kMinBilateralSamplesPerDirection), historyLen / kMaxHistoryLength);
+	const I32 sampleCount = sampleCountf;
 
 	for(I32 x = -sampleCount; x <= sampleCount; ++x)
 	{
@@ -937,8 +930,9 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 			IVec2 newCoord = coord + IVec2(x, y);
 			newCoord = clamp(newCoord, 0, viewport - 1);
 
-			const Vec3 sampleColor = TEX(g_inTex, newCoord);
-			const F32 sampleDepth = TEX(g_depthTex, newCoord);
+			const Vec4 rgba = TEX(g_inTex, newCoord);
+			const Vec3 sampleColor = rgba.xyz;
+			const F32 sampleDepth = 1.0 - rgba.w;
 
 			const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
 			const F32 weight = depthWeight;
@@ -949,7 +943,8 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 	}
 
 	colorSum /= weightSum;
-	TEX(g_outTex, coord) = Vec4(colorSum, 0.0);
+
+	TEX(g_uav, coord) = Vec4(colorSum, 0.0);
 }
 #endif
 

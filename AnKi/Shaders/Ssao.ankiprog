@@ -263,8 +263,7 @@ SamplerState g_linearAnyClampSampler : register(s0);
 
 Texture2D<Vec4> g_bentNormalsAndSsaoTex : register(t0);
 Texture2D<Vec4> g_historyBentNormalsAndSsaoTex : register(t1);
-Texture2D<Vec4> g_motionVectorsTex : register(t2);
-Texture2D<Vec4> g_historyLengthTex : register(t3);
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t2);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
 
@@ -281,10 +280,8 @@ HVec4 doWork(Vec2 coord)
 	const F16 minBlendFactor = 0.1;
 	const F16 maxBlendFactor = 0.9;
 
-	const F16 historyLen = g_historyLengthTex[coord].x * kMaxHistoryLength;
-
-	F16 blendFactor = min(1.0, historyLen / 1.0);
-	blendFactor = lerp(maxBlendFactor, minBlendFactor, blendFactor);
+	const Vec2 adjMotionVec = g_adjustedMotionVectorsTex[coord];
+	const Bool disocclusion = all(adjMotionVec == 1.0);
 
 	Vec2 uv2 = uv;
 #	if SSAO_QUARTER_REZ
@@ -292,19 +289,19 @@ HVec4 doWork(Vec2 coord)
 #	endif
 	HVec4 outColor = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv2, 0.0);
 
-	if(blendFactor > maxBlendFactor * 0.9)
+	if(disocclusion)
 	{
 		// Don't accumulate
 	}
 	else
 	{
-		const Vec2 mv = g_motionVectorsTex[coord];
 		const Vec2 historyUv =
-			uv + mv
+			uv + adjMotionVec
 			+ (g_globalRendererConsts.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConsts.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
 
 		const HVec4 history = g_historyBentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
 
+		const F16 blendFactor = 0.1;
 		outColor = lerp(history, outColor, blendFactor);
 		outColor.xyz = normalize(outColor.xyz);
 	}

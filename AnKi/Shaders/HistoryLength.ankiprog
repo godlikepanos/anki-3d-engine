@@ -11,67 +11,34 @@
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/QuadVert.hlsl>
 
-constexpr F32 kZDistanceLimit = 0.05; // In meters
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t0);
+Texture2D<F32> g_prevHistoryLengthTex : register(t1);
 
-Texture2D<F32> g_depthTex : register(t0);
-Texture2D<F32> g_historyDepthTex : register(t1);
-Texture2D<Vec2> g_motionVectorsTex : register(t2);
-Texture2D<F32> g_prevHistoryLengthTex : register(t3);
-
-RWTexture2D<F32> g_historyLengthTex : register(u0);
-
-ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
+RWTexture2D<F32> g_historyLengthUav : register(u0);
 
 SamplerState g_linearAnyClampSampler : register(s0);
-
-Vec3 unproject(Vec2 ndc, F32 d)
-{
-	return cheapPerspectiveUnprojection(g_globalRendererConsts.m_matrices.m_unprojectionParameters, ndc, d);
-}
 
 F32 computeLength(Vec2 coord)
 {
 	Vec2 viewport;
-	g_depthTex.GetDimensions(viewport.x, viewport.y);
+	g_adjustedMotionVectorsTex.GetDimensions(viewport.x, viewport.y);
 
 	const Vec2 uv = (coord + 0.5) / viewport;
-	const Vec2 ndc = uvToNdc(uv);
-	const Vec2 historyUv =
-		uv + TEX(g_motionVectorsTex, coord)
-		+ (g_globalRendererConsts.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConsts.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
+	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, coord);
 
-	// Compute length
-	F32 good = 0.0; // Zero means "new" pixel this frame
-	if(any(historyUv < 0.0) || any(historyUv > 1.0))
+	const Bool disocclusion = all(mv == 1.0);
+
+	F32 len;
+	if(disocclusion)
 	{
-		good = 0.0;
+		len = 0.0;
 	}
 	else
 	{
-		const F32 crntDepth = g_depthTex[coord];
-		if(crntDepth == 1.0)
-		{
-			return 0.0;
-		}
+		const Vec2 historyUv = uv + mv;
 
-		const F32 crntViewZ = cheapPerspectiveUnprojection(g_globalRendererConsts.m_matrices.m_unprojectionParameters, ndc, crntDepth).z;
-
-		// Read history
-		const F32 historyDepth = g_historyDepthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
-
-		const Vec4 v = mul(g_globalRendererConsts.m_previousMatrices.m_invertedViewProjection, Vec4(uvToNdc(historyUv), historyDepth, 1.0));
-		const F32 historyViewZ = mul(g_globalRendererConsts.m_matrices.m_view, Vec4(v.xyz / v.w, 1.0)).z;
-
-		const F32 dist = abs(crntViewZ - historyViewZ);
-		const F32 factor = dist / kZDistanceLimit;
-		good = 1.0 - min(factor, 1.0);
-	}
-
-	F32 len = good;
-	if(good > 0.1)
-	{
-		const F32 prevLen = g_prevHistoryLengthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f) * kMaxHistoryLength;
-		len += prevLen;
+		const F32 prevLen = g_prevHistoryLengthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0) * kMaxHistoryLength;
+		len = 1.0 + prevLen;
 		len = min(len, kMaxHistoryLength);
 	}
 
@@ -84,14 +51,14 @@ F32 computeLength(Vec2 coord)
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 
 	Vec2 viewport;
-	g_historyLengthTex.GetDimensions(viewport.x, viewport.y);
+	g_adjustedMotionVectorsTex.GetDimensions(viewport.x, viewport.y);
 	if(any(coord >= viewport))
 	{
 		return;
 	}
 
 	const F32 len = computeLength(coord);
-	TEX(g_historyLengthTex, coord) = len;
+	TEX(g_historyLengthUav, coord) = len;
 }
 #endif
 

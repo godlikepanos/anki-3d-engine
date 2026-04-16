@@ -172,9 +172,8 @@ void Ssao::populateRenderGraph()
 
 		ppass->newTextureDependency(finalRt, readUsage);
 		ppass->newTextureDependency(historyRt, readUsage);
-		ppass->newTextureDependency(getMotionVectors().getMotionVectorsRt(), readUsage);
 		ppass->newTextureDependency(bentNormalsAndSsaoTempRt, writeUsage);
-		ppass->newTextureDependency(getHistoryLength().getRt(), readUsage);
+		ppass->newTextureDependency(getMotionVectors().getAdjustedMotionVectorsRt(), readUsage);
 
 		ppass->setWork([this, bentNormalsAndSsaoTempRt, finalRt, historyRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SsaoTemporalDenoise);
@@ -185,8 +184,7 @@ void Ssao::populateRenderGraph()
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, finalRt);
 			rgraphCtx.bindSrv(1, 0, historyRt);
-			rgraphCtx.bindSrv(2, 0, getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindSrv(3, 0, getHistoryLength().getRt());
+			rgraphCtx.bindSrv(2, 0, getMotionVectors().getAdjustedMotionVectorsRt());
 
 			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 

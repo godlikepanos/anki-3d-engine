@@ -780,8 +780,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 
 		pass.newTextureDependency(fullRtTmp, TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(historyRt, TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(getHistoryLength().getRt(), TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getMotionVectors().getAdjustedMotionVectorsRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this, fullRtTmp, historyRt, outRt](RenderPassWorkContext& rgraphCtx) {
@@ -789,16 +789,14 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 
 			cmdb.bindShaderProgram(m_temporalDenoiseGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, getHistoryLength().getRt());
-			rgraphCtx.bindSrv(1, 0, getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindSrv(2, 0, historyRt);
-			rgraphCtx.bindSrv(3, 0, fullRtTmp);
+			rgraphCtx.bindSrv(0, 0, fullRtTmp);
+			rgraphCtx.bindSrv(1, 0, historyRt);
+			rgraphCtx.bindSrv(2, 0, getMotionVectors().getAdjustedMotionVectorsRt());
+			rgraphCtx.bindSrv(3, 0, getGBuffer().getDepthRt());
 
 			rgraphCtx.bindUav(0, 0, outRt);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-
-			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
 		});
@@ -808,8 +806,8 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Bilateral denoise");
 
-		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(outRt, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getHistoryLength().getRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(historyRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this, outRt, historyRt](RenderPassWorkContext& rgraphCtx) {
@@ -818,7 +816,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 			cmdb.bindShaderProgram(m_bilateralDenoiseGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, outRt);
-			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, getHistoryLength().getRt());
 			rgraphCtx.bindUav(0, 0, historyRt);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
