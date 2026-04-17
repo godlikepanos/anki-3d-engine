@@ -291,7 +291,12 @@ Error App::init()
 	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
 	String extraPaths = getParentFilepath(executableFname);
 	extraPaths += "|ankiprogbin"; // Shaders
-	extraPaths += ":" ANKI_SOURCE_DIRECTORY "|EngineAssets,!AndroidProject"; // EngineAssets
+
+	if(directoryExists(ANKI_SOURCE_DIRECTORY))
+	{
+		extraPaths += ":" ANKI_SOURCE_DIRECTORY "|EngineAssets,!AndroidProject"; // EngineAssets
+	}
+
 	extraPaths += ":";
 	extraPaths += g_cvarRsrcDataPaths;
 	g_cvarRsrcDataPaths = extraPaths;

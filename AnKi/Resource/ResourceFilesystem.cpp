@@ -254,7 +254,7 @@ Error ResourceFilesystem::addNewPath(CString filepath_, const ResourceStringList
 		filepath = filepath_;
 	}
 
-	ANKI_RESOURCE_LOGV("Adding new resource path: %s", filepath.cstr());
+	ANKI_RESOURCE_LOGI("Adding new resource path: %s", filepath.cstr());
 
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
 	ResourceStringList filenameList;
