@@ -196,7 +196,7 @@ public:
 	{
 		ANKI_ASSERT(q);
 		LockGuard lock(m_pipelineQueriesMtx);
-		m_pipelineQueries[m_frameCount % kMaxFramesInFlight].emplaceBack(q);
+		m_pipelineQueries.getBack().emplaceBack(q);
 	}
 #endif
 
@@ -280,7 +280,7 @@ private:
 	} m_runCtx;
 
 #if ANKI_STATS_ENABLED
-	Array<RendererDynamicArray<PipelineQueryPtr>, kMaxFramesInFlight> m_pipelineQueries;
+	RendererDynamicArray<RendererDynamicArray<PipelineQueryPtr>> m_pipelineQueries;
 	Mutex m_pipelineQueriesMtx;
 #endif
 

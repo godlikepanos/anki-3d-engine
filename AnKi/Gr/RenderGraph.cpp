@@ -1314,6 +1314,11 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	SpinLock cmdbsMtx;
 	Atomic<U32> firstGroupThatWroteToSwapchain(kMaxU32);
 
+	if(m_ctx->m_gatherStatistics)
+	{
+		m_statistics.m_frames.emplaceBack();
+	}
+
 	for(U32 group = 0; group < batchGroupCount; ++group)
 	{
 		U32 start, end;
@@ -1342,28 +1347,24 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 				{
 					preQuery = GrManager::getSingleton().newTimestampQuery();
 					cmdb->writeTimestamp(preQuery.get());
+
+					StatsElement& frame = m_statistics.m_frames.getBack();
+					frame.m_frameStartTimestamp = preQuery;
 				}
 
 				if(setPostQuery)
 				{
 					postQuery = GrManager::getSingleton().newTimestampQuery();
+
+					StatsElement& frame = m_statistics.m_frames.getBack();
+					frame.m_frameEndTimestamp = postQuery;
+					frame.m_cpuStartTime = HighRezTimer::getCurrentTime();
 				}
 
 				// Bookkeeping
 				{
 					LockGuard lock(cmdbsMtx);
 					cmdbs[group] = cmdb;
-
-					if(preQuery.isCreated())
-					{
-						m_statistics.m_timestamps[m_statistics.m_nextTimestamp][0] = preQuery;
-					}
-
-					if(postQuery.isCreated())
-					{
-						m_statistics.m_timestamps[m_statistics.m_nextTimestamp][1] = postQuery;
-						m_statistics.m_cpuStartTimes[m_statistics.m_nextTimestamp] = HighRezTimer::getCurrentTime();
-					}
 				}
 
 				RenderPassWorkContext ctx;
@@ -1561,28 +1562,27 @@ void RenderGraph::periodicCleanup()
 
 void RenderGraph::getStatistics(RenderGraphStatistics& statistics)
 {
-	m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
-	const U32 oldFrame = m_statistics.m_nextTimestamp;
+	statistics.m_gpuTime = -1.0;
+	statistics.m_cpuStartTime = -1.0;
 
-	if(m_statistics.m_timestamps[oldFrame][0].isCreated() && m_statistics.m_timestamps[oldFrame][1].isCreated())
+	for(StatsElement& frame : m_statistics.m_frames)
 	{
 		Second start, end;
-		[[maybe_unused]] TimestampQueryResult res = m_statistics.m_timestamps[oldFrame][0]->getResult(start);
-		ANKI_ASSERT(res == TimestampQueryResult::kAvailable);
-		m_statistics.m_timestamps[oldFrame][0].reset(nullptr);
+		TimestampQueryResult res = frame.m_frameEndTimestamp->getResult(end);
 
-		res = m_statistics.m_timestamps[oldFrame][1]->getResult(end);
-		ANKI_ASSERT(res == TimestampQueryResult::kAvailable);
-		m_statistics.m_timestamps[oldFrame][1].reset(nullptr);
+		if(res == TimestampQueryResult::kNotAvailable)
+		{
+			break;
+		}
 
-		const Second diff = end - start;
-		statistics.m_gpuTime = diff;
-		statistics.m_cpuStartTime = m_statistics.m_cpuStartTimes[oldFrame];
-	}
-	else
-	{
-		statistics.m_gpuTime = -1.0;
-		statistics.m_cpuStartTime = -1.0;
+		res = frame.m_frameStartTimestamp->getResult(start);
+		ANKI_ASSERT(res == TimestampQueryResult::kAvailable);
+
+		statistics.m_cpuStartTime = frame.m_cpuStartTime;
+		statistics.m_gpuTime = end - start;
+
+		m_statistics.m_frames.erase(m_statistics.m_frames.getBegin());
+		break;
 	}
 
 	m_texMemPool.getStats(statistics.m_gpuMemoryUsed, statistics.m_gpuMemoryPoolCapacity);

@@ -812,26 +812,33 @@ void Renderer::gpuSceneCopy()
 #if ANKI_STATS_ENABLED
 void Renderer::updatePipelineStats()
 {
-	RendererDynamicArray<PipelineQueryPtr>& arr = m_pipelineQueries[m_frameCount % kMaxFramesInFlight];
-
-	U64 sum = 0;
-	for(PipelineQueryPtr& q : arr)
+	if(m_pipelineQueries.getSize())
 	{
-		U64 value;
-		const PipelineQueryResult res = q->getResult(value);
-		if(res == PipelineQueryResult::kNotAvailable)
+		auto& arr = m_pipelineQueries.getFront();
+		Bool queriesCompleted = true;
+		U64 sum = 0;
+		for(PipelineQueryPtr& q : arr)
 		{
-			ANKI_R_LOGW("Pipeline query result is not available");
-		}
-		else
-		{
+			U64 value;
+			const PipelineQueryResult res = q->getResult(value);
+			if(res == PipelineQueryResult::kNotAvailable)
+			{
+				queriesCompleted = false;
+				break;
+			}
+
 			sum += value;
+		}
+
+		if(queriesCompleted)
+		{
+			g_svarPrimitivesDrawn.set(sum);
+			m_pipelineQueries.erase(m_pipelineQueries.getBegin());
 		}
 	}
 
-	arr.destroy();
-
-	g_svarPrimitivesDrawn.set(sum);
+	// Create array for the next frame
+	m_pipelineQueries.emplaceBack();
 }
 #endif
 

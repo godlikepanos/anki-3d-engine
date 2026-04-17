@@ -420,13 +420,18 @@ private:
 	BakeContext* m_ctx = nullptr;
 	U64 m_version = 0;
 
-	static constexpr U kMaxBufferedTimestamps = kMaxFramesInFlight + 1;
+	class StatsElement
+	{
+	public:
+		TimestampQueryInternalPtr m_frameStartTimestamp;
+		TimestampQueryInternalPtr m_frameEndTimestamp;
+		Second m_cpuStartTime;
+	};
+
 	class
 	{
 	public:
-		Array2d<TimestampQueryInternalPtr, kMaxBufferedTimestamps, 2> m_timestamps;
-		Array<Second, kMaxBufferedTimestamps> m_cpuStartTimes;
-		U8 m_nextTimestamp = 0;
+		GrDynamicArray<StatsElement> m_frames;
 	} m_statistics;
 
 	RenderGraph(CString name);

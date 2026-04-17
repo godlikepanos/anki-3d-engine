@@ -7,27 +7,23 @@
 
 namespace anki {
 
-U32 ReadbackManager::findBestSlot(const MultiframeReadbackToken& token) const
+const GpuReadbackMemoryAllocation* ReadbackManager::findBestAllocation(const MultiframeReadbackToken& token) const
 {
-	const U64 earliestFrame = m_frameId - (kMaxFramesInFlight - 1);
-	U32 bestSlot = kMaxU32;
-	U32 secondBestSlot = kMaxU32;
-
-	for(U32 i = 0; i < kMaxFramesInFlight; ++i)
+	const MultiframeReadbackToken::Allocation* candidate = nullptr;
+	for(auto it = token.m_allocations.getBegin(); it != token.m_allocations.getEnd(); ++it)
 	{
-		if(token.m_frameIds[i] == earliestFrame && token.m_allocations[i])
+		const Bool frameHasFinished = it->m_frameIndex <= m_lastFinishedFrame;
+		if(frameHasFinished)
 		{
-			bestSlot = i;
-			break;
-		}
-		else if(token.m_frameIds[i] < earliestFrame && token.m_allocations[i])
-		{
-			secondBestSlot = i;
+			if(candidate == nullptr || it->m_frameIndex > candidate->m_frameIndex)
+			{
+				// No candidate or candidate that is later frame
+				candidate = &(*it);
+			}
 		}
 	}
 
-	const U32 slot = (bestSlot != kMaxU32) ? bestSlot : secondBestSlot;
-	return slot;
+	return (candidate) ? &candidate->m_alloc : nullptr;
 }
 
 void ReadbackManager::readMostRecentData(const MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut) const
@@ -35,48 +31,56 @@ void ReadbackManager::readMostRecentData(const MultiframeReadbackToken& token, v
 	ANKI_ASSERT(data && dataSize > 0);
 	dataOut = 0;
 
-	const U32 slot = findBestSlot(token);
-	if(slot == kMaxU32)
+	const GpuReadbackMemoryAllocation* alloc = findBestAllocation(token);
+	if(alloc == nullptr)
 	{
 		return;
 	}
 
-	const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
-	dataOut = min(dataSize, allocation.getSize());
-
-	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()), dataOut);
+	dataOut = min(dataSize, alloc->getSize());
+	memcpy(data, alloc->getMappedMemory(), dataOut);
 }
 
 void ReadbackManager::endFrame(Fence* fence)
 {
 	ANKI_ASSERT(fence);
 
-	// Release fences
+	// Delete frames
+	Array<U32, 8> framesToDelete;
+	ANKI_ASSERT(m_frames.getSize() <= framesToDelete.getSize() && "Can't buffer that many frames. Something is wrong");
+	U32 framesToDeleteCount = 0;
 	for(Frame& frame : m_frames)
 	{
-		if(frame.m_fence.isCreated())
+		ANKI_ASSERT(frame.m_fence);
+
+		const Bool signaled = frame.m_fence->signaled();
+
+		if(frame.m_frameIndex <= m_lastFinishedFrame)
 		{
-			if(frame.m_fence->clientWait(0.0))
-			{
-				frame.m_fence.reset(nullptr);
-			}
+			ANKI_ASSERT(signaled);
+		}
+
+		if(signaled)
+		{
+			m_lastFinishedFrame = max(m_lastFinishedFrame, frame.m_frameIndex);
+
+			framesToDelete[framesToDeleteCount++] = frame.m_blockArrayIndex;
 		}
 	}
 
-	Frame& frame = m_frames[m_frameId % m_frames.getSize()];
-	if(frame.m_fence.isCreated()) [[unlikely]]
+	for(U32 i = 0; i < framesToDeleteCount; ++i)
 	{
-		ANKI_R_LOGW("Readback fence is not signaled. Need to wait it");
-		const Bool signaled = frame.m_fence->clientWait(10.0_sec);
-		if(!signaled)
-		{
-			ANKI_R_LOGF("Fence won't signal. Can't recover");
-		}
+		m_frames.erase(framesToDelete[i]);
 	}
 
+	// Create new frame
+	auto it = m_frames.emplace();
+	Frame& frame = *it;
 	frame.m_fence.reset(fence);
+	frame.m_frameIndex = m_crntFrame;
+	frame.m_blockArrayIndex = it.getArrayIndex();
 
-	++m_frameId;
+	++m_crntFrame;
 }
 
 } // end namespace anki

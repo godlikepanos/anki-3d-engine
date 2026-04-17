@@ -7,24 +7,27 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/GpuMemory/GpuReadbackMemoryPool.h>
+#include <AnKi/Util/BlockArray.h>
 
 namespace anki {
 
-/// @addtogroup renderer
-/// @{
-
-/// A persistent GPU readback token. It's essentially a group of allocations.
+// A persistent GPU readback token. It's essentially a group of allocations.
 class MultiframeReadbackToken
 {
 	friend class ReadbackManager;
 
 private:
-	Array<GpuReadbackMemoryAllocation, kMaxFramesInFlight> m_allocations;
-	Array<U64, kMaxFramesInFlight> m_frameIds = {};
-	U32 m_slot = 0;
+	class Allocation
+	{
+	public:
+		GpuReadbackMemoryAllocation m_alloc;
+		U64 m_frameIndex = kMaxU64;
+	};
+
+	RendererDynamicArray<Allocation> m_allocations;
 };
 
-/// A small class that is used to streamling the use of GPU readbacks.
+// A small class that is used to streamling the use of GPU readbacks.
 class ReadbackManager
 {
 public:
@@ -34,20 +37,18 @@ public:
 		return Error::kNone;
 	}
 
-	/// Read the most up to date data from the GPU. 1st thing to call in a frame.
+	// Read the most up to date data from the GPU. 1st thing to call in a frame.
 	void readMostRecentData(const MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut) const;
 
-	/// Read the most up to date data from the GPU.
+	// Read the most up to date data from the GPU.
 	template<typename T, typename TMemPool>
 	void readMostRecentData(const MultiframeReadbackToken& token, DynamicArray<T, TMemPool>& data) const
 	{
-		const U32 slot = findBestSlot(token);
-		if(slot != kMaxU32 && token.m_allocations[slot])
+		const GpuReadbackMemoryAllocation* alloc = findBestAllocation(token);
+		if(alloc)
 		{
-			const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
-
-			data.resize(U32(allocation.getSize()) / sizeof(T));
-			memcpy(&data[0], static_cast<const U8*>(allocation.getMappedMemory()), allocation.getSize());
+			data.resize(U32(alloc->getSize()) / sizeof(T));
+			memcpy(&data[0], alloc->getMappedMemory(), alloc->getSize());
 		}
 		else
 		{
@@ -55,36 +56,54 @@ public:
 		}
 	}
 
-	/// Allocate new data for the following frame. 2nd thing to call in a frame.
+	// Allocate new data for the following frame. 2nd thing to call in a frame.
 	template<typename T>
-	BufferView allocateStructuredBuffer(MultiframeReadbackToken& token, U32 count) const
+	BufferView allocateStructuredBuffer(MultiframeReadbackToken& token, U32 count)
 	{
 		ANKI_ASSERT(count > 0);
 
-		for([[maybe_unused]] U64 frame : token.m_frameIds)
+		for(const MultiframeReadbackToken::Allocation& a : token.m_allocations)
 		{
-			ANKI_ASSERT(frame != m_frameId && "Can't allocate multiple times in a frame");
+			ANKI_ASSERT(a.m_frameIndex != m_crntFrame && "Can't allocate multiple times in a frame");
 		}
 
-		GpuReadbackMemoryAllocation& allocation = token.m_allocations[token.m_slot];
-
-		if(allocation && allocation.getSize() != sizeof(T) * count)
+		auto it = token.m_allocations.getBegin();
+		for(; it != token.m_allocations.getEnd(); ++it)
 		{
-			GpuReadbackMemoryPool::getSingleton().deferredFree(allocation);
+			if(it->m_frameIndex <= m_lastFinishedFrame)
+			{
+				break;
+			}
 		}
 
-		if(!allocation)
+		const PtrSize allocationSize = sizeof(T) * count;
+
+		MultiframeReadbackToken::Allocation* alloc;
+		if(it == token.m_allocations.getEnd())
 		{
-			allocation = GpuReadbackMemoryPool::getSingleton().allocateStructuredBuffer<T>(count);
+			alloc = token.m_allocations.emplaceBack();
 		}
-		token.m_frameIds[token.m_slot] = m_frameId;
+		else
+		{
+			alloc = &(*it);
 
-		token.m_slot = (token.m_slot + 1) % kMaxFramesInFlight;
+			if(alloc->m_alloc.getSize() != allocationSize)
+			{
+				GpuReadbackMemoryPool::getSingleton().deferredFree(alloc->m_alloc);
+			}
+		}
 
-		return BufferView(allocation).setRange(sizeof(T) * count);
+		if(!alloc->m_alloc)
+		{
+			alloc->m_alloc = GpuReadbackMemoryPool::getSingleton().allocateStructuredBuffer<T>(count);
+		}
+
+		alloc->m_frameIndex = m_crntFrame;
+
+		return BufferView(alloc->m_alloc);
 	}
 
-	/// Last thing to call in a frame.
+	// Last thing to call in a frame.
 	void endFrame(Fence* fence);
 
 private:
@@ -92,13 +111,15 @@ private:
 	{
 	public:
 		FencePtr m_fence;
+		U64 m_frameIndex = kMaxU64;
+		U32 m_blockArrayIndex = kMaxU32;
 	};
 
-	Array<Frame, kMaxFramesInFlight> m_frames;
-	U64 m_frameId = kMaxFramesInFlight;
+	RendererBlockArray<Frame> m_frames;
+	U64 m_crntFrame = 1;
+	U64 m_lastFinishedFrame = 0;
 
-	U32 findBestSlot(const MultiframeReadbackToken& token) const;
+	const GpuReadbackMemoryAllocation* findBestAllocation(const MultiframeReadbackToken& token) const;
 };
-/// @}
 
 } // end namespace anki

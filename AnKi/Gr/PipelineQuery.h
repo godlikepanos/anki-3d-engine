@@ -9,10 +9,6 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// @memberof PipelineQuery.
 class PipelineQueryInitInfo : public GrBaseInitInfo
 {
 public:
@@ -21,7 +17,7 @@ public:
 	using GrBaseInitInfo::GrBaseInitInfo;
 };
 
-/// Query of various pipeline statistics.
+// Query of various pipeline statistics.
 class PipelineQuery : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -29,25 +25,21 @@ class PipelineQuery : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kPipelineQuery;
 
-	/// Get the occlusion query result. It won't block.
+	// Get the occlusion query result. It won't block.
 	PipelineQueryResult getResult(U64& value) const;
 
 protected:
-	/// Construct.
 	PipelineQuery(CString name)
 		: GrObject(kClassType, name)
 	{
 	}
 
-	/// Destroy.
 	~PipelineQuery()
 	{
 	}
 
 private:
-	/// Allocate and initialize a new instance.
 	[[nodiscard]] static PipelineQuery* newInstance(const PipelineQueryInitInfo& inf);
 };
-/// @}
 
 } // end namespace anki

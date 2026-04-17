@@ -47,8 +47,8 @@ android_app* g_androidApp = nullptr;
 #endif
 
 ANKI_SVAR(CpuAllocatedMem, StatCategory::kCpuMem, "Total", StatFlag::kBytes)
-ANKI_SVAR(CpuAllocationCount, StatCategory::kCpuMem, "Allocations/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame)
-ANKI_SVAR(CpuFreesCount, StatCategory::kCpuMem, "Frees/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(CpuAllocationCount, StatCategory::kCpuMem, "Allocations/frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(CpuFreesCount, StatCategory::kCpuMem, "Frees/frame", StatFlag::kZeroEveryFrame)
 
 #if ANKI_PLATFORM_MOBILE
 ANKI_SVAR(MaliGpuActive, StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates)
@@ -118,7 +118,7 @@ App::App(CString appName, U32 argc, Char** argv, AllocAlignedCallback allocCb, v
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
 
-	if(ANKI_STATS_ENABLED && g_cvarCoreDisplayStats > 1)
+	if(ANKI_STATS_ENABLED)
 	{
 		m_allocCallback = statsAllocCallback;
 		m_allocUserData = this;
