@@ -56,13 +56,20 @@ StructuredBuffer<U32> g_lightIndexOffsetsPerCell : register(t10, SPACE);
 StructuredBuffer<U32> g_lightIndexList : register(t11, SPACE);
 
 // UAVs
-#	if defined(CLIPMAP_VOLUME)
-RWTexture2D<Vec4> g_lightResultTex : register(u0, SPACE);
-RWTexture2D<Vec4> g_dummyUav : register(u1, SPACE);
-#	else
-RWTexture2D<Vec4> g_colorAndPdfTex : register(u0, SPACE);
-RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1, SPACE);
-#	endif
+RWTexture2D<Vec4> g_uav0 : register(u0, SPACE);
+RWTexture2D<Vec4> g_uav1 : register(u1, SPACE);
+RWTexture2D<Vec4> g_uav2 : register(u2, SPACE);
+
+#	define g_lightResultUav g_uav0
+
+#	define g_colorAndPdfUav g_uav0
+#	define g_hitPosAndDepthUav g_uav1
+
+#	define g_lightResultAndDepthUav g_uav0
+
+#	define g_redShUav g_uav0
+#	define g_greenShUav g_uav1
+#	define g_blueShUav g_uav2
 
 // Samplers
 SamplerState g_linearAnyClampSampler : register(s0, SPACE);

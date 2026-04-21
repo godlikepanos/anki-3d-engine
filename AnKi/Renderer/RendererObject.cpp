@@ -360,6 +360,7 @@ void RtMaterialFetchRendererObject::bindRgenSpace2Resources(RenderPassWorkContex
 
 	cmdb.bindUav(0, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 	cmdb.bindUav(1, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+	cmdb.bindUav(2, space, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
 
 	cmdb.bindConstantBuffer(0, space, getRenderingContext().m_globalRenderingConstantsBuffer);
 }

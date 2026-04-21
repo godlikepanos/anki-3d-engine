@@ -775,7 +775,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 #	endif
 
 	UVec2 halfViewportSize;
-	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
+	g_hitPosAndDepthUav.GetDimensions(halfViewportSize.x, halfViewportSize.y);
 
 	const PixelFailedSsr pixelFailedSsr = SBUFF(g_pixelsFailedSsr, gtid);
 	const UVec2 realCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
@@ -833,11 +833,11 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 #	endif
 	}
 
-	g_colorAndPdfTex[realCoord] = Vec4(radiance, max(0.0, pdf));
+	g_colorAndPdfUav[realCoord] = Vec4(radiance, max(0.0, pdf));
 
 	// Move it with camera to avoid precision issues since it's stored in fp16
 	// Store depth in reverse for better precision
-	g_hitPosAndDepthTex[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
+	g_hitPosAndDepthUav[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
 }
 #endif
 

@@ -166,7 +166,7 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 
 	// Store result
 	const F32 kMaxDist = 1000.0; // Chose something small and make sure its square doesn't overflow F16
-	TEX(g_lightResultTex, UVec2(probeIdx, octMapTexelIdx * g_consts.m_rayCountPerTexel + subRayIdx)) = HVec4(radiance, min(rayT, kMaxDist));
+	TEX(g_lightResultUav, UVec2(probeIdx, octMapTexelIdx * g_consts.m_rayCountPerTexel + subRayIdx)) = HVec4(radiance, min(rayT, kMaxDist));
 }
 #endif
 
@@ -567,7 +567,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 {
 #	if INLINE_RT
 	UVec2 texSize;
-	g_colorAndPdfTex.GetDimensions(texSize.x, texSize.y);
+	g_colorAndPdfUav.GetDimensions(texSize.x, texSize.y);
 	if(any(svDispatchThreadId.xy >= texSize))
 	{
 		return;
@@ -585,6 +585,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec2 uv = (fullCoord + 0.5) / (texSize * 2);
 #	endif
 
+	// Get the position and normal of the screenspace surface X
 	const F32 depth = TEX(g_depthTex, fullCoord).x;
 	const Vec3 worldNormal = TEX(g_gbufferRt2, fullCoord); // Bent normals
 
@@ -601,7 +602,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Mat3 tbn = rotationFromDirection(worldNormal);
 	const Vec3 rayDir = normalize(mul(tbn, hemisphereSampleCos(randFactors)));
 
-	// Trace
+	// Shoot a short random ray from X
 	const F32 tMax = g_consts.m_rayMax;
 	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
 	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
@@ -613,6 +614,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Bool hit = materialRayTrace<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
 #	endif
 
+	// If the short ray hit something evaluate the lighting in the surface that was hit, Y
 	HVec3 radiance = 0.0;
 	Vec3 hitPos = 0.0;
 	if(hit)
@@ -621,6 +623,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 	}
 
+	// Get the irradiance from the clipmaps. If the short ray hit then get the irradiance at Y, else take the irradiance at X
 	Vec3 rayOrigin;
 	Vec3 rayDir2;
 	if(hit)
@@ -639,18 +642,21 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		sampleClipmapIrradiance(rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, g_globalRendererConstants.m_indirectDiffuseClipmaps,
 								g_linearAnyRepeatSampler, flags, randFactors.x);
 
-	Vec3 final;
+	// If the short ray hit then the final irradiance is radiance at Y and irradiance at Y. Else use the fallback irradiance at X. The finalIrradiance
+	// is just one sample of the integral. Temporal and spatial accumulation will compute the actual finalIrradiance
+	Vec3 finalIrradiance;
 	if(hit)
 	{
-		final = radiance + irradiance * gbuffer.m_diffuse;
+		// With cosine-weighted sampling (PDF = cos/π), the MC estimator for irradiance E_X is π·L_i = π·L_o(Y).
+		// LightShading applies diffuse/π, so store π·L_o(Y) here to get the correct diffuse·L_o(Y) result.
+		finalIrradiance = radiance * kPi + irradiance * gbuffer.m_diffuse;
 	}
 	else
 	{
-		final = irradiance;
+		finalIrradiance = irradiance;
 	}
 
-	TEX(g_colorAndPdfTex, svDispatchThreadId.xy) = Vec4(final, 1.0 - depth); // Revert depth for better precision
-	// TEX(g_colorAndPdfTex, DispatchRaysIndex().xy) = lerp(TEX(g_colorAndPdfTex, DispatchRaysIndex().xy), Vec4(final, 0.0), 0.05);
+	TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(finalIrradiance, 1.0 - depth); // Revert depth for better precision
 }
 #endif
 
