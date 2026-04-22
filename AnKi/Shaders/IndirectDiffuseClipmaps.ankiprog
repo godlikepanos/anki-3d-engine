@@ -595,14 +595,14 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec3 biasDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
 	const Vec3 biasedWorldPos = worldPos + biasDir * 0.1;
 
-	// Rand
+	// Compute a random ray in the hemisphere defined by N. It's cosine weighted
 	const UVec3 seed = rand3DPCG16(UVec3(fullCoord, g_globalRendererConstants.m_frame % 8u));
 	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
 
 	const Mat3 tbn = rotationFromDirection(worldNormal);
 	const Vec3 rayDir = normalize(mul(tbn, hemisphereSampleCos(randFactors)));
 
-	// Shoot a short random ray from X
+	// Shoot the random ray
 	const F32 tMax = g_consts.m_rayMax;
 	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
 	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
@@ -615,15 +615,24 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 #	endif
 
 	// If the short ray hit something evaluate the lighting in the surface that was hit, Y
-	HVec3 radiance = 0.0;
+	HVec3 directLightingValue = 0.0;
 	Vec3 hitPos = 0.0;
 	if(hit)
 	{
 		hitPos = biasedWorldPos + rayDir * (rayT - 0.01);
-		radiance = directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
+		directLightingValue =
+			directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 	}
 
-	// Get the irradiance from the clipmaps. If the short ray hit then get the irradiance at Y, else take the irradiance at X
+	// For cosine weighted sampling the irradiance is E(X) ~= π/N * Σ[ Li(X, ωi) ]
+	// This shader only calculates a single sample and the following accumulation passes average the results.
+	// Single sample is: π * Li(X, ωi) where ωi is the random direction computed above
+	// If the short ray hit a surface X' then this single sample is π * (L_direct(X') + L_diffuse_indirect(X'))
+	// If we are limiting the whole thing to 2 bounces it becomes: π * (L_direct(X') + ρ/π * E(X'))
+	// E(X') is the irradiance from the clipmaps
+	// If the short ray didn't hit anything then just return the irradiance from the clipmap. This is technically wrong though but we are cheating
+
+	// Get the irradiance from the clipmaps
 	Vec3 rayOrigin;
 	Vec3 rayDir2;
 	if(hit)
@@ -644,19 +653,17 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 	// If the short ray hit then the final irradiance is radiance at Y and irradiance at Y. Else use the fallback irradiance at X. The finalIrradiance
 	// is just one sample of the integral. Temporal and spatial accumulation will compute the actual finalIrradiance
-	Vec3 finalIrradiance;
+	Vec3 sample;
 	if(hit)
 	{
-		// With cosine-weighted sampling (PDF = cos/π), the MC estimator for irradiance E_X is π·L_i = π·L_o(Y).
-		// LightShading applies diffuse/π, so store π·L_o(Y) here to get the correct diffuse·L_o(Y) result.
-		finalIrradiance = radiance * kPi + irradiance * gbuffer.m_diffuse;
+		sample = directLightingValue * kPi + irradiance * gbuffer.m_diffuse;
 	}
 	else
 	{
-		finalIrradiance = irradiance;
+		sample = irradiance;
 	}
 
-	TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(finalIrradiance, 1.0 - depth); // Revert depth for better precision
+	TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(sample, 1.0 - depth); // Revert depth for better precision
 }
 #endif
 

@@ -157,8 +157,15 @@ vector<T, 3> generateUniformPointOnSphere(TInt sampleIndex, TInt sampleCount, U3
 	return normalize(vector<T, 3>(x, y, z));
 }
 
-// Taken from SHforHLSL
+// Taken from SHforHLSL. The PDF when shooting random rays around a sphere
 F32 sampleDirectionSpherePdf()
 {
 	return 1.0 / (kPi * 4.0);
+}
+
+// This is the PDF when using hemisphereSampleCos(). The normal is the normal of the hemisphere and the sampleDir a random direction on that
+// hemisphere
+F32 sampleCosWeightedPdf(Vec3 sampleDir, Vec3 normal)
+{
+	return dot(sampleDir, normal) / kPi;
 }
