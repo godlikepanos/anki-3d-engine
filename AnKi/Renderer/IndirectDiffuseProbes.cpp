@@ -178,7 +178,7 @@ void IndirectDiffuseProbes::populateRenderGraph()
 	const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
 	const RenderTargetHandle shadowsRt = (doShadows) ? rgraph.newRenderTarget(m_shadowMapping.m_rtDescr) : RenderTargetHandle();
 	const RenderTargetHandle lightShadingRt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);
-	const RenderTargetHandle irradianceVolume = rgraph.importRenderTarget(&probeToRefresh->getVolumeTexture(), TextureUsageBit::kNone);
+	const RenderTargetHandle irradianceVolume = rgraph.importRenderTarget(&probeToRefresh->getVolumeTexture(), true, TextureUsageBit::kNone);
 
 	m_runCtx.m_probeVolumeHandle = irradianceVolume;
 

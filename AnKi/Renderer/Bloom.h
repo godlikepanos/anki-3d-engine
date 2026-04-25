@@ -63,6 +63,7 @@ private:
 	ShaderProgramPtr m_upscaleGrProg;
 
 	RendererTexture m_pyramidTex;
+	Bool m_pyramidTexImportedOnce = false;
 
 	RenderTargetDesc m_exposureRtDesc;
 	RenderTargetDesc m_finalRtDesc;

@@ -126,16 +126,8 @@ void ShadowMapping::populateRenderGraph()
 
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	// Import
-	if(m_rtImportedOnce) [[likely]]
-	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get());
-	}
-	else
-	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get(), TextureUsageBit::kSrvPixel);
-		m_rtImportedOnce = true;
-	}
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get(), !m_rtImportedOnce, TextureUsageBit::kSrvPixel);
+	m_rtImportedOnce = true;
 
 	// First process the lights
 	processLights();

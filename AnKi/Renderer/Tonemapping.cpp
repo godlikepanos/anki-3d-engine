@@ -52,8 +52,8 @@ Error Tonemapping::init()
 void Tonemapping::importRenderTargets()
 {
 	// Just import it. It will not be used in resource tracking
-	m_runCtx.m_exposureLuminanceHandle =
-		getRenderingContext().m_renderGraphDescr.importRenderTarget(m_expAndAvgLum.m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kUavCompute);
+	m_runCtx.m_exposureLuminanceHandle = getRenderingContext().m_renderGraphDescr.importRenderTarget(
+		m_expAndAvgLum.m_exposureAndAvgLuminance1x1.get(), true, TextureUsageBit::kUavCompute);
 }
 
 void Tonemapping::populateRenderGraph()

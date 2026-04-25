@@ -57,20 +57,9 @@ void Ssao::populateRenderGraph()
 	const U32 readRtIdx = getRenderer().getFrameCount() & 1;
 	const U32 writeRtIdx = !readRtIdx;
 
-	RenderTargetHandle historyRt;
-	RenderTargetHandle finalRt;
-
-	if(m_texImportedOnce) [[likely]]
-	{
-		finalRt = rgraph.importRenderTarget(m_tex[writeRtIdx].get());
-		historyRt = rgraph.importRenderTarget(m_tex[readRtIdx].get());
-	}
-	else
-	{
-		finalRt = rgraph.importRenderTarget(m_tex[writeRtIdx].get(), TextureUsageBit::kAllSrv);
-		historyRt = rgraph.importRenderTarget(m_tex[readRtIdx].get(), TextureUsageBit::kAllSrv);
-		m_texImportedOnce = true;
-	}
+	const RenderTargetHandle finalRt = rgraph.importRenderTarget(m_tex[writeRtIdx].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+	const RenderTargetHandle historyRt = rgraph.importRenderTarget(m_tex[readRtIdx].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+	m_texImportedOnce = true;
 
 	m_runCtx.m_finalRt = finalRt;
 

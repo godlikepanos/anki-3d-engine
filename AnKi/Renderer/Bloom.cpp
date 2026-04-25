@@ -67,7 +67,8 @@ Error Bloom::init()
 void Bloom::importRenderTargets()
 {
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
-	m_runCtx.m_pyramidRt = rgraph.importRenderTarget(m_pyramidTex.get(), TextureUsageBit::kSrvCompute);
+	m_runCtx.m_pyramidRt = rgraph.importRenderTarget(m_pyramidTex.get(), !m_pyramidTexImportedOnce, TextureUsageBit::kSrvCompute);
+	m_pyramidTexImportedOnce = true;
 }
 
 void Bloom::populateRenderGraph()

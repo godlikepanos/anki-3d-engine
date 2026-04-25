@@ -271,11 +271,10 @@ public:
 		return static_cast<NonGraphicsRenderPass&>(pass);
 	}
 
-	// Import an existing render target and let the render graph know about it's up-to-date usage.
-	RenderTargetHandle importRenderTarget(Texture* tex, TextureUsageBit usage);
-
-	// Import an existing render target and let the render graph find it's current usage by looking at the previous frame.
-	RenderTargetHandle importRenderTarget(Texture* tex);
+	// Import an existing render target and:
+	// - if firstImport is true let the render graph know about its up-to-date usage or
+	// - if firstImport is false let the render graph find it's current usage by looking at the previous frame. firstImportUsage is ignored
+	RenderTargetHandle importRenderTarget(Texture* tex, Bool firstImport, TextureUsageBit firstImportUsage = TextureUsageBit::kNone);
 
 	// Get or create a new render target.
 	RenderTargetHandle newRenderTarget(const RenderTargetDesc& initInf);

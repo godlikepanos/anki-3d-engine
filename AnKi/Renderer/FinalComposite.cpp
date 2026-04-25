@@ -87,7 +87,7 @@ void FinalComposite::populateRenderGraph()
 	if(bRendersToSwapchain)
 	{
 		TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-		outRt = getRenderingContext().m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
+		outRt = getRenderingContext().m_renderGraphDescr.importRenderTarget(presentableTex.get(), true, TextureUsageBit::kNone);
 		ANKI_ASSERT(!getRenderingContext().m_swapchainRenderTarget.isValid());
 		getRenderingContext().m_swapchainRenderTarget = outRt;
 

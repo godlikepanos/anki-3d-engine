@@ -53,7 +53,7 @@ void UiStage::populateRenderGraph()
 	DynamicArray<RenderTargetHandle, MemoryPoolPtrWrapper<StackMemoryPool>> texHandles(&getRenderer().getFrameMemoryPool());
 
 	m_canvas->visitTexturesForUpdate([&](Texture& tex, Bool isNew) {
-		const RenderTargetHandle handle = rgraph.importRenderTarget(&tex, (isNew) ? TextureUsageBit::kNone : TextureUsageBit::kSrvPixel);
+		const RenderTargetHandle handle = rgraph.importRenderTarget(&tex, true, (isNew) ? TextureUsageBit::kNone : TextureUsageBit::kSrvPixel);
 		texHandles.emplaceBack(handle);
 	});
 

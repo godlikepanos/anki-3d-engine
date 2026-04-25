@@ -125,23 +125,12 @@ void Reflections::populateRenderGraph()
 	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderReflectionsRt;
 
 	// Create or import render targets
-	RenderTargetHandle mainRt;
-	RenderTargetHandle readMomentsRt;
-	RenderTargetHandle writeMomentsRt;
-
-	if(m_texImportedOnce)
-	{
-		mainRt = rgraph.importRenderTarget(m_tex.get());
-		readMomentsRt = rgraph.importRenderTarget(m_momentsTextures[getRenderer().getFrameCount() & 1].get());
-		writeMomentsRt = rgraph.importRenderTarget(m_momentsTextures[(getRenderer().getFrameCount() + 1) & 1].get());
-	}
-	else
-	{
-		mainRt = rgraph.importRenderTarget(m_tex.get(), TextureUsageBit::kAllSrv);
-		readMomentsRt = rgraph.importRenderTarget(m_momentsTextures[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kAllSrv);
-		writeMomentsRt = rgraph.importRenderTarget(m_momentsTextures[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kAllSrv);
-		m_texImportedOnce = true;
-	}
+	const RenderTargetHandle mainRt = rgraph.importRenderTarget(m_tex.get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+	const RenderTargetHandle readMomentsRt =
+		rgraph.importRenderTarget(m_momentsTextures[getRenderer().getFrameCount() & 1].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+	const RenderTargetHandle writeMomentsRt =
+		rgraph.importRenderTarget(m_momentsTextures[(getRenderer().getFrameCount() + 1) & 1].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+	m_texImportedOnce = true;
 
 	const RenderTargetHandle transientRt1 = rgraph.newRenderTarget(m_transientRtDesc1);
 	const RenderTargetHandle transientRt2 = rgraph.newRenderTarget(m_transientRtDesc2);

@@ -345,14 +345,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	{
 		for(U32 i = 0; i < 2; ++i)
 		{
-			if(m_texturesImportedOnce) [[likely]]
-			{
-				fullRts[i] = rgraph.importRenderTarget(m_irradianceRts[i].get());
-			}
-			else
-			{
-				fullRts[i] = rgraph.importRenderTarget(m_irradianceRts[i].get(), TextureUsageBit::kSrvCompute);
-			}
+			fullRts[i] = rgraph.importRenderTarget(m_irradianceRts[i].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
 		}
 	}
 
@@ -363,22 +356,12 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount>& avgIrradianceVolumes = m_runCtx.m_handles.m_avgIrradianceVolumes;
 	for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
 	{
-		if(m_texturesImportedOnce) [[likely]]
-		{
-			radianceVolumes[i] = rgraph.importRenderTarget(m_radianceVolumes[i].get());
-			irradianceVolumes[i] = rgraph.importRenderTarget(m_irradianceVolumes[i].get());
-			distanceMomentsVolumes[i] = rgraph.importRenderTarget(m_distanceMomentsVolumes[i].get());
-			probeValidityVolumes[i] = rgraph.importRenderTarget(m_probeValidityVolumes[i].get());
-			avgIrradianceVolumes[i] = rgraph.importRenderTarget(m_avgIrradianceVolumes[i].get());
-		}
-		else
-		{
-			radianceVolumes[i] = rgraph.importRenderTarget(m_radianceVolumes[i].get(), TextureUsageBit::kSrvCompute);
-			irradianceVolumes[i] = rgraph.importRenderTarget(m_irradianceVolumes[i].get(), TextureUsageBit::kSrvCompute);
-			distanceMomentsVolumes[i] = rgraph.importRenderTarget(m_distanceMomentsVolumes[i].get(), TextureUsageBit::kSrvCompute);
-			probeValidityVolumes[i] = rgraph.importRenderTarget(m_probeValidityVolumes[i].get(), TextureUsageBit::kSrvCompute);
-			avgIrradianceVolumes[i] = rgraph.importRenderTarget(m_avgIrradianceVolumes[i].get(), TextureUsageBit::kSrvCompute);
-		}
+		radianceVolumes[i] = rgraph.importRenderTarget(m_radianceVolumes[i].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+		irradianceVolumes[i] = rgraph.importRenderTarget(m_irradianceVolumes[i].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+		distanceMomentsVolumes[i] =
+			rgraph.importRenderTarget(m_distanceMomentsVolumes[i].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+		probeValidityVolumes[i] = rgraph.importRenderTarget(m_probeValidityVolumes[i].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+		avgIrradianceVolumes[i] = rgraph.importRenderTarget(m_avgIrradianceVolumes[i].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
 	}
 
 	m_texturesImportedOnce = true;

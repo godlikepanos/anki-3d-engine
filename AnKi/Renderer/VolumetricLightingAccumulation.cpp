@@ -64,8 +64,8 @@ void VolumetricLightingAccumulation::populateRenderGraph()
 
 	const U readRtIdx = getRenderer().getFrameCount() & 1;
 
-	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx].get(), TextureUsageBit::kSrvPixel);
-	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx].get(), TextureUsageBit::kNone);
+	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx].get(), true, TextureUsageBit::kSrvPixel);
+	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx].get(), true, TextureUsageBit::kNone);
 
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol light");
 

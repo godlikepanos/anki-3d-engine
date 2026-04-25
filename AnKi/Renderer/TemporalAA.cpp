@@ -43,17 +43,10 @@ void TemporalAA::populateRenderGraph()
 	const Bool preferCompute = g_cvarRenderPreferCompute;
 
 	// Import RTs
-	if(m_rtTexturesImportedOnce) [[likely]]
-	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get());
-	}
-	else
-	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSrvPixel);
-		m_rtTexturesImportedOnce = true;
-	}
+	m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), !m_rtTexturesImportedOnce, TextureUsageBit::kSrvPixel);
+	m_rtTexturesImportedOnce = true;
 
-	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx].get(), TextureUsageBit::kNone);
+	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx].get(), true, TextureUsageBit::kNone);
 
 	// Create pass
 	TextureUsageBit readUsage;

@@ -914,7 +914,7 @@ Error Renderer::render(FencePtr& fence)
 	if(!ctx.m_swapchainRenderTarget.isValid())
 	{
 		TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-		ctx.m_swapchainRenderTarget = ctx.m_renderGraphDescr.importRenderTarget(presentableTex.get(), TextureUsageBit::kNone);
+		ctx.m_swapchainRenderTarget = ctx.m_renderGraphDescr.importRenderTarget(presentableTex.get(), true, TextureUsageBit::kNone);
 	}
 
 	const Bool bNeedsBlit = m_postProcessResolution != m_swapchainResolution;

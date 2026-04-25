@@ -72,17 +72,10 @@ void VrsSriGeneration::importRenderTargets()
 		return;
 	}
 
-	if(m_sriTexImportedOnce)
-	{
-		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex.get());
-		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex.get());
-	}
-	else
-	{
-		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex.get(), TextureUsageBit::kShadingRate);
-		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex.get(), TextureUsageBit::kShadingRate);
-		m_sriTexImportedOnce = true;
-	}
+	m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex.get(), !m_sriTexImportedOnce, TextureUsageBit::kShadingRate);
+	m_runCtx.m_downscaledRt =
+		ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex.get(), !m_sriTexImportedOnce, TextureUsageBit::kShadingRate);
+	m_sriTexImportedOnce = true;
 }
 
 void VrsSriGeneration::populateRenderGraph()

@@ -114,7 +114,7 @@ void ProbeReflections::populateRenderGraph()
 	const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
 
 	// Create render targets now to save memory
-	const RenderTargetHandle probeTexture = rgraph.importRenderTarget(&probeToRefresh->getReflectionTexture(), TextureUsageBit::kNone);
+	const RenderTargetHandle probeTexture = rgraph.importRenderTarget(&probeToRefresh->getReflectionTexture(), true, TextureUsageBit::kNone);
 	m_runCtx.m_probeTex = probeTexture;
 	const RenderTargetHandle gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 	const RenderTargetHandle shadowMapRt = (doShadows) ? rgraph.newRenderTarget(m_shadowMapping.m_rtDescr) : RenderTargetHandle();

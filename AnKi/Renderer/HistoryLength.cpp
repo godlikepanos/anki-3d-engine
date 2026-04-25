@@ -32,21 +32,14 @@ void HistoryLength::populateRenderGraph()
 {
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	RenderTargetHandle history;
-	RenderTargetHandle current;
-	U32 readTex = getRenderer().getFrameCount() & 1;
-	U32 writeTex = !readTex;
-	if(m_texturesImportedOnce) [[likely]]
-	{
-		history = rgraph.importRenderTarget(m_historyLenTextures[readTex].get());
-		current = rgraph.importRenderTarget(m_historyLenTextures[writeTex].get());
-	}
-	else
-	{
-		history = rgraph.importRenderTarget(m_historyLenTextures[readTex].get(), TextureUsageBit::kSrvCompute);
-		current = rgraph.importRenderTarget(m_historyLenTextures[writeTex].get(), TextureUsageBit::kSrvCompute);
-		m_texturesImportedOnce = true;
-	}
+	const U32 readTex = getRenderer().getFrameCount() & 1;
+	const U32 writeTex = !readTex;
+
+	const RenderTargetHandle history =
+		rgraph.importRenderTarget(m_historyLenTextures[readTex].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+	const RenderTargetHandle current =
+		rgraph.importRenderTarget(m_historyLenTextures[writeTex].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+	m_texturesImportedOnce = true;
 
 	m_runCtx.m_rt = current;
 

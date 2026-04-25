@@ -68,22 +68,12 @@ void GBuffer::importRenderTargets()
 {
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
-	{
-		// Already imported once
-		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get());
+	const Bool firstImport = !m_runCtx.m_crntFrameDepthRt.isValid();
 
-		m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get());
-	}
-	else
-	{
-		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kSrvPixel);
-
-		m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get(), TextureUsageBit::kSrvCompute);
-	}
+	m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), true, TextureUsageBit::kNone);
+	m_runCtx.m_prevFrameDepthRt =
+		rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), firstImport, TextureUsageBit::kSrvPixel);
+	m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get(), firstImport, TextureUsageBit::kSrvCompute);
 }
 
 void GBuffer::populateRenderGraph()

@@ -127,8 +127,14 @@ void GraphicsRenderPass::setRenderpassInfo(ConstWeakArray<GraphicsRenderPassTarg
 	m_graphicsPassExtra->m_hasRenderpass = true;
 }
 
-RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex, TextureUsageBit usage)
+RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex, Bool firstImport, TextureUsageBit firstImportUsage)
 {
+	if(!firstImport)
+	{
+		// Usage ignored
+		firstImportUsage = TextureUsageBit::kNone;
+	}
+
 	for([[maybe_unused]] const RT& rt : m_renderTargets)
 	{
 		ANKI_ASSERT(rt.m_importedTex.tryGet() != tex && "Already imported");
@@ -136,19 +142,18 @@ RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex, TextureU
 
 	RT& rt = *m_renderTargets.emplaceBack();
 	rt.m_importedTex.reset(tex);
-	rt.m_importedLastKnownUsage = usage;
+	rt.m_importedLastKnownUsage = firstImportUsage;
 	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
 	rt.setName(tex->getName());
 
+	if(!firstImport)
+	{
+		rt.m_importedAndUndefinedUsage = true;
+	}
+
 	RenderTargetHandle out;
 	out.m_idx = m_renderTargets.getSize() - 1;
-	return out;
-}
 
-RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex)
-{
-	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::kNone);
-	m_renderTargets.getBack().m_importedAndUndefinedUsage = true;
 	return out;
 }
 

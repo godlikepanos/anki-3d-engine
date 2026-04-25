@@ -66,31 +66,15 @@ void GeneratedSky::populateRenderGraph()
 	m_sunPower = sunPower;
 
 	// Create render targets
-	RenderTargetHandle transmittanceLutRt;
-	RenderTargetHandle multipleScatteringLutRt;
-	if(renderTransAndMultiScatLuts)
-	{
-		transmittanceLutRt = rgraph.importRenderTarget(m_transmittanceLut.get(), TextureUsageBit::kSrvCompute);
-		multipleScatteringLutRt = rgraph.importRenderTarget(m_multipleScatteringLut.get(), TextureUsageBit::kSrvCompute);
-		m_transmittanceAndMultiScatterLutsGenerated = true;
-	}
-	else
-	{
-		transmittanceLutRt = rgraph.importRenderTarget(m_transmittanceLut.get(), TextureUsageBit::kSrvCompute);
-		multipleScatteringLutRt = rgraph.importRenderTarget(m_multipleScatteringLut.get(), TextureUsageBit::kSrvCompute);
-	}
+	const RenderTargetHandle transmittanceLutRt =
+		rgraph.importRenderTarget(m_transmittanceLut.get(), !m_transmittanceAndMultiScatterLutsGenerated, TextureUsageBit::kSrvCompute);
+	const RenderTargetHandle multipleScatteringLutRt =
+		rgraph.importRenderTarget(m_multipleScatteringLut.get(), !m_transmittanceAndMultiScatterLutsGenerated, TextureUsageBit::kSrvCompute);
+	m_transmittanceAndMultiScatterLutsGenerated = true;
 
-	if(m_skyLutImportedOnce) [[likely]]
-	{
-		m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get());
-		m_runCtx.m_envMapRt = rgraph.importRenderTarget(m_envMap.get());
-	}
-	else
-	{
-		m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get(), TextureUsageBit::kSrvCompute);
-		m_runCtx.m_envMapRt = rgraph.importRenderTarget(m_envMap.get(), TextureUsageBit::kSrvCompute);
-		m_skyLutImportedOnce = true;
-	}
+	m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get(), !m_skyLutImportedOnce, TextureUsageBit::kSrvCompute);
+	m_runCtx.m_envMapRt = rgraph.importRenderTarget(m_envMap.get(), !m_skyLutImportedOnce, TextureUsageBit::kSrvCompute);
+	m_skyLutImportedOnce = true;
 
 	// Transmittance LUT
 	if(renderTransAndMultiScatLuts)
