@@ -587,6 +587,12 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 	// Get the position and normal of the screenspace surface X
 	const F32 depth = TEX(g_depthTex, fullCoord).x;
+	if(depth == 1.0)
+	{
+		TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(0.0, 0.0, 0.0, 1.0 - depth);
+		return;
+	}
+
 	const Vec3 worldNormal = TEX(g_gbufferRt2, fullCoord); // Bent normals
 
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
@@ -605,65 +611,45 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	// Shoot the random ray
 	const F32 tMax = g_consts.m_rayMax;
 	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
-	GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
+	GBufferLight<F32> gbuffer = (GBufferLight<F32>)0;
 	F32 rayT = 0.0;
 	Bool backfacing = false;
 #	if INLINE_RT
-	const Bool hit = materialRayTraceInlineRt<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing);
+	const Bool hit = materialRayTraceInlineRt<F32>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing);
 #	else
-	const Bool hit = materialRayTrace<F16>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
+	const Bool hit = materialRayTrace<F32>(biasedWorldPos, rayDir, 0.01, tMax, 1000.0, gbuffer, rayT, backfacing, traceFlags);
 #	endif
-
-	// If the short ray hit something evaluate the lighting in the surface that was hit, Y
-	HVec3 directLightingValue = 0.0;
-	Vec3 hitPos = 0.0;
-	if(hit)
-	{
-		hitPos = biasedWorldPos + rayDir * (rayT - 0.01);
-		directLightingValue =
-			directLighting<F16>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
-	}
 
 	// For cosine weighted sampling the irradiance is E(X) ~= π/N * Σ[ Li(X, ωi) ]
 	// This shader only calculates a single sample and the following accumulation passes average the results.
-	// Single sample is: π * Li(X, ωi) where ωi is the random direction computed above
+	// Single radiance sample is: π * Li(X, ωi) where ωi is the random direction computed above
 	// If the short ray hit a surface X' then this single sample is π * (L_direct(X') + L_diffuse_indirect(X'))
 	// If we are limiting the whole thing to 2 bounces it becomes: π * (L_direct(X') + ρ/π * E(X'))
 	// E(X') is the irradiance from the clipmaps
-	// If the short ray didn't hit anything then just return the irradiance from the clipmap. This is technically wrong though but we are cheating
+	// If the short ray didn't hit anything then just return the radiance from the clipmap
 
-	// Get the irradiance from the clipmaps
-	Vec3 rayOrigin;
-	Vec3 rayDir2;
-	if(hit)
-	{
-		// 2nd bounce
-		rayOrigin = hitPos;
-		rayDir2 = gbuffer.m_worldNormal;
-	}
-	else
-	{
-		rayOrigin = biasedWorldPos;
-		rayDir2 = worldNormal;
-	}
 	const SampleClipmapFlag flags = kSampleClipmapFlagFullQuality | kSampleClipmapFlagBiasSamplePointSurfaceNormal;
-	const Vec3 irradiance =
-		sampleClipmapIrradiance(rayOrigin, rayDir2, g_globalRendererConstants.m_cameraPosition, g_globalRendererConstants.m_indirectDiffuseClipmaps,
-								g_linearAnyRepeatSampler, flags, randFactors.x);
-
-	// If the short ray hit then the final irradiance is radiance at Y and irradiance at Y. Else use the fallback irradiance at X. The finalIrradiance
-	// is just one sample of the integral. Temporal and spatial accumulation will compute the actual finalIrradiance
-	Vec3 sample;
+	Vec3 radianceSample;
 	if(hit)
 	{
-		sample = directLightingValue * kPi + irradiance * gbuffer.m_diffuse;
+		const Vec3 hitPos = biasedWorldPos + rayDir * (rayT - 0.01);
+		const Vec3 directLightingValue =
+			directLighting<F32>(gbuffer, hitPos, !hit, true, 1000.0, kLocalLightShadow, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
+
+		const Vec3 irradiance =
+			sampleClipmapIrradiance(hitPos, gbuffer.m_worldNormal, g_globalRendererConstants.m_cameraPosition,
+									g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, randFactors.x);
+
+		radianceSample = directLightingValue * kPi + irradiance * gbuffer.m_diffuse;
 	}
 	else
 	{
-		sample = irradiance;
+		radianceSample = sampleClipmapRadiance(biasedWorldPos, rayDir, g_globalRendererConstants.m_cameraPosition,
+											   g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, randFactors.x)
+						 * kPi;
 	}
 
-	TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(sample, 1.0 - depth); // Revert depth for better precision
+	TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(radianceSample, 1.0 - depth); // Revert depth for better precision
 }
 #endif
 
