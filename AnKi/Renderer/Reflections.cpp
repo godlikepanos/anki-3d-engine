@@ -181,7 +181,7 @@ void Reflections::populateRenderGraph()
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SSR");
 
-		rpass.newTextureDependency(getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getDepthDownscale().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(0), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
@@ -208,7 +208,7 @@ void Reflections::populateRenderGraph()
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(0));
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(2));
-			rgraphCtx.bindSrv(3, 0, getDepthDownscale().getRt());
+			rgraphCtx.bindSrv(3, 0, getDepthDownscale().getDepthRt());
 			rgraphCtx.bindSrv(4, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(5, 0, getRenderer().getBloom().getPyramidRt());
 			cmdb.bindSrv(6, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));

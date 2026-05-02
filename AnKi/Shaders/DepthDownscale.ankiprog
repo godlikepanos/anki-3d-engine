@@ -4,20 +4,25 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator WAVE_OPERATIONS 0 1
+#pragma anki mutator PIXEL_SHADER_DOWNSCALE_NORMALS 0 1
 
 #pragma anki technique vert pixel comp
 
 #if ANKI_COMPUTE_SHADER
 #	include <AnKi/Shaders/Common.hlsl>
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
 
 ANKI_FAST_CONSTANTS(DepthDownscaleConstants, g_consts)
 
-globallycoherent RWStructuredBuffer<U32> g_spdCounter : register(u0);
-RWTexture2D<Vec4> g_dstStorageTextures[kMaxMipsSinglePassDownsamplerCanProduce] : register(u1);
+Texture2D g_depthTex : register(t0);
+Texture2D g_normalsTex : register(t1);
 
-SamplerState u_linearAnyClampSampler : register(s0);
-Texture2D g_srcTex : register(t0);
+SamplerState g_linearAnyClampSampler : register(s0);
+
+globallycoherent RWStructuredBuffer<U32> g_spdCounter : register(u0);
+RWTexture2D<Vec4> g_normalUav : register(u1);
+RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce] : register(u2);
 
 // Include SPD
 #	define A_GPU 1
@@ -30,20 +35,45 @@ groupshared AF1 s_spdIntermediateR[16][16];
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	const AF2 textureCoord = Vec2(p) * g_consts.m_srcTexSizeOverOne + g_consts.m_srcTexSizeOverOne;
-	return AF4(g_srcTex.SampleLevel(u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
+	const Vec2 uv = Vec2(p) * g_consts.m_srcTexSizeOverOne + g_consts.m_srcTexSizeOverOne;
+
+	const Vec4 depths = g_depthTex.GatherRed(g_linearAnyClampSampler, uv);
+	const F32 minDepth = min4(depths);
+
+	UVec2 readCoord = p;
+	if(minDepth == depths[0])
+	{
+		readCoord += UVec2(0, 1);
+	}
+	else if(minDepth == depths[1])
+	{
+		readCoord += UVec2(1, 1);
+	}
+	else if(minDepth == depths[2])
+	{
+		readCoord += UVec2(1, 0);
+	}
+	else
+	{
+		readCoord += UVec2(0, 0);
+	}
+
+	const Vec3 normalAtNearDepth = unpackNormalFromGBuffer(TEX(g_normalsTex, readCoord));
+	TEX(g_normalUav, p / 2) = Vec4(normalAtNearDepth, 0.0);
+
+	return AF4(minDepth, 0.0, 0.0, 0.0);
 }
 
 AF4 SpdLoad(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	return AF4(g_dstStorageTextures[5][p].r, 0.0, 0.0, 0.0);
+	return AF4(g_dstUavs[5][p].r, 0.0, 0.0, 0.0);
 }
 
 void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	g_dstStorageTextures[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
+	g_dstUavs[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
 }
 
 void SpdIncreaseAtomicCounter(AU1 slice)
@@ -75,8 +105,8 @@ void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
 
 AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
-	const F32 avg = (v0.x + v1.x + v2.x + v3.x) / 4.0f;
-	return AF4(avg, 0.0, 0.0, 0.0);
+	const F32 m = min4(v0.x, v1.x, v2.x, v3.x);
+	return AF4(m, 0.0, 0.0, 0.0);
 }
 
 #	define SPD_LINEAR_SAMPLER 1
@@ -98,14 +128,58 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 
 #if ANKI_PIXEL_SHADER || ANKI_VERTEX_SHADER
 #	include <AnKi/Shaders/QuadVert.hlsl>
-
-Texture2D<Vec4> g_inputTex : register(t0);
-SamplerState g_linearAnyClampSampler : register(s0);
+#	include <AnKi/Shaders/PackFunctions.hlsl>
 
 #	if ANKI_PIXEL_SHADER
-F32 main(VertOut input) : SV_TARGET0
+Texture2D<Vec4> g_depthTex : register(t0);
+#		if PIXEL_SHADER_DOWNSCALE_NORMALS
+Texture2D<Vec4> g_normalsTex : register(t1);
+#		endif
+
+SamplerState g_linearAnyClampSampler : register(s0);
+
+struct PixelOut
 {
-	return g_inputTex.SampleLevel(g_linearAnyClampSampler, input.m_uv, 0.0).x;
+	F32 m_depth : SV_TARGET0;
+#		if PIXEL_SHADER_DOWNSCALE_NORMALS
+	Vec4 m_normal : SV_TARGET1;
+#		endif
+};
+
+PixelOut main(VertOut input)
+{
+	const Vec2 uv = input.m_uv;
+
+	PixelOut output;
+
+	const Vec4 depths = g_depthTex.GatherRed(g_linearAnyClampSampler, uv);
+	const F32 minDepth = min4(depths);
+	output.m_depth = minDepth;
+
+#		if PIXEL_SHADER_DOWNSCALE_NORMALS
+	UVec2 readCoord = UVec2(input.m_svPosition.xy) * 2u;
+	if(minDepth == depths[0])
+	{
+		readCoord += UVec2(0, 1);
+	}
+	else if(minDepth == depths[1])
+	{
+		readCoord += UVec2(1, 1);
+	}
+	else if(minDepth == depths[2])
+	{
+		readCoord += UVec2(1, 0);
+	}
+	else
+	{
+		readCoord += UVec2(0, 0);
+	}
+
+	const Vec3 normalAtNearDepth = unpackNormalFromGBuffer(TEX(g_normalsTex, readCoord));
+	output.m_normal = Vec4(normalAtNearDepth, 0.0);
+#		endif
+
+	return output;
 }
 #	endif // ANKI_PIXEL_SHADER
 #endif // ANKI_PIXEL_SHADER || ANKI_VERTEX_SHADER

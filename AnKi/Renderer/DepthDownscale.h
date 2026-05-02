@@ -27,9 +27,14 @@ public:
 	void populateRenderGraph();
 
 	// Return a FP color render target with hierarchical Z (min Z) in it's mips.
-	RenderTargetHandle getRt() const
+	RenderTargetHandle getDepthRt() const
 	{
-		return m_runCtx.m_rt;
+		return m_runCtx.m_depthRt;
+	}
+
+	RenderTargetHandle getNormalsRt() const
+	{
+		return m_runCtx.m_normalsRt;
 	}
 
 	U8 getMipmapCount() const
@@ -38,10 +43,10 @@ public:
 	}
 
 private:
-	RenderTargetDesc m_rtDescr;
+	RenderTargetDesc m_depthRtDesc;
+	RenderTargetDesc m_normalRtDesc;
 
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	Array<RendererShaderProgram, 2> m_prog;
 
 	SegregatedListsGpuMemoryPoolAllocation m_counterBuffer;
 
@@ -50,7 +55,8 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_rt;
+		RenderTargetHandle m_depthRt;
+		RenderTargetHandle m_normalsRt;
 	} m_runCtx;
 
 	Error initInternal();
