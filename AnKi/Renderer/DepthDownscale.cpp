@@ -6,6 +6,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -51,7 +52,10 @@ Error DepthDownscale::initInternal()
 		"Downscaled normals");
 	m_normalRtDesc.bake();
 
-	Array<SubMutation, 2> mutation = {{{"PIXEL_SHADER_DOWNSCALE_NORMALS", 0}, {"WAVE_OPERATIONS", 1}}};
+	m_motionVectorsRtDesc = getRenderer().create2DRenderTargetDescription(width, height, Format::kR16G16_Sfloat, "Downscaled adjusted MVs");
+	m_motionVectorsRtDesc.bake();
+
+	Array<SubMutation, 2> mutation = {{{"PIXEL_SHADER_DOWNSCALE_OTHER", 0}, {"WAVE_OPERATIONS", 1}}};
 	ANKI_CHECK(m_prog[0].load("ShaderBinaries/DepthDownscale.ankiprogbin", mutation));
 
 	mutation[0].m_value = 1;
@@ -85,6 +89,7 @@ void DepthDownscale::populateRenderGraph()
 
 	m_runCtx.m_depthRt = rgraph.newRenderTarget(m_depthRtDesc);
 	m_runCtx.m_normalsRt = rgraph.newRenderTarget(m_normalRtDesc);
+	m_runCtx.m_motionVectorsRt = rgraph.newRenderTarget(m_motionVectorsRtDesc);
 
 	if(g_cvarRenderPreferCompute)
 	{
@@ -94,9 +99,11 @@ void DepthDownscale::populateRenderGraph()
 
 		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getMotionVectors().getAdjustedMotionVectorsRt(), TextureUsageBit::kSrvCompute);
 
 		pass.newTextureDependency(m_runCtx.m_depthRt, TextureUsageBit::kUavCompute);
 		pass.newTextureDependency(m_runCtx.m_normalsRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(m_runCtx.m_motionVectorsRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
@@ -121,6 +128,7 @@ void DepthDownscale::populateRenderGraph()
 			cmdb.bindUav(0, 0, m_counterBuffer);
 
 			rgraphCtx.bindUav(1, 0, m_runCtx.m_normalsRt);
+			rgraphCtx.bindUav(2, 0, m_runCtx.m_motionVectorsRt);
 
 			for(U8 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
@@ -134,12 +142,13 @@ void DepthDownscale::populateRenderGraph()
 					surface.m_mipmap = 0; // Put something random
 				}
 
-				rgraphCtx.bindUav(mip + 2, 0, m_runCtx.m_depthRt, surface);
+				rgraphCtx.bindUav(mip + 3, 0, m_runCtx.m_depthRt, surface);
 			}
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(2, 0, getMotionVectors().getAdjustedMotionVectorsRt());
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
@@ -158,10 +167,12 @@ void DepthDownscale::populateRenderGraph()
 
 			if(mip == 0)
 			{
-				pass.setRenderpassInfo({rti, m_runCtx.m_normalsRt});
+				pass.setRenderpassInfo({rti, m_runCtx.m_normalsRt, m_runCtx.m_motionVectorsRt});
 				pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 				pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvPixel);
+				pass.newTextureDependency(getMotionVectors().getAdjustedMotionVectorsRt(), TextureUsageBit::kSrvPixel);
 				pass.newTextureDependency(m_runCtx.m_normalsRt, TextureUsageBit::kRtvDsvWrite);
+				pass.newTextureDependency(m_runCtx.m_motionVectorsRt, TextureUsageBit::kRtvDsvWrite);
 			}
 			else
 			{
@@ -184,6 +195,7 @@ void DepthDownscale::populateRenderGraph()
 				{
 					rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
 					rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(2));
+					rgraphCtx.bindSrv(2, 0, getMotionVectors().getAdjustedMotionVectorsRt());
 				}
 				else
 				{

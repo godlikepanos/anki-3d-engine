@@ -37,6 +37,11 @@ public:
 		return m_runCtx.m_normalsRt;
 	}
 
+	RenderTargetHandle getMotionVectorsRt() const
+	{
+		return m_runCtx.m_motionVectorsRt;
+	}
+
 	U8 getMipmapCount() const
 	{
 		return m_mipCount;
@@ -45,6 +50,7 @@ public:
 private:
 	RenderTargetDesc m_depthRtDesc;
 	RenderTargetDesc m_normalRtDesc;
+	RenderTargetDesc m_motionVectorsRtDesc;
 
 	Array<RendererShaderProgram, 2> m_prog;
 
@@ -57,6 +63,7 @@ private:
 	public:
 		RenderTargetHandle m_depthRt;
 		RenderTargetHandle m_normalsRt;
+		RenderTargetHandle m_motionVectorsRt;
 	} m_runCtx;
 
 	Error initInternal();

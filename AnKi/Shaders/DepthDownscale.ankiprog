@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator WAVE_OPERATIONS 0 1
-#pragma anki mutator PIXEL_SHADER_DOWNSCALE_NORMALS 0 1
+#pragma anki mutator PIXEL_SHADER_DOWNSCALE_OTHER 0 1
 
 #pragma anki technique vert pixel comp
 
@@ -17,12 +17,14 @@ ANKI_FAST_CONSTANTS(DepthDownscaleConstants, g_consts)
 
 Texture2D g_depthTex : register(t0);
 Texture2D g_normalsTex : register(t1);
+Texture2D g_motionVectorsTex : register(t2);
 
 SamplerState g_linearAnyClampSampler : register(s0);
 
 globallycoherent RWStructuredBuffer<U32> g_spdCounter : register(u0);
 RWTexture2D<Vec4> g_normalUav : register(u1);
-RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce] : register(u2);
+RWTexture2D<Vec4> g_motionVectorsUav : register(u2);
+RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce] : register(u3);
 
 // Include SPD
 #	define A_GPU 1
@@ -60,6 +62,9 @@ AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 
 	const Vec3 normalAtNearDepth = unpackNormalFromGBuffer(TEX(g_normalsTex, readCoord));
 	TEX(g_normalUav, p / 2) = Vec4(normalAtNearDepth, 0.0);
+
+	const Vec2 mv = TEX(g_motionVectorsTex, readCoord);
+	TEX(g_motionVectorsUav, p / 2) = Vec4(mv, 0.0, 0.0);
 
 	return AF4(minDepth, 0.0, 0.0, 0.0);
 }
@@ -132,8 +137,9 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 
 #	if ANKI_PIXEL_SHADER
 Texture2D<Vec4> g_depthTex : register(t0);
-#		if PIXEL_SHADER_DOWNSCALE_NORMALS
+#		if PIXEL_SHADER_DOWNSCALE_OTHER
 Texture2D<Vec4> g_normalsTex : register(t1);
+Texture2D<Vec4> g_motionVectorsTex : register(t2);
 #		endif
 
 SamplerState g_linearAnyClampSampler : register(s0);
@@ -141,8 +147,9 @@ SamplerState g_linearAnyClampSampler : register(s0);
 struct PixelOut
 {
 	F32 m_depth : SV_TARGET0;
-#		if PIXEL_SHADER_DOWNSCALE_NORMALS
+#		if PIXEL_SHADER_DOWNSCALE_OTHER
 	Vec4 m_normal : SV_TARGET1;
+	Vec2 m_motionVectors : SV_TARGET2;
 #		endif
 };
 
@@ -156,7 +163,7 @@ PixelOut main(VertOut input)
 	const F32 minDepth = min4(depths);
 	output.m_depth = minDepth;
 
-#		if PIXEL_SHADER_DOWNSCALE_NORMALS
+#		if PIXEL_SHADER_DOWNSCALE_OTHER
 	UVec2 readCoord = UVec2(input.m_svPosition.xy) * 2u;
 	if(minDepth == depths[0])
 	{
@@ -177,6 +184,9 @@ PixelOut main(VertOut input)
 
 	const Vec3 normalAtNearDepth = unpackNormalFromGBuffer(TEX(g_normalsTex, readCoord));
 	output.m_normal = Vec4(normalAtNearDepth, 0.0);
+
+	const Vec2 mv = TEX(g_motionVectorsTex, readCoord);
+	output.m_motionVectors = mv;
 #		endif
 
 	return output;
