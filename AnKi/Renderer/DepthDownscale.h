@@ -11,7 +11,7 @@
 
 namespace anki {
 
-// Downscales the depth buffer a few times.
+// Downscales the depth buffer and a few other RTs a few times. The downscale picks one pixel out of a 2x2 grid for the first downscale
 class DepthDownscale : public RendererObject
 {
 public:
@@ -26,7 +26,6 @@ public:
 
 	void populateRenderGraph();
 
-	// Return a FP color render target with hierarchical Z (min Z) in it's mips.
 	RenderTargetHandle getDepthRt() const
 	{
 		return m_runCtx.m_depthRt;
@@ -37,7 +36,7 @@ public:
 		return m_runCtx.m_normalsRt;
 	}
 
-	RenderTargetHandle getMotionVectorsRt() const
+	RenderTargetHandle getAdjustedMotionVectorsRt() const
 	{
 		return m_runCtx.m_motionVectorsRt;
 	}

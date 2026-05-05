@@ -55,7 +55,7 @@ Error DepthDownscale::initInternal()
 	m_motionVectorsRtDesc = getRenderer().create2DRenderTargetDescription(width, height, Format::kR16G16_Sfloat, "Downscaled adjusted MVs");
 	m_motionVectorsRtDesc.bake();
 
-	Array<SubMutation, 2> mutation = {{{"PIXEL_SHADER_DOWNSCALE_OTHER", 0}, {"WAVE_OPERATIONS", 1}}};
+	Array<SubMutation, 2> mutation = {{{"PIXEL_SHADER_FIRST_DOWNSCALE", 0}, {"WAVE_OPERATIONS", 1}}};
 	ANKI_CHECK(m_prog[0].load("ShaderBinaries/DepthDownscale.ankiprogbin", mutation));
 
 	mutation[0].m_value = 1;
@@ -187,8 +187,8 @@ void DepthDownscale::populateRenderGraph()
 
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				const Bool downscaleNormal = mip == 0;
-				cmdb.bindShaderProgram(m_prog[downscaleNormal].get());
+				const Bool firstPass = mip == 0;
+				cmdb.bindShaderProgram(m_prog[firstPass].get());
 				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 				if(mip == 0)

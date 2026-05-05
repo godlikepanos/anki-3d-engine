@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator WAVE_OPERATIONS 0 1
-#pragma anki mutator PIXEL_SHADER_DOWNSCALE_OTHER 0 1
+#pragma anki mutator PIXEL_SHADER_FIRST_DOWNSCALE 0 1
 
 #pragma anki technique vert pixel comp
 
@@ -36,37 +36,18 @@ groupshared AF1 s_spdIntermediateR[16][16];
 
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
+	// In a 2x2 grid return the top left pixel. The rest of the reduction will get the min of the 2x2
 	ANKI_MAYBE_UNUSED(slice);
-	const Vec2 uv = Vec2(p) * g_consts.m_srcTexSizeOverOne + g_consts.m_srcTexSizeOverOne;
 
-	const Vec4 depths = g_depthTex.GatherRed(g_linearAnyClampSampler, uv);
-	const F32 minDepth = min4(depths);
+	const F32 depth = TEX(g_depthTex, p);
 
-	UVec2 readCoord = p;
-	if(minDepth == depths[0])
-	{
-		readCoord += UVec2(0, 1);
-	}
-	else if(minDepth == depths[1])
-	{
-		readCoord += UVec2(1, 1);
-	}
-	else if(minDepth == depths[2])
-	{
-		readCoord += UVec2(1, 0);
-	}
-	else
-	{
-		readCoord += UVec2(0, 0);
-	}
+	const Vec3 normal = unpackNormalFromGBuffer(TEX(g_normalsTex, p));
+	TEX(g_normalUav, p / 2) = Vec4(normal, 0.0);
 
-	const Vec3 normalAtNearDepth = unpackNormalFromGBuffer(TEX(g_normalsTex, readCoord));
-	TEX(g_normalUav, p / 2) = Vec4(normalAtNearDepth, 0.0);
-
-	const Vec2 mv = TEX(g_motionVectorsTex, readCoord);
+	const Vec2 mv = TEX(g_motionVectorsTex, p);
 	TEX(g_motionVectorsUav, p / 2) = Vec4(mv, 0.0, 0.0);
 
-	return AF4(minDepth, 0.0, 0.0, 0.0);
+	return AF4(depth, 0.0, 0.0, 0.0);
 }
 
 AF4 SpdLoad(AU2 p, AU1 slice)
@@ -137,7 +118,7 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 
 #	if ANKI_PIXEL_SHADER
 Texture2D<Vec4> g_depthTex : register(t0);
-#		if PIXEL_SHADER_DOWNSCALE_OTHER
+#		if PIXEL_SHADER_FIRST_DOWNSCALE
 Texture2D<Vec4> g_normalsTex : register(t1);
 Texture2D<Vec4> g_motionVectorsTex : register(t2);
 #		endif
@@ -147,7 +128,7 @@ SamplerState g_linearAnyClampSampler : register(s0);
 struct PixelOut
 {
 	F32 m_depth : SV_TARGET0;
-#		if PIXEL_SHADER_DOWNSCALE_OTHER
+#		if PIXEL_SHADER_FIRST_DOWNSCALE
 	Vec4 m_normal : SV_TARGET1;
 	Vec2 m_motionVectors : SV_TARGET2;
 #		endif
@@ -155,38 +136,19 @@ struct PixelOut
 
 PixelOut main(VertOut input)
 {
-	const Vec2 uv = input.m_uv;
+	const UVec2 p = UVec2(input.m_svPosition.xy) * 2;
 
 	PixelOut output;
 
-	const Vec4 depths = g_depthTex.GatherRed(g_linearAnyClampSampler, uv);
+#		if PIXEL_SHADER_FIRST_DOWNSCALE
+	output.m_depth = TEX(g_depthTex, p);
+
+	output.m_normal = Vec4(unpackNormalFromGBuffer(TEX(g_normalsTex, p)), 0.0);
+	output.m_motionVectors = TEX(g_motionVectorsTex, p);
+#		else
+	const Vec4 depths = g_depthTex.GatherRed(g_linearAnyClampSampler, input.m_uv);
 	const F32 minDepth = min4(depths);
 	output.m_depth = minDepth;
-
-#		if PIXEL_SHADER_DOWNSCALE_OTHER
-	UVec2 readCoord = UVec2(input.m_svPosition.xy) * 2u;
-	if(minDepth == depths[0])
-	{
-		readCoord += UVec2(0, 1);
-	}
-	else if(minDepth == depths[1])
-	{
-		readCoord += UVec2(1, 1);
-	}
-	else if(minDepth == depths[2])
-	{
-		readCoord += UVec2(1, 0);
-	}
-	else
-	{
-		readCoord += UVec2(0, 0);
-	}
-
-	const Vec3 normalAtNearDepth = unpackNormalFromGBuffer(TEX(g_normalsTex, readCoord));
-	output.m_normal = Vec4(normalAtNearDepth, 0.0);
-
-	const Vec2 mv = TEX(g_motionVectorsTex, readCoord);
-	output.m_motionVectors = mv;
 #		endif
 
 	return output;

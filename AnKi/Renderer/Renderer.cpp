@@ -346,8 +346,8 @@ Error Renderer::populateRenderGraph()
 	m_gpuParticles->populateRenderGraph();
 	m_motionVectors->populateRenderGraph();
 	m_historyLength->populateRenderGraph();
-	m_ssao->populateRenderGraph();
 	m_depthDownscale->populateRenderGraph();
+	m_ssao->populateRenderGraph();
 	m_shadowMapping->populateRenderGraph();
 	m_clusterBinning->populateRenderGraph();
 	m_generatedSky->populateRenderGraph();

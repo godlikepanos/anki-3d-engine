@@ -51,12 +51,13 @@ public:
 
 public:
 	RendererShaderProgram m_ssaoGrProg;
-	Array<RendererShaderProgram, 2> m_tempralDenoiseGrProgs;
+	RendererShaderProgram m_temporalDenoiseGrProg;
 	RendererShaderProgram m_spatialDenoiseGrProg;
+	RendererShaderProgram m_upscaleGrProg;
 
-	RenderTargetDesc m_bentNormalsAndSsaoRtDescr;
+	Array<RenderTargetDesc, 2> m_bentNormalsAndSsaoRtDescr;
 
-	Array<RendererTexture, 2> m_tex;
+	RendererTexture m_tex;
 	Bool m_texImportedOnce = false;
 
 	ImageResourcePtr m_noiseImage;

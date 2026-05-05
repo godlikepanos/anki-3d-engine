@@ -18,7 +18,7 @@ T calculateBilateralWeightDepth(T depthCenter, T depthTap, T phi)
 #if 0
 	return max(0.0, 1.0 - diff * phi);
 #else
-	return sqrt(1.0 / (getEpsilon<T>() + diff)) * phi;
+	return sqrt(1.0 / (getEpsilon<T>() + diff)) * phi - phi;
 #endif
 }
 
@@ -29,14 +29,15 @@ F32 calculateBilateralWeightDepth2(F32 depthCenter, F32 depthTap, F32 phi)
 }
 
 // https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
-F32 calculateBilateralWeightNormal(Vec3 center, Vec3 tap, F32 phi)
+template<typename T>
+T calculateBilateralWeightNormal(TVec<T, 3> center, TVec<T, 3> tap, T phi)
 {
-	F32 normalCloseness = dot(tap, center);
+	T normalCloseness = dot(tap, center);
 	normalCloseness = normalCloseness * normalCloseness;
 	normalCloseness = normalCloseness * normalCloseness;
 
-	const F32 normalError = (1.0 - normalCloseness);
-	return max((1.0 - normalError * phi), 0.0);
+	const T normalError = (T(1) - normalCloseness);
+	return max((T(1) - normalError * phi), T(0));
 }
 
 F32 calculateBilateralWeightNormalCos(Vec3 ref, Vec3 tap, F32 phi)
