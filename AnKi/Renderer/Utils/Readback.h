@@ -62,7 +62,7 @@ public:
 	{
 		ANKI_ASSERT(count > 0);
 
-		for(const MultiframeReadbackToken::Allocation& a : token.m_allocations)
+		for([[maybe_unused]] const MultiframeReadbackToken::Allocation& a : token.m_allocations)
 		{
 			ANKI_ASSERT(a.m_frameIndex != m_crntFrame && "Can't allocate multiple times in a frame");
 		}

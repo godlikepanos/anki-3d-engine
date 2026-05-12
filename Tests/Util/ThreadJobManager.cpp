@@ -43,12 +43,13 @@ ANKI_TEST(Util, ThreadJobManagerBench)
 {
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 
+	const U32 threadCount = getCpuCoresCount() - 2; // Leave 2 cores for the system to breathe
+
 	const U64 time = HighRezTimer::getCurrentTimeUs();
+	constexpr U32 kTaskCount = 20 * 1024 * 1024;
 
 	{
-		constexpr U32 kTaskCount = 20 * 1024 * 1024;
-
-		ThreadJobManager manager(getCpuCoresCount(), true, 256);
+		ThreadJobManager manager(threadCount, true, 256);
 
 		Atomic<U32> atomic(0);
 
@@ -65,7 +66,7 @@ ANKI_TEST(Util, ThreadJobManagerBench)
 	}
 
 	const U64 timeDiff = HighRezTimer::getCurrentTimeUs() - time;
-	ANKI_TEST_LOGI("Time spent %lu us / %lu ms", timeDiff, timeDiff / 1000);
+	ANKI_TEST_LOGI("Time spent %" PRIu64 " us / %" PRId64 " ms. %f ops per ms", timeDiff, timeDiff / 1000, F64(kTaskCount) / F64(timeDiff / 1000));
 
 	DefaultMemoryPool::freeSingleton();
 }
