@@ -5,16 +5,17 @@
 
 #pragma anki mutator SSR_SAMPLE_GBUFFER 0 1
 #pragma anki mutator INDIRECT_DIFFUSE_CLIPMAPS 0 1
+#pragma anki mutator QUARTER_REZ 0 1
 
-#pragma anki technique Classification comp mutators
+#pragma anki technique Classification comp mutators QUARTER_REZ
 #pragma anki technique Ssr comp
-#pragma anki technique ReflectionProbeFallback comp mutators
-#pragma anki technique RtMaterialFetch rgen mutators INDIRECT_DIFFUSE_CLIPMAPS
-#pragma anki technique RtMaterialFetchInlineRt comp mutators INDIRECT_DIFFUSE_CLIPMAPS
-#pragma anki technique SpatialDenoise comp mutators
-#pragma anki technique TemporalDenoise comp mutators
-#pragma anki technique BilateralDenoiseVertical comp mutators
-#pragma anki technique BilateralDenoiseHorizontal comp mutators
+#pragma anki technique ReflectionProbeFallback comp mutators QUARTER_REZ
+#pragma anki technique RtMaterialFetch rgen mutators INDIRECT_DIFFUSE_CLIPMAPS QUARTER_REZ
+#pragma anki technique RtMaterialFetchInlineRt comp mutators INDIRECT_DIFFUSE_CLIPMAPS QUARTER_REZ
+#pragma anki technique SpatialAccumulation comp mutators QUARTER_REZ
+#pragma anki technique TemporalDenoise comp mutators QUARTER_REZ
+#pragma anki technique SpatialDenoise comp mutators QUARTER_REZ
+#pragma anki technique Upscale comp mutators
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -44,7 +45,7 @@ constexpr F32 kTemporalSourceWeight = 0.01;
 constexpr F32 kTemporalGamma = 1.0;
 constexpr Bool kPerfectTemporal = true;
 constexpr F32 kPdfForVeryRough = 1.0; // Something like 100 would have made more sense but it doesn't work well
-#define TILE_SIZE 32
+constexpr U32 kTileSize = 32;
 
 // The states of a tile
 enum
@@ -55,33 +56,6 @@ enum
 	kClassVeryRough,
 };
 
-// Functions
-HVec4 encodeColorDepthAndSampleCount(HVec3 color, F16 depth, U32 sampleCount)
-{
-	HVec4 signs;
-	[unroll] for(U32 i = 0; i < 4; i++)
-	{
-		signs[i] = (sampleCount & (1u << i)) ? 1.0 : -1.0;
-	}
-
-	return (HVec4(color, depth) + 0.01) * signs; // Add 0.01 to make sure that the sign sticks
-}
-
-void decodeColorDepthAndSampleCount(HVec4 rgba, out HVec3 color, out F16 depth, out U32 sampleCount)
-{
-	sampleCount = 0;
-	[unroll] for(U32 i = 0; i < 4; ++i)
-	{
-		sampleCount |= (sign(rgba[i]) > 0.0) ? (1u << i) : 0u;
-	}
-
-	rgba = abs(rgba);
-	rgba -= 0.01;
-
-	color = rgba.xyz;
-	depth = rgba.w;
-}
-
 template<typename T>
 Bool isMirror(T roughness)
 {
@@ -91,14 +65,12 @@ Bool isMirror(T roughness)
 // ===========================================================================
 // Classification                                                            =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Classification)
-
-SamplerState g_trilinearClampSampler : register(s0);
+#if ANKI_TECHNIQUE_Classification
 
 Texture2D<Vec4> g_gbufferRt1 : register(t0);
-Texture2D<Vec4> g_depthTex : register(t1);
+Texture2D<Vec4> g_depthTex : register(t1); // Could be in quarter rez
 
-RWTexture2D<UVec4> g_classTimeMap : register(u0);
+RWTexture2D<UVec4> g_classTileMap : register(u0);
 RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 
 ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
@@ -107,12 +79,12 @@ groupshared U32 g_minRoughness;
 groupshared U32 g_maxRoughness;
 groupshared U32 g_allSky;
 
-[numthreads(TILE_SIZE / 2, TILE_SIZE, 1)] void main(U32 svGroupIndex : SV_GROUPINDEX, UVec2 svDispatchThreadId : SV_DISPATCHTHREADID,
-													UVec2 svGroupId : SV_GROUPID)
+// It computes the class of a tile. If reflections run in quarter rez the tile points to the quarter rez textures
+[numthreads(kTileSize, kTileSize, 1)] void main(COMPUTE_ARGS)
 {
-	if(svDispatchThreadId.x == 0 && svDispatchThreadId.y == 0)
+	if(all(svDispatchThreadId.xy == 0u))
 	{
-		// Reset the value for the next frame
+		// Reset the value for the next job (SSR)
 		g_indirectArgs[0].m_threadGroupCountX = 0;
 		g_indirectArgs[1].m_threadGroupCountX = 0;
 	}
@@ -126,18 +98,23 @@ groupshared U32 g_allSky;
 
 	GroupMemoryBarrierWithGroupSync();
 
-	UVec2 fullViewportSize;
-	g_gbufferRt1.GetDimensions(fullViewportSize.x, fullViewportSize.y);
+#	if QUARTER_REZ
+	const UVec2 quarterViewportSize = getDimensions(g_depthTex);
 
-	const UVec2 realCoord = min(svDispatchThreadId, fullViewportSize / UVec2(2, 1) - 1u);
-	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
+	const UVec2 quarterCoord = min(svDispatchThreadId.xy, quarterViewportSize - 1u);
+	const UVec2 fullCoord = quarterCoord * 2u; // Top left pixel of every 2x2 quad
+#	else
+	const UVec2 fullViewportSize = getDimensions(g_depthTex);
 
-	const F32 depth = g_depthTex[logicalCoord].x;
+	const UVec2 quarterCoord = min(svDispatchThreadId.xy, fullViewportSize - 1u);
+	const UVec2 fullCoord = quarterCoord;
+#	endif
+
+	const F32 depth = TEX(g_depthTex, quarterCoord).x;
 
 	if(depth < 1.0)
 	{
-		const Vec4 rt1 = g_gbufferRt1[logicalCoord];
-		const F32 roughness = unpackRoughnessFromGBuffer(rt1);
+		const F32 roughness = unpackRoughnessFromGBuffer(TEX(g_gbufferRt1, fullCoord));
 
 		U32 orig;
 		InterlockedMax(g_maxRoughness, asuint(roughness), orig);
@@ -153,7 +130,7 @@ groupshared U32 g_allSky;
 	if(svGroupIndex == 0)
 	{
 		U32 tileClass = 0;
-		if(g_allSky == TILE_SIZE / 2 * TILE_SIZE)
+		if(g_allSky == square(kTileSize))
 		{
 			tileClass = kClassSky;
 		}
@@ -170,7 +147,7 @@ groupshared U32 g_allSky;
 			tileClass = kClassNormal;
 		}
 
-		g_classTimeMap[svGroupId] = tileClass;
+		TEX(g_classTileMap, svGroupId.xy) = tileClass;
 	}
 }
 #endif
@@ -178,7 +155,7 @@ groupshared U32 g_allSky;
 // ===========================================================================
 // SSR                                                                       =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Ssr)
+#if ANKI_TECHNIQUE_Ssr
 SamplerState g_trilinearClampSampler : register(s0);
 SamplerComparisonState g_shadowSampler : register(s1);
 SamplerState g_linearAnyRepeatSampler : register(s2);
@@ -186,17 +163,18 @@ SamplerState g_linearAnyRepeatSampler : register(s2);
 Texture2D<Vec4> g_gbufferRt0 : register(t0);
 Texture2D<Vec4> g_gbufferRt1 : register(t1);
 Texture2D<Vec4> g_gbufferRt2 : register(t2);
-Texture2D<Vec4> g_downscaledDepthTex : register(t3);
-Texture2D<Vec4> g_depthTex : register(t4);
-Texture2D<Vec4> g_lightBufferRt : register(t5);
-StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t6);
-StructuredBuffer<Cluster> g_clusters : register(t7);
-Texture2D<Vec4> g_shadowAtlasTex : register(t8);
-Texture2D<UVec4> g_classTileMap : register(t9);
-StructuredBuffer<GpuSceneLight> g_lights : register(t10);
+Texture2D<Vec4> g_quarterNormalsTex : register(t3);
+Texture2D<Vec4> g_downscaledDepthTex : register(t4);
+Texture2D<Vec4> g_depthTex : register(t5); // In full or quarter rez
+Texture2D<Vec4> g_lightBufferRt : register(t6);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t7);
+StructuredBuffer<Cluster> g_clusters : register(t8);
+Texture2D<Vec4> g_shadowAtlasTex : register(t9);
+Texture2D<UVec4> g_classTileMap : register(t10);
+StructuredBuffer<GpuSceneLight> g_lights : register(t11);
 
-RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
-RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
+RWTexture2D<Vec4> g_colorAndDepthUav : register(u0);
+RWTexture2D<Vec4> g_hitPosAndPdfUav : register(u1);
 RWStructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(u2);
 RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u3);
 
@@ -206,25 +184,25 @@ ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 
 #	define NUM_THREADS_SQRT 8
 
-groupshared Vec4 g_viewHitPointAndSsrSuccess[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
-groupshared Vec4 g_colorAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
+DEF_GS2(Vec4, NUM_THREADS_SQRT, NUM_THREADS_SQRT, g_viewHitPointAndSsrSuccess)
+DEF_GS2(Vec4, NUM_THREADS_SQRT, NUM_THREADS_SQRT, g_colorAndDepth)
 
 constexpr U32 kDirectionDirBinCount = 6;
-groupshared U32 g_directionBins[kDirectionDirBinCount];
+DEF_GS1(U32, kDirectionDirBinCount, g_directionBins)
 groupshared U32 g_pixelsFailedSsrOffset;
 
 constexpr SampleClipmapFlag kSampleClipmapFlags =
 	kSampleClipmapFlagBiasSamplePointTowardsCamera | kSampleClipmapFlagInvalidProbeRejection | kSampleClipmapFlagBackfacingProbeRejection;
 
-Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
+Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 fullCoord, F32 depth)
 {
 	// Read
 	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
-	unpackGBufferNoVelocity<F32>(g_gbufferRt0[coord], g_gbufferRt1[coord], g_gbufferRt2[coord], gbuffer);
+	unpackGBufferNoVelocity<F32>(TEX(g_gbufferRt0, fullCoord), TEX(g_gbufferRt1, fullCoord), TEX(g_gbufferRt2, fullCoord), gbuffer);
 
 	Vec3 outColor = gbuffer.m_emission;
 
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(coord.xy + 0.5, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(fullCoord + 0.5, depth));
 
 	// GI
 #	if INDIRECT_DIFFUSE_CLIPMAPS
@@ -244,7 +222,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	{
 		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 		F32 shadowFactor;
-		if(shadowCascadeCount >> 1u)
+		if(shadowCascadeCount > 1u)
 		{
 			const F32 negativeZViewSpace = -viewPos.z;
 
@@ -266,7 +244,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	U32 idx;
 	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const GpuSceneLight light = g_lights[idx];
+		const GpuSceneLight light = SBUFF(g_lights, idx);
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		const F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
@@ -278,7 +256,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	// Spot lights
 	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const GpuSceneLight light = g_lights[idx];
+		const GpuSceneLight light = SBUFF(g_lights, idx);
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
@@ -295,15 +273,19 @@ struct SampleNormalFunc
 {
 	Vec3 sample(Vec2 uv)
 	{
-		const Vec3 gbufferNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, uv, 0.0));
-		const Vec3 newNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(gbufferNormal, 0.0));
-		return newNormal;
+#	if QUARTER_REZ
+		const Vec3 worldNormal = g_quarterNormalsTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);
+#	else
+		const Vec3 worldNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, uv, 0.0));
+#	endif
+		const Vec3 viewNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(worldNormal, 0.0));
+		return viewNormal;
 	}
 };
 
 // Calculations in view space
-Bool doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewPos, F32 depth, F32 randFactor, F32 roughness,
-		   Vec3 viewReflDir, out Vec3 outColor, out Vec3 viewHitPoint)
+Bool doSsr(UVec2 fullViewportSize, Vec2 uv, Vec3 viewPos, F32 depth, F32 randFactor, F32 roughness, Vec3 viewReflDir, out Vec3 outColor,
+		   out Vec3 viewHitPoint)
 {
 	outColor = 0.0;
 	viewHitPoint = 0.0;
@@ -357,7 +339,7 @@ Bool doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 
 	else
 	{
 		const Vec3 worldPos = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewHitPoint, 1.0));
-		outColor = doLightShading(worldPos, viewHitPoint, hitUv * logicalViewportSize, hitDepth);
+		outColor = doLightShading(worldPos, viewHitPoint, hitUv * fullViewportSize, hitDepth);
 	}
 
 	return true;
@@ -367,16 +349,20 @@ Bool doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 
 void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, inout IVec2 neighbourOffset, inout F32 depthWeight,
 								inout F32 candidateCount)
 {
-	const IVec2 svGroupThreadId2 = clamp(svGroupThreadId + offset, 0, NUM_THREADS_SQRT - 1);
+	const IVec2 svGroupThreadId2 = svGroupThreadId + offset;
+	if(any(svGroupThreadId2 < 0) || any(svGroupThreadId2 >= NUM_THREADS_SQRT))
+	{
+		return;
+	}
 
-	if(!g_viewHitPointAndSsrSuccess[svGroupThreadId2.x][svGroupThreadId2.y].w)
+	if(!GS2(g_viewHitPointAndSsrSuccess, svGroupThreadId2.x, svGroupThreadId2.y).w)
 	{
 		return;
 	}
 
 	candidateCount += 1.0;
 
-	const F32 weight = calculateBilateralWeightDepth<F32>(depth, g_colorAndDepth[svGroupThreadId2.x][svGroupThreadId2.y].w, 1.0);
+	const F32 weight = calculateBilateralWeightDepth<F32>(depth, GS2(g_colorAndDepth, svGroupThreadId2.x, svGroupThreadId2.y).w, 1.0);
 	if(weight > depthWeight)
 	{
 		depthWeight = weight;
@@ -407,31 +393,40 @@ U32 dominantAxis(Vec3 d)
 {
 	if(svGroupIndex < kDirectionDirBinCount)
 	{
-		g_directionBins[svGroupIndex] = 0;
+		GS1(g_directionBins, svGroupIndex) = 0;
 	}
 	GroupMemoryBarrierWithGroupSync();
 
-	UVec2 halfViewportSize;
-	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
+	const UVec2 fullViewportSize = getDimensions(g_gbufferRt0);
 
-	const UVec2 realCoord = min(svDispatchThreadId, halfViewportSize - 1u);
-	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
-	const Vec2 uv = (Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y);
+#	if QUARTER_REZ
+	const UVec2 quarterCoord = min(svDispatchThreadId.xy, fullViewportSize / 2u - 1u);
+	const UVec2 fullCoord = quarterCoord * 2u; // Top left pixel of every 2x2 quad
+#	else
+	const UVec2 quarterCoord = min(svDispatchThreadId.xy, fullViewportSize - 1u);
+	const UVec2 fullCoord = quarterCoord;
+#	endif
+
+	const Vec2 uv = (fullCoord + 0.5) / fullViewportSize;
 
 	// Sky
-	const U32 tileClass = g_classTileMap[logicalCoord / TILE_SIZE];
+	const U32 tileClass = TEX(g_classTileMap, quarterCoord / kTileSize);
 	if(tileClass == kClassSky)
 	{
-		g_colorAndPdfTex[realCoord] = 0.0;
-		g_hitPosAndDepthTex[realCoord] = 0.0;
+		const F32 depth = 1.0;
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(0.0, 0.0, 0.0, 1.0 - depth);
+		TEX(g_hitPosAndPdfUav, quarterCoord) = 0.0;
 		return; // Return is OK because it's uniform controll flow
 	}
 
-	const F32 depth = g_depthTex[logicalCoord].x;
-	const Vec4 rt2 = g_gbufferRt2[logicalCoord];
-	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+	const F32 depth = TEX(g_depthTex, quarterCoord).x;
+#	if QUARTER_REZ
+	const Vec3 worldNormal = TEX(g_quarterNormalsTex, quarterCoord);
+#	else
+	const Vec3 worldNormal = unpackNormalFromGBuffer(TEX(g_gbufferRt2, fullCoord));
+#	endif
 
-	// Very rough
+	// Very rough?, sample the GI probes
 	if(tileClass == kClassVeryRough)
 	{
 		Vec4 worldPos = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjection, Vec4(uvToNdc(uv), depth, 1.0));
@@ -443,28 +438,27 @@ U32 dominantAxis(Vec3 d)
 		const Vec3 col = sampleClipmapRadiance(worldPos, reflDir, g_globalRendererConstants.m_cameraPosition,
 											   g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
 #	else
-		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(logicalCoord.xy + 0.5, depth));
+		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(fullCoord + 0.5, depth));
 		const Vec3 col = sampleGiProbes<F32>(cluster, g_giProbes, reflDir, worldPos.xyz, g_trilinearClampSampler);
 #	endif
 
 		Vec3 worldHitPos = worldPos + reflDir * 1.0;
 		worldHitPos -= g_globalRendererConstants.m_cameraPosition;
-		g_hitPosAndDepthTex[realCoord] = Vec4(worldHitPos, 1.0 - depth);
-		g_colorAndPdfTex[realCoord] = Vec4(col, kPdfForVeryRough);
+		TEX(g_hitPosAndPdfUav, quarterCoord) = Vec4(worldHitPos, kPdfForVeryRough);
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(col, 1.0 - depth);
 
 		return; // Return is OK because it's uniform controll flow
 	}
 
 	// Read stuff
-	const Vec4 rt1 = g_gbufferRt1[logicalCoord];
 	const Vec3 viewNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(worldNormal, 0.0));
-	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
+	const F32 roughness = unpackRoughnessFromGBuffer(TEX(g_gbufferRt1, fullCoord));
 
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec3 viewPos = cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, ndc, depth);
 
 	// Rand
-	const UVec3 seed = rand3DPCG16(UVec3(logicalCoord, g_globalRendererConstants.m_frame % 8u));
+	const UVec3 seed = rand3DPCG16(UVec3(quarterCoord, g_globalRendererConstants.m_frame % 8u));
 	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
 
 	// Compute refl vector
@@ -493,7 +487,7 @@ U32 dominantAxis(Vec3 d)
 	{
 		viewReflDir = reflect(-viewDir, viewNormal);
 
-		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(logicalCoord.xy + 0.5, depth));
+		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(fullCoord + 0.5, depth));
 
 		const Vec3 woldReflDir = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0));
 
@@ -517,22 +511,21 @@ U32 dominantAxis(Vec3 d)
 		if(!kStochasticReflections || tileClass == kClassMirror)
 		{
 			viewReflDir = reflect(-viewDir, viewNormal);
-			pdf = pdfVndfIsotropic(viewReflDir, viewDir, kMinRoughness, viewNormal);
+			pdf = pdfVndfIsotropic(viewReflDir, viewDir, square(kMinRoughness), viewNormal);
 		}
 		else
 		{
 			viewReflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
 		}
 
-		ssrSuccess = doSsr(halfViewportSize * UVec2(2, 1), realCoord, logicalCoord, uv, viewPos, depth, randFactors.x, roughness, viewReflDir,
-						   outColor, viewHitPoint);
+		ssrSuccess = doSsr(fullViewportSize, uv, viewPos, depth, randFactors.x, roughness, viewReflDir, outColor, viewHitPoint);
 	}
 
 	// Stash to groupshared
 	if(kSsrHallucinate)
 	{
-		g_viewHitPointAndSsrSuccess[svGroupThreadId.x][svGroupThreadId.y] = Vec4(viewHitPoint, ssrSuccess);
-		g_colorAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(outColor, depth);
+		GS2(g_viewHitPointAndSsrSuccess, svGroupThreadId.x, svGroupThreadId.y) = Vec4(viewHitPoint, ssrSuccess);
+		GS2(g_colorAndDepth, svGroupThreadId.x, svGroupThreadId.y) = Vec4(outColor, depth);
 		GroupMemoryBarrierWithGroupSync();
 	}
 
@@ -543,27 +536,35 @@ U32 dominantAxis(Vec3 d)
 		F32 depthWeight = 0.0;
 		F32 candidateCount = 0.0;
 
-		bestCandidateToHallucinate(svGroupThreadId, IVec2(0, -1), depth, neighbourOffset, depthWeight, candidateCount);
-		bestCandidateToHallucinate(svGroupThreadId, IVec2(0, 1), depth, neighbourOffset, depthWeight, candidateCount);
-		bestCandidateToHallucinate(svGroupThreadId, IVec2(1, -1), depth, neighbourOffset, depthWeight, candidateCount);
-		bestCandidateToHallucinate(svGroupThreadId, IVec2(1, 1), depth, neighbourOffset, depthWeight, candidateCount);
+		for(I32 x = -1; x <= 1; ++x)
+		{
+			for(I32 y = -1; y <= 1; ++y)
+			{
+				if(x == 0 && y == 0)
+				{
+					continue;
+				}
 
-		if(neighbourOffset.x != -100 && candidateCount == 4.0)
+				bestCandidateToHallucinate(svGroupThreadId, IVec2(x, y), depth, neighbourOffset, depthWeight, candidateCount);
+			}
+		}
+
+		if(neighbourOffset.x != -100 && candidateCount >= 6.0)
 		{
 			// Found something
 
 			const UVec2 neighbourSvGroupThreadId = svGroupThreadId + neighbourOffset;
 
-			viewHitPoint = g_viewHitPointAndSsrSuccess[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].xyz;
+			viewHitPoint = GS2(g_viewHitPointAndSsrSuccess, neighbourSvGroupThreadId.x, neighbourSvGroupThreadId.y).xyz;
 
 			viewReflDir = normalize(viewHitPoint - viewPos);
 			const Vec3 viewDir = normalize(-viewPos);
 			const F32 alpha = square(roughness);
 			pdf = pdfVndfIsotropic(viewReflDir, viewDir, alpha, viewNormal);
 
-			ssrSuccess = g_viewHitPointAndSsrSuccess[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].w;
+			ssrSuccess = GS2(g_viewHitPointAndSsrSuccess, neighbourSvGroupThreadId.x, neighbourSvGroupThreadId.y).w;
 
-			outColor = g_colorAndDepth[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].xyz;
+			outColor = GS2(g_colorAndDepth, neighbourSvGroupThreadId.x, neighbourSvGroupThreadId.y).xyz;
 
 			if(kSsrHallucinateDebug)
 			{
@@ -580,7 +581,7 @@ U32 dominantAxis(Vec3 d)
 		const Vec3 reflDirWorld = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0)).xyz;
 		const U32 directionBin = dominantAxis(reflDirWorld);
 
-		InterlockedAdd(g_directionBins[directionBin], 1, offsetInPixelsFailedSsr);
+		InterlockedAdd(GS1(g_directionBins, directionBin), 1, offsetInPixelsFailedSsr);
 	}
 
 	// Do a few things
@@ -590,16 +591,16 @@ U32 dominantAxis(Vec3 d)
 		// Prefix sum
 		[unroll] for(U32 i = 1; i < kDirectionDirBinCount; ++i)
 		{
-			g_directionBins[i] += g_directionBins[i - 1u];
+			GS1(g_directionBins, i) += GS1(g_directionBins, i - 1u);
 		}
 
 		// Set the RTP indirect command
-		const U32 pixelsFailedSsrCountInGroup = g_directionBins[kDirectionDirBinCount - 1];
-		InterlockedAdd(g_indirectArgs[0].m_threadGroupCountX, pixelsFailedSsrCountInGroup, g_pixelsFailedSsrOffset);
+		const U32 pixelsFailedSsrCountInGroup = GS1(g_directionBins, kDirectionDirBinCount - 1);
+		InterlockedAdd(SBUFF(g_indirectArgs, 0).m_threadGroupCountX, pixelsFailedSsrCountInGroup, g_pixelsFailedSsrOffset);
 
 		// Set the threadgroup count for Z for ReflectionProbeFallback
 		const U32 totalFailedCount = g_pixelsFailedSsrOffset + 1;
-		InterlockedMax(g_indirectArgs[1].m_threadGroupCountX, (totalFailedCount + (64 - 1)) / 64);
+		InterlockedMax(SBUFF(g_indirectArgs, 1).m_threadGroupCountX, (totalFailedCount + (64 - 1)) / 64);
 	}
 
 	GroupMemoryBarrierWithGroupSync();
@@ -611,7 +612,7 @@ U32 dominantAxis(Vec3 d)
 		const Vec3 reflDirWorld = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0)).xyz;
 
 		PixelFailedSsr failedPixel;
-		failedPixel.m_pixel = (realCoord.x << 16u) | realCoord.y;
+		failedPixel.m_pixel = (quarterCoord.x << 16u) | quarterCoord.y;
 		failedPixel.m_reflectionDirAndRoughness = packSnorm4x8(Vec4(reflDirWorld, roughness));
 		failedPixel.m_pdf_f16_rayDirT_f16 = f32tof16(pdf) << 16u;
 		failedPixel.m_pdf_f16_rayDirT_f16 |= f32tof16(length(viewPos - viewHitPoint));
@@ -619,30 +620,30 @@ U32 dominantAxis(Vec3 d)
 		const U32 directionBin = dominantAxis(reflDirWorld); // Compute again to avoid reg pressure
 
 		U32 writeOffset = g_pixelsFailedSsrOffset + offsetInPixelsFailedSsr;
-		writeOffset += (directionBin == 0) ? 0 : g_directionBins[directionBin - 1];
+		writeOffset += (directionBin == 0) ? 0 : GS1(g_directionBins, directionBin - 1);
 		SBUFF(g_pixelsFailedSsr, writeOffset) = failedPixel;
 	}
 	else if(!ssrSuccess && kDebugSsr)
 	{
-		g_colorAndPdfTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
-		g_hitPosAndDepthTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(1.0, 0.0, 1.0, 0.0);
+		TEX(g_hitPosAndPdfUav, quarterCoord) = Vec4(1.0, 0.0, 1.0, 0.0);
 	}
 	else if(depth == 1.0)
 	{
-		g_colorAndPdfTex[realCoord] = 0.0;
-		g_hitPosAndDepthTex[realCoord] = 0.0;
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(0.0, 0.0, 0.0, 1.0 - depth);
+		TEX(g_hitPosAndPdfUav, quarterCoord) = 0.0;
 	}
 	else
 	{
 		// Write to the image
 
-		g_colorAndPdfTex[realCoord] = Vec4(outColor, pdf);
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(outColor, 1.0 - depth);
 
 		Vec3 worldHitPos = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewHitPoint, 1.0));
 		worldHitPos -= g_globalRendererConstants.m_cameraPosition; // Move it with camera to avoid precision issues since it's stored in fp16
 
 		// Store depth in reverse for better precision
-		g_hitPosAndDepthTex[realCoord] = Vec4(worldHitPos, 1.0 - depth);
+		TEX(g_hitPosAndPdfUav, quarterCoord) = Vec4(worldHitPos, pdf);
 	}
 }
 #endif
@@ -650,9 +651,9 @@ U32 dominantAxis(Vec3 d)
 // ===========================================================================
 // ReflectionProbeFallback                                                   =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_ReflectionProbeFallback)
+#if ANKI_TECHNIQUE_ReflectionProbeFallback
 
-Texture2D<Vec4> g_depthTex : register(t0);
+Texture2D<Vec4> g_depthTex : register(t0); // Can be in quarter resolution
 StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t1);
 StructuredBuffer<GpuSceneReflectionProbe> g_reflectionProbes : register(t2);
 StructuredBuffer<Cluster> g_clusters : register(t3);
@@ -663,33 +664,36 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 
 SamplerState g_trilinearClampSampler : register(s0);
 
-RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
-RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
+RWTexture2D<Vec4> g_colorAndDepthUav : register(u0);
+RWTexture2D<Vec4> g_hitPosAndPdfUav : register(u1);
 
-[numthreads(64, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	if(svDispatchThreadId.x >= g_pixelsFailedSsrCount[0])
+	if(svDispatchThreadId.x >= SBUFF(g_pixelsFailedSsrCount, 0))
 	{
 		return;
 	}
 
-	UVec2 viewportSize;
-	g_depthTex.GetDimensions(viewportSize.x, viewportSize.y);
+	const UVec2 fullViewportSize = g_globalRendererConstants.m_renderingSize;
 
-	const PixelFailedSsr pixelFailedSsr = g_pixelsFailedSsr[svDispatchThreadId.x];
-	const UVec2 realCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
-	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
+	const PixelFailedSsr pixelFailedSsr = SBUFF(g_pixelsFailedSsr, svDispatchThreadId.x);
+	const UVec2 quarterCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
+#	if QUARTER_REZ
+	const UVec2 fullCoord = quarterCoord * 2u;
+#	else
+	const UVec2 fullCoord = quarterCoord;
+#	endif
 	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
 	const Vec3 reflDir = packed.xyz;
 	const F32 roughness = packed.w;
 	const F32 pdf = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 >> 16u);
 
-	const F32 depth = g_depthTex[logicalCoord].x;
-	const Vec2 ndc = uvToNdc((Vec2(logicalCoord) + 0.5) / Vec2(viewportSize));
+	const F32 depth = TEX(g_depthTex, quarterCoord).x;
+	const Vec2 ndc = uvToNdc((fullCoord + 0.5) / fullViewportSize);
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;
 
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(logicalCoord.xy + 0.5, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, Vec3(fullCoord + 0.5, depth));
 
 	const F32 reflLod = (g_globalRendererConstants.m_reflectionProbesMipCount - 1.0f) * roughness;
 	Vec3 probeColor = sampleReflectionProbes<F32>(cluster, g_reflectionProbes, reflDir, worldPos, reflLod, g_trilinearClampSampler);
@@ -701,19 +705,18 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 	}
 
 	// Write out
-	g_colorAndPdfTex[realCoord] = Vec4(probeColor, max(0.0, pdf));
+	TEX(g_colorAndDepthUav, quarterCoord) = Vec4(probeColor, 1.0 - depth); // Store depth in reverse for better precision
 
 	// Move it with camera to avoid precision issues since it's stored in fp16
-	// Store depth in reverse for better precision
 	const Vec3 hitPos = worldPos + reflDir * 1.0;
-	g_hitPosAndDepthTex[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
+	TEX(g_hitPosAndPdfUav, quarterCoord) = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, max(0.0, pdf));
 }
 #endif
 
 // ===========================================================================
 // RtMaterialFetch                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetch) || NOT_ZERO(ANKI_TECHNIQUE_RtMaterialFetchInlineRt)
+#if ANKI_TECHNIQUE_RtMaterialFetch || ANKI_TECHNIQUE_RtMaterialFetchInlineRt
 
 #	define INCLUDE_ALL
 #	include <AnKi/Shaders/RtMaterialFetch.hlsl>
@@ -774,20 +777,23 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	const U32 gtid = DispatchRaysIndex().x;
 #	endif
 
-	UVec2 halfViewportSize;
-	g_hitPosAndDepthUav.GetDimensions(halfViewportSize.x, halfViewportSize.y);
+	const Vec2 fullViewportSizef = g_globalRendererConstants.m_renderingSize;
 
 	const PixelFailedSsr pixelFailedSsr = SBUFF(g_pixelsFailedSsr, gtid);
-	const UVec2 realCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
-	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
+	const UVec2 quarterCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
+#	if QUARTER_REZ
+	const UVec2 fullCoord = quarterCoord * 2u;
+#	else
+	const UVec2 fullCoord = quarterCoord;
+#	endif
 	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
 	const Vec3 reflDir = packed.xyz;
 	const F32 roughness = packed.w;
 	const F32 pdf = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 >> 16u);
 	const F32 tmin = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 & 0xFFFFu);
 
-	const F32 depth = g_depthTex[logicalCoord].x;
-	const Vec2 ndc = uvToNdc((Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y));
+	const F32 depth = TEX(g_depthTex, quarterCoord).x;
+	const Vec2 ndc = uvToNdc((fullCoord + 0.5) / fullViewportSizef);
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;
 
@@ -833,142 +839,88 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 #	endif
 	}
 
-	g_colorAndPdfUav[realCoord] = Vec4(radiance, max(0.0, pdf));
+	TEX(g_colorAndDepthUav, quarterCoord) = Vec4(radiance, 1.0 - depth); // Store depth in reverse for better precision
 
 	// Move it with camera to avoid precision issues since it's stored in fp16
-	// Store depth in reverse for better precision
-	g_hitPosAndDepthUav[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
+	TEX(g_hitPosAndPdfUav, quarterCoord) = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, max(0.0, pdf));
 }
 #endif
 
 // ===========================================================================
-// SpatialDenoise                                                            =
+// SpatialAccumulation                                                       =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_SpatialDenoise)
-Texture2D<Vec4> g_colorAndPdfTex : register(t0);
-Texture2D<Vec4> g_hitPosAndDepthTex : register(t1);
-Texture2D<Vec4> g_depthTex : register(t2);
+#if ANKI_TECHNIQUE_SpatialAccumulation
+Texture2D<Vec4> g_colorAndDepthTex : register(t0); // In quarter or full rez
+Texture2D<Vec4> g_hitPosAndPdfTex : register(t1); // In quarter or full rez
+Texture2D<Vec4> g_depthTex : register(t2); // In quarter or full rez
 Texture2D<Vec4> g_gbufferRt1 : register(t3);
+#	if QUARTER_REZ
+Texture2D<Vec4> g_quarterNormalsTex : register(t4); // In quarter rez
+#	else
 Texture2D<Vec4> g_gbufferRt2 : register(t4);
+#	endif
 Texture2D<UVec4> g_classTileMap : register(t5);
 
-RWTexture2D<Vec4> g_denoisedTex : register(u0);
-RWTexture2D<Vec4> g_hitPosTex : register(u1);
+RWTexture2D<Vec4> g_colorAndDepthUav : register(u0); // In quarter or full rez
+RWTexture2D<Vec4> g_hitPosUav : register(u1); // In quarter or full rez
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
 ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 
-groupshared Vec4 g_colorAndPdf[8][8];
-groupshared Vec4 g_hitPosAndDepth[8][8];
-
-// Return true if the coord contains a pixel that was populated by the previous passes
-Bool isCheckerboardWhite(UVec2 coord)
+// It operates in full or quarter resolution. It gathers samples around the current pixel to compute a better reflection.
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	return (coord.y & 1u) == (coord.x & 1u);
-}
+	const UVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+#	if QUARTER_REZ
+	const UVec2 fullCoord = quarterCoord * 2u;
+#	else
+	const UVec2 fullCoord = quarterCoord;
+#	endif
 
-void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec3 color, inout F32 pdf, inout Vec3 hitPos, inout F32 sumWeight)
-{
-	if(any(svGroupThreadId < 0u) || any(svGroupThreadId > 7u))
-	{
-		return;
-	}
+	const UVec2 fullViewportSize = getDimensions(g_gbufferRt1);
 
-	const F32 weight = calculateBilateralWeightDepth<F32>(refDepth, g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y].w, 1.0);
+	const F32 refDepth = TEX(g_depthTex, quarterCoord); // Don't rely on the depth stored in g_colorAndDepthTex because it's low precision
 
-	color += g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y].xyz * weight;
-	pdf += g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y].w * weight;
-	hitPos += g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y].xyz * weight;
-
-	sumWeight += weight;
-}
-
-[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID, UVec2 svGroupThreadId : SV_GROUPTHREADID,
-								U32 svGroupIndex : SV_GROUPINDEX)
-{
-	UVec2 viewportSize;
-	g_colorAndPdfTex.GetDimensions(viewportSize.x, viewportSize.y);
-	const UVec2 halfViewportSize = UVec2(viewportSize.x / 2u, viewportSize.y);
-
-	const UVec2 coord = min(svDispatchThreadId, viewportSize - 1u);
-	const UVec2 checkerboardCoord = UVec2(coord.x / 2u, coord.y);
-
-	const F32 refDepth = g_depthTex[coord];
-
-	Vec3 refColor = 0.0;
-	F32 refPdf = 0.0;
-	Vec3 refHitPos = 0.0;
-	if(isCheckerboardWhite(coord))
-	{
-		// Dump pixel data to shared memory to be used to reconstruct other pixels
-		const Vec4 rgba = g_colorAndPdfTex[checkerboardCoord];
-		refColor = rgba.xyz;
-		refPdf = rgba.w;
-		g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y] = rgba;
-
-		refHitPos = g_hitPosAndDepthTex[checkerboardCoord].xyz;
-		g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(refHitPos, refDepth);
-	}
-	else
-	{
-		g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y] = 0.0;
-		g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(0.0, 0.0, 0.0, refDepth);
-	}
-
-	GroupMemoryBarrierWithGroupSync();
-
-	if(!isCheckerboardWhite(coord))
-	{
-		// Reconstruct missing pixel
-		const IVec2 svGroupThreadIdi = svGroupThreadId;
-
-		F32 sumWeight = 0.001;
-		reconstructCheckerboardBlack(svGroupThreadIdi + IVec2(-1, 0), refDepth, refColor, refPdf, refHitPos, sumWeight);
-		reconstructCheckerboardBlack(svGroupThreadIdi + IVec2(+1, 0), refDepth, refColor, refPdf, refHitPos, sumWeight);
-		reconstructCheckerboardBlack(svGroupThreadIdi + IVec2(0, +1), refDepth, refColor, refPdf, refHitPos, sumWeight);
-		reconstructCheckerboardBlack(svGroupThreadIdi + IVec2(0, -1), refDepth, refColor, refPdf, refHitPos, sumWeight);
-
-		refColor /= sumWeight;
-		refPdf /= sumWeight;
-		refHitPos /= sumWeight;
-	}
-
-	// NOTE: We are done with groupshared so we can use "return"
-
-	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
+	const U16 tileClass = TEX(g_classTileMap, quarterCoord / kTileSize);
 
 	if(tileClass == kClassSky || refDepth == 1.0)
 	{
-		g_denoisedTex[coord] = 0.0;
-		g_hitPosTex[coord] = 0.0;
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(0.0, 0.0, 0.0, 1.0 - refDepth);
+		TEX(g_hitPosUav, quarterCoord) = 0.0;
 		return;
 	}
 
-	const Vec4 rt1 = g_gbufferRt1[coord];
-	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
+	const Vec3 refColor = TEX(g_colorAndDepthTex, quarterCoord);
+	const Vec4 rgba = TEX(g_hitPosAndPdfTex, quarterCoord);
+	const F32 refPdf = rgba.w;
+	const Vec3 refHitPos = rgba.xyz + g_globalRendererConstants.m_cameraPosition;
+
+	const F32 roughness = unpackRoughnessFromGBuffer(TEX(g_gbufferRt1, fullCoord));
 	const F32 alpha = square(roughness);
 
 	if(kDisableDenoising || tileClass == kClassVeryRough || tileClass == kClassMirror || roughness >= g_consts.m_roughnessCutoffToGiEdges.y
 	   || isMirror(roughness))
 	{
-		g_denoisedTex[coord] = Vec4(refColor, 1.0 - refDepth); // Store depth in reverse for better precision
-		g_hitPosTex[coord] = Vec4(refHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(refColor, 1.0 - refDepth); // Store depth in reverse for better precision
+		TEX(g_hitPosUav, quarterCoord) = Vec4(refHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
 		return;
 	}
 
-	const Vec2 ndc = uvToNdc((Vec2(coord) + 0.5) / Vec2(viewportSize));
+	const Vec2 uv = (fullCoord + 0.5) / fullViewportSize;
+	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, refDepth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;
 
 	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
 
-	Vec3 newHitPos = 0.0;
+#	if QUARTER_REZ
+	const Vec3 worldNormal = TEX(g_quarterNormalsTex, quarterCoord);
+#	else
+	const Vec3 worldNormal = unpackNormalFromGBuffer(TEX(g_gbufferRt2, fullCoord));
+#	endif
 
-	const Vec4 rt2 = g_gbufferRt2[coord];
-	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
-
-	const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
+	const UVec3 seed = rand3DPCG16(UVec3(quarterCoord, g_globalRendererConstants.m_frame % 8u));
 	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
 
 	const F32 sinTheta = sin(randFactors.x * 2.0 * kPi);
@@ -976,8 +928,9 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 
 	const F32 sampleCount = ARRAY_SIZE(SPATIAL_UPSCALING_POISON_KERNEL) + 1.0;
 	F32 avgLuma = computeLuminance(refColor) / sampleCount;
-	Vec3 outColor = refColor;
-	F32 weightSum = refPdf;
+	F32 weightSum = refPdf * calculateBilateralWeightDepth<F32>(refDepth, refDepth, 1.0);
+	Vec3 outColor = refColor * weightSum;
+	Vec3 newHitPos = refHitPos * weightSum;
 	for(U32 i = 0u; i < ARRAY_SIZE(SPATIAL_UPSCALING_POISON_KERNEL); ++i)
 	{
 		const Vec2 diskPoint = SPATIAL_UPSCALING_POISON_KERNEL[i];
@@ -987,14 +940,20 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 		rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
 		rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
 
-		rotatedDiskPoint.x /= 2.0; // Adjust because the input textures are in half width
-
 		// Offset calculation
-		const IVec2 newCoord = clamp(IVec2(checkerboardCoord) + rotatedDiskPoint * kSpatialUpscalingPcfTexelOffset, 0, halfViewportSize - 1u);
+#	if QUARTER_REZ
+		IVec2 newCoord = IVec2(quarterCoord) + rotatedDiskPoint * kSpatialUpscalingPcfTexelOffset / 2.0;
+		newCoord = clamp(newCoord, 0, fullViewportSize / 2u - 1u);
+#	else
+		IVec2 newCoord = IVec2(fullCoord) + rotatedDiskPoint * kSpatialUpscalingPcfTexelOffset;
+		newCoord = clamp(newCoord, 0, fullViewportSize - 1u);
+#	endif
 
-		const Vec4 rgba = g_hitPosAndDepthTex[newCoord];
+		const Vec4 rgba = TEX(g_colorAndDepthTex, newCoord);
+		const Vec3 sampleColor = rgba.xyz;
 		const F32 sampleDepth = 1.0 - rgba.w;
-		const Vec3 hitPos = rgba.xyz + g_globalRendererConstants.m_cameraPosition;
+
+		const Vec3 hitPos = TEX(g_hitPosAndPdfTex, newCoord).xyz + g_globalRendererConstants.m_cameraPosition;
 
 		const Vec3 reflectedDir = normalize(hitPos - worldPos);
 		const F32 pdf = pdfVndfIsotropic(reflectedDir, viewDir, alpha, worldNormal);
@@ -1003,8 +962,6 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 
 		if(weight > 0.001)
 		{
-			const Vec3 sampleColor = g_colorAndPdfTex[newCoord].xyz;
-
 			outColor += sampleColor * weight;
 			weightSum += weight;
 			avgLuma += computeLuminance(sampleColor) / sampleCount;
@@ -1031,34 +988,37 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 		outColor *= avgLuma / luma;
 	}
 
-	g_denoisedTex[coord] = Vec4(outColor, 1.0 - refDepth); // Store depth in reverse for better precision
-	g_hitPosTex[coord] = Vec4(newHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
+	TEX(g_colorAndDepthUav, quarterCoord) = Vec4(outColor, 1.0 - refDepth); // Store depth in reverse for better precision
+	TEX(g_hitPosUav, quarterCoord) = Vec4(newHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
 }
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SpatialDenoise
+#endif
 
 // ===========================================================================
 // TemporalDenoise                                                           =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_TemporalDenoise)
+#if ANKI_TECHNIQUE_TemporalDenoise
 SamplerState g_linearAnyClampSampler : register(s0);
 
-Texture2D<Vec4> g_colorAndDepth : register(t0);
-Texture2D<Vec4> g_historyTex : register(t1);
-Texture2D<Vec4> g_momentsHistoryTex : register(t2);
-Texture2D<Vec4> g_motionVectorsTex : register(t3);
-Texture2D<Vec4> g_hitPosTex : register(t4);
+Texture2D<Vec4> g_colorAndDepthTex : register(t0); // Full or quarter rez
+Texture2D<Vec4> g_historyTex : register(t1); // Full rez
+Texture2D<Vec4> g_momentsHistoryTex : register(t2); // Full or quarter rez
+Texture2D<Vec4> g_motionVectorsTex : register(t3); // Adjusted motion vectors. Full or quarter rez
+Texture2D<Vec4> g_hitPosTex : register(t4); // Full or quarter rez
 Texture2D<UVec4> g_classTileMap : register(t5);
+Texture2D<Vec4> g_gbufferRt1 : register(t6);
 
-RWTexture2D<Vec4> g_outTex : register(u0);
-RWTexture2D<Vec4> g_momentsTex : register(u1);
+RWTexture2D<Vec4> g_colorAndDepthUav : register(u0); // Full or quarter rez
+RWTexture2D<Vec4> g_momentsUav : register(u1); // Full or quarter rez
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
+ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
+
 // Spacial history UV calculation to decrease parallax reprojection effect
-Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
+Vec2 computeHistoryUv(UVec2 quarterCoord, UVec2 fullCoord, Vec2 uv)
 {
 	// Compute the history UV by reprojecting the hit point
-	const Vec3 hitWorldPos = g_hitPosTex[coords].xyz + g_globalRendererConstants.m_cameraPosition;
+	const Vec3 hitWorldPos = TEX(g_hitPosTex, quarterCoord).xyz + g_globalRendererConstants.m_cameraPosition;
 
 	Vec4 clipPos = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitWorldPos, 1.0));
 	clipPos.xy /= clipPos.w;
@@ -1070,76 +1030,87 @@ Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
 	const Vec2 hitHistoryUv = uv + diff;
 
 	// Read the motion vectors as well
-	const Vec2 motionHistoryUv =
-		uv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).xy
-		+ (g_globalRendererConstants.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConstants.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
+	const Vec2 motionHistoryUv = uv + TEX(g_motionVectorsTex, quarterCoord).xy;
 
 	// Blend the 2 histories. The more the projected hit point is in the view the more we use it
 	F32 factor = max(abs(clipPos.x), abs(clipPos.y));
 	factor = min(factor, 1.0);
 	factor = pow(factor, 8.0);
-	factor = 1 - factor;
+	factor = 1.0 - factor;
 
 	const Vec2 historyUv = lerp(motionHistoryUv, hitHistoryUv, factor);
 
 	return historyUv;
 }
 
-[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	UVec2 textureSize;
-	g_colorAndDepth.GetDimensions(textureSize.x, textureSize.y);
+	const UVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+#	if QUARTER_REZ
+	const UVec2 fullCoord = quarterCoord * 2u;
+#	else
+	const UVec2 fullCoord = quarterCoord;
+#	endif
 
-	const UVec2 coord = min(svDispatchThreadId, textureSize - 1);
-	const Vec2 uv = (Vec2(coord) + 0.5f) / textureSize;
+	const Vec2 fullViewportf = g_globalRendererConstants.m_renderingSize;
 
-	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
+	const Vec2 uv = (Vec2(fullCoord) + 0.5) / fullViewportf;
+
+	const U16 tileClass = TEX(g_classTileMap, quarterCoord / kTileSize);
 
 	if(kDisableDenoising || tileClass != kClassNormal)
 	{
-		g_outTex[coord] = g_colorAndDepth[coord];
-		g_momentsTex[coord] = 0.0;
+		TEX(g_colorAndDepthUav, quarterCoord) = TEX(g_colorAndDepthTex, quarterCoord);
+		TEX(g_momentsUav, quarterCoord) = 0.0;
+		return;
+	}
+
+	const F32 roughness = unpackRoughnessFromGBuffer<F32>(TEX(g_gbufferRt1, fullCoord), 0.0);
+	if(isMirror(roughness) || roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
+	{
+		TEX(g_colorAndDepthUav, quarterCoord) = TEX(g_colorAndDepthTex, quarterCoord);
+		TEX(g_momentsUav, quarterCoord) = 0.0;
 		return;
 	}
 
 	// Read history
-	const Vec2 historyUv = computeHistoryUv(coord, uv);
-	Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
+	const Vec2 historyUv = computeHistoryUv(quarterCoord, fullCoord, uv);
+	const Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
 
 	// TAA
-	const Vec3 finalVal = computeTemporalAA<F32>(g_colorAndDepth, g_linearAnyClampSampler, history, coord);
+	const Vec3 finalVal = computeTemporalAA<F32>(g_colorAndDepthTex, g_linearAnyClampSampler, history, quarterCoord);
 
 	// Temporal variance
-	const Vec2 momentsHistory = g_momentsHistoryTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f).xy;
+	const Vec2 momentsHistory = g_momentsHistoryTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0).xy;
 	Vec2 crntMoments;
 	crntMoments.x = computeLuminance(finalVal);
 	crntMoments.y = crntMoments.x * crntMoments.x;
 	const Vec2 moments = lerp(crntMoments, momentsHistory, 0.25);
 
 	// Write value
-	const F32 depth = g_colorAndDepth[coord].w;
-	g_outTex[coord] = Vec4(finalVal, depth);
-	g_momentsTex[coord] = Vec4(moments, 0.0, 0.0);
+	const F32 depth = 1.0 - TEX(g_colorAndDepthTex, quarterCoord).w;
+	TEX(g_colorAndDepthUav, quarterCoord) = Vec4(finalVal, 1.0 - depth);
+	TEX(g_momentsUav, quarterCoord) = Vec4(moments, 0.0, 0.0);
 }
 #endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_TemporalDenoise
 
 // ===========================================================================
-// BilateralDenoiseHorizontal                                                =
+// SpatialDenoise                                                            =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_BilateralDenoiseHorizontal)
-Texture2D<Vec4> g_colorAndDepth : register(t0);
-Texture2D<Vec4> g_momentsTex : register(t1);
-Texture2D<Vec4> g_gbufferRt1 : register(t2);
+#if ANKI_TECHNIQUE_SpatialDenoise
+Texture2D<Vec4> g_colorAndDepthTex : register(t0); // Full or quarter rez
+Texture2D<Vec4> g_momentsTex : register(t1); // Full or quarter rez
+Texture2D<Vec4> g_gbufferRt1 : register(t2); // Full rez
 Texture2D<UVec4> g_classTileMap : register(t3);
 
-RWTexture2D<Vec4> g_outTex : register(u0);
+RWTexture2D<Vec4> g_colorAndDepthUav : register(u0); // Full or quarter rez
 
 ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 
-F16 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
+F32 computeVarianceCenter(IVec2 quarterCoord, IVec2 textureSize)
 {
 #	if 1
-	const F16 kernel[2][2] = {{1.0 / 4.0, 1.0 / 8.0}, {1.0 / 8.0, 1.0 / 16.0}};
+	const F32 kernel[2][2] = {{1.0 / 4.0, 1.0 / 8.0}, {1.0 / 8.0, 1.0 / 16.0}};
 	const I32 radius = 1;
 
 	HVec2 sumMoments = 0.0f;
@@ -1147,142 +1118,219 @@ F16 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 	{
 		for(I32 xx = -radius; xx <= radius; xx++)
 		{
-			IVec2 newCoord = coord + IVec2(xx, yy);
+			IVec2 newCoord = quarterCoord + IVec2(xx, yy);
 			newCoord = clamp(newCoord, 0, textureSize - 1);
 
-			const F16 k = kernel[abs(xx)][abs(yy)];
-			sumMoments += g_momentsTex[newCoord].xy * k;
+			const F32 k = kernel[abs(xx)][abs(yy)];
+			sumMoments += TEX(g_momentsTex, newCoord).xy * k;
 		}
 	}
 
 	return abs(sumMoments.y - sumMoments.x * sumMoments.x);
 #	else
-	Vec2 sumMoments = g_momentsTex[coord].xy;
+	Vec2 sumMoments = TEX(g_momentsTex, quarterCoord).xy;
 	return abs(sumMoments.y - sumMoments.x * sumMoments.x);
 #	endif
 }
 
-[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	UVec2 outSize;
-	g_outTex.GetDimensions(outSize.x, outSize.y);
+	const UVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+#	if QUARTER_REZ
+	const UVec2 fullCoord = quarterCoord * 2u;
+#	else
+	const UVec2 fullCoord = quarterCoord;
+#	endif
 
-	const UVec2 coord = min(svDispatchThreadId, outSize - 1);
-	HVec4 rgba = g_colorAndDepth[coord];
-	const F16 refDepth = rgba.w;
-	const HVec3 centerColor = rgba.xyz;
+	UVec2 fullViewport = getDimensions(g_colorAndDepthTex);
+	const UVec2 quarterViewport = fullViewport;
+#	if QUARTER_REZ
+	fullViewport *= 2u;
+#	endif
 
-	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
+	Vec4 rgba = TEX(g_colorAndDepthTex, quarterCoord);
+	const F32 refDepth = rgba.w;
+	const Vec3 centerColor = rgba.xyz;
+
+	const U16 tileClass = TEX(g_classTileMap, quarterCoord / kTileSize);
 
 	if(kDisableDenoising || tileClass != kClassNormal)
 	{
-		g_outTex[coord] = encodeColorDepthAndSampleCount(centerColor, refDepth, 0u);
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(centerColor, refDepth);
 		return;
 	}
 
-	const HVec4 rt1 = g_gbufferRt1[coord];
-	const F16 roughness = unpackRoughnessFromGBuffer<F16>(rt1, 0.0);
-	const F16 sqRoughness = sqrt(roughness);
+	const F32 roughness = unpackRoughnessFromGBuffer<F32>(TEX(g_gbufferRt1, fullCoord), 0.0);
+	const F32 sqRoughness = sqrt(roughness);
 
-	if(roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
+	if(isMirror(roughness) || roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
 	{
-		g_outTex[coord] = encodeColorDepthAndSampleCount(centerColor, refDepth, 0u);
+		TEX(g_colorAndDepthUav, quarterCoord) = Vec4(centerColor, refDepth);
 		return;
 	}
 
-	const F16 variance = sqrt(computeVarianceCenter(coord, outSize)) * 100.0;
+	const F32 variance = sqrt(computeVarianceCenter(quarterCoord, quarterViewport)) * 100.0;
 
-	const F16 lerpFactor = sqRoughness * min(1.0, max(sqRoughness, variance));
+	const F32 lerpFactor = sqRoughness * min(1.0, max(sqRoughness, variance));
 
-	const F16 sampleCount = round(lerp(0, kMaxBilateralSamples, lerpFactor));
+	const F32 sampleCountPerDimension = round(lerp(0, kMaxBilateralSamples, lerpFactor));
 
-	F16 weightSum = gaussianWeight2d<F16>(kGaussianSigma, 0.0, 0.0);
-	HVec3 colorSum = centerColor * weightSum;
-	for(F16 x = -sampleCount; x <= sampleCount; x += 1.0)
+	F32 weightSum = gaussianWeight2d<F32>(kGaussianSigma, 0.0, 0.0);
+	Vec3 colorSum = centerColor * weightSum;
+	for(F32 x = -sampleCountPerDimension; x <= sampleCountPerDimension; x += 1.0)
 	{
-		if(x == 0.0)
+		for(F32 y = -sampleCountPerDimension; y <= sampleCountPerDimension; y += 1.0)
 		{
-			continue;
+			if(x == 0.0 && y == 0.0)
+			{
+				continue;
+			}
+
+			IVec2 newCoord = IVec2(quarterCoord) + IVec2(x, y);
+			newCoord = clamp(newCoord, 0, quarterViewport - 1);
+
+			rgba = TEX(g_colorAndDepthTex, newCoord);
+			const F32 sampleDepth = rgba.w;
+			const Vec3 sampleColor = rgba.xyz;
+
+			const F32 gWeight =
+				gaussianWeight<F32>(kGaussianSigma, x / sampleCountPerDimension) * gaussianWeight<F32>(kGaussianSigma, y / sampleCountPerDimension);
+			const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
+			const F32 weight = gWeight * depthWeight;
+
+			colorSum += sampleColor * weight;
+			weightSum += weight;
 		}
-
-		IVec2 newCoord = coord + IVec2(x, 0);
-		newCoord.x = clamp(newCoord.x, 0, outSize.x - 1);
-
-		rgba = g_colorAndDepth[newCoord];
-		const F16 sampleDepth = rgba.w;
-		const HVec3 sampleColor = rgba.xyz;
-
-		const F16 gWeight = gaussianWeight<F16>(kGaussianSigma, x / sampleCount);
-		const F16 depthWeight = calculateBilateralWeightDepth<F16>(refDepth, sampleDepth, 1.0);
-		const F16 weight = gWeight * depthWeight;
-
-		colorSum += sampleColor * weight;
-		weightSum += weight;
 	}
 
 	colorSum /= weightSum;
 
-	g_outTex[coord] = encodeColorDepthAndSampleCount(colorSum, refDepth, sampleCount);
+	TEX(g_colorAndDepthUav, quarterCoord) = Vec4(colorSum, refDepth);
 }
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoiseHorizontal
+#endif
 
 // ===========================================================================
-// BilateralDenoiseVertical                                                  =
+// Upscale                                                                   =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_BilateralDenoiseVertical)
-Texture2D<Vec4> g_colorAndDepthAndSampleCount : register(t0);
-Texture2D<UVec4> g_classTileMap : register(t1);
+#if ANKI_TECHNIQUE_Upscale
+#	include <AnKi/Shaders/BilateralFilter.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
 
-RWTexture2D<Vec4> g_outTex : register(u0);
+Texture2D<Vec4> g_quarterColorAndDepthTex : register(t0);
+Texture2D<F32> g_fullDepthTex : register(t1);
+Texture2D<Vec4> g_fullNormalsTex : register(t2);
 
-[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
+RWTexture2D<Vec4> g_upscaledUav : register(u0);
+
+template<typename T>
+void appendSample(T refDepth, T sampleDepth, TVec<T, 3> refNormal, TVec<T, 3> sampleNormal, TVec<T, 3> sample, inout TVec<T, 3> sampleSum,
+				  inout T weightSum, T extraWeight = T(1))
 {
-	UVec2 outSize;
-	g_outTex.GetDimensions(outSize.x, outSize.y);
+	T weight = calculateBilateralWeightDepth<T>(refDepth, sampleDepth, T(1));
+	weight *= calculateBilateralWeightNormal<T>(sampleNormal, refNormal, T(1));
+	weight *= extraWeight;
 
-	const UVec2 coord = min(svDispatchThreadId, outSize - 1);
-
-	U32 sampleCountu;
-	F16 refDepth;
-	HVec3 refColor;
-	decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[coord], refColor, refDepth, sampleCountu);
-	const F16 sampleCount = sampleCountu;
-
-	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
-
-	if(kDisableDenoising || tileClass >= kClassSky)
-	{
-		g_outTex[coord] = HVec4(refColor, 1.0);
-		return;
-	}
-
-	F16 weightSum = gaussianWeight<F16>(kGaussianSigma, 0.0);
-	HVec3 colorSum = refColor * weightSum;
-	for(F16 y = -sampleCount; y <= sampleCount; y += 1.0)
-	{
-		if(y == 0.0)
-		{
-			continue;
-		}
-
-		IVec2 newCoord = coord + IVec2(0.0, y);
-		newCoord.y = clamp(newCoord.y, 0, outSize.y - 1);
-
-		F16 sampleDepth;
-		HVec3 sampleColor;
-		U32 unused;
-		decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[newCoord], sampleColor, sampleDepth, unused);
-
-		const F16 gWeight = gaussianWeight<F16>(kGaussianSigma, y / sampleCount);
-		const F16 depthWeight = calculateBilateralWeightDepth<F16>(refDepth, sampleDepth, 1.0);
-		const F16 weight = gWeight * depthWeight;
-
-		colorSum += sampleColor * weight;
-		weightSum += weight;
-	}
-
-	colorSum /= weightSum;
-
-	g_outTex[coord] = HVec4(colorSum, 1.0);
+	sampleSum += sample * weight;
+	weightSum += weight;
 }
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoiseVertical
+
+template<typename T>
+void normalizeSum(T weightSum, inout TVec<T, 3> sampleSum)
+{
+	if(weightSum > getEpsilon<T>() * T(10))
+	{
+		sampleSum /= weightSum;
+	}
+	else
+	{
+		sampleSum = T(0);
+	}
+}
+
+template<typename T>
+void oneIn4Reconstruct(IVec2 svDispatchThreadId)
+{
+	const IVec2 viewportSize = getDimensions(g_upscaledUav);
+	const IVec2 quarterViewportSize = viewportSize / 2;
+	const IVec2 quarterCoord = svDispatchThreadId; // Coord in quarter rez
+
+	// This thread fills the 0,a,b,c pixels and this is the pattern we are trying to fill. The numbered pixels are known values. The a,b and c will
+	// need to be reconstructed. The - are pixels we don't care, another thread will fill those.
+	// +---+---+---+---+
+	// | 0 | a | 1 | - |
+	// +---+---+---+---+
+	// | b | c | - | - |
+	// +---+---+---+---+
+	// | 2 | - | 3 | - |
+	// +---+---+---+---+
+
+	// Gather the color of the neighbours and their depth
+	TVec<T, 4> samplesAndDepths[4];
+	TVec<T, 3> normals[4];
+	[unroll] for(I32 i = 0; i < 4; ++i)
+	{
+		const I32 x = i % 2;
+		const I32 y = i / 2;
+
+		IVec2 coord = quarterCoord + IVec2(x, y);
+		coord = min(coord, quarterViewportSize - 1);
+
+		samplesAndDepths[i] = TEX(g_quarterColorAndDepthTex, coord);
+		samplesAndDepths[i].w = T(1) - samplesAndDepths[i].w;
+
+		normals[i] = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord * 2));
+	}
+
+	// 0 is already filled, just write it
+	IVec2 coord = quarterCoord * 2;
+	TEX(g_upscaledUav, coord) = samplesAndDepths[0];
+
+	// For c use 4 samples
+	coord = quarterCoord * 2 + 1;
+	T refDepth = T(TEX(g_fullDepthTex, coord));
+	TVec<T, 3> refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
+	TVec<T, 3> sampleSum = T(0);
+	T weightSum = T(0);
+	appendSample(refDepth, samplesAndDepths[0].w, refNormal, normals[0], samplesAndDepths[0].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepths[1].w, refNormal, normals[1], samplesAndDepths[1].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepths[2].w, refNormal, normals[2], samplesAndDepths[2].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepths[3].w, refNormal, normals[3], samplesAndDepths[3].xyz, sampleSum, weightSum);
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_upscaledUav, coord) = TVec<T, 4>(sampleSum, 0);
+	const TVec<T, 3> sampleC = sampleSum;
+	const T depthC = refDepth;
+	const TVec<T, 3> normalC = refNormal;
+
+	// For a use 3 samples
+	coord = quarterCoord * 2 + IVec2(1, 0);
+	refDepth = T(TEX(g_fullDepthTex, coord));
+	refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
+	sampleSum = T(0);
+	weightSum = T(0);
+	appendSample(refDepth, samplesAndDepths[0].w, refNormal, normals[0], samplesAndDepths[0].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, samplesAndDepths[1].w, refNormal, normals[1], samplesAndDepths[1].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, depthC, refNormal, normalC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_upscaledUav, coord) = TVec<T, 4>(sampleSum, 0);
+
+	// For b use 3 samples
+	coord = quarterCoord * 2 + IVec2(0, 1);
+	refDepth = T(TEX(g_fullDepthTex, coord));
+	refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
+	sampleSum = T(0);
+	weightSum = T(0);
+	appendSample(refDepth, samplesAndDepths[0].w, refNormal, normals[0], samplesAndDepths[0].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, samplesAndDepths[2].w, refNormal, normals[2], samplesAndDepths[2].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, depthC, refNormal, normalC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_upscaledUav, coord) = TVec<T, 4>(sampleSum, 0);
+}
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	oneIn4Reconstruct<F32>(coord);
+}
+#endif

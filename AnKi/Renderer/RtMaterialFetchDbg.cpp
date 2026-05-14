@@ -17,29 +17,12 @@ Error RtMaterialFetchDbg::init()
 {
 	ANKI_CHECK(RtMaterialFetchRendererObject::init());
 
-	// Ray gen and miss
-	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchDbg.ankiprogbin", m_rtProg));
+	ANKI_CHECK(m_libraryProg.load("ShaderBinaries/RtMaterialFetchDbg.ankiprogbin", {}, "RtMaterialFetch", ShaderTypeBit::kRayGen));
+	m_rayGenShaderGroupIdx = m_libraryProg.getShaderGroupHandleIndex();
+	m_shaderGroupHandlesBuff = m_libraryProg.getShaderGroupHandlesBuffer();
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rtProg);
-		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
-		const ShaderProgramResourceVariant* variant;
-		m_rtProg->getOrCreateVariant(variantInitInfo, variant);
-		m_libraryGrProg.reset(&variant->getProgram());
-		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
-
-		m_shaderGroupHandlesBuff = variant->getShaderGroupHandlesBuffer();
-	}
-
-	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", m_missProg));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_missProg);
-		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
-		const ShaderProgramResourceVariant* variant;
-		m_missProg->getOrCreateVariant(variantInitInfo, variant);
-		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
-	}
+	ANKI_CHECK(m_missProg.load("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", {}, "RtMaterialFetch", ShaderTypeBit::kMiss));
+	m_missShaderGroupIdx = m_missProg.getShaderGroupHandleIndex();
 
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
@@ -79,7 +62,7 @@ void RtMaterialFetchDbg::populateRenderGraph()
 			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetchRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_libraryGrProg.get());
+			cmdb.bindShaderProgram(m_libraryProg.get());
 
 			// Space 0 globals
 #include <AnKi/Shaders/Include/MaterialBindings.def.h>

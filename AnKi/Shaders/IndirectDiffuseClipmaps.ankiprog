@@ -567,7 +567,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 {
 #	if INLINE_RT
 	UVec2 texSize;
-	g_colorAndPdfUav.GetDimensions(texSize.x, texSize.y);
+	g_lightResultAndDepthUav.GetDimensions(texSize.x, texSize.y);
 	if(any(svDispatchThreadId.xy >= texSize))
 	{
 		return;

@@ -62,8 +62,8 @@ RWTexture2D<Vec4> g_uav2 : register(u2, SPACE);
 
 #	define g_lightResultUav g_uav0
 
-#	define g_colorAndPdfUav g_uav0
-#	define g_hitPosAndDepthUav g_uav1
+#	define g_colorAndDepthUav g_uav0
+#	define g_hitPosAndPdfUav g_uav1
 
 #	define g_lightResultAndDepthUav g_uav0
 
