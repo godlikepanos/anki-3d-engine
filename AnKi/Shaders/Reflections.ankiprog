@@ -274,7 +274,7 @@ struct SampleNormalFunc
 	Vec3 sample(Vec2 uv)
 	{
 #	if QUARTER_REZ
-		const Vec3 worldNormal = g_quarterNormalsTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);
+		const Vec3 worldNormal = g_quarterNormalsTex.SampleLevel(g_trilinearClampSampler, uv, 0.0) * 2.0 - 1.0;
 #	else
 		const Vec3 worldNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, uv, 0.0));
 #	endif
@@ -421,7 +421,7 @@ U32 dominantAxis(Vec3 d)
 
 	const F32 depth = TEX(g_depthTex, quarterCoord).x;
 #	if QUARTER_REZ
-	const Vec3 worldNormal = TEX(g_quarterNormalsTex, quarterCoord);
+	const Vec3 worldNormal = TEX(g_quarterNormalsTex, quarterCoord) * 2.0 - 1.0;
 #	else
 	const Vec3 worldNormal = unpackNormalFromGBuffer(TEX(g_gbufferRt2, fullCoord));
 #	endif
@@ -915,7 +915,7 @@ ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
 
 #	if QUARTER_REZ
-	const Vec3 worldNormal = TEX(g_quarterNormalsTex, quarterCoord);
+	const Vec3 worldNormal = TEX(g_quarterNormalsTex, quarterCoord) * 2.0 - 1.0;
 #	else
 	const Vec3 worldNormal = unpackNormalFromGBuffer(TEX(g_gbufferRt2, fullCoord));
 #	endif

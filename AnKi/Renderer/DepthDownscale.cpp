@@ -46,10 +46,7 @@ Error DepthDownscale::initInternal()
 	m_depthRtDesc.m_mipmapCount = m_mipCount;
 	m_depthRtDesc.bake();
 
-	m_normalRtDesc = getRenderer().create2DRenderTargetDescription(
-		width, height,
-		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Snorm : Format::kR8G8B8A8_Snorm,
-		"Downscaled normals");
+	m_normalRtDesc = getRenderer().create2DRenderTargetDescription(width, height, Format::kA2B10G10R10_Unorm_Pack32, "Downscaled normals");
 	m_normalRtDesc.bake();
 
 	m_motionVectorsRtDesc = getRenderer().create2DRenderTargetDescription(width, height, Format::kR16G16_Sfloat, "Downscaled adjusted MVs");

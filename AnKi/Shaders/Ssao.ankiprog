@@ -78,7 +78,7 @@ TVec<T, 4> doWork(Vec2 coord)
 #	if PACKED_NORMALS
 	const TVec<T, 3> worldNormal = unpackNormalFromGBuffer(TEX(g_normalsTex, coord));
 #	else
-	const TVec<T, 3> worldNormal = TEX(g_normalsTex, coord);
+	const TVec<T, 3> worldNormal = TEX(g_normalsTex, coord) * 2.0 - 1.0;
 #	endif
 	const TVec<T, 3> viewspaceNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
 

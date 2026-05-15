@@ -42,7 +42,7 @@ AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 	const F32 depth = TEX(g_depthTex, p);
 
 	const Vec3 normal = unpackNormalFromGBuffer(TEX(g_normalsTex, p));
-	TEX(g_normalUav, p / 2) = Vec4(normal, 0.0);
+	TEX(g_normalUav, p / 2) = Vec4(normal / 2.0 + 0.5, 0.0);
 
 	const Vec2 mv = TEX(g_motionVectorsTex, p);
 	TEX(g_motionVectorsUav, p / 2) = Vec4(mv, 0.0, 0.0);
