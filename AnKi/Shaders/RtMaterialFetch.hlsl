@@ -151,13 +151,16 @@ Bool materialRayTraceInlineRt(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T
 	}
 	else
 	{
-		backfacing = q.CommittedTriangleFrontFace();
-
 		// Read the diff color from the AS instance
-		UVec3 diffColoru = q.CommittedInstanceID();
-		diffColoru >>= UVec3(16, 8, 0);
-		diffColoru &= 0xFF;
-		gbuffer.m_diffuse = Vec3(diffColoru) / 255.0;
+		UVec4 diffColoru = q.CommittedInstanceID();
+		diffColoru >>= UVec4(18, 12, 6, 0);
+		diffColoru &= 63u;
+		const Vec4 diffColor = Vec4(diffColoru) / 63.0;
+
+		gbuffer.m_diffuse = diffColor.xyz;
+
+		const Bool hasAlpha = diffColor.w < 0.9;
+		backfacing = !hasAlpha && q.CommittedTriangleFrontFace();
 
 		// Compute the normal
 		const Vec3 positions[3] = spvRayQueryGetIntersectionTriangleVertexPositionsKHR(q, SpvRayQueryCommittedIntersectionKHR);

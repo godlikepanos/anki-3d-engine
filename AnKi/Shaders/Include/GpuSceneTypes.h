@@ -29,7 +29,7 @@ struct GpuSceneRenderable
 	U32 m_uuid; // A UUID specific for this renderable. Not related to the scene object
 	U32 m_sceneNodeUuid;
 
-	U32 m_diffuseColor : 24; // The average diffuse color of the renderable. Blue is in low bits.
+	U32 m_diffuseColor : 24; // The average diffuse color of the renderable. It's RGBA with A in the low bits.
 	U32 m_padding : 8;
 };
 

@@ -988,6 +988,11 @@ ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 		outColor *= avgLuma / luma;
 	}
 
+	if(isInfOrNan(outColor))
+	{
+		outColor = 0.0;
+	}
+
 	TEX(g_colorAndDepthUav, quarterCoord) = Vec4(outColor, 1.0 - refDepth); // Store depth in reverse for better precision
 	TEX(g_hitPosUav, quarterCoord) = Vec4(newHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
 }
