@@ -368,7 +368,18 @@ T square(T x)
 		return d; \
 	}
 
+#define GET_DIMENSIONS_3D(texType) \
+	template<typename T> \
+	UVec3 getDimensions(texType<T> tex) \
+	{ \
+		UVec3 d; \
+		tex.GetDimensions(d.x, d.y, d.z); \
+		return d; \
+	}
+
 GET_DIMENSIONS_2D(Texture2D)
 GET_DIMENSIONS_2D(RWTexture2D)
+GET_DIMENSIONS_3D(Texture3D)
+GET_DIMENSIONS_3D(RWTexture3D)
 
 #undef GET_DIMENSIONS_2D

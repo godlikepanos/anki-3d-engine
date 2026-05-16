@@ -153,17 +153,17 @@ private:
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(RtMaterialFetchType)
 
-	Array<RendererRtShaderProgram, U32(RtMaterialFetchType::kCount)> m_rtMaterialFetchGrProg;
-	RendererRtShaderProgram m_missGrProg;
-	RendererShaderProgram m_rtMaterialFetchInlineRtGrProg;
-	RendererShaderProgram m_populateCachesGrProg;
-	RendererShaderProgram m_computeIrradianceGrProg;
-	RendererShaderProgram m_applyGiGrProg;
-	RendererShaderProgram m_applyGiUsingInlineRtGrProg;
-	RendererShaderProgram m_visProbesGrProg;
-	RendererShaderProgram m_temporalDenoiseGrProg;
-	RendererShaderProgram m_spatialReconstructGrProg;
-	RendererShaderProgram m_bilateralDenoiseGrProg;
+	Array<RendererRtShaderProgram, U32(RtMaterialFetchType::kCount)> m_rtMaterialFetchProg;
+	RendererRtShaderProgram m_missProg;
+	RendererShaderProgram m_probeInlineRtProg;
+	RendererShaderProgram m_populateCachesProg;
+	RendererShaderProgram m_probeIrradianceProg;
+	RendererShaderProgram m_applyProbeIrradianceProg;
+	RendererShaderProgram m_applyGiUsingInlineRtProg;
+	RendererShaderProgram m_visProbesProg;
+	RendererShaderProgram m_temporalDenoiseProg;
+	RendererShaderProgram m_spatialReconstructProg;
+	RendererShaderProgram m_bilateralDenoiseProg;
 
 	ImageResourcePtr m_blueNoiseImg;
 

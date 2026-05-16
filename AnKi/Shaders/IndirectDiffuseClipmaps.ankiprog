@@ -11,10 +11,10 @@
 #pragma anki mutator IRRADIANCE_USE_SH_L2 0 1
 
 #pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_TYPE SPATIAL_RECONSTRUCT_TYPE
-#pragma anki technique RtMaterialFetchInlineRt comp mutators
+#pragma anki technique ProbeInlineRt comp mutators
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
-#pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_USE_SH_L2
-#pragma anki technique Apply comp mutators SPATIAL_RECONSTRUCT_TYPE
+#pragma anki technique ProbeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_USE_SH_L2
+#pragma anki technique ApplyProbeIrradiance comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique ApplyInlineRt comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique SpatialReconstruct comp mutators SPATIAL_RECONSTRUCT_TYPE
 #pragma anki technique TemporalDenoise comp mutators
@@ -62,9 +62,9 @@ struct ProbeUpdateConsts
 };
 
 // ===========================================================================
-// RtMaterialFetch (Probes) and RtMaterialFetchInlineRt                      =
+// RtMaterialFetch (Probes) and ProbeInlineRt                                =
 // ===========================================================================
-#if(ANKI_TECHNIQUE_RtMaterialFetch && RT_MATERIAL_FETCH_TYPE == RT_MATERIAL_FETCH_TYPE_PROBES) || ANKI_TECHNIQUE_RtMaterialFetchInlineRt
+#if(ANKI_TECHNIQUE_RtMaterialFetch && RT_MATERIAL_FETCH_TYPE == RT_MATERIAL_FETCH_TYPE_PROBES) || ANKI_TECHNIQUE_ProbeInlineRt
 
 #	define CLIPMAP_VOLUME
 #	define INCLUDE_ALL
@@ -173,7 +173,7 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 // ===========================================================================
 // PopulateCaches                                                            =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_PopulateCaches)
+#if ANKI_TECHNIQUE_PopulateCaches
 Texture2D<Vec4> g_rtResultTex : register(t0);
 
 RWTexture3D<Vec4> g_radianceVolume : register(u0);
@@ -332,9 +332,9 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 #endif
 
 // ===========================================================================
-// ComputeIrradiance                                                         =
+// ProbeIrradiance                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_ComputeIrradiance)
+#if ANKI_TECHNIQUE_ProbeIrradiance
 
 // Each thread is touching a radiance texel
 constexpr U32 kThreadCount = (RADIANCE_OCTAHEDRON_MAP_SIZE * RADIANCE_OCTAHEDRON_MAP_SIZE + 32 - 1) / 32 * 32;
@@ -471,9 +471,9 @@ struct StoreBorderFunc
 #endif
 
 // ===========================================================================
-// Apply                                                                     =
+// ApplyProbeIrradiance                                                      =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Apply)
+#if ANKI_TECHNIQUE_ApplyProbeIrradiance
 Texture2D<Vec4> g_depthTex : register(t0);
 Texture2D<Vec4> g_bentNormalsTex : register(t1);
 
@@ -487,8 +487,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	Vec2 lowTextureSize;
-	g_uav.GetDimensions(lowTextureSize.x, lowTextureSize.y);
+	const Vec2 lowTextureSize = getDimensions(g_uav);
 
 	const UVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 #	if SPATIAL_RECONSTRUCT_TYPE == 0
@@ -513,8 +512,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	const Vec3 normal = TEX(g_bentNormalsTex, coord);
 
 	// Rand
-	UVec2 noiseTexSize;
-	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
+	const UVec2 noiseTexSize = getDimensions(g_blueNoiseTex);
 	Vec3 noise3 = TEX(g_blueNoiseTex, realSvDispatchThreadId % noiseTexSize);
 	noise3 = animateBlueNoise(noise3, g_globalRendererConstants.m_frame);
 	const F32 noise = noise3.x;
@@ -566,8 +564,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 #	endif
 {
 #	if INLINE_RT
-	UVec2 texSize;
-	g_lightResultAndDepthUav.GetDimensions(texSize.x, texSize.y);
+	const UVec2 texSize = getDimensions(g_lightResultAndDepthUav);
 	if(any(svDispatchThreadId.xy >= texSize))
 	{
 		return;
@@ -689,8 +686,7 @@ void normalizeSum(T weightSum, inout TVec<T, 3> sampleSum)
 template<typename T>
 void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 {
-	IVec2 viewportSize;
-	g_uav.GetDimensions(viewportSize.x, viewportSize.y);
+	const IVec2 viewportSize = getDimensions(g_uav);
 	const IVec2 quarterViewportSize = viewportSize / 2;
 	const IVec2 quarterCoord = svDispatchThreadId; // Coord in quarter rez
 
@@ -796,8 +792,7 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 template<typename T>
 void checkerboardReconstruct(IVec2 svDispatchThreadId)
 {
-	IVec2 viewportSize;
-	g_uav.GetDimensions(viewportSize.x, viewportSize.y);
+	const IVec2 viewportSize = getDimensions(g_uav);
 
 	const IVec2 filledCoord = IVec2(svDispatchThreadId.x * 2 + (svDispatchThreadId.y & 1), svDispatchThreadId.y);
 	const IVec2 toBeFilledCoord = IVec2(svDispatchThreadId.x * 2 + ((svDispatchThreadId.y + 1) & 1), svDispatchThreadId.y);
@@ -868,8 +863,7 @@ SamplerState g_linearAnyClampSampler : register(s0);
 	}
 	else
 	{
-		Vec2 viewport;
-		g_uav.GetDimensions(viewport.x, viewport.y);
+		const Vec2 viewport = getDimensions(g_uav);
 
 		const Vec2 uv = (coord + 0.5) / viewport;
 		const Vec2 historyUv = uv + mv;
@@ -896,8 +890,7 @@ RWTexture2D<Vec4> g_uav : register(u0);
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	IVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	IVec2 viewport;
-	g_uav.GetDimensions(viewport.x, viewport.y);
+	const IVec2 viewport = getDimensions(g_uav);
 
 	const Bool outOfBounds = any(coord >= viewport);
 	if(outOfBounds)
@@ -949,7 +942,7 @@ RWTexture2D<Vec4> g_uav : register(u0);
 // ===========================================================================
 // VisualizeProbes                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_VisualizeProbes)
+#if ANKI_TECHNIQUE_VisualizeProbes
 
 struct VertIn
 {
@@ -1053,8 +1046,7 @@ FragOut main(VertOut input)
 	const Vec4 p = mul(g_globalRendererConstants.m_matrices.m_viewProjectionJitter, Vec4(collisionPoint, 1.0));
 	output.m_svDepth = p.z / p.w;
 
-	UVec3 texSize;
-	g_volume.GetDimensions(texSize.x, texSize.y, texSize.z);
+	const UVec3 texSize = getDimensions(g_volume);
 
 	const Bool hasOctMap = texSize.x != probeCounts.x;
 
