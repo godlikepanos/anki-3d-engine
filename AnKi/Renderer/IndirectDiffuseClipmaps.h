@@ -55,7 +55,7 @@ ANKI_CVAR2(NumericCVar<U32>, Render, Idc, IrradianceOctMapSize, 5, 4, 20, "Size 
 
 ANKI_CVAR2(NumericCVar<F32>, Render, Idc, FirstBounceRayDistance, (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, 10000.0f,
 		   "For the 1st bounce shoot rays instead of sampling the clipmaps")
-ANKI_CVAR2(BoolCVar, Render, Idc, ApplyHighQuality, false, "If true use 1/2 resolution else use 1/4")
+ANKI_CVAR2(BoolCVar, Render, Idc, QuarterRez, true, "Quarter or full resolution")
 ANKI_CVAR2(NumericCVar<U8>, Render, Idc, RayCountPerTexelOfNewProbe, kDefaultRayCountPerTexelOfNewProbe, 1, 16,
 		   "The number of rays for a single texel of the oct map that will be cast for probes that are seen for the 1st time")
 
@@ -136,11 +136,11 @@ private:
 	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
 	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 
-	RenderTargetDesc m_rtResultRtDesc;
-	RenderTargetDesc m_lowRezRtDesc;
-	RenderTargetDesc m_fullRtDesc;
+	RenderTargetDesc m_probeRtResultRtDesc;
+	RenderTargetDesc m_colorAndDepthRtDesc1;
+	RenderTargetDesc m_colorAndDepthRtDesc2;
 
-	Array<RendererTexture, 2> m_irradianceRts;
+	RendererTexture m_finalTex;
 
 	IndirectDiffuseClipmapConstants m_consts;
 
@@ -162,8 +162,8 @@ private:
 	RendererShaderProgram m_applyGiUsingInlineRtProg;
 	RendererShaderProgram m_visProbesProg;
 	RendererShaderProgram m_temporalDenoiseProg;
-	RendererShaderProgram m_spatialReconstructProg;
 	RendererShaderProgram m_bilateralDenoiseProg;
+	RendererShaderProgram m_upscaleProg;
 
 	ImageResourcePtr m_blueNoiseImg;
 
