@@ -170,8 +170,8 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_postProcessResolution = setResolution(m_swapchainResolution, g_cvarRenderRenderScaling);
 	m_internalResolution = setResolution(m_postProcessResolution, g_cvarRenderInternalRenderScaling);
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x, m_postProcessResolution.y,
-				m_internalResolution.x, m_internalResolution.y);
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolutions: Internal %ux%u, post-process %ux%u, swapchain %ux%u", m_internalResolution.x,
+				m_internalResolution.y, m_postProcessResolution.x, m_postProcessResolution.y, m_swapchainResolution.x, m_swapchainResolution.y);
 
 	if(g_cvarCoreMeshletRendering && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 	{

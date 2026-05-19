@@ -11,7 +11,7 @@
 namespace anki {
 
 ANKI_CVAR(NumericCVar<F32>, Render, FilmGrain, 16.0f, 0.0f, 250.0f, "Film grain strength")
-ANKI_CVAR(NumericCVar<F32>, Render, Sharpness, (ANKI_PLATFORM_MOBILE) ? 0.0f : 1.0f, 0.0f, 1.0f, "Sharpen the image. It's a factor")
+ANKI_CVAR(NumericCVar<F32>, Render, Sharpness, 1.0f, 0.0f, 1.0f, "Sharpen the image. It's a factor")
 
 // Final stage in the rendering pipeline
 class FinalComposite : public RendererObject
@@ -32,7 +32,7 @@ public:
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	Array<ShaderProgramPtr, 2> m_grProgs; ///< [Debug on or off]
+	Array<ShaderProgramPtr, 2> m_grProgs; // [Debug on or off]
 
 	ShaderProgramResourcePtr m_visualizeRenderTargetProg;
 	ShaderProgramPtr m_visualizeRenderTargetGrProg;

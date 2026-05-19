@@ -21,8 +21,7 @@ Error Ssao::init()
 	}
 
 	{
-		TextureUsageBit usage = TextureUsageBit::kAllSrv;
-		usage |= TextureUsageBit::kUavCompute;
+		const TextureUsageBit usage = TextureUsageBit::kAllSrv | TextureUsageBit::kUavCompute | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texInit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR8G8B8A8_Snorm, usage, "Bent normals + SSAO");
 		m_tex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSrv);
