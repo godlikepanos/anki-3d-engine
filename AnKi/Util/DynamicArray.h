@@ -50,6 +50,19 @@ public:
 		*this = std::move(b);
 	}
 
+	DynamicArray(ConstWeakArray<T, TSize> arr, const TMemoryPool& pool = TMemoryPool())
+		: m_pool(pool)
+	{
+		if(arr.getSize() > 0)
+		{
+			resizeStorage(arr.getSize());
+			for(TSize i = 0; i < arr.getSize(); ++i)
+			{
+				emplaceBack(arr[i]);
+			}
+		}
+	}
+
 	~DynamicArray()
 	{
 		destroy();

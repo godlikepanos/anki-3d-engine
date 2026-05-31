@@ -57,7 +57,7 @@ public:
 
 	VkImageSubresourceRange computeVkImageSubresourceRange(const TextureSubresourceDesc& subresource) const
 	{
-		const TextureView in(this, subresource);
+		const TextureView in(const_cast<TextureImpl*>(this), subresource);
 		VkImageSubresourceRange range = {};
 		range.aspectMask = convertImageAspect(in.getDepthStencilAspect());
 		range.baseMipLevel = in.getFirstMipmap();

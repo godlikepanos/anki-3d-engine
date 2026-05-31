@@ -343,8 +343,7 @@ public:
 	// exposure: 1x1 Texture containing exposure
 	// resetAccumulation: Whether to clean or not any temporal history
 	// jitterOffset: Jittering offset that was applied during the generation of sourceTexture
-	// motionVectorsScale: Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV space to Pixel space
-	//                               conversion)
+	// motionVectorsScale: Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV space to Pixel space conversion)
 	void upscale(GrUpscaler* upscaler, const TextureView& inColor, const TextureView& outUpscaledColor, const TextureView& motionVectors,
 				 const TextureView& depth, const TextureView& exposure, Bool resetAccumulation, const Vec2& jitterOffset,
 				 const Vec2& motionVectorsScale);
