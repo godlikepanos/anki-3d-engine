@@ -67,7 +67,7 @@ public:
 
 	U32 calcD3DSubresourceIndex(const TextureSubresourceDesc& subresource) const
 	{
-		const TextureView view(this, subresource);
+		const TextureView view(const_cast<TextureImpl*>(this), subresource);
 
 		const U32 faceCount = textureTypeIsCube(m_texType);
 		const U32 arraySize = faceCount * m_layerCount;
