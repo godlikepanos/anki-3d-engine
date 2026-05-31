@@ -4,20 +4,27 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator WAVE_OPERATIONS 0 1
+#pragma anki mutator PIXEL_SHADER_FIRST_DOWNSCALE 0 1
 
 #pragma anki technique vert pixel comp
 
 #if ANKI_COMPUTE_SHADER
 #	include <AnKi/Shaders/Common.hlsl>
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
 
 ANKI_FAST_CONSTANTS(DepthDownscaleConstants, g_consts)
 
-globallycoherent RWStructuredBuffer<U32> g_spdCounter : register(u0);
-RWTexture2D<Vec4> g_dstStorageTextures[kMaxMipsSinglePassDownsamplerCanProduce] : register(u1);
+Texture2D g_depthTex : register(t0);
+Texture2D g_normalsTex : register(t1);
+Texture2D g_motionVectorsTex : register(t2);
 
-SamplerState u_linearAnyClampSampler : register(s0);
-Texture2D g_srcTex : register(t0);
+SamplerState g_linearAnyClampSampler : register(s0);
+
+globallycoherent RWStructuredBuffer<U32> g_spdCounter : register(u0);
+RWTexture2D<Vec4> g_normalUav : register(u1);
+RWTexture2D<Vec4> g_motionVectorsUav : register(u2);
+RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce] : register(u3);
 
 // Include SPD
 #	define A_GPU 1
@@ -29,21 +36,30 @@ groupshared AF1 s_spdIntermediateR[16][16];
 
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
+	// In a 2x2 grid return the top left pixel. The rest of the reduction will get the min of the 2x2
 	ANKI_MAYBE_UNUSED(slice);
-	const AF2 textureCoord = Vec2(p) * g_consts.m_srcTexSizeOverOne + g_consts.m_srcTexSizeOverOne;
-	return AF4(g_srcTex.SampleLevel(u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
+
+	const F32 depth = TEX(g_depthTex, p);
+
+	const Vec3 normal = unpackNormalFromGBuffer(TEX(g_normalsTex, p));
+	TEX(g_normalUav, p / 2) = Vec4(normal / 2.0 + 0.5, 0.0);
+
+	const Vec2 mv = TEX(g_motionVectorsTex, p);
+	TEX(g_motionVectorsUav, p / 2) = Vec4(mv, 0.0, 0.0);
+
+	return AF4(depth, 0.0, 0.0, 0.0);
 }
 
 AF4 SpdLoad(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	return AF4(g_dstStorageTextures[5][p].r, 0.0, 0.0, 0.0);
+	return AF4(g_dstUavs[5][p].r, 0.0, 0.0, 0.0);
 }
 
 void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	g_dstStorageTextures[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
+	g_dstUavs[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
 }
 
 void SpdIncreaseAtomicCounter(AU1 slice)
@@ -75,8 +91,8 @@ void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
 
 AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
-	const F32 avg = (v0.x + v1.x + v2.x + v3.x) / 4.0f;
-	return AF4(avg, 0.0, 0.0, 0.0);
+	const F32 m = min4(v0.x, v1.x, v2.x, v3.x);
+	return AF4(m, 0.0, 0.0, 0.0);
 }
 
 #	define SPD_LINEAR_SAMPLER 1
@@ -98,14 +114,44 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 
 #if ANKI_PIXEL_SHADER || ANKI_VERTEX_SHADER
 #	include <AnKi/Shaders/QuadVert.hlsl>
-
-Texture2D<Vec4> g_inputTex : register(t0);
-SamplerState g_linearAnyClampSampler : register(s0);
+#	include <AnKi/Shaders/PackFunctions.hlsl>
 
 #	if ANKI_PIXEL_SHADER
-F32 main(VertOut input) : SV_TARGET0
+Texture2D<Vec4> g_depthTex : register(t0);
+#		if PIXEL_SHADER_FIRST_DOWNSCALE
+Texture2D<Vec4> g_normalsTex : register(t1);
+Texture2D<Vec4> g_motionVectorsTex : register(t2);
+#		endif
+
+SamplerState g_linearAnyClampSampler : register(s0);
+
+struct PixelOut
 {
-	return g_inputTex.SampleLevel(g_linearAnyClampSampler, input.m_uv, 0.0).x;
+	F32 m_depth : SV_TARGET0;
+#		if PIXEL_SHADER_FIRST_DOWNSCALE
+	Vec4 m_normal : SV_TARGET1;
+	Vec2 m_motionVectors : SV_TARGET2;
+#		endif
+};
+
+PixelOut main(VertOut input)
+{
+	const UVec2 p = UVec2(input.m_svPosition.xy) * 2;
+
+	PixelOut output;
+
+#		if PIXEL_SHADER_FIRST_DOWNSCALE
+	output.m_depth = TEX(g_depthTex, p);
+
+	output.m_normal = Vec4(unpackNormalFromGBuffer(TEX(g_normalsTex, p)), 0.0);
+	output.m_motionVectors = TEX(g_motionVectorsTex, p);
+#		else
+	const Vec4 depths = g_depthTex.GatherRed(g_linearAnyClampSampler, input.m_uv);
+	const F32 minDepth = min4(depths);
+	output.m_depth = minDepth;
+#		endif
+
+	return output;
 }
 #	endif // ANKI_PIXEL_SHADER
 #endif // ANKI_PIXEL_SHADER || ANKI_VERTEX_SHADER

@@ -357,11 +357,6 @@ void EditorUi::mainMenu()
 					m_showCVarEditorWindow = true;
 				}
 
-				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
-				{
-					m_showDebugRtsWindow = true;
-				}
-
 				if(ImGui::MenuItem(ICON_MDI_CHART_BAR_STACKED " Stats"))
 				{
 					m_statsWindow.m_open = true;
@@ -372,6 +367,11 @@ void EditorUi::mainMenu()
 
 			if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
 			{
+				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
+				{
+					m_showDebugRtsWindow = true;
+				}
+
 				DbgOptions& options = Renderer::getSingleton().getDbg().getOptions();
 				Bool bBoundingBoxes = options.m_renderableBoundingBoxes;
 				if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))

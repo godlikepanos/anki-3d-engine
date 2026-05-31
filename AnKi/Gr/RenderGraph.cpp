@@ -1384,7 +1384,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 					texBarriers.resizeStorage(batch.m_textureBarriersBefore.getSize());
 					for(const TextureBarrier& barrier : batch.m_textureBarriersBefore)
 					{
-						const Texture& tex = *m_ctx->m_rts[barrier.m_idx].m_texture;
+						Texture& tex = *m_ctx->m_rts[barrier.m_idx].m_texture;
 						TextureBarrierInfo& inf = *texBarriers.emplaceBack();
 						inf.m_previousUsage = barrier.m_usageBefore;
 						inf.m_nextUsage = barrier.m_usageAfter;

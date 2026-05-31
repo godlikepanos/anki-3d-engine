@@ -6,11 +6,13 @@
 // Ground truth ambiend occlusion
 
 #pragma anki mutator SSAO_16BIT 0 1
-#pragma anki mutator SSAO_QUARTER_REZ 0 1
+#pragma anki mutator PACKED_NORMALS 0 1
+#pragma anki mutator QUARTER_REZ 0 1
 
-#pragma anki technique Ssao vert pixel comp mutators SSAO_16BIT
-#pragma anki technique SsaoTemporalDenoise vert pixel comp mutators SSAO_QUARTER_REZ
-#pragma anki technique SsaoSpatialDenoise vert pixel comp mutators
+#pragma anki technique Ssao vert pixel comp mutators SSAO_16BIT PACKED_NORMALS
+#pragma anki technique TemporalDenoise vert pixel comp mutators QUARTER_REZ
+#pragma anki technique SpatialDenoise vert pixel comp mutators
+#pragma anki technique Upscale comp mutators
 
 #include <AnKi/Shaders/QuadVert.hlsl>
 
@@ -24,7 +26,7 @@
 #	include <AnKi/Shaders/FastMathFunctions.hlsl>
 #	include <AnKi/Shaders/ImportanceSampling.hlsl>
 
-Texture2D<Vec4> g_gbufferRt2 : register(t0);
+Texture2D<Vec4> g_normalsTex : register(t0);
 Texture2D<Vec4> g_depthTex : register(t1);
 
 Texture2D<Vec4> g_noiseTex : register(t2);
@@ -73,7 +75,11 @@ TVec<T, 4> doWork(Vec2 coord)
 	const TVec<T, 2> noise2 = spatioTemporalNoise(coord, g_consts.m_frameCount);
 #	endif
 
-	const Vec3 worldNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_linearAnyClampSampler, uv, 0.0));
+#	if PACKED_NORMALS
+	const TVec<T, 3> worldNormal = unpackNormalFromGBuffer(TEX(g_normalsTex, coord));
+#	else
+	const TVec<T, 3> worldNormal = TEX(g_normalsTex, coord) * 2.0 - 1.0;
+#	endif
 	const TVec<T, 3> viewspaceNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
 
 	const F32 falloffFrom = g_consts.m_radius * (1.0 - kFalloffRange);
@@ -251,12 +257,10 @@ Vec4 main(VertOut input) : SV_TARGET0
 #endif
 
 // ===========================================================================
-// SSAO temporal denoise                                                     =
+// Temporal denoise                                                          =
 // ===========================================================================
-#if ANKI_TECHNIQUE_SsaoTemporalDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
+#if ANKI_TECHNIQUE_TemporalDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/Functions.hlsl>
-#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
-#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 SamplerState g_linearAnyClampSampler : register(s0);
@@ -275,19 +279,11 @@ HVec4 doWork(Vec2 coord)
 {
 	Vec2 viewport;
 	g_bentNormalsAndSsaoTex.GetDimensions(viewport.x, viewport.y);
-	const Vec2 uv = (coord + 0.5) / viewport;
 
-	const F16 minBlendFactor = 0.1;
-	const F16 maxBlendFactor = 0.9;
-
-	const Vec2 adjMotionVec = g_adjustedMotionVectorsTex[coord];
+	const Vec2 adjMotionVec = TEX(g_adjustedMotionVectorsTex, coord);
 	const Bool disocclusion = all(adjMotionVec == 1.0);
 
-	Vec2 uv2 = uv;
-#	if SSAO_QUARTER_REZ
-	uv2 /= 2.0;
-#	endif
-	HVec4 outColor = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv2, 0.0);
+	HVec4 outColor = TEX(g_bentNormalsAndSsaoTex, coord);
 
 	if(disocclusion)
 	{
@@ -295,15 +291,20 @@ HVec4 doWork(Vec2 coord)
 	}
 	else
 	{
-		const Vec2 historyUv =
-			uv + adjMotionVec
-			+ (g_globalRendererConsts.m_previousMatrices.m_jitterOffsetNdc - g_globalRendererConsts.m_matrices.m_jitterOffsetNdc) / Vec2(2.0, -2.0);
+#	if QUARTER_REZ
+		// Need the UV of the top left pixel
+		const Vec2 uv = (coord * 2.0 + 0.5) / (viewport * 2.0);
+#	else
+		const Vec2 uv = (coord + 0.5) / viewport;
+#	endif
+		const Vec2 historyUv = uv + adjMotionVec;
 
 		const HVec4 history = g_historyBentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
 
 		const F16 blendFactor = 0.1;
 		outColor = lerp(history, outColor, blendFactor);
 		outColor.xyz = normalize(outColor.xyz);
+		outColor.w = saturate(outColor.w);
 	}
 
 	return outColor;
@@ -313,7 +314,7 @@ HVec4 doWork(Vec2 coord)
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	g_bentNormalsAndSsaoStorageUav[coord] = doWork(coord);
+	TEX(g_bentNormalsAndSsaoStorageUav, coord) = doWork(coord);
 }
 #	else
 Vec4 main(VertOut input) : SV_TARGET0
@@ -325,14 +326,15 @@ Vec4 main(VertOut input) : SV_TARGET0
 #endif
 
 // ===========================================================================
-// SSAO spatial denoise                                                      =
+// Spatial denoise                                                           =
 // ===========================================================================
-#if ANKI_TECHNIQUE_SsaoSpatialDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
+#if ANKI_TECHNIQUE_SpatialDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/BilateralFilter.hlsl>
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_linearAnyClampSampler : register(s0);
+
 Texture2D<Vec4> g_bentNormalsAndSsaoTex : register(t0);
 Texture2D<Vec4> g_depthTex : register(t1);
 
@@ -361,7 +363,7 @@ HVec4 doWork(IVec2 coord)
 	g_bentNormalsAndSsaoTex.GetDimensions(viewport.x, viewport.y);
 
 	// Sample ref
-	const F32 refDepth = g_depthTex[coord].x;
+	const F32 refDepth = TEX(g_depthTex, coord).x;
 	if(refDepth == 1.0)
 	{
 		return 0.0;
@@ -369,7 +371,7 @@ HVec4 doWork(IVec2 coord)
 
 	F16 weightSum = depthWeight(0.0, 0.0); // Highest weight that this function can give
 
-	HVec4 bentNormalAndSsao = g_bentNormalsAndSsaoTex[coord];
+	HVec4 bentNormalAndSsao = TEX(g_bentNormalsAndSsaoTex, coord);
 	bentNormalAndSsao *= weightSum;
 
 	for(I32 x = -g_consts.m_halfSampleCount; x <= g_consts.m_halfSampleCount; ++x)
@@ -384,8 +386,8 @@ HVec4 doWork(IVec2 coord)
 			IVec2 newCoord = coord + IVec2(x, y);
 			newCoord = clamp(newCoord, 0, viewport - 1);
 
-			const HVec4 sampleColor = g_bentNormalsAndSsaoTex[newCoord];
-			const F32 sampleDepth = g_depthTex[newCoord].x;
+			const HVec4 sampleColor = TEX(g_bentNormalsAndSsaoTex, newCoord);
+			const F32 sampleDepth = TEX(g_depthTex, newCoord).x;
 
 			const F16 weight = depthWeight(refDepth, sampleDepth);
 
@@ -415,4 +417,134 @@ Vec4 main(VertOut input) : SV_TARGET0
 	return doWork(coord);
 }
 #	endif
+#endif
+
+// ===========================================================================
+// Upscale                                                                   =
+// ===========================================================================
+#if ANKI_TECHNIQUE_Upscale && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
+#	include <AnKi/Shaders/BilateralFilter.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
+
+Texture2D<Vec4> g_quarterSsaoTex : register(t0);
+Texture2D<F32> g_fullDepthTex : register(t1);
+Texture2D<Vec4> g_fullNormalsTex : register(t2);
+
+RWTexture2D<Vec4> g_upscaledUav : register(u0);
+
+template<typename T>
+void appendSample(T refDepth, T sampleDepth, TVec<T, 3> refNormal, TVec<T, 3> sampleNormal, TVec<T, 4> sample, inout TVec<T, 4> sampleSum,
+				  inout T weightSum, T extraWeight = T(1))
+{
+	T weight = calculateBilateralWeightDepth<T>(refDepth, sampleDepth, T(1));
+	weight *= calculateBilateralWeightNormal<T>(sampleNormal, refNormal, T(1));
+	weight *= extraWeight;
+
+	sampleSum += sample * weight;
+	weightSum += weight;
+}
+
+template<typename T>
+void normalizeSum(T weightSum, inout TVec<T, 4> sampleSum)
+{
+	if(weightSum > getEpsilon<T>() * T(10))
+	{
+		sampleSum /= weightSum;
+
+		sampleSum.xyz = normalize(sampleSum.xyz);
+		sampleSum.w = saturate(sampleSum.w);
+	}
+	else
+	{
+		sampleSum = TVec<T, 4>(1, 0, 0, 1);
+	}
+}
+
+template<typename T>
+void oneIn4Reconstruct(IVec2 svDispatchThreadId)
+{
+	IVec2 viewportSize;
+	g_upscaledUav.GetDimensions(viewportSize.x, viewportSize.y);
+	const IVec2 quarterViewportSize = viewportSize / 2;
+	const IVec2 quarterCoord = svDispatchThreadId; // Coord in quarter rez
+
+	// This thread fills the 0,a,b,c pixels and this is the pattern we are trying to fill. The numbered pixels are known values. The a,b and c will
+	// need to be reconstructed. The - are pixels we don't care, another thread will fill those.
+	// +---+---+---+---+
+	// | 0 | a | 1 | - |
+	// +---+---+---+---+
+	// | b | c | - | - |
+	// +---+---+---+---+
+	// | 2 | - | 3 | - |
+	// +---+---+---+---+
+
+	// Gather the color of the neighbours and their depth
+	TVec<T, 4> samples[4];
+	TVec<T, 4> normalsAndDepths[4];
+	[unroll] for(I32 i = 0; i < 4; ++i)
+	{
+		const I32 x = i % 2;
+		const I32 y = i / 2;
+
+		IVec2 coord = quarterCoord + IVec2(x, y);
+		coord = min(coord, quarterViewportSize - 1);
+
+		samples[i] = TEX(g_quarterSsaoTex, coord);
+
+		normalsAndDepths[i].xyz = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord * 2));
+		normalsAndDepths[i].w = TEX(g_fullDepthTex, coord * 2);
+	}
+
+	// 0 is already filled, just write it
+	IVec2 coord = quarterCoord * 2;
+	TEX(g_upscaledUav, coord) = samples[0];
+
+	// For c use 4 samples
+	coord = quarterCoord * 2 + 1;
+	T refDepth = T(TEX(g_fullDepthTex, coord));
+	TVec<T, 3> refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
+	TVec<T, 4> sampleSum = T(0);
+	T weightSum = T(0);
+	appendSample(refDepth, normalsAndDepths[0].w, refNormal, normalsAndDepths[0].xyz, samples[0], sampleSum, weightSum);
+	appendSample(refDepth, normalsAndDepths[1].w, refNormal, normalsAndDepths[1].xyz, samples[1], sampleSum, weightSum);
+	appendSample(refDepth, normalsAndDepths[2].w, refNormal, normalsAndDepths[2].xyz, samples[2], sampleSum, weightSum);
+	appendSample(refDepth, normalsAndDepths[3].w, refNormal, normalsAndDepths[3].xyz, samples[3], sampleSum, weightSum);
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_upscaledUav, coord) = sampleSum;
+	const TVec<T, 4> sampleC = sampleSum;
+	const T depthC = refDepth;
+	const TVec<T, 3> normalC = refNormal;
+
+	// For a use 3 samples
+	coord = quarterCoord * 2 + IVec2(1, 0);
+	refDepth = T(TEX(g_fullDepthTex, coord));
+	refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
+	sampleSum = T(0);
+	weightSum = T(0);
+	appendSample(refDepth, normalsAndDepths[0].w, refNormal, normalsAndDepths[0].xyz, samples[0], sampleSum, weightSum, T(1));
+	appendSample(refDepth, normalsAndDepths[1].w, refNormal, normalsAndDepths[1].xyz, samples[1], sampleSum, weightSum, T(1));
+	appendSample(refDepth, depthC, refNormal, normalC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_upscaledUav, coord) = sampleSum;
+
+	// For b use 3 samples
+	coord = quarterCoord * 2 + IVec2(0, 1);
+	refDepth = T(TEX(g_fullDepthTex, coord));
+	refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
+	sampleSum = T(0);
+	weightSum = T(0);
+	appendSample(refDepth, normalsAndDepths[0].w, refNormal, normalsAndDepths[0].xyz, samples[0], sampleSum, weightSum, T(1));
+	appendSample(refDepth, normalsAndDepths[2].w, refNormal, normalsAndDepths[2].xyz, samples[2], sampleSum, weightSum, T(1));
+	appendSample(refDepth, depthC, refNormal, normalC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
+	normalizeSum(weightSum, sampleSum);
+	TEX(g_upscaledUav, coord) = sampleSum;
+}
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	oneIn4Reconstruct<F32>(coord);
+}
 #endif

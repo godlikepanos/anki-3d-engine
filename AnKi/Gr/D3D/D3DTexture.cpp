@@ -201,7 +201,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 	if(type == ViewType::kRtv)
 	{
 		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllRtvDsv));
-		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect == DepthStencilAspectBit::kNone);
+		ANKI_ASSERT(TextureView(const_cast<TextureImpl*>(this), subresource).isGoodForRenderTarget() && m_aspect == DepthStencilAspectBit::kNone);
 
 		D3D12_RENDER_TARGET_VIEW_DESC desc = {};
 
@@ -225,7 +225,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 	else if(type == ViewType::kDsv || type == ViewType::kReadOnlyDsv)
 	{
 		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllRtvDsv));
-		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect != DepthStencilAspectBit::kNone);
+		ANKI_ASSERT(TextureView(const_cast<TextureImpl*>(this), subresource).isGoodForRenderTarget() && m_aspect != DepthStencilAspectBit::kNone);
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
 
@@ -257,7 +257,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 	else if(type == ViewType::kSrv)
 	{
 		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllSrv));
-		const TextureView tview(this, subresource);
+		const TextureView tview(const_cast<TextureImpl*>(this), subresource);
 
 		ANKI_ASSERT(tview.getSubresource().m_depthStencilAspect != DepthStencilAspectBit::kDepthStencil && "Can only create a single plane SRV");
 
@@ -457,7 +457,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 
 const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDesc& subresource, ViewType type) const
 {
-	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
+	ANKI_ASSERT(subresource == TextureView(const_cast<TextureImpl*>(this), subresource).getSubresource() && "Should have been sanitized");
 
 	// Check some pre-created
 	if(type == m_wholeTextureSrv.m_type && subresource == m_wholeTextureSrvSubresource)
@@ -519,7 +519,7 @@ D3D12_TEXTURE_BARRIER TextureImpl::computeBarrierInfo(TextureUsageBit before, Te
 {
 	ANKI_ASSERT((m_usage & before) == before);
 	ANKI_ASSERT((m_usage & after) == after);
-	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
+	ANKI_ASSERT(subresource == TextureView(const_cast<TextureImpl*>(this), subresource).getSubresource() && "Should have been sanitized");
 
 	D3D12_TEXTURE_BARRIER barrier = {};
 

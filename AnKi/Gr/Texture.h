@@ -298,7 +298,7 @@ public:
 	{
 	}
 
-	explicit TextureView(const Texture* tex, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
+	explicit TextureView(Texture* tex, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
 		: m_tex(tex)
 		, m_subresource(subresource)
 	{
@@ -331,7 +331,7 @@ public:
 		return m_tex != nullptr;
 	}
 
-	[[nodiscard]] const Texture& getTexture() const
+	[[nodiscard]] Texture& getTexture() const
 	{
 		validate();
 		return *m_tex;
@@ -433,7 +433,7 @@ public:
 	}
 
 private:
-	const Texture* m_tex = nullptr;
+	Texture* m_tex = nullptr;
 	TextureSubresourceDesc m_subresource;
 
 	void validate() const

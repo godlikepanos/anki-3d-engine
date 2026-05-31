@@ -661,7 +661,7 @@ Error TextureImpl::initViews()
 
 const TextureImpl::TextureViewEntry& TextureImpl::getTextureViewEntry(const TextureSubresourceDesc& subresource) const
 {
-	const TextureView view(this, subresource);
+	const TextureView view(const_cast<TextureImpl*>(this), subresource);
 
 	// Find class
 	ViewClass c;

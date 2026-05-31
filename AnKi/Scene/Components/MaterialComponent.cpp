@@ -251,7 +251,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_submeshIdx = min(m_submeshIdx, (m_meshComponent) ? (m_meshComponent->getMeshResource().getSubMeshCount() - 1) : 0);
 
 	// Extract the diffuse color
-	Vec3 averageDiffuse(0.0f);
+	Vec4 averageDiffuse(0.0f, 0.0f, 0.0f, 1.0);
 	{
 		const MaterialVariable* diffuseRelatedMtlVar = nullptr;
 
@@ -281,21 +281,50 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(diffuseRelatedMtlVar->getDataType() >= ShaderVariableDataType::kTextureFirst
 			   && diffuseRelatedMtlVar->getDataType() <= ShaderVariableDataType::kTextureLast)
 			{
-				averageDiffuse = diffuseRelatedMtlVar->getValue<ImageResourcePtr>()->getAverageColor().xyz;
+				averageDiffuse = diffuseRelatedMtlVar->getValue<ImageResourcePtr>()->getAverageColor();
 			}
 			else if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kVec3)
 			{
-				averageDiffuse = diffuseRelatedMtlVar->getValue<Vec3>();
+				averageDiffuse = diffuseRelatedMtlVar->getValue<Vec3>().xyz1;
 			}
 			else if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kU32 && diffuseRelatedMtlVar->tryGetImageResource())
 			{
 				// Bindless texture
-				averageDiffuse = diffuseRelatedMtlVar->tryGetImageResource()->getAverageColor().xyz;
+				averageDiffuse = diffuseRelatedMtlVar->tryGetImageResource()->getAverageColor();
 			}
 			else
 			{
 				ANKI_SCENE_LOGW("Couldn't extract a diffuse value for material: %s", mtl.getFilename().cstr());
 			}
+
+			// Search the material if it's alpha tested
+			Bool alphaTested = false;
+			for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
+			{
+				if(!(RenderingTechniqueBit(1 << t) & mtl.getRenderingTechniques()))
+				{
+					continue;
+				}
+
+				RenderingKey key;
+				key.setLod(0); // Materials don't care
+				key.setRenderingTechnique(t);
+				key.setSkinned(m_skinComponent != nullptr);
+				key.setVelocity(moved);
+				key.setMeshletRendering(!prioritizeEmitter
+										&& (GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_cvarCoreMeshletRendering));
+
+				const MaterialVariant& mvariant = mtl.getOrCreateVariant(key);
+
+				if(!(mvariant.getShaderProgram()->getShaderTypes() & ShaderTypeBit::kPixel))
+				{
+					continue;
+				}
+
+				alphaTested = alphaTested || mvariant.getShaderProgram()->hasDiscard();
+			}
+
+			averageDiffuse.w = (alphaTested) ? 0.0 : 1.0; // Be a bit conservative
 		}
 	}
 
@@ -331,8 +360,8 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 		gpuRenderable.m_uuid = m_renderableUuid.fetchAdd(1);
 
-		const UVec3 u3(averageDiffuse.xyz.clamp(0.0f, 1.0f) * 255.0f);
-		gpuRenderable.m_diffuseColor = ((u3.x << 16u) | (u3.y << 8u) | u3.z) & 0xFFFFFFF;
+		const UVec4 u4(averageDiffuse.clamp(0.0f, 1.0f) * 63.0f);
+		gpuRenderable.m_diffuseColor = ((u4.x << 18u) | (u4.y << 12u) | (u4.z << 6) | u4.w) & 0xFFFFFF;
 		gpuRenderable.m_sceneNodeUuid = info.m_node->getUuid();
 
 		m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);

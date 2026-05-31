@@ -55,7 +55,7 @@ void LensFlare::populateRenderGraph()
 	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Lens flare indirect");
 
 	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kUavCompute);
-	rpass.newTextureDependency(getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute, DepthDownscale::kEighthInternalResolution);
+	rpass.newTextureDependency(getDepthDownscale().getDepthRt(), TextureUsageBit::kSrvCompute, DepthDownscale::kEighthInternalResolution);
 
 	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(LensFlare);
@@ -80,7 +80,7 @@ void LensFlare::populateRenderGraph()
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_indirectBuffHandle);
 		// Bind neareset because you don't need high quality
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		rgraphCtx.bindSrv(1, 0, getDepthDownscale().getRt(), DepthDownscale::kEighthInternalResolution);
+		rgraphCtx.bindSrv(1, 0, getDepthDownscale().getDepthRt(), DepthDownscale::kEighthInternalResolution);
 
 		cmdb.dispatchCompute(flareCount, 1, 1);
 	});

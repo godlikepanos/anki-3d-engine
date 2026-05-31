@@ -29,78 +29,71 @@ Error Reflections::init()
 
 	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderReflectionsRt;
 	const Bool bSsrSamplesGBuffer = bRtReflections;
+	const Bool bQuarterRez = g_cvarRenderReflectionsQuarterResolution;
+	const UVec2 operatingRez = (bQuarterRez) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
 
-	std::initializer_list<SubMutation> mutation = {{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer},
-												   {"INDIRECT_DIFFUSE_CLIPMAPS", isIndirectDiffuseClipmapsEnabled()}};
 	constexpr CString kProgFname = "ShaderBinaries/Reflections.ankiprogbin";
+	ShaderProgramResourcePtr prog;
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(kProgFname, prog)); // Load it to avoid the loading/unloading of RendererShaderProgram
+
+	Array<SubMutation, 3> mutation = {{{"SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer},
+									   {"INDIRECT_DIFFUSE_CLIPMAPS", isIndirectDiffuseClipmapsEnabled()},
+									   {"QUARTER_REZ", bQuarterRez}}};
+
 	// Ray gen and miss
 	if(bRtReflections)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(kProgFname, m_mainProg));
+		ANKI_CHECK(m_libraryProg.load(kProgFname, mutation, "RtMaterialFetch", ShaderTypeBit::kRayGen));
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_mainProg);
-		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
-		variantInitInfo.addMutation("SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer);
-		variantInitInfo.addMutation("INDIRECT_DIFFUSE_CLIPMAPS", isIndirectDiffuseClipmapsEnabled());
-		const ShaderProgramResourceVariant* variant;
-		m_mainProg->getOrCreateVariant(variantInitInfo, variant);
-		m_libraryGrProg.reset(&variant->getProgram());
-		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
+		m_rayGenShaderGroupIdx = m_libraryProg.getShaderGroupHandleIndex();
+		m_shaderGroupHandlesBuff = m_libraryProg.getShaderGroupHandlesBuffer();
 
-		m_shaderGroupHandlesBuff = variant->getShaderGroupHandlesBuffer();
-
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", m_missProg));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_missProg);
-		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
-		m_missProg->getOrCreateVariant(variantInitInfo2, variant);
-		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
+		ANKI_CHECK(m_missProg.load("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", {}, "RtMaterialFetch", ShaderTypeBit::kMiss));
+		m_missShaderGroupIdx = m_missProg.getShaderGroupHandleIndex();
 
 		m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 											GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
-		ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_rtMaterialFetchInlineRtGrProg, "RtMaterialFetchInlineRt"));
+		ANKI_CHECK(m_rtMaterialFetchInlineRtProg.load(kProgFname, mutation, "RtMaterialFetchInlineRt"));
 	}
 
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_verticalBilateralDenoisingGrProg, "BilateralDenoiseVertical"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_horizontalBilateralDenoisingGrProg, "BilateralDenoiseHorizontal"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_ssrGrProg, "Ssr"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
-	ANKI_CHECK(loadShaderProgram(kProgFname, mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
+	ANKI_CHECK(m_spatialAccumulationProg.load(kProgFname, mutation, "SpatialAccumulation"));
+	ANKI_CHECK(m_temporalDenoisingProg.load(kProgFname, mutation, "TemporalDenoise"));
+	ANKI_CHECK(m_spatialDenoisingProg.load(kProgFname, mutation, "SpatialDenoise"));
+	ANKI_CHECK(m_ssrProg.load(kProgFname, mutation, "Ssr"));
+	ANKI_CHECK(m_probeFallbackProg.load(kProgFname, mutation, "ReflectionProbeFallback"));
+	ANKI_CHECK(m_tileClassificationProg.load(kProgFname, mutation, "Classification"));
+	ANKI_CHECK(m_upscalingProg.load(kProgFname, mutation, "Upscale"));
 
-	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "Reflections #1");
-	m_transientRtDesc1.bake();
+	m_colorAndDepth1RtDesc =
+		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat, "Reflections: Color+Depth #1");
+	m_colorAndDepth1RtDesc.bake();
 
-	m_transientRtDesc2 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "Reflections #2");
-	m_transientRtDesc2.bake();
+	m_colorAndDepth2RtDesc =
+		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat, "Reflections: Color+Depth #2");
+	m_colorAndDepth2RtDesc.bake();
 
-	m_hitPosAndDepthRtDesc = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x / 2u, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
-	m_hitPosAndDepthRtDesc.bake();
+	m_hitPosAndPdf1RtDesc =
+		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat, "Reflections: Hitpos+Pdf #1");
+	m_hitPosAndPdf1RtDesc.bake();
 
-	m_hitPosRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
-																   Format::kR16G16B16A16_Sfloat, "HitPos");
-	m_hitPosRtDesc.bake();
+	m_hitPosAndPdf2RtDesc =
+		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat, "Reflections: Hitpos+Pdf #2");
+	m_hitPosAndPdf2RtDesc.bake();
 
 	TextureInitInfo texInit = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, getRenderer().getHdrFormat(), "ReflectionsMain");
+		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, getRenderer().getHdrFormat(), "Reflections: Final");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
 	m_tex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
-	texInit = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
-															Format::kR32G32_Sfloat, "ReflectionsMoments #1");
+	texInit = getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR32G32_Sfloat, "Reflections: Moments #1");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
-	m_momentsTextures[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
-	texInit.setName("ReflectionsMoments #2");
-	m_momentsTextures[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
+	m_momentsTex[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
+	texInit.setName("Reflections: Moments #2");
+	m_momentsTex[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
-	m_classTileMapRtDesc = getRenderer().create2DRenderTargetDescription((getRenderer().getInternalResolution().x + kTileSize - 1) / kTileSize,
-																		 (getRenderer().getInternalResolution().y + kTileSize - 1) / kTileSize,
-																		 Format::kR8_Uint, "ReflClassTileMap");
+	m_classTileMapRtDesc = getRenderer().create2DRenderTargetDescription(
+		(operatingRez.x + kTileSize - 1) / kTileSize, (operatingRez.y + kTileSize - 1) / kTileSize, Format::kR8_Uint, "Reflections: ClassTileMap");
 	m_classTileMapRtDesc.bake();
 
 	{
@@ -123,19 +116,20 @@ void Reflections::populateRenderGraph()
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
 	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderReflectionsRt;
+	const Bool bQuarterRez = g_cvarRenderReflectionsQuarterResolution;
 
 	// Create or import render targets
-	const RenderTargetHandle mainRt = rgraph.importRenderTarget(m_tex.get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+	const RenderTargetHandle finalRt = rgraph.importRenderTarget(m_tex.get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
 	const RenderTargetHandle readMomentsRt =
-		rgraph.importRenderTarget(m_momentsTextures[getRenderer().getFrameCount() & 1].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+		rgraph.importRenderTarget(m_momentsTex[getRenderer().getFrameCount() & 1].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
 	const RenderTargetHandle writeMomentsRt =
-		rgraph.importRenderTarget(m_momentsTextures[(getRenderer().getFrameCount() + 1) & 1].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
+		rgraph.importRenderTarget(m_momentsTex[(getRenderer().getFrameCount() + 1) & 1].get(), !m_texImportedOnce, TextureUsageBit::kAllSrv);
 	m_texImportedOnce = true;
 
-	const RenderTargetHandle transientRt1 = rgraph.newRenderTarget(m_transientRtDesc1);
-	const RenderTargetHandle transientRt2 = rgraph.newRenderTarget(m_transientRtDesc2);
-	const RenderTargetHandle hitPosAndDepthRt = rgraph.newRenderTarget(m_hitPosAndDepthRtDesc);
-	const RenderTargetHandle hitPosRt = rgraph.newRenderTarget(m_hitPosRtDesc);
+	const RenderTargetHandle colorAndDepth1Rt = rgraph.newRenderTarget(m_colorAndDepth1RtDesc);
+	const RenderTargetHandle colorAndDepth2Rt = rgraph.newRenderTarget(m_colorAndDepth2RtDesc);
+	const RenderTargetHandle hitPosAndPdf1Rt = rgraph.newRenderTarget(m_hitPosAndPdf1RtDesc);
+	const RenderTargetHandle hitPosAndPdf2Rt = rgraph.newRenderTarget(m_hitPosAndPdf2RtDesc);
 	const RenderTargetHandle classTileMapRt = rgraph.newRenderTarget(m_classTileMapRtDesc);
 	const BufferHandle indirectArgsHandle = rgraph.importBuffer(m_indirectArgsBuffer, BufferUsageBit::kNone);
 
@@ -147,87 +141,106 @@ void Reflections::populateRenderGraph()
 	// Classification
 	{
 		// Create the pass
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflTileClassification");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: Tile classification");
 
 		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kUavCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, classTileMapRt, consts](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, classTileMapRt, consts, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsClassification);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_tileClassificationGrProg.get());
+			cmdb.bindShaderProgram(m_tileClassificationProg.get());
 
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, (bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt());
 			rgraphCtx.bindUav(0, 0, classTileMapRt);
 			cmdb.bindUav(1, 0, m_indirectArgsBuffer);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, kTileSize / 2, kTileSize, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y);
+			UVec2 rez = getRenderer().getInternalResolution();
+			if(bQuarterRez)
+			{
+				rez /= 2;
+			}
+
+			dispatchPPCompute(cmdb, kTileSize, kTileSize, rez.x, rez.y);
 		});
 	}
 
 	// SSR
 	BufferView pixelsFailedSsrBuff;
 	{
-		const U32 pixelCount = getRenderer().getInternalResolution().x / 2 * getRenderer().getInternalResolution().y;
+		U32 pixelCount = getRenderer().getInternalResolution().x * getRenderer().getInternalResolution().y;
+		if(bQuarterRez)
+		{
+			pixelCount /= 4;
+		}
 		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<PixelFailedSsr>(pixelCount);
 
 		// Create the pass
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SSR");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: SSR");
 
-		rpass.newTextureDependency(getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getDepthDownscale().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(0), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getDepthDownscale().getNormalsRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getBloom().getPyramidRt(), TextureUsageBit::kSrvCompute);
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
-		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(colorAndDepth1Rt, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(hitPosAndPdf1Rt, TextureUsageBit::kUavCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ReflectionsSsr);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		rpass.setWork(
+			[this, colorAndDepth1Rt, hitPosAndPdf1Rt, pixelsFailedSsrBuff, consts, classTileMapRt, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(ReflectionsSsr);
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_ssrGrProg.get());
+				cmdb.bindShaderProgram(m_ssrProg.get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
-			cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+				cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
+				cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-			rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(0));
-			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(2));
-			rgraphCtx.bindSrv(3, 0, getDepthDownscale().getRt());
-			rgraphCtx.bindSrv(4, 0, getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(5, 0, getRenderer().getBloom().getPyramidRt());
-			cmdb.bindSrv(6, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-			cmdb.bindSrv(7, 0, getClusterBinning().getClustersBuffer());
-			rgraphCtx.bindSrv(8, 0, getShadowMapping().getShadowmapRt());
-			rgraphCtx.bindSrv(9, 0, classTileMapRt);
-			cmdb.bindSrv(10, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+				rgraphCtx.bindSrv(0, 0, getGBuffer().getColorRt(0));
+				rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(1));
+				rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(2));
+				rgraphCtx.bindSrv(3, 0, getDepthDownscale().getNormalsRt());
+				rgraphCtx.bindSrv(4, 0, getDepthDownscale().getDepthRt());
+				rgraphCtx.bindSrv(5, 0, (bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt());
+				rgraphCtx.bindSrv(6, 0, getRenderer().getBloom().getPyramidRt());
+				cmdb.bindSrv(7, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+				cmdb.bindSrv(8, 0, getClusterBinning().getClustersBuffer());
+				rgraphCtx.bindSrv(9, 0, getShadowMapping().getShadowmapRt());
+				rgraphCtx.bindSrv(10, 0, classTileMapRt);
+				cmdb.bindSrv(11, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
-			rgraphCtx.bindUav(0, 0, transientRt1);
-			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
-			cmdb.bindUav(2, 0, pixelsFailedSsrBuff);
-			cmdb.bindUav(3, 0, m_indirectArgsBuffer);
+				rgraphCtx.bindUav(0, 0, colorAndDepth1Rt);
+				rgraphCtx.bindUav(1, 0, hitPosAndPdf1Rt);
+				cmdb.bindUav(2, 0, pixelsFailedSsrBuff);
+				cmdb.bindUav(3, 0, m_indirectArgsBuffer);
 
-			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
+				cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
-			cmdb.setFastConstants(&consts, sizeof(consts));
+				cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y);
-		});
+				UVec2 rez = getRenderer().getInternalResolution();
+				if(bQuarterRez)
+				{
+					rez /= 2;
+				}
+
+				dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
+			});
 	}
 
 	// SBT build
@@ -235,14 +248,14 @@ void Reflections::populateRenderGraph()
 	BufferView sbtBuffer;
 	if(bRtReflections && !g_cvarRenderReflectionsInlineRt)
 	{
-		buildShaderBindingTablePass("RtReflections: Build SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIdx, m_missShaderGroupIdx,
-									m_sbtRecordSize, rgraph, sbtHandle, sbtBuffer);
+		buildShaderBindingTablePass("Reflections: Build SBT", m_shaderGroupHandlesBuff, m_rayGenShaderGroupIdx, m_missShaderGroupIdx, m_sbtRecordSize,
+									rgraph, sbtHandle, sbtBuffer);
 	}
 
 	// Ray gen
 	if(bRtReflections)
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: Dispatch rays");
 
 		const TextureUsageBit uavTexUsage = (g_cvarRenderReflectionsInlineRt) ? TextureUsageBit::kUavCompute : TextureUsageBit::kUavDispatchRays;
 		const BufferUsageBit indirectBuffUsage =
@@ -253,29 +266,38 @@ void Reflections::populateRenderGraph()
 		{
 			rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		}
-		rpass.newTextureDependency(transientRt1, uavTexUsage);
-		rpass.newTextureDependency(hitPosAndDepthRt, uavTexUsage);
+		rpass.newTextureDependency(colorAndDepth1Rt, uavTexUsage);
+		rpass.newTextureDependency(hitPosAndPdf1Rt, uavTexUsage);
 		rpass.newBufferDependency(indirectArgsHandle, indirectBuffUsage);
 		setRgenSpace2Dependencies(rpass, g_cvarRenderReflectionsInlineRt);
+
+		if(bQuarterRez)
+		{
+			rpass.newTextureDependency(getDepthDownscale().getDepthRt(), srvTexUsage);
+		}
 
 		if(isIndirectDiffuseClipmapsEnabled())
 		{
 			getIndirectDiffuseClipmaps().setDependencies(rpass, srvTexUsage);
 		}
 
-		rpass.setWork([this, sbtBuffer, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, sbtBuffer, colorAndDepth1Rt, hitPosAndPdf1Rt, pixelsFailedSsrBuff, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram((g_cvarRenderReflectionsInlineRt) ? m_rtMaterialFetchInlineRtGrProg.get() : m_libraryGrProg.get());
+			cmdb.bindShaderProgram((g_cvarRenderReflectionsInlineRt) ? m_rtMaterialFetchInlineRtProg.get() : m_libraryProg.get());
 
 			// Space 0 globals
 #include <AnKi/Shaders/Include/MaterialBindings.def.h>
 
 			bindRgenSpace2Resources(rgraphCtx);
+			if(bQuarterRez)
+			{
+				rgraphCtx.bindSrv(4, 2, getDepthDownscale().getDepthRt());
+			}
 			cmdb.bindSrv(7, 2, pixelsFailedSsrBuff);
-			rgraphCtx.bindUav(0, 2, transientRt1);
-			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
+			rgraphCtx.bindUav(0, 2, colorAndDepth1Rt);
+			rgraphCtx.bindUav(1, 2, hitPosAndPdf1Rt);
 
 			struct Consts
 			{
@@ -302,13 +324,13 @@ void Reflections::populateRenderGraph()
 	}
 	else
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionProbeFallback");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: Probe fallback");
 
-		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
-		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(colorAndDepth1Rt, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(hitPosAndPdf1Rt, TextureUsageBit::kUavCompute);
 		if(getGeneratedSky().isEnabled())
 		{
 			rpass.newTextureDependency(getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvCompute);
@@ -319,13 +341,13 @@ void Reflections::populateRenderGraph()
 			rpass.newTextureDependency(getProbeReflections().getCurrentlyRefreshedReflectionRt(), TextureUsageBit::kSrvCompute);
 		}
 
-		rpass.setWork([this, pixelsFailedSsrBuff, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, pixelsFailedSsrBuff, colorAndDepth1Rt, hitPosAndPdf1Rt, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsProbeFallback);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_probeFallbackGrProg.get());
+			cmdb.bindShaderProgram(m_probeFallbackProg.get());
 
-			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, (bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt());
 			cmdb.bindSrv(1, 0, pixelsFailedSsrBuff);
 			cmdb.bindSrv(2, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
 			cmdb.bindSrv(3, 0, getClusterBinning().getClustersBuffer());
@@ -349,149 +371,180 @@ void Reflections::populateRenderGraph()
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			rgraphCtx.bindUav(0, 0, transientRt1);
-			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
+			rgraphCtx.bindUav(0, 0, colorAndDepth1Rt);
+			rgraphCtx.bindUav(1, 0, hitPosAndPdf1Rt);
 
 			cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer).incrementOffset(sizeof(DispatchIndirectArgs)));
 		});
 	}
 
-	// Spatial denoising
+	// Spatial accumulation
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsSpatialDenoise");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: Spatial accumulation");
 
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(colorAndDepth1Rt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(hitPosAndPdf1Rt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getNormalsRt() : getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
-		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(colorAndDepth2Rt, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(hitPosAndPdf2Rt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, colorAndDepth1Rt, colorAndDepth2Rt, hitPosAndPdf1Rt, hitPosAndPdf2Rt, consts, classTileMapRt,
+					   bQuarterRez](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ReflectionsSpatialDenoise);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_spatialDenoisingGrProg.get());
+			cmdb.bindShaderProgram(m_spatialAccumulationProg.get());
 
-			rgraphCtx.bindSrv(0, 0, transientRt1);
-			rgraphCtx.bindSrv(1, 0, hitPosAndDepthRt);
-			rgraphCtx.bindSrv(2, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, colorAndDepth1Rt);
+			rgraphCtx.bindSrv(1, 0, hitPosAndPdf1Rt);
+			rgraphCtx.bindSrv(2, 0, (bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(3, 0, getGBuffer().getColorRt(1));
-			rgraphCtx.bindSrv(4, 0, getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(4, 0, (bQuarterRez) ? getDepthDownscale().getNormalsRt() : getGBuffer().getColorRt(2));
 			rgraphCtx.bindSrv(5, 0, classTileMapRt);
 
-			rgraphCtx.bindUav(0, 0, transientRt2);
-			rgraphCtx.bindUav(1, 0, hitPosRt);
+			rgraphCtx.bindUav(0, 0, colorAndDepth2Rt);
+			rgraphCtx.bindUav(1, 0, hitPosAndPdf2Rt);
 
 			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
+			UVec2 rez = getRenderer().getInternalResolution();
+			if(bQuarterRez)
+			{
+				rez /= 2;
+			}
+
+			dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
 		});
 	}
 
 	// Temporal denoising
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsTemporalDenoise");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: Temporal denoise");
 
-		rpass.newTextureDependency(transientRt2, TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(mainRt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(colorAndDepth2Rt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(finalRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(readMomentsRt, TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getAdjustedMotionVectorsRt() : getMotionVectors().getAdjustedMotionVectorsRt(),
+								   TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(hitPosAndPdf2Rt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(colorAndDepth1Rt, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork(
-			[this, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosRt, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-				ANKI_TRACE_SCOPED_EVENT(ReflectionsTemporalDenoise);
+		rpass.setWork([this, colorAndDepth1Rt, hitPosAndPdf2Rt, colorAndDepth2Rt, finalRt, readMomentsRt, writeMomentsRt, classTileMapRt, bQuarterRez,
+					   consts](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsTemporalDenoise);
 
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				cmdb.bindShaderProgram(m_temporalDenoisingGrProg.get());
+			cmdb.bindShaderProgram(m_temporalDenoisingProg.get());
 
-				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-				rgraphCtx.bindSrv(0, 0, transientRt2);
-				rgraphCtx.bindSrv(1, 0, mainRt);
-				rgraphCtx.bindSrv(2, 0, readMomentsRt);
-				rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
-				rgraphCtx.bindSrv(4, 0, hitPosRt);
-				rgraphCtx.bindSrv(5, 0, classTileMapRt);
+			rgraphCtx.bindSrv(0, 0, colorAndDepth2Rt);
+			rgraphCtx.bindSrv(1, 0, finalRt);
+			rgraphCtx.bindSrv(2, 0, readMomentsRt);
+			rgraphCtx.bindSrv(3, 0,
+							  (bQuarterRez) ? getDepthDownscale().getAdjustedMotionVectorsRt() : getMotionVectors().getAdjustedMotionVectorsRt());
+			rgraphCtx.bindSrv(4, 0, hitPosAndPdf2Rt);
+			rgraphCtx.bindSrv(5, 0, classTileMapRt);
+			rgraphCtx.bindSrv(6, 0, getGBuffer().getColorRt(1));
 
-				rgraphCtx.bindUav(0, 0, transientRt1);
-				rgraphCtx.bindUav(1, 0, writeMomentsRt);
+			rgraphCtx.bindUav(0, 0, colorAndDepth1Rt);
+			rgraphCtx.bindUav(1, 0, writeMomentsRt);
 
-				cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
-			});
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			UVec2 rez = getRenderer().getInternalResolution();
+			if(bQuarterRez)
+			{
+				rez /= 2;
+			}
+
+			dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
+		});
 	}
 
-	// Hotizontal bilateral filter
+	// Spatial denois
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsHorizBilateral");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: Spatial denoise");
 
-		rpass.newTextureDependency(transientRt1, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(colorAndDepth1Rt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency((bQuarterRez) ? colorAndDepth2Rt : finalRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, transientRt1, transientRt2, writeMomentsRt, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ReflectionsHorizontalDenoise);
+		rpass.setWork([this, colorAndDepth1Rt, colorAndDepth2Rt, writeMomentsRt, finalRt, consts, classTileMapRt,
+					   bQuarterRez](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsBilateral);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_horizontalBilateralDenoisingGrProg.get());
+			cmdb.bindShaderProgram(m_spatialDenoisingProg.get());
 
-			rgraphCtx.bindSrv(0, 0, transientRt1);
+			rgraphCtx.bindSrv(0, 0, colorAndDepth1Rt);
 			rgraphCtx.bindSrv(1, 0, writeMomentsRt);
 			rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(3, 0, classTileMapRt);
 
-			rgraphCtx.bindUav(0, 0, transientRt2);
+			rgraphCtx.bindUav(0, 0, (bQuarterRez) ? colorAndDepth2Rt : finalRt);
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
+			UVec2 rez = getRenderer().getInternalResolution();
+			if(bQuarterRez)
+			{
+				rez /= 2;
+			}
+
+			dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
 		});
 	}
 
-	// Vertical bilateral filter
+	// Upscale
+	if(bQuarterRez)
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsVertBilateral");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Reflections: Upscale");
 
-		rpass.newTextureDependency(transientRt2, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(colorAndDepth2Rt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(mainRt, TextureUsageBit::kUavCompute);
-		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(finalRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, transientRt2, mainRt, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ReflectionsVerticalDenoise);
+		rpass.setWork([this, colorAndDepth2Rt, finalRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsUpscale);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_verticalBilateralDenoisingGrProg.get());
+			cmdb.bindShaderProgram(m_upscalingProg.get());
 
-			rgraphCtx.bindSrv(0, 0, transientRt2);
-			rgraphCtx.bindSrv(1, 0, classTileMapRt);
+			rgraphCtx.bindSrv(0, 0, colorAndDepth2Rt);
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(2));
 
-			rgraphCtx.bindUav(0, 0, mainRt);
+			rgraphCtx.bindUav(0, 0, finalRt);
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
+			const UVec2 rez = getRenderer().getInternalResolution() / 2;
+
+			dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
 		});
 	}
 
-	m_runCtx.m_rt = mainRt;
+	m_runCtx.m_rt = finalRt;
 }
 
 } // end namespace anki

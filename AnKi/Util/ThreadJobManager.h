@@ -8,19 +8,16 @@
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/Function.h>
 #include <AnKi/Util/DynamicArray.h>
+#include <AnKi/Util/WeakArray.h>
 
 namespace anki {
 
-/// @addtogroup util_thread
-/// @{
-
-/// Parallel task dispatcher. You feed it with tasks and sends them for execution in parallel and then waits for all to finish.
+// Parallel task dispatcher. You feed it with tasks and sends them for execution in parallel and then waits for all to finish.
 class ThreadJobManager
 {
 public:
 	using Func = Function<void(U32 threadId)>;
 
-	/// Constructor.
 	ThreadJobManager(U32 threadCount, Bool pinToCores = false, U32 queueSize = 256);
 
 	ThreadJobManager(const ThreadJobManager&) = delete; // Non-copyable
@@ -29,26 +26,22 @@ public:
 
 	ThreadJobManager& operator=(const ThreadJobManager&) = delete; // Non-copyable
 
-	/// Assign a task to a working thread
+	// Assign a task to a working thread
 	void dispatchTask(const Func& func)
 	{
-		m_tasksInFlightCount.fetchAdd(1);
-
 		while(!pushBackTask(func))
 		{
-			m_cvar.notifyOne();
 			std::this_thread::yield();
 		}
 
 		m_cvar.notifyOne();
 	}
 
-	/// Wait for all tasks to finish.
+	// Wait for all tasks to finish.
 	void waitForAllTasksToFinish()
 	{
-		while(m_tasksInFlightCount.load() != 0)
+		while(m_activeTaskCount.load() > 0)
 		{
-			m_cvar.notifyOne();
 			std::this_thread::yield();
 		}
 	}
@@ -59,16 +52,24 @@ public:
 	}
 
 private:
-	class WorkerThread;
+	class alignas(ANKI_CACHE_LINE_SIZE) WorkerThread
+	{
+	public:
+		U32 m_id;
+		Thread m_thread;
+		ThreadJobManager* m_manager;
 
-	DynamicArray<WorkerThread*> m_threads;
+		WorkerThread(ThreadJobManager* manager, U32 id, Bool pinToCore, CString threadName);
 
-	DynamicArray<Func> m_tasks;
+		static Error threadCallback(ThreadCallbackInfo& info);
+	};
+
+	WeakArray<WorkerThread> m_threads;
+
+	DynamicArray<Func> m_taskQueue;
 	U32 m_tasksFront = 0;
 	U32 m_tasksBack = 0;
-	Mutex m_tasksMtx;
-
-	Atomic<U32> m_tasksInFlightCount = {0};
+	Atomic<U32> m_activeTaskCount = {0};
 
 	ConditionVariable m_cvar;
 	Mutex m_mtx;
@@ -80,6 +81,5 @@ private:
 
 	void threadRun(U32 threadId);
 };
-/// @}
 
 } // end namespace anki

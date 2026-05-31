@@ -18,14 +18,11 @@ namespace anki {
 // Forward
 class MeshBinaryLoader;
 
-/// @addtogroup resource
-/// @{
-
-/// Mesh Resource. It contains the geometry packed in GPU buffers.
+// Mesh Resource. It contains the geometry packed in GPU buffers.
 class MeshResource : public ResourceObject
 {
 public:
-	/// Default constructor
+	// Default constructor
 	MeshResource(CString fname, U32 uuid)
 		: ResourceObject(fname, uuid)
 	{
@@ -33,10 +30,10 @@ public:
 
 	~MeshResource();
 
-	/// Load from a mesh file
+	// Load from a mesh file
 	Error load(const ResourceFilename& filename, Bool async);
 
-	/// Get the complete bounding box.
+	// Get the complete bounding box.
 	const Aabb& getBoundingShape() const
 	{
 		return m_aabb;
@@ -47,7 +44,7 @@ public:
 		return m_subMeshes.getSize();
 	}
 
-	/// Get submesh info.
+	// Get submesh info.
 	void getSubMeshInfo(U32 lod, U32 subMeshId, U32& firstIndex, U32& indexCount, U32& firstMeshlet, U32& meshletCount, Aabb& aabb) const
 	{
 		const SubMesh& sm = m_subMeshes[subMeshId];
@@ -58,7 +55,7 @@ public:
 		aabb = sm.m_aabb;
 	}
 
-	/// Get all info around vertex indices.
+	// Get all info around vertex indices.
 	void getIndexBufferInfo(U32 lod, PtrSize& buffOffset, U32& indexCount, IndexType& indexType) const
 	{
 		buffOffset = m_lods[lod].m_indexBufferAllocationToken.getOffset();
@@ -67,7 +64,7 @@ public:
 		indexType = m_indexType;
 	}
 
-	/// Get vertex buffer info.
+	// Get vertex buffer info.
 	void getVertexBufferInfo(U32 lod, VertexStreamId stream, PtrSize& ugbOffset, U32& vertexCount) const
 	{
 		ugbOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset();
@@ -89,7 +86,7 @@ public:
 		return m_subMeshes[subMeshId].m_blas[lod];
 	}
 
-	/// Check if a vertex stream is present.
+	// Check if a vertex stream is present.
 	Bool isVertexStreamPresent(const VertexStreamId stream) const
 	{
 		return !!(m_presentVertStreams & VertexStreamMask(1 << stream));
@@ -168,6 +165,5 @@ private:
 
 	Error loadAsync(MeshBinaryLoader& loader) const;
 };
-/// @}
 
 } // end namespace anki

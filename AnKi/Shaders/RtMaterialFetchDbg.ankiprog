@@ -8,12 +8,12 @@
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#define CHEAP 0
+#define CHEAP (1 && ANKI_GR_BACKEND_VULKAN)
 
 [shader("raygeneration")] void main()
 {
 	Vec2 outSize;
-	g_colorAndPdfUav.GetDimensions(outSize.x, outSize.y);
+	g_uav0.GetDimensions(outSize.x, outSize.y);
 	const Vec2 uv = Vec2(DispatchRaysIndex().xy) / outSize;
 
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), 1.0, 1.0));
@@ -63,10 +63,20 @@
 	}
 	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 
+	Vec4 surfaceColor = 0.0;
+	if(hit)
+	{
+		UVec4 coloru = q.CommittedInstanceID();
+		coloru >>= UVec4(18, 12, 6, 0);
+		coloru &= 63u;
+		surfaceColor = Vec4(coloru) / 63.0;
+	}
+
 	Bool backfacing = false;
 	if(hit)
 	{
-		backfacing = q.CommittedTriangleFrontFace();
+		const Bool hasAlpha = surfaceColor.w < 0.9;
+		backfacing = !hasAlpha && q.CommittedTriangleFrontFace();
 	}
 
 	if(!hit)
@@ -79,18 +89,13 @@
 	}
 	else
 	{
-		UVec3 coloru = q.CommittedInstanceID();
-		coloru >>= UVec3(16, 8, 0);
-		coloru &= 0xFF;
-		const Vec3 color = Vec3(coloru) / 255.0;
-
 		const Vec3 positions[3] = spvRayQueryGetIntersectionTriangleVertexPositionsKHR(q, SpvRayQueryCommittedIntersectionKHR);
 		const Vec3 vertNormal = normalize(cross(positions[1] - positions[0], positions[2] - positions[1]));
 
 		const Vec3 worldNormal = normalize(mul(q.CommittedObjectToWorld3x4(), Vec4(vertNormal, 0.0)));
 
 		GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
-		gbuffer.m_diffuse = color;
+		gbuffer.m_diffuse = surfaceColor;
 		gbuffer.m_worldNormal = worldNormal;
 
 		const F32 rayT = q.CommittedRayT();
@@ -103,5 +108,5 @@
 	}
 #endif
 
-	g_colorAndPdfUav[DispatchRaysIndex().xy] = Vec4(col, 0.0);
+	g_uav0[DispatchRaysIndex().xy] = Vec4(col, 0.0);
 }

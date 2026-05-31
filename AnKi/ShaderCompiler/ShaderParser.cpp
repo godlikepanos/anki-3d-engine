@@ -746,6 +746,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 	if(depth > kMaxIncludeDepth)
 	{
 		ANKI_SHADER_COMPILER_LOGE("The include depth is too high. Probably circular includance");
+		return Error::kUserData;
 	}
 
 	Bool foundPragmaOnce = false;
@@ -754,7 +755,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 	ShaderCompilerString txt;
 	ANKI_CHECK(m_fsystem->readAllText(fname, txt));
 
-	m_hash = (m_hash) ? computeHash(txt.cstr(), txt.getLength()) : appendHash(txt.cstr(), txt.getLength(), m_hash);
+	m_hash = (m_hash) ? appendHash(txt.cstr(), txt.getLength(), m_hash) : computeHash(txt.cstr(), txt.getLength());
 
 	ShaderCompilerStringList lines;
 	lines.splitString(txt, '\n', true);

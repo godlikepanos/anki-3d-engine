@@ -51,7 +51,7 @@ void ShadowmapsResolve::populateRenderGraph()
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
-		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
@@ -67,7 +67,7 @@ void ShadowmapsResolve::populateRenderGraph()
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
-		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
+		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvPixel);
 
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
@@ -105,7 +105,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	if(m_quarterRez)
 	{
-		rgraphCtx.bindSrv(3, 0, getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+		rgraphCtx.bindSrv(3, 0, getDepthDownscale().getDepthRt(), DepthDownscale::kQuarterInternalResolution);
 	}
 	else
 	{

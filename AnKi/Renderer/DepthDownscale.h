@@ -11,7 +11,7 @@
 
 namespace anki {
 
-// Downscales the depth buffer a few times.
+// Downscales the depth buffer and a few other RTs a few times. The downscale picks one pixel out of a 2x2 grid for the first downscale
 class DepthDownscale : public RendererObject
 {
 public:
@@ -26,10 +26,19 @@ public:
 
 	void populateRenderGraph();
 
-	// Return a FP color render target with hierarchical Z (min Z) in it's mips.
-	RenderTargetHandle getRt() const
+	RenderTargetHandle getDepthRt() const
 	{
-		return m_runCtx.m_rt;
+		return m_runCtx.m_depthRt;
+	}
+
+	RenderTargetHandle getNormalsRt() const
+	{
+		return m_runCtx.m_normalsRt;
+	}
+
+	RenderTargetHandle getAdjustedMotionVectorsRt() const
+	{
+		return m_runCtx.m_motionVectorsRt;
 	}
 
 	U8 getMipmapCount() const
@@ -38,10 +47,11 @@ public:
 	}
 
 private:
-	RenderTargetDesc m_rtDescr;
+	RenderTargetDesc m_depthRtDesc;
+	RenderTargetDesc m_normalRtDesc;
+	RenderTargetDesc m_motionVectorsRtDesc;
 
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	Array<RendererShaderProgram, 2> m_prog;
 
 	SegregatedListsGpuMemoryPoolAllocation m_counterBuffer;
 
@@ -50,7 +60,9 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_rt;
+		RenderTargetHandle m_depthRt;
+		RenderTargetHandle m_normalsRt;
+		RenderTargetHandle m_motionVectorsRt;
 	} m_runCtx;
 
 	Error initInternal();

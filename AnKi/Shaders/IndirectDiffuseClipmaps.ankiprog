@@ -7,18 +7,18 @@
 #pragma anki mutator RADIANCE_OCTAHEDRON_MAP_SIZE 8 10 12 14 16 18 20
 #pragma anki mutator IRRADIANCE_OCTAHEDRON_MAP_SIZE 4 5 6
 #pragma anki mutator RT_MATERIAL_FETCH_TYPE 0 1
-#pragma anki mutator SPATIAL_RECONSTRUCT_TYPE 0 1
+#pragma anki mutator QUARTER_REZ 0 1
 #pragma anki mutator IRRADIANCE_USE_SH_L2 0 1
 
-#pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_TYPE SPATIAL_RECONSTRUCT_TYPE
-#pragma anki technique RtMaterialFetchInlineRt comp mutators
+#pragma anki technique RtMaterialFetch rgen mutators RT_MATERIAL_FETCH_TYPE QUARTER_REZ
+#pragma anki technique ProbeInlineRt comp mutators
 #pragma anki technique PopulateCaches comp mutators RADIANCE_OCTAHEDRON_MAP_SIZE
-#pragma anki technique ComputeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_USE_SH_L2
-#pragma anki technique Apply comp mutators SPATIAL_RECONSTRUCT_TYPE
-#pragma anki technique ApplyInlineRt comp mutators SPATIAL_RECONSTRUCT_TYPE
-#pragma anki technique SpatialReconstruct comp mutators SPATIAL_RECONSTRUCT_TYPE
-#pragma anki technique TemporalDenoise comp mutators
-#pragma anki technique BilateralDenoise comp mutators
+#pragma anki technique ProbeIrradiance comp mutators GPU_WAVE_SIZE RADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_OCTAHEDRON_MAP_SIZE IRRADIANCE_USE_SH_L2
+#pragma anki technique ApplyProbeIrradiance comp mutators QUARTER_REZ
+#pragma anki technique ApplyInlineRt comp mutators QUARTER_REZ
+#pragma anki technique TemporalDenoise comp mutators QUARTER_REZ
+#pragma anki technique BilateralDenoise comp mutators QUARTER_REZ
+#pragma anki technique Upscale comp mutators
 #pragma anki technique VisualizeProbes vert pixel mutators
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -62,9 +62,9 @@ struct ProbeUpdateConsts
 };
 
 // ===========================================================================
-// RtMaterialFetch (Probes) and RtMaterialFetchInlineRt                      =
+// RtMaterialFetch (Probes) and ProbeInlineRt                                =
 // ===========================================================================
-#if(ANKI_TECHNIQUE_RtMaterialFetch && RT_MATERIAL_FETCH_TYPE == RT_MATERIAL_FETCH_TYPE_PROBES) || ANKI_TECHNIQUE_RtMaterialFetchInlineRt
+#if(ANKI_TECHNIQUE_RtMaterialFetch && RT_MATERIAL_FETCH_TYPE == RT_MATERIAL_FETCH_TYPE_PROBES) || ANKI_TECHNIQUE_ProbeInlineRt
 
 #	define CLIPMAP_VOLUME
 #	define INCLUDE_ALL
@@ -173,7 +173,7 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 // ===========================================================================
 // PopulateCaches                                                            =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_PopulateCaches)
+#if ANKI_TECHNIQUE_PopulateCaches
 Texture2D<Vec4> g_rtResultTex : register(t0);
 
 RWTexture3D<Vec4> g_radianceVolume : register(u0);
@@ -332,9 +332,9 @@ ANKI_FAST_CONSTANTS(ProbeUpdateConsts, g_consts)
 #endif
 
 // ===========================================================================
-// ComputeIrradiance                                                         =
+// ProbeIrradiance                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_ComputeIrradiance)
+#if ANKI_TECHNIQUE_ProbeIrradiance
 
 // Each thread is touching a radiance texel
 constexpr U32 kThreadCount = (RADIANCE_OCTAHEDRON_MAP_SIZE * RADIANCE_OCTAHEDRON_MAP_SIZE + 32 - 1) / 32 * 32;
@@ -471,15 +471,15 @@ struct StoreBorderFunc
 #endif
 
 // ===========================================================================
-// Apply                                                                     =
+// ApplyProbeIrradiance                                                      =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_Apply)
-Texture2D<Vec4> g_depthTex : register(t0);
-Texture2D<Vec4> g_bentNormalsTex : register(t1);
+#if ANKI_TECHNIQUE_ApplyProbeIrradiance
+Texture2D<Vec4> g_depthTex : register(t0); // In quarter or full rez
+Texture2D<Vec4> g_bentNormalsTex : register(t1); // In full rez
 
 Texture2D<Vec4> g_blueNoiseTex : register(t2);
 
-RWTexture2D<Vec4> g_uav : register(u0);
+RWTexture2D<Vec4> g_uav : register(u0); // In quarter or full rez
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -487,35 +487,33 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	Vec2 lowTextureSize;
-	g_uav.GetDimensions(lowTextureSize.x, lowTextureSize.y);
+	const UVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
 
-	const UVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-#	if SPATIAL_RECONSTRUCT_TYPE == 0
-	const Vec2 fullViewportSize = lowTextureSize * Vec2(2.0, 1.0);
-	const Vec2 coord = Vec2(realSvDispatchThreadId.x * 2u + (realSvDispatchThreadId.y & 1u), realSvDispatchThreadId.y);
+	const UVec2 quarterViewportSize = getDimensions(g_uav);
+#	if QUARTER_REZ
+	const UVec2 fullViewportSize = quarterViewportSize * 2u;
+	const UVec2 fullCoord = quarterCoord * 2u;
 #	else
-	const Vec2 fullViewportSize = lowTextureSize * 2.0;
-	const Vec2 coord = Vec2(realSvDispatchThreadId * 2u);
+	const UVec2 fullViewportSize = quarterViewportSize;
+	const UVec2 fullCoord = quarterCoord;
 #	endif
 
-	if(any(coord >= fullViewportSize))
+	if(any(quarterCoord >= quarterViewportSize))
 	{
 		return;
 	}
 
-	const F32 depth = TEX(g_depthTex, coord).r;
-	const Vec2 uv = (coord + 0.5) / fullViewportSize;
+	const F32 depth = TEX(g_depthTex, quarterCoord).r;
+	const Vec2 uv = (fullCoord + 0.5) / fullViewportSize;
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 normal = TEX(g_bentNormalsTex, coord);
+	const Vec3 normal = TEX(g_bentNormalsTex, fullCoord);
 
 	// Rand
-	UVec2 noiseTexSize;
-	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
-	Vec3 noise3 = TEX(g_blueNoiseTex, realSvDispatchThreadId % noiseTexSize);
+	const UVec2 noiseTexSize = getDimensions(g_blueNoiseTex);
+	Vec3 noise3 = TEX(g_blueNoiseTex, quarterCoord % noiseTexSize);
 	noise3 = animateBlueNoise(noise3, g_globalRendererConstants.m_frame);
 	const F32 noise = noise3.x;
 
@@ -534,7 +532,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 												g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, noise);
 	}
 
-	TEX(g_uav, realSvDispatchThreadId) = Vec4(irradiance, 0.0);
+	TEX(g_uav, quarterCoord) = Vec4(irradiance, 1.0 - depth);
 }
 #endif
 
@@ -560,36 +558,38 @@ struct Consts
 ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 #	if INLINE_RT
-[numthreads(8, 8, 1)] void main(COMPUTE_ARGS)
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 #	else
 [Shader("raygeneration")] void main()
 #	endif
 {
 #	if INLINE_RT
-	UVec2 texSize;
-	g_colorAndPdfUav.GetDimensions(texSize.x, texSize.y);
-	if(any(svDispatchThreadId.xy >= texSize))
+	const UVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const UVec2 quarterViewport = getDimensions(g_lightResultAndDepthUav);
+	if(any(quarterCoord >= quarterViewport))
 	{
 		return;
 	}
 #	else
-	const UVec2 svDispatchThreadId = DispatchRaysIndex();
-	const UVec2 texSize = DispatchRaysDimensions().xy;
+	const UVec2 quarterCoord = DispatchRaysIndex();
+	const UVec2 quarterViewport = DispatchRaysDimensions().xy;
 #	endif
 
-#	if SPATIAL_RECONSTRUCT_TYPE == 0
-	const UVec2 fullCoord = UVec2(svDispatchThreadId.x * 2u + (svDispatchThreadId.y & 1u), svDispatchThreadId.y);
-	const Vec2 uv = (fullCoord + 0.5) / (texSize * UVec2(2, 1));
+#	if QUARTER_REZ
+	const UVec2 fullCoord = quarterCoord * 2u;
+	const UVec2 fullViewport = quarterViewport * 2u;
 #	else
-	const UVec2 fullCoord = svDispatchThreadId.xy * 2u;
-	const Vec2 uv = (fullCoord + 0.5) / (texSize * 2);
+	const UVec2 fullCoord = quarterCoord;
+	const UVec2 fullViewport = quarterViewport;
 #	endif
+
+	const Vec2 uv = (fullCoord + 0.5) / fullViewport;
 
 	// Get the position and normal of the screenspace surface X
-	const F32 depth = TEX(g_depthTex, fullCoord).x;
+	const F32 depth = TEX(g_depthTex, quarterCoord).x;
 	if(depth == 1.0)
 	{
-		TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(0.0, 0.0, 0.0, 1.0 - depth);
+		TEX(g_lightResultAndDepthUav, quarterCoord) = Vec4(0.0, 0.0, 0.0, 1.0 - depth);
 		return;
 	}
 
@@ -602,8 +602,12 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec3 biasedWorldPos = worldPos + biasDir * 0.1;
 
 	// Compute a random ray in the hemisphere defined by N. It's cosine weighted
-	const UVec3 seed = rand3DPCG16(UVec3(fullCoord, g_globalRendererConstants.m_frame % 8u));
+#	if 1
+	const UVec3 seed = rand3DPCG16(UVec3(quarterCoord, g_globalRendererConstants.m_frame % 16u));
 	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
+#	else
+	const Vec2 randFactors = spatioTemporalNoise(fullCoord, g_globalRendererConstants.m_frame);
+#	endif
 
 	const Mat3 tbn = rotationFromDirection(worldNormal);
 	const Vec3 rayDir = normalize(mul(tbn, hemisphereSampleCos(randFactors)));
@@ -649,26 +653,154 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 						 * kPi;
 	}
 
-	TEX(g_lightResultAndDepthUav, svDispatchThreadId.xy) = Vec4(radianceSample, 1.0 - depth); // Revert depth for better precision
+	TEX(g_lightResultAndDepthUav, quarterCoord) = Vec4(radianceSample, 1.0 - depth); // Revert depth for better precision
 }
 #endif
 
 // ===========================================================================
-// SpatialReconstruct                                                        =
+// TemporalDenoise                                                           =
 // ===========================================================================
-#if ANKI_TECHNIQUE_SpatialReconstruct
+#if ANKI_TECHNIQUE_TemporalDenoise
+Texture2D<Vec4> g_currentTex : register(t0); // In quarter or full rez
+Texture2D<Vec4> g_historyTex : register(t1); // In full rez
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t2); // In quarter or full rez
+Texture2D<F32> g_depthTex : register(t3); // In quarter or full rez
 
-#	define FP F32 // Convert to 16bit when you have proof that it's beneficial
+RWTexture2D<Vec4> g_uav : register(u0); // In quarter or full rez
 
-Texture2D<Vec4> g_inTex : register(t0);
-Texture2D<F32> g_depthTex : register(t1);
+SamplerState g_linearAnyClampSampler : register(s0);
 
-RWTexture2D<Vec4> g_uav : register(u0);
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const UVec2 quarterViewportSize = getDimensions(g_uav);
+#	if QUARTER_REZ
+	const UVec2 fullCoord = quarterCoord * 2u;
+	const UVec2 fullViewport = getDimensions(g_uav) * 2u;
+#	else
+	const UVec2 fullCoord = quarterCoord;
+	const UVec2 fullViewport = getDimensions(g_uav);
+#	endif
+
+	if(any(quarterCoord >= quarterViewportSize))
+	{
+		return;
+	}
+
+	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, quarterCoord);
+	const Bool disocclusion = all(mv == 1.0);
+
+	Vec3 outColor = TEX(g_currentTex, quarterCoord);
+	if(disocclusion)
+	{
+		// Don't accumulate
+	}
+	else
+	{
+		const Vec2 uv = (fullCoord + 0.5) / fullViewport;
+		const Vec2 historyUv = uv + mv;
+
+		const Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
+
+		outColor = lerp(history, outColor, kTemporalDenoiseBlendFactor);
+	}
+
+	const F32 depth = TEX(g_depthTex, quarterCoord);
+	TEX(g_uav, quarterCoord) = Vec4(outColor, 1.0 - depth); // Store reverse depth for better precision
+}
+#endif
+
+// ===========================================================================
+// BilateralDenoise                                                          =
+// ===========================================================================
+#if ANKI_TECHNIQUE_BilateralDenoise
+Texture2D<Vec4> g_inTex : register(t0); // In quarter or full rez
+Texture2D<F32> g_historyLengthTex : register(t1); // In full rez
+
+RWTexture2D<Vec4> g_uav : register(u0); // In quarter or full rez
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const IVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const IVec2 quarterViewportSize = getDimensions(g_uav);
+
+#	if QUARTER_REZ
+	const IVec2 fullCoord = quarterCoord * 2;
+	const IVec2 fullViewportSize = quarterViewportSize * 2;
+#	else
+	const IVec2 fullCoord = quarterCoord;
+	const IVec2 fullViewportSize = quarterViewportSize;
+#	endif
+
+	if(any(quarterCoord >= quarterViewportSize))
+	{
+		return;
+	}
+
+	const Vec4 rgba = TEX(g_inTex, quarterCoord);
+	const F32 refDepth = rgba.w;
+
+	F32 weightSum = calculateBilateralWeightDepth<F32>(0.0, 0.0, 1.0); // Highest weight that this function can give
+	Vec3 colorSum = rgba.xyz * weightSum;
+
+	const F32 historyLen = TEX(g_historyLengthTex, fullCoord) * kMaxHistoryLength;
+
+	const F32 sampleCountf = lerp(F32(kMaxBilateralSamplesPerDirection), F32(kMinBilateralSamplesPerDirection), historyLen / kMaxHistoryLength);
+	const I32 sampleCount = sampleCountf;
+
+	for(I32 x = -sampleCount; x <= sampleCount; ++x)
+	{
+		for(I32 y = -sampleCount; y <= sampleCount; ++y)
+		{
+			if(x == 0 && y == 0)
+			{
+				continue;
+			}
+
+			IVec2 newCoord = quarterCoord + IVec2(x, y);
+			newCoord = clamp(newCoord, 0, quarterViewportSize - 1);
+
+			const Vec4 rgba = TEX(g_inTex, newCoord);
+			const Vec3 sampleColor = rgba.xyz;
+			const F32 sampleDepth = rgba.w;
+
+			const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
+			const F32 weight = depthWeight;
+
+			colorSum += sampleColor * weight;
+			weightSum += weight;
+		}
+	}
+
+	colorSum /= weightSum;
+
+	TEX(g_uav, quarterCoord) = Vec4(colorSum, refDepth);
+}
+#endif
+
+// ===========================================================================
+// Upscale                                                                   =
+// ===========================================================================
+#if ANKI_TECHNIQUE_Upscale
+#	include <AnKi/Shaders/BilateralFilter.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
+
+Texture2D<Vec4> g_quarterColorAndDepthTex : register(t0);
+Texture2D<F32> g_fullDepthTex : register(t1);
+Texture2D<Vec4> g_fullNormalsTex : register(t2);
+
+RWTexture2D<Vec4> g_upscaledUav : register(u0);
 
 template<typename T>
-void appendSample(T refDepth, T sampleDepth, TVec<T, 3> sample, inout TVec<T, 3> sampleSum, inout T weightSum, T extraWeight = T(1))
+void appendSample(T refDepth, T sampleDepth, TVec<T, 3> refNormal, TVec<T, 3> sampleNormal, TVec<T, 3> sample, inout TVec<T, 3> sampleSum,
+				  inout T weightSum, T extraWeight = T(1))
 {
-	const T weight = calculateBilateralWeightDepth<T>(refDepth, sampleDepth, T(1)) * extraWeight;
+	T weight = calculateBilateralWeightDepth<T>(refDepth, sampleDepth, T(1));
+	weight *= calculateBilateralWeightNormal<T>(sampleNormal, refNormal, T(1));
+	weight *= extraWeight;
+
 	sampleSum += sample * weight;
 	weightSum += weight;
 }
@@ -689,8 +821,7 @@ void normalizeSum(T weightSum, inout TVec<T, 3> sampleSum)
 template<typename T>
 void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 {
-	IVec2 viewportSize;
-	g_uav.GetDimensions(viewportSize.x, viewportSize.y);
+	const IVec2 viewportSize = getDimensions(g_upscaledUav);
 	const IVec2 quarterViewportSize = viewportSize / 2;
 	const IVec2 quarterCoord = svDispatchThreadId; // Coord in quarter rez
 
@@ -705,9 +836,8 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 	// +---+---+---+---+
 
 	// Gather the color of the neighbours and their depth
-	TVec<T, 4> samplesAndDepth[4];
-	T maxLuma = T(0);
-	I32 maxLumaPixel = 0;
+	TVec<T, 4> samplesAndDepths[4];
+	TVec<T, 3> normals[4];
 	[unroll] for(I32 i = 0; i < 4; ++i)
 	{
 		const I32 x = i % 2;
@@ -716,240 +846,68 @@ void oneIn4Reconstruct(IVec2 svDispatchThreadId)
 		IVec2 coord = quarterCoord + IVec2(x, y);
 		coord = min(coord, quarterViewportSize - 1);
 
-		const TVec<T, 4> color = TEX(g_inTex, coord);
-		const T depth = color.w; // depth is inverted
+		samplesAndDepths[i] = TEX(g_quarterColorAndDepthTex, coord);
+		samplesAndDepths[i].w = T(1) - samplesAndDepths[i].w;
 
-		samplesAndDepth[i] = TVec<T, 4>(color.xyz, depth);
-
-		const T luma = computeLuminance(color.xyz);
-		if(luma > maxLuma)
-		{
-			maxLuma = luma;
-			maxLumaPixel = i;
-		}
-	}
-
-	// Remove fireflies
-	T avgLumaOf3 = T(0);
-	[unroll] for(I32 i = 0; i < 4; ++i)
-	{
-		if(maxLumaPixel != i)
-		{
-			const T luma = computeLuminance(samplesAndDepth[i].xyz);
-			avgLumaOf3 += luma / T(3);
-		}
-	}
-
-	if(maxLuma > avgLumaOf3 * T(5))
-	{
-		// Firefly, tone it down
-		samplesAndDepth[maxLumaPixel].xyz *= avgLumaOf3 / maxLuma;
+		normals[i] = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord * 2));
 	}
 
 	// 0 is already filled, just write it
 	IVec2 coord = quarterCoord * 2;
-	TEX(g_uav, coord) = TVec<T, 4>(samplesAndDepth[0].xyz, T(0));
-
-	// Tonemap everything because bright pixels will contribute more even if they have less weight
-	[unroll] for(I32 i = 0; i < 4; ++i)
-	{
-		samplesAndDepth[i].xyz = tonemapReinhard(samplesAndDepth[i].xyz);
-	}
+	TEX(g_upscaledUav, coord) = TVec<T, 4>(samplesAndDepths[0].xyz, 0);
 
 	// For c use 4 samples
 	coord = quarterCoord * 2 + 1;
-	T refDepth = T(1) - T(TEX(g_depthTex, coord));
+	T refDepth = T(TEX(g_fullDepthTex, coord));
+	TVec<T, 3> refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
 	TVec<T, 3> sampleSum = T(0);
 	T weightSum = T(0);
-	appendSample(refDepth, samplesAndDepth[0].w, samplesAndDepth[0].xyz, sampleSum, weightSum);
-	appendSample(refDepth, samplesAndDepth[1].w, samplesAndDepth[1].xyz, sampleSum, weightSum);
-	appendSample(refDepth, samplesAndDepth[2].w, samplesAndDepth[2].xyz, sampleSum, weightSum);
-	appendSample(refDepth, samplesAndDepth[3].w, samplesAndDepth[3].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepths[0].w, refNormal, normals[0], samplesAndDepths[0].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepths[1].w, refNormal, normals[1], samplesAndDepths[1].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepths[2].w, refNormal, normals[2], samplesAndDepths[2].xyz, sampleSum, weightSum);
+	appendSample(refDepth, samplesAndDepths[3].w, refNormal, normals[3], samplesAndDepths[3].xyz, sampleSum, weightSum);
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_uav, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
+	TEX(g_upscaledUav, coord) = TVec<T, 4>(sampleSum, 0);
 	const TVec<T, 3> sampleC = sampleSum;
 	const T depthC = refDepth;
+	const TVec<T, 3> normalC = refNormal;
 
 	// For a use 3 samples
 	coord = quarterCoord * 2 + IVec2(1, 0);
-	refDepth = T(1) - T(TEX(g_depthTex, coord));
+	refDepth = T(TEX(g_fullDepthTex, coord));
+	refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
 	sampleSum = T(0);
 	weightSum = T(0);
-	appendSample(refDepth, samplesAndDepth[0].w, samplesAndDepth[0].xyz, sampleSum, weightSum, T(1));
-	appendSample(refDepth, samplesAndDepth[1].w, samplesAndDepth[1].xyz, sampleSum, weightSum, T(1));
-	appendSample(refDepth, depthC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
+	appendSample(refDepth, samplesAndDepths[0].w, refNormal, normals[0], samplesAndDepths[0].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, samplesAndDepths[1].w, refNormal, normals[1], samplesAndDepths[1].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, depthC, refNormal, normalC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_uav, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
+	TEX(g_upscaledUav, coord) = TVec<T, 4>(sampleSum, 0);
 
 	// For b use 3 samples
 	coord = quarterCoord * 2 + IVec2(0, 1);
-	refDepth = T(1) - T(TEX(g_depthTex, coord));
+	refDepth = T(TEX(g_fullDepthTex, coord));
+	refNormal = unpackNormalFromGBuffer<T>(TEX(g_fullNormalsTex, coord));
 	sampleSum = T(0);
 	weightSum = T(0);
-	appendSample(refDepth, samplesAndDepth[0].w, samplesAndDepth[0].xyz, sampleSum, weightSum, T(1));
-	appendSample(refDepth, samplesAndDepth[2].w, samplesAndDepth[2].xyz, sampleSum, weightSum, T(1));
-	appendSample(refDepth, depthC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
+	appendSample(refDepth, samplesAndDepths[0].w, refNormal, normals[0], samplesAndDepths[0].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, samplesAndDepths[2].w, refNormal, normals[2], samplesAndDepths[2].xyz, sampleSum, weightSum, T(1));
+	appendSample(refDepth, depthC, refNormal, normalC, sampleC, sampleSum, weightSum, T(0.5)); // Less weight on that since it's reconstructed
 	normalizeSum(weightSum, sampleSum);
-	TEX(g_uav, coord) = TVec<T, 4>(invertTonemapReinhard(sampleSum), T(0));
+	TEX(g_upscaledUav, coord) = TVec<T, 4>(sampleSum, 0);
 }
-
-template<typename T>
-void checkerboardReconstruct(IVec2 svDispatchThreadId)
-{
-	IVec2 viewportSize;
-	g_uav.GetDimensions(viewportSize.x, viewportSize.y);
-
-	const IVec2 filledCoord = IVec2(svDispatchThreadId.x * 2 + (svDispatchThreadId.y & 1), svDispatchThreadId.y);
-	const IVec2 toBeFilledCoord = IVec2(svDispatchThreadId.x * 2 + ((svDispatchThreadId.y + 1) & 1), svDispatchThreadId.y);
-
-	const T refDepth = T(1) - T(TEX(g_depthTex, toBeFilledCoord));
-
-	TVec<T, 3> toBeFilledColor = T(0);
-	T weightSum = T(0);
-	const IVec2 offsets[4] = {IVec2(-1, 0), IVec2(1, 0), IVec2(0, -1), IVec2(0, 1)};
-	[unroll] for(U32 i = 0; i < 4; ++i)
-	{
-		const IVec2 sampleCoord = toBeFilledCoord + offsets[i];
-		if(all(sampleCoord >= 0) && all(sampleCoord < viewportSize))
-		{
-			const TVec<T, 4> color = TEX(g_inTex, IVec2(sampleCoord.x / 2, sampleCoord.y));
-
-			const T sampleDepth = color.w; // depth is inverted
-			const TVec<T, 3> sample = color.xyz;
-
-			appendSample(refDepth, sampleDepth, sample, toBeFilledColor, weightSum);
-
-			if(all(sampleCoord == filledCoord))
-			{
-				TEX(g_uav, filledCoord) = TVec<T, 4>(sample, T(0));
-			}
-		}
-	}
-
-	normalizeSum(weightSum, toBeFilledColor);
-	TEX(g_uav, toBeFilledCoord) = TVec<T, 4>(toBeFilledColor, T(0));
-}
-
-[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
-{
-	const IVec2 realSvDispatchThreadId = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-#	if SPATIAL_RECONSTRUCT_TYPE == 0
-	checkerboardReconstruct<FP>(realSvDispatchThreadId);
-#	else
-	oneIn4Reconstruct<FP>(realSvDispatchThreadId);
-#	endif
-}
-#endif
-
-// ===========================================================================
-// TemporalDenoise                                                           =
-// ===========================================================================
-#if ANKI_TECHNIQUE_TemporalDenoise
-Texture2D<Vec4> g_currentTex : register(t0);
-Texture2D<Vec4> g_historyTex : register(t1);
-Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t2);
-Texture2D<F32> g_depthTex : register(t3);
-
-RWTexture2D<Vec4> g_uav : register(u0);
-
-SamplerState g_linearAnyClampSampler : register(s0);
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-
-	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, coord);
-	const Bool disocclusion = all(mv == 1.0);
-
-	Vec3 outColor = TEX(g_currentTex, coord);
-	if(disocclusion)
-	{
-		// Don't accumulate
-	}
-	else
-	{
-		Vec2 viewport;
-		g_uav.GetDimensions(viewport.x, viewport.y);
-
-		const Vec2 uv = (coord + 0.5) / viewport;
-		const Vec2 historyUv = uv + mv;
-
-		const Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
-
-		outColor = lerp(history, outColor, kTemporalDenoiseBlendFactor);
-	}
-
-	const F32 depth = TEX(g_depthTex, coord);
-	TEX(g_uav, coord) = Vec4(outColor, 1.0 - depth); // Store reverse depth for better precision
-}
-#endif
-
-// ===========================================================================
-// BilateralDenoise                                                          =
-// ===========================================================================
-#if ANKI_TECHNIQUE_BilateralDenoise
-Texture2D<Vec4> g_inTex : register(t0);
-Texture2D<F32> g_historyLengthTex : register(t1);
-
-RWTexture2D<Vec4> g_uav : register(u0);
-
-[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
-{
-	IVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	IVec2 viewport;
-	g_uav.GetDimensions(viewport.x, viewport.y);
-
-	const Bool outOfBounds = any(coord >= viewport);
-	if(outOfBounds)
-	{
-		return;
-	}
-
-	const Vec4 rgba = TEX(g_inTex, coord);
-	const F32 refDepth = 1.0 - rgba.w;
-
-	F32 weightSum = calculateBilateralWeightDepth<F32>(0.0, 0.0, 1.0); // Highest weight that this function can give
-	Vec3 colorSum = rgba.xyz * weightSum;
-
-	const F32 historyLen = TEX(g_historyLengthTex, coord) * kMaxHistoryLength;
-
-	const F32 sampleCountf = lerp(F32(kMaxBilateralSamplesPerDirection), F32(kMinBilateralSamplesPerDirection), historyLen / kMaxHistoryLength);
-	const I32 sampleCount = sampleCountf;
-
-	for(I32 x = -sampleCount; x <= sampleCount; ++x)
-	{
-		for(I32 y = -sampleCount; y <= sampleCount; ++y)
-		{
-			if(x == 0.0 && y == 0.0)
-			{
-				continue;
-			}
-
-			IVec2 newCoord = coord + IVec2(x, y);
-			newCoord = clamp(newCoord, 0, viewport - 1);
-
-			const Vec4 rgba = TEX(g_inTex, newCoord);
-			const Vec3 sampleColor = rgba.xyz;
-			const F32 sampleDepth = 1.0 - rgba.w;
-
-			const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
-			const F32 weight = depthWeight;
-
-			colorSum += sampleColor * weight;
-			weightSum += weight;
-		}
-	}
-
-	colorSum /= weightSum;
-
-	TEX(g_uav, coord) = Vec4(colorSum, 0.0);
+	oneIn4Reconstruct<F32>(coord);
 }
 #endif
 
 // ===========================================================================
 // VisualizeProbes                                                           =
 // ===========================================================================
-#if NOT_ZERO(ANKI_TECHNIQUE_VisualizeProbes)
+#if ANKI_TECHNIQUE_VisualizeProbes
 
 struct VertIn
 {
@@ -1053,8 +1011,7 @@ FragOut main(VertOut input)
 	const Vec4 p = mul(g_globalRendererConstants.m_matrices.m_viewProjectionJitter, Vec4(collisionPoint, 1.0));
 	output.m_svDepth = p.z / p.w;
 
-	UVec3 texSize;
-	g_volume.GetDimensions(texSize.x, texSize.y, texSize.z);
+	const UVec3 texSize = getDimensions(g_volume);
 
 	const Bool hasOctMap = texSize.x != probeCounts.x;
 

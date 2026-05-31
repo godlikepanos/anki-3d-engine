@@ -31,9 +31,8 @@ public:
 	}
 
 public:
-	ShaderProgramResourcePtr m_rtProg;
-	ShaderProgramResourcePtr m_missProg;
-	ShaderProgramPtr m_libraryGrProg;
+	RendererRtShaderProgram m_libraryProg;
+	RendererRtShaderProgram m_missProg;
 
 	BufferView m_shaderGroupHandlesBuff;
 

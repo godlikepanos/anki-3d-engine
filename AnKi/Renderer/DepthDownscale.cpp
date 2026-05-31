@@ -6,6 +6,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -41,15 +42,21 @@ Error DepthDownscale::initInternal()
 
 	const Bool preferCompute = g_cvarRenderPreferCompute;
 
-	// Create RT descr
-	{
-		m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR32_Sfloat, "Downscaled depth");
-		m_rtDescr.m_mipmapCount = m_mipCount;
-		m_rtDescr.bake();
-	}
+	m_depthRtDesc = getRenderer().create2DRenderTargetDescription(width, height, Format::kR32_Sfloat, "Downscaled depth");
+	m_depthRtDesc.m_mipmapCount = m_mipCount;
+	m_depthRtDesc.bake();
 
-	// Progs
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/DepthDownscale.ankiprogbin", {{"WAVE_OPERATIONS", 1}}, m_prog, m_grProg));
+	m_normalRtDesc = getRenderer().create2DRenderTargetDescription(width, height, Format::kA2B10G10R10_Unorm_Pack32, "Downscaled normals");
+	m_normalRtDesc.bake();
+
+	m_motionVectorsRtDesc = getRenderer().create2DRenderTargetDescription(width, height, Format::kR16G16_Sfloat, "Downscaled adjusted MVs");
+	m_motionVectorsRtDesc.bake();
+
+	Array<SubMutation, 2> mutation = {{{"PIXEL_SHADER_FIRST_DOWNSCALE", 0}, {"WAVE_OPERATIONS", 1}}};
+	ANKI_CHECK(m_prog[0].load("ShaderBinaries/DepthDownscale.ankiprogbin", mutation));
+
+	mutation[0].m_value = 1;
+	ANKI_CHECK(m_prog[1].load("ShaderBinaries/DepthDownscale.ankiprogbin", mutation));
 
 	// Counter buffer
 	if(preferCompute)
@@ -77,7 +84,9 @@ void DepthDownscale::populateRenderGraph()
 	ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+	m_runCtx.m_depthRt = rgraph.newRenderTarget(m_depthRtDesc);
+	m_runCtx.m_normalsRt = rgraph.newRenderTarget(m_normalRtDesc);
+	m_runCtx.m_motionVectorsRt = rgraph.newRenderTarget(m_motionVectorsRtDesc);
 
 	if(g_cvarRenderPreferCompute)
 	{
@@ -86,15 +95,19 @@ void DepthDownscale::populateRenderGraph()
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Depth downscale");
 
 		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getMotionVectors().getAdjustedMotionVectorsRt(), TextureUsageBit::kSrvCompute);
 
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(m_runCtx.m_depthRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(m_runCtx.m_normalsRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(m_runCtx.m_motionVectorsRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_grProg.get());
+			cmdb.bindShaderProgram(m_prog[0].get());
 
 			varAU2(dispatchThreadGroupCountXY);
 			varAU2(workGroupOffset); // needed if Left and Top are not 0,0
@@ -109,6 +122,11 @@ void DepthDownscale::populateRenderGraph()
 
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
+			cmdb.bindUav(0, 0, m_counterBuffer);
+
+			rgraphCtx.bindUav(1, 0, m_runCtx.m_normalsRt);
+			rgraphCtx.bindUav(2, 0, m_runCtx.m_motionVectorsRt);
+
 			for(U8 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
 				TextureSubresourceDesc surface = TextureSubresourceDesc::firstSurface();
@@ -121,13 +139,13 @@ void DepthDownscale::populateRenderGraph()
 					surface.m_mipmap = 0; // Put something random
 				}
 
-				rgraphCtx.bindUav(mip + 1, 0, m_runCtx.m_rt, surface);
+				rgraphCtx.bindUav(mip + 3, 0, m_runCtx.m_depthRt, surface);
 			}
-
-			cmdb.bindUav(0, 0, m_counterBuffer);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(2, 0, getMotionVectors().getAdjustedMotionVectorsRt());
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
@@ -141,36 +159,44 @@ void DepthDownscale::populateRenderGraph()
 			static constexpr Array<CString, 4> passNames = {"Depth downscale #1", "Depth downscale #2", "Depth downscale #3", "Depth downscale #4"};
 			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
 
-			GraphicsRenderPassTargetDesc rti(m_runCtx.m_rt);
+			GraphicsRenderPassTargetDesc rti(m_runCtx.m_depthRt);
 			rti.m_subresource.m_mipmap = mip;
-			pass.setRenderpassInfo({rti});
 
 			if(mip == 0)
 			{
+				pass.setRenderpassInfo({rti, m_runCtx.m_normalsRt, m_runCtx.m_motionVectorsRt});
 				pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
+				pass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvPixel);
+				pass.newTextureDependency(getMotionVectors().getAdjustedMotionVectorsRt(), TextureUsageBit::kSrvPixel);
+				pass.newTextureDependency(m_runCtx.m_normalsRt, TextureUsageBit::kRtvDsvWrite);
+				pass.newTextureDependency(m_runCtx.m_motionVectorsRt, TextureUsageBit::kRtvDsvWrite);
 			}
 			else
 			{
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSrvPixel, TextureSubresourceDesc::surface(mip - 1, 0, 0));
+				pass.newTextureDependency(m_runCtx.m_depthRt, TextureUsageBit::kSrvPixel, TextureSubresourceDesc::surface(mip - 1, 0, 0));
+				pass.setRenderpassInfo({rti});
 			}
 
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(mip, 0, 0));
+			pass.newTextureDependency(m_runCtx.m_depthRt, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(mip, 0, 0));
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
 
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				cmdb.bindShaderProgram(m_grProg.get());
+				const Bool firstPass = mip == 0;
+				cmdb.bindShaderProgram(m_prog[firstPass].get());
 				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 				if(mip == 0)
 				{
 					rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+					rgraphCtx.bindSrv(1, 0, getGBuffer().getColorRt(2));
+					rgraphCtx.bindSrv(2, 0, getMotionVectors().getAdjustedMotionVectorsRt());
 				}
 				else
 				{
-					rgraphCtx.bindSrv(0, 0, m_runCtx.m_rt, TextureSubresourceDesc::surface(mip - 1, 0, 0));
+					rgraphCtx.bindSrv(0, 0, m_runCtx.m_depthRt, TextureSubresourceDesc::surface(mip - 1, 0, 0));
 				}
 
 				const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;

@@ -221,8 +221,28 @@ CHECK_TEXTURE_3()
 #undef CHECK_TEXTURE_2D
 #undef CHECK_TEXTURE_3D
 
-/// Safely access a UAV or SRV texture. Throw an assertion if it's out of bounds
+// Safely access a UAV or SRV texture. Throw an assertion if it's out of bounds
 #define TEX(tex, coords) tex[checkTexture(tex, coords)]
+
+template<typename T>
+T checkGroupshared1d(T idx, U32 size)
+{
+	ANKI_ASSERT(idx < size);
+	return idx;
+}
+
+#define DEF_GS1(type, size, name) \
+	constexpr U32 kGroupsharedSize_##name = size; \
+	groupshared type name[size];
+
+#define GS1(name, idx) name[checkGroupshared1d(idx, kGroupsharedSize_##name)]
+
+#define DEF_GS2(type, sizeX, sizeY, name) \
+	constexpr U32 kGroupsharedSizeX_##name = sizeX; \
+	constexpr U32 kGroupsharedSizeY_##name = sizeY; \
+	groupshared type name[sizeX][sizeY];
+
+#define GS2(name, x, y) name[checkGroupshared1d(x, kGroupsharedSizeX_##name)][checkGroupshared1d(y, kGroupsharedSizeY_##name)]
 
 // Need extra decoration for per-primitive stuff in Vulkan. Remove when https://github.com/microsoft/DirectXShaderCompiler/issues/6862 is fixed
 #if ANKI_GR_BACKEND_VULKAN
@@ -338,3 +358,28 @@ T square(T x)
 		UVec3 svDispatchThreadId : \
 		SV_DISPATCHTHREADID, \
 		UVec3 svGroupThreadId : SV_GROUPTHREADID
+
+#define GET_DIMENSIONS_2D(texType) \
+	template<typename T> \
+	UVec2 getDimensions(texType<T> tex) \
+	{ \
+		UVec2 d; \
+		tex.GetDimensions(d.x, d.y); \
+		return d; \
+	}
+
+#define GET_DIMENSIONS_3D(texType) \
+	template<typename T> \
+	UVec3 getDimensions(texType<T> tex) \
+	{ \
+		UVec3 d; \
+		tex.GetDimensions(d.x, d.y, d.z); \
+		return d; \
+	}
+
+GET_DIMENSIONS_2D(Texture2D)
+GET_DIMENSIONS_2D(RWTexture2D)
+GET_DIMENSIONS_3D(Texture3D)
+GET_DIMENSIONS_3D(RWTexture3D)
+
+#undef GET_DIMENSIONS_2D
