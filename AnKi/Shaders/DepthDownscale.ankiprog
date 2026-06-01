@@ -144,6 +144,7 @@ PixelOut main(VertOut input)
 	output.m_depth = TEX(g_depthTex, p);
 
 	output.m_normal = Vec4(unpackNormalFromGBuffer(TEX(g_normalsTex, p)), 0.0);
+	output.m_normal = output.m_normal / 2.0 + 0.5;
 	output.m_motionVectors = TEX(g_motionVectorsTex, p);
 #		else
 	const Vec4 depths = g_depthTex.GatherRed(g_linearAnyClampSampler, input.m_uv);
