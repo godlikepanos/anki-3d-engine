@@ -1306,7 +1306,7 @@ AccelerationStructure* RenderGraph::getAs(AccelerationStructureHandle handle) co
 	return m_ctx->m_as[handle.m_idx].m_as.get();
 }
 
-void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
+void RenderGraph::recordAndSubmitCommandBuffers(Fence* waitFence, FencePtr* signalFence)
 {
 	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphRecordAndSubmit);
 	ANKI_ASSERT(m_ctx);
@@ -1484,21 +1484,22 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	const U32 firstGroupThatWroteToSwapchain2 = firstGroupThatWroteToSwapchain.getNonAtomically();
 	if(firstGroupThatWroteToSwapchain2 == 0 || firstGroupThatWroteToSwapchain2 == kMaxU32)
 	{
-		GrManager::getSingleton().submit(WeakArray(pCmdbs), {}, &fence, true);
+		GrManager::getSingleton().submit(WeakArray(pCmdbs), WeakArray<Fence*>(&waitFence, (waitFence) ? 1 : 0), &fence, true);
 	}
 	else
 	{
 		// 2 submits. The 1st contains all the batches that don't write to swapchain
 
-		GrManager::getSingleton().submit(WeakArray(pCmdbs).subrange(0, firstGroupThatWroteToSwapchain2), {}, nullptr);
+		GrManager::getSingleton().submit(WeakArray(pCmdbs).subrange(0, firstGroupThatWroteToSwapchain2),
+										 WeakArray<Fence*>(&waitFence, (waitFence) ? 1 : 0), nullptr);
 
 		GrManager::getSingleton().submit(
 			WeakArray(pCmdbs).subrange(firstGroupThatWroteToSwapchain2, batchGroupCount - firstGroupThatWroteToSwapchain2), {}, &fence, true);
 	}
 
-	if(optionalFence)
+	if(signalFence)
 	{
-		*optionalFence = fence;
+		*signalFence = fence;
 	}
 
 	m_texMemPool.endFrame(fence.get());

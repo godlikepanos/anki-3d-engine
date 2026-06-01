@@ -373,7 +373,7 @@ public:
 	void compileNewGraph(const RenderGraphBuilder& descr, StackMemoryPool& pool);
 
 	// 2nd step. Will call a number of RenderPassWorkCallback that populate command buffers and submit work.
-	void recordAndSubmitCommandBuffers(FencePtr* optionalFence = nullptr);
+	void recordAndSubmitCommandBuffers(Fence* waitFence = nullptr, FencePtr* signalFence = nullptr);
 
 	// 3rd step. Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
 	void reset();

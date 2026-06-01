@@ -11,7 +11,6 @@
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Resource/TransferGpuAllocator.h>
 #include <AnKi/ShaderCompiler/ShaderParser.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Util/WeakArray.h>

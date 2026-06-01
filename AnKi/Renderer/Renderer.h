@@ -37,6 +37,7 @@ ANKI_CVAR(NumericCVar<F32>, Render, ShadowCascade2Distance, (ANKI_PLATFORM_MOBIL
 ANKI_CVAR(NumericCVar<F32>, Render, ShadowCascade3Distance, 200.0, 1.0, kMaxF32, "The distance of the 4th cascade")
 ANKI_CVAR(NumericCVar<F32>, Render, Lod0MaxDistance, 20.0f, 1.0f, kMaxF32, "Distance that will be used to calculate the LOD 0")
 ANKI_CVAR(NumericCVar<F32>, Render, Lod1MaxDistance, 40.0f, 2.0f, kMaxF32, "Distance that will be used to calculate the LOD 1")
+ANKI_CVAR(StringCVar, Render, DebugRt, "", "Set the current debug render target")
 
 ANKI_SVAR(RendererGpuTime, StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 

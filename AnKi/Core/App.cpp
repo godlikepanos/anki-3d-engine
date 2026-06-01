@@ -18,6 +18,7 @@
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/GpuReadbackMemoryPool.h>
 #include <AnKi/GpuMemory/TextureMemoryPool.h>
+#include <AnKi/GpuMemory/CopyEngine.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Core/MaliHwCounters.h>
@@ -168,6 +169,7 @@ void App::cleanup()
 	GpuSceneBuffer::freeSingleton();
 	TextureMemoryPool::freeSingleton();
 	GpuReadbackMemoryPool::freeSingleton();
+	CopyEngine::freeSingleton();
 	CoreThreadJobManager::freeSingleton();
 	MaliHwCounters::freeSingleton();
 	GrManager::freeSingleton();
@@ -274,6 +276,7 @@ Error App::init()
 	GpuVisibleTransientMemoryPool::allocateSingleton();
 	GpuReadbackMemoryPool::allocateSingleton();
 	TextureMemoryPool::allocateSingleton();
+	CopyEngine::allocateSingleton();
 
 	//
 	// Physics
@@ -459,7 +462,7 @@ Error App::mainLoop()
 	while(!quit)
 	{
 		{
-			ANKI_TRACE_SCOPED_EVENT(Frame);
+			ANKI_TRACE_SCOPED_EVENT(CpuFrameTime);
 			const Second startTime = HighRezTimer::getCurrentTime();
 
 			prevUpdateTime = crntTime;

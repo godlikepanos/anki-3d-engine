@@ -190,7 +190,7 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 		const I64 durMicroSec = I64(event.m_duration * 1000000.0);
 
 		// Do a hack
-		const ThreadId tid = (event.m_name == "tGpuFrameTime") ? 1 : item.m_tid;
+		const ThreadId tid = (event.m_name == "GpuFrameTime") ? 1 : item.m_tid;
 
 		ANKI_CHECK(m_traceJsonFile.writeTextf("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
 											  "\"pid\": 1, \"tid\": %" PRIu64 ", \"ts\": %" PRIi64 ", \"dur\": %" PRIi64 "},\n",

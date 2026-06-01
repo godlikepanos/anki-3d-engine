@@ -35,7 +35,6 @@ ResourceManager::~ResourceManager()
 
 	AsyncLoader::freeSingleton();
 	ShaderProgramResourceSystem::freeSingleton();
-	TransferGpuAllocator::freeSingleton();
 	ResourceFilesystem::freeSingleton();
 
 #define ANKI_INSTANTIATE_RESOURCE(className) \
@@ -59,9 +58,6 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 
 	// Init the thread
 	AsyncLoader::allocateSingleton();
-
-	TransferGpuAllocator::allocateSingleton();
-	ANKI_CHECK(TransferGpuAllocator::getSingleton().init(g_cvarRsrcTransferScratchMemorySize));
 
 	// Init the programs
 	ShaderProgramResourceSystem::allocateSingleton();

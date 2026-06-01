@@ -16,6 +16,7 @@
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Core/App.h>
+#include <AnKi/GpuMemory/CopyEngine.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -908,6 +909,11 @@ Error Renderer::render(FencePtr& fence)
 		ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocate(sizeof(*globalConsts), alignment, globalConsts);
 	}
 
+	if(CString(g_cvarRenderDebugRt) != "")
+	{
+		setCurrentDebugRenderTarget(g_cvarRenderDebugRt);
+	}
+
 	ANKI_CHECK(populateRenderGraph());
 
 	// Blit renderer's result to swapchain
@@ -960,8 +966,11 @@ Error Renderer::render(FencePtr& fence)
 	// Bake the render graph
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
 
-	// Flush
-	m_rgraph->recordAndSubmitCommandBuffers(&fence);
+	// Flush stuff
+	FencePtr copyEngineFence;
+	CopyEngine::getSingleton().flush(copyEngineFence);
+
+	m_rgraph->recordAndSubmitCommandBuffers(copyEngineFence.tryGet(), &fence);
 
 	// Misc
 	m_rgraph->reset();

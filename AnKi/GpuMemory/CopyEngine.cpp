@@ -8,7 +8,6 @@
 #include <AnKi/Gr/AccelerationStructure.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Fence.h>
-#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -188,21 +187,42 @@ public:
 	{
 		return !!m_fence;
 	}
+
+	Bool overlapsWith(const Batch& b, U32 ringBufferSize) const
+	{
+		const Batch* leftBatch;
+		const Batch* rightBatch;
+		if(m_startOffset < b.m_startOffset)
+		{
+			leftBatch = this;
+			rightBatch = &b;
+		}
+		else
+		{
+			leftBatch = &b;
+			rightBatch = this;
+		}
+
+		if(leftBatch->m_startOffset + leftBatch->m_allocatedSize > rightBatch->m_startOffset)
+		{
+			return true;
+		}
+
+		if(rightBatch->m_startOffset + rightBatch->m_allocatedSize > ringBufferSize)
+		{
+			// Right batch wraps around
+			const U32 remainder = (rightBatch->m_startOffset + rightBatch->m_allocatedSize) % ringBufferSize;
+			if(remainder > leftBatch->m_startOffset)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 };
 
 CopyEngine::CopyEngine()
-{
-}
-
-CopyEngine::~CopyEngine()
-{
-	if(m_ringBufferMappedMem)
-	{
-		m_ringBuffer->unmap();
-	}
-}
-
-void CopyEngine::init()
 {
 	BufferInitInfo info("CopyEngine");
 	info.m_mapAccess = BufferMapAccessBit::kWrite;
@@ -215,11 +235,31 @@ void CopyEngine::init()
 	m_ringBufferSize = g_cvarGpuMemCopyEngineBuffersize;
 }
 
+CopyEngine::~CopyEngine()
+{
+	if(m_ringBufferMappedMem)
+	{
+		m_ringBuffer->unmap();
+	}
+
+	for(Batch& batch : m_batches)
+	{
+		if(batch.m_fence)
+		{
+			const Bool signaled = batch.m_fence->clientWait(kMaxSecond);
+			if(!signaled)
+			{
+				ANKI_GPUMEM_LOGF("GPU timeout detected");
+			}
+		}
+	}
+}
+
 void CopyEngine::flushInternal(FencePtr& fence)
 {
 	fence.reset(nullptr);
 
-	if(m_batches.isEmpty()) [[unlikely]]
+	if(m_batches.isEmpty())
 	{
 		return;
 	}
@@ -232,6 +272,8 @@ void CopyEngine::flushInternal(FencePtr& fence)
 		// Empty batch, don't bother
 		return;
 	}
+
+	ANKI_TRACE_INC_COUNTER(CopyEngineFlush, 1);
 
 	// Populate and submit the command buffer
 	CommandBufferInitInfo init("CopyEngine commands");
@@ -273,7 +315,7 @@ void CopyEngine::flushInternal(FencePtr& fence)
 
 	// Update the current batch
 	crntBatch.m_fence = fence;
-	crntBatch.m_commands.resize(0); // Free memory
+	crntBatch.m_commands.destroy(); // Free memory
 }
 
 void CopyEngine::cleanupCompletedBatches()
@@ -373,7 +415,11 @@ U32 CopyEngine::allocate(U32 origSize)
 		ANKI_ASSERT(newOffset < newEnd);
 		ANKI_ASSERT(newEnd <= m_ringBufferSize);
 
-		const Bool batchCanGrow = (m_batches.getSize() == 1) || newEnd <= m_batches.getFront().m_startOffset;
+		Batch tmpBatch;
+		tmpBatch.m_startOffset = batch->m_startOffset;
+		tmpBatch.m_allocatedSize = newAllocatedSize;
+
+		const Bool batchCanGrow = (m_batches.getSize() == 1) || !tmpBatch.overlapsWith(m_batches.getFront(), m_ringBufferSize);
 		if(!batchCanGrow)
 		{
 			const Bool signaled = m_batches.getFront().m_fence->clientWait(kMaxSecond);
@@ -387,6 +433,7 @@ U32 CopyEngine::allocate(U32 origSize)
 		}
 		else
 		{
+			ANKI_ASSERT(newAllocatedSize > batch->m_allocatedSize);
 			batch->m_allocatedSize = newAllocatedSize;
 			break;
 		}
@@ -462,6 +509,8 @@ CopyEngineLockGuard CopyEngine::copyBufferToBuffer(U32 srcBufferSize, WeakArray<
 void CopyEngine::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 									ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
 {
+	ANKI_TRACE_SCOPED_EVENT(CopyEngineLock);
+
 	LockGuard lock(m_mtx);
 
 	WeakArray<U8> unused1;
@@ -479,6 +528,7 @@ void CopyEngine::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures,
 
 void CopyEngine::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
 {
+	ANKI_TRACE_SCOPED_EVENT(CopyEngineLock);
 	LockGuard lock(m_mtx);
 
 	WeakArray<U8> unused1;
@@ -495,7 +545,6 @@ void CopyEngine::buildAccelerationStructure(AccelerationStructure* as, const Buf
 void CopyEngine::flush(FencePtr& fence)
 {
 	ANKI_TRACE_SCOPED_EVENT(CopyEngineFlush);
-
 	LockGuard lock(m_mtx);
 
 	cleanupCompletedBatches();
@@ -532,18 +581,7 @@ void CopyEngine::validate() const
 				continue;
 			}
 
-			const Batch& otherBatch = m_batches[j];
-
-			const Batch& leftBatch = (batch.m_startOffset < otherBatch.m_startOffset) ? batch : otherBatch;
-			const Batch& rightBatch = (batch.m_startOffset > otherBatch.m_startOffset) ? batch : otherBatch;
-			ANKI_ASSERT(leftBatch.m_startOffset + leftBatch.m_allocatedSize <= rightBatch.m_startOffset);
-
-			if(rightBatch.m_startOffset + rightBatch.m_allocatedSize > m_ringBufferSize)
-			{
-				// Right batch wraps around
-				const U32 remainder = (rightBatch.m_startOffset + rightBatch.m_allocatedSize) % m_ringBufferSize;
-				ANKI_ASSERT(remainder <= leftBatch.m_startOffset);
-			}
+			ANKI_ASSERT(!batch.overlapsWith(m_batches[j], m_ringBufferSize));
 		}
 	}
 #endif

@@ -12,6 +12,7 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/GpuMemory/CopyEngine.h>
 
 namespace anki {
 
@@ -208,26 +209,19 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 {
 	GrManager& gr = GrManager::getSingleton();
-	TransferGpuAllocator& transferAlloc = TransferGpuAllocator::getSingleton();
+	CopyEngine& copyEngine = CopyEngine::getSingleton();
 
 	// With GFXR enabled we can't do fwrite directly to mapped VkBuffer. So we need to first fwrite to a CPU buffer and copy that to the mapped
 	// VkBuffer
 	const Bool bGfxreconstruct = gr.getDeviceCapabilities().m_gfxReconstruct;
 
-	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1 + 3)> handles;
-	U32 handleCount = 0;
-
 	Buffer* unifiedGeometryBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
 	const BufferUsageBit unifiedGeometryBufferNonTransferUsage = unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kCopyDestination;
-
-	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
-	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	// Set transfer to transfer barrier because of the clear that happened while sync loading
 	const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), unifiedGeometryBufferNonTransferUsage,
 									   BufferUsageBit::kCopyDestination};
-	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
+	copyEngine.setPipelineBarrier({}, {&barrier, 1}, {});
 
 	// Upload index and vertex buffers
 	for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
@@ -236,30 +230,28 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 		// Upload index buffer
 		{
-			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-
-			ANKI_CHECK(transferAlloc.allocate(lod.m_indexBufferAllocationToken.getAllocatedSize(), handle));
+			WeakArray<U8> mappedMem;
+			const U32 allocSize = lod.m_indexBufferAllocationToken.getAllocatedSize();
+			const CopyEngineLockGuard lock = copyEngine.copyBufferToBuffer(allocSize, mappedMem, lod.m_indexBufferAllocationToken);
 
 			void* dest;
 			ResourceDynamicArrayLarge<U8> cpuTransientData;
 			if(bGfxreconstruct)
 			{
-				cpuTransientData.resize(handle.getRange());
+				cpuTransientData.resize(allocSize);
 				dest = cpuTransientData.getBegin();
 			}
 			else
 			{
-				dest = handle.getMappedMemory();
+				dest = mappedMem.getBegin();
 			}
 
-			ANKI_CHECK(loader.storeIndexBuffer(lodIdx, dest, handle.getRange()));
+			ANKI_CHECK(loader.storeIndexBuffer(lodIdx, dest, allocSize));
 
 			if(bGfxreconstruct)
 			{
-				memcpy(handle.getMappedMemory(), cpuTransientData.getBegin(), handle.getRange());
+				memcpy(mappedMem.getBegin(), cpuTransientData.getBegin(), allocSize);
 			}
-
-			cmdb->copyBufferToBuffer(handle, lod.m_indexBufferAllocationToken);
 		}
 
 		// Upload vert buffers
@@ -270,76 +262,70 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				continue;
 			}
 
-			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-
-			ANKI_CHECK(transferAlloc.allocate(lod.m_vertexBuffersAllocationToken[stream].getAllocatedSize(), handle));
+			const U32 allocSize = lod.m_vertexBuffersAllocationToken[stream].getAllocatedSize();
+			WeakArray<U8> mappedMem;
+			const CopyEngineLockGuard lock = copyEngine.copyBufferToBuffer(allocSize, mappedMem, lod.m_vertexBuffersAllocationToken[stream]);
 
 			void* dest;
 			ResourceDynamicArrayLarge<U8> cpuTransientData;
 			if(bGfxreconstruct)
 			{
-				cpuTransientData.resize(handle.getRange());
+				cpuTransientData.resize(allocSize);
 				dest = cpuTransientData.getBegin();
 			}
 			else
 			{
-				dest = handle.getMappedMemory();
+				dest = mappedMem.getBegin();
 			}
 
 			// Load to staging
-			ANKI_CHECK(loader.storeVertexBuffer(lodIdx, U32(stream), dest, handle.getRange()));
+			ANKI_CHECK(loader.storeVertexBuffer(lodIdx, U32(stream), dest, allocSize));
 
 			if(bGfxreconstruct)
 			{
-				memcpy(handle.getMappedMemory(), cpuTransientData.getBegin(), handle.getRange());
+				memcpy(mappedMem.getBegin(), cpuTransientData.getBegin(), allocSize);
 			}
-
-			// Copy
-			cmdb->copyBufferToBuffer(handle, lod.m_vertexBuffersAllocationToken[stream]);
 		}
 
 		if(lod.m_meshletBoundingVolumes)
 		{
 			// Indices
-			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-			const PtrSize primitivesSize = lod.m_meshletIndices.getAllocatedSize();
-			ANKI_CHECK(transferAlloc.allocate(primitivesSize, handle));
-
-			void* dest;
-			ResourceDynamicArrayLarge<U8> cpuTransientData;
-			if(bGfxreconstruct)
 			{
-				cpuTransientData.resize(handle.getRange());
-				dest = cpuTransientData.getBegin();
-			}
-			else
-			{
-				dest = handle.getMappedMemory();
-			}
+				const U32 primitivesSize = lod.m_meshletIndices.getAllocatedSize();
 
-			ANKI_CHECK(loader.storeMeshletIndicesBuffer(lodIdx, dest, primitivesSize));
+				WeakArray<U8> mappedMem;
+				const CopyEngineLockGuard lock = copyEngine.copyBufferToBuffer(primitivesSize, mappedMem, lod.m_meshletIndices);
 
-			if(bGfxreconstruct)
-			{
-				memcpy(handle.getMappedMemory(), cpuTransientData.getBegin(), handle.getRange());
+				void* dest;
+				ResourceDynamicArrayLarge<U8> cpuTransientData;
+				if(bGfxreconstruct)
+				{
+					cpuTransientData.resize(primitivesSize);
+					dest = cpuTransientData.getBegin();
+				}
+				else
+				{
+					dest = mappedMem.getBegin();
+				}
+
+				ANKI_CHECK(loader.storeMeshletIndicesBuffer(lodIdx, dest, primitivesSize));
+
+				if(bGfxreconstruct)
+				{
+					memcpy(mappedMem.getBegin(), cpuTransientData.getBegin(), primitivesSize);
+				}
 			}
-
-			cmdb->copyBufferToBuffer(handle, lod.m_meshletIndices);
 
 			// Meshlets
 			ResourceDynamicArray<MeshBinaryMeshlet> binaryMeshlets;
 			binaryMeshlets.resize(loader.getHeader().m_meshletCounts[lodIdx]);
 			ANKI_CHECK(loader.storeMeshletBuffer(lodIdx, WeakArray(binaryMeshlets)));
 
-			TransferGpuAllocatorHandle& handle2 = handles[handleCount++];
-			ANKI_CHECK(transferAlloc.allocate(lod.m_meshletBoundingVolumes.getAllocatedSize(), handle2));
-			WeakArray<MeshletBoundingVolume> outMeshletBoundingVolumes(static_cast<MeshletBoundingVolume*>(handle2.getMappedMemory()),
-																	   loader.getHeader().m_meshletCounts[lodIdx]);
+			ResourceDynamicArray<MeshletBoundingVolume> outMeshletBoundingVolumes;
+			outMeshletBoundingVolumes.resize(loader.getHeader().m_meshletCounts[lodIdx]);
 
-			TransferGpuAllocatorHandle& handle3 = handles[handleCount++];
-			ANKI_CHECK(transferAlloc.allocate(lod.m_meshletGeometryDescriptors.getAllocatedSize(), handle3));
-			WeakArray<MeshletGeometryDescriptor> outMeshletGeomDescriptors(static_cast<MeshletGeometryDescriptor*>(handle3.getMappedMemory()),
-																		   loader.getHeader().m_meshletCounts[lodIdx]);
+			ResourceDynamicArray<MeshletGeometryDescriptor> outMeshletGeomDescriptors;
+			outMeshletGeomDescriptors.resize(loader.getHeader().m_meshletCounts[lodIdx]);
 
 			for(U32 i = 0; i < binaryMeshlets.getSize(); ++i)
 			{
@@ -378,8 +364,24 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				outMeshletBoundingVolume.m_primitiveCount = inMeshlet.m_primitiveCount;
 			}
 
-			cmdb->copyBufferToBuffer(handle2, lod.m_meshletBoundingVolumes);
-			cmdb->copyBufferToBuffer(handle3, lod.m_meshletGeometryDescriptors);
+			// Upload the data
+			{
+				WeakArray<U8> mappedMem;
+				const CopyEngineLockGuard lock =
+					copyEngine.copyBufferToBuffer(lod.m_meshletBoundingVolumes.getAllocatedSize(), mappedMem, lod.m_meshletBoundingVolumes);
+
+				ANKI_ASSERT(outMeshletBoundingVolumes.getSizeInBytes() == mappedMem.getSizeInBytes());
+				memcpy(mappedMem.getBegin(), outMeshletBoundingVolumes.getBegin(), mappedMem.getSizeInBytes());
+			}
+
+			{
+				WeakArray<U8> mappedMem;
+				const CopyEngineLockGuard lock =
+					copyEngine.copyBufferToBuffer(lod.m_meshletGeometryDescriptors.getAllocatedSize(), mappedMem, lod.m_meshletGeometryDescriptors);
+
+				ANKI_ASSERT(outMeshletGeomDescriptors.getSizeInBytes() == mappedMem.getSizeInBytes());
+				memcpy(mappedMem.getBegin(), outMeshletGeomDescriptors.getBegin(), mappedMem.getSizeInBytes());
+			}
 		}
 	}
 
@@ -405,7 +407,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kBuild;
 			}
 
-			cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {&asBarriers[0], m_lods.getSize()});
+			copyEngine.setPipelineBarrier({}, {&bufferBarrier, 1}, {&asBarriers[0], m_lods.getSize()});
 
 			// Build BLASes
 			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
@@ -420,10 +422,10 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 					barr.m_bufferView = scratchBuff;
 					barr.m_previousUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
 					barr.m_nextUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
-					cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+					copyEngine.setPipelineBarrier({}, {&barr, 1}, {});
 				}
 
-				cmdb->buildAccelerationStructure(submesh.m_blas[lodIdx].get(), scratchBuff);
+				copyEngine.buildAccelerationStructure(submesh.m_blas[lodIdx].get(), scratchBuff);
 			}
 
 			// Barriers again
@@ -434,7 +436,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kAllRead;
 			}
 
-			cmdb->setPipelineBarrier({}, {}, {&asBarriers[0], m_lods.getSize()});
+			copyEngine.setPipelineBarrier({}, {}, {&asBarriers[0], m_lods.getSize()});
 		}
 	}
 	else
@@ -445,21 +447,10 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		bufferBarrier.m_previousUsage = BufferUsageBit::kCopyDestination;
 		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
-		cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {});
-	}
-
-	// Finalize
-	FencePtr fence;
-	cmdb->endRecording();
-	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-
-	for(U32 i = 0; i < handleCount; ++i)
-	{
-		transferAlloc.release(handles[i], fence);
+		copyEngine.setPipelineBarrier({}, {&bufferBarrier, 1}, {});
 	}
 
 	m_loadedLodCount.store(m_lods.getSize());
-
 	return Error::kNone;
 }
 

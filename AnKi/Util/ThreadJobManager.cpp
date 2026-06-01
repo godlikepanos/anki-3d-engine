@@ -112,7 +112,7 @@ void ThreadJobManager::threadRun(U32 threadId)
 		{
 			func(threadId);
 
-			const U32 count = m_activeTaskCount.fetchSub(1);
+			[[maybe_unused]] const U32 count = m_activeTaskCount.fetchSub(1);
 			ANKI_ASSERT(count > 0);
 		}
 	}

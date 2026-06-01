@@ -16,7 +16,6 @@ class ResourceManager;
 class ResourceFilesystem;
 template<typename Type>
 class ResourcePointer;
-class TransferGpuAllocatorHandle;
 class PhysicsWorld;
 
 /// @addtogroup resource

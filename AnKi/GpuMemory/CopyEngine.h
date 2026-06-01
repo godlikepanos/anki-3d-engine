@@ -9,6 +9,7 @@
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -48,11 +49,17 @@ public:
 		{
 			m_mtx->unlock();
 			m_mtx = nullptr;
+#if ANKI_TRACING_ENABLED
+			Tracer::getSingleton().endEvent("CopyEngineLock", m_traceHandle);
+#endif
 		}
 	}
 
 private:
 	Mutex* m_mtx = nullptr;
+#if ANKI_TRACING_ENABLED
+	TracerEventHandle m_traceHandle;
+#endif
 
 	CopyEngineLockGuard(Mutex* mtx)
 		: m_mtx(mtx)
@@ -60,6 +67,9 @@ private:
 		if(m_mtx)
 		{
 			m_mtx->lock();
+#if ANKI_TRACING_ENABLED
+			m_traceHandle = Tracer::getSingleton().beginEvent("CopyEngineLock");
+#endif
 		}
 	}
 };
@@ -73,8 +83,6 @@ public:
 	CopyEngine();
 
 	~CopyEngine();
-
-	void init();
 
 	// Begin commands //
 

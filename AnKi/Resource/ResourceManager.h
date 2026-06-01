@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <AnKi/Resource/TransferGpuAllocator.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Functions.h>
@@ -25,7 +24,6 @@ class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
 class AccelerationStructureScratchAllocator;
 
-ANKI_CVAR(NumericCVar<PtrSize>, Rsrc, TransferScratchMemorySize, 256_MB, 1_MB, 4_GB, "Memory that is used fot texture and buffer uploads")
 #if ANKI_WITH_EDITOR
 ANKI_CVAR(BoolCVar, Rsrc, TrackFileUpdates, false, "If true the resource manager is able to track file update times")
 #endif

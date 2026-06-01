@@ -376,7 +376,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 {
 	ANKI_TRACE_FUNCTION();
-	ANKI_TRACE_INC_COUNTER(SceneNodeUpdated, 1);
+	ANKI_TRACE_INC_COUNTER(SceneNodeVisited, 1);
 
 	UpdateSceneNodesCtx::PerThread& thread = ctx.m_perThread[tid];
 
@@ -397,7 +397,7 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 
 		if(updated)
 		{
-			ANKI_TRACE_INC_COUNTER(SceneComponentUpdated, 1);
+			ANKI_TRACE_INC_COUNTER(SceneComponentUpdate, 1);
 			comp.setTimestamp(GlobalFrameIndex::getSingleton().m_value);
 			++sceneComponentUpdatedCount;
 		}
@@ -458,6 +458,7 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 
 		if(!m_paused || node.getUpdateOnPause()) [[likely]]
 		{
+			ANKI_TRACE_INC_COUNTER(SceneNodeUpdated, 1);
 			SceneNodeUpdateInfo info(ctx.m_prevUpdateTime, ctx.m_crntTime, m_paused);
 			node.update(info);
 		}

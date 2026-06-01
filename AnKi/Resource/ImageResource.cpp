@@ -9,6 +9,7 @@
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Filesystem.h>
+#include <AnKi/GpuMemory/CopyEngine.h>
 
 namespace anki {
 
@@ -273,10 +274,6 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 		const U32 begin = b;
 		const U32 end = min(copyCount, b + kMaxCopiesBeforeFlush);
 
-		CommandBufferInitInfo ci;
-		ci.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(ci);
-
 		// Set the barriers of the batch
 		Array<TextureBarrierInfo, kMaxCopiesBeforeFlush> barriers;
 		U32 barrierCount = 0;
@@ -288,11 +285,9 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kNone,
 										TextureUsageBit::kCopyDestination};
 		}
-		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
+		CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
 		// Do the copies
-		Array<TransferGpuAllocatorHandle, kMaxCopiesBeforeFlush> handles;
-		U32 handleCount = 0;
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
@@ -320,16 +315,12 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 			}
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);
-			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-			ANKI_CHECK(TransferGpuAllocator::getSingleton().allocate(allocationSize, handle));
-			void* data = handle.getMappedMemory();
-			ANKI_ASSERT(data);
 
-			memcpy(data, surfOrVolData, surfOrVolSize);
+			WeakArray<U8> mappedMem;
+			const CopyEngineLockGuard lock = CopyEngine::getSingleton().copyBufferToTexture(
+				U32(allocationSize), mappedMem, TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)));
 
-			// Create temp tex view
-			const TextureSubresourceDesc subresource = TextureSubresourceDesc::surface(mip, face, layer);
-			cmdb->copyBufferToTexture(handle, TextureView(m_tex.get(), subresource));
+			memcpy(mappedMem.getBegin(), surfOrVolData, surfOrVolSize);
 		}
 
 		// Set the barriers of the batch
@@ -342,18 +333,7 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
 										TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
 		}
-		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
-
-		// Flush batch
-		FencePtr fence;
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-
-		for(U i = 0; i < handleCount; ++i)
-		{
-			TransferGpuAllocator::getSingleton().release(handles[i], fence);
-		}
-		cmdb.reset(nullptr);
+		CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 	}
 
 	[[maybe_unused]] const U32 prevVal = m_pendingLoadedMips.fetchSub(m_tex->getMipmapCount());
