@@ -13,7 +13,9 @@
 
 namespace anki {
 
-ANKI_CVAR(NumericCVar<U32>, GpuMem, CopyEngineBuffersize, 64_MB, 16_MB, 2_GB, "Memory size for the copy engine")
+ANKI_CVAR2(NumericCVar<U32>, GpuMem, CopyEngine, BufferSize, 64_MB, 16_MB, 2_GB, "Memory size for the copy engine")
+ANKI_CVAR2(NumericCVar<U32>, GpuMem, CopyEngine, AccelerationStructureScratchBufferSize, 64_MB, 16_MB, 2_GB,
+		   "Memory size for the ring buffer used for BLAS builds")
 
 // A mutex lock guard for some CopyEngine operations
 class CopyEngineLockGuard
@@ -103,7 +105,7 @@ public:
 
 	// A general compute command.
 	// It's thread-safe
-	void buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer);
+	void buildAccelerationStructure(AccelerationStructure* as);
 
 	// End commands //
 
@@ -125,9 +127,14 @@ private:
 	BufferPtr m_ringBuffer;
 	U8* m_ringBufferMappedMem = nullptr;
 
+	BufferPtr m_asScratchBuffer;
+
 	DynamicArray<Batch> m_batches;
 
+	U32 m_asScratchBufferOffset = 0;
+
 	U32 m_ringBufferSize = kMaxU32; // Cache it
+	U32 m_asScratchBufferSize = kMaxU32;
 
 	void flushInternal(FencePtr& fence);
 

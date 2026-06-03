@@ -7,7 +7,6 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshBinaryLoader.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Resource/AccelerationStructureScratchAllocator.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Core/App.h>
@@ -412,20 +411,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			// Build BLASes
 			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
 			{
-				Bool addBarrier;
-				const BufferView scratchBuff =
-					AccelerationStructureScratchAllocator::getSingleton().allocate(submesh.m_blas[lodIdx]->getBuildScratchBufferSize(), addBarrier);
-
-				if(addBarrier)
-				{
-					BufferBarrierInfo barr;
-					barr.m_bufferView = scratchBuff;
-					barr.m_previousUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
-					barr.m_nextUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
-					copyEngine.setPipelineBarrier({}, {&barr, 1}, {});
-				}
-
-				copyEngine.buildAccelerationStructure(submesh.m_blas[lodIdx].get(), scratchBuff);
+				copyEngine.buildAccelerationStructure(submesh.m_blas[lodIdx].get());
 			}
 
 			// Barriers again

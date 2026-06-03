@@ -61,7 +61,6 @@ public:
 	public:
 		AccelerationStructurePtr m_as;
 
-		BufferPtr m_buff;
 		PtrSize m_buffOffset = kMaxPtrSize;
 		PtrSize m_buffRange = kMaxPtrSize;
 	};
@@ -226,13 +225,24 @@ CopyEngine::CopyEngine()
 {
 	BufferInitInfo info("CopyEngine");
 	info.m_mapAccess = BufferMapAccessBit::kWrite;
-	info.m_size = g_cvarGpuMemCopyEngineBuffersize;
+	info.m_size = g_cvarGpuMemCopyEngineBufferSize;
 	info.m_usage = BufferUsageBit::kCopySource;
 	m_ringBuffer = GrManager::getSingleton().newBuffer(info);
 
 	m_ringBufferMappedMem = static_cast<U8*>(m_ringBuffer->map(0, kMaxPtrSize));
 
-	m_ringBufferSize = g_cvarGpuMemCopyEngineBuffersize;
+	m_ringBufferSize = g_cvarGpuMemCopyEngineBufferSize;
+
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
+	{
+		info = {};
+		info.setName("CopyEngineAccelStructScratch");
+		info.m_size = g_cvarGpuMemCopyEngineAccelerationStructureScratchBufferSize;
+		info.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+		m_asScratchBuffer = GrManager::getSingleton().newBuffer(info);
+
+		m_asScratchBufferSize = g_cvarGpuMemCopyEngineAccelerationStructureScratchBufferSize;
+	}
 }
 
 CopyEngine::~CopyEngine()
@@ -302,7 +312,7 @@ void CopyEngine::flushInternal(FencePtr& fence)
 			break;
 		case Command::CommandType::kBuildAs:
 			cmdb->buildAccelerationStructure(cmd.m_buildAs.m_as.get(),
-											 BufferView(cmd.m_buildAs.m_buff.get(), cmd.m_buildAs.m_buffOffset, cmd.m_buildAs.m_buffRange));
+											 BufferView(m_asScratchBuffer.get(), cmd.m_buildAs.m_buffOffset, cmd.m_buildAs.m_buffRange));
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -526,10 +536,32 @@ void CopyEngine::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures,
 	cmd.m_setPipelineBarrier.m_accelerationStructures = std::move(arr3);
 }
 
-void CopyEngine::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
+void CopyEngine::buildAccelerationStructure(AccelerationStructure* as)
 {
 	ANKI_TRACE_SCOPED_EVENT(CopyEngineLock);
+
+	ANKI_ASSERT(as);
+	const U32 scratchBufferSize = U32(as->getBuildScratchBufferSize());
+	ANKI_ASSERT(scratchBufferSize > 0 && scratchBufferSize <= m_asScratchBufferSize);
+
 	LockGuard lock(m_mtx);
+
+	if(m_asScratchBufferOffset + scratchBufferSize > m_asScratchBufferSize)
+	{
+		// Ring buffer wraps around, need to insert a barrier
+
+		m_asScratchBufferOffset = 0;
+
+		WeakArray<U8> unused1;
+		U32 unused2 = kMaxU32;
+		Command& cmd = newCommand(0, unused1, unused2);
+
+		cmd.m_type = Command::CommandType::kSetPipelineBarrier;
+		BufferBarrierInfo& barr = *cmd.m_setPipelineBarrier.m_buffers.emplaceBack();
+		barr.m_bufferView = BufferView(m_asScratchBuffer.get());
+		barr.m_previousUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
+		barr.m_nextUsage = BufferUsageBit::kAccelerationStructureBuildScratch;
+	}
 
 	WeakArray<U8> unused1;
 	U32 unused2 = kMaxU32;
@@ -537,9 +569,10 @@ void CopyEngine::buildAccelerationStructure(AccelerationStructure* as, const Buf
 
 	cmd.m_type = Command::CommandType::kBuildAs;
 	cmd.m_buildAs.m_as.reset(as);
-	cmd.m_buildAs.m_buff.reset(&scratchBuffer.getBuffer());
-	cmd.m_buildAs.m_buffOffset = scratchBuffer.getOffset();
-	cmd.m_buildAs.m_buffRange = scratchBuffer.getRange();
+	cmd.m_buildAs.m_buffOffset = m_asScratchBufferOffset;
+	cmd.m_buildAs.m_buffRange = scratchBufferSize;
+
+	m_asScratchBufferOffset += scratchBufferSize;
 }
 
 void CopyEngine::flush(FencePtr& fence)

@@ -22,7 +22,6 @@ class AsyncLoader;
 class ResourceManagerModel;
 class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
-class AccelerationStructureScratchAllocator;
 
 #if ANKI_WITH_EDITOR
 ANKI_CVAR(BoolCVar, Rsrc, TrackFileUpdates, false, "If true the resource manager is able to track file update times")

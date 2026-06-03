@@ -7,7 +7,6 @@
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Resource/ShaderProgramResourceSystem.h>
 #include <AnKi/Resource/AnimationResource.h>
-#include <AnKi/Resource/AccelerationStructureScratchAllocator.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/CVarSet.h>
 
@@ -42,8 +41,6 @@ ResourceManager::~ResourceManager()
 	static_cast<TypeData<className>&>(m_allTypes).m_map.destroy();
 #include <AnKi/Resource/Resources.def.h>
 
-	AccelerationStructureScratchAllocator::freeSingleton();
-
 	ResourceMemoryPool::freeSingleton();
 }
 
@@ -62,11 +59,6 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 	// Init the programs
 	ShaderProgramResourceSystem::allocateSingleton();
 	ANKI_CHECK(ShaderProgramResourceSystem::getSingleton().init());
-
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing)
-	{
-		AccelerationStructureScratchAllocator::allocateSingleton();
-	}
 
 #if ANKI_WITH_EDITOR
 	m_trackFileUpdateTimes = g_cvarRsrcTrackFileUpdates;
