@@ -66,6 +66,16 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kImage2D"/>
 			<enumerant name="kGenerated"/>
 		</enum>
+
+		<enum name="MeshComponentType">
+			<enumerant name="kMeshResource"/>
+			<enumerant name="kPrimitive"/>
+		</enum>
+
+		<enum name="MeshComponentPrimitiveType">
+			<enumerant name="kBox"/>
+			<enumerant name="kSphere"/>
+		</enum>
 	</enums>
 
 	<classes>
@@ -333,6 +343,24 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="MeshComponent">
 			<methods>
+				<method name="setMeshComponentType">
+					<args>
+						<arg>MeshComponentType</arg>
+					</args>
+					<return>MeshComponent&amp;</return>
+				</method>
+				<method name="setMeshComponentPrimitiveType">
+					<args>
+						<arg>MeshComponentPrimitiveType</arg>
+					</args>
+					<return>MeshComponent&amp;</return>
+				</method>
+				<method name="setSpherePrimitiveSubdivision">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>MeshComponent&amp;</return>
+				</method>
 				<method name="setMeshFilename">
 					<args>
 						<arg>CString</arg>

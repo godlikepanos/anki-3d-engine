@@ -174,7 +174,21 @@ void GBuffer::populateRenderGraph()
 			args.fill(visOut);
 
 			cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
+
+			if(m_wireframe) [[unlikely]]
+			{
+				cmdb.setFillMode(FillMode::kWireframe);
+				cmdb.setLineWidth(2.0f);
+			}
+
 			getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
+
+			if(m_wireframe) [[unlikely]]
+			{
+				// Restore the default
+				cmdb.setFillMode(FillMode::kSolid);
+				cmdb.setLineWidth(1.0f);
+			}
 
 			{
 				struct Consts

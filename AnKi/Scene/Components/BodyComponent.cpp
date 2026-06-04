@@ -27,7 +27,7 @@ BodyComponent::~BodyComponent()
 
 Bool BodyComponent::isValid() const
 {
-	return m_shapeType != BodyComponentCollisionShapeType::kFromMeshComponent || (m_mesh.m_meshc && m_mesh.m_meshc->hasMeshResource());
+	return m_shapeType != BodyComponentCollisionShapeType::kFromMeshComponent || (m_mesh.m_meshc && m_mesh.m_meshc->isValid());
 }
 
 void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -46,9 +46,18 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		shapeDirty = true;
 	}
 
-	if(!shapeDirty
-	   && (m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent
-		   && m_mesh.m_meshc->getMeshResource().getUuid() != m_mesh.m_meshResourceUuid))
+	auto isCollisionShapeDirty = [this]() {
+		if(m_mesh.m_meshc->getMeshComponentType() == MeshComponentType::kMeshResource)
+		{
+			return m_mesh.m_meshc->getMeshResource().getUuid() != m_mesh.m_meshResourceUuid;
+		}
+		else
+		{
+			return m_collisionShape.tryGet() != m_mesh.m_meshc->getPrimitiveCollisionShape();
+		}
+	};
+
+	if(!shapeDirty && (m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent && isCollisionShapeDirty()))
 	{
 		shapeDirty = true;
 	}
@@ -80,13 +89,20 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		if(m_shapeType == BodyComponentCollisionShapeType::kFromMeshComponent)
 		{
-			const MeshResource& meshResource = m_mesh.m_meshc->getMeshResource();
-			m_mesh.m_meshResourceUuid = meshResource.getUuid();
-
-			if(meshResource.getOrCreateCollisionShape(isStatic, kMaxLodCount - 1, m_collisionShape))
+			if(m_mesh.m_meshc->getMeshComponentType() == MeshComponentType::kMeshResource)
 			{
-				ANKI_SCENE_LOGE("BodyComponent::update failed due to error");
-				return;
+				const MeshResource& meshResource = m_mesh.m_meshc->getMeshResource();
+				m_mesh.m_meshResourceUuid = meshResource.getUuid();
+
+				if(meshResource.getOrCreateCollisionShape(isStatic, kMaxLodCount - 1, m_collisionShape))
+				{
+					ANKI_SCENE_LOGE("BodyComponent::update failed due to error");
+					return;
+				}
+			}
+			else
+			{
+				m_collisionShape.reset(m_mesh.m_meshc->getPrimitiveCollisionShape());
 			}
 		}
 		else if(m_shapeType == BodyComponentCollisionShapeType::kAabb)

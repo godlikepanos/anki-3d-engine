@@ -66,6 +66,16 @@ public:
 		return m_runCtx.m_visOut;
 	}
 
+	void setWireframeMode(Bool wireframe)
+	{
+		m_wireframe = wireframe;
+	}
+
+	Bool getWireframeMode()
+	{
+		return m_wireframe;
+	}
+
 private:
 	Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<RendererTexture, 2> m_depthRts;
@@ -74,6 +84,8 @@ private:
 	ShaderProgramResourcePtr m_visualizeProbeProg;
 	ShaderProgramPtr m_visualizeGiProbeGrProg;
 	ShaderProgramPtr m_visualizeReflProbeGrProg;
+
+	Bool m_wireframe = false; // Render the GBuffer geometry in wireframe
 
 	class
 	{

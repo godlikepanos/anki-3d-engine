@@ -50,7 +50,7 @@ Error MyApp::userPostInit()
 		monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
 		monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
 
-		const Aabb aabb = monkey->getFirstComponentOfType<MeshComponent>().getMeshResource().getBoundingShape();
+		const Aabb aabb = monkey->getFirstComponentOfType<MeshComponent>().getLocalAabb();
 		const F32 height = aabb.getMax().y - aabb.getMin().y;
 
 		bodyc = monkey->newComponent<BodyComponent>();
@@ -89,7 +89,7 @@ Error MyApp::userPostInit()
 			SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("monkey_chain%u", i).toCString());
 			const MeshComponent& meshc = monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
 			monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
-			const Aabb aabb = meshc.getMeshResource().getBoundingShape();
+			const Aabb aabb = meshc.getLocalAabb();
 			const F32 height = aabb.getMax().y - aabb.getMin().y;
 
 			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));

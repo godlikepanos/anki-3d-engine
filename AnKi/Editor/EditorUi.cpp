@@ -11,6 +11,7 @@
 #include <AnKi/Window/Input.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Collision.h>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
@@ -370,6 +371,12 @@ void EditorUi::mainMenu()
 				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
 				{
 					m_showDebugRtsWindow = true;
+				}
+
+				Bool wireframe = Renderer::getSingleton().getGBuffer().getWireframeMode();
+				if(ImGui::Checkbox("GBuffer Wireframe", &wireframe))
+				{
+					Renderer::getSingleton().getGBuffer().setWireframeMode(wireframe);
 				}
 
 				DbgOptions& options = Renderer::getSingleton().getDbg().getOptions();

@@ -422,7 +422,61 @@ void SceneNodePropertiesUi::meshComponent(MeshComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
+	// Type
+	if(ImGui::BeginCombo("Type", kMeshComponentTypeNames[comp.getMeshComponentType()]))
+	{
+		for(MeshComponentType type : EnumIterable<MeshComponentType>())
+		{
+			const Bool selected = type == comp.getMeshComponentType();
+			if(ImGui::Selectable(kMeshComponentTypeNames[type], selected))
+			{
+				comp.setMeshComponentType(type);
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if(selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	// Primitive type
+	if(comp.getMeshComponentType() == MeshComponentType::kPrimitive)
+	{
+		if(ImGui::BeginCombo("Primitive Type", kMeshComponentPrimitiveTypeNames[comp.getMeshComponentPrimitiveType()]))
+		{
+			for(MeshComponentPrimitiveType type : EnumIterable<MeshComponentPrimitiveType>())
+			{
+				const Bool selected = type == comp.getMeshComponentPrimitiveType();
+				if(ImGui::Selectable(kMeshComponentPrimitiveTypeNames[type], selected))
+				{
+					comp.setMeshComponentPrimitiveType(type);
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if(selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+	}
+
+	// Sphere subdivision
+	if(comp.getMeshComponentType() == MeshComponentType::kPrimitive && comp.getMeshComponentPrimitiveType() == MeshComponentPrimitiveType::kSphere)
+	{
+		I32 value = comp.getSpherePrimitiveSubdivision();
+		if(ImGui::SliderInt("Sphere Subdivision", &value, 1, MeshComponent::kMaxSpherePrimitiveSubdivision - 1, "%d", ImGuiSliderFlags_AlwaysClamp))
+		{
+			comp.setSpherePrimitiveSubdivision(value);
+		}
+	}
+
 	// Filename
+	if(comp.getMeshComponentType() == MeshComponentType::kMeshResource)
 	{
 		const DynamicArray<CString> meshFilenames = gatherResourceFilenames(".ankimesh");
 

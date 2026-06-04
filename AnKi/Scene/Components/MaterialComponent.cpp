@@ -122,9 +122,7 @@ Aabb MaterialComponent::computeAabb(const SceneNode& node) const
 	}
 	else
 	{
-		Aabb aabbLocal;
-		U32 firstIndex, indexCount, firstMeshlet, meshletCount;
-		m_meshComponent->getMeshResource().getSubMeshInfo(0, m_submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabbLocal);
+		Aabb aabbLocal = m_meshComponent->getLocalAabb();
 
 		if(m_skinComponent && m_skinComponent->isValid())
 		{
@@ -248,7 +246,16 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_anyDirty = false;
 
 	// Sanitize
-	m_submeshIdx = min(m_submeshIdx, (m_meshComponent) ? (m_meshComponent->getMeshResource().getSubMeshCount() - 1) : 0);
+	if(m_meshComponent)
+	{
+		const U32 submeshCount =
+			(m_meshComponent->getMeshComponentType() == MeshComponentType::kMeshResource) ? m_meshComponent->getMeshResource().getSubMeshCount() : 1;
+		m_submeshIdx = min(m_submeshIdx, submeshCount - 1);
+	}
+	else
+	{
+		m_submeshIdx = 0;
+	}
 
 	// Extract the diffuse color
 	Vec4 averageDiffuse(0.0f, 0.0f, 0.0f, 1.0);
@@ -402,10 +409,17 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		U32 meshletCount = 0;
 		if(!prioritizeEmitter)
 		{
-			U32 firstIndex, indexCount, firstMeshlet;
-			Aabb aabb;
-			m_meshComponent->getMeshResource().getSubMeshInfo(0, m_submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabb);
-			wantsMesletCount = key.getMeshletRendering() && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
+			if(m_meshComponent->getMeshComponentType() == MeshComponentType::kMeshResource)
+			{
+				U32 firstIndex, indexCount, firstMeshlet;
+				Aabb aabb;
+				m_meshComponent->getMeshResource().getSubMeshInfo(0, m_submeshIdx, firstIndex, indexCount, firstMeshlet, meshletCount, aabb);
+				wantsMesletCount = key.getMeshletRendering() && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
+			}
+			else
+			{
+				wantsMesletCount = false;
+			}
 		}
 
 		m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(state, t, (wantsMesletCount) ? meshletCount : 0);

@@ -14,10 +14,7 @@ namespace anki {
 extern I32 g_singletonsAllocated;
 #endif
 
-/// @addtogroup util_patterns
-/// @{
-
-/// If class inherits that it will become a singleton.
+// If class inherits that it will become a singleton.
 template<typename T>
 class MakeSingleton
 {
@@ -66,7 +63,7 @@ private:
 template<typename T>
 alignas(ANKI_SAFE_ALIGNMENT) U8 MakeSingleton<T>::m_global[sizeof(T)];
 
-/// If class inherits that it will become a singleton.
+// If class inherits that it will become a singleton.
 template<typename T>
 class MakeSingletonPtr
 {
@@ -110,7 +107,7 @@ private:
 	static inline T* m_global = nullptr;
 };
 
-/// If class inherits that it will become a singleton. This is a simple version without a need for init.
+// If class inherits that it will become a singleton. This is a simple version without a need for init.
 template<typename T>
 class MakeSingletonSimple
 {
@@ -127,7 +124,7 @@ private:
 template<typename T>
 T MakeSingletonSimple<T>::m_global;
 
-/// If class inherits that it will become a singleton. This is a simple version with implicit init.
+// If class inherits that it will become a singleton. This is a simple version with implicit init.
 template<typename T, Bool kThreadsafe = true>
 class MakeSingletonLazyInit
 {
@@ -156,6 +153,5 @@ private:
 	static inline T* m_global = nullptr;
 	static inline SpinLock m_mtx;
 };
-/// @}
 
 } // end namespace anki
