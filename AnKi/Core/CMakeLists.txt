@@ -2,7 +2,8 @@ set(sources
 	App.cpp
 	CoreTracer.cpp
 	MaliHwCounters.cpp
-	StatsSet.cpp)
+	StatsSet.cpp
+	StdinListener.cpp)
 
 set(headers
 	App.h

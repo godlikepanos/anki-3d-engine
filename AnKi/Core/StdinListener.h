@@ -6,41 +6,31 @@
 #pragma once
 
 #include <AnKi/Core/Common.h>
-#include <AnKi/Util/String.h>
 #include <AnKi/Util/Thread.h>
-#include <AnKi/Util/List.h>
+#include <AnKi/Util/StringList.h>
 
 namespace anki {
 
-/// @addtogroup core
-/// @{
-
-/// The listener of the stdin. It initiates a thread that constantly reads the stdin and puts the results in a queue
-class StdinListener
+// The listener of the stdin. It initiates a thread that constantly reads the stdin and puts the results in a queue
+class StdinListener : public MakeSingletonPtr<StdinListener>
 {
 public:
-	StdinListener()
-		: m_thrd("Stdin")
-	{
-	}
+	StdinListener() = default;
 
 	~StdinListener();
 
-	Error create(HeapMemoryPool* pool);
+	Error init();
 
-	/// Get line from the queue or return an empty string
-	String getLine();
+	// Get line from the queue. Returns true if there was a line to return
+	// It's thread-safe.
+	Bool getLine(String& line);
 
 private:
-	HeapMemoryPool* m_pool = nullptr;
-	List<String> m_q;
-	Mutex m_mtx; ///< Protect the queue
-	Thread m_thrd; ///< The thread
-	Bool m_quit = false;
+	StringList m_q;
+	Mutex m_mtx; // Protect the queue
+	Thread* m_thread = nullptr; // The thread
 
-	static Error workingFunc(ThreadCallbackInfo& info); ///< The thread function
+	static Error workingFunc(ThreadCallbackInfo& info); // The thread function
 };
-
-/// @}
 
 } // end namespace anki

@@ -12,27 +12,12 @@ namespace anki {
 
 StdinListener::~StdinListener()
 {
-	m_quit = true;
-	Error err = m_thrd.join();
-	if(err)
-	{
-		ANKI_CORE_LOGE("Error when joining StdinListener");
-	}
-
-	for(String& s : m_q)
-	{
-		s.destroy(*m_pool);
-	}
-
-	m_q.destroy(*m_pool);
 }
 
-Error StdinListener::create(HeapMemoryPool* pool)
+Error StdinListener::init()
 {
-	ANKI_ASSERT(pool);
-	m_pool = pool;
-	m_thrd.start(this, workingFunc);
-
+	m_thread = new Thread("StdinListener"); // Allocate but never free. It's a pain to join the thread since when it's blocked in read()
+	m_thread->start(this, workingFunc);
 	return Error::kNone;
 }
 
@@ -41,34 +26,35 @@ Error StdinListener::workingFunc(ThreadCallbackInfo& info)
 	StdinListener& self = *reinterpret_cast<StdinListener*>(info.m_userData);
 	Array<char, 512> buff;
 
-	while(!self.m_quit)
+	while(true)
 	{
-		I m = read(0, &buff[0], sizeof(buff));
-		buff[m] = '\0';
+		const I m = read(0, &buff[0], sizeof(buff));
+		if(m > 0)
+		{
+			buff[m] = '\0';
 
-		LockGuard<Mutex>(self.m_mtx);
-		self.m_q.emplaceBack(*self.m_pool);
-
-		self.m_q.getBack().create(*self.m_pool, &buff[0]);
+			LockGuard lock(self.m_mtx);
+			self.m_q.pushBack(buff.getBegin());
+		}
 	}
 
 	return Error::kNone;
 }
 
-String StdinListener::getLine()
+Bool StdinListener::getLine(String& line)
 {
-	String ret;
-	m_mtx.lock();
+	Bool gotLine = false;
+
+	LockGuard lock(m_mtx);
 
 	if(!m_q.isEmpty())
 	{
-		ret = std::move(m_q.getFront());
-		m_q.popFront(*m_pool);
+		line = std::move(m_q.getFront());
+		m_q.popFront();
+		gotLine = true;
 	}
 
-	m_mtx.unlock();
-
-	return ret;
+	return gotLine;
 }
 
 } // end namespace anki
