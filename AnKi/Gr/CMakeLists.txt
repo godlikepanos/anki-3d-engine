@@ -3,6 +3,7 @@ set(common_sources Common.cpp)
 set(backend_sources
 	Common.cpp
 	GrObject.cpp
+	GrManager.cpp
 	RenderGraph.cpp
 	ShaderProgram.cpp
 	BackendCommon/Functions.cpp

@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma once
+
 #include <AnKi/Gr/D3D/D3DCommon.h>
 #include <AnKi/Gr/BackendCommon/GraphicsStateTracker.h>
 #include <AnKi/Util/WeakArray.h>

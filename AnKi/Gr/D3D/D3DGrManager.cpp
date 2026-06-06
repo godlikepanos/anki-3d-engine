@@ -565,12 +565,16 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_zeroBuffer->unmap();
 	}
 
+	commonPostInit();
+
 	return Error::kNone;
 }
 
 void GrManagerImpl::destroy()
 {
 	ANKI_D3D_LOGI("Destroying D3D backend");
+
+	commonPreDestroy();
 
 	finishInternal();
 

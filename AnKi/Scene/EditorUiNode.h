@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma once
+
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Editor/EditorUi.h>

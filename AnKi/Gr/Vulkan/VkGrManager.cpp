@@ -167,6 +167,8 @@ GrManagerImpl::~GrManagerImpl()
 {
 	ANKI_VK_LOGI("Destroying Vulkan backend");
 
+	commonPreDestroy();
+
 	// 1st THING: wait for the GPU
 	finishInternal();
 
@@ -306,6 +308,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(BindlessDescriptorSet::getSingleton().init());
 
 	PipelineLayoutFactory2::allocateSingleton();
+
+	commonPostInit();
 
 	return Error::kNone;
 }

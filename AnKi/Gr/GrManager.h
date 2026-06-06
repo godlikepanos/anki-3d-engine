@@ -99,10 +99,14 @@ protected:
 	GrString m_cacheDir;
 	Atomic<U32> m_uuidIndex = {1};
 	GpuDeviceCapabilities m_capabilities;
+	Texture* m_slot0BindlessTexture = nullptr;
 
 	GrManager();
 
 	virtual ~GrManager();
+
+	void commonPostInit();
+	void commonPreDestroy();
 };
 
 template<>
