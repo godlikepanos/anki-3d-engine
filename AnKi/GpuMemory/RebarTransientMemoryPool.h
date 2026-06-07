@@ -99,6 +99,9 @@ private:
 	U32 m_crntActiveSlice = kMaxU32;
 	Array<FrameSlice, kSliceCount> m_slices;
 	Array<FencePtr, kSliceCount> m_sliceFences;
+	Array<U64, kSliceCount> m_sliceFrameIndices = {};
+
+	U64 m_frameIndex = 0;
 
 	RebarTransientMemoryPool() = default;
 

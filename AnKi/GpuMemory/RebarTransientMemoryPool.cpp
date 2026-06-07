@@ -110,19 +110,23 @@ BufferView RebarTransientMemoryPool::allocateInternal(PtrSize origSize, U32 alig
 void RebarTransientMemoryPool::endFrame(Fence* fence)
 {
 	// Free up previous slices
-	m_activeSliceMask.iterateSetBitsFromLeastSignificant([&](U32 sliceIdx) {
-		if(sliceIdx != m_crntActiveSlice)
-		{
-			if(m_sliceFences[sliceIdx]->signaled())
+	auto freeUpFences = [this]() {
+		m_activeSliceMask.iterateSetBitsFromLeastSignificant([&](U32 sliceIdx) {
+			if(sliceIdx != m_crntActiveSlice)
 			{
-				m_sliceFences[sliceIdx].reset(nullptr);
-				m_slices[sliceIdx] = {};
-				m_activeSliceMask.unset(sliceIdx);
+				if(m_sliceFences[sliceIdx]->signaled())
+				{
+					m_sliceFences[sliceIdx].reset(nullptr);
+					m_slices[sliceIdx] = {};
+					m_activeSliceMask.unset(sliceIdx);
+				}
 			}
-		}
 
-		return FunctorContinue::kContinue;
-	});
+			return FunctorContinue::kContinue;
+		});
+	};
+
+	freeUpFences();
 
 	// Finalize the active slice
 	const PtrSize crntOffset = m_offset.getNonAtomically();
@@ -147,11 +151,13 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 
 		slice.m_offset = slice.m_offset % m_bufferSize;
 		slice.m_range = m_bufferSize - slice.m_offset;
+		m_sliceFrameIndices[m_crntActiveSlice] = m_frameIndex;
 		m_sliceFences[m_crntActiveSlice].reset(fence);
 
 		const U32 secondSliceIdx = (~m_activeSliceMask).getLeastSignificantBit();
 		m_slices[secondSliceIdx].m_offset = 0;
 		m_slices[secondSliceIdx].m_range = range - slice.m_range;
+		m_sliceFrameIndices[secondSliceIdx] = m_frameIndex;
 		ANKI_ASSERT(crntNormalizedOffset == m_slices[secondSliceIdx].m_range);
 		m_sliceFences[secondSliceIdx].reset(fence);
 		m_activeSliceMask.set(secondSliceIdx);
@@ -162,16 +168,52 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 
 		slice.m_offset = slice.m_offset % m_bufferSize;
 		slice.m_range = range;
+		m_sliceFrameIndices[m_crntActiveSlice] = m_frameIndex;
 		m_sliceFences[m_crntActiveSlice].reset(fence);
+	}
+
+	if(m_activeSliceMask.getSetBitCount() == kSliceCount)
+	{
+		// Out of slices, need to wait at a fence
+
+		ANKI_GPUMEM_LOGW("Out of slices. Need to wait for something to complete");
+
+		// Find oldest frame
+		U64 oldestFrame = kMaxU64;
+		FencePtr oldestFrameFence;
+		m_activeSliceMask.iterateSetBitsFromLeastSignificant([&](U32 sliceIdx) {
+			if(sliceIdx != m_crntActiveSlice)
+			{
+				if(m_sliceFrameIndices[sliceIdx] < oldestFrame)
+				{
+					oldestFrame = m_sliceFrameIndices[sliceIdx];
+					oldestFrameFence = m_sliceFences[sliceIdx];
+				}
+			}
+
+			return FunctorContinue::kContinue;
+		});
+
+		// Wait for oldest fence
+		const Bool signaled = oldestFrameFence->clientWait(kMaxSecond);
+		if(!signaled)
+		{
+			ANKI_GPUMEM_LOGF("GPU timeout detected");
+		}
+
+		freeUpFences();
 	}
 
 	// Create a new active slice
 	const U32 newSliceIdx = (~m_activeSliceMask).getLeastSignificantBit();
+	ANKI_ASSERT(newSliceIdx != kMaxU32);
 	m_activeSliceMask.set(newSliceIdx);
 	m_slices[newSliceIdx].m_offset = crntOffset;
 	m_crntActiveSlice = newSliceIdx;
 
 	validateSlices();
+
+	++m_frameIndex;
 
 	// Stats
 	const PtrSize usedMemory = range;
