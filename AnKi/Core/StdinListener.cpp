@@ -6,7 +6,6 @@
 #include <AnKi/Core/StdinListener.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/Thread.h>
-#include <unistd.h>
 
 namespace anki {
 
