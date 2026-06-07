@@ -188,7 +188,7 @@ Error MicroSwapchain::initInternal()
 		ci.imageExtent.width = surfaceWidth;
 		ci.imageExtent.height = surfaceHeight;
 		ci.imageArrayLayers = 1;
-		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
 		ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 		ci.imageSharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
@@ -225,8 +225,7 @@ Error MicroSwapchain::initInternal()
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
 			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
-			init.m_usage = TextureUsageBit::kUavCompute | TextureUsageBit::kUavDispatchRays | TextureUsageBit::kRtvDsvRead
-						   | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
+			init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
 			init.m_type = TextureType::k2D;
 
 			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());

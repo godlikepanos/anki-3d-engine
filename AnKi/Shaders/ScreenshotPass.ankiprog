@@ -1,0 +1,31 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Simple shader that copies the swapchain to a 1D buffer
+
+#pragma anki technique comp
+
+#include <AnKi/Shaders/Functions.hlsl>
+
+Texture2D<Vec4> g_swapchainTex : register(t0);
+RWStructuredBuffer<U32> g_uav : register(u0);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 texSize = getDimensions(g_swapchainTex);
+
+	const Vec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	if(any(coord >= texSize))
+	{
+		return;
+	}
+
+	const Vec3 color = TEX(g_swapchainTex, coord).xyz;
+	const UVec3 coloru = clamp(color * 255.0, 0.0, 255.0);
+	const U32 pixel = (0xFFu << 24u) | (coloru.z << 16u) | (coloru.y << 8u) | coloru.x;
+
+	const U32 coord1D = coord.y * texSize.x + coord.x;
+	SBUFF(g_uav, coord1D) = pixel;
+}

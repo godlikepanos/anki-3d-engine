@@ -41,6 +41,11 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 #endif
 
+	if(in.getKey(KeyCode::kF10) == 1)
+	{
+		Renderer::getSingleton().getScreenshotPass().setFramesToCapture(1);
+	}
+
 	static Vec2 mousePosOn1stClick = in.getMousePositionNdc();
 	if(in.getMouseButton(MouseButton::kRight) == 1)
 	{

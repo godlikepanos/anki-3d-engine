@@ -50,6 +50,7 @@
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/GpuParticles.h>
+#include <AnKi/Renderer/ScreenshotPass.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -951,6 +952,8 @@ Error Renderer::render(FencePtr& fence)
 		});
 	}
 
+	m_screenshotPass->populateRenderGraph();
+
 	// Create a dummy pass to transition the presentable image to present
 	{
 		NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Present");
@@ -973,6 +976,7 @@ Error Renderer::render(FencePtr& fence)
 	m_rgraph->recordAndSubmitCommandBuffers(copyEngineFence.tryGet(), &fence);
 
 	// Misc
+	m_screenshotPass->setFence(fence.get());
 	m_rgraph->reset();
 	++m_frameCount;
 	m_prevMatrices = ctx.m_matrices;

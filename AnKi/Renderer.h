@@ -27,3 +27,4 @@
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/Ssao.h>
+#include <AnKi/Renderer/ScreenshotPass.h>

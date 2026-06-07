@@ -13,6 +13,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
+#include <AnKi/Renderer/ScreenshotPass.h>
 #include <AnKi/Collision.h>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
 
@@ -1112,6 +1113,11 @@ void EditorUi::handleInput()
 	{
 		// Re-init mouse pos
 		mousePosOn1stClick = input.getMousePositionNdc();
+	}
+
+	if(input.getKey(KeyCode::kF10) == 1)
+	{
+		Renderer::getSingleton().getScreenshotPass().setFramesToCapture(1);
 	}
 
 	if(input.getMouseButton(MouseButton::kRight) > 0 && !m_mouseOverAnyWindow)
