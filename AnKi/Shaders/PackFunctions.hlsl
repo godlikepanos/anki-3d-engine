@@ -97,6 +97,25 @@ vector<T, 4> unpackSnorm4x8(U32 value)
 	return clamp(vector<T, 4>(packed) / T(127), T(-1), T(1));
 }
 
+template<typename T>
+U32 packSnorm11_11_10(TVec<T, 3> value)
+{
+	value = clamp(value, T(-1), T(1));
+	value *= TVec<T, 3>(1023, 1023, 511);
+	value = round(value);
+	const IVec3 packed = IVec3(value) & UVec3(2047, 2047, 1023);
+	return U32(packed.x | (packed.y << 11) | (packed.z << 22));
+}
+
+template<typename T>
+TVec<T, 3> unpackSnorm11_11_10(U32 value)
+{
+	const I32 signedValue = (I32)value;
+	const IVec3 packed = IVec3(signedValue << 21, signedValue << 10, signedValue) >> IVec3(21, 21, 22);
+	const TVec<T, 3> o = TVec<T, 3>(packed) / TVec<T, 3>(1023, 1023, 511);
+	return clamp(o, T(-1), T(1));
+}
+
 // Convert from RGB to YCbCr.
 // The RGB should be in [0, 1] and the output YCbCr will be in [0, 1] as well.
 template<typename T>

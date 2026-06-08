@@ -62,6 +62,34 @@ Bool isMirror(T roughness)
 	return roughness <= T(kMinRoughness * 2);
 }
 
+PixelFailedSsr packPixelFailedSsr(UVec2 coord, Vec3 reflectionDir, F32 roughness, F32 pdf, F32 rayDirT)
+{
+	PixelFailedSsr o;
+
+	o.m_pixelX = coord.x;
+	o.m_pixelY = coord.y;
+	o.m_roughness = U32(saturate(roughness) * 127.0);
+
+	o.m_reflectionDir = packSnorm11_11_10(reflectionDir);
+
+	o.m_pdf = f32tof16(pdf);
+	o.m_rayDirT = f32tof16(rayDirT);
+
+	return o;
+}
+
+void unpackPixelFailedSsr(PixelFailedSsr i, out UVec2 coord, out Vec3 reflectionDir, out F32 roughness, out F32 pdf, out F32 rayDirT)
+{
+	coord.x = i.m_pixelX;
+	coord.y = i.m_pixelY;
+	roughness = F32(i.m_roughness) / 127.0;
+
+	reflectionDir = unpackSnorm11_11_10<F32>(i.m_reflectionDir);
+
+	pdf = f16tof32(i.m_pdf);
+	rayDirT = f16tof32(i.m_rayDirT);
+}
+
 // ===========================================================================
 // Classification                                                            =
 // ===========================================================================
@@ -611,11 +639,7 @@ U32 dominantAxis(Vec3 d)
 		// Compute again to avoid reg pressure
 		const Vec3 reflDirWorld = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0)).xyz;
 
-		PixelFailedSsr failedPixel;
-		failedPixel.m_pixel = (quarterCoord.x << 16u) | quarterCoord.y;
-		failedPixel.m_reflectionDirAndRoughness = packSnorm4x8(Vec4(reflDirWorld, roughness));
-		failedPixel.m_pdf_f16_rayDirT_f16 = f32tof16(pdf) << 16u;
-		failedPixel.m_pdf_f16_rayDirT_f16 |= f32tof16(length(viewPos - viewHitPoint));
+		const PixelFailedSsr failedPixel = packPixelFailedSsr(quarterCoord, reflDirWorld, roughness, pdf, length(viewPos - viewHitPoint));
 
 		const U32 directionBin = dominantAxis(reflDirWorld); // Compute again to avoid reg pressure
 
@@ -676,17 +700,18 @@ RWTexture2D<Vec4> g_hitPosAndPdfUav : register(u1);
 
 	const UVec2 fullViewportSize = g_globalRendererConstants.m_renderingSize;
 
-	const PixelFailedSsr pixelFailedSsr = SBUFF(g_pixelsFailedSsr, svDispatchThreadId.x);
-	const UVec2 quarterCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
+	UVec2 quarterCoord;
+	Vec3 reflDir;
+	F32 roughness;
+	F32 pdf;
+	F32 unused;
+	unpackPixelFailedSsr(SBUFF(g_pixelsFailedSsr, svDispatchThreadId.x), quarterCoord, reflDir, roughness, pdf, unused);
+
 #	if QUARTER_REZ
 	const UVec2 fullCoord = quarterCoord * 2u;
 #	else
 	const UVec2 fullCoord = quarterCoord;
 #	endif
-	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
-	const Vec3 reflDir = packed.xyz;
-	const F32 roughness = packed.w;
-	const F32 pdf = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 >> 16u);
 
 	const F32 depth = TEX(g_depthTex, quarterCoord).x;
 	const Vec2 ndc = uvToNdc((fullCoord + 0.5) / fullViewportSize);
@@ -779,18 +804,18 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 
 	const Vec2 fullViewportSizef = g_globalRendererConstants.m_renderingSize;
 
-	const PixelFailedSsr pixelFailedSsr = SBUFF(g_pixelsFailedSsr, gtid);
-	const UVec2 quarterCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
+	UVec2 quarterCoord;
+	Vec3 reflDir;
+	F32 roughness;
+	F32 pdf;
+	F32 tmin;
+	unpackPixelFailedSsr(SBUFF(g_pixelsFailedSsr, gtid), quarterCoord, reflDir, roughness, pdf, tmin);
+
 #	if QUARTER_REZ
 	const UVec2 fullCoord = quarterCoord * 2u;
 #	else
 	const UVec2 fullCoord = quarterCoord;
 #	endif
-	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
-	const Vec3 reflDir = packed.xyz;
-	const F32 roughness = packed.w;
-	const F32 pdf = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 >> 16u);
-	const F32 tmin = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 & 0xFFFFu);
 
 	const F32 depth = TEX(g_depthTex, quarterCoord).x;
 	const Vec2 ndc = uvToNdc((fullCoord + 0.5) / fullViewportSizef);

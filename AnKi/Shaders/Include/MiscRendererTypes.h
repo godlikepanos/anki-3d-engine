@@ -195,9 +195,14 @@ struct ReflectionConstants
 
 struct PixelFailedSsr
 {
-	U32 m_pixel;
-	U32 m_reflectionDirAndRoughness;
-	U32 m_pdf_f16_rayDirT_f16;
+	U32 m_pixelX : 13u;
+	U32 m_pixelY : 12u;
+	U32 m_roughness : 7u;
+
+	U32 m_reflectionDir;
+
+	U32 m_pdf : 16u;
+	U32 m_rayDirT : 16u;
 };
 
 // Vol fog
