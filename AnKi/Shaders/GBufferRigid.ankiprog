@@ -1,0 +1,258 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator ANKI_VELOCITY 0 1
+#pragma anki mutator ALPHA_TEST 0 1
+#pragma anki mutator DIFFUSE_TEX 0 1
+#pragma anki mutator ROUGHNESS_METALNESS_TEX 0 1
+#pragma anki mutator NORMAL_TEX 0 1
+#pragma anki mutator EMISSIVE_TEX 0 1
+
+#pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
+
+#pragma anki technique GBufferLegacy vert mutators ANKI_VELOCITY ALPHA_TEST NORMAL_TEX
+#pragma anki technique GBufferLegacy pixel
+
+#pragma anki technique ShadowsLegacy vert mutators ALPHA_TEST DIFFUSE_TEX
+#pragma anki technique ShadowsLegacy pixel mutators ALPHA_TEST DIFFUSE_TEX
+
+#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
+
+#if !defined(DIFFUSE_TEX)
+#	define DIFFUSE_TEX 0
+#endif
+
+#if !defined(ROUGHNESS_METALNESS_TEX)
+#	define ROUGHNESS_METALNESS_TEX 0
+#endif
+
+#if !defined(NORMAL_TEX)
+#	define NORMAL_TEX 0
+#endif
+
+#if !defined(EMISSIVE_TEX)
+#	define EMISSIVE_TEX 0
+#endif
+
+#if !defined(ALPHA_TEST)
+#	define ALPHA_TEST 0
+#endif
+
+#define GBUFFER (ANKI_TECHNIQUE_GBufferLegacy)
+#define SHADOWS (ANKI_TECHNIQUE_ShadowsLegacy)
+#define REALLY_ALPHA_TEST (ALPHA_TEST)
+#define UVS (GBUFFER || REALLY_ALPHA_TEST)
+#define NORMAL_MAPPING (GBUFFER && NORMAL_TEX)
+#define REALLY_VELOCITY (GBUFFER && ANKI_VELOCITY)
+
+#pragma anki struct AnKiLocalConstants
+
+#pragma anki member U32 m_diffuseTex 0
+#pragma anki member U32 m_normalTex 0
+#pragma anki member U32 m_roughnessMetalnessTex 0
+#pragma anki member U32 m_emissiveTex 0
+
+#pragma anki member Vec4 m_diffuseScale 1.0 1.0 1.0 1.0
+#pragma anki member F32 m_roughnessScale 1.0
+#pragma anki member F32 m_metalnessScale 1.0
+#pragma anki member Vec3 m_specularScale 1.0 1.0 1.0
+#pragma anki member Vec3 m_emissionScale 1.0 1.0 1.0
+#pragma anki member F32 m_subsurface 0.0
+#pragma anki member U32 m_bTriplanarMapping 0
+
+#pragma anki struct_end
+
+struct VertIn
+{
+	U32 m_svVertexId : SV_VERTEXID;
+};
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+
+#if UVS
+	Vec2 m_uv : TEXCOORD;
+#endif
+
+#if REALLY_VELOCITY
+	Vec3 m_prevClipXyw : PREV_CLIP;
+	Vec3 m_crntClipXyw : CRNT_CLIP;
+#endif
+
+#if NORMAL_MAPPING
+	Vec3 m_worldPos : WORLD_POS;
+#endif
+
+#if GBUFFER
+	ANKI_RELAXED_PRECISION Vec3 m_normal : NORMAL;
+#endif
+
+	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
+};
+
+void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPos, Vec4 svPosition, out Vec3 prevClipXyw, out Vec3 crntClipXyw)
+{
+	ANKI_MAYBE_UNUSED(prevWorldTransform);
+	ANKI_MAYBE_UNUSED(worldTransform);
+
+	Vec4 v4 = Vec4(mul(prevWorldTransform, Vec4(prevLocalPos, 1.0)), 1.0);
+	v4 = mul(g_globalConstants.m_previousViewProjectionMatrix, v4);
+
+	prevClipXyw = v4.xyw;
+	crntClipXyw = svPosition.xyw;
+}
+
+// ===========================================================================
+// Vert                                                                      =
+// ===========================================================================
+#if ANKI_VERTEX_SHADER
+
+VertOut main(VertIn input)
+{
+	VertOut output;
+
+	const GpuScenePerDraw instance = getGpuScenePerDraw();
+	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
+	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, false);
+
+	output.m_constantsOffset = instance.m_constantsOffset;
+	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
+
+	const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
+	const Mat3x4 prevWorldTransform = g_transforms[worldTransformsIndex + 1u];
+	ANKI_MAYBE_UNUSED(prevWorldTransform);
+
+#	if UVS
+	output.m_uv = vert.m_uv;
+#	endif
+
+	const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
+	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
+
+#	if NORMAL_MAPPING
+	output.m_worldPos = worldPos;
+#	endif
+
+#	if GBUFFER
+	output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
+#	endif
+
+#	if REALLY_VELOCITY
+	velocity(worldTransform, prevWorldTransform, vert.m_position, output.m_svPosition, output.m_prevClipXyw, output.m_crntClipXyw);
+#	endif
+
+	return output;
+};
+#endif // ANKI_VERTEX_SHADER
+
+// ===========================================================================
+// Pixel                                                                     =
+// ===========================================================================
+#if ANKI_PIXEL_SHADER
+
+#	define BINDLESS(x) getBindlessTexture2DVec4(x)
+
+#	if SHADOWS
+void main(VertOut vertOut)
+{
+#		if REALLY_ALPHA_TEST
+	const U32 constantsOffset = vertOut.m_constantsOffset;
+
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
+	const HVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(g_trilinearRepeatSampler, vertOut.m_uv);
+	if(diffColorA.a * F16(localConstants.m_diffuseScale.a) < 0.5f)
+	{
+		discard;
+	}
+#		endif
+}
+
+#	else // !SHADOWS
+
+GBufferPixelOut main(VertOut vertOut)
+{
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, vertOut.m_constantsOffset);
+
+#		if UVS
+	const Vec2 uv = vertOut.m_uv;
+#		else
+	const Vec2 uv = 0.0;
+#		endif
+
+	// Diffuse
+#		if DIFFUSE_TEX
+	const HVec4 diffColorA =
+		BINDLESS(localConstants.m_diffuseTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv) * HVec4(localConstants.m_diffuseScale);
+	const HVec3 diffColor = diffColorA.rgb;
+#			if REALLY_ALPHA_TEST
+	if(diffColorA.a < 0.5)
+	{
+		discard;
+	}
+#			endif // REALLY_ALPHA_TEST
+#		else // !DIFFUSE_TEX
+	const HVec3 diffColor = HVec4(localConstants.m_diffuseScale);
+#		endif // DIFFUSE_TEX
+
+	// Specular
+	const HVec3 specColor = localConstants.m_specularScale;
+
+	// Roughness & metalness
+#		if ROUGHNESS_METALNESS_TEX
+	const HVec3 comp = BINDLESS(localConstants.m_roughnessMetalnessTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv).rgb;
+	const F16 roughness = comp.g * F16(localConstants.m_roughnessScale);
+	const F16 metallic = comp.b * F16(localConstants.m_metalnessScale);
+#		else
+	const F16 roughness = localConstants.m_roughnessScale;
+	const F16 metallic = localConstants.m_metalnessScale;
+#		endif
+
+	// Normal
+#		if NORMAL_TEX
+	const HVec3 nAtTangentspace =
+		normalize((BINDLESS(localConstants.m_normalTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv).rgb - 0.5) * 2.0);
+	const Vec3 viewDir = -normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertOut.m_worldPos);
+	const HVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertOut.m_normal));
+#		else
+	const HVec3 normal = normalize(vertOut.m_normal);
+#		endif
+
+	// Emissive
+#		if EMISSIVE_TEX
+	const HVec3 emission = BINDLESS(localConstants.m_emissiveTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv).rgb
+						   * HVec3(localConstants.m_emissionScale);
+#		else
+	const HVec3 emission = localConstants.m_emissionScale;
+#		endif
+
+	// Velocity
+#		if ANKI_VELOCITY
+	const Vec2 prevNdc = vertOut.m_prevClipXyw.xy / vertOut.m_prevClipXyw.z;
+	const Vec2 crntNdc = vertOut.m_crntClipXyw.xy / vertOut.m_crntClipXyw.z;
+
+	const Vec2 velocity = ndcToUv(prevNdc) - ndcToUv(crntNdc);
+#		else
+	const Vec2 velocity = Vec2(1.0, 1.0);
+#		endif
+
+	GbufferInfo<F16> g;
+	g.m_diffuse = diffColor;
+	g.m_normal = normal;
+	g.m_f0 = specColor;
+	g.m_roughness = roughness;
+	g.m_subsurface = localConstants.m_subsurface;
+	g.m_emission = emission;
+	g.m_metallic = metallic;
+	g.m_velocity = velocity;
+
+	return packGBuffer(g);
+}
+#	endif // SHADOWS
+
+#endif
