@@ -76,7 +76,7 @@ template<typename T, typename TMemoryPool, typename TSize>
 template<typename... TArgs>
 void DynamicArray<T, TMemoryPool, TSize>::resize(Size newSize, TArgs... args)
 {
-	if constexpr(std::is_copy_constructible<T>::value)
+	if constexpr(std::is_copy_constructible<T>::value || std::is_move_constructible<T>::value)
 	{
 		const Bool willGrow = newSize > m_size;
 		resizeStorage(newSize);

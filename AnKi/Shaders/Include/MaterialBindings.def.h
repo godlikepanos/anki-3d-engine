@@ -115,8 +115,7 @@ ANKI_SRV(StructuredBuffer<Cluster>, g_clusters, 22, cmdb, getClusterBinning().ge
 // CBVs
 #if defined(ANKI_RASTER_PATH)
 ANKI_CBV(ConstantBuffer<MaterialGlobalConstants>, g_globalConstants, 0, cmdb, globalConstantsToken, true)
-ANKI_CBV(ConstantBuffer<GlobalRendererConstants>, g_globalRendererConstants, 1, cmdb, getRenderingContext().m_globalRenderingConstantsBuffer,
-		 bForwardShading)
+ANKI_CBV(ConstantBuffer<GlobalRendererConstants>, g_globalRendererConstants, 1, cmdb, getRenderingContext().m_globalRenderingConstantsBuffer, true)
 #endif
 
 // Undef everything

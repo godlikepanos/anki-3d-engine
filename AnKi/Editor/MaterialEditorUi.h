@@ -36,6 +36,20 @@ private:
 		{
 			m_Mat4 = Mat4::getZero();
 		}
+
+		Data(const Data& b)
+		{
+			*this = b;
+		}
+
+		Data& operator=(const Data& b)
+		{
+			m_Mat4 = b.m_Mat4; // Copy the largest member of the union to copy all its bytes
+			m_image = b.m_image;
+			m_name = b.m_name;
+			m_type = b.m_type;
+			return *this;
+		}
 	};
 
 	class Program

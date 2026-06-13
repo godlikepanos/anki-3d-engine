@@ -246,11 +246,40 @@ void MaterialEditorUi::gatherPrograms()
 
 void MaterialEditorUi::rebuildCache(const MaterialResource& mtl)
 {
+	// Do the program
+	m_currentlySelectedProgram = getBasename(mtl.getShaderProgramResource().getFilename());
+	const Program* prog = nullptr;
+	for(const Program& p : m_programs)
+	{
+		if(p.m_name == m_currentlySelectedProgram)
+		{
+			prog = &p;
+			break;
+		}
+	}
+	ANKI_ASSERT(prog);
+
+	// Build the partial mutation
 	m_cachedMutators.resize(mtl.getPartialMutation().getSize());
 	U32 count = 0;
 	for(const PartialMutation& mutation : mtl.getPartialMutation())
 	{
-		m_cachedMutators[count++] = mutation;
+		// Find the mutator in the program
+		// WARNING: The m_cachedMutators should point to Program::m_programBinary because the m_programBinary is persistent. We can't reference the
+		// mtl at all because it's transient
+		const ShaderBinaryMutator* mutator = nullptr;
+		for(const ShaderBinaryMutator& m : prog->m_programBinary->m_mutators)
+		{
+			if(CString(m.m_name.getBegin()) == mutation.m_mutator->m_name.getBegin())
+			{
+				mutator = &m;
+				break;
+			}
+		}
+		ANKI_ASSERT(mutator);
+
+		// Store it
+		m_cachedMutators[count++] = PartialMutation{.m_mutator = mutator, .m_value = mutation.m_value};
 	}
 
 	m_cachedInputs.resize(mtl.getVariables().getSize());
@@ -282,8 +311,6 @@ void MaterialEditorUi::rebuildCache(const MaterialResource& mtl)
 		m_cachedInputs[count].m_name = var.getName();
 		++count;
 	}
-
-	m_currentlySelectedProgram = getBasename(mtl.getShaderProgramResource().getFilename());
 }
 
 void MaterialEditorUi::rebuildCache(CString programName)
@@ -299,13 +326,26 @@ void MaterialEditorUi::rebuildCache(CString programName)
 			break;
 		}
 	}
+	ANKI_ASSERT(prog);
 
-	m_cachedInputs.destroy();
 	m_cachedInputs.resize(prog->m_inputs.getSize());
 	U32 count = 0;
 	for(const ShaderBinaryStructMember& m : prog->m_inputs)
 	{
+		// Set a default value from the binary
 		m_cachedInputs[count].m_Mat4 = Mat4::getZero();
+		switch(m.m_type)
+		{
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	case ShaderVariableDataType::k##type: \
+		ANKI_ASSERT(sizeof(m_cachedInputs[count].m_Mat4) == m.m_defaultValues.getSizeInBytes()); \
+		memcpy(&m_cachedInputs[count].m_Mat4, m.m_defaultValues.getBegin(), m.m_defaultValues.getSizeInBytes()); \
+		break;
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
+		default:
+			ANKI_ASSERT(0);
+		}
+
 		m_cachedInputs[count].m_name = m.m_name.getBegin();
 		m_cachedInputs[count].m_type = m.m_type;
 
@@ -330,13 +370,8 @@ void MaterialEditorUi::rebuildCache(CString programName)
 			continue;
 		}
 
-		PartialMutation& pmut = *m_cachedMutators.emplaceBack();
-
-		pmut.m_mutator = &m;
-		pmut.m_value = m.m_values[0];
+		m_cachedMutators.emplaceBack(PartialMutation{.m_mutator = &m, .m_value = m.m_values[0]});
 	}
-
-	ANKI_ASSERT(prog);
 }
 
 Error MaterialEditorUi::saveCache()

@@ -5,50 +5,29 @@
 
 #pragma anki mutator ANKI_VELOCITY 0 1
 #pragma anki mutator ALPHA_TEST 0 1
-#pragma anki mutator DIFFUSE_TEX 0 1
-#pragma anki mutator ROUGHNESS_METALNESS_TEX 0 1
-#pragma anki mutator NORMAL_TEX 0 1
-#pragma anki mutator EMISSIVE_TEX 0 1
+#pragma anki mutator TRIPLANAR_UV_MAPPING 0 1
 
-#pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
-
-#pragma anki technique GBufferLegacy vert mutators ANKI_VELOCITY ALPHA_TEST NORMAL_TEX
+#pragma anki technique GBufferLegacy vert
 #pragma anki technique GBufferLegacy pixel
 
-#pragma anki technique ShadowsLegacy vert mutators ALPHA_TEST DIFFUSE_TEX
-#pragma anki technique ShadowsLegacy pixel mutators ALPHA_TEST DIFFUSE_TEX
+#pragma anki technique ShadowsLegacy vert mutators ALPHA_TEST TRIPLANAR_UV_MAPPING
+#pragma anki technique ShadowsLegacy pixel mutators ALPHA_TEST TRIPLANAR_UV_MAPPING
+
+#pragma anki technique RtMaterialFetch chit mutators ALPHA_TEST TRIPLANAR_UV_MAPPING
 
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
+#include <AnKi/Shaders/ImportanceSampling.hlsl>
+#include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
-#if !defined(DIFFUSE_TEX)
-#	define DIFFUSE_TEX 0
-#endif
-
-#if !defined(ROUGHNESS_METALNESS_TEX)
-#	define ROUGHNESS_METALNESS_TEX 0
-#endif
-
-#if !defined(NORMAL_TEX)
-#	define NORMAL_TEX 0
-#endif
-
-#if !defined(EMISSIVE_TEX)
-#	define EMISSIVE_TEX 0
-#endif
-
-#if !defined(ALPHA_TEST)
-#	define ALPHA_TEST 0
+#if !defined(ANKI_VELOCITY)
+#	define ANKI_VELOCITY 0
 #endif
 
 #define GBUFFER (ANKI_TECHNIQUE_GBufferLegacy)
 #define SHADOWS (ANKI_TECHNIQUE_ShadowsLegacy)
-#define REALLY_ALPHA_TEST (ALPHA_TEST)
-#define UVS (GBUFFER || REALLY_ALPHA_TEST)
-#define NORMAL_MAPPING (GBUFFER && NORMAL_TEX)
-#define REALLY_VELOCITY (GBUFFER && ANKI_VELOCITY)
 
 #pragma anki struct AnKiLocalConstants
 
@@ -60,10 +39,12 @@
 #pragma anki member Vec4 m_diffuseScale 1.0 1.0 1.0 1.0
 #pragma anki member F32 m_roughnessScale 1.0
 #pragma anki member F32 m_metalnessScale 1.0
-#pragma anki member Vec3 m_specularScale 1.0 1.0 1.0
-#pragma anki member Vec3 m_emissionScale 1.0 1.0 1.0
+#pragma anki member Vec3 m_specularScale 0.04 0.04 0.04
+#pragma anki member Vec3 m_emissionScale 0.0 0.0 0.0
 #pragma anki member F32 m_subsurface 0.0
-#pragma anki member U32 m_bTriplanarMapping 0
+#pragma anki member F32 m_triplanarMappingScale 1.0
+#pragma anki member F32 m_triplanarMappingEdgeSharpness 8.0
+#pragma anki member U32 m_bUseWorldInTriplanarMapping 1
 
 #pragma anki struct_end
 
@@ -76,26 +57,109 @@ struct VertOut
 {
 	Vec4 m_svPosition : SV_POSITION;
 
-#if UVS
+#if(GBUFFER || ALPHA_TEST) && !TRIPLANAR_UV_MAPPING
+#	define UV_DEF 1
 	Vec2 m_uv : TEXCOORD;
+#else
+#	define UV_DEF 0
 #endif
 
-#if REALLY_VELOCITY
+#if(GBUFFER || ALPHA_TEST) && TRIPLANAR_UV_MAPPING
+#	define TRIPLANAR_UV_DEF 1
+	ANKI_RELAXED_PRECISION Vec2 m_uvX : UV_X;
+	ANKI_RELAXED_PRECISION Vec2 m_uvY : UV_Y;
+	ANKI_RELAXED_PRECISION Vec2 m_uvZ : UV_Z;
+	ANKI_RELAXED_PRECISION Vec3 m_uvWeights : UV_WEIGHTS;
+#else
+#	define TRIPLANAR_UV_DEF 0
+#endif
+
+#if GBUFFER && ANKI_VELOCITY
+#	define CLIP_DEF 1
 	Vec3 m_prevClipXyw : PREV_CLIP;
 	Vec3 m_crntClipXyw : CRNT_CLIP;
+#else
+#	define CLIP_DEF 0
 #endif
 
-#if NORMAL_MAPPING
+#if GBUFFER || TRIPLANAR_UV_MAPPING
+#	define WORLD_POS_AND_NORMAL_DEF 1
 	Vec3 m_worldPos : WORLD_POS;
-#endif
-
-#if GBUFFER
 	ANKI_RELAXED_PRECISION Vec3 m_normal : NORMAL;
+#else
+#	define WORLD_POS_AND_NORMAL_DEF 0
 #endif
 
+#if GBUFFER || ALPHA_TEST
+#	define CONST_OFFSET_DEF 1
 	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
+#else
+#	define CONST_OFFSET_DEF 0
+#endif
 };
 
+void triplanarMapping(Vec3 worldPos, Vec3 normal, F32 tilingScale, F32 sharpness, F32 rand0to1, out Vec2 uv, out Vec2 ddx, out Vec2 ddy)
+{
+	Vec3 weights = abs(normal);
+	weights = pow(weights, sharpness);
+	weights /= weights.x + weights.y + weights.z;
+
+	const Vec2 uvX = worldPos.zy * tilingScale;
+	const Vec2 uvY = worldPos.xz * tilingScale;
+	const Vec2 uvZ = worldPos.xy * tilingScale;
+
+	const Vec2 ddxX = ddx_coarse(uvX);
+	const Vec2 ddyX = ddy_coarse(uvX);
+	const Vec2 ddxY = ddx_coarse(uvY);
+	const Vec2 ddyY = ddy_coarse(uvY);
+	const Vec2 ddxZ = ddx_coarse(uvZ);
+	const Vec2 ddyZ = ddy_coarse(uvZ);
+
+	if(rand0to1 < weights.x)
+	{
+		ddx = ddxX;
+		ddy = ddyX;
+		uv = uvX;
+	}
+	else if(rand0to1 < weights.x + weights.y)
+	{
+		ddx = ddxY;
+		ddy = ddyY;
+		uv = uvY;
+	}
+	else
+	{
+		ddx = ddxZ;
+		ddy = ddyZ;
+		uv = uvZ;
+	}
+}
+
+void triplanarMapping(Vec3 worldPos, Vec3 normal, F32 tilingScale, F32 sharpness, F32 rand0to1, out Vec2 uv)
+{
+	Vec3 weights = abs(normal);
+	weights = pow(weights, sharpness);
+	weights /= weights.x + weights.y + weights.z;
+
+	const Vec2 uvX = worldPos.zy * tilingScale;
+	const Vec2 uvY = worldPos.xz * tilingScale;
+	const Vec2 uvZ = worldPos.xy * tilingScale;
+
+	if(rand0to1 < weights.x)
+	{
+		uv = uvX;
+	}
+	else if(rand0to1 < weights.x + weights.y)
+	{
+		uv = uvY;
+	}
+	else
+	{
+		uv = uvZ;
+	}
+}
+
+#if ANKI_VELOCITY
 void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPos, Vec4 svPosition, out Vec3 prevClipXyw, out Vec3 crntClipXyw)
 {
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
@@ -107,6 +171,7 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 	prevClipXyw = v4.xyw;
 	crntClipXyw = svPosition.xyw;
 }
+#endif
 
 // ===========================================================================
 // Vert                                                                      =
@@ -121,30 +186,49 @@ VertOut main(VertIn input)
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, false);
 
+#	if CONST_OFFSET_DEF
 	output.m_constantsOffset = instance.m_constantsOffset;
+#	endif
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
 
 	const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
 	const Mat3x4 prevWorldTransform = g_transforms[worldTransformsIndex + 1u];
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
 
-#	if UVS
+#	if UV_DEF
 	output.m_uv = vert.m_uv;
 #	endif
 
 	const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
 	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
 
-#	if NORMAL_MAPPING
+	const Vec3 worldNormal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
+#	if WORLD_POS_AND_NORMAL_DEF
 	output.m_worldPos = worldPos;
+	output.m_normal = worldNormal;
 #	endif
 
-#	if GBUFFER
-	output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
-#	endif
-
-#	if REALLY_VELOCITY
+#	if CLIP_DEF
 	velocity(worldTransform, prevWorldTransform, vert.m_position, output.m_svPosition, output.m_prevClipXyw, output.m_crntClipXyw);
+#	endif
+
+#	if TRIPLANAR_UV_DEF
+	{
+		const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, instance.m_constantsOffset);
+
+		const Vec3 normal = (localConstants.m_bUseWorldInTriplanarMapping) ? worldNormal : vert.m_normal;
+		const Vec3 pos = (localConstants.m_bUseWorldInTriplanarMapping) ? worldPos : vert.m_position;
+
+		Vec3 weights = abs(normal);
+		weights = pow(weights, localConstants.m_triplanarMappingEdgeSharpness);
+		weights /= weights.x + weights.y + weights.z;
+
+		output.m_uvX = pos.zy * localConstants.m_triplanarMappingScale;
+		output.m_uvY = pos.xz * localConstants.m_triplanarMappingScale;
+		output.m_uvZ = pos.xy * localConstants.m_triplanarMappingScale;
+
+		output.m_uvWeights = weights;
+	}
 #	endif
 
 	return output;
@@ -159,77 +243,116 @@ VertOut main(VertIn input)
 #	define BINDLESS(x) getBindlessTexture2DVec4(x)
 
 #	if SHADOWS
+#		define SAMPLER g_trilinearRepeatSampler
+#	else
+#		define SAMPLER g_trilinearRepeatAnisoResolutionScalingBiasSampler
+#	endif
+
+#	if TRIPLANAR_UV_MAPPING
+#		define SAMPLE_TEX(bindlessIdx) BINDLESS(bindlessIdx).SampleGrad(SAMPLER, uv, ddx, ddy)
+#	else
+#		define SAMPLE_TEX(bindlessIdx) BINDLESS(bindlessIdx).Sample(SAMPLER, uv)
+#	endif
+
+#	if SHADOWS
 void main(VertOut vertOut)
-{
-#		if REALLY_ALPHA_TEST
-	const U32 constantsOffset = vertOut.m_constantsOffset;
-
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
-	const HVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(g_trilinearRepeatSampler, vertOut.m_uv);
-	if(diffColorA.a * F16(localConstants.m_diffuseScale.a) < 0.5f)
-	{
-		discard;
-	}
-#		endif
-}
-
-#	else // !SHADOWS
-
+#	else
 GBufferPixelOut main(VertOut vertOut)
+#	endif
 {
+#	if CONST_OFFSET_DEF
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, vertOut.m_constantsOffset);
+#	endif
 
-#		if UVS
-	const Vec2 uv = vertOut.m_uv;
+#	if GBUFFER || ALPHA_TEST
+	Vec2 uv;
+#		if TRIPLANAR_UV_MAPPING
+	Vec2 ddx = 0.0;
+	Vec2 ddy = 0.0;
+
+	const F32 rand0to1 = spatioTemporalNoise(vertOut.m_svPosition.xy, g_globalRendererConstants.m_frame).x;
+
+	const Vec3 weights = vertOut.m_uvWeights;
+
+	const Vec2 uvX = vertOut.m_uvX;
+	const Vec2 uvY = vertOut.m_uvY;
+	const Vec2 uvZ = vertOut.m_uvZ;
+
+	const Vec2 ddxX = ddx_coarse(uvX);
+	const Vec2 ddyX = ddy_coarse(uvX);
+	const Vec2 ddxY = ddx_coarse(uvY);
+	const Vec2 ddyY = ddy_coarse(uvY);
+	const Vec2 ddxZ = ddx_coarse(uvZ);
+	const Vec2 ddyZ = ddy_coarse(uvZ);
+
+	if(rand0to1 < weights.x)
+	{
+		ddx = ddxX;
+		ddy = ddyX;
+		uv = uvX;
+	}
+	else if(rand0to1 < weights.x + weights.y)
+	{
+		ddx = ddxY;
+		ddy = ddyY;
+		uv = uvY;
+	}
+	else
+	{
+		ddx = ddxZ;
+		ddy = ddyZ;
+		uv = uvZ;
+	}
 #		else
-	const Vec2 uv = 0.0;
+	uv = vertOut.m_uv;
 #		endif
+#	endif // GBUFFER || ALPHA_TEST
 
 	// Diffuse
-#		if DIFFUSE_TEX
-	const HVec4 diffColorA =
-		BINDLESS(localConstants.m_diffuseTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv) * HVec4(localConstants.m_diffuseScale);
-	const HVec3 diffColor = diffColorA.rgb;
-#			if REALLY_ALPHA_TEST
-	if(diffColorA.a < 0.5)
+#	if GBUFFER || ALPHA_TEST
+	Vec4 diffColor = localConstants.m_diffuseScale;
+	if(localConstants.m_diffuseTex)
 	{
-		discard;
-	}
-#			endif // REALLY_ALPHA_TEST
-#		else // !DIFFUSE_TEX
-	const HVec3 diffColor = HVec4(localConstants.m_diffuseScale);
-#		endif // DIFFUSE_TEX
+		diffColor *= SAMPLE_TEX(localConstants.m_diffuseTex);
 
+#		if ALPHA_TEST
+		if(diffColor.a < 0.5)
+		{
+			discard;
+		}
+#		endif
+	}
+#	endif // GBUFFER || ALPHA_TEST
+
+#	if GBUFFER
 	// Specular
-	const HVec3 specColor = localConstants.m_specularScale;
+	const Vec3 specColor = localConstants.m_specularScale;
 
 	// Roughness & metalness
-#		if ROUGHNESS_METALNESS_TEX
-	const HVec3 comp = BINDLESS(localConstants.m_roughnessMetalnessTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv).rgb;
-	const F16 roughness = comp.g * F16(localConstants.m_roughnessScale);
-	const F16 metallic = comp.b * F16(localConstants.m_metalnessScale);
-#		else
-	const F16 roughness = localConstants.m_roughnessScale;
-	const F16 metallic = localConstants.m_metalnessScale;
-#		endif
+	F32 roughness = localConstants.m_roughnessScale;
+	F32 metallic = localConstants.m_metalnessScale;
+	if(localConstants.m_roughnessMetalnessTex)
+	{
+		const Vec3 comp = SAMPLE_TEX(localConstants.m_roughnessMetalnessTex);
+		roughness *= comp.g;
+		metallic *= comp.b;
+	}
 
 	// Normal
-#		if NORMAL_TEX
-	const HVec3 nAtTangentspace =
-		normalize((BINDLESS(localConstants.m_normalTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv).rgb - 0.5) * 2.0);
-	const Vec3 viewDir = -normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertOut.m_worldPos);
-	const HVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertOut.m_normal));
-#		else
-	const HVec3 normal = normalize(vertOut.m_normal);
-#		endif
+	Vec3 normal = normalize(vertOut.m_normal);
+	if(localConstants.m_normalTex)
+	{
+		const Vec3 nAtTangentspace = normalize((SAMPLE_TEX(localConstants.m_normalTex).xyz - 0.5) * 2.0);
+		const Vec3 viewDir = -normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertOut.m_worldPos);
+		normal = perturbNormal(nAtTangentspace, viewDir, uv, normal);
+	}
 
 	// Emissive
-#		if EMISSIVE_TEX
-	const HVec3 emission = BINDLESS(localConstants.m_emissiveTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, uv).rgb
-						   * HVec3(localConstants.m_emissionScale);
-#		else
-	const HVec3 emission = localConstants.m_emissionScale;
-#		endif
+	Vec3 emission = localConstants.m_emissionScale;
+	if(localConstants.m_emissiveTex)
+	{
+		emission *= SAMPLE_TEX(localConstants.m_emissiveTex).rgb;
+	}
 
 	// Velocity
 #		if ANKI_VELOCITY
@@ -241,7 +364,7 @@ GBufferPixelOut main(VertOut vertOut)
 	const Vec2 velocity = Vec2(1.0, 1.0);
 #		endif
 
-	GbufferInfo<F16> g;
+	GbufferInfo<F32> g;
 	g.m_diffuse = diffColor;
 	g.m_normal = normal;
 	g.m_f0 = specColor;
@@ -252,7 +375,125 @@ GBufferPixelOut main(VertOut vertOut)
 	g.m_velocity = velocity;
 
 	return packGBuffer(g);
+#	endif // GBUFFER
 }
-#	endif // SHADOWS
+#endif
 
+// ===========================================================================
+// RT material fetch                                                         =
+// ===========================================================================
+#if ANKI_TECHNIQUE_RtMaterialFetch
+
+#	define USE_POSITION_FETCH_NORMALS ANKI_GR_BACKEND_VULKAN
+
+ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
+
+#	define SAMPLE_TEX(bindlessIdx) \
+		getBindlessTextureNonUniformIndex2DVec4(bindlessIdx).SampleLevel(g_trilinearRepeatSampler, uv, payload.m_textureLod)
+
+[shader("closesthit")] void main(inout RtMaterialFetchRayPayload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
+{
+	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
+
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_record.m_constantsOffset);
+
+	const Bool needsUvs = payload.m_textureLod < 100.0;
+	const Bool skipVerts = USE_POSITION_FETCH_NORMALS && !needsUvs;
+
+	Vec3 vertNormal;
+	Vec2 uv;
+	Vec3 vertPos;
+	if(!skipVerts)
+	{
+		const GpuSceneMeshLod mesh = g_meshLods[g_record.m_meshLodIndex];
+
+		const U16Vec3 indices = g_unifiedGeom.Load<U16Vec3>(mesh.m_firstIndex * sizeof(U16) + PrimitiveIndex() * sizeof(U16Vec3));
+		const UnpackedMeshVertex vert0 = loadVertex(mesh, indices[0], false);
+		const UnpackedMeshVertex vert1 = loadVertex(mesh, indices[1], false);
+		const UnpackedMeshVertex vert2 = loadVertex(mesh, indices[2], false);
+
+#	if USE_POSITION_FETCH_NORMALS
+		const Vec3 pos0 = gl_HitTriangleVertexPositions[0];
+		const Vec3 pos1 = gl_HitTriangleVertexPositions[1];
+		const Vec3 pos2 = gl_HitTriangleVertexPositions[2];
+
+		vertNormal = cross(pos1 - pos0, pos2 - pos1);
+#	else
+		const Vec3 pos0 = vert0.m_position;
+		const Vec3 pos1 = vert1.m_position;
+		const Vec3 pos2 = vert2.m_position;
+
+		vertNormal = vert0.m_normal * bary.x + vert1.m_normal * bary.y + vert2.m_normal * bary.z;
+#	endif
+
+		vertPos = pos0 * bary.x + pos1 * bary.y + pos2 * bary.z;
+
+#	if !TRIPLANAR_UV_MAPPING
+		uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
+#	endif
+	}
+	else
+	{
+#	if USE_POSITION_FETCH_NORMALS
+		const Vec3 pos0 = gl_HitTriangleVertexPositions[0];
+		const Vec3 pos1 = gl_HitTriangleVertexPositions[1];
+		const Vec3 pos2 = gl_HitTriangleVertexPositions[2];
+		vertNormal = cross(pos1 - pos0, pos2 - pos1);
+
+		vertPos = pos0 * bary.x + pos1 * bary.y + pos2 * bary.z;
+#	else
+		vertNormal = 0.0;
+		vertPos = 0.0;
+#	endif
+
+		uv = 0.5; // Center
+	}
+
+	// Normal
+	const Mat3x4 worldTransform = g_transforms[g_record.m_worldTransformsIndex];
+	payload.m_worldNormal = normalize(mul(worldTransform, Vec4(vertNormal, 0.0)));
+
+#	if TRIPLANAR_UV_MAPPING
+	if(needsUvs)
+	{
+		const Vec3 worldPos = mul(worldTransform, Vec4(vertPos, 1.0));
+
+		const Vec3 normal = (localConstants.m_bUseWorldInTriplanarMapping) ? payload.m_worldNormal : vertNormal;
+		const Vec3 pos = (localConstants.m_bUseWorldInTriplanarMapping) ? worldPos : vertPos;
+
+		const Vec3 p = frac(worldPos * 1000.0);
+		const F32 rand0to1 = (p.x + p.y + p.z) / 3.0;
+
+		triplanarMapping(pos, normal, localConstants.m_triplanarMappingScale, localConstants.m_triplanarMappingEdgeSharpness, rand0to1, uv);
+	}
+#	endif
+
+	// Roughness & metalness
+	F32 metallic = localConstants.m_metalnessScale;
+	if(localConstants.m_roughnessMetalnessTex)
+	{
+		const Vec3 comp = SAMPLE_TEX(localConstants.m_roughnessMetalnessTex);
+		metallic *= comp.b;
+	}
+
+	// Diffuse
+	Vec3 diffColor = localConstants.m_diffuseScale.xyz;
+	if(localConstants.m_diffuseTex)
+	{
+		diffColor *= SAMPLE_TEX(localConstants.m_diffuseTex).xyz;
+	}
+	payload.m_diffuseColor = diffColor * (1.0 - metallic);
+
+	// Emission
+	Vec3 emission = localConstants.m_emissionScale;
+	if(localConstants.m_emissiveTex)
+	{
+		emission *= SAMPLE_TEX(localConstants.m_emissiveTex).rgb;
+	}
+	payload.m_emission = emission;
+
+	// Ray T
+	const Bool backfacing = !ALPHA_TEST && HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
+	payload.m_rayT = RayTCurrent() * (backfacing ? -1.0 : 1.0);
+}
 #endif
