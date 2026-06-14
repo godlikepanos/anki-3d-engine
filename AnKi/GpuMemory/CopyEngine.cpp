@@ -275,13 +275,14 @@ void CopyEngine::flushInternal(FencePtr& fence)
 	}
 
 	Batch& crntBatch = m_batches.getBack();
-	ANKI_ASSERT(!crntBatch.m_fence);
 
 	if(crntBatch.m_allocatedSize == 0 || crntBatch.m_commands.getSize() == 0)
 	{
 		// Empty batch, don't bother
 		return;
 	}
+
+	ANKI_ASSERT(!crntBatch.m_fence);
 
 	ANKI_TRACE_INC_COUNTER(CopyEngineFlush, 1);
 

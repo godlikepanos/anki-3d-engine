@@ -13,6 +13,11 @@ namespace anki {
 class ScreenshotPass : public RendererObject
 {
 public:
+	ScreenshotPass()
+		: m_thread("AnKiScreenshot")
+	{
+	}
+
 	~ScreenshotPass();
 
 	Error init();
@@ -29,6 +34,13 @@ public:
 private:
 	static constexpr U32 kFramesInFlightCount = 4;
 
+	class Task
+	{
+	public:
+		U64 m_frame;
+		U64 m_pixels[1]; // Trailing array
+	};
+
 	RendererShaderProgram m_prog;
 
 	U32 m_framesToCaptureCount = 0;
@@ -39,7 +51,17 @@ private:
 	Array<U64, kFramesInFlightCount> m_rendererFrames = {};
 	U32 m_localFrame = 0;
 
-	Error saveTexture(U32 localFrame) const;
+	Thread m_thread;
+	ConditionVariable m_cvar;
+	Mutex m_mtx;
+	RendererDynamicArray<Task*> m_tasks;
+	Bool m_quit = false;
+
+	Error threadWork();
+
+	static Error saveTexture(U64 frame, void* pixels);
+
+	void newTask(U64 frame, void* pixels);
 };
 
 } // end namespace anki
