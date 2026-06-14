@@ -44,7 +44,7 @@ def thread_callback(tid):
 
         if is_shader:
             # Read all text
-            file = open(file_name, mode="r", newline="\n")
+            file = open(file_name, mode="r", newline="\n", encoding="utf-8")
             file_txt = file.read()
             file.close()
 
@@ -59,7 +59,7 @@ def thread_callback(tid):
 
             # Write the new file
             tmp_filefd, tmp_filename = tempfile.mkstemp(suffix=".txt")
-            with open(tmp_filename, "w", newline="\n") as f:
+            with open(tmp_filename, "w", newline="\n", encoding="utf-8") as f:
                 f.write(file_txt)
                 os.close(tmp_filefd)
 
@@ -79,7 +79,7 @@ def thread_callback(tid):
 
         if is_shader:
             # Read tmp file
-            file = open(tmp_filename, mode="r", newline="\n")
+            file = open(tmp_filename, mode="r", newline="\n", encoding="utf-8")
             file_txt = file.read()
             file.close()
 
@@ -94,7 +94,7 @@ def thread_callback(tid):
 
             # Write formatted file
             if new_file_hash != original_file_hash:
-                file = open(orig_filename, mode="w", newline="\n")
+                file = open(orig_filename, mode="w", newline="\n", encoding="utf-8")
                 file.write(file_txt)
                 file.close()
 

@@ -28,7 +28,7 @@ def parse_commandline():
 
 
 def parse_file(fname):
-    file = open(fname, mode="r")
+    file = open(fname, mode="r", encoding="utf-8")
     txt = file.read()
 
     my_includes = re.findall(r"\s*#\s*include\ <(.*)>", txt)
