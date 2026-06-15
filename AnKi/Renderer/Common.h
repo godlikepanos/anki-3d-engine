@@ -84,6 +84,8 @@ public:
 
 	BufferView m_globalRenderingConstantsBuffer;
 
+	Second m_dt = 0.0;
+
 	RenderingContext(StackMemoryPool* pool)
 		: m_renderGraphDescr(pool)
 	{

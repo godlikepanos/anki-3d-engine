@@ -97,12 +97,6 @@ public:
 		return *m_resource;
 	}
 
-	ANKI_INTERNAL F32 getDt() const
-	{
-		ANKI_ASSERT(isValid());
-		return m_dt;
-	}
-
 private:
 	class ParticleEmitterQuadGeometry;
 
@@ -120,8 +114,6 @@ private:
 	} m_gpuScene;
 
 	Array<Vec3, 2> m_boundingVolume = {Vec3(-0.5f), Vec3(0.5f)};
-
-	F32 m_dt = 0.0f;
 
 	ParticleGeometryType m_geomType = ParticleGeometryType::kQuad;
 	Bool m_anyDirty = true;

@@ -198,8 +198,8 @@ public:
 		if constexpr(kSseEnabled)
 		{
 			// Taken from: http://momchil-velikov.blogspot.nl/2013/10/fast-sse-quternion-multiplication.html
-			const __m128 abcd = m_vec.getSimd();
-			const __m128 xyzw = b.m_vec.getSimd();
+			const __m128 abcd = m_vec.m_simd;
+			const __m128 xyzw = b.m_vec.m_simd;
 
 			const __m128 t0 = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(3, 3, 3, 3));
 			const __m128 t1 = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(2, 3, 0, 1));
@@ -327,7 +327,7 @@ public:
 	{
 		const T len = m_vec.length();
 		ANKI_ASSERT(!isZero<T>(len));
-		return conjugated() / len;
+		return TQuat(conjugated().m_vec / len);
 	}
 
 	[[nodiscard]] TQuat conjugated() const

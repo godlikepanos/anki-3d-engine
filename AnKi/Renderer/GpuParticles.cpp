@@ -139,7 +139,7 @@ void GpuParticles::populateRenderGraph()
 			consts.m_invertedViewProjMat = getRenderingContext().m_matrices.m_invertedViewProjection;
 			consts.m_unprojectionParams = getRenderingContext().m_matrices.m_unprojectionParameters;
 			consts.m_randomNumber = getRandom() % kMaxU32;
-			consts.m_dt = emitter.getDt();
+			consts.m_dt = F32(getRenderingContext().m_dt);
 			consts.m_gpuSceneParticleEmitterIndex = emitter.getGpuSceneParticleEmitter2Index();
 			*allocateAndBindConstants<ParticleSimulationConstants>(cmdb, ANKI_PARTICLE_SIM_CONSTANTS, 0) = consts;
 

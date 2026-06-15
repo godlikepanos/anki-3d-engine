@@ -215,12 +215,6 @@ Error App::init()
 
 	ANKI_CORE_LOGI("Number of job threads: %u", U32(g_cvarCoreJobThreadCount));
 
-	if(g_cvarCoreBenchmarkMode && g_cvarGrVsync)
-	{
-		ANKI_CORE_LOGW("Vsync is enabled and benchmark mode as well. Will turn vsync off");
-		g_cvarGrVsync = false;
-	}
-
 	GlobalFrameIndex::allocateSingleton();
 
 	//
@@ -442,137 +436,75 @@ Error App::mainLoop()
 	Bool quit = false;
 
 	Second prevUpdateTime = HighRezTimer::getCurrentTime();
-	Second crntTime = prevUpdateTime;
-
-	// Benchmark mode stuff:
-	const Bool benchmarkMode = g_cvarCoreBenchmarkMode;
-	Second aggregatedCpuTime = 0.0;
-	Second aggregatedGpuTime = 0.0;
-	constexpr U32 kBenchmarkFramesToGatherBeforeFlush = 60;
-	U32 benchmarkFramesGathered = 0;
-	File benchmarkCsvFile;
-	CoreString benchmarkCsvFileFilename;
-	if(benchmarkMode)
-	{
-		benchmarkCsvFileFilename.sprintf("%s/Benchmark.csv", m_settingsDir.cstr());
-		ANKI_CHECK(benchmarkCsvFile.open(benchmarkCsvFileFilename, FileOpenFlag::kWrite));
-		ANKI_CHECK(benchmarkCsvFile.writeText("CPU, GPU\n"));
-	}
 
 	while(!quit)
 	{
+		ANKI_TRACE_SCOPED_EVENT(CpuFrameTime);
+		const Second crntTime = HighRezTimer::getCurrentTime();
+
+		ANKI_CHECK(Input::getSingleton().handleEvents());
+		if(Input::getSingleton().getEvent(InputEvent::kWindowClosed))
 		{
-			ANKI_TRACE_SCOPED_EVENT(CpuFrameTime);
-			const Second startTime = HighRezTimer::getCurrentTime();
-
-			prevUpdateTime = crntTime;
-			crntTime = (!benchmarkMode) ? HighRezTimer::getCurrentTime() : (prevUpdateTime + 1.0_sec / 60.0_sec);
-
-			ANKI_CHECK(Input::getSingleton().handleEvents());
-			if(Input::getSingleton().getEvent(InputEvent::kWindowClosed))
-			{
-				quit = true;
-			}
-
-			GrManager::getSingleton().beginFrame();
-
-			GpuSceneMicroPatcher::getSingleton().beginPatching();
-			Bool userQuit = false;
-			ANKI_CHECK(userMainLoop(userQuit, crntTime - prevUpdateTime));
-			quit = quit || userQuit;
-
-			SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
-			GpuSceneMicroPatcher::getSingleton().endPatching();
-
-			FencePtr renderFence;
-			ANKI_CHECK(Renderer::getSingleton().render(renderFence));
-
-			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
-			Second grTime = 0.0;
-			if(benchmarkMode || g_cvarCoreDisplayStats > 0) [[unlikely]]
-			{
-				grTime = HighRezTimer::getCurrentTime();
-			}
-
-			GrManager::getSingleton().endFrame();
-
-			if(benchmarkMode || g_cvarCoreDisplayStats > 0) [[unlikely]]
-			{
-				grTime = HighRezTimer::getCurrentTime() - grTime;
-			}
-
-			RebarTransientMemoryPool::getSingleton().endFrame(renderFence.get());
-			UnifiedGeometryBuffer::getSingleton().endFrame(renderFence.get());
-			GpuSceneBuffer::getSingleton().endFrame(renderFence.get());
-			GpuVisibleTransientMemoryPool::getSingleton().endFrame();
-			GpuReadbackMemoryPool::getSingleton().endFrame(renderFence.get());
-			TextureMemoryPool::getSingleton().endFrame(renderFence.get());
-
-			// Sleep
-			const Second endTime = HighRezTimer::getCurrentTime();
-			const Second frameTime = endTime - startTime;
-			g_svarCpuTotalTime.set((frameTime - grTime) * 1000.0);
-			if(!benchmarkMode) [[likely]]
-			{
-				const Second timerTick = 1.0_sec / Second(g_cvarCoreTargetFps);
-				if(frameTime < timerTick)
-				{
-					ANKI_TRACE_SCOPED_EVENT(TimerTickSleep);
-					HighRezTimer::sleep(timerTick - frameTime);
-				}
-			}
-			// Benchmark stats
-			else
-			{
-				aggregatedCpuTime += frameTime - grTime;
-				aggregatedGpuTime += 0; // TODO
-				++benchmarkFramesGathered;
-				if(benchmarkFramesGathered >= kBenchmarkFramesToGatherBeforeFlush)
-				{
-					aggregatedCpuTime = aggregatedCpuTime / Second(kBenchmarkFramesToGatherBeforeFlush) * 1000.0;
-					aggregatedGpuTime = aggregatedGpuTime / Second(kBenchmarkFramesToGatherBeforeFlush) * 1000.0;
-					ANKI_CHECK(benchmarkCsvFile.writeTextf("%f,%f\n", aggregatedCpuTime, aggregatedGpuTime));
-
-					benchmarkFramesGathered = 0;
-					aggregatedCpuTime = 0.0;
-					aggregatedGpuTime = 0.0;
-				}
-			}
-
-			// Stats
-#if ANKI_PLATFORM_MOBILE
-			if(MaliHwCounters::isAllocated())
-			{
-				MaliHwCountersOut out;
-				MaliHwCounters::getSingleton().sample(out);
-				g_svarMaliGpuActive.set(out.m_gpuActive);
-				g_svarMaliGpuReadBandwidth.set(out.m_readBandwidth);
-				g_svarMaliGpuWriteBandwidth.set(out.m_writeBandwidth);
-			}
-#endif
-
-			StatsSet::getSingleton().endFrame();
-
-			++GlobalFrameIndex::getSingleton().m_value;
-
-			if(benchmarkMode) [[unlikely]]
-			{
-				if(GlobalFrameIndex::getSingleton().m_value >= g_cvarCoreBenchmarkModeFrameCount)
-				{
-					quit = true;
-				}
-			}
+			quit = true;
 		}
 
-#if ANKI_TRACING_ENABLED
-		static U64 frame = 1;
-		CoreTracer::getSingleton().flushFrame(frame++);
-#endif
-	}
+		GrManager::getSingleton().beginFrame();
 
-	if(benchmarkMode) [[unlikely]]
-	{
-		ANKI_CORE_LOGI("Benchmark file saved in: %s", benchmarkCsvFileFilename.cstr());
+		GpuSceneMicroPatcher::getSingleton().beginPatching();
+		Bool userQuit = false;
+		ANKI_CHECK(userMainLoop(userQuit, crntTime - prevUpdateTime));
+		quit = quit || userQuit;
+
+		SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
+		GpuSceneMicroPatcher::getSingleton().endPatching();
+
+		FencePtr renderFence;
+		ANKI_CHECK(Renderer::getSingleton().render(renderFence, prevUpdateTime, crntTime));
+
+		// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
+		Second grTime = (g_cvarCoreDisplayStats > 0) ? HighRezTimer::getCurrentTime() : 0.0;
+		GrManager::getSingleton().endFrame();
+		grTime = (g_cvarCoreDisplayStats > 0) ? HighRezTimer::getCurrentTime() - grTime : 0.0;
+
+		RebarTransientMemoryPool::getSingleton().endFrame(renderFence.get());
+		UnifiedGeometryBuffer::getSingleton().endFrame(renderFence.get());
+		GpuSceneBuffer::getSingleton().endFrame(renderFence.get());
+		GpuVisibleTransientMemoryPool::getSingleton().endFrame();
+		GpuReadbackMemoryPool::getSingleton().endFrame(renderFence.get());
+		TextureMemoryPool::getSingleton().endFrame(renderFence.get());
+
+		// Sleep
+		const Second endTime = HighRezTimer::getCurrentTime();
+		const Second frameTime = endTime - crntTime;
+		g_svarCpuTotalTime.set((frameTime - grTime) * 1000.0);
+
+		const Second timerTick = 1.0_sec / Second(g_cvarCoreTargetFps);
+		if(frameTime < timerTick)
+		{
+			ANKI_TRACE_SCOPED_EVENT(TimerTickSleep);
+			HighRezTimer::sleep(timerTick - frameTime);
+		}
+
+		// Stats
+#if ANKI_PLATFORM_MOBILE
+		if(MaliHwCounters::isAllocated())
+		{
+			MaliHwCountersOut out;
+			MaliHwCounters::getSingleton().sample(out);
+			g_svarMaliGpuActive.set(out.m_gpuActive);
+			g_svarMaliGpuReadBandwidth.set(out.m_readBandwidth);
+			g_svarMaliGpuWriteBandwidth.set(out.m_writeBandwidth);
+		}
+#endif
+
+		StatsSet::getSingleton().endFrame();
+
+#if ANKI_TRACING_ENABLED
+		CoreTracer::getSingleton().flushFrame(GlobalFrameIndex::getSingleton().m_value);
+#endif
+
+		++GlobalFrameIndex::getSingleton().m_value;
+		prevUpdateTime = crntTime;
 	}
 
 	return Error::kNone;

@@ -628,43 +628,55 @@ void EditorUi::cVarsWindow()
 					{
 						NumericCVar<F32>& bcvar = static_cast<NumericCVar<F32>&>(cvar);
 						F32 val = bcvar;
-						ImGui::InputFloat("", &val);
-						bcvar = val;
+						if(ImGui::InputFloat("", &val, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
+						{
+							bcvar = val;
+						}
 					}
 					else if(cvar.getValueType() == CVarValueType::kNumericF64)
 					{
 						NumericCVar<F64>& bcvar = static_cast<NumericCVar<F64>&>(cvar);
 						F64 val = bcvar;
-						ImGui::InputDouble("", &val);
-						bcvar = val;
+						if(ImGui::InputDouble("", &val, 0.0f, 0.0f, "%.6f", ImGuiInputTextFlags_EnterReturnsTrue))
+						{
+							bcvar = val;
+						}
 					}
 					else if(cvar.getValueType() == CVarValueType::kNumericU8)
 					{
 						NumericCVar<U8>& bcvar = static_cast<NumericCVar<U8>&>(cvar);
 						I32 val = bcvar;
-						ImGui::InputInt("", &val);
-						bcvar = U8(val);
+						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						{
+							bcvar = U8(val);
+						}
 					}
 					else if(cvar.getValueType() == CVarValueType::kNumericU16)
 					{
 						NumericCVar<U16>& bcvar = static_cast<NumericCVar<U16>&>(cvar);
 						I32 val = bcvar;
-						ImGui::InputInt("", &val);
-						bcvar = U8(val);
+						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						{
+							bcvar = U16(val);
+						}
 					}
 					else if(cvar.getValueType() == CVarValueType::kNumericU32)
 					{
 						NumericCVar<U32>& bcvar = static_cast<NumericCVar<U32>&>(cvar);
 						I32 val = bcvar;
-						ImGui::InputInt("", &val);
-						bcvar = val;
+						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						{
+							bcvar = val;
+						}
 					}
 					else if(cvar.getValueType() == CVarValueType::kNumericPtrSize)
 					{
 						NumericCVar<PtrSize>& bcvar = static_cast<NumericCVar<PtrSize>&>(cvar);
 						I32 val = I32(bcvar);
-						ImGui::InputInt("", &val);
-						bcvar = val;
+						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						{
+							bcvar = val;
+						}
 					}
 					else if(cvar.getValueType() == CVarValueType::kString)
 					{
@@ -672,8 +684,11 @@ void EditorUi::cVarsWindow()
 						CString value = bcvar;
 						Char str[256];
 						std::strncpy(str, value.cstr(), sizeof(str));
-						ImGui::InputText("", str, sizeof(str));
-						bcvar = str;
+						str[sizeof(str) - 1] = '\0';
+						if(ImGui::InputText("", str, sizeof(str), ImGuiInputTextFlags_EnterReturnsTrue))
+						{
+							bcvar = str;
+						}
 					}
 					else
 					{

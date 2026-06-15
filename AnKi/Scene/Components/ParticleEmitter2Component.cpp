@@ -217,7 +217,6 @@ Bool ParticleEmitter2Component::isValid() const
 void ParticleEmitter2Component::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	m_gpuSceneReallocationsThisFrame = false;
-	m_dt = F32(info.m_dt);
 
 	if(!isValid()) [[unlikely]]
 	{

@@ -844,7 +844,7 @@ void Renderer::updatePipelineStats()
 }
 #endif
 
-Error Renderer::render(FencePtr& fence)
+Error Renderer::render(FencePtr& fence, Second prevTime, Second crntTime)
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
@@ -861,6 +861,7 @@ Error Renderer::render(FencePtr& fence)
 		m_runCtx = {};
 	});
 	RenderingContext& ctx = *m_runCtx.m_currentCtx;
+	ctx.m_dt = crntTime - prevTime;
 	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
 
 #if ANKI_STATS_ENABLED
