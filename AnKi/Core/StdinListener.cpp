@@ -6,6 +6,7 @@
 #include <AnKi/Core/StdinListener.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/Thread.h>
+#include <cstdio>
 
 namespace anki {
 
@@ -27,13 +28,15 @@ Error StdinListener::workingFunc(ThreadCallbackInfo& info)
 
 	while(true)
 	{
-		const I m = read(0, &buff[0], sizeof(buff));
-		if(m > 0)
+		if(fgets(&buff[0], sizeof(buff), stdin) != nullptr)
 		{
-			buff[m] = '\0';
-
 			LockGuard lock(self.m_mtx);
 			self.m_q.pushBack(buff.getBegin());
+		}
+		else
+		{
+			// EOF or error on stdin. Nothing left to read, bail out
+			break;
 		}
 	}
 
