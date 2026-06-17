@@ -37,7 +37,7 @@ ResourceManager::~ResourceManager()
 	ResourceFilesystem::freeSingleton();
 
 #define ANKI_INSTANTIATE_RESOURCE(className) \
-	static_cast<TypeData<className>&>(m_allTypes).m_entries.destroy(); \
+	static_cast<TypeData<className>&>(m_allTypes).m_resources.destroy(); \
 	static_cast<TypeData<className>&>(m_allTypes).m_map.destroy();
 #include <AnKi/Resource/Resources.def.h>
 
@@ -68,136 +68,151 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 }
 
 template<typename T>
-Error ResourceManager::loadResource(CString filename, ResourcePtr<T>& out, Bool async)
+Error ResourceManager::loadResource(CString filename, IntrusiveNoDelPtr<T>& out, Bool async)
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
 	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
 
-	// Check if registered
-	using EntryType = typename TypeData<T>::Entry;
-	EntryType* entry;
+	// Try to find the resource
+	using Rsrc = typename TypeData<T>::Resource;
+	Rsrc* rsrc = nullptr;
+	U32 resourceArrayIdx = kMaxU32;
 	{
 		RLockGuard lock(type.m_mtx);
+
 		auto it = type.m_map.find(filename);
-		entry = (it != type.m_map.getEnd()) ? &type.m_entries[*it] : nullptr;
-	}
 
-	if(!entry)
-	{
-		// Resource entry doesn't exist, create one
-
-		WLockGuard lock(type.m_mtx);
-
-		auto it = type.m_map.find(filename); // Search again
 		if(it != type.m_map.getEnd())
 		{
-			entry = &type.m_entries[*it];
-		}
-		else
-		{
-			auto arrit = type.m_entries.emplace();
-			type.m_map.emplace(filename, arrit.getArrayIndex());
-			entry = &(*arrit);
+			rsrc = &type.m_resources[*it];
+			resourceArrayIdx = *it;
 		}
 	}
 
-	ANKI_ASSERT(entry);
-
-	// Try to load the resource
-	Error err = Error::kNone;
-	T* rsrc = nullptr;
+	// Resource not found, create it
+	if(!rsrc)
 	{
-		LockGuard lock(entry->m_mtx);
+		WLockGuard lock(type.m_mtx);
 
-		if(entry->m_resources.getSize() == 0
-#if ANKI_WITH_EDITOR
-		   || entry->m_resources.getBack()->isObsolete()
-#endif
-		)
+		// Check again...
+		auto it = type.m_map.find(filename);
+
+		// ... and create
+		if(it != type.m_map.getEnd())
 		{
-			// Resource hasn't been loaded or it needs update, load it
-
-			rsrc = newInstance<T>(ResourceMemoryPool::getSingleton(), filename, m_uuid.fetchAdd(1));
-
-			// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
-			rsrc->retain();
-
-			err = rsrc->load(filename, async);
-
-			// Decrement because of the increment happened a few lines above
-			rsrc->release();
-
-			if(err)
-			{
-				ANKI_RESOURCE_LOGE("Failed to load resource: %s", filename.cstr());
-				deleteInstance(ResourceMemoryPool::getSingleton(), rsrc);
-				rsrc = nullptr;
-			}
-			else
-			{
-				entry->m_resources.emplaceBack(rsrc);
-
-#if ANKI_WITH_EDITOR
-				if(m_trackFileUpdateTimes)
-				{
-					entry->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
-				}
-#endif
-			}
+			rsrc = &type.m_resources[*it];
+			resourceArrayIdx = *it;
 		}
 		else
 		{
-			rsrc = entry->m_resources.getBack();
-		}
+			auto it = type.m_resources.emplace();
+			resourceArrayIdx = it.getArrayIndex();
+			rsrc = &(*it);
 
-		if(!err)
-		{
-			ANKI_ASSERT(rsrc);
-			out.reset(rsrc);
+			type.m_map.emplace(filename, resourceArrayIdx);
 		}
+	}
+
+	ANKI_ASSERT(rsrc && resourceArrayIdx < kMaxU32);
+
+	LockGuard lock(rsrc->m_mtx);
+
+	T* ver = (rsrc->m_versions.getSize()) ? rsrc->m_versions.getBack() : nullptr;
+
+	if(ver
+#if ANKI_WITH_EDITOR
+	   && !ver->isObsolete()
+#endif
+	)
+	{
+		// We are done
+		out.reset(ver);
+		return Error::kNone;
+	}
+
+	// Versioned resource hasn't been loaded or it needs update, load it
+
+	ver = newInstance<T>(ResourceMemoryPool::getSingleton(), filename, m_uuid.fetchAdd(1));
+	ver->m_versionResourceIdx = resourceArrayIdx;
+
+	// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
+	ver->retain();
+
+	const Error err = ver->load(filename, async);
+
+	if(err)
+	{
+		ANKI_RESOURCE_LOGE("Failed to load resource: %s", filename.cstr());
+		deleteInstance(ResourceMemoryPool::getSingleton(), ver);
+	}
+	else
+	{
+		rsrc->m_versions.emplaceBack(ver);
+
+#if ANKI_WITH_EDITOR
+		if(m_trackFileUpdateTimes)
+		{
+			rsrc->m_fileUpdateTime = ResourceFilesystem::getSingleton().getFileUpdateTime(filename);
+		}
+#endif
+
+		out.reset(ver);
+
+		// Decrement because of the increment happened a few lines above.
+		ver->release();
 	}
 
 	return err;
 }
 
 template<typename T>
-void ResourceManager::freeResource(T* ptr)
+void ResourceManager::freeResource(U32 uuid, U32 versionedResourceIdx)
 {
-	ANKI_ASSERT(ptr);
-	ANKI_ASSERT(ptr->m_refcount.load() == 0);
-
 	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
 
-	typename TypeData<T>::Entry* entry = nullptr;
+	using Rsrc = typename TypeData<T>::Resource;
+
+	Rsrc* rsrc;
 	{
 		RLockGuard lock(type.m_mtx);
-		auto it = type.m_map.find(ptr->m_fname);
-		ANKI_ASSERT(it != type.m_map.getEnd());
-		entry = &type.m_entries[*it];
+		rsrc = &type.m_resources[versionedResourceIdx];
 	}
 
+	T* toDelete = nullptr;
 	{
-		LockGuard lock(entry->m_mtx);
+		LockGuard lock(rsrc->m_mtx);
 
-		auto it = entry->m_resources.getBegin();
-		for(; it != entry->m_resources.getEnd(); ++it)
+		auto it = rsrc->m_versions.getBegin();
+		for(; it != rsrc->m_versions.getEnd(); ++it)
 		{
-			if(*it == ptr)
+			if((*it)->m_uuid == uuid)
 			{
 				break;
 			}
 		}
-		ANKI_ASSERT(it != entry->m_resources.getEnd());
-		deleteInstance(ResourceMemoryPool::getSingleton(), *it);
-		entry->m_resources.erase(it);
+
+		// Check the refcount because there can be a race condition where:
+		// - ResourceObject::release() is called, refcount reaches 0
+		// - This function is called but didn't got the lock
+		// - loadResource is called and the resource is found. Refcount goes to 1
+		// - ResourceObject::release() is called, refcount reaches 0, objects delets
+		// - Then this function finaly gets the lock, the object is already deleted... boom
+		if(it != rsrc->m_versions.getEnd() && (*it)->m_refcount.load() == 0)
+		{
+			toDelete = *it;
+			rsrc->m_versions.erase(it);
+		}
 	}
+
+	// Now you can delete outside any locks
+	deleteInstance(ResourceMemoryPool::getSingleton(), toDelete);
 }
 
 // Instansiate
 #define ANKI_INSTANTIATE_RESOURCE(className) \
-	template Error ResourceManager::loadResource<className>(CString filename, ResourcePtr<className> & out, Bool async); \
-	template void ResourceManager::freeResource<className>(className * ptr);
+	template Error ResourceManager::loadResource<className>(CString filename, IntrusiveNoDelPtr<className> & out, Bool async); \
+	template void ResourceManager::freeResource<className>(U32, U32);
 #include <AnKi/Resource/Resources.def.h>
 
 #if ANKI_WITH_EDITOR
@@ -208,22 +223,22 @@ void ResourceManager::refreshFileUpdateTimesInternal()
 
 	WLockGuard lock(type.m_mtx);
 
-	for(auto& entry : type.m_entries)
+	for(auto& entry : type.m_resources)
 	{
 		LockGuard lock(entry.m_mtx);
 
-		if(entry.m_resources.getSize() == 0)
+		if(entry.m_versions.getSize() == 0)
 		{
 			continue;
 		}
 
-		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_resources[0]->getFilename());
+		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_versions[0]->getFilename());
 		if(newTime != entry.m_fileUpdateTime)
 		{
-			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: %s", entry.m_resources[0]->getFilename().cstr());
+			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: %s", entry.m_versions[0]->getFilename().cstr());
 			entry.m_fileUpdateTime = newTime;
 
-			for(T* rsrc : entry.m_resources)
+			for(T* rsrc : entry.m_versions)
 			{
 				rsrc->m_isObsolete.store(1);
 			}

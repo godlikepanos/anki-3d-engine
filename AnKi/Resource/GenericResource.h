@@ -10,15 +10,12 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
-/// A generic resource. It just loads a file to memory.
+// A generic resource. It just loads a file to memory.
 class GenericResource : public ResourceObject
 {
 public:
 	GenericResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kGenericResource)
 	{
 	}
 
@@ -34,6 +31,5 @@ public:
 private:
 	ResourceDynamicArray<U8> m_data;
 };
-/// @}
 
 } // end namespace anki

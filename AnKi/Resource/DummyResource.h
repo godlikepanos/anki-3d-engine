@@ -10,15 +10,12 @@
 
 namespace anki {
 
-/// @addtogroup resource_private
-/// @{
-
-/// A dummy resource for the unit tests of the ResourceManager
+// A dummy resource for the unit tests of the ResourceManager
 class DummyResource : public ResourceObject
 {
 public:
 	DummyResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kDummyResource)
 	{
 	}
 
@@ -52,6 +49,5 @@ public:
 private:
 	void* m_memory = nullptr;
 };
-/// @}
 
 } // end namespace anki

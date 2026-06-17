@@ -107,7 +107,11 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) deleteInstance(RendererMemoryPool::getSingleton(), m_##name2);
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
+	if(m_##name2 != numberToPtr<void*>(kMaxPtrSize)) \
+	{ \
+		deleteInstance(RendererMemoryPool::getSingleton(), m_##name2); \
+	}
 #include <AnKi/Renderer/RendererObject.def.h>
 }
 

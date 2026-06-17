@@ -12,20 +12,29 @@
 
 namespace anki {
 
+enum class ResourceType : U8
+{
+#define ANKI_INSTANTIATE_RESOURCE(type) k##type,
+#include <AnKi/Resource/Resources.def.h>
+
+	kCount,
+	kFirst = 0
+};
+
 // The base of all resource objects.
 class ResourceObject
 {
 	friend class ResourceManager;
-	template<typename>
-	friend class ResourcePtrDeleter;
 
 public:
-	ResourceObject(CString fname, U32 uuid)
-		: m_uuid(uuid)
-		, m_fname(fname)
+	ResourceObject(CString fname, U32 uuid, ResourceType type)
+		: m_fname(fname)
+		, m_uuid(uuid)
+		, m_type(type)
 	{
 		ANKI_ASSERT(uuid > 0);
 		ANKI_ASSERT(!fname.isEmpty());
+		ANKI_ASSERT(m_type < ResourceType::kCount);
 	}
 
 	virtual ~ResourceObject() = default;
@@ -35,10 +44,7 @@ public:
 		m_refcount.fetchAdd(1);
 	}
 
-	I32 release() const
-	{
-		return m_refcount.fetchSub(1);
-	}
+	void release();
 
 	CString getFilename() const
 	{
@@ -78,8 +84,10 @@ private:
 #if ANKI_WITH_EDITOR
 	mutable Atomic<U32> m_isObsolete = {0}; // If the file of the resource changed in the filesystem then this flag is 1
 #endif
-	U32 m_uuid = 0;
 	ResourceString m_fname; // Unique resource name
+	U32 m_uuid;
+	U32 m_versionResourceIdx = kMaxU32; // Index TypeData::m_resources
+	ResourceType m_type;
 };
 
 } // end namespace anki

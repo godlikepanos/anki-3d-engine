@@ -96,7 +96,7 @@ class ParticleEmitterResource2 : public ResourceObject
 {
 public:
 	ParticleEmitterResource2(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kParticleEmitterResource2)
 	{
 	}
 

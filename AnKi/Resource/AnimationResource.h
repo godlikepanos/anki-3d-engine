@@ -15,10 +15,7 @@ namespace anki {
 // Forward
 class XmlElement;
 
-/// @addtogroup resource
-/// @{
-
-/// A keyframe
+// A keyframe
 template<typename T>
 class AnimationKeyframe
 {
@@ -40,7 +37,7 @@ private:
 	T m_value;
 };
 
-/// Animation channel
+// Animation channel
 class AnimationChannel
 {
 public:
@@ -54,12 +51,12 @@ public:
 	ResourceDynamicArray<AnimationKeyframe<F32>> m_cameraFovs;
 };
 
-/// Animation consists of keyframe data.
+// Animation consists of keyframe data.
 class AnimationResource : public ResourceObject
 {
 public:
 	AnimationResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kAnimationResource)
 	{
 	}
 
@@ -67,25 +64,25 @@ public:
 
 	Error load(const ResourceFilename& filename, Bool async);
 
-	/// Get a vector of all animation channels
+	// Get a vector of all animation channels
 	ConstWeakArray<AnimationChannel> getChannels() const
 	{
 		return m_channels;
 	}
 
-	/// Get the duration of the animation in seconds
+	// Get the duration of the animation in seconds
 	Second getDuration() const
 	{
 		return m_duration;
 	}
 
-	/// Get the time (in seconds) the animation should start
+	// Get the time (in seconds) the animation should start
 	Second getStartingTime() const
 	{
 		return m_startTime;
 	}
 
-	/// Get the interpolated data
+	// Get the interpolated data
 	void interpolate(U32 channelIndex, Second time, Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
@@ -93,6 +90,5 @@ private:
 	Second m_duration;
 	Second m_startTime;
 };
-/// @}
 
 } // end namespace anki

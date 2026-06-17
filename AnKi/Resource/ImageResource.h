@@ -19,7 +19,7 @@ class ImageResource : public ResourceObject
 {
 public:
 	ImageResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kImageResource)
 	{
 	}
 

@@ -11,37 +11,32 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
-/// Image atlas resource class.
-///
-/// XML format:
-/// @code
-/// <imageAtlas>
-/// 	<image>path/to/tex.ankitex</image>
-/// 	<subImageMargin>N</subImageMargin>
-/// 	<subImages>
-/// 		<subImage>
-/// 			<name>name</name>
-/// 			<uv>0.1 0.2 0.5 0.6</uv>
-/// 		</subImage>
-/// 		<subImage>...</subImage>
-/// 		...
-/// 	</subImages>
-/// </imageAtlas>
-/// @endcode
+// Image atlas resource class.
+//
+// XML format:
+// <imageAtlas>
+// 	<image>path/to/tex.ankitex</image>
+// 	<subImageMargin>N</subImageMargin>
+// 	<subImages>
+// 		<subImage>
+// 			<name>name</name>
+// 			<uv>0.1 0.2 0.5 0.6</uv>
+// 		</subImage>
+// 		<subImage>...</subImage>
+// 		...
+// 	</subImages>
+// </imageAtlas>
 class ImageAtlasResource : public ResourceObject
 {
 public:
 	ImageAtlasResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kImageAtlasResource)
 	{
 	}
 
 	~ImageAtlasResource() = default;
 
-	/// Load the atlas.
+	// Load the atlas.
 	Error load(const ResourceFilename& filename, Bool async);
 
 	const Texture& getTexture() const
@@ -64,14 +59,14 @@ public:
 		return m_margin;
 	}
 
-	/// Get the UV coordinates of a sub image.
+	// Get the UV coordinates of a sub image.
 	Error getSubImageInfo(CString name, F32 uv[4]) const;
 
 private:
 	class SubTex
 	{
 	public:
-		CString m_name; ///< Points to ImageAtlas::m_subTexNames.
+		CString m_name; // Points to ImageAtlas::m_subTexNames.
 		Array<F32, 4> m_uv;
 	};
 
@@ -81,6 +76,5 @@ private:
 	Array<U32, 2> m_size;
 	U32 m_margin = 0;
 };
-/// @}
 
 } // end namespace anki

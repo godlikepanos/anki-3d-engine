@@ -56,7 +56,7 @@ public:
 
 	// For resources
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, ResourcePtr<T>& rsrc)
+	Error serialize(String varName, U32 varVersion, Bool varDeprecated, IntrusiveNoDelPtr<T>& rsrc)
 	{
 		SceneString filename;
 

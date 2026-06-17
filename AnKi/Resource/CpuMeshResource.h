@@ -12,22 +12,19 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
-/// CPU Mesh Resource. It contains the geometry packed in CPU buffers.
+// CPU Mesh Resource. It contains the geometry packed in CPU buffers.
 class CpuMeshResource : public ResourceObject
 {
 public:
-	/// Default constructor
+	// Default constructor
 	CpuMeshResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kCpuMeshResource)
 	{
 	}
 
 	~CpuMeshResource() = default;
 
-	/// Load from a mesh file
+	// Load from a mesh file
 	Error load(const ResourceFilename& filename, Bool async);
 
 	const PhysicsCollisionShapePtr& getOrCreateCollisionShape(Bool isStatic, U32 lod = kMaxLodCount - 1) const;
@@ -42,6 +39,5 @@ private:
 	Bool m_isConvex = false;
 	U8 m_maxLod = 0;
 };
-/// @}
 
 } // namespace anki

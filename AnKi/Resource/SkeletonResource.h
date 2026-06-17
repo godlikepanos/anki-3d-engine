@@ -11,15 +11,12 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
 constexpr U32 kMaxChildrenPerBone = 8;
 
-/// Skeleton bone
+// Skeleton bone
 class Bone
 {
-	friend class SkeletonResource; ///< For loading
+	friend class SkeletonResource; // For loading
 
 public:
 	Bone() = default;
@@ -57,9 +54,9 @@ public:
 	}
 
 private:
-	ResourceString m_name; ///< The name of the bone
+	ResourceString m_name; // The name of the bone
 
-	Mat3x4 m_transform; ///< See the class notes.
+	Mat3x4 m_transform; // See the class notes.
 	Mat3x4 m_vertTrf;
 
 	U32 m_idx;
@@ -69,34 +66,32 @@ private:
 	U8 m_childrenCount = 0;
 };
 
-/// It contains the bones with their position and hierarchy
-///
-/// XML file format:
-///
-/// @code
-/// <skeleton>
-/// 	<bones>
-/// 		<bone>
-/// 			<name>X</name>
-/// 			<transform>12 floats</transform>
-/// 			<boneTransform>12 floats</boneTransform>
-/// 			[<parent>bone_name</parent>]
-/// 		<bone>
-///         ...
-/// 	</bones>
-/// </skeleton>
-/// @endcode
+// It contains the bones with their position and hierarchy
+//
+// XML file format:
+//
+// <skeleton>
+// 	<bones>
+// 		<bone>
+// 			<name>X</name>
+// 			<transform>12 floats</transform>
+// 			<boneTransform>12 floats</boneTransform>
+// 			[<parent>bone_name</parent>]
+// 		<bone>
+//         ...
+// 	</bones>
+// </skeleton>
 class SkeletonResource : public ResourceObject
 {
 public:
 	SkeletonResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kSkeletonResource)
 	{
 	}
 
 	~SkeletonResource() = default;
 
-	/// Load file
+	// Load file
 	Error load(const ResourceFilename& filename, Bool async);
 
 	ConstWeakArray<Bone> getBones() const
@@ -127,6 +122,5 @@ private:
 	ResourceDynamicArray<Bone> m_bones;
 	U32 m_rootBoneIdx = kMaxU32;
 };
-/// @}
 
 } // end namespace anki

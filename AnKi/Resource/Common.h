@@ -18,9 +18,6 @@ template<typename Type>
 class ResourcePointer;
 class PhysicsWorld;
 
-/// @addtogroup resource
-/// @{
-
 #define ANKI_RESOURCE_LOGI(...) ANKI_LOG("RSRC", kNormal, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGE(...) ANKI_LOG("RSRC", kError, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGW(...) ANKI_LOG("RSRC", kWarning, __VA_ARGS__)
@@ -43,26 +40,13 @@ private:
 
 ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Resource, ResourceMemoryPool)
 
-/// Deleter for ResourcePtr.
-template<typename T>
-class ResourcePtrDeleter
-{
-public:
-	void operator()(T* ptr);
-};
-
-/// Smart pointer for resources.
-template<typename T>
-using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
-
 // NOTE: Add resources in 3 places
 #define ANKI_INSTANTIATE_RESOURCE(className) \
 	class className; \
-	using className##Ptr = ResourcePtr<className>;
+	using className##Ptr = IntrusiveNoDelPtr<className>;
 #include <AnKi/Resource/Resources.def.h>
 
-/// An alias that denotes a ResourceFilesystem path.
+// An alias that denotes a ResourceFilesystem path.
 using ResourceFilename = CString;
-/// @}
 
 } // end namespace anki

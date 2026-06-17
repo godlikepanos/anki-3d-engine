@@ -9,15 +9,12 @@
 
 namespace anki {
 
-/// @addtogroup resource
-/// @{
-
-/// Script resource.
+// Script resource.
 class ScriptResource : public ResourceObject
 {
 public:
 	ScriptResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kScriptResource)
 	{
 	}
 
@@ -33,6 +30,5 @@ public:
 private:
 	ResourceString m_source;
 };
-/// @}
 
 } // namespace anki

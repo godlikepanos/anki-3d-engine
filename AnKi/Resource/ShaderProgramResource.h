@@ -109,7 +109,7 @@ class ShaderProgramResource : public ResourceObject
 {
 public:
 	ShaderProgramResource(CString fname, U32 uuid)
-		: ResourceObject(fname, uuid)
+		: ResourceObject(fname, uuid, ResourceType::kShaderProgramResource)
 	{
 	}
 
