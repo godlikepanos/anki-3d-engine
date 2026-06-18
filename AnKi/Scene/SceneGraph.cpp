@@ -119,41 +119,51 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
-	// Setup the default scene
-	{
-		Scene* scene = newEmptyScene("_DefaultScene");
-		setActiveScene(scene);
-
-		// Init the default main camera
-		m_defaultMainCamNode = newSceneNode<SceneNode>("_MainCamera");
-		m_defaultMainCamNode->setSerialization(false);
-		CameraComponent* camc = m_defaultMainCamNode->newComponent<CameraComponent>();
-		camc->setPerspective(0.1f, 1000.0f, toRad(100.0f), toRad(100.0f));
-		m_mainCamNode = m_defaultMainCamNode;
-
-		RenderStateBucketContainer::allocateSingleton();
-
-		// Construct a few common nodes
-		if(ANKI_STATS_ENABLED)
-		{
-			newSceneNode<StatsUiNode>("_StatsUi");
-		}
-
-		newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
-
-#if ANKI_WITH_EDITOR
-		if(g_cvarCoreShowEditor)
-		{
-			EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
-			editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
-		}
-#endif
-
-		scene->m_immutable = true;
-		scene->m_canDelete = false;
-	}
+	createDefaultScene();
 
 	return Error::kNone;
+}
+
+void SceneGraph::createDefaultScene()
+{
+	Scene* scene = newEmptyScene("_DefaultScene");
+	setActiveScene(scene);
+
+	// Init the default main camera
+	m_defaultMainCamNode = newSceneNode<SceneNode>("_MainCamera");
+	m_defaultMainCamNode->setSerialization(false);
+	CameraComponent* camc = m_defaultMainCamNode->newComponent<CameraComponent>();
+	camc->setPerspective(0.1f, 1000.0f, toRad(100.0f), toRad(100.0f));
+	m_mainCamNode = m_defaultMainCamNode;
+
+	RenderStateBucketContainer::allocateSingleton();
+
+	// Construct a few common nodes
+	if(ANKI_STATS_ENABLED)
+	{
+		newSceneNode<StatsUiNode>("_StatsUi");
+	}
+
+	newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
+
+#if ANKI_WITH_EDITOR
+	if(g_cvarCoreShowEditor)
+	{
+		EditorUiNode* editorNode = newSceneNode<EditorUiNode>("_Editor");
+		editorNode->getFirstComponentOfType<UiComponent>().setEnabled(false);
+	}
+#endif
+
+	// Create a default renderable node. It's needed because the renderer is not designed with zero renderables
+	SceneNode* renderable = newSceneNode<SceneNode>("_Renderable");
+	renderable->setLocalScale(Vec3(0.0001f));
+	MeshComponent* meshc = renderable->newComponent<MeshComponent>();
+	meshc->setMeshComponentType(MeshComponentType::kPrimitive);
+	MaterialComponent* mtlc = renderable->newComponent<MaterialComponent>();
+	mtlc->setMaterialFilename("EngineAssets/Default.ankimtl");
+
+	scene->m_immutable = true;
+	scene->m_canDelete = false;
 }
 
 SceneNode& SceneGraph::findSceneNode(const CString& name)

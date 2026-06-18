@@ -463,6 +463,8 @@ private:
 	{
 		ANKI_ASSERT(!m_inUpdate && "Did a illegal function call from update()");
 	}
+
+	void createDefaultScene();
 };
 
 } // end namespace anki
