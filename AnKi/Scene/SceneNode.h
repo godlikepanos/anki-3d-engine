@@ -183,6 +183,7 @@ public:
 		return m_markedForDeletion;
 	}
 
+	// Mark this and the children nodes for deletion
 	void markForDeletion();
 
 	// Enable serialization for this node, its components and its children

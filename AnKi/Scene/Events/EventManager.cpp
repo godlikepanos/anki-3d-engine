@@ -90,22 +90,24 @@ void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 		}
 	}
 
-	// Delete events
-	DynamicArray<Event*, MemoryPoolPtrWrapper<StackMemoryPool>> eventsForDeletion(&SceneGraph::getSingleton().getFrameMemoryPool());
-	for(Event& event : m_events)
+	// Cleanup
+	auto it = m_events.getBegin();
+	while(it != m_events.getEnd())
 	{
-		if(event.isMarkedForDeletion() || assosiatedNodesMarkedForDeletion(event))
+		if(it->isMarkedForDeletion() || assosiatedNodesMarkedForDeletion(*it))
 		{
-			eventsForDeletion.emplaceBack(&event);
+			Event* e = &(*it);
+
+			++it; // Point to the next before deleting
+
+			m_events.erase(e);
+			deleteInstance(SceneMemoryPool::getSingleton(), e);
+		}
+		else
+		{
+			++it;
 		}
 	}
-
-	for(Event* e : eventsForDeletion)
-	{
-		m_events.erase(e);
-		deleteInstance(SceneMemoryPool::getSingleton(), e);
-	}
-	eventsForDeletion.destroy();
 }
 
 Bool EventManager::assosiatedNodesMarkedForDeletion(const Event& e)

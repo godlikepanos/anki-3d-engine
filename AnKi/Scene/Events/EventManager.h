@@ -11,18 +11,15 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// This manager creates the events ands keeps track of them
+// This manager creates the events ands keeps track of them
 class EventManager
 {
 public:
 	EventManager();
 	~EventManager();
 
-	/// Create a new event
-	/// @note It's thread-safe against itself. Can be called in Event::update.
+	// Create a new event
+	// It's thread-safe against itself. Can be called in Event::update.
 	template<typename T, typename... TArgs>
 	T* newEvent(TArgs&&... args)
 	{
@@ -32,7 +29,7 @@ public:
 		return event;
 	}
 
-	/// Update
+	// Update
 	ANKI_INTERNAL void updateAllEvents(Second prevUpdateTime, Second crntTime);
 
 private:
@@ -43,6 +40,5 @@ private:
 
 	static Bool assosiatedNodesMarkedForDeletion(const Event& e);
 };
-/// @}
 
 } // end namespace anki

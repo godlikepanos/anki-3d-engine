@@ -109,6 +109,8 @@ public:
 	// Print the whole dree tree.
 	ResourceString printTree() const;
 
+	Bool fileExists(ResourceFilename filename) const;
+
 	// Iterate all the filenames from all paths provided.
 	template<typename TFunc>
 	FunctorContinue iterateAllFilenames(TFunc func) const

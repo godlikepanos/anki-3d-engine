@@ -636,6 +636,40 @@ void AssetBrowserUi::rightClickMenuDialog()
 
 void AssetBrowserUi::drawMenu()
 {
+	auto createNewFile = [this](CString suffix, CString fileText) {
+		U32 index = 0;
+
+		while(index < 10)
+		{
+			String filepath;
+			filepath.sprintf("%s/%04u.%s", m_runCtx.m_selectedDir->m_fullPath.cstr(), index, suffix.cstr());
+
+			if(!fileExists(filepath))
+			{
+				File file;
+				Error err = file.open(filepath, FileOpenFlag::kWrite);
+				if(!err)
+				{
+					err = file.writeText(fileText);
+				}
+
+				if(err)
+				{
+					ANKI_LOGE("Failed to create new file: %s", filepath.cstr());
+				}
+
+				break;
+			}
+
+			++index;
+		}
+
+		if(index == 10)
+		{
+			ANKI_LOGE("Failed to create file: %s", suffix.cstr());
+		}
+	};
+
 	if(ImGui::BeginMenuBar())
 	{
 		ImGui::BeginDisabled(m_runCtx.m_selectedDir == nullptr);
@@ -644,60 +678,47 @@ void AssetBrowserUi::drawMenu()
 		{
 			if(ImGui::MenuItem(ICON_MDI_TEXTURE_BOX " Material"))
 			{
-				String filepath;
-				filepath.sprintf("%s/%04u.NewMaterial.ankimtl", m_runCtx.m_selectedDir->m_fullPath.cstr(), m_newMaterialIndex++);
-
-				File file;
-				Error err = file.open(filepath, FileOpenFlag::kWrite);
-				if(!err)
-				{
-					err = file.writeText(kDefaultMaterial);
-				}
-
-				if(err)
-				{
-					ANKI_LOGE("Failed to create new material: %s", filepath.cstr());
-				}
-
+				createNewFile("NewMaterial.ankimtl", kDefaultMaterial);
 				m_refreshAssetsPathsNextTime = true;
 			}
 
 			if(ImGui::MenuItem(ICON_MDI_CREATION " Particles"))
 			{
-				String filepath;
-				filepath.sprintf("%s/%04u.NewParticles.ankipart", m_runCtx.m_selectedDir->m_fullPath.cstr(), m_newMaterialIndex++);
-
-				File file;
-				Error err = file.open(filepath, FileOpenFlag::kWrite);
-				if(!err)
-				{
-					err = file.writeText(kDefaultParticles);
-				}
-
-				if(err)
-				{
-					ANKI_LOGE("Failed to create new particles: %s", filepath.cstr());
-				}
-
+				createNewFile("NewParticles.ankipart", kDefaultParticles);
 				m_refreshAssetsPathsNextTime = true;
 			}
 
 			if(ImGui::MenuItem(ICON_MDI_CURTAINS " Scene"))
 			{
-				String filepath;
-				filepath.sprintf("%s/%04u.NewScene.ankiscene", m_runCtx.m_selectedDir->m_fullPath.cstr(), m_newMaterialIndex++);
-
-				String randomSceneName;
-				randomSceneName.sprintf("%u", U32(getRandom() % kMaxU32));
-				Scene* tempScene = SceneGraph::getSingleton().newEmptyScene(randomSceneName);
-				tempScene->setCanBeSaved(true);
-
-				if(SceneGraph::getSingleton().saveScene(filepath, *tempScene))
+				U32 index = 0;
+				while(index < 10)
 				{
-					ANKI_LOGE("Failed to create new scene: %s", filepath.cstr());
+					String filepath;
+					filepath.sprintf("%s/%04u.NewScene.ankiscene", m_runCtx.m_selectedDir->m_fullPath.cstr(), index);
+
+					if(!fileExists(filepath))
+					{
+						String randomSceneName;
+						randomSceneName.sprintf("%u", U32(getRandom() % kMaxU32));
+						Scene* tempScene = SceneGraph::getSingleton().newEmptyScene(randomSceneName);
+						tempScene->setCanBeSaved(true);
+
+						if(SceneGraph::getSingleton().saveScene(filepath, *tempScene))
+						{
+							ANKI_LOGE("Failed to create new scene: %s", filepath.cstr());
+						}
+
+						SceneGraph::getSingleton().deleteScene(tempScene);
+						break;
+					}
+
+					++index;
 				}
 
-				SceneGraph::getSingleton().deleteScene(tempScene);
+				if(index == 10)
+				{
+					ANKI_LOGE("Failed to create scene");
+				}
 
 				m_refreshAssetsPathsNextTime = true;
 			}

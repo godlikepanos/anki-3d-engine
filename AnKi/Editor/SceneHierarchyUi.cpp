@@ -61,15 +61,20 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 		}
 
 		// Delete active scene
-		ImGui::SameLine();
-		if(ImGui::Button(ICON_MDI_MINUS_BOX))
 		{
-			Scene* activeScene = &SceneGraph::getSingleton().getActiveScene();
-			if(selectedNode && &selectedNode->getScene() == activeScene)
+			ImGui::SameLine();
+			Scene& activeScene = SceneGraph::getSingleton().getActiveScene();
+			ImGui::BeginDisabled(!activeScene.canBeDeleted());
+			if(ImGui::Button(ICON_MDI_MINUS_BOX))
 			{
-				selectedNode = nullptr;
+				if(selectedNode && &selectedNode->getScene() == &activeScene)
+				{
+					selectedNode = nullptr;
+				}
+				SceneGraph::getSingleton().deleteScene(&activeScene);
 			}
-			SceneGraph::getSingleton().deleteScene(activeScene);
+			ImGui::EndDisabled();
+			ImGui::SetItemTooltip("Delete active scene");
 		}
 
 		// Save active scene

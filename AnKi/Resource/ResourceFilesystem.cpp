@@ -563,7 +563,7 @@ ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) co
 	{
 		// Assume it's not file in a resource dir
 		out = filename;
-		found = fileExists(filename);
+		found = anki::fileExists(filename);
 	}
 #endif
 
@@ -662,6 +662,25 @@ ResourceString ResourceFilesystem::printTree() const
 	ResourceString out;
 	list.join("\n", out);
 	return out;
+}
+
+Bool ResourceFilesystem::fileExists(ResourceFilename filename) const
+{
+	const U64 filenameHash = filename.computeHash();
+
+	// Search for the fname in reverse order
+	for(const DataPath& p : m_dataPaths)
+	{
+		for(const FileInfo& fsfile : p.m_files)
+		{
+			if(filenameHash == fsfile.m_filenameHash)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 } // end namespace anki

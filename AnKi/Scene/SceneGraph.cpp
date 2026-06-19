@@ -341,6 +341,13 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	{
 		const auto& thread = updateCtx.m_perThread[tid];
 
+		// First detach the deleted nodes from their parents. Do it before deleting anything because a parent might be deleted before its
+		// child and removeParent() would touch freed memory. Iterating the flat list (not m_children) makes this safe
+		for(SceneNode* node : thread.m_nodesForDeletion)
+		{
+			node->removeParent();
+		}
+
 		for(SceneNode* node : thread.m_nodesForDeletion)
 		{
 			Scene& scene = m_scenes[node->m_sceneIndex];
@@ -375,6 +382,26 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		}
 	}
 
+	// Delete scenes
+	while(true)
+	{
+		Bool done = true;
+		for(Scene& scene : m_scenes)
+		{
+			if(scene.m_markedForDeletion)
+			{
+				m_scenes.erase(scene.m_arrayIndex);
+				done = false;
+				break;
+			}
+		}
+
+		if(done)
+		{
+			break;
+		}
+	}
+
 	// Misc
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::getSingleton().flush();
 #include <AnKi/Scene/GpuSceneArrays.def.h>
@@ -389,6 +416,18 @@ void SceneGraph::updateNode(U32 tid, SceneNode& node, UpdateSceneNodesCtx& ctx)
 	ANKI_TRACE_INC_COUNTER(SceneNodeVisited, 1);
 
 	UpdateSceneNodesCtx::PerThread& thread = ctx.m_perThread[tid];
+
+	if(node.isMarkedForDeletion()) [[unlikely]]
+	{
+		thread.m_nodesForDeletion.emplaceBack(&node);
+
+		node.visitAllChildren([&](SceneNode& child) {
+			thread.m_nodesForDeletion.emplaceBack(&child);
+			return FunctorContinue::kContinue;
+		});
+
+		return;
+	}
 
 	// Components update
 	SceneComponentUpdateInfo componentUpdateInfo(ctx.m_prevUpdateTime, ctx.m_crntTime, ctx.m_forceUpdateSceneBounds
@@ -514,14 +553,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 		{
 			SceneNode& node = *batch[i];
 			ANKI_ASSERT(node.getParent() == nullptr);
-			if(node.isMarkedForDeletion()) [[unlikely]]
-			{
-				ctx.m_perThread[tid].m_nodesForDeletion.emplaceBack(&node);
-			}
-			else
-			{
-				updateNode(tid, *batch[i], ctx);
-			}
+			updateNode(tid, *batch[i], ctx);
 		}
 	}
 }
@@ -989,41 +1021,25 @@ void SceneGraph::deleteScene(Scene* scene)
 	ANKI_ASSERT(scene);
 	forbidCallOnUpdate();
 
-	const U64 begin = HighRezTimer::getCurrentTimeUs();
-
 	if(!scene->m_canDelete)
 	{
 		ANKI_LOGE("Scene can't be deleted: %s", scene->m_name.cstr());
 		return;
 	}
 
+	// Switch scene
 	if(scene->m_arrayIndex == m_activeSceneIndex)
 	{
 		m_activeSceneIndex = tryFindScene("_DefaultScene")->m_arrayIndex;
 	}
 
+	// Mark all nodes for deletion
 	for(SceneNode* node : scene->m_nodes)
 	{
-		if(node->m_updatableNodesArrayIndex != kMaxU32)
-		{
-			m_updatableNodes.erase(node->m_updatableNodesArrayIndex);
-		}
-
-		if(node->getName() != "Unnamed")
-		{
-			auto it = m_nodesDict.find(node->getName());
-			ANKI_ASSERT(it != m_nodesDict.getEnd());
-			m_nodesDict.erase(it);
-		}
-
-		deleteInstance(SceneMemoryPool::getSingleton(), node);
+		node->markForDeletion();
 	}
 
-	Array<Char, 32> sceneName;
-	strncpy(sceneName.getBegin(), scene->m_name.cstr(), sceneName.getSize());
-	m_scenes.erase(scene->m_arrayIndex);
-
-	ANKI_SCENE_LOGI("Unloaded scene %s in %fms", sceneName.getBegin(), F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
+	scene->m_markedForDeletion = true;
 }
 
 } // end namespace anki

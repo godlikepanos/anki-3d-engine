@@ -54,8 +54,6 @@ private:
 	MaterialEditorUi m_materialEditorWindow;
 	ImageViewerUi m_imageViewerWindow;
 
-	U32 m_newMaterialIndex = 0;
-
 	class
 	{
 	public:

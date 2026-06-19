@@ -134,6 +134,11 @@ public:
 		m_canBeSaved = can;
 	}
 
+	ANKI_INTERNAL Bool canBeDeleted() const
+	{
+		return m_canDelete;
+	}
+
 private:
 	SceneBlockArray<SceneNode*> m_nodes;
 
@@ -151,6 +156,7 @@ private:
 	Bool m_immutable : 1 = false; // Can't add or remove nodes from it
 	Bool m_canDelete : 1 = true;
 	Bool m_canBeSaved : 1 = false;
+	Bool m_markedForDeletion : 1 = false;
 };
 
 // The scene graph that  all the scene entities
