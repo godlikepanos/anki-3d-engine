@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <SamplesApp.h>
 #include <Application/EntryPoint.h>
@@ -12,6 +12,7 @@
 #include <Jolt/Core/StreamWrapper.h>
 #include <Jolt/Core/StringTools.h>
 #include <Jolt/Geometry/OrientedBox.h>
+#include <Jolt/Compute/CPU/ComputeSystemCPU.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/StateRecorderImpl.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -45,10 +46,12 @@
 #include <Jolt/Physics/Constraints/DistanceConstraint.h>
 #include <Jolt/Physics/Constraints/PulleyConstraint.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Shaders/HairWrapper.h>
 #include <Utils/Log.h>
 #include <Utils/ShapeCreator.h>
 #include <Utils/CustomMemoryHook.h>
 #include <Utils/SoftBodyCreator.h>
+#include <Utils/ReadData.h>
 #include <Renderer/DebugRendererImp.h>
 
 JPH_SUPPRESS_WARNINGS_STD_BEGIN
@@ -286,6 +289,7 @@ JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, CreateRigTest)
 #ifdef JPH_OBJECT_STREAM
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, LoadRigTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, KinematicRigTest)
+JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SoftKeyframedRigTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, PoweredRigTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, RigPileTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, LoadSaveRigTest)
@@ -302,6 +306,7 @@ static TestNameAndRTTI sRigTests[] =
 	{ "Load / Save Rig",					JPH_RTTI(LoadSaveRigTest) },
 	{ "Load / Save Binary Rig",				JPH_RTTI(LoadSaveBinaryRigTest) },
 	{ "Kinematic Rig",						JPH_RTTI(KinematicRigTest) },
+	{ "Soft Keyframed Rig",					JPH_RTTI(SoftKeyframedRigTest) },
 	{ "Powered Rig",						JPH_RTTI(PoweredRigTest) },
 	{ "Skeleton Mapper",					JPH_RTTI(SkeletonMapperTest) },
 	{ "Rig Pile",							JPH_RTTI(RigPileTest) },
@@ -362,27 +367,40 @@ JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SoftBodyCustomUpdateTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SoftBodyLRAConstraintTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SoftBodyBendConstraintTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SoftBodySkinnedConstraintTest)
+JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SoftBodyCosseratRodConstraintTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SoftBodySensorTest)
 
 static TestNameAndRTTI sSoftBodyTests[] =
 {
-	{ "Soft Body vs Shapes",			JPH_RTTI(SoftBodyShapesTest) },
-	{ "Soft Body vs Fast Moving",		JPH_RTTI(SoftBodyVsFastMovingTest) },
-	{ "Soft Body Friction",				JPH_RTTI(SoftBodyFrictionTest) },
-	{ "Soft Body Restitution",			JPH_RTTI(SoftBodyRestitutionTest) },
-	{ "Soft Body Pressure",				JPH_RTTI(SoftBodyPressureTest) },
-	{ "Soft Body Gravity Factor",		JPH_RTTI(SoftBodyGravityFactorTest) },
-	{ "Soft Body Force",				JPH_RTTI(SoftBodyForceTest) },
-	{ "Soft Body Kinematic",			JPH_RTTI(SoftBodyKinematicTest) },
-	{ "Soft Body Update Position",		JPH_RTTI(SoftBodyUpdatePositionTest) },
-	{ "Soft Body Stress Test",			JPH_RTTI(SoftBodyStressTest) },
-	{ "Soft Body Vertex Radius Test",	JPH_RTTI(SoftBodyVertexRadiusTest) },
-	{ "Soft Body Contact Listener",		JPH_RTTI(SoftBodyContactListenerTest) },
-	{ "Soft Body Custom Update",		JPH_RTTI(SoftBodyCustomUpdateTest) },
-	{ "Soft Body LRA Constraint",		JPH_RTTI(SoftBodyLRAConstraintTest) },
-	{ "Soft Body Bend Constraint",		JPH_RTTI(SoftBodyBendConstraintTest) },
-	{ "Soft Body Skinned Constraint",	JPH_RTTI(SoftBodySkinnedConstraintTest) },
-	{ "Soft Body vs Sensor",			JPH_RTTI(SoftBodySensorTest) }
+	{ "Soft Body vs Shapes",				JPH_RTTI(SoftBodyShapesTest) },
+	{ "Soft Body vs Fast Moving",			JPH_RTTI(SoftBodyVsFastMovingTest) },
+	{ "Soft Body Friction",					JPH_RTTI(SoftBodyFrictionTest) },
+	{ "Soft Body Restitution",				JPH_RTTI(SoftBodyRestitutionTest) },
+	{ "Soft Body Pressure",					JPH_RTTI(SoftBodyPressureTest) },
+	{ "Soft Body Gravity Factor",			JPH_RTTI(SoftBodyGravityFactorTest) },
+	{ "Soft Body Force",					JPH_RTTI(SoftBodyForceTest) },
+	{ "Soft Body Kinematic",				JPH_RTTI(SoftBodyKinematicTest) },
+	{ "Soft Body Update Position",			JPH_RTTI(SoftBodyUpdatePositionTest) },
+	{ "Soft Body Stress Test",				JPH_RTTI(SoftBodyStressTest) },
+	{ "Soft Body Vertex Radius Test",		JPH_RTTI(SoftBodyVertexRadiusTest) },
+	{ "Soft Body Contact Listener",			JPH_RTTI(SoftBodyContactListenerTest) },
+	{ "Soft Body Custom Update",			JPH_RTTI(SoftBodyCustomUpdateTest) },
+	{ "Soft Body LRA Constraint",			JPH_RTTI(SoftBodyLRAConstraintTest) },
+	{ "Soft Body Bend Constraint",			JPH_RTTI(SoftBodyBendConstraintTest) },
+	{ "Soft Body Skinned Constraint",		JPH_RTTI(SoftBodySkinnedConstraintTest) },
+	{ "Soft Body Cosserat Rod Constraint",	JPH_RTTI(SoftBodyCosseratRodConstraintTest) },
+	{ "Soft Body vs Sensor",				JPH_RTTI(SoftBodySensorTest) }
+};
+
+JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, HairTest)
+JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, HairCollisionTest)
+JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, HairGravityPreloadTest)
+
+static TestNameAndRTTI sHairTests[] =
+{
+	{ "Hair",								JPH_RTTI(HairTest) },
+	{ "Hair Collision",						JPH_RTTI(HairCollisionTest) },
+	{ "Hair Gravity Preload",				JPH_RTTI(HairGravityPreloadTest) },
 };
 
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, BroadPhaseCastRayTest)
@@ -431,6 +449,7 @@ static TestCategory sAllCategories[] =
 	{ "Water", sWaterTests, size(sWaterTests) },
 	{ "Vehicle", sVehicleTests, size(sVehicleTests) },
 	{ "Soft Body", sSoftBodyTests, size(sSoftBodyTests) },
+	{ "Hair", sHairTests, size(sHairTests) },
 	{ "Broad Phase", sBroadPhaseTests, size(sBroadPhaseTests) },
 	{ "Convex Collision", sConvexCollisionTests, size(sConvexCollisionTests) },
 	{ "Tools", sTools, size(sTools) }
@@ -466,6 +485,33 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 	// Create single threaded job system for validating
 	mJobSystemValidating = new JobSystemSingleThreaded(cMaxPhysicsJobs);
 
+	// Set shader loader
+	mComputeSystem = &mRenderer->GetComputeSystem();
+	mComputeSystem->mShaderLoader = [](const char *inName, Array<uint8> &outData, String &outError) {
+	#ifdef JPH_PLATFORM_MACOS
+		// In macOS the shaders are copied to the bundle
+		String base_path = "Jolt/Shaders/";
+	#else
+		// On other platforms they are in the Jolt source folder
+		String base_path = "../Jolt/Shaders/";
+	#endif
+		outData = ReadData((base_path + inName).c_str());
+		return true;
+	};
+
+	// Create compute queue
+	ComputeQueueResult queue_result = mComputeSystem->CreateComputeQueue();
+	if (queue_result.HasError())
+		FatalError(queue_result.GetError().c_str());
+	mComputeQueue = queue_result.Get();
+
+#ifdef JPH_USE_CPU_COMPUTE
+	// Create compute system CPU
+	mComputeSystemCPU = StaticCast<ComputeSystemCPU>(CreateComputeSystemCPU().Get());
+	HairRegisterShaders(mComputeSystemCPU);
+	mComputeQueueCPU = mComputeSystemCPU->CreateComputeQueue().Get();
+#endif // JPH_USE_CPU_COMPUTE
+
 	{
 		// Disable allocation checking
 		DisableCustomMemoryHook dcmh;
@@ -492,8 +538,7 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 		});
 		mDebugUI->CreateTextButton(main_menu, "Restart Test (R)", [this]() { StartTest(mTestClass); });
 		mDebugUI->CreateTextButton(main_menu, "Run All Tests", [this]() { RunAllTests(); });
-		mNextTestButton = mDebugUI->CreateTextButton(main_menu, "Next Test (N)", [this]() { NextTest(); });
-		mNextTestButton->SetDisabled(true);
+		mDebugUI->CreateTextButton(main_menu, "Next Test (N)", [this]() { NextTest(); });
 		mDebugUI->CreateTextButton(main_menu, "Take Snapshot", [this]() { TakeSnapshot(); });
 		mDebugUI->CreateTextButton(main_menu, "Take And Reload Snapshot", [this]() { TakeAndReloadSnapshot(); });
 		mDebugUI->CreateTextButton(main_menu, "Physics Settings", [this]() {
@@ -524,6 +569,9 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 			mDebugUI->CreateCheckBox(phys_settings, "Record State For Playback", mRecordState, [this](UICheckBox::EState inState) { mRecordState = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(phys_settings, "Check Determinism", mCheckDeterminism, [this](UICheckBox::EState inState) { mCheckDeterminism = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(phys_settings, "Install Contact Listener", mInstallContactListener, [this](UICheckBox::EState inState) { mInstallContactListener = inState == UICheckBox::STATE_CHECKED; StartTest(mTestClass); });
+#ifdef JPH_USE_CPU_COMPUTE
+			mDebugUI->CreateCheckBox(phys_settings, "Use GPU Compute System", mUseGPUCompute, [this](UICheckBox::EState inState) { mUseGPUCompute = inState == UICheckBox::STATE_CHECKED; StartTest(mTestClass); });
+#endif // JPH_USE_CPU_COMPUTE
 			mDebugUI->ShowMenu(phys_settings);
 		});
 	#ifdef JPH_DEBUG_RENDERER
@@ -545,7 +593,7 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Contact Manifolds (M)", ContactConstraintManager::sDrawContactManifolds, [](UICheckBox::EState inState) { ContactConstraintManager::sDrawContactManifolds = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Motion Quality Linear Cast", PhysicsSystem::sDrawMotionQualityLinearCast, [](UICheckBox::EState inState) { PhysicsSystem::sDrawMotionQualityLinearCast = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Bounding Boxes", mBodyDrawSettings.mDrawBoundingBox, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawBoundingBox = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Physics System Bounds", mDrawPhysicsSystemBounds, [this](UICheckBox::EState inState) { mDrawPhysicsSystemBounds = inState == UICheckBox::STATE_CHECKED; });
+			mDebugUI->CreateCheckBox(drawing_options, "Draw Broadphase Bounds", mDrawBroadPhaseBounds, [this](UICheckBox::EState inState) { mDrawBroadPhaseBounds = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Center of Mass Transforms", mBodyDrawSettings.mDrawCenterOfMassTransform, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawCenterOfMassTransform = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(drawing_options, "Draw World Transforms", mBodyDrawSettings.mDrawWorldTransform, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawWorldTransform = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Velocity", mBodyDrawSettings.mDrawVelocity, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawVelocity = inState == UICheckBox::STATE_CHECKED; });
@@ -559,18 +607,30 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Mesh Shape Triangle Outlines", MeshShape::sDrawTriangleOutlines, [](UICheckBox::EState inState) { MeshShape::sDrawTriangleOutlines = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Height Field Shape Triangle Outlines", HeightFieldShape::sDrawTriangleOutlines, [](UICheckBox::EState inState) { HeightFieldShape::sDrawTriangleOutlines = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(drawing_options, "Draw Submerged Volumes", Shape::sDrawSubmergedVolumes, [](UICheckBox::EState inState) { Shape::sDrawSubmergedVolumes = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Character Virtual Constraints", CharacterVirtual::sDrawConstraints, [](UICheckBox::EState inState) { CharacterVirtual::sDrawConstraints = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Character Virtual Walk Stairs", CharacterVirtual::sDrawWalkStairs, [](UICheckBox::EState inState) { CharacterVirtual::sDrawWalkStairs = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Character Virtual Stick To Floor", CharacterVirtual::sDrawStickToFloor, [](UICheckBox::EState inState) { CharacterVirtual::sDrawStickToFloor = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body Vertices", mBodyDrawSettings.mDrawSoftBodyVertices, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyVertices = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body Vertex Velocities", mBodyDrawSettings.mDrawSoftBodyVertexVelocities, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyVertexVelocities = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body Edge Constraints", mBodyDrawSettings.mDrawSoftBodyEdgeConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyEdgeConstraints = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body Bend Constraints", mBodyDrawSettings.mDrawSoftBodyBendConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyBendConstraints = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body Volume Constraints", mBodyDrawSettings.mDrawSoftBodyVolumeConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyVolumeConstraints = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body Skin Constraints", mBodyDrawSettings.mDrawSoftBodySkinConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodySkinConstraints = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body LRA Constraints", mBodyDrawSettings.mDrawSoftBodyLRAConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyLRAConstraints = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateCheckBox(drawing_options, "Draw Soft Body Predicted Bounds", mBodyDrawSettings.mDrawSoftBodyPredictedBounds, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyPredictedBounds = inState == UICheckBox::STATE_CHECKED; });
-			mDebugUI->CreateComboBox(drawing_options, "Draw Soft Body Constraint Color", { "Constraint Type", "Constraint Group", "Constraint Order" }, (int)mBodyDrawSettings.mDrawSoftBodyConstraintColor, [this](int inItem) { mBodyDrawSettings.mDrawSoftBodyConstraintColor = (ESoftBodyConstraintColor)inItem; });
+			mDebugUI->CreateTextButton(drawing_options, "Draw Character Virtual", [this](){
+				UIElement *draw_character = mDebugUI->CreateMenu();
+				mDebugUI->CreateCheckBox(draw_character, "Draw Character Virtual Constraints", CharacterVirtual::sDrawConstraints, [](UICheckBox::EState inState) { CharacterVirtual::sDrawConstraints = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_character, "Draw Character Virtual Walk Stairs", CharacterVirtual::sDrawWalkStairs, [](UICheckBox::EState inState) { CharacterVirtual::sDrawWalkStairs = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_character, "Draw Character Virtual Stick To Floor", CharacterVirtual::sDrawStickToFloor, [](UICheckBox::EState inState) { CharacterVirtual::sDrawStickToFloor = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_character, "Draw Character Supporting Volume", CharacterVirtual::sDrawSupportingVolume, [](UICheckBox::EState inState) { CharacterVirtual::sDrawSupportingVolume = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->ShowMenu(draw_character);
+			});
+			mDebugUI->CreateTextButton(drawing_options, "Draw Soft Body", [this](){
+				UIElement *draw_soft_body = mDebugUI->CreateMenu();
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Vertices", mBodyDrawSettings.mDrawSoftBodyVertices, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyVertices = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Vertex Velocities", mBodyDrawSettings.mDrawSoftBodyVertexVelocities, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyVertexVelocities = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Edge Constraints", mBodyDrawSettings.mDrawSoftBodyEdgeConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyEdgeConstraints = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Bend Constraints", mBodyDrawSettings.mDrawSoftBodyBendConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyBendConstraints = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Volume Constraints", mBodyDrawSettings.mDrawSoftBodyVolumeConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyVolumeConstraints = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Skin Constraints", mBodyDrawSettings.mDrawSoftBodySkinConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodySkinConstraints = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw LRA Constraints", mBodyDrawSettings.mDrawSoftBodyLRAConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyLRAConstraints = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Rods", mBodyDrawSettings.mDrawSoftBodyRods, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyRods = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Rod States", mBodyDrawSettings.mDrawSoftBodyRodStates, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyRodStates = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Rod Bend Twist Constraints", mBodyDrawSettings.mDrawSoftBodyRodBendTwistConstraints, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyRodBendTwistConstraints = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateCheckBox(draw_soft_body, "Draw Predicted Bounds", mBodyDrawSettings.mDrawSoftBodyPredictedBounds, [this](UICheckBox::EState inState) { mBodyDrawSettings.mDrawSoftBodyPredictedBounds = inState == UICheckBox::STATE_CHECKED; });
+				mDebugUI->CreateComboBox(draw_soft_body, "Draw Constraint Color", { "Constraint Type", "Constraint Group", "Constraint Order" }, (int)mBodyDrawSettings.mDrawSoftBodyConstraintColor, [this](int inItem) { mBodyDrawSettings.mDrawSoftBodyConstraintColor = (ESoftBodyConstraintColor)inItem; });
+				mDebugUI->ShowMenu(draw_soft_body);
+			});
 			mDebugUI->ShowMenu(drawing_options);
 		});
 	#endif // JPH_DEBUG_RENDERER
@@ -587,6 +647,7 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 			mDebugUI->CreateComboBox(probe_options, "Active Edge Mode", { "Only Active", "All" }, (int)mActiveEdgeMode, [this](int inItem) { mActiveEdgeMode = (EActiveEdgeMode)inItem; });
 			mDebugUI->CreateComboBox(probe_options, "Collect Faces Mode", { "Collect Faces", "No Faces" }, (int)mCollectFacesMode, [this](int inItem) { mCollectFacesMode = (ECollectFacesMode)inItem; });
 			mDebugUI->CreateSlider(probe_options, "Max Separation Distance", mMaxSeparationDistance, 0.0f, 5.0f, 0.1f, [this](float inValue) { mMaxSeparationDistance = inValue; });
+			mDebugUI->CreateSlider(probe_options, "Extra Convex Radius", mExtraConvexRadius, 0.0f, 5.0f, 0.1f, [this](float inValue) { mExtraConvexRadius = inValue; });
 			mDebugUI->CreateCheckBox(probe_options, "Treat Convex As Solid", mTreatConvexAsSolid, [this](UICheckBox::EState inState) { mTreatConvexAsSolid = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(probe_options, "Return Deepest Point", mReturnDeepestPoint, [this](UICheckBox::EState inState) { mReturnDeepestPoint = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(probe_options, "Shrunken Shape + Convex Radius", mUseShrunkenShapeAndConvexRadius, [this](UICheckBox::EState inState) { mUseShrunkenShapeAndConvexRadius = inState == UICheckBox::STATE_CHECKED; });
@@ -628,10 +689,16 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 		mDebugUI->ShowMenu(main_menu);
 	}
 
-	// Get test name from command line
-	String cmd_line = ToLower(inCommandLine);
+	// Explode command line into separate arguments
 	Array<String> args;
-	StringToVector(cmd_line, args, " ");
+	StringToVector(ToLower(inCommandLine), args, " ");
+
+	// Remove entries starting with `-`
+	for (int i = (int)args.size() - 1; i >= 0; --i)
+		if (!args[i].empty() && args[i].at(0) == '-')
+			args.erase(args.begin() + i);
+
+	// Get test name from command line
 	if (args.size() == 2)
 	{
 		String cmd = args[1];
@@ -675,6 +742,8 @@ SamplesApp::~SamplesApp()
 	delete mTest;
 	delete mContactListener;
 	delete mPhysicsSystem;
+	mComputeQueue = nullptr;
+	mComputeSystem = nullptr;
 	delete mJobSystemValidating;
 	delete mJobSystem;
 	delete mTempAllocator;
@@ -682,6 +751,9 @@ SamplesApp::~SamplesApp()
 
 void SamplesApp::StartTest(const RTTI *inRTTI)
 {
+	// Clear anything that is being rendered right now to avoid showing the previous test while initializing the new one
+	ClearDebugRenderer();
+
 	// Pop active menus, we might be in the settings menu for the test which will be dangling after restarting the test
 	mDebugUI->BackToMain();
 
@@ -719,6 +791,14 @@ void SamplesApp::StartTest(const RTTI *inRTTI)
 	mTest = static_cast<Test *>(inRTTI->CreateObject());
 	mTest->SetPhysicsSystem(mPhysicsSystem);
 	mTest->SetJobSystem(mJobSystem);
+#ifdef JPH_USE_CPU_COMPUTE
+	if (mUseGPUCompute)
+#endif // JPH_USE_CPU_COMPUTE
+		mTest->SetComputeSystem(mComputeSystem, mComputeQueue);
+#ifdef JPH_USE_CPU_COMPUTE
+	else
+		mTest->SetComputeSystem(mComputeSystemCPU, mComputeQueueCPU);
+#endif // JPH_USE_CPU_COMPUTE
 	mTest->SetDebugRenderer(mDebugRenderer);
 	mTest->SetTempAllocator(mTempAllocator);
 	if (mInstallContactListener)
@@ -743,32 +823,64 @@ void SamplesApp::StartTest(const RTTI *inRTTI)
 	// Reset the camera to the original position
 	ResetCamera();
 
-	// Start paused
-	Pause(true);
-	SingleStep();
+	if (mIsRunningAllTests)
+	{
+		// Unpause and start the count down
+		Pause(false);
+		mTestTimeLeft = 10.0f;
+	}
+	else
+	{
+		// Start paused
+		Pause(true);
+		SingleStep();
+	}
 
 	// Check if test has settings menu
 	mTestSettingsButton->SetDisabled(!mTest->HasSettingsMenu());
+
+	// We're immediately doing a step, we want to display the description for the first 2 steps
+	mShowDescription = 2;
 }
 
 void SamplesApp::RunAllTests()
 {
-	mTestsToRun.clear();
-
-	for (const TestCategory &c : sAllCategories)
-		for (uint i = 0; i < c.mNumTests; ++i)
-		{
-			TestNameAndRTTI &t = c.mTests[i];
-			mTestsToRun.push_back(t.mRTTI);
-		}
-
-	NextTest();
+	mIsRunningAllTests = true;
+	StartTest(sAllCategories[0].mTests[0].mRTTI);
 }
 
 bool SamplesApp::NextTest()
 {
-	if (mTestsToRun.empty())
+	// Find the next test to run based on the RTTI of the current test
+	const RTTI *next_test = nullptr;
+	bool cur_test_found = false;
+	for (const TestCategory &c : sAllCategories)
 	{
+		for (uint j = 0; j < c.mNumTests; ++j)
+		{
+			const TestNameAndRTTI &test = c.mTests[j];
+			if (cur_test_found)
+			{
+				// We already found the current test so this test is the next test to run
+				next_test = test.mRTTI;
+				break;
+			}
+			else if (test.mRTTI == mTestClass)
+			{
+				// RTTI matches, the next test we encounter is the next test to run
+				cur_test_found = true;
+			}
+		}
+
+		if (next_test != nullptr)
+			break;
+	}
+
+	if (next_test == nullptr)
+	{
+		mIsRunningAllTests = false;
+		mTestTimeLeft = -1.0f;
+
 		if (mExitAfterRunningTests)
 			return false; // Exit the application now
 		else
@@ -776,21 +888,9 @@ bool SamplesApp::NextTest()
 	}
 	else
 	{
-		// Start the timer for 10 seconds
-		mTestTimeLeft = 10.0f;
-
-		// Take next test
-		const RTTI *rtti = mTestsToRun.front();
-		mTestsToRun.erase(mTestsToRun.begin());
-
-		// Start it
-		StartTest(rtti);
-
-		// Unpause
-		Pause(false);
+		// Start next test
+		StartTest(next_test);
 	}
-
-	mNextTestButton->SetDisabled(mTestsToRun.empty());
 
 	return true;
 }
@@ -1369,7 +1469,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 
 						// Draw material
 						const PhysicsMaterial *material2 = hit_body.GetShape()->GetMaterial(hit.mSubShapeID2);
-						mDebugRenderer->DrawText3D(contact_position2, material2->GetDebugName());
+						mDebugRenderer->DrawText3D(contact_position2, material2->GetDebugName() + StringFormat(", pen=%.3f", (double)hit.mPenetrationDepth));
 
 						// Draw faces
 						mDebugRenderer->DrawWirePolygon(RMat44::sTranslation(base_offset), hit.mShape1Face, Color::sYellow, 0.01f);
@@ -1394,6 +1494,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 
 			// Settings
 			ShapeCastSettings settings;
+			settings.mExtraConvexRadius = mExtraConvexRadius;
 			settings.mUseShrunkenShapeAndConvexRadius = mUseShrunkenShapeAndConvexRadius;
 			settings.mActiveEdgeMode = mActiveEdgeMode;
 			settings.mBackFaceModeTriangles = mBackFaceModeTriangles;
@@ -1484,7 +1585,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 
 						// Draw material
 						const PhysicsMaterial *material2 = hit_body.GetShape()->GetMaterial(hit.mSubShapeID2);
-						mDebugRenderer->DrawText3D(position, material2->GetDebugName());
+						mDebugRenderer->DrawText3D(position, material2->GetDebugName() + StringFormat(", pen=%.3f", (double)hit.mPenetrationDepth));
 
 						// Draw faces
 						mDebugRenderer->DrawWirePolygon(RMat44::sTranslation(base_offset), hit.mShape1Face, Color::sYellow, 0.01f);
@@ -1539,7 +1640,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 					SphereShape point_sphere(1.0e-6f);
 					point_sphere.SetEmbedded();
 					CollideShapeSettings settings;
-					settings.mMaxSeparationDistance = sqrt(3.0f) * max_distance; // Box is extended in all directions by max_distance
+					settings.mMaxSeparationDistance = Sqrt(3.0f) * max_distance; // Box is extended in all directions by max_distance
 					ClosestHitCollisionCollector<CollideShapeCollector> collide_shape_collector;
 					ts.CollideShape(&point_sphere, Vec3::sOne(), RMat44::sTranslation(start + position), settings, start, collide_shape_collector);
 					if (collide_shape_collector.HadHit())
@@ -2025,6 +2126,10 @@ bool SamplesApp::UpdateFrame(float inDeltaTime)
 	if (mMaxConcurrentJobs != mJobSystem->GetMaxConcurrency())
 		static_cast<JobSystemThreadPool *>(mJobSystem)->SetNumThreads(mMaxConcurrentJobs - 1);
 
+	// Decrement number of frames to show the description
+	if (inDeltaTime > 0.0f && mShowDescription > 0)
+		--mShowDescription;
+
 	// Restart the test if the test requests this
 	if (mTest->NeedsRestart())
 	{
@@ -2033,7 +2138,11 @@ bool SamplesApp::UpdateFrame(float inDeltaTime)
 	}
 
 	// Get the status string
-	mStatusString = mTest->GetStatusString();
+	const char *description = mShowDescription > 0? mTest->GetDescription() : nullptr;
+	if (description != nullptr)
+		mStatusString = String(description) + "\n" + mTest->GetStatusString();
+	else
+		mStatusString = mTest->GetStatusString();
 
 	// Select the next test if automatic testing times out
 	if (!CheckNextTest())
@@ -2052,9 +2161,8 @@ bool SamplesApp::UpdateFrame(float inDeltaTime)
 			return true;
 
 		case EKey::N:
-			if (!mTestsToRun.empty())
-				NextTest();
-			break;
+			NextTest();
+			return true;
 
 	#ifdef JPH_DEBUG_RENDERER
 		case EKey::H:
@@ -2126,6 +2234,12 @@ bool SamplesApp::UpdateFrame(float inDeltaTime)
 				mPlaybackMode = shift? EPlaybackMode::FastForward : EPlaybackMode::StepForward;
 			}
 			break;
+
+	#if defined(JPH_TRACK_SIMULATION_STATS) && defined(JPH_PROFILE_ENABLED)
+		case EKey::Y:
+			mPhysicsSystem->ReportSimulationStats();
+			break;
+	#endif
 		}
 
 	// Stop recording if record state is turned off
@@ -2315,9 +2429,11 @@ void SamplesApp::DrawPhysics()
 	if (mDrawConstraintReferenceFrame)
 		mPhysicsSystem->DrawConstraintReferenceFrame(mDebugRenderer);
 
-	if (mDrawPhysicsSystemBounds)
-		mDebugRenderer->DrawWireBox(mPhysicsSystem->GetBounds(), Color::sGreen);
+	if (mDrawBroadPhaseBounds)
+		mDebugRenderer->DrawWireBox(mPhysicsSystem->GetBroadPhaseQuery().GetBounds(), Color::sGreen);
 #endif // JPH_DEBUG_RENDERER
+
+	mTest->DrawBodyLabels();
 
 	// This map collects the shapes that we used this frame
 	ShapeToGeometryMap shape_to_geometry;

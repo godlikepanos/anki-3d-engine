@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2024 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/Character/CharacterPlanetTest.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
@@ -10,6 +10,7 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Layers.h>
+#include <Input/Keyboard.h>
 
 JPH_IMPLEMENT_RTTI_VIRTUAL(CharacterPlanetTest)
 {
@@ -197,7 +198,7 @@ void CharacterPlanetTest::OnStep(const PhysicsStepListenerContext &inContext)
 	}
 }
 
-void CharacterPlanetTest::OnContactAdded(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
+void CharacterPlanetTest::OnContactAdded(const CharacterVirtual *inCharacter, const CharacterContact &inContact, CharacterContactSettings &ioSettings)
 {
 	// We don't want the spheres to push the player character
 	ioSettings.mCanPushCharacter = false;

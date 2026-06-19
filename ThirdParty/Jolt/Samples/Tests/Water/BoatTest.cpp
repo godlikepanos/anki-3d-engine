@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2024 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/Water/BoatTest.h>
 #include <Jolt/Core/QuickSort.h>
@@ -13,6 +13,7 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Layers.h>
 #include <Renderer/DebugRendererImp.h>
+#include <Input/Keyboard.h>
 
 JPH_IMPLEMENT_RTTI_VIRTUAL(BoatTest)
 {

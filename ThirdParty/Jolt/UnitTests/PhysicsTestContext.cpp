@@ -59,6 +59,13 @@ Body &PhysicsTestContext::CreateFloor()
 	return floor;
 }
 
+Body &PhysicsTestContext::CreateBody(const BodyCreationSettings &inSettings, EActivation inActivation)
+{
+	Body &body = *mSystem->GetBodyInterface().CreateBody(inSettings);
+	mSystem->GetBodyInterface().AddBody(body.GetID(), inActivation);
+	return body;
+}
+
 Body &PhysicsTestContext::CreateBody(const ShapeSettings *inShapeSettings, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, EMotionQuality inMotionQuality, ObjectLayer inLayer, EActivation inActivation)
 {
 	BodyCreationSettings settings;
@@ -71,9 +78,7 @@ Body &PhysicsTestContext::CreateBody(const ShapeSettings *inShapeSettings, RVec3
 	settings.mLinearDamping = 0.0f;
 	settings.mAngularDamping = 0.0f;
 	settings.mCollisionGroup.SetGroupID(0);
-	Body &body = *mSystem->GetBodyInterface().CreateBody(settings);
-	mSystem->GetBodyInterface().AddBody(body.GetID(), inActivation);
-	return body;
+	return CreateBody(settings, inActivation);
 }
 
 Body &PhysicsTestContext::CreateBox(RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, EMotionQuality inMotionQuality, ObjectLayer inLayer, Vec3Arg inHalfExtent, EActivation inActivation)
@@ -84,6 +89,15 @@ Body &PhysicsTestContext::CreateBox(RVec3Arg inPosition, QuatArg inRotation, EMo
 Body &PhysicsTestContext::CreateSphere(RVec3Arg inPosition, float inRadius, EMotionType inMotionType, EMotionQuality inMotionQuality, ObjectLayer inLayer, EActivation inActivation)
 {
 	return CreateBody(new SphereShapeSettings(inRadius), inPosition, Quat::sIdentity(), inMotionType, inMotionQuality, inLayer, inActivation);
+}
+
+EPhysicsUpdateError PhysicsTestContext::SimulateNoDeltaTime()
+{
+	EPhysicsUpdateError errors = mSystem->Update(0.0f, mCollisionSteps, mTempAllocator, mJobSystem);
+#ifndef JPH_DISABLE_TEMP_ALLOCATOR
+	JPH_ASSERT(static_cast<TempAllocatorImpl *>(mTempAllocator)->IsEmpty());
+#endif // JPH_DISABLE_TEMP_ALLOCATOR
+	return errors;
 }
 
 EPhysicsUpdateError PhysicsTestContext::SimulateSingleStep()

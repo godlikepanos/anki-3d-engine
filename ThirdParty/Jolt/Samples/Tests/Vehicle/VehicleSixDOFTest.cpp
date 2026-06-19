@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/Vehicle/VehicleSixDOFTest.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
@@ -11,6 +11,7 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Application/DebugUI.h>
 #include <Layers.h>
+#include <Input/Keyboard.h>
 
 JPH_IMPLEMENT_RTTI_VIRTUAL(VehicleSixDOFTest)
 {

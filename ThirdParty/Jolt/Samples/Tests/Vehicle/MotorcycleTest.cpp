@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/Vehicle/MotorcycleTest.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
@@ -15,6 +15,7 @@
 #include <Application/DebugUI.h>
 #include <Layers.h>
 #include <Renderer/DebugRendererImp.h>
+#include <Input/Keyboard.h>
 
 JPH_IMPLEMENT_RTTI_VIRTUAL(MotorcycleTest)
 {

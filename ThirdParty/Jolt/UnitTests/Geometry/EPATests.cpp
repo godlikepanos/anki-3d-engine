@@ -58,12 +58,12 @@ TEST_SUITE("EPATests")
 
 			// Check delta between contact on A
 			Vec3 dpa = pa2 - pa1;
-			CHECK(dpa.Length() < 8.0e-4f);
+			CHECK(dpa.Length() < 9.0e-4f);
 			EPA_TESTS_TRACE("Delta A = %.9g\n", (double)dpa.Length());
 
 			// Check delta between contact on B
 			Vec3 dpb = pb2 - pb1;
-			CHECK(dpb.Length() < 8.0e-4f);
+			CHECK(dpb.Length() < 9.0e-4f);
 			EPA_TESTS_TRACE("Delta B = %.9g\n", (double)dpb.Length());
 		}
 
@@ -97,28 +97,28 @@ TEST_SUITE("EPATests")
 		{
 			// Sphere just missing box on edge
 			AABox box(Vec3(1, 1, -2), Vec3(2, 2, 2));
-			Sphere sphere(Vec3(4, 4, 0), sqrt(8.0f) - 0.01f);
+			Sphere sphere(Vec3(4, 4, 0), Sqrt(8.0f) - 0.01f);
 			CHECK(!CollideBoxSphere(inMatrix, box, sphere));
 		}
 
 		{
 			// Sphere just penetrating box on edge
 			AABox box(Vec3(1, 1, -2), Vec3(2, 2, 2));
-			Sphere sphere(Vec3(4, 4, 0), sqrt(8.0f) + 0.01f);
+			Sphere sphere(Vec3(4, 4, 0), Sqrt(8.0f) + 0.01f);
 			CHECK(CollideBoxSphere(inMatrix, box, sphere));
 		}
 
 		{
 			// Sphere just missing box on vertex
 			AABox box(Vec3(1, 1, 1), Vec3(2, 2, 2));
-			Sphere sphere(Vec3(4, 4, 4), sqrt(12.0f) - 0.01f);
+			Sphere sphere(Vec3(4, 4, 4), Sqrt(12.0f) - 0.01f);
 			CHECK(!CollideBoxSphere(inMatrix, box, sphere));
 		}
 
 		{
 			// Sphere just penetrating box on vertex
 			AABox box(Vec3(1, 1, 1), Vec3(2, 2, 2));
-			Sphere sphere(Vec3(4, 4, 4), sqrt(12.0f) + 0.01f);
+			Sphere sphere(Vec3(4, 4, 4), Sqrt(12.0f) + 0.01f);
 			CHECK(CollideBoxSphere(inMatrix, box, sphere));
 		}
 	}

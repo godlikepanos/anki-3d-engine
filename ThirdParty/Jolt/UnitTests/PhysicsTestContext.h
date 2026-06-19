@@ -35,6 +35,9 @@ public:
 	Body &				CreateFloor();
 
 	/// Create a body and add it to the world
+	Body &				CreateBody(const BodyCreationSettings &inSettings, EActivation inActivation);
+
+	/// Create a body and add it to the world
 	Body &				CreateBody(const ShapeSettings *inShapeSettings, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, EMotionQuality inMotionQuality, ObjectLayer inLayer, EActivation inActivation);
 
 	// Create a box and add it to the world
@@ -51,6 +54,9 @@ public:
 		mSystem->AddConstraint(constraint);
 		return *constraint;
 	}
+
+	// Call the update with zero delta time
+	EPhysicsUpdateError SimulateNoDeltaTime();
 
 	// Simulate only for one delta time step
 	EPhysicsUpdateError	SimulateSingleStep();
@@ -86,6 +92,18 @@ public:
 	inline float		GetStepDeltaTime() const
 	{
 		return mDeltaTime / mCollisionSteps;
+	}
+
+	// Get the temporary allocator
+	TempAllocator *		GetTempAllocator() const
+	{
+		return mTempAllocator;
+	}
+
+	// Get the job system
+	JobSystem *			GetJobSystem() const
+	{
+		return mJobSystem;
 	}
 
 #ifdef JPH_DEBUG_RENDERER

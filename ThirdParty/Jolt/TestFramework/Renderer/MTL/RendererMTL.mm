@@ -17,11 +17,19 @@
 #include <Utils/AssetStream.h>
 #include <Jolt/Core/Profiler.h>
 
+RendererMTL::RendererMTL()
+{
+	// Ensure ComputeSystem doesn't get destructed
+	ComputeSystem::SetEmbedded();
+}
+
 RendererMTL::~RendererMTL()
 {
 	[mCommandQueue release];
 	[mShadowRenderPass release];
 	[mShaderLibrary release];
+
+	ComputeSystemMTL::Shutdown();
 }
 
 void RendererMTL::Initialize(ApplicationWindow *inWindow)
@@ -30,7 +38,9 @@ void RendererMTL::Initialize(ApplicationWindow *inWindow)
 
 	mView = static_cast<ApplicationWindowMacOS *>(inWindow)->GetMetalView();
 
-	id<MTLDevice> device = GetDevice();
+	id<MTLDevice> device = mView.device;
+
+	ComputeSystemMTL::Initialize(device);
 
 	// Load the shader library containing all shaders for the test framework
 	NSError *error = nullptr;
@@ -52,7 +62,7 @@ void RendererMTL::Initialize(ApplicationWindow *inWindow)
 	mCommandQueue = [device newCommandQueue];
 }
 
-void RendererMTL::BeginFrame(const CameraState &inCamera, float inWorldScale)
+bool RendererMTL::BeginFrame(const CameraState &inCamera, float inWorldScale)
 {
 	JPH_PROFILE_FUNCTION();
 
@@ -78,6 +88,8 @@ void RendererMTL::BeginFrame(const CameraState &inCamera, float inWorldScale)
 
 	// Start with projection mode
 	SetProjectionMode();
+
+	return true;
 }
 
 void RendererMTL::EndShadowPass()
@@ -159,9 +171,9 @@ Ref<PixelShader> RendererMTL::CreatePixelShader(const char *inName)
 	return new PixelShaderMTL(function);
 }
 
-unique_ptr<PipelineState> RendererMTL::CreatePipelineState(const VertexShader *inVertexShader, const PipelineState::EInputDescription *inInputDescription, uint inInputDescriptionCount, const PixelShader *inPixelShader, PipelineState::EDrawPass inDrawPass, PipelineState::EFillMode inFillMode, PipelineState::ETopology inTopology, PipelineState::EDepthTest inDepthTest, PipelineState::EBlendMode inBlendMode, PipelineState::ECullMode inCullMode)
+std::unique_ptr<PipelineState> RendererMTL::CreatePipelineState(const VertexShader *inVertexShader, const PipelineState::EInputDescription *inInputDescription, uint inInputDescriptionCount, const PixelShader *inPixelShader, PipelineState::EDrawPass inDrawPass, PipelineState::EFillMode inFillMode, PipelineState::ETopology inTopology, PipelineState::EDepthTest inDepthTest, PipelineState::EBlendMode inBlendMode, PipelineState::ECullMode inCullMode)
 {
-	return make_unique<PipelineStateMTL>(this, static_cast<const VertexShaderMTL *>(inVertexShader), inInputDescription, inInputDescriptionCount, static_cast<const PixelShaderMTL *>(inPixelShader), inDrawPass, inFillMode, inTopology, inDepthTest, inBlendMode, inCullMode);
+	return std::make_unique<PipelineStateMTL>(this, static_cast<const VertexShaderMTL *>(inVertexShader), inInputDescription, inInputDescriptionCount, static_cast<const PixelShaderMTL *>(inPixelShader), inDrawPass, inFillMode, inTopology, inDepthTest, inBlendMode, inCullMode);
 }
 
 RenderPrimitive *RendererMTL::CreateRenderPrimitive(PipelineState::ETopology inType)
@@ -174,9 +186,7 @@ RenderInstances *RendererMTL::CreateRenderInstances()
 	return new RenderInstancesMTL(this);
 }
 
-#ifndef JPH_ENABLE_VULKAN
 Renderer *Renderer::sCreate()
 {
 	return new RendererMTL;
 }
-#endif

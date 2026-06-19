@@ -7,9 +7,10 @@
 
 # Jolt Physics
 
-A multi core friendly rigid body physics and collision detection library. Suitable for games and VR applications. Used by Horizon Forbidden West.
+A multi core friendly rigid body physics and collision detection library. Suitable for games and VR applications. Used by Horizon Forbidden West and Death Stranding 2: On the Beach.
 
 [![Horizon Forbidden West Cover Art](https://jrouwe.nl/jolt/Horizon_Forbidden_West.png)](https://www.playstation.com/en-us/games/horizon-forbidden-west/)
+[![Death Stranding 2 Cover Art](https://jrouwe.nl/jolt/Death_Stranding_2.png)](https://www.playstation.com/en-us/games/death-stranding-2-on-the-beach/)
 
 |[![Ragdoll Pile](https://img.youtube.com/vi/pwyCW0yNKMA/hqdefault.jpg)](https://www.youtube.com/watch?v=pwyCW0yNKMA)|
 |:-|
@@ -78,18 +79,26 @@ Why create yet another physics engine? Firstly, it has been a personal learning 
 * Soft body simulation (e.g. a soft ball or piece of cloth).
 	* Edge constraints.
 	* Dihedral bend constraints.
+	* Cosserat rod constraints (an edge with an orientation that can be used to orient geometry, e.g. a plant leaf).
 	* Tetrahedron volume constraints.
 	* Long range attachment constraints (also called tethers).
 	* Limiting the simulation to stay within a certain range of a skinned vertex.
 	* Internal pressure.
 	* Collision with simulated rigid bodies.
 	* Collision tests against soft bodies.
+* A strand based hair simulation running on GPU
+	* System is based on Cosserad rods.
+	* Can use long range attachment constraints to limit the stretch of hairs.
+	* Supports simulation (guide) and render (follow) hairs.
+	* Hair vs hair collision is handled by accumulating the average velocity in a grid and using those velocities to drive hairs.
+	* Supports collision with the environment, although it only supports ConvexHull and CompoundShapes at the moment.
+	* The roots of the hairs can be skinned to the scalp mesh.
 * Water buoyancy calculations.
 * An optional double precision mode that allows large worlds.
 
 ## Supported platforms
 
-* Windows (Desktop or UWP) x86/x64/ARM32/ARM64
+* Windows x86/x64/ARM64
 * Linux (tested on Ubuntu) x86/x64/ARM32/ARM64/RISC-V64/LoongArch64/PowerPC64LE
 * FreeBSD
 * Android x86/x64/ARM32/ARM64
@@ -106,15 +115,17 @@ Why create yet another physics engine? Firstly, it has been a personal learning 
 
 ## Documentation
 
-To learn more about Jolt go to the latest [Architecture and API documentation](https://jrouwe.github.io/JoltPhysics/). Documentation for [a specific release is also available](https://jrouwe.github.io/JoltPhysicsDocs/).
-
 To get started, look at the [HelloWorld](HelloWorld/HelloWorld.cpp) example. A [HelloWorld example using CMake FetchContent](https://github.com/jrouwe/JoltPhysicsHelloWorld) is also available to show how you can integrate Jolt Physics in a CMake project.
+
+Every feature in Jolt has its own sample. [Running the Samples application](Docs/Samples.md) and browsing through the [code](https://github.com/jrouwe/JoltPhysics/tree/master/Samples/Tests) is a great way to learn about the library!
+
+To learn more about Jolt go to the latest [Architecture and API documentation](https://jrouwe.github.io/JoltPhysics/). Documentation for [a specific release is also available](https://jrouwe.github.io/JoltPhysicsDocs/).
 
 Some algorithms used by Jolt are described in detail in my GDC 2022 talk: Architecting Jolt Physics for 'Horizon Forbidden West' ([slides](https://gdcvault.com/play/1027560/Architecting-Jolt-Physics-for-Horizon), [slides with speaker notes](https://jrouwe.nl/architectingjolt/ArchitectingJoltPhysics_Rouwe_Jorrit_Notes.pdf), [video](https://gdcvault.com/play/1027891/Architecting-Jolt-Physics-for-Horizon)).
 
 ## Compiling
 
-* Compiles with Visual Studio 2019+, Clang 10+ or GCC 9+.
+* Compiles with Visual Studio 2022+, Clang 16+ or GCC 12+.
 * Uses C++ 17.
 * Depends only on the standard template library.
 * Doesn't use RTTI.
@@ -143,16 +154,19 @@ If you're interested in how Jolt scales with multiple CPUs and compares to other
 
 ## Bindings for other languages
 
-* C [here](https://github.com/zig-gamedev/zphysics/tree/main/libs/JoltC) and [here](https://github.com/amerkoleci/joltc)
+* C [here](https://github.com/amerkoleci/joltc), [here](https://github.com/zig-gamedev/zphysics/tree/main/libs/JoltC) and [here](https://github.com/SecondHalfGames/JoltC/)
 * [C#](https://github.com/amerkoleci/JoltPhysicsSharp)
-* [Java](https://github.com/stephengold/jolt-jni)
+* Java or Kotlin [here](https://stephengold.github.io/jolt-jni-docs) and [here](https://github.com/Morgoth398/JoltPhysics-JavaFFM)
 * [JavaScript](https://github.com/jrouwe/JoltPhysics.js)
+* [Rust](https://github.com/SecondHalfGames/jolt-rust)
+* [Python](https://github.com/Evilpasture/Culverin)
 * [Zig](https://github.com/zig-gamedev/zphysics)
 
 ## Integrations in other engines
 
-* [Godot](https://github.com/godot-jolt/godot-jolt)
+* [Godot](https://github.com/godotengine/godot)
 * [Source Engine](https://github.com/Joshua-Ashton/VPhysics-Jolt)
+* Unreal Plugin [here](https://github.com/OversizedSunCoreDev/ArtilleryEco) and [here](https://github.com/Yadhu-S/UnrealJolt)
 
 See [a list of projects that use Jolt Physics here](Docs/ProjectsUsingJolt.md).
 

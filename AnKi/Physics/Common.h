@@ -42,6 +42,7 @@
 #include <Jolt/Physics/Constraints/HingeConstraint.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE

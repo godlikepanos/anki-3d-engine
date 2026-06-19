@@ -10,6 +10,7 @@
 #include <Utils/Log.h>
 #include <Utils/CustomMemoryHook.h>
 #include <Jolt/Core/Factory.h>
+#include <Jolt/Core/LSANSuppressions.h>
 #include <Jolt/RegisterTypes.h>
 #include <Renderer/DebugRendererImp.h>
 #ifdef JPH_PLATFORM_WINDOWS
@@ -25,6 +26,10 @@
 	#include <Input/MacOS/KeyboardMacOS.h>
 	#include <Input/MacOS/MouseMacOS.h>
 	#include <Window/ApplicationWindowMacOS.h>
+#endif
+
+#ifdef JPH_USE_VK
+extern Renderer *CreateRendererVK();
 #endif
 
 JPH_GCC_SUPPRESS_WARNING("-Wswitch")
@@ -61,6 +66,10 @@ Application::Application(const char *inApplicationName, [[maybe_unused]] const S
 	// Register physics types with the factory
 	RegisterTypes();
 
+	// Explode command line into separate arguments
+	Array<String> args;
+	StringToVector(ToLower(inCommandLine), args, " ");
+
 	{
 		// Disable allocation checking
 		DisableCustomMemoryHook dcmh;
@@ -78,7 +87,12 @@ Application::Application(const char *inApplicationName, [[maybe_unused]] const S
 		mWindow->Initialize(inApplicationName);
 
 		// Create renderer
-		mRenderer = Renderer::sCreate();
+	#ifdef JPH_USE_VK
+		if (std::find(args.begin(), args.end(), "-vulkan") != args.end())
+			mRenderer = CreateRendererVK();
+		else
+	#endif
+			mRenderer = Renderer::sCreate();
 		mRenderer->Initialize(mWindow);
 
 		// Create font
@@ -122,7 +136,7 @@ Application::Application(const char *inApplicationName, [[maybe_unused]] const S
 	}
 
 	// Get initial time
-	mLastUpdateTime = chrono::high_resolution_clock::now();
+	mLastUpdateTime = std::chrono::high_resolution_clock::now();
 }
 
 // Destructor
@@ -210,8 +224,8 @@ bool Application::RenderFrame()
 		}
 
 	// Calculate delta time
-	chrono::high_resolution_clock::time_point time = chrono::high_resolution_clock::now();
-	chrono::microseconds delta = chrono::duration_cast<chrono::microseconds>(time - mLastUpdateTime);
+	std::chrono::high_resolution_clock::time_point time = std::chrono::high_resolution_clock::now();
+	std::chrono::microseconds delta = std::chrono::duration_cast<std::chrono::microseconds>(time - mLastUpdateTime);
 	mLastUpdateTime = time;
 	float clock_delta_time = 1.0e-6f * delta.count();
 	float world_delta_time = 0.0f;
@@ -271,7 +285,8 @@ bool Application::RenderFrame()
 		UpdateCamera(clock_delta_time);
 
 	// Start rendering
-	mRenderer->BeginFrame(mWorldCamera, GetWorldScale());
+	if (!mRenderer->BeginFrame(mWorldCamera, GetWorldScale()))
+		return true;
 
 	// Draw from light
 	static_cast<DebugRendererImp *>(mDebugRenderer)->DrawShadowPass();

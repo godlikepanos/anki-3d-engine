@@ -108,7 +108,7 @@ PipelineStateVK::PipelineStateVK(RendererVK *inRenderer, const VertexShaderVK *i
 	depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	depth_stencil.depthTestEnable = inDepthTest == EDepthTest::On? VK_TRUE : VK_FALSE;
 	depth_stencil.depthWriteEnable = inDepthTest == EDepthTest::On? VK_TRUE : VK_FALSE;
-	depth_stencil.depthCompareOp = VK_COMPARE_OP_GREATER; // Reverse-Z, greater is closer
+	depth_stencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; // Reverse-Z, greater is closer
 
 	VkPipelineColorBlendAttachmentState color_blend_attachment = {};
 	color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -142,12 +142,12 @@ PipelineStateVK::PipelineStateVK(RendererVK *inRenderer, const VertexShaderVK *i
 	};
 	VkPipelineDynamicStateCreateInfo dynamic_state = {};
 	dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamic_state.dynamicStateCount = std::size(dynamic_states);
+	dynamic_state.dynamicStateCount = (uint32)std::size(dynamic_states);
 	dynamic_state.pDynamicStates = dynamic_states;
 
 	VkGraphicsPipelineCreateInfo pipeline_info = {};
 	pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipeline_info.stageCount = std::size(shader_stages);
+	pipeline_info.stageCount = (uint32)std::size(shader_stages);
 	pipeline_info.pStages = shader_stages;
 	pipeline_info.pVertexInputState = &vertex_input_info;
 	pipeline_info.pInputAssemblyState = &input_assembly;
@@ -159,17 +159,17 @@ PipelineStateVK::PipelineStateVK(RendererVK *inRenderer, const VertexShaderVK *i
 	pipeline_info.pDynamicState = &dynamic_state;
 	pipeline_info.layout = mRenderer->GetPipelineLayout();
 	pipeline_info.renderPass = inDrawPass == EDrawPass::Normal? mRenderer->GetRenderPass() : mRenderer->GetRenderPassShadow();
-	FatalErrorIfFailed(vkCreateGraphicsPipelines(mRenderer->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &mGraphicsPipeline));
+	FatalErrorIfFailed(mRenderer->mVkCreateGraphicsPipelines(mRenderer->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &mGraphicsPipeline));
 }
 
 PipelineStateVK::~PipelineStateVK()
 {
-	vkDeviceWaitIdle(mRenderer->GetDevice());
+	mRenderer->mVkDeviceWaitIdle(mRenderer->GetDevice());
 
-	vkDestroyPipeline(mRenderer->GetDevice(), mGraphicsPipeline, nullptr);
+	mRenderer->mVkDestroyPipeline(mRenderer->GetDevice(), mGraphicsPipeline, nullptr);
 }
 
 void PipelineStateVK::Activate()
 {
-	vkCmdBindPipeline(mRenderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
+	mRenderer->mVkCmdBindPipeline(mRenderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 }

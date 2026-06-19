@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/General/FrictionPerTriangleTest.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
@@ -80,7 +80,7 @@ void FrictionPerTriangleTest::sOverrideContactSettings(const Body &inBody1, cons
 	sGetFrictionAndRestitution(inBody2, inManifold.mSubShapeID2, friction2, restitution2);
 
 	// Use the default formulas for combining friction and restitution
-	ioSettings.mCombinedFriction = sqrt(friction1 * friction2);
+	ioSettings.mCombinedFriction = Sqrt(friction1 * friction2);
 	ioSettings.mCombinedRestitution = max(restitution1, restitution2);
 }
 

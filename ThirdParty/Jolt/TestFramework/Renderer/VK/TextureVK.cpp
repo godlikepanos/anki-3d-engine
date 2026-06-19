@@ -48,18 +48,16 @@ TextureVK::TextureVK(RendererVK *inRenderer, const Surface *inSurface) :
 
 	int bpp = surface->GetBytesPerPixel();
 	VkDeviceSize image_size = VkDeviceSize(mWidth) * mHeight * bpp;
-	VkDevice device = mRenderer->GetDevice();
 
 	BufferVK staging_buffer;
 	mRenderer->CreateBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer);
 
 	// Copy data to upload texture
 	surface->Lock(ESurfaceLockMode::Read);
-	void *data;
-	vkMapMemory(device, staging_buffer.mMemory, staging_buffer.mOffset, image_size, 0, &data);
+	void *data = mRenderer->MapBuffer(staging_buffer);
 	for (int y = 0; y < mHeight; ++y)
 		memcpy(reinterpret_cast<uint8 *>(data) + y * mWidth * bpp, surface->GetData() + y * surface->GetStride(), mWidth * bpp);
-	vkUnmapMemory(device, staging_buffer.mMemory);
+	mRenderer->UnmapBuffer(staging_buffer);
 	surface->UnLock();
 
 	// Create destination image
@@ -75,7 +73,7 @@ TextureVK::TextureVK(RendererVK *inRenderer, const Surface *inSurface) :
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	region.imageSubresource.layerCount = 1;
 	region.imageExtent = { uint32(mWidth), uint32(mHeight), 1 };
-	vkCmdCopyBufferToImage(command_buffer, staging_buffer.mBuffer, mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+	mRenderer->mVkCmdCopyBufferToImage(command_buffer, staging_buffer.mBuffer, mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 	// Make the image suitable for sampling
 	TransitionImageLayout(command_buffer, mImage, vk_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -106,9 +104,9 @@ TextureVK::~TextureVK()
 	{
 		VkDevice device = mRenderer->GetDevice();
 
-		vkDeviceWaitIdle(device);
+		mRenderer->mVkDeviceWaitIdle(device);
 
-		vkDestroyImageView(device, mImageView, nullptr);
+		mRenderer->mVkDestroyImageView(device, mImageView, nullptr);
 
 		mRenderer->DestroyImage(mImage, mImageMemory);
 	}
@@ -117,7 +115,7 @@ TextureVK::~TextureVK()
 void TextureVK::Bind() const
 {
 	if (mDescriptorSet != VK_NULL_HANDLE)
-		vkCmdBindDescriptorSets(mRenderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mRenderer->GetPipelineLayout(), 1, 1, &mDescriptorSet, 0, nullptr);
+		mRenderer->mVkCmdBindDescriptorSets(mRenderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mRenderer->GetPipelineLayout(), 1, 1, &mDescriptorSet, 0, nullptr);
 }
 
 void TextureVK::CreateImageViewAndDescriptorSet(VkFormat inFormat, VkImageAspectFlags inAspectFlags, VkSampler inSampler)
@@ -134,7 +132,7 @@ void TextureVK::CreateImageViewAndDescriptorSet(VkFormat inFormat, VkImageAspect
 	descriptor_set_alloc_info.descriptorPool = mRenderer->GetDescriptorPool();
 	descriptor_set_alloc_info.descriptorSetCount = 1;
 	descriptor_set_alloc_info.pSetLayouts = &layout;
-	FatalErrorIfFailed(vkAllocateDescriptorSets(device, &descriptor_set_alloc_info, &mDescriptorSet));
+	FatalErrorIfFailed(mRenderer->mVkAllocateDescriptorSets(device, &descriptor_set_alloc_info, &mDescriptorSet));
 
 	VkDescriptorImageInfo image_info = {};
 	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -149,7 +147,7 @@ void TextureVK::CreateImageViewAndDescriptorSet(VkFormat inFormat, VkImageAspect
 	descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptor_write.descriptorCount = 1;
 	descriptor_write.pImageInfo = &image_info;
-	vkUpdateDescriptorSets(device, 1, &descriptor_write, 0, nullptr);
+	mRenderer->mVkUpdateDescriptorSets(device, 1, &descriptor_write, 0, nullptr);
 }
 
 void TextureVK::TransitionImageLayout(VkCommandBuffer inCommandBuffer, VkImage inImage, VkFormat inFormat, VkImageLayout inOldLayout, VkImageLayout inNewLayout)
@@ -169,12 +167,12 @@ void TextureVK::TransitionImageLayout(VkCommandBuffer inCommandBuffer, VkImage i
 	{
 		barrier.srcAccessMask = 0;
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		vkCmdPipelineBarrier(inCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		mRenderer->mVkCmdPipelineBarrier(inCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	}
 	else if (inOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && inNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 	{
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		vkCmdPipelineBarrier(inCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		mRenderer->mVkCmdPipelineBarrier(inCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	}
 }

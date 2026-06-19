@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2024 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/SoftBody/SoftBodyContactListenerTest.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -30,6 +30,13 @@ void SoftBodyContactListenerTest::Initialize()
 	StartCycle();
 }
 
+void SoftBodyContactListenerTest::UpdateLabel()
+{
+	// Draw current state
+	const char *cycle_names[] = { "Accept contact", "Sphere 10x mass", "Cloth 10x mass", "Sphere infinite mass", "Cloth infinite mass", "Sensor contact", "Reject contact", "Kinematic Sphere", "Kinematic Sphere, cloth infinite mass", "Kinematic sphere, sensor contact", "Kinematic Sphere, reject contact" };
+	SetBodyLabel(mOtherBodyID, cycle_names[mCycle]);
+}
+
 void SoftBodyContactListenerTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 {
 	mTime += inParams.mDeltaTime;
@@ -49,9 +56,7 @@ void SoftBodyContactListenerTest::PrePhysicsUpdate(const PreUpdateParams &inPara
 		StartCycle();
 	}
 
-	// Draw current state
-	const char *cycle_names[] = { "Accept contact", "Sphere 10x mass", "Cloth 10x mass", "Sphere infinite mass", "Cloth infinite mass", "Sensor contact", "Reject contact", "Kinematic Sphere", "Kinematic Sphere, cloth infinite mass", "Kinematic sphere, sensor contact", "Kinematic Sphere, reject contact" };
-	mDebugRenderer->DrawText3D(mBodyInterface->GetPosition(mOtherBodyID), cycle_names[mCycle], Color::sWhite, 1.0f);
+	UpdateLabel();
 }
 
 void SoftBodyContactListenerTest::StartCycle()
@@ -75,6 +80,8 @@ void SoftBodyContactListenerTest::StartCycle()
 	if (kinematic)
 		bcs.mLinearVelocity = Vec3(0, -2.5f, 0);
 	mOtherBodyID = mBodyInterface->CreateAndAddBody(bcs, EActivation::Activate);
+
+	UpdateLabel();
 }
 
 SoftBodyValidateResult SoftBodyContactListenerTest::OnSoftBodyContactValidate(const Body &inSoftBody, const Body &inOtherBody, SoftBodyContactSettings &ioSettings)
@@ -148,4 +155,16 @@ void SoftBodyContactListenerTest::OnSoftBodyContactAdded(const Body &inSoftBody,
 			mDebugRenderer->DrawMarker(position, Color::sRed, 0.1f);
 			mDebugRenderer->DrawArrow(position, position + normal, Color::sGreen, 0.1f);
 		}
+
+	// Draw the sensors that are in contact with the soft body
+	for (uint i = 0; i < inManifold.GetNumSensorContacts(); ++i)
+	{
+		BodyID sensor_id = inManifold.GetSensorContactBodyID(i);
+		BodyLockRead lock(mPhysicsSystem->GetBodyLockInterfaceNoLock(), sensor_id); // Can't lock in a callback
+		if (lock.SucceededAndIsInBroadPhase())
+		{
+			AABox bounds = lock.GetBody().GetWorldSpaceBounds();
+			DebugRenderer::sInstance->DrawWireBox(bounds, Color::sGreen);
+		}
+	}
 }

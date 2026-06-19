@@ -10,11 +10,16 @@
 #include <Jolt/Skeleton/SkeletonPose.h>
 #include <Jolt/Physics/Ragdoll/Ragdoll.h>
 
-// This test demonstrates powered constraints. It can either show a ragdoll in a static pose or in an animated pose (e.g. walk).
 class PoweredRigTest : public Test
 {
 public:
 	JPH_DECLARE_RTTI_VIRTUAL(JPH_NO_EXPORT, PoweredRigTest)
+
+	// Description of the test
+	virtual const char *	GetDescription() const override
+	{
+		return "Demonstrates how to use motors to drive a ragdoll to a pose.";
+	}
 
 	// Destructor
 	virtual					~PoweredRigTest() override;
@@ -40,9 +45,13 @@ private:
 	// Filename of animation to load for this test
 	static const char *		sAnimationName;
 
+	// Drive to pose using position motors (0) or position and velocity motors (1)
+	inline static int		sMotorMode = 0;
+
 	float					mTime = 0.0f;
 	Ref<RagdollSettings>	mRagdollSettings;
 	Ref<Ragdoll>			mRagdoll;
 	Ref<SkeletalAnimation>	mAnimation;
+	SkeletonPose			mPrevPose;
 	SkeletonPose			mPose;
 };

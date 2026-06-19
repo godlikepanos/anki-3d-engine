@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Renderer/PixelShader.h>
+#include <Renderer/VK/RendererVK.h>
 
 #include <vulkan/vulkan.h>
 
@@ -13,9 +14,8 @@ class PixelShaderVK : public PixelShader
 {
 public:
 	/// Constructor
-							PixelShaderVK(VkDevice inDevice, VkShaderModule inShaderModule) :
-		mDevice(inDevice),
-		mStageInfo()
+							PixelShaderVK(RendererVK *inRenderer, VkShaderModule inShaderModule) :
+		mRenderer(inRenderer)
 	{
 		mStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		mStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -26,9 +26,9 @@ public:
 	/// Destructor
 	virtual					~PixelShaderVK() override
 	{
-		vkDestroyShaderModule(mDevice, mStageInfo.module, nullptr);
+		mRenderer->mVkDestroyShaderModule(mRenderer->GetDevice(), mStageInfo.module, nullptr);
 	}
 
-	VkDevice				mDevice;
-	VkPipelineShaderStageCreateInfo mStageInfo;
+	RendererVK *			mRenderer;
+	VkPipelineShaderStageCreateInfo mStageInfo = {};
 };

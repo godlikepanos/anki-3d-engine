@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2022 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/Rig/BigWorldTest.h>
 #include <Jolt/Physics/PhysicsScene.h>
@@ -63,7 +63,7 @@ void BigWorldTest::Initialize()
 	for (Real distance : distances)
 	{
 		// Calculate origin for this simulation assuming we want to be 'distance' away and the same distance along each coordinate axis
-		RVec3 origin = RVec3::sReplicate(distance) / sqrt(3.0_r);
+		RVec3 origin = RVec3::sReplicate(distance) / Sqrt(3.0_r);
 
 		// Create floor (floor at 0 was already created)
 		if (distance != 0.0f)

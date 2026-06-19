@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2024 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/SoftBody/SoftBodyVertexRadiusTest.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -27,12 +27,12 @@ void SoftBodyVertexRadiusTest::Initialize()
 
 	// Create cloth with specified vertex radius
 	mSharedSettings = SoftBodyCreator::CreateCloth(30, 30, 0.5f);
-	mSharedSettings->mVertexRadius = sVertexRadius;
 	SoftBodyCreationSettings cloth(mSharedSettings, RVec3(0, 5, 0), Quat::sRotation(Vec3::sAxisY(), 0.25f * JPH_PI), Layers::MOVING);
+	cloth.mVertexRadius = sVertexRadius;
 	mBodyInterface->CreateAndAddSoftBody(cloth, EActivation::Activate);
 }
 
 void SoftBodyVertexRadiusTest::CreateSettingsMenu(DebugUI *inUI, UIElement *inSubMenu)
 {
-	inUI->CreateSlider(inSubMenu, "Vertex Radius", sVertexRadius, 0.0f, 0.5f, 0.01f, [this](float inValue) { sVertexRadius = inValue; mSharedSettings->mVertexRadius = inValue; });
+	inUI->CreateSlider(inSubMenu, "Vertex Radius", sVertexRadius, 0.0f, 0.5f, 0.01f, [](float inValue) { sVertexRadius = inValue; });
 }

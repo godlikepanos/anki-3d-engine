@@ -3,6 +3,7 @@ set(UNIT_TESTS_ROOT ${PHYSICS_REPO_ROOT}/UnitTests)
 
 # Source files
 set(UNIT_TESTS_SRC_FILES
+	${UNIT_TESTS_ROOT}/Compute/ComputeTests.cpp
 	${UNIT_TESTS_ROOT}/Core/ArrayTest.cpp
 	${UNIT_TESTS_ROOT}/Core/BinaryHeapTest.cpp
 	${UNIT_TESTS_ROOT}/Core/FPFlushDenormalsTest.cpp
@@ -10,7 +11,6 @@ set(UNIT_TESTS_SRC_FILES
 	${UNIT_TESTS_ROOT}/Core/InsertionSortTest.cpp
 	${UNIT_TESTS_ROOT}/Core/JobSystemTest.cpp
 	${UNIT_TESTS_ROOT}/Core/LinearCurveTest.cpp
-	${UNIT_TESTS_ROOT}/Core/PreciseMathTest.cpp
 	${UNIT_TESTS_ROOT}/Core/ScopeExitTest.cpp
 	${UNIT_TESTS_ROOT}/Core/STLLocalAllocatorTest.cpp
 	${UNIT_TESTS_ROOT}/Core/StringToolsTest.cpp
@@ -28,6 +28,7 @@ set(UNIT_TESTS_SRC_FILES
 	${UNIT_TESTS_ROOT}/Layers.h
 	${UNIT_TESTS_ROOT}/LoggingBodyActivationListener.h
 	${UNIT_TESTS_ROOT}/LoggingContactListener.h
+	${UNIT_TESTS_ROOT}/LoggingSoftBodyContactListener.h
 	${UNIT_TESTS_ROOT}/Math/BVec16Tests.cpp
 	${UNIT_TESTS_ROOT}/Math/DMat44Tests.cpp
 	${UNIT_TESTS_ROOT}/Math/DVec3Tests.cpp
@@ -88,6 +89,12 @@ if (ENABLE_OBJECT_STREAM)
 		${UNIT_TESTS_ROOT}/ObjectStream/ObjectStreamTest.cpp
 	)
 endif()
+
+# Assets used by the unit tests
+set(UNIT_TESTS_ASSETS
+	${JOLT_PHYSICS_SPV_SHADERS}
+	${JOLT_PHYSICS_METAL_LIB}
+)
 
 # Group source files
 source_group(TREE ${UNIT_TESTS_ROOT} FILES ${UNIT_TESTS_SRC_FILES})

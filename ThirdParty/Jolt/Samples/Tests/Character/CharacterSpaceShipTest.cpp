@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/Character/CharacterSpaceShipTest.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
@@ -11,6 +11,7 @@
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Layers.h>
+#include <Input/Keyboard.h>
 
 JPH_IMPLEMENT_RTTI_VIRTUAL(CharacterSpaceShipTest)
 {
@@ -39,7 +40,7 @@ void CharacterSpaceShipTest::Initialize()
 	StaticCompoundShapeSettings compound;
 	compound.SetEmbedded();
 	for (float h = cSpaceShipRingHeight; h < cSpaceShipHeight; h += cSpaceShipRingHeight)
-		compound.AddShape(Vec3::sZero(), Quat::sIdentity(), new CylinderShape(h, sqrt(Square(cSpaceShipRadius) - Square(cSpaceShipRadius - cSpaceShipHeight - cSpaceShipRingHeight + h))));
+		compound.AddShape(Vec3::sZero(), Quat::sIdentity(), new CylinderShape(h, Sqrt(Square(cSpaceShipRadius) - Square(cSpaceShipRadius - cSpaceShipHeight - cSpaceShipRingHeight + h))));
 	mSpaceShip = mBodyInterface->CreateAndAddBody(BodyCreationSettings(&compound, cShipInitialPosition, Quat::sIdentity(), EMotionType::Kinematic, Layers::MOVING), EActivation::Activate);
 	mSpaceShipPrevTransform = mBodyInterface->GetCenterOfMassTransform(mSpaceShip);
 }

@@ -47,6 +47,7 @@ JPH_SUPPRESS_WARNINGS
 #include "LargeMeshScene.h"
 #include "CharacterVirtualScene.h"
 #include "MaxBodiesScene.h"
+#include "HighSpeedScene.h"
 
 // Time step for physics
 constexpr float cDeltaTime = 1.0f / 60.0f;
@@ -122,6 +123,8 @@ int main(int argc, char** argv)
 				scene = unique_ptr<PerformanceTestScene>(new CharacterVirtualScene);
 			else if (strcmp(arg + 3, "MaxBodies") == 0)
 				scene = unique_ptr<MaxBodiesScene>(new MaxBodiesScene);
+			else if (strcmp(arg + 3, "HighSpeed") == 0)
+				scene = unique_ptr<PerformanceTestScene>(new HighSpeedScene);
 			else
 			{
 				Trace("Invalid scene");
@@ -218,9 +221,6 @@ int main(int argc, char** argv)
 	// Register all Jolt physics types
 	RegisterTypes();
 
-	// Create temp allocator
-	TempAllocatorImpl temp_allocator(scene->GetTempAllocatorSizeMB() * 1024 * 1024);
-
 	// Show used instruction sets
 	Trace(GetConfigurationString());
 
@@ -230,6 +230,9 @@ int main(int argc, char** argv)
 
 	// Output scene we're running
 	Trace("Running scene: %s", scene->GetName());
+
+	// Create temp allocator
+	TempAllocatorImpl temp_allocator(scene->GetTempAllocatorSizeMB() * 1024 * 1024);
 
 	// Find the asset path
 	bool found = false;
@@ -276,6 +279,9 @@ int main(int argc, char** argv)
 	// Start profiling this program
 	JPH_PROFILE_START("Main");
 
+	// Start the determinism log
+	JPH_DET_LOG_OPEN();
+
 	// Trace header
 	Trace("Motion Quality, Thread Count, Steps / Second, Hash");
 
@@ -309,7 +315,7 @@ int main(int argc, char** argv)
 
 				// Create physics system
 				PhysicsSystem physics_system;
-				physics_system.Init(scene->GetMaxBodies(), 0, 65536, 20480, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
+				physics_system.Init(scene->GetMaxBodies(), 0, scene->GetMaxBodyPairs(), scene->GetMaxContactConstraints(), broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 				// Start test scene
 				scene->StartTest(physics_system, motion_quality);
@@ -498,6 +504,9 @@ int main(int argc, char** argv)
 	delete Factory::sInstance;
 	Factory::sInstance = nullptr;
 
+	// End the determinism log
+	JPH_DET_LOG_CLOSE();
+
 	// End profiling this program
 	JPH_PROFILE_END();
 
@@ -509,6 +518,11 @@ int main(int argc, char** argv)
 // Main entry point for android
 void android_main(struct android_app *ioApp)
 {
+#ifdef JPH_ENABLE_DETERMINISM_LOG
+    // Determine base path for performance log
+	DeterminismLog::sBasePath = ioApp->activity->externalDataPath;
+#endif
+
 	// Run the regular main function
 	const char *args[] = { "Unused", "-s=ConvexVsMesh", "-t=max" };
 	main(size(args), (char **)args);

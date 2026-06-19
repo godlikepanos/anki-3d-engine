@@ -7,6 +7,7 @@
 #include <UI/UIManager.h>
 #include <UI/UIAnimationSlide.h>
 #include <Jolt/Core/Profiler.h>
+#include <Jolt/Core/FPException.h>
 #include <Renderer/Renderer.h>
 #include <Renderer/Font.h>
 
@@ -44,8 +45,8 @@ UIManager::UIManager(Renderer *inRenderer) :
 	Ref<PixelShader> pix_textured = mRenderer->CreatePixelShader("UIPixelShader");
 	Ref<PixelShader> pix_untextured = mRenderer->CreatePixelShader("UIPixelShaderUntextured");
 
-	mTextured = mRenderer->CreatePipelineState(vtx, vertex_desc, std::size(vertex_desc), pix_textured, PipelineState::EDrawPass::Normal, PipelineState::EFillMode::Solid, PipelineState::ETopology::Triangle, PipelineState::EDepthTest::Off, PipelineState::EBlendMode::AlphaBlend, PipelineState::ECullMode::Backface);
-	mUntextured = mRenderer->CreatePipelineState(vtx, vertex_desc, std::size(vertex_desc), pix_untextured, PipelineState::EDrawPass::Normal, PipelineState::EFillMode::Solid, PipelineState::ETopology::Triangle, PipelineState::EDepthTest::Off, PipelineState::EBlendMode::AlphaBlend, PipelineState::ECullMode::Backface);
+	mTextured = mRenderer->CreatePipelineState(vtx, vertex_desc, (uint)std::size(vertex_desc), pix_textured, PipelineState::EDrawPass::Normal, PipelineState::EFillMode::Solid, PipelineState::ETopology::Triangle, PipelineState::EDepthTest::Off, PipelineState::EBlendMode::AlphaBlend, PipelineState::ECullMode::Backface);
+	mUntextured = mRenderer->CreatePipelineState(vtx, vertex_desc, (uint)std::size(vertex_desc), pix_untextured, PipelineState::EDrawPass::Normal, PipelineState::EFillMode::Solid, PipelineState::ETopology::Triangle, PipelineState::EDepthTest::Off, PipelineState::EBlendMode::AlphaBlend, PipelineState::ECullMode::Backface);
 }
 
 UIManager::~UIManager()
@@ -264,6 +265,10 @@ void UIManager::DrawQuad(int inX, int inY, int inWidth, int inHeight, const UITe
 
 	if (inQuad.mTexture != nullptr)
 	{
+		// UV calculations below can generate exceptions
+		FPExceptionDisableInvalid disable_invalid;
+		JPH_UNUSED(disable_invalid);
+
 		bool has_inner = inQuad.HasInnerPart();
 
 		Ref<RenderPrimitive> primitive = mRenderer->CreateRenderPrimitive(PipelineState::ETopology::Triangle);

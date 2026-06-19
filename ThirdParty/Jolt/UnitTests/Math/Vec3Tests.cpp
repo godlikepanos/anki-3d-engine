@@ -252,22 +252,49 @@ TEST_SUITE("Vec3Tests")
 		CHECK(Vec3(-1, 2, -3).Abs() == Vec3(1, 2, 3));
 	}
 
+	TEST_CASE("TestVec3ReduceSum")
+	{
+		CHECK(Vec3(1, 10, 100).ReduceSum() == 111);
+#ifdef JPH_CROSS_PLATFORM_DETERMINISTIC
+		// Test handling of -0.0f
+		CHECK(BitCast<uint32>(Vec3(-0.0f, -0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec3(-0.0f, -0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec3(-0.0f, 0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec3(-0.0f, 0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, -0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, -0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, 0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, 0.0f, 0.0f).ReduceSum()) == 0);
+#endif
+	}
+
 	TEST_CASE("TestVec3Dot")
 	{
 		CHECK(Vec3(1, 2, 3).Dot(Vec3(4, 5, 6)) == float(1 * 4 + 2 * 5 + 3 * 6));
 		CHECK(Vec3(1, 2, 3).DotV(Vec3(4, 5, 6)) == Vec3::sReplicate(1 * 4 + 2 * 5 + 3 * 6));
 		CHECK(Vec3(1, 2, 3).DotV4(Vec3(4, 5, 6)) == Vec4::sReplicate(1 * 4 + 2 * 5 + 3 * 6));
+#ifdef JPH_CROSS_PLATFORM_DETERMINISTIC
+		// Test handling of -0.0f
+		CHECK(BitCast<uint32>(Vec3(-0.0f, -0.0f, -0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec3(-0.0f, -0.0f, 0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec3(-0.0f, 0.0f, -0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec3(-0.0f, 0.0f, 0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, -0.0f, -0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, -0.0f, 0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, 0.0f, -0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec3(0.0f, 0.0f, 0.0f).Dot(Vec3::sReplicate(1.0f))) == 0);
+#endif
 	}
 
 	TEST_CASE("TestVec3Length")
 	{
 		CHECK(Vec3(1, 2, 3).LengthSq() == float(1 + 4 + 9));
-		CHECK(Vec3(1, 2, 3).Length() == sqrt(float(1 + 4 + 9)));
+		CHECK(Vec3(1, 2, 3).Length() == Sqrt(float(1 + 4 + 9)));
 	}
 
 	TEST_CASE("TestVec3Sqrt")
 	{
-		CHECK_APPROX_EQUAL(Vec3(13, 15, 17).Sqrt(), Vec3(sqrt(13.0f), sqrt(15.0f), sqrt(17.0f)));
+		CHECK_APPROX_EQUAL(Vec3(13, 15, 17).Sqrt(), Vec3(Sqrt(13.0f), Sqrt(15.0f), Sqrt(17.0f)));
 	}
 
 	TEST_CASE("TestVec3Cross")
@@ -282,11 +309,11 @@ TEST_SUITE("Vec3Tests")
 
 	TEST_CASE("TestVec3Normalize")
 	{
-		CHECK(Vec3(3, 2, 1).Normalized() == Vec3(3, 2, 1) / sqrt(9.0f + 4.0f + 1.0f));
-		CHECK(Vec3(3, 2, 1).NormalizedOr(Vec3(1, 2, 3)) == Vec3(3, 2, 1) / sqrt(9.0f + 4.0f + 1.0f));
+		CHECK(Vec3(3, 2, 1).Normalized() == Vec3(3, 2, 1) / Sqrt(9.0f + 4.0f + 1.0f));
+		CHECK(Vec3(3, 2, 1).NormalizedOr(Vec3(1, 2, 3)) == Vec3(3, 2, 1) / Sqrt(9.0f + 4.0f + 1.0f));
 		CHECK(Vec3::sZero().NormalizedOr(Vec3(1, 2, 3)) == Vec3(1, 2, 3));
-		CHECK(Vec3(0.999f * sqrt(FLT_MIN), 0, 0).NormalizedOr(Vec3(1, 2, 3)) == Vec3(1, 2, 3)); // A vector that has a squared length that is denormal should also be treated as zero
-		CHECK_APPROX_EQUAL(Vec3(1.001f * sqrt(FLT_MIN), 0, 0).NormalizedOr(Vec3(1, 2, 3)), Vec3(1, 0, 0)); // A value that is just above being denormal should work normally
+		CHECK(Vec3(0.999f * Sqrt(FLT_MIN), 0, 0).NormalizedOr(Vec3(1, 2, 3)) == Vec3(1, 2, 3)); // A vector that has a squared length that is denormal should also be treated as zero
+		CHECK_APPROX_EQUAL(Vec3(1.001f * Sqrt(FLT_MIN), 0, 0).NormalizedOr(Vec3(1, 2, 3)), Vec3(1, 0, 0)); // A value that is just above being denormal should work normally
 	}
 
 	TEST_CASE("TestVec3Cast")
@@ -310,12 +337,40 @@ TEST_SUITE("Vec3Tests")
 			CHECK(p.IsNormalized());
 			CHECK(abs(v.Dot(p)) < 1.0e-6f);
 		}
+
+	#ifdef JPH_CROSS_PLATFORM_DETERMINISTIC
+		// Check treatment of -0.0f
+		CHECK(UVec4::sEquals(Vec3(0.0f, 0.0f, 2.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 1.0f, 0.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(0.0f, -0.0f, 2.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 1.0f, 0.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(-0.0f, 0.0f, 2.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 1.0f, 0.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(-0.0f, -0.0f, 2.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 1.0f, 0.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(0.0f, 2.0f, 0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(0.0f, 2.0f, -0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, -0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(-0.0f, 2.0f, 0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(-0.0f, 2.0f, -0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, -0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(2.0f, 0.0f, 0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(2.0f, 0.0f, -0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(-0.0f, 0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(2.0f, -0.0f, 0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(0.0f, 0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+		CHECK(UVec4::sEquals(Vec3(2.0f, -0.0f, -0.0f).GetNormalizedPerpendicular().ReinterpretAsInt(), Vec3(-0.0f, 0.0f, -1.0f).ReinterpretAsInt()).TestAllXYZTrue());
+	#endif
 	}
 
 	TEST_CASE("TestVec3Sign")
 	{
 		CHECK(Vec3(1.2345f, -6.7891f, 0).GetSign() == Vec3(1, -1, 1));
 		CHECK(Vec3(0, 2.3456f, -7.8912f).GetSign() == Vec3(1, 1, -1));
+		CHECK(Vec3(-0.0f, 0.0f, -0.0f).GetSign() == Vec3(-1, 1, -1));
+		CHECK(Vec3(1.0f, -1.0f, 1.0f).GetSign() == Vec3(1, -1, 1));
+		CHECK(Vec3(FLT_TRUE_MIN, -FLT_TRUE_MIN, FLT_TRUE_MIN).GetSign() == Vec3(1, -1, 1)); // Denormal number
+		CHECK(Vec3(numeric_limits<float>::infinity(), -numeric_limits<float>::infinity(), numeric_limits<float>::infinity()).GetSign() == Vec3(1, -1, 1));
+	}
+
+	TEST_CASE("TestVec3FlipSign")
+	{
+		Vec3 v(1, 2, 3);
+		CHECK(v.FlipSign<-1, 1, 1>() == Vec3(-1, 2, 3));
+		CHECK(v.FlipSign<1, -1, 1>() == Vec3(1, -2, 3));
+		CHECK(v.FlipSign<1, 1, -1>() == Vec3(1, 2, -3));
 	}
 
 #ifdef JPH_FLOATING_POINT_EXCEPTIONS_ENABLED
@@ -375,5 +430,39 @@ TEST_SUITE("Vec3Tests")
 	{
 		Vec3 v(1, 2, 3);
 		CHECK(ConvertToString(v) == "1, 2, 3");
+	}
+
+	TEST_CASE("TestVec3CompressUnitVector")
+	{
+		// We want these to be preserved exactly
+		CHECK(Vec3::sDecompressUnitVector(Vec3::sAxisX().CompressUnitVector()) == Vec3::sAxisX());
+		CHECK(Vec3::sDecompressUnitVector(Vec3::sAxisY().CompressUnitVector()) == Vec3::sAxisY());
+		CHECK(Vec3::sDecompressUnitVector(Vec3::sAxisZ().CompressUnitVector()) == Vec3::sAxisZ());
+		CHECK(Vec3::sDecompressUnitVector((-Vec3::sAxisX()).CompressUnitVector()) == -Vec3::sAxisX());
+		CHECK(Vec3::sDecompressUnitVector((-Vec3::sAxisY()).CompressUnitVector()) == -Vec3::sAxisY());
+		CHECK(Vec3::sDecompressUnitVector((-Vec3::sAxisZ()).CompressUnitVector()) == -Vec3::sAxisZ());
+
+		UnitTestRandom random;
+		for (int i = 0; i < 1000; ++i)
+		{
+			Vec3 v = Vec3::sRandom(random);
+			uint32 compressed = v.CompressUnitVector();
+			Vec3 decompressed = Vec3::sDecompressUnitVector(compressed);
+			float diff = (decompressed - v).Length();
+			CHECK(diff < 1.0e-4f);
+		}
+	}
+
+	TEST_CASE("TestDifferenceOfProducts")
+	{
+		Vec3 a = Vec3(33962.035f, 33962.0351f, 33962.0352f), b = Vec3(-30438.8f, -30438.801f, -30438.802f), c = Vec3(41563.4f, 41563.401f, 41563.402f), d = Vec3(-24871.969f, -24871.970f, -24871.971f);
+		Vec3 result = Vec3::sDifferenceOfProducts(a, b, c, d);
+		DVec3 expected = DVec3(a) * DVec3(b) - DVec3(c) * DVec3(d);
+		CHECK(expected == DVec3(-75.165603637695312, 103.16904449462891, 36.836944580078125));
+	#ifdef JPH_USE_FMADD
+		CHECK(result == Vec3(expected));
+	#else
+		CHECK(result == Vec3(-128.0f, 64.0f, 0.0f)); // The products are in the order of 10^9, so the subtraction causes a large loss of precision and we get a very different result. This is expected when fused multiply add instructions are not available.
+	#endif
 	}
 }

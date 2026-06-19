@@ -159,8 +159,8 @@ TEST_SUITE("DVec3Tests")
 
 	TEST_CASE("TestDVec3Select")
 	{
-		const double cTrue2 = BitCast<double>(uint64(1) << 63);
-		const double cFalse2 = BitCast<double>(~uint64(0) >> 1);
+		constexpr double cTrue2 = BitCast<double>(uint64(1) << 63);
+		constexpr double cFalse2 = BitCast<double>(~uint64(0) >> 1);
 
 		CHECK(DVec3::sSelect(DVec3(1, 2, 3), DVec3(4, 5, 6), DVec3(DVec3::cTrue, DVec3::cFalse, DVec3::cTrue)) == DVec3(4, 2, 6));
 		CHECK(DVec3::sSelect(DVec3(1, 2, 3), DVec3(4, 5, 6), DVec3(DVec3::cFalse, DVec3::cTrue, DVec3::cFalse)) == DVec3(1, 5, 3));
@@ -251,12 +251,12 @@ TEST_SUITE("DVec3Tests")
 	TEST_CASE("TestDVec3Length")
 	{
 		CHECK(DVec3(2, 3, 4).LengthSq() == double(4 + 9 + 16));
-		CHECK(DVec3(2, 3, 4).Length() == sqrt(double(4 + 9 + 16)));
+		CHECK(DVec3(2, 3, 4).Length() == Sqrt(double(4 + 9 + 16)));
 	}
 
 	TEST_CASE("TestDVec3Sqrt")
 	{
-		CHECK(DVec3(13, 15, 17).Sqrt() == DVec3(sqrt(13.0), sqrt(15.0), sqrt(17.0)));
+		CHECK(DVec3(13, 15, 17).Sqrt() == DVec3(Sqrt(13.0), Sqrt(15.0), Sqrt(17.0)));
 	}
 
 	TEST_CASE("TestDVec3Equals")
@@ -279,6 +279,29 @@ TEST_SUITE("DVec3Tests")
 		CHECK(d3 == d3_out);
 	}
 
+	TEST_CASE("TestDVec3StoreDouble3EdgeCases")
+	{
+		// Negative, zero, and large values to stress SIMD lane handling
+		{
+			DVec3 v(-1.23456789, 0.0, 1.23456789e10);
+			Double3 out;
+			v.StoreDouble3(&out);
+			CHECK(out.x == v.GetX());
+			CHECK(out.y == v.GetY());
+			CHECK(out.z == v.GetZ());
+		}
+
+		// Negative zero can expose SIMD mask bugs
+		{
+			DVec3 v(-0.0, -0.0, -0.0);
+			Double3 out;
+			v.StoreDouble3(&out);
+			CHECK(BitCast<uint64>(out.x) == BitCast<uint64>(v.GetX()));
+			CHECK(BitCast<uint64>(out.y) == BitCast<uint64>(v.GetY()));
+			CHECK(BitCast<uint64>(out.z) == BitCast<uint64>(v.GetZ()));
+		}
+	}
+
 	TEST_CASE("TestDVec3Cross")
 	{
 		CHECK(DVec3(1, 0, 0).Cross(DVec3(0, 1, 0)) == DVec3(0, 0, 1));
@@ -291,13 +314,17 @@ TEST_SUITE("DVec3Tests")
 
 	TEST_CASE("TestDVec3Normalize")
 	{
-		CHECK(DVec3(3, 2, 1).Normalized() == DVec3(3, 2, 1) / sqrt(9.0 + 4.0 + 1.0));
+		CHECK(DVec3(3, 2, 1).Normalized() == DVec3(3, 2, 1) / Sqrt(9.0 + 4.0 + 1.0));
 	}
 
 	TEST_CASE("TestDVec3Sign")
 	{
 		CHECK(DVec3(1.2345, -6.7891, 0).GetSign() == DVec3(1, -1, 1));
 		CHECK(DVec3(0, 2.3456, -7.8912).GetSign() == DVec3(1, 1, -1));
+		CHECK(DVec3(-0.0, 0.0, -0.0).GetSign() == DVec3(-1, 1, -1));
+		CHECK(DVec3(1.0, -1.0, 1.0).GetSign() == DVec3(1, -1, 1));
+		CHECK(DVec3(DBL_TRUE_MIN, -DBL_TRUE_MIN, DBL_TRUE_MIN).GetSign() == DVec3(1, -1, 1)); // Denormal number
+		CHECK(DVec3(numeric_limits<double>::infinity(), -numeric_limits<double>::infinity(), numeric_limits<double>::infinity()).GetSign() == DVec3(1, -1, 1));
 	}
 
 	TEST_CASE("TestDVec3ConvertToString")

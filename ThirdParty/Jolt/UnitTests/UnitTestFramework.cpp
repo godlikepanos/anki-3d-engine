@@ -6,6 +6,7 @@
 #include <Jolt/ConfigurationString.h>
 #include <Jolt/Core/FPException.h>
 #include <Jolt/Core/Factory.h>
+#include <Jolt/Core/LSANSuppressions.h>
 #include <Jolt/RegisterTypes.h>
 #ifdef JPH_PLATFORM_WINDOWS
 #include <crtdbg.h>
@@ -28,6 +29,8 @@ using namespace JPH;
 
 JPH_SUPPRESS_WARNINGS_STD_BEGIN
 JPH_CLANG_16_PLUS_SUPPRESS_WARNING("-Wunsafe-buffer-usage")
+JPH_MSVC2026_PLUS_SUPPRESS_WARNING(4865) // wingdi.h(2806,1): '<unnamed-enum-DISPLAYCONFIG_OUTPUT_TECHNOLOGY_OTHER>': the underlying type will change from 'int' to '__int64' when '/Zc:enumTypes' is specified on the command line
+JPH_MSVC2026_PLUS_SUPPRESS_WARNING(5291) // 'doctest::DiscardOStream': deriving from the base class 'std::basic_ostream<char,std::char_traits<char>>' can cause potential runtime issues due to an ABI bug. Recommend adding a 4-byte data member to the base class for the padding at the end of it to work around this bug.
 #include "doctest.h"
 JPH_SUPPRESS_WARNINGS_STD_END
 
@@ -351,7 +354,7 @@ void android_main(struct android_app *ioApp)
 	android_poll_source *source;
 	do
 	{
-		if (ALooper_pollAll(1, nullptr, &events, (void **)&source) >= 0 && source != nullptr)
+		if (ALooper_pollOnce(1, nullptr, &events, (void **)&source) >= 0 && source != nullptr)
 			source->process(ioApp, source);
 	} while (ioApp->destroyRequested == 0);
 }

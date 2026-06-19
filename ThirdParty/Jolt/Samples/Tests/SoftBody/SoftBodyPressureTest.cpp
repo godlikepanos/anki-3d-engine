@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include <TestFramework.h>
+#include <Samples.h>
 
 #include <Tests/SoftBody/SoftBodyPressureTest.h>
 #include <Jolt/Physics/SoftBody/SoftBodyCreationSettings.h>
@@ -26,6 +26,7 @@ void SoftBodyPressureTest::Initialize()
 	{
 		sphere.mPosition = RVec3(-50.0f + i * 10.0f, 10.0f, 0);
 		sphere.mPressure = 1000.0f * i;
-		mBodyInterface->CreateAndAddSoftBody(sphere, EActivation::Activate);
+		BodyID id = mBodyInterface->CreateAndAddSoftBody(sphere, EActivation::Activate);
+		SetBodyLabel(id, StringFormat("Pressure: %g", double(sphere.mPressure)));
 	}
 }

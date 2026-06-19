@@ -18,6 +18,7 @@
 namespace JPH {
 	class JobSystem;
 	class TempAllocator;
+	class ComputeSystemCPU;
 };
 
 // Application class that runs the samples
@@ -92,6 +93,12 @@ private:
 	TempAllocator *			mTempAllocator = nullptr;									// Allocator for temporary allocations
 	JobSystem *				mJobSystem = nullptr;										// The job system that runs physics jobs
 	JobSystem *				mJobSystemValidating = nullptr;								// The job system to use when validating determinism
+	Ref<ComputeSystem>		mComputeSystem = nullptr;									// The compute system to use for compute jobs
+	Ref<ComputeQueue>		mComputeQueue = nullptr;									// The compute queue to use for compute jobs
+#ifdef JPH_USE_CPU_COMPUTE
+	Ref<ComputeSystemCPU>	mComputeSystemCPU = nullptr;								// The compute system to use for CPU compute jobs
+	Ref<ComputeQueue>		mComputeQueueCPU = nullptr;									// The compute queue to use for CPU compute jobs
+#endif // JPH_USE_CPU_COMPUTE
 	BPLayerInterfaceImpl	mBroadPhaseLayerInterface;									// The broadphase layer interface that maps object layers to broadphase layers
 	ObjectVsBroadPhaseLayerFilterImpl mObjectVsBroadPhaseLayerFilter;					// Class that filters object vs broadphase layers
 	ObjectLayerPairFilterImpl mObjectVsObjectLayerFilter;								// Class that filters object vs object layers
@@ -105,7 +112,7 @@ private:
 	bool					mDrawConstraints = false;									// If the constraints should be drawn
 	bool					mDrawConstraintLimits = false;								// If the constraint limits should be drawn
 	bool					mDrawConstraintReferenceFrame = false;						// If the constraint reference frames should be drawn
-	bool					mDrawPhysicsSystemBounds = false;							// If the bounds of the physics system should be drawn
+	bool					mDrawBroadPhaseBounds = false;								// If the bounds of the broadphase should be drawn
 	BodyManager::DrawSettings mBodyDrawSettings;										// Settings for how to draw bodies from the body manager
 	SkeletonPose::DrawSettings mPoseDrawSettings;										// Settings for drawing skeletal poses
 #endif // JPH_DEBUG_RENDERER
@@ -118,15 +125,18 @@ private:
 	const RTTI *			mTestClass = nullptr;										// RTTI information for the test we're currently running
 	Test *					mTest = nullptr;											// The test we're currently running
 	UITextButton *			mTestSettingsButton = nullptr;								// Button that activates the menu that the test uses to configure additional settings
+	int						mShowDescription = 0;										// If > 0, render the description of the test
 
 	// Automatic cycling through tests
-	Array<const RTTI *>		mTestsToRun;												// The list of tests that are still waiting to be run
+	bool					mIsRunningAllTests = false;									// If the user selected the 'Run All Tests' option
 	float					mTestTimeLeft = -1.0f;										// How many seconds the test is still supposed to run
 	bool					mExitAfterRunningTests = false;								// When true, the application will quit when mTestsToRun becomes empty
-	UITextButton *			mNextTestButton = nullptr;									// Button that activates the next test when we're running all tests
 
 	// Test settings
 	bool					mInstallContactListener = false;							// When true, the contact listener is installed the next time the test is reset
+#ifdef JPH_USE_CPU_COMPUTE
+	bool					mUseGPUCompute = true;										// When true, uses the GPU compute system for compute jobs
+#endif // JPH_USE_CPU_COMPUTE
 
 	// State recording and determinism checks
 	bool					mRecordState = false;										// When true, the state of the physics system is recorded in mPlaybackFrames every physics update
@@ -197,6 +207,7 @@ private:
 	EActiveEdgeMode			mActiveEdgeMode = EActiveEdgeMode::CollideOnlyWithActive;	// How to handle active edges when doing a collision probe check.
 	ECollectFacesMode		mCollectFacesMode = ECollectFacesMode::NoFaces;				// If we should collect colliding faces
 	float					mMaxSeparationDistance = 0.0f;								// Max separation distance for collide shape test
+	float					mExtraConvexRadius = 0.0f;									// Extra convex radius for the cast shape test
 	bool					mTreatConvexAsSolid = true;									// For ray casts if the shape should be treated as solid or if the ray should only collide with the surface
 	bool					mReturnDeepestPoint = true;									// For shape casts, when true this will return the deepest point
 	bool					mUseShrunkenShapeAndConvexRadius = false;					// Shrink then expand the shape by the convex radius

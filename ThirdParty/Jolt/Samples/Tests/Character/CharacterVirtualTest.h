@@ -6,11 +6,16 @@
 
 #include <Tests/Character/CharacterBaseTest.h>
 
-// Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
 class CharacterVirtualTest : public CharacterBaseTest, public CharacterContactListener
 {
 public:
 	JPH_DECLARE_RTTI_VIRTUAL(JPH_NO_EXPORT, CharacterVirtualTest)
+
+	// Description of the test
+	virtual const char *	GetDescription() const override
+	{
+		return "Shows the CharacterVirtual class. Move around with the arrow keys, Shift for crouch and Ctrl for jump.";
+	}
 
 	// Initialize the test
 	virtual void			Initialize() override;
@@ -22,23 +27,26 @@ public:
 	virtual void			SaveState(StateRecorder &inStream) const override;
 	virtual void			RestoreState(StateRecorder &inStream) override;
 
+	/// Checks if a character can collide with specified body. Return true if the contact is valid.
+	virtual bool			OnContactValidate(const CharacterVirtual *inCharacter, const CharacterContact &inContact) override;
+
 	/// Callback to adjust the velocity of a body as seen by the character. Can be adjusted to e.g. implement a conveyor belt or an inertial dampener system of a sci-fi space ship.
 	virtual void			OnAdjustBodyVelocity(const CharacterVirtual *inCharacter, const Body &inBody2, Vec3 &ioLinearVelocity, Vec3 &ioAngularVelocity) override;
 
 	// Called whenever the character collides with a body.
-	virtual void			OnContactAdded(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings) override;
+	virtual void			OnContactAdded(const CharacterVirtual *inCharacter, const CharacterContact &inContact, CharacterContactSettings &ioSettings) override;
 
 	// Called whenever the character persists colliding with a body.
-	virtual void			OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings) override;
+	virtual void			OnContactPersisted(const CharacterVirtual *inCharacter, const CharacterContact &inContact, CharacterContactSettings &ioSettings) override;
 
 	// Called whenever the character loses contact with a body.
 	virtual void			OnContactRemoved(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2) override;
 
 	// Called whenever the character collides with a virtual character.
-	virtual void			OnCharacterContactAdded(const CharacterVirtual *inCharacter, const CharacterVirtual *inOtherCharacter, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings) override;
+	virtual void			OnCharacterContactAdded(const CharacterVirtual *inCharacter, const CharacterContact &inContact, CharacterContactSettings &ioSettings) override;
 
 	// Called whenever the character persists colliding with a virtual character.
-	virtual void			OnCharacterContactPersisted(const CharacterVirtual *inCharacter, const CharacterVirtual *inOtherCharacter, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings) override;
+	virtual void			OnCharacterContactPersisted(const CharacterVirtual *inCharacter, const CharacterContact &inContact, CharacterContactSettings &ioSettings) override;
 
 	// Called whenever the character loses contact with a virtual character.
 	virtual void			OnCharacterContactRemoved(const CharacterVirtual *inCharacter, const CharacterID &inOtherCharacterID, const SubShapeID &inSubShapeID2) override;
@@ -48,8 +56,8 @@ public:
 
 protected:
 	// Common function to be called when contacts are added/persisted
-	void					OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings);
-	void					OnCharacterContactCommon(const CharacterVirtual *inCharacter, const CharacterVirtual *inOtherCharacter, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings);
+	void					OnContactCommon(const CharacterVirtual *inCharacter, const CharacterContact &inContact, CharacterContactSettings &ioSettings);
+	void					OnCharacterContactCommon(const CharacterVirtual *inCharacter, const CharacterContact &inContact, CharacterContactSettings &ioSettings);
 
 	// Get position of the character
 	virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
@@ -93,6 +101,6 @@ private:
 	bool					mAllowSliding = false;
 
 	// Track active contacts for debugging purposes
-	using ContactSet = Array<CharacterVirtual::ContactKey>;
+	using ContactSet = Array<CharacterContactKey>;
 	ContactSet				mActiveContacts;
 };

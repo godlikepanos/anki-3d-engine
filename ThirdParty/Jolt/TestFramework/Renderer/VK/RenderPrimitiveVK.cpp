@@ -9,7 +9,7 @@
 
 void RenderPrimitiveVK::ReleaseVertexBuffer()
 {
-	mRenderer->FreeBuffer(mVertexBuffer);
+	mRenderer->FreeBufferDelayed(mVertexBuffer);
 	mVertexBufferDeviceLocal = false;
 
 	RenderPrimitive::ReleaseVertexBuffer();
@@ -17,7 +17,7 @@ void RenderPrimitiveVK::ReleaseVertexBuffer()
 
 void RenderPrimitiveVK::ReleaseIndexBuffer()
 {
-	mRenderer->FreeBuffer(mIndexBuffer);
+	mRenderer->FreeBufferDelayed(mIndexBuffer);
 	mIndexBufferDeviceLocal = false;
 
 	RenderPrimitive::ReleaseIndexBuffer();
@@ -41,14 +41,12 @@ void *RenderPrimitiveVK::LockVertexBuffer()
 {
 	JPH_ASSERT(!mVertexBufferDeviceLocal);
 
-	void *data;
-	FatalErrorIfFailed(vkMapMemory(mRenderer->GetDevice(), mVertexBuffer.mMemory, mVertexBuffer.mOffset, VkDeviceSize(mNumVtx) * mVtxSize, 0, &data));
-	return data;
+	return mRenderer->MapBuffer(mVertexBuffer);
 }
 
 void RenderPrimitiveVK::UnlockVertexBuffer()
 {
-	vkUnmapMemory(mRenderer->GetDevice(), mVertexBuffer.mMemory);
+	mRenderer->UnmapBuffer(mVertexBuffer);
 }
 
 void RenderPrimitiveVK::CreateIndexBuffer(int inNumIdx, const uint32 *inData)
@@ -69,14 +67,12 @@ uint32 *RenderPrimitiveVK::LockIndexBuffer()
 {
 	JPH_ASSERT(!mIndexBufferDeviceLocal);
 
-	void *data;
-	vkMapMemory(mRenderer->GetDevice(), mIndexBuffer.mMemory, mIndexBuffer.mOffset, VkDeviceSize(mNumIdx) * sizeof(uint32), 0, &data);
-	return reinterpret_cast<uint32 *>(data);
+	return reinterpret_cast<uint32 *>(mRenderer->MapBuffer(mIndexBuffer));
 }
 
 void RenderPrimitiveVK::UnlockIndexBuffer()
 {
-	vkUnmapMemory(mRenderer->GetDevice(), mIndexBuffer.mMemory);
+	mRenderer->UnmapBuffer(mIndexBuffer);
 }
 
 void RenderPrimitiveVK::Draw() const
@@ -85,16 +81,16 @@ void RenderPrimitiveVK::Draw() const
 
 	VkBuffer vertex_buffers[] = { mVertexBuffer.mBuffer };
 	VkDeviceSize offsets[] = { 0 };
-	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
+	mRenderer->mVkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
 
 	if (mIndexBuffer.mBuffer == VK_NULL_HANDLE)
 	{
-		vkCmdDraw(command_buffer, mNumVtxToDraw, 1, 0, 0);
+		mRenderer->mVkCmdDraw(command_buffer, mNumVtxToDraw, 1, 0, 0);
 	}
 	else
 	{
-		vkCmdBindIndexBuffer(command_buffer, mIndexBuffer.mBuffer, 0, VK_INDEX_TYPE_UINT32);
+		mRenderer->mVkCmdBindIndexBuffer(command_buffer, mIndexBuffer.mBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdDrawIndexed(command_buffer, mNumIdxToDraw, 1, 0, 0, 0);
+		mRenderer->mVkCmdDrawIndexed(command_buffer, mNumIdxToDraw, 1, 0, 0, 0);
 	}
 }

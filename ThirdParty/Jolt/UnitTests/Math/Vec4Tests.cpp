@@ -90,6 +90,8 @@ TEST_SUITE("Vec4Tests")
 	{
 		Vec4 v1(1, 6, 3, 8);
 		Vec4 v2(5, 2, 7, 4);
+		Vec4 v3(5, 7, 2, 4);
+		Vec4 v4(7, 5, 4, 2);
 
 		CHECK(Vec4::sMin(v1, v2) == Vec4(1, 2, 3, 4));
 		CHECK(Vec4::sMax(v1, v2) == Vec4(5, 6, 7, 8));
@@ -98,6 +100,52 @@ TEST_SUITE("Vec4Tests")
 		CHECK(v1.ReduceMax() == 8);
 		CHECK(v2.ReduceMin() == 2);
 		CHECK(v2.ReduceMax() == 7);
+
+		CHECK(v1.GetLowestComponentIndex() == 0);
+		CHECK(v1.GetHighestComponentIndex() == 3);
+		CHECK(v2.GetLowestComponentIndex() == 1);
+		CHECK(v2.GetHighestComponentIndex() == 2);
+		CHECK(v3.GetLowestComponentIndex() == 2);
+		CHECK(v3.GetHighestComponentIndex() == 1);
+		CHECK(v4.GetLowestComponentIndex() == 3);
+		CHECK(v4.GetHighestComponentIndex() == 0);
+	}
+
+	TEST_CASE("TestVec4ReduceSum")
+	{
+		Vec4 v1(1, 6, 3, 8);
+		Vec4 v2(-5, 2, -7, 4);
+
+		CHECK(v1.ReduceSum() == 1 + 6 + 3 + 8);
+		CHECK(v2.ReduceSum() == -5 + 2 - 7 + 4);
+	#ifdef JPH_CROSS_PLATFORM_DETERMINISTIC
+		// Test handling of -0.0f
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, -0.0f, -0.0f).ReduceSum()) == 0x80000000u);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, -0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, 0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, 0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, -0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, -0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, 0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, 0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, -0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, -0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, 0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, 0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, -0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, -0.0f, 0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, 0.0f, -0.0f).ReduceSum()) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, 0.0f, 0.0f).ReduceSum()) == 0);
+	#endif
+	}
+
+	TEST_CASE("TestVec4Clamp")
+	{
+		Vec4 v1(1, 2, 3, 4);
+		Vec4 v2(5, 6, 7, 8);
+		Vec4 v(-1, 3, 9, -11);
+
+		CHECK(Vec4::sClamp(v, v1, v2) == Vec4(1, 3, 7, 4));
 	}
 
 	TEST_CASE("TestVec4Comparisons")
@@ -140,6 +188,9 @@ TEST_SUITE("Vec4Tests")
 
 		CHECK(Vec4(1.001f, 0, 0, 0).IsNormalized(1.0e-2f));
 		CHECK(!Vec4(0, 1.001f, 0, 0).IsNormalized(1.0e-4f));
+
+		CHECK(Vec4(-1.0e-7f, 1.0e-7f, 1.0e-8f, -1.0e-8f).IsNearZero());
+		CHECK(!Vec4(-1.0e-7f, 1.0e-7f, -1.0e-5f, 1.0e-5f).IsNearZero());
 	}
 
 	TEST_CASE("TestVec4Operators")
@@ -189,6 +240,11 @@ TEST_SUITE("Vec4Tests")
 		CHECK(v.SplatY() == Vec4::sReplicate(2));
 		CHECK(v.SplatZ() == Vec4::sReplicate(3));
 		CHECK(v.SplatW() == Vec4::sReplicate(4));
+
+		CHECK(v.SplatX3() == Vec3::sReplicate(1));
+		CHECK(v.SplatY3() == Vec3::sReplicate(2));
+		CHECK(v.SplatZ3() == Vec3::sReplicate(3));
+		CHECK(v.SplatW3() == Vec3::sReplicate(4));
 
 		CHECK(v.Swizzle<SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X>() == Vec4(1, 1, 1, 1));
 		CHECK(v.Swizzle<SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_Y>() == Vec4(1, 1, 1, 2));
@@ -462,22 +518,41 @@ TEST_SUITE("Vec4Tests")
 	{
 		CHECK(Vec4(1, 2, 3, 4).Dot(Vec4(5, 6, 7, 8)) == float(1 * 5 + 2 * 6 + 3 * 7 + 4 * 8));
 		CHECK(Vec4(1, 2, 3, 4).DotV(Vec4(5, 6, 7, 8)) == Vec4::sReplicate(1 * 5 + 2 * 6 + 3 * 7 + 4 * 8));
+	#ifdef JPH_CROSS_PLATFORM_DETERMINISTIC
+		// Test handling of -0.0f
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, -0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0x80000000u);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, -0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, 0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, -0.0f, 0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, -0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, -0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, 0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(-0.0f, 0.0f, 0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, -0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, -0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, 0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, -0.0f, 0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, -0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, -0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, 0.0f, -0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+		CHECK(BitCast<uint32>(Vec4(0.0f, 0.0f, 0.0f, 0.0f).Dot(Vec4::sReplicate(1.0f))) == 0);
+	#endif
 	}
 
 	TEST_CASE("TestVec4Length")
 	{
 		CHECK(Vec4(1, 2, 3, 4).LengthSq() == float(1 + 4 + 9 + 16));
-		CHECK(Vec4(1, 2, 3, 4).Length() == sqrt(float(1 + 4 + 9 + 16)));
+		CHECK(Vec4(1, 2, 3, 4).Length() == Sqrt(float(1 + 4 + 9 + 16)));
 	}
 
 	TEST_CASE("TestVec4Sqrt")
 	{
-		CHECK_APPROX_EQUAL(Vec4(13, 15, 17, 19).Sqrt(), Vec4(sqrt(13.0f), sqrt(15.0f), sqrt(17.0f), sqrt(19.0f)));
+		CHECK_APPROX_EQUAL(Vec4(13, 15, 17, 19).Sqrt(), Vec4(Sqrt(13.0f), Sqrt(15.0f), Sqrt(17.0f), Sqrt(19.0f)));
 	}
 
 	TEST_CASE("TestVec4Normalize")
 	{
-		CHECK(Vec4(1, 2, 3, 4).Normalized() == Vec4(1, 2, 3, 4) / sqrt(30.0f));
+		CHECK(Vec4(1, 2, 3, 4).Normalized() == Vec4(1, 2, 3, 4) / Sqrt(30.0f));
 	}
 
 	TEST_CASE("TestVec4Cast")
@@ -490,6 +565,19 @@ TEST_SUITE("Vec4Tests")
 	{
 		CHECK(Vec4(1.2345f, -6.7891f, 0, 1).GetSign() == Vec4(1, -1, 1, 1));
 		CHECK(Vec4(0, 2.3456f, -7.8912f, -1).GetSign() == Vec4(1, 1, -1, -1));
+		CHECK(Vec4(-0.0f, 0.0f, -0.0f, 0.0f).GetSign() == Vec4(-1, 1, -1, 1));
+		CHECK(Vec4(1.0f, -1.0f, 1.0f, -1.0f).GetSign() == Vec4(1, -1, 1, -1));
+		CHECK(Vec4(FLT_TRUE_MIN, -FLT_TRUE_MIN, FLT_TRUE_MIN, -FLT_TRUE_MIN).GetSign() == Vec4(1, -1, 1, -1)); // Denormal number
+		CHECK(Vec4(numeric_limits<float>::infinity(), -numeric_limits<float>::infinity(), numeric_limits<float>::infinity(), -numeric_limits<float>::infinity()).GetSign() == Vec4(1, -1, 1, -1));
+	}
+
+	TEST_CASE("TestVec4FlipSign")
+	{
+		Vec4 v(1, 2, 3, 4);
+		CHECK(v.FlipSign<-1, 1, 1, 1>() == Vec4(-1, 2, 3, 4));
+		CHECK(v.FlipSign<1, -1, 1, 1>() == Vec4(1, -2, 3, 4));
+		CHECK(v.FlipSign<1, 1, -1, 1>() == Vec4(1, 2, -3, 4));
+		CHECK(v.FlipSign<1, 1, 1, -1>() == Vec4(1, 2, 3, -4));
 	}
 
 	TEST_CASE("TestVec4SignBit")
@@ -730,5 +818,50 @@ TEST_SUITE("Vec4Tests")
 	{
 		Vec4 v(1, 2, 3, 4);
 		CHECK(ConvertToString(v) == "1, 2, 3, 4");
+	}
+
+	TEST_CASE("TestVec4CompressUnitVector")
+	{
+		// We want these to be preserved exactly
+		CHECK(Vec4::sDecompressUnitVector(Vec4(1, 0, 0, 0).CompressUnitVector()) == Vec4(1, 0, 0, 0));
+		CHECK(Vec4::sDecompressUnitVector(Vec4(0, 1, 0, 0).CompressUnitVector()) == Vec4(0, 1, 0, 0));
+		CHECK(Vec4::sDecompressUnitVector(Vec4(0, 0, 1, 0).CompressUnitVector()) == Vec4(0, 0, 1, 0));
+		CHECK(Vec4::sDecompressUnitVector(Vec4(0, 0, 0, 1).CompressUnitVector()) == Vec4(0, 0, 0, 1));
+		CHECK(Vec4::sDecompressUnitVector(Vec4(-1, 0, 0, 0).CompressUnitVector()) == Vec4(-1, 0, 0, 0));
+		CHECK(Vec4::sDecompressUnitVector(Vec4(0, -1, 0, 0).CompressUnitVector()) == Vec4(0, -1, 0, 0));
+		CHECK(Vec4::sDecompressUnitVector(Vec4(0, 0, -1, 0).CompressUnitVector()) == Vec4(0, 0, -1, 0));
+		CHECK(Vec4::sDecompressUnitVector(Vec4(0, 0, 0, -1).CompressUnitVector()) == Vec4(0, 0, 0, -1));
+
+		UnitTestRandom random;
+		for (int i = 0; i < 1000; ++i)
+		{
+			std::uniform_real_distribution<float> scale(-1.0f, 1.0f);
+			Vec4 v = Vec4(scale(random), scale(random), scale(random), scale(random)).Normalized();
+			uint32 compressed = v.CompressUnitVector();
+			Vec4 decompressed = Vec4::sDecompressUnitVector(compressed);
+			float diff = (decompressed - v).Length();
+			CHECK(diff < 5.0e-3f);
+		}
+	}
+
+	TEST_CASE("TestDifferenceOfProducts")
+	{
+		Vec4 a = Vec4(33962.035f, 33962.0351f, 33962.0352f, 33962.0353f), b = Vec4(-30438.8f, -30438.801f, -30438.802f, -30438.803f), c = Vec4(41563.4f, 41563.401f, 41563.402f, 41563.403f), d = Vec4(-24871.969f, -24871.970f, -24871.971f, -24871.972f);
+		Vec4 result = Vec4::sDifferenceOfProducts(a, b, c, d);
+		double expected[4] = {
+			double(a.GetX()) * double(b.GetX()) - double(c.GetX()) * double(d.GetX()),
+			double(a.GetY()) * double(b.GetY()) - double(c.GetY()) * double(d.GetY()),
+			double(a.GetZ()) * double(b.GetZ()) - double(c.GetZ()) * double(d.GetZ()),
+			double(a.GetW()) * double(b.GetW()) - double(c.GetW()) * double(d.GetW())
+		};
+		CHECK(expected[0] == -75.165603637695312);
+		CHECK(expected[1] == 103.16904449462891);
+		CHECK(expected[2] == 36.836944580078125);
+		CHECK(expected[3] == 118.01546478271484);
+	#ifdef JPH_USE_FMADD
+		CHECK(result == Vec4(float(expected[0]), float(expected[1]), float(expected[2]), float(expected[3])));
+	#else
+		CHECK(result == Vec4(-128.0f, 64.0f, 0.0f, 64.0f)); // The products are in the order of 10^9, so the subtraction causes a large loss of precision and we get a very different result. This is expected when fused multiply add instructions are not available.
+	#endif
 	}
 }

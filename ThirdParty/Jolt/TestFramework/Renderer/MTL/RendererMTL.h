@@ -6,18 +6,20 @@
 
 #include <Renderer/Renderer.h>
 #include <Renderer/MTL/TextureMTL.h>
-
-#include <MetalKit/MetalKit.h>
+#include <Jolt/Compute/MTL/ComputeSystemMTL.h>
 
 /// Metal renderer
-class RendererMTL : public Renderer
+class RendererMTL : public Renderer, public ComputeSystemMTL
 {
 public:
+	/// Constructor / destructor
+									RendererMTL();
 	virtual 						~RendererMTL() override;
-	
+
 	// See: Renderer
 	virtual void					Initialize(ApplicationWindow *inWindow) override;
-	virtual void					BeginFrame(const CameraState &inCamera, float inWorldScale) override;
+	virtual ComputeSystem &			GetComputeSystem() override										{ return *this; }
+	virtual bool					BeginFrame(const CameraState &inCamera, float inWorldScale) override;
 	virtual void					EndShadowPass() override;
 	virtual void					EndFrame() override;
 	virtual void					SetProjectionMode() override;
@@ -25,14 +27,13 @@ public:
 	virtual Ref<Texture>			CreateTexture(const Surface *inSurface) override;
 	virtual Ref<VertexShader>		CreateVertexShader(const char *inName) override;
 	virtual Ref<PixelShader>		CreatePixelShader(const char *inName) override;
-	virtual unique_ptr<PipelineState> CreatePipelineState(const VertexShader *inVertexShader, const PipelineState::EInputDescription *inInputDescription, uint inInputDescriptionCount, const PixelShader *inPixelShader, PipelineState::EDrawPass inDrawPass, PipelineState::EFillMode inFillMode, PipelineState::ETopology inTopology, PipelineState::EDepthTest inDepthTest, PipelineState::EBlendMode inBlendMode, PipelineState::ECullMode inCullMode) override;
+	virtual std::unique_ptr<PipelineState> CreatePipelineState(const VertexShader *inVertexShader, const PipelineState::EInputDescription *inInputDescription, uint inInputDescriptionCount, const PixelShader *inPixelShader, PipelineState::EDrawPass inDrawPass, PipelineState::EFillMode inFillMode, PipelineState::ETopology inTopology, PipelineState::EDepthTest inDepthTest, PipelineState::EBlendMode inBlendMode, PipelineState::ECullMode inCullMode) override;
 	virtual RenderPrimitive *		CreateRenderPrimitive(PipelineState::ETopology inType) override;
 	virtual RenderInstances *		CreateRenderInstances() override;
 	virtual Texture *				GetShadowMap() const override									{ return mShadowMap; }
 	virtual void					OnWindowResize() override										{ }
 
 	MTKView *						GetView() const													{ return mView; }
-	id<MTLDevice>					GetDevice() const												{ return mView.device; }
 	id<MTLRenderCommandEncoder>		GetRenderEncoder() const										{ return mRenderEncoder; }
 
 private:

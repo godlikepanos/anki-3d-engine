@@ -5,16 +5,19 @@
 #pragma once
 
 #include <Jolt/Physics/PhysicsSystem.h>
-#include <Renderer/Renderer.h>
-#include <Input/Keyboard.h>
 #include <Jolt/Skeleton/SkeletonPose.h>
 #include <Jolt/Core/RTTI.h>
+#include <Jolt/Core/UnorderedMap.h>
+#include <Renderer/CameraState.h>
 
 class DebugUI;
 class UIElement;
+class Keyboard;
 namespace JPH {
 	class StateRecorder;
 	class JobSystem;
+	class ComputeSystem;
+	class ComputeQueue;
 	class ContactListener;
 	class DebugRenderer;
 }
@@ -33,11 +36,17 @@ public:
 	// Set the job system
 	void			SetJobSystem(JobSystem *inJobSystem)						{ mJobSystem = inJobSystem; }
 
+	// Set compute system and queue
+	void			SetComputeSystem(ComputeSystem *inComputeSystem, ComputeQueue *inComputeQueue) { mComputeSystem = inComputeSystem; mComputeQueue = inComputeQueue; }
+
 	// Set the debug renderer
 	void			SetDebugRenderer(DebugRenderer *inDebugRenderer)			{ mDebugRenderer = inDebugRenderer; }
 
 	// Set the temp allocator
 	void			SetTempAllocator(TempAllocator *inTempAllocator)			{ mTempAllocator = inTempAllocator; }
+
+	// Description of the test
+	virtual const char *GetDescription() const									{ return nullptr; }
 
 	// Initialize the test
 	virtual void	Initialize()												{ }
@@ -107,6 +116,9 @@ public:
 	// Return a string that is displayed in the top left corner of the screen
 	virtual String	GetStatusString() const										{ return String(); }
 
+	// Draw the body labels
+	void			DrawBodyLabels();
+
 protected:
 	// Utility function to create a static floor body
 	Body &			CreateFloor(float inSize = 200.0f);
@@ -118,7 +130,12 @@ protected:
 	Body &			CreateMeshTerrain();
 	Body &			CreateHeightFieldTerrain();
 
+	// Add a label to a body
+	void			SetBodyLabel(const BodyID &inBodyID, const String &inLabel)	{ mBodyLabels[inBodyID] = inLabel; }
+
 	JobSystem *		mJobSystem = nullptr;
+	ComputeSystem *	mComputeSystem = nullptr;
+	ComputeQueue *	mComputeQueue = nullptr;
 	PhysicsSystem *	mPhysicsSystem = nullptr;
 	BodyInterface *	mBodyInterface = nullptr;
 	DebugRenderer *	mDebugRenderer = nullptr;
@@ -126,4 +143,7 @@ protected:
 
 private:
 	bool			mNeedsRestart = false;
+
+	using BodyLabels = UnorderedMap<BodyID, String>;
+	BodyLabels		mBodyLabels;
 };
