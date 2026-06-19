@@ -72,6 +72,51 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			SceneGraph::getSingleton().deleteScene(activeScene);
 		}
 
+		// Save active scene
+		{
+			ImGui::SameLine();
+			Scene& activeScene = SceneGraph::getSingleton().getActiveScene();
+			ImGui::BeginDisabled(!activeScene.canBeSaved());
+			if(ImGui::Button(ICON_MDI_CONTENT_SAVE))
+			{
+				if(SceneGraph::getSingleton().saveScene(activeScene.getFilepath(), activeScene))
+				{
+					ANKI_LOGE("Failed to save scene");
+				}
+			}
+
+			ImGui::EndDisabled();
+			ImGui::SetItemTooltip("Save active scene");
+		}
+
+		// Save all scenes
+		ImGui::SameLine();
+		if(ImGui::Button(ICON_MDI_CONTENT_SAVE_ALL))
+		{
+			U32 scenesSaved = 0;
+			SceneGraph::getSingleton().visitScenes([&](Scene& scene) {
+				if(scene.canBeSaved())
+				{
+					if(SceneGraph::getSingleton().saveScene(scene.getFilepath(), scene))
+					{
+						ANKI_LOGE("Failed to save scene");
+					}
+					else
+					{
+						++scenesSaved;
+					}
+				}
+				else
+				{
+					ANKI_LOGV("Skip saving scene: %s", scene.getName().cstr());
+				}
+				return FunctorContinue::kContinue;
+			});
+
+			ANKI_LOGI("%u scenes saved", scenesSaved);
+		}
+		ImGui::SetItemTooltip("Save all scenes");
+
 		// Scene node filter
 		drawfilteredText(m_nodeNamesFilter);
 
@@ -122,16 +167,7 @@ void SceneHierarchyUi::doSceneNode(Bool focusOnSelectedNode, SceneNode& node, Sc
 	String componentsString;
 	for(SceneComponentType sceneComponentType : EnumBitsIterable<SceneComponentType, SceneComponentTypeMask>(node.getSceneComponentMask()))
 	{
-		switch(sceneComponentType)
-		{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
-	case SceneComponentType::k##name: \
-		componentsString += ICON_MDI_##icon; \
-		break;
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-		default:
-			ANKI_ASSERT(0);
-		}
+		componentsString += kSceneComponentIcons[sceneComponentType];
 	}
 
 	// If one if the children of this node is selected and we need to focus on it then open the tree thingy

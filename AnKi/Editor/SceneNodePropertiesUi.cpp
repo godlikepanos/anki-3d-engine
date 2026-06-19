@@ -163,12 +163,14 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 			ImGui::SetNextItemWidth(-1.0f);
 
 			SceneComponentType n = SceneComponentType::kFirst;
-			if(ImGui::BeginCombo(" ", kSceneComponentTypeInfos[m_selectedSceneComponentType].m_name))
+			String label = String(kSceneComponentIcons[n]) + " " + kSceneComponentTypeInfos[m_selectedSceneComponentType].m_name;
+			if(ImGui::BeginCombo(" ", label.cstr()))
 			{
 				for(const SceneComponentTypeInfo& inf : kSceneComponentTypeInfos)
 				{
 					const Bool isSelected = (m_selectedSceneComponentType == n);
-					if(ImGui::Selectable(inf.m_name, isSelected))
+					label = String(kSceneComponentIcons[n]) + " " + inf.m_name;
+					if(ImGui::Selectable(label.cstr(), isSelected))
 					{
 						m_selectedSceneComponentType = n;
 					}
@@ -205,17 +207,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 					ImGui::PushItemWidth(-min(labelWidthBase, labelWidthMax));
 
 					// Find the icon
-					CString icon = ICON_MDI_TOY_BRICK;
-					switch(comp.getType())
-					{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon_, serializable) \
-	case SceneComponentType::k##name: \
-		icon = ANKI_CONCATENATE(ICON_MDI_, icon_); \
-		break;
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-					default:
-						ANKI_ASSERT(0);
-					}
+					const CString icon = kSceneComponentIcons[comp.getType()];
 
 					// Header
 					{

@@ -155,9 +155,7 @@ void EditorUi::draw(UiCanvas& canvas)
 
 	ImGui::PushFont(m_font, m_fontSize);
 	ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 20.0f);
-
-	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
-	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.0f;
+	const Vec4 originalWindowColor = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
 
 	// Do some pre-drawing work
 	m_showDeleteSceneNodeDialog = false;
@@ -167,11 +165,11 @@ void EditorUi::draw(UiCanvas& canvas)
 	objectPicking();
 
 	// Draw the windows
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, Vec4(originalWindowColor.xyz, 0.0)); // Make the viewport transparent
 	ImGui::Begin("MainWindow", nullptr,
 				 ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
 					 | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-
-	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
+	ImGui::PopStyleColor();
 
 	ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
 	ImGui::SetWindowSize(canvas.getSizef());
@@ -1222,6 +1220,8 @@ void EditorUi::saveScenes(Bool onlyActive)
 	if(onlyActive)
 	{
 		Scene& activeScene = SceneGraph::getSingleton().getActiveScene();
+
+		ImGui::BeginDisabled(!activeScene.canBeSaved());
 		if(SceneGraph::getSingleton().saveScene(activeScene.getFilepath(), activeScene))
 		{
 			ANKI_LOGE("Failed to save scene");
@@ -1230,6 +1230,7 @@ void EditorUi::saveScenes(Bool onlyActive)
 		{
 			++scenesSaved;
 		}
+		ImGui::EndDisabled();
 	}
 	else
 	{

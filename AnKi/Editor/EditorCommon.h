@@ -17,6 +17,11 @@ class EditorUiBase
 protected:
 	static constexpr U32 kMaxTextInputLen = 256;
 
+	static constexpr Array<const Char*, U32(SceneComponentType::kCount)> kSceneComponentIcons = {
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) ICON_MDI_##icon,
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+	};
+
 	class SceneGraphViewScene
 	{
 	public:
