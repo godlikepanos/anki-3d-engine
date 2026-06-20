@@ -55,6 +55,8 @@ private:
 		ImGui::PopStyleVar();
 		ImGui::SameLine();
 	};
+
+	void parent(SceneNode& node, const SceneGraphView& sceneGraphView);
 };
 
 } // end namespace anki

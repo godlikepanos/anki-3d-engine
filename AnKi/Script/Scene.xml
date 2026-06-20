@@ -76,6 +76,11 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kBox"/>
 			<enumerant name="kSphere"/>
 		</enum>
+
+		<enum name="ReparentFlag">
+			<enumerant name="kNone"/>
+			<enumerant name="kKeepWorldTransform"/>
+		</enum>
 	</enums>
 
 	<classes>
@@ -475,9 +480,10 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getName">
 					<return>CString</return>
 				</method>
-				<method name="addChild">
+				<method name="setParent">
 					<args>
 						<arg>SceneNode*</arg>
+						<arg>ReparentFlag</arg>
 					</args>
 				</method>
 				<method name="markForDeletion"></method>

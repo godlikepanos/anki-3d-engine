@@ -243,30 +243,15 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 		}
 
 		SceneNode* parent = *it;
-		parent->addChild(this);
+		setParent(parent, ReparentFlag::kNone);
 	}
 
 	return Error::kNone;
 }
 
-void SceneNode::setParent(SceneNode* parent)
+void SceneNode::setParent(SceneNode* parent, ReparentFlag flags)
 {
-	if(parent)
-	{
-		if(parent->m_sceneIndex != m_sceneIndex)
-		{
-			ANKI_SCENE_LOGE("Can't make node %s parent of %s. The don't belong in the same scene", parent->getName().cstr(), getName().cstr());
-			return;
-		}
-
-		if(parent == this)
-		{
-			ANKI_SCENE_LOGE("Can't make parent the not itself: %s", getName().cstr());
-			return;
-		}
-	}
-
-	SceneGraph::getSingleton().setSceneNodeParentDeferred(this, parent);
+	SceneGraph::getSingleton().setSceneNodeParentDeferred(this, parent, flags);
 }
 
 const Scene& SceneNode::getScene() const

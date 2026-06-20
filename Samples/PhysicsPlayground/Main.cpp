@@ -44,7 +44,7 @@ Error MyApp::userPostInit()
 		JointComponent* jointc = joint->newComponent<JointComponent>();
 		jointc->setJointType(JointComponentyType::kHinge);
 		joint->setLocalOrigin(Vec3(-0.0f, 4.8f, -3.0f));
-		base->addChild(joint);
+		joint->setParent(base);
 
 		SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>("monkey_p2p");
 		monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
@@ -58,7 +58,7 @@ Error MyApp::userPostInit()
 		bodyc->setMass(2.0f);
 		monkey->setLocalOrigin(Vec3(-0.0f, 4.8f - height / 2.0f, -3.0f));
 
-		joint->addChild(monkey);
+		monkey->setParent(joint);
 	}
 
 	// Create a chain
@@ -97,7 +97,7 @@ Error MyApp::userPostInit()
 			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
 			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
 			bodyc->setMass(1.0f);
-			joint->addChild(monkey);
+			monkey->setParent(joint);
 			monkey->setLocalOrigin(trf.getOrigin().xyz);
 			monkey->setLocalRotation(trf.getRotation().getRotationPart());
 

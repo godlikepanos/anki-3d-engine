@@ -52,7 +52,7 @@ FpsCharacter::FpsCharacter(const SceneNodeInitInfo& inf)
 	cam->setLocalTransform(Transform(Vec3(0.0f, 2.0f, 0.0f), Mat3::getIdentity(), Vec3(1.0f)));
 	CameraComponent* camc = cam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, Renderer::getSingleton().getAspectRatio() * toRad<F32>(g_cvarGameFov), toRad<F32>(g_cvarGameFov));
-	addChild(cam);
+	cam->setParent(this);
 	cam->setSerialization(false);
 	m_cameraNode = cam;
 
@@ -62,7 +62,7 @@ FpsCharacter::FpsCharacter(const SceneNodeInitInfo& inf)
 	shotgun->newComponent<MaterialComponent>()->setMaterialFilename("Assets/arms_3a4232ebbd425e7a.ankimtl").setSubmeshIndex(0);
 	shotgun->newComponent<MaterialComponent>()->setMaterialFilename("Assets/boomstick_89a614a521ace7fd.ankimtl").setSubmeshIndex(1);
 	shotgun->setSerialization(false);
-	cam->addChild(shotgun);
+	shotgun->setParent(cam);
 	m_shotgunNode = shotgun;
 }
 

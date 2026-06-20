@@ -79,6 +79,13 @@ public:
 	}
 };
 
+enum class ReparentFlag : U32
+{
+	kNone,
+	kKeepWorldTransform = 1 << 0 // When changing parent or removing one try to adjust the local transform to keep the world intact
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ReparentFlag);
+
 // Base class of the scene
 class SceneNode : private IntrusiveHierarchy<SceneNode>
 {
@@ -125,12 +132,6 @@ public:
 	// Hierarchy manipulation //
 	// Changes in the hierarchy are deferred and won't be visible until the next frame
 
-	void addChild(SceneNode* obj)
-	{
-		ANKI_ASSERT(obj);
-		obj->setParent(this);
-	}
-
 	U32 getChildrenCount() const
 	{
 		return m_children.getSize();
@@ -161,7 +162,7 @@ public:
 		return cont;
 	}
 
-	void setParent(SceneNode* obj);
+	void setParent(SceneNode* obj, ReparentFlag flags = ReparentFlag::kNone);
 
 	SceneNode* getParent() const
 	{

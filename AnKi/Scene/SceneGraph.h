@@ -421,7 +421,7 @@ private:
 	public:
 		SceneDynamicArray<SceneNode*> m_nodesForRegistration;
 		SceneDynamicArray<std::pair<SceneNode*, SceneString>> m_nodesRenamed;
-		SceneDynamicArray<std::pair<SceneNode*, SceneNode*>> m_nodesParentChanged;
+		SceneDynamicArray<std::tuple<SceneNode*, SceneNode*, ReparentFlag>> m_nodesParentChanged;
 		SpinLock m_mtx;
 	} m_deferredOps;
 
@@ -454,13 +454,16 @@ private:
 		m_deferredOps.m_nodesRenamed.emplaceBack(std::pair(&node, oldName));
 	}
 
-	void setSceneNodeParentDeferred(SceneNode* node, SceneNode* parent)
+	void setSceneNodeParentDeferred(SceneNode* node, SceneNode* parent, ReparentFlag flags)
 	{
 		LockGuard lock(m_deferredOps.m_mtx);
-		m_deferredOps.m_nodesParentChanged.emplaceBack(std::pair(node, parent));
+		m_deferredOps.m_nodesParentChanged.emplaceBack(std::tuple{node, parent, flags});
 	}
 
 	void doDeferredOperations();
+
+	// Drop any pending deferred ops that reference a node. Call before freeing a node since the queues hold raw pointers
+	void removeNodeFromDeferredOps(SceneNode* node);
 	// End deferred operations //
 
 	static void countSerializableNodes(SceneNode& root, U32& serializableNodeCount);

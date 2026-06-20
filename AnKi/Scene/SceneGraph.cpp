@@ -377,6 +377,9 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 				m_updatableNodes.erase(node->m_updatableNodesArrayIndex);
 			}
 
+			// Drop any pending deferred ops that still reference the node, the pointer is about to dangle
+			removeNodeFromDeferredOps(node);
+
 			// ...and now can delete
 			deleteInstance(SceneMemoryPool::getSingleton(), node);
 		}
@@ -944,13 +947,72 @@ void SceneGraph::doDeferredOperations()
 	m_deferredOps.m_nodesRenamed.destroy();
 
 	// Hierarchy changes
-	for(auto& pair : m_deferredOps.m_nodesParentChanged)
+	for(auto& tuple : m_deferredOps.m_nodesParentChanged)
 	{
-		SceneNode* child = pair.first;
-		SceneNode* parent = pair.second;
+		SceneNode* child = std::get<0>(tuple);
+		ANKI_ASSERT(child);
+		SceneNode* parent = std::get<1>(tuple);
+		const ReparentFlag flag = std::get<2>(tuple);
+
+		// Skip if nothing changes
+		if(child->getParent() == parent)
+		{
+			continue;
+		}
+
+		if(parent)
+		{
+			if(parent->m_sceneIndex != child->m_sceneIndex)
+			{
+				ANKI_SCENE_LOGE("Can't make %s the parent of %s. They don't belong in the same scene", parent->getName().cstr(),
+								child->getName().cstr());
+				continue;
+			}
+
+			// Walk parent's ancestors. If child shows up then reparenting would create a cycle (this also covers parent==child)
+			Bool createsCycle = false;
+			for(const SceneNode* ancestor = parent; ancestor; ancestor = ancestor->getParent())
+			{
+				if(ancestor == child)
+				{
+					createsCycle = true;
+					break;
+				}
+			}
+
+			if(createsCycle)
+			{
+				ANKI_SCENE_LOGE("Can't make %s the parent of %s. It would create a cycle in the hierarchy", parent->getName().cstr(),
+								child->getName().cstr());
+				continue;
+			}
+		}
+
+		if(!!(flag & ReparentFlag::kKeepWorldTransform))
+		{
+			const Transform trfW = child->getWorldTransform();
+			if(parent == nullptr)
+			{
+				// Removing parent, child inherits its world transform
+				child->setLocalTransform(trfW);
+			}
+			else
+			{
+				// Got a new parent, compute the local transform relative to it
+				const Transform parentTrfW = parent->getWorldTransform();
+				const Transform newTrfL = parentTrfW.invert().combineTransformations(trfW);
+				child->setLocalTransform(newTrfL);
+			}
+		}
+		else
+		{
+			// Set something to trigger update
+			child->setLocalTransform(child->getLocalTransform());
+		}
 
 		if(child->getParent() == nullptr)
 		{
+			ANKI_ASSERT(child->m_updatableNodesArrayIndex != kMaxU32 && "A parentless node should be in the updatable nodes array");
 			ANKI_ASSERT(m_updatableNodes[child->m_updatableNodesArrayIndex] == child);
 			m_updatableNodes.erase(child->m_updatableNodesArrayIndex);
 			child->m_updatableNodesArrayIndex = kMaxU32;
@@ -972,6 +1034,39 @@ void SceneGraph::doDeferredOperations()
 		}
 	}
 	m_deferredOps.m_nodesParentChanged.destroy();
+}
+
+void SceneGraph::removeNodeFromDeferredOps(SceneNode* node)
+{
+	ANKI_ASSERT(node);
+
+	// Registration: drop the node if it's still pending registration
+	for(U32 i = m_deferredOps.m_nodesForRegistration.getSize(); i-- != 0;)
+	{
+		if(m_deferredOps.m_nodesForRegistration[i] == node)
+		{
+			m_deferredOps.m_nodesForRegistration.erase(m_deferredOps.m_nodesForRegistration.getBegin() + i);
+		}
+	}
+
+	// Parent changes: drop entries where the node is either the child or the new parent
+	for(U32 i = m_deferredOps.m_nodesParentChanged.getSize(); i-- != 0;)
+	{
+		const auto& tuple = m_deferredOps.m_nodesParentChanged[i];
+		if(std::get<0>(tuple) == node || std::get<1>(tuple) == node)
+		{
+			m_deferredOps.m_nodesParentChanged.erase(m_deferredOps.m_nodesParentChanged.getBegin() + i);
+		}
+	}
+
+	// Renames: drop entries for the node
+	for(U32 i = m_deferredOps.m_nodesRenamed.getSize(); i-- != 0;)
+	{
+		if(m_deferredOps.m_nodesRenamed[i].first == node)
+		{
+			m_deferredOps.m_nodesRenamed.erase(m_deferredOps.m_nodesRenamed.getBegin() + i);
+		}
+	}
 }
 
 Scene* SceneGraph::newEmptyScene(CString name)

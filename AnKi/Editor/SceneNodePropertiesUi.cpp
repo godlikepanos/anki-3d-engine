@@ -47,39 +47,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 		}
 
 		// Parent
-		{
-			const SceneGraphViewScene* sceneView = nullptr;
-			for(const SceneGraphViewScene& v : sceneGraphView.m_scenes)
-			{
-				if(v.m_scene->getSceneUuid() == node->getSceneUuid())
-				{
-					sceneView = &v;
-					break;
-				}
-			}
-			ANKI_ASSERT(sceneView);
-
-			CString parentName;
-			if(node->getParent())
-			{
-				parentName = node->getParent()->getName();
-			}
-			else
-			{
-				parentName = "No Parent";
-			}
-
-			// ImGui::SetNextItemWidth(-1.0f);
-			U32 newSelected = 0;
-			const Bool selected = comboWithFilter("Parent", sceneView->m_nodeNames, parentName, newSelected, m_nodeParentFilter);
-			if(selected)
-			{
-				SceneNode* newParent = sceneView->m_nodes[newSelected];
-				node->setParent(newParent);
-			}
-
-			ImGui::TextUnformatted(" ");
-		}
+		parent(*node, sceneGraphView);
 
 		// Local transform
 		{
@@ -104,7 +72,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 			ImGui::SameLine();
 
 			F32 localScale[3] = {node->getLocalScale().x, node->getLocalScale().y, node->getLocalScale().z};
-			if(ImGui::DragFloat3(ICON_MDI_ARROW_EXPAND_ALL " Scale", localScale, 0.0025f, 0.01f, 1000000.0f))
+			if(ImGui::DragFloat3(ICON_MDI_ARROW_EXPAND_ALL " Scale", localScale, 0.0025f, 0.01f, 1000000.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
 			{
 				if(!m_uniformScale)
 				{
@@ -288,6 +256,49 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 	}
 
 	ImGui::End();
+}
+
+void SceneNodePropertiesUi::parent(SceneNode& node, const SceneGraphView& sceneGraphView)
+{
+	const SceneGraphViewScene* sceneView = nullptr;
+	for(const SceneGraphViewScene& v : sceneGraphView.m_scenes)
+	{
+		if(v.m_scene->getSceneUuid() == node.getSceneUuid())
+		{
+			sceneView = &v;
+			break;
+		}
+	}
+	ANKI_ASSERT(sceneView);
+
+	CString parentName;
+	if(node.getParent())
+	{
+		parentName = node.getParent()->getName();
+	}
+	else
+	{
+		parentName = "No Parent";
+	}
+
+	// Delete parent
+	ImGui::BeginDisabled(node.getParent() == nullptr);
+	if(ImGui::Button(ICON_MDI_DELETE))
+	{
+		node.setParent(nullptr, ReparentFlag::kKeepWorldTransform);
+	}
+	ImGui::EndDisabled();
+	ImGui::SetItemTooltip("Remove parent");
+
+	// ImGui::SetNextItemWidth(-1.0f);
+	ImGui::SameLine();
+	U32 newSelected = 0;
+	const Bool selected = comboWithFilter("Parent", sceneView->m_nodeNames, parentName, newSelected, m_nodeParentFilter);
+	if(selected)
+	{
+		SceneNode* newParent = sceneView->m_nodes[newSelected];
+		node.setParent(newParent, ReparentFlag::kKeepWorldTransform);
+	}
 }
 
 void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
@@ -665,7 +676,7 @@ void SceneNodePropertiesUi::jointComponent(JointComponent& comp)
 		for(JointComponentyType type : EnumIterable<JointComponentyType>())
 		{
 			const Bool selected = type == comp.getJointType();
-			if(ImGui::Selectable(kBodyComponentCollisionShapeTypeNames[type], selected))
+			if(ImGui::Selectable(kJointComponentTypeName[type], selected))
 			{
 				comp.setJointType(type);
 			}
