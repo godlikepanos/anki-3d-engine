@@ -119,18 +119,18 @@ void PrimaryNonRenderableVisibility::populateRenderGraph()
 						if(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kLight)
 						{
 							m_runCtx.m_interestingComponents.m_shadowLights = gatherComponents<LightComponent>(
-								pairs, SceneGraph::getSingleton().getComponentArrays().getLights(), getRenderer().getFrameMemoryPool());
+								pairs, SceneGraph::getSingleton().getComponentArray<LightComponent>(), getRenderer().getFrameMemoryPool());
 						}
 						else if(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kReflectionProbe)
 						{
 							m_runCtx.m_interestingComponents.m_reflectionProbes = gatherComponents<ReflectionProbeComponent>(
-								pairs, SceneGraph::getSingleton().getComponentArrays().getReflectionProbes(), getRenderer().getFrameMemoryPool());
+								pairs, SceneGraph::getSingleton().getComponentArray<ReflectionProbeComponent>(), getRenderer().getFrameMemoryPool());
 						}
 						else
 						{
 							ANKI_ASSERT(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kGlobalIlluminationProbe);
 							m_runCtx.m_interestingComponents.m_globalIlluminationProbes = gatherComponents<GlobalIlluminationProbeComponent>(
-								pairs, SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes(),
+								pairs, SceneGraph::getSingleton().getComponentArray<GlobalIlluminationProbeComponent>(),
 								getRenderer().getFrameMemoryPool());
 						}
 					}

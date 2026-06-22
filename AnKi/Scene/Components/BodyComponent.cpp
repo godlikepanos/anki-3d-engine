@@ -18,6 +18,15 @@ BodyComponent::BodyComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 	, m_node(init.m_node)
 {
+	// A body lives in world space, so its node must ignore the parent's transform (after this, world == local). If the node currently has a parent,
+	// bake the real world transform into the local first, otherwise enabling ignore-parent would snap the node to its parent-relative transform. Do
+	// this here (not in update()) because right now the world transform is still valid; inside update() it's stale (MoveComponent refreshes it and
+	// runs after us).
+	if(m_node->getParent())
+	{
+		m_node->setLocalTransform(m_node->getWorldTransform());
+	}
+
 	m_node->setIgnoreParentTransform(true);
 }
 
@@ -62,8 +71,9 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		shapeDirty = true;
 	}
 
-	if(!shapeDirty && (info.m_node->isLocalTransformDirty() && info.m_node->getLocalScale() != m_creationScale))
+	if(!shapeDirty && info.m_node->getLocalScale() != m_creationScale)
 	{
+		// Scale is baked into the body and it changed, recreate the body
 		shapeDirty = true;
 	}
 
@@ -75,6 +85,8 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
+		// The node ignores its parent so local == world. Use local: it's the fresh value here, because MoveComponent (which recomputes the world
+		// transform via updateTransform()) updates after us.
 		init.m_transform = m_node->getLocalTransform();
 
 		const Bool isStatic = m_mass == 0.0f;
@@ -120,23 +132,38 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_body = PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(this);
 		m_creationScale = init.m_transform.getScale().xyz;
-	}
 
-	if(info.m_node->isLocalTransformDirty())
+		// Adopt the body's current version so next frame's readback doesn't echo our own creation transform back into the node.
+		m_body->getTransform(&m_transformVersion);
+	}
+	else
 	{
-		updated = true;
-		m_body->setPositionAndRotation(info.m_node->getLocalOrigin(), info.m_node->getLocalRotation());
+		// Body doesn't need re-creation
+
+		if(info.m_node->isLocalTransformDirty())
+		{
+			// Someone moved the body, teleport it to its new position
+			updated = true;
+			m_body->setPositionAndRotation(info.m_node->getLocalOrigin(), info.m_node->getLocalRotation());
+
+			// Swallow the version bump caused by our own teleport so we don't read it back next frame.
+			m_body->getTransform(&m_transformVersion);
+		}
+		else
+		{
+			// Check if the body moved on its own (physics) and follow it
+			U32 version;
+			const Transform bodyTrf = m_body->getTransform(&version);
+			if(version != m_transformVersion)
+			{
+				m_transformVersion = version;
+				updated = true;
+				info.m_node->setLocalTransform(bodyTrf);
+			}
+		}
 	}
 
-	U32 version;
-	Transform bodyTrf = m_body->getTransform(&version);
-	if(version != m_transformVersion)
-	{
-		m_transformVersion = version;
-		updated = true;
-		info.m_node->setLocalTransform(m_body->getTransform());
-	}
-
+	// Apply force
 	if(m_force.lengthSquared() > 0.0f)
 	{
 		if(m_forcePosition != 0.0f)

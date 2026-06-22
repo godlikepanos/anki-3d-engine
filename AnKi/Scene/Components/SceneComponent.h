@@ -16,7 +16,7 @@ namespace anki {
 
 enum class SceneComponentType : U8
 {
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) k##name,
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) k##name,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 	kCount,
@@ -28,7 +28,8 @@ enum class SceneComponentTypeMask : U32
 {
 	kNone = 0,
 
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) k##name = 1 << U32(SceneComponentType::k##name),
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
+	k##name = 1 << U32(SceneComponentType::k##name),
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentTypeMask)
@@ -36,7 +37,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentTypeMask)
 class SceneComponentType2
 {
 public:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
 	static constexpr SceneComponentType k##name##Component = SceneComponentType::k##name;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
@@ -52,15 +53,16 @@ class SceneComponentTypeInfo
 public:
 	const Char* m_name;
 	F32 m_weight;
-	Bool m_sceneNodeCanHaveMany;
-	Bool m_serializable;
+	Bool m_sceneNodeCanHaveMany : 1;
+	Bool m_serializable : 1;
+	Bool m_canBeDeleted : 1;
 };
 
 // Component names
 inline Array<SceneComponentTypeInfo, U32(SceneComponentType::kCount)> kSceneComponentTypeInfos = {{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
 	{ \
-		ANKI_STRINGIZE(name), weight, sceneNodeCanHaveMany, serializable \
+		ANKI_STRINGIZE(name), weight, sceneNodeCanHaveMany, serializable, canBeDeleted \
 	}
 #define ANKI_SCENE_COMPONENT_SEPARATOR ,
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>

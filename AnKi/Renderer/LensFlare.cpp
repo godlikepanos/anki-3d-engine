@@ -38,7 +38,7 @@ Error LensFlare::initInternal()
 void LensFlare::populateRenderGraph()
 {
 	ANKI_TRACE_SCOPED_EVENT(LensFlare);
-	const U32 flareCount = SceneGraph::getSingleton().getComponentArrays().getLensFlares().getSize();
+	const U32 flareCount = SceneGraph::getSingleton().getComponentArray<LensFlareComponent>().getSize();
 	if(flareCount == 0)
 	{
 		m_runCtx = {};
@@ -61,7 +61,7 @@ void LensFlare::populateRenderGraph()
 		ANKI_TRACE_SCOPED_EVENT(LensFlare);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		const U32 flareCount = SceneGraph::getSingleton().getComponentArrays().getLensFlares().getSize();
+		const U32 flareCount = SceneGraph::getSingleton().getComponentArray<LensFlareComponent>().getSize();
 		ANKI_ASSERT(flareCount > 0);
 
 		cmdb.bindShaderProgram(m_updateIndirectBuffGrProg.get());
@@ -72,7 +72,7 @@ void LensFlare::populateRenderGraph()
 		// Write flare info
 		WeakArray<Vec4> flarePositions = allocateAndBindSrvStructuredBuffer<Vec4>(cmdb, 0, 0, flareCount);
 		U32 count = 0;
-		for(const LensFlareComponent& comp : SceneGraph::getSingleton().getComponentArrays().getLensFlares())
+		for(const LensFlareComponent& comp : SceneGraph::getSingleton().getComponentArray<LensFlareComponent>())
 		{
 			flarePositions[count++] = Vec4(comp.getWorldPosition(), 1.0f);
 		}
@@ -88,7 +88,7 @@ void LensFlare::populateRenderGraph()
 
 void LensFlare::runDrawFlares(CommandBuffer& cmdb)
 {
-	const U32 flareCount = SceneGraph::getSingleton().getComponentArrays().getLensFlares().getSize();
+	const U32 flareCount = SceneGraph::getSingleton().getComponentArray<LensFlareComponent>().getSize();
 
 	if(flareCount == 0)
 	{
@@ -100,7 +100,7 @@ void LensFlare::runDrawFlares(CommandBuffer& cmdb)
 	cmdb.setDepthWrite(false);
 
 	U32 count = 0;
-	for(const LensFlareComponent& comp : SceneGraph::getSingleton().getComponentArrays().getLensFlares())
+	for(const LensFlareComponent& comp : SceneGraph::getSingleton().getComponentArray<LensFlareComponent>())
 	{
 		// Compute position
 		Vec4 lfPos = Vec4(comp.getWorldPosition(), 1.0f);

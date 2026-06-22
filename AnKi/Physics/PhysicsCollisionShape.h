@@ -11,7 +11,7 @@
 
 namespace anki {
 
-/// Wrapper on top of JPH collision shapes.
+// Wrapper on top of JPH collision shapes.
 class PhysicsCollisionShape : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS

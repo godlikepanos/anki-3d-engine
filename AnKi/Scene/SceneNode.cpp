@@ -29,26 +29,101 @@
 
 namespace anki {
 
-// Specialize newComponent(). Do that first
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
-	template<> \
-	name##Component* SceneNode::newComponent<name##Component>() \
-	{ \
-		if(hasComponent<name##Component>() && !kSceneComponentTypeInfos[SceneComponentType::k##name].m_sceneNodeCanHaveMany) \
-		{ \
-			ANKI_SCENE_LOGE("Can't have many %s components in scene node %s", kSceneComponentTypeInfos[SceneComponentType::k##name].m_name, \
-							getName().cstr()); \
-			return nullptr; \
-		} \
-		SceneComponentInitInfo compInit; \
-		compInit.m_node = this; \
-		compInit.m_componentUuid = SceneGraph::getSingleton().m_scenes[m_sceneIndex].getNewNodeUuid(); \
-		compInit.m_sceneUuid = m_sceneUuid; \
-		auto it = SceneGraph::getSingleton().m_componentArrays.get##name##s().emplace(compInit); \
-		it->setArrayIndex(it.getArrayIndex()); \
-		addComponent(&(*it)); \
-		return &(*it); \
+template<typename T>
+T* SceneNode::newComponent()
+{
+	if(hasComponent<T>() && !kSceneComponentTypeInfos[T::kClassType].m_sceneNodeCanHaveMany)
+	{
+		ANKI_SCENE_LOGE("Can't have many %s components in scene node %s", kSceneComponentTypeInfos[T::kClassType].m_name, getName().cstr());
+		return nullptr;
 	}
+	SceneComponentInitInfo compInit;
+	compInit.m_node = this;
+	compInit.m_componentUuid = SceneGraph::getSingleton().m_scenes[m_sceneIndex].getNewNodeUuid();
+	compInit.m_sceneUuid = m_sceneUuid;
+	auto it = SceneGraph::getSingleton().getComponentArray<T>().emplace(compInit);
+	it->setArrayIndex(it.getArrayIndex());
+	addComponent(&(*it));
+	return &(*it);
+}
+
+template<typename TComponent>
+void SceneNode::deleteComponent(TComponent* comp)
+{
+	const SceneComponentType compType = TComponent::kClassType;
+
+	if(!kSceneComponentTypeInfos[compType].m_canBeDeleted)
+	{
+		ANKI_SCENE_LOGE("Can't delete component of type: %s", kSceneComponentTypeInfos[compType].m_name);
+		return;
+	}
+
+	// Find the component
+	ANKI_ASSERT(comp);
+	U32 componentsOfSameTypeCount = 0;
+	auto compToDel = m_components.getEnd();
+	for(auto it = m_components.getBegin(); it != m_components.getEnd(); ++it)
+	{
+		if(*it == comp)
+		{
+			compToDel = it;
+		}
+		else if((*it)->getType() == compType)
+		{
+			++componentsOfSameTypeCount;
+		}
+	}
+
+	// Delete it
+	if(compToDel != m_components.getEnd())
+	{
+		// Inform all other components that the component was removed
+		for(SceneComponent* other : m_components)
+		{
+			if(other != comp)
+			{
+				other->onOtherComponentRemovedOrAdded(comp, false);
+			}
+		}
+
+		comp->onDestroy(*this);
+
+		SceneGraph::getSingleton().getComponentArray<TComponent>().erase(comp->getArrayIndex());
+		m_components.erase(compToDel);
+
+		if(componentsOfSameTypeCount == 0)
+		{
+			const SceneComponentTypeMask compMask = SceneComponentTypeMask(1u << compType);
+			m_componentTypeMask &= ~compMask;
+		}
+	}
+	else
+	{
+		ANKI_SCENE_LOGE("Component doesn't belong to this node. Ignoring deleteComponent()");
+	}
+}
+
+// Instantiate
+template<>
+void SceneNode::deleteComponent<SceneComponent>(SceneComponent* comp)
+{
+	ANKI_ASSERT(comp);
+
+	switch(comp->getType())
+	{
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
+	case SceneComponentType::k##name: \
+		deleteComponent<name##Component>(static_cast<name##Component*>(comp)); \
+		break;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+	default:
+		ANKI_ASSERT(0);
+	}
+}
+
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
+	template name##Component* SceneNode::newComponent<name##Component>(); \
+	template void SceneNode::deleteComponent<name##Component>(name##Component*);
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 SceneNode::SceneNode(const SceneNodeInitInfo& inf)
@@ -77,9 +152,9 @@ SceneNode::~SceneNode()
 
 		switch(comp->getType())
 		{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
 	case SceneComponentType::k##name: \
-		SceneGraph::getSingleton().getComponentArrays().get##name##s().erase(comp->getArrayIndex()); \
+		SceneGraph::getSingleton().getComponentArray<name##Component>().erase(comp->getArrayIndex()); \
 		break;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 		default:

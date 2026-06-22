@@ -42,7 +42,7 @@ Error GpuParticles::init()
 
 void GpuParticles::populateRenderGraph()
 {
-	SceneBlockArray<ParticleEmitter2Component>& emitters = SceneGraph::getSingleton().getComponentArrays().getParticleEmitter2s();
+	SceneBlockArray<ParticleEmitter2Component>& emitters = SceneGraph::getSingleton().getComponentArray<ParticleEmitter2Component>();
 	if(emitters.getSize() == 0) [[unlikely]]
 	{
 		return;
@@ -59,7 +59,7 @@ void GpuParticles::populateRenderGraph()
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		SceneBlockArray<ParticleEmitter2Component>& emitters = SceneGraph::getSingleton().getComponentArrays().getParticleEmitter2s();
+		SceneBlockArray<ParticleEmitter2Component>& emitters = SceneGraph::getSingleton().getComponentArray<ParticleEmitter2Component>();
 
 		// Handle the readbacks
 		for(ParticleEmitter2Component& emitter : emitters)

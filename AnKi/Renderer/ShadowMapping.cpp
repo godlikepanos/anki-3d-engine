@@ -197,10 +197,10 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 		for(U64 kickedLightHash : kickedOutLights)
 		{
 			const LightHash hash = decodeTileHash(kickedLightHash);
-			const Bool found = SceneGraph::getSingleton().getComponentArrays().getLights().indexExists(hash.m_unpacked.m_componentIndex);
+			const Bool found = SceneGraph::getSingleton().getComponentArray<LightComponent>().indexExists(hash.m_unpacked.m_componentIndex);
 			if(found)
 			{
-				LightComponent& lightc = SceneGraph::getSingleton().getComponentArrays().getLights()[hash.m_unpacked.m_componentIndex];
+				LightComponent& lightc = SceneGraph::getSingleton().getComponentArray<LightComponent>()[hash.m_unpacked.m_componentIndex];
 				if(lightc.getUuid() == hash.m_unpacked.m_uuid)
 				{
 					lightc.setShadowAtlasUvViewports({});

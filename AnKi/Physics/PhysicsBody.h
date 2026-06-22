@@ -10,40 +10,35 @@
 
 namespace anki {
 
-/// @addtogroup physics
-/// @{
-
-/// An interface to process contacts.
-/// @memberof PhysicsBody
+// An interface to process contacts.
 class PhysicsTriggerCallbacks
 {
 public:
-	/// Will be called whenever a contact first touches a trigger.
+	// Will be called whenever a contact first touches a trigger.
 	virtual void onTriggerEnter([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsObjectBase& obj)
 	{
 	}
 
-	/// Will be called whenever a contact stops touching a trigger.
+	// Will be called whenever a contact stops touching a trigger.
 	virtual void onTriggerExit([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsObjectBase& obj)
 	{
 	}
 };
 
-/// An interface to process contacts.
-/// @memberof PhysicsBody
+// An interface to process contacts.
 class PhysicsCollisionFilterCallback
 {
 public:
 	virtual Bool collidesWith(const PhysicsBody& body1, const PhysicsBody& body2) = 0;
 };
 
-/// Init info for PhysicsBody.
+// Init info for PhysicsBody.
 class PhysicsBodyInitInfo
 {
 public:
 	PhysicsCollisionShape* m_shape = nullptr;
 
-	F32 m_mass = 0.0f; ///< Zero mass means static object.
+	F32 m_mass = 0.0f; // Zero mass means static object.
 
 	Transform m_transform = Transform::getIdentity();
 
@@ -56,7 +51,7 @@ public:
 	void* m_userData = nullptr;
 };
 
-/// Rigid body.
+// Rigid body.
 class PhysicsBody : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
@@ -75,16 +70,16 @@ public:
 
 	void setPositionAndRotation(Vec3 position, const Mat3& rotation);
 
-	/// @param force In Newton and in world space.
-	/// @param relPos The position to apply the force. It's in the local space of the body.
+	// force: In Newton and in world space.
+	// relPos: The position to apply the force. It's in the local space of the body.
 	void applyForce(const Vec3& force, const Vec3& relPos);
 
-	/// Apply force to the center of mass.
+	// Apply force to the center of mass.
 	void applyForce(const Vec3& force);
 
 	void activate(Bool activate);
 
-	/// Zero means no gravity, 1 means normal gravity.
+	// Zero means no gravity, 1 means normal gravity.
 	void setGravityFactor(F32 factor);
 
 	void setLinearVelocity(Vec3 v);
@@ -138,6 +133,5 @@ private:
 
 	void postPhysicsUpdate();
 };
-/// @}
 
 } // end namespace anki

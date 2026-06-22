@@ -14,28 +14,23 @@
 
 namespace anki {
 
-/// @addtogroup physics
-/// @{
-
-/// @memberof PhysicsWorld
 class RayHitResult
 {
 public:
 	PhysicsObjectBase* m_object = nullptr;
-	Vec3 m_normal; ///< In world space.
-	Vec3 m_hitPosition; ///< In world space.
+	Vec3 m_normal; // In world space.
+	Vec3 m_hitPosition; // In world space.
 };
 
-/// @memberof PhysicsWorld
 class PhysicsDebugDrawerInterface
 {
 public:
-	/// The implementer is responsible of batching lines together.
+	// The implementer is responsible of batching lines together.
 	virtual void drawLines(ConstWeakArray<Vec3> lines, Array<U8, 4> color) = 0;
 };
 
-/// The master container for all physics related stuff.
-/// The newXXX methods are thread-safe between themselves and the dereference of the pointers. Every other method is not thread-safe.
+// The master container for all physics related stuff.
+// The newXXX methods are thread-safe between themselves and the dereference of the pointers. Every other method is not thread-safe.
 class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 {
 	template<typename>
@@ -52,25 +47,27 @@ public:
 
 	PhysicsCollisionShapePtr newSphereCollisionShape(F32 radius);
 	PhysicsCollisionShapePtr newBoxCollisionShape(Vec3 extend);
-	PhysicsCollisionShapePtr newCapsuleCollisionShape(F32 height, F32 radius); ///< Capsule axis is in Y.
+	PhysicsCollisionShapePtr newCapsuleCollisionShape(F32 height, F32 radius); // Capsule axis is in Y.
 	PhysicsCollisionShapePtr newConvexHullShape(ConstWeakArray<Vec3> positions);
 	PhysicsCollisionShapePtr newStaticMeshShape(ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices);
 
 	PhysicsBodyPtr newPhysicsBody(const PhysicsBodyInitInfo& init);
 
+	// pivot: world-space point where the 2 bodies get pinned together. Both bodies should already be positioned so that pivot is their common point.
+	// Removes the 3 translational DOF (rotation around it stays free).
 	PhysicsJointPtr newPointJoint(PhysicsBody* body1, PhysicsBody* body2, const Vec3& pivot);
 
-	/// @param pivot Gives the origin and rotation of the hinge. The hinge rotats in the X axis of the transform.
+	// pivot: Gives the origin and rotation of the hinge. The hinge rotats in the X axis of the transform.
 	PhysicsJointPtr newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot);
 
 	PhysicsPlayerControllerPtr newPlayerController(const PhysicsPlayerControllerInitInfo& init);
 
 	void update(Second dt);
 
-	/// Returns the closest hit.
+	// Returns the closest hit.
 	Bool castRayClosestHit(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers, RayHitResult& result);
 
-	/// Executes a callback for all hits found.
+	// Executes a callback for all hits found.
 	template<typename TFunc>
 	Bool castRayAllHits(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers, TFunc func)
 	{
@@ -143,6 +140,5 @@ private:
 
 	Bool castRayAllHitsInternal(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers, PhysicsDynamicArray<RayHitResult>& results);
 };
-/// @}
 
 } // end namespace anki

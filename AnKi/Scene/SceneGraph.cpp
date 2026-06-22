@@ -124,6 +124,15 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	return Error::kNone;
 }
 
+// Instanciate
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
+	template<> \
+	const SceneBlockArray<name##Component>& SceneGraph::getComponentArray() const \
+	{ \
+		return m_##name##Array; \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
 void SceneGraph::createDefaultScene()
 {
 	Scene* scene = newEmptyScene("_DefaultScene");
@@ -714,12 +723,12 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 		return Error::kNone;
 	};
 
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
 	if(serializable) \
 	{ \
 		U32 name##Count = serializationArgs.m_write.m_componentsToBeSerializedCount[SceneComponentType::k##name]; \
 		ANKI_SERIALIZE(name##Count, 1); \
-		for(SceneComponent & comp : m_componentArrays.get##name##s()) \
+		for(SceneComponent & comp : getComponentArray<name##Component>()) \
 		{ \
 			ANKI_CHECK(serializeComponent(comp)); \
 		} \
@@ -864,14 +873,14 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 		return Error::kNone;
 	};
 
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
 	if(serializable) \
 	{ \
 		U32 name##Count = 0; \
 		ANKI_SERIALIZE(name##Count, 1); \
 		for(U32 i = 0; i < name##Count; ++i) \
 		{ \
-			ANKI_CHECK(serializeComponent(SceneGraph::getSingleton().getComponentArrays().get##name##s())); \
+			ANKI_CHECK(serializeComponent(SceneGraph::getSingleton().getComponentArray<name##Component>())); \
 		} \
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
@@ -988,7 +997,7 @@ void SceneGraph::doDeferredOperations()
 			}
 		}
 
-		if(!!(flag & ReparentFlag::kKeepWorldTransform))
+		if(!!(flag & ReparentFlag::kKeepWorldTransform) && !child->m_ignoreParentNodeTransform)
 		{
 			const Transform trfW = child->getWorldTransform();
 			if(parent == nullptr)

@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup physics
-/// @{
-
-/// Wrapper on top of Jolt joints.
+// Wrapper on top of Jolt joints.
 class PhysicsJoint : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
@@ -42,6 +39,5 @@ private:
 		m_base.destroy();
 	}
 };
-/// @}
 
 } // end namespace anki

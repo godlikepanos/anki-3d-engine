@@ -116,7 +116,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 			{
 				switch(m_selectedSceneComponentType)
 				{
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
 	case SceneComponentType::k##name: \
 		node->newComponent<name##Component>(); \
 		break;
@@ -162,6 +162,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 			ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, Vec2(0.5f));
 
 			U32 count = 0;
+			SceneComponent* compToDelete = nullptr;
 			node->iterateComponents([&](SceneComponent& comp) {
 				ImGui::PushID(comp.getUuid());
 				const F32 alpha = 0.1f;
@@ -183,13 +184,17 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 						label.sprintf(" %s %s (%u)", icon.cstr(), kSceneComponentTypeInfos[comp.getType()].m_name, comp.getUuid());
 						ImGui::SeparatorText(label.cstr());
 
+						// Delete component
+						ImGui::BeginDisabled(!kSceneComponentTypeInfos[comp.getType()].m_canBeDeleted);
 						if(ImGui::Button(ICON_MDI_MINUS_BOX))
 						{
-							ANKI_LOGW("TODO");
+							compToDelete = &comp;
 						}
+						ImGui::EndDisabled();
 						ImGui::SetItemTooltip("Delete Component");
-						ImGui::SameLine();
 
+						// Disable
+						ImGui::SameLine();
 						if(ImGui::Button(ICON_MDI_EYE))
 						{
 							ANKI_LOGW("TODO");
@@ -250,6 +255,11 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 				ImGui::PopStyleColor();
 				return FunctorContinue::kContinue;
 			});
+
+			if(compToDelete)
+			{
+				node->deleteComponent(compToDelete);
+			}
 
 			ImGui::PopStyleVar();
 		}

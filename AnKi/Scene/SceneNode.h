@@ -422,6 +422,9 @@ public:
 	TComponent* newComponent();
 
 	template<typename TComponent>
+	void deleteComponent(TComponent* comp);
+
+	template<typename TComponent>
 	Bool hasComponent() const
 	{
 		return !!((1u << SceneComponentTypeMask(TComponent::kClassType)) & m_componentTypeMask);
@@ -492,6 +495,11 @@ public:
 	const Transform& getPreviousWorldTransform() const
 	{
 		return m_prevWTrf;
+	}
+
+	Vec3 getWorldScale() const
+	{
+		return m_wtrf.getScale().xyz;
 	}
 
 	void rotateLocalX(F32 angleRad)

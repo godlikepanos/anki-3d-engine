@@ -32,25 +32,6 @@ ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneDecals, 2 * 1024, 8, 100 * 1024, "
 ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneFogDensityVolumes, 512, 8, 100 * 1024, "The min number fog density volumes stored in the GPU scene")
 ANKI_CVAR(NumericCVar<U32>, Scene, MinGpuSceneRenderables, 10 * 1024, 8, 100 * 1024, "The min number of renderables stored in the GPU scene")
 
-class SceneComponentArrays
-{
-public:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) \
-	SceneBlockArray<name##Component>& get##name##s() \
-	{ \
-		return m_##name##Array; \
-	} \
-	const SceneBlockArray<name##Component>& get##name##s() const \
-	{ \
-		return m_##name##Array; \
-	}
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-
-private:
-#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable) SceneBlockArray<name##Component> m_##name##Array;
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-};
-
 // The scenegraph consists of multiple scenes. Scenes are containers of nodes.
 class Scene
 {
@@ -334,10 +315,14 @@ public:
 		return m_sceneMax;
 	}
 
-	SceneComponentArrays& getComponentArrays()
+	template<typename TComponent>
+	const SceneBlockArray<TComponent>& getComponentArray() const;
+
+	template<typename TComponent>
+	ANKI_INTERNAL SceneBlockArray<TComponent>& getComponentArray()
 	{
-		forbidCallOnUpdate();
-		return m_componentArrays;
+		const auto& self = *this;
+		return const_cast<SceneBlockArray<TComponent>&>(self.getComponentArray<TComponent>());
 	}
 
 	LightComponent* getDirectionalLight() const
@@ -431,7 +416,9 @@ private:
 
 	Bool m_paused = true; // If true the game-loop is paused
 
-	SceneComponentArrays m_componentArrays;
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) \
+	SceneBlockArray<name##Component> m_##name##Array;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 	LightComponent* m_activeDirLight = nullptr;
 	SkyboxComponent* m_activeSkybox = nullptr;

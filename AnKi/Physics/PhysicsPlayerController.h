@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup physics
-/// @{
-
-/// Init info for PhysicsPlayerController.
+// Init info for PhysicsPlayerController.
 class PhysicsPlayerControllerInitInfo
 {
 public:
@@ -30,7 +27,7 @@ public:
 	void* m_userData = nullptr;
 };
 
-/// A player controller that walks the world.
+// A player controller that walks the world.
 class PhysicsPlayerController : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
@@ -47,7 +44,7 @@ public:
 		m_input.m_updated = 1;
 	}
 
-	/// This is a deferred operation, will happen on the next PhysicsWorld::update.
+	// This is a deferred operation, will happen on the next PhysicsWorld::update.
 	void moveToPosition(const Vec3& position)
 	{
 		m_jphCharacter->SetPosition(toJPH(position));
@@ -110,6 +107,5 @@ private:
 
 	void postPhysicsUpdate();
 };
-/// @}
 
 } // end namespace anki

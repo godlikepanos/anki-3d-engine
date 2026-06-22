@@ -22,7 +22,7 @@ Error UiStage::init()
 
 void UiStage::buildUi()
 {
-	if(SceneGraph::getSingleton().getComponentArrays().getUis().getSize() == 0)
+	if(SceneGraph::getSingleton().getComponentArray<UiComponent>().getSize() == 0)
 	{
 		// Early exit
 		return;
@@ -37,7 +37,7 @@ void UiStage::buildUi()
 	m_canvas->beginBuilding();
 	m_canvas->resize(getRenderer().getSwapchainResolution());
 
-	for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
+	for(UiComponent& comp : SceneGraph::getSingleton().getComponentArray<UiComponent>())
 	{
 		comp.drawUi(*m_canvas);
 	}
@@ -89,7 +89,7 @@ void UiStage::setDependencies(RenderPassBase& pass)
 
 void UiStage::drawUi(CommandBuffer& cmdb)
 {
-	if(SceneGraph::getSingleton().getComponentArrays().getUis().getSize() == 0)
+	if(SceneGraph::getSingleton().getComponentArray<UiComponent>().getSize() == 0)
 	{
 		// Early exit
 		return;

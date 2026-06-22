@@ -210,7 +210,7 @@ void GBuffer::populateRenderGraph()
 					cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 
-					for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes())
+					for(const auto& probe : SceneGraph::getSingleton().getComponentArray<GlobalIlluminationProbeComponent>())
 					{
 						Consts* consts = allocateAndBindConstants<Consts>(cmdb, 0, 0);
 
@@ -232,7 +232,7 @@ void GBuffer::populateRenderGraph()
 					cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());
 
-					for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getReflectionProbes())
+					for(const auto& probe : SceneGraph::getSingleton().getComponentArray<ReflectionProbeComponent>())
 					{
 						Consts* consts = allocateAndBindConstants<Consts>(cmdb, 0, 0);
 
