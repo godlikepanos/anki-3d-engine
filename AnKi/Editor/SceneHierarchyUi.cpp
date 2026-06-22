@@ -131,7 +131,7 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			if(ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
 			{
 				SceneGraph::getSingleton().getActiveScene().visitNodes([&](SceneNode& node) {
-					if(!node.getParent() && m_nodeNamesFilter.PassFilter(node.getName().cstr()))
+					if(node.getParent() == nullptr)
 					{
 						doSceneNode(focusOnSelectedNode, node, selectedNode, deleteSelectedNode);
 					}
@@ -148,6 +148,31 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 
 void SceneHierarchyUi::doSceneNode(Bool focusOnSelectedNode, SceneNode& node, SceneNode*& selectedNode, Bool& deleteSelectedNode)
 {
+	Bool forceOpenTree = false; // If true then we will force the sub-tree to expand
+
+	if(m_nodeNamesFilter.IsActive())
+	{
+		Bool passesFilter = m_nodeNamesFilter.PassFilter(node.getName().cstr());
+
+		Bool childPassesFilter = false; // One of the children passes the filter?
+		node.visitAllChildren([&](SceneNode& child) {
+			if(m_nodeNamesFilter.PassFilter(child.getName().cstr()))
+			{
+				childPassesFilter = true;
+				return FunctorContinue::kStop;
+			}
+
+			return FunctorContinue::kContinue;
+		});
+
+		if(!passesFilter && !childPassesFilter)
+		{
+			return;
+		}
+
+		forceOpenTree = childPassesFilter; // If the filter has text and one of the children is in that text we need to expand the sub-tree
+	}
+
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
 	ImGui::PushID(I32(node.getUuid()));
@@ -181,12 +206,17 @@ void SceneHierarchyUi::doSceneNode(Bool focusOnSelectedNode, SceneNode& node, Sc
 		node.visitAllChildren([&](SceneNode& child) {
 			if(&child == selectedNode)
 			{
-				ImGui::SetNextItemOpen(true);
+				forceOpenTree |= true;
 				return FunctorContinue::kStop;
 			}
 
 			return FunctorContinue::kContinue;
 		});
+	}
+
+	if(forceOpenTree)
+	{
+		ImGui::SetNextItemOpen(true);
 	}
 
 	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s  %s", node.getName().cstr(), componentsString.cstr());
