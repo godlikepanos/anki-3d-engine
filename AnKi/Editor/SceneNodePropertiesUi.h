@@ -16,7 +16,8 @@ class SceneNodePropertiesUi : public EditorUiBase
 public:
 	Bool m_open = true;
 
-	void drawWindow(SceneNode* node, const SceneGraphView& sceneView, Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
+	void drawWindow(SceneNode* node, const SceneGraphView& sceneView, Vec2 initialPos, Vec2 initialSize, Bool& reparented,
+					ImGuiWindowFlags windowFlags);
 
 private:
 	SceneComponentType m_selectedSceneComponentType = SceneComponentType::kFirst;
@@ -56,7 +57,7 @@ private:
 		ImGui::SameLine();
 	};
 
-	void parent(SceneNode& node, const SceneGraphView& sceneGraphView);
+	void parent(SceneNode& node, const SceneGraphView& sceneGraphView, Bool& reparented);
 };
 
 } // end namespace anki

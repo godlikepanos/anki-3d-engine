@@ -202,8 +202,15 @@ void EditorUi::draw(UiCanvas& canvas)
 		const F32 initialWidth = 500.0f;
 		const Vec2 initialPos(viewportSize.x - initialWidth, viewportPos.y);
 		const Vec2 initialSize(initialWidth, viewportSize.y - kConsoleHeight);
+		Bool reparented = false;
 
-		m_sceneNodePropertiesWindow.drawWindow(m_selectedNode, m_sceneGraphView, initialPos, initialSize, ImGuiWindowFlags_NoCollapse);
+		m_sceneNodePropertiesWindow.drawWindow(m_selectedNode, m_sceneGraphView, initialPos, initialSize, reparented, ImGuiWindowFlags_NoCollapse);
+
+		if(reparented)
+		{
+			// Focus a few frames down the line
+			m_onNextUpdateFocusOnSelectedNode = 2;
+		}
 	}
 
 	{

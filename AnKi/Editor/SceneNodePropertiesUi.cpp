@@ -9,9 +9,11 @@
 
 namespace anki {
 
-void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sceneGraphView, Vec2 initialPos, Vec2 initialSize,
+void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sceneGraphView, Vec2 initialPos, Vec2 initialSize, Bool& reparented,
 									   ImGuiWindowFlags windowFlags)
 {
+	reparented = false;
+
 	if(!m_open)
 	{
 		return;
@@ -47,7 +49,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 		}
 
 		// Parent
-		parent(*node, sceneGraphView);
+		parent(*node, sceneGraphView, reparented);
 
 		// Local transform
 		{
@@ -268,7 +270,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 	ImGui::End();
 }
 
-void SceneNodePropertiesUi::parent(SceneNode& node, const SceneGraphView& sceneGraphView)
+void SceneNodePropertiesUi::parent(SceneNode& node, const SceneGraphView& sceneGraphView, Bool& reparented)
 {
 	const SceneGraphViewScene* sceneView = nullptr;
 	for(const SceneGraphViewScene& v : sceneGraphView.m_scenes)
@@ -296,6 +298,7 @@ void SceneNodePropertiesUi::parent(SceneNode& node, const SceneGraphView& sceneG
 	if(ImGui::Button(ICON_MDI_DELETE))
 	{
 		node.setParent(nullptr, ReparentFlag::kKeepWorldTransform);
+		reparented = true;
 	}
 	ImGui::EndDisabled();
 	ImGui::SetItemTooltip("Remove parent");
@@ -308,6 +311,7 @@ void SceneNodePropertiesUi::parent(SceneNode& node, const SceneGraphView& sceneG
 	{
 		SceneNode* newParent = sceneView->m_nodes[newSelected];
 		node.setParent(newParent, ReparentFlag::kKeepWorldTransform);
+		reparented = true;
 	}
 }
 
