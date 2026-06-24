@@ -312,6 +312,8 @@ option(USE_STATIC_MSVC_RUNTIME_LIBRARY "Use the static MSVC runtime library" OFF
 set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF)
 option(DEBUG_RENDERER_IN_DISTRIBUTION "Enable debug renderer in all builds" ON)
 set(DEBUG_RENDERER_IN_DISTRIBUTION ON)
+set(JPH_USE_DX12 OFF)
+set(JPH_USE_VK OFF)
 if(ANKI_EXTRA_CHECKS)
 	option(USE_ASSERTS "Enable asserts" ON)
 	set(USE_ASSERTS ON)

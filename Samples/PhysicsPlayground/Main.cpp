@@ -40,12 +40,6 @@ Error MyApp::userPostInit()
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
 		base->setLocalOrigin(Vec3(-0.0f, 5.0f, -3.0f));
 
-		SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>("hinge");
-		JointComponent* jointc = joint->newComponent<JointComponent>();
-		jointc->setJointType(JointComponentyType::kHinge);
-		joint->setLocalOrigin(Vec3(-0.0f, 4.8f, -3.0f));
-		joint->setParent(base);
-
 		SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>("monkey_p2p");
 		monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
 		monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
@@ -53,12 +47,17 @@ Error MyApp::userPostInit()
 		const Aabb aabb = monkey->getFirstComponentOfType<MeshComponent>().getLocalAabb();
 		const F32 height = aabb.getMax().y - aabb.getMin().y;
 
+		JointComponent* jointc = monkey->newComponent<JointComponent>();
+		jointc->setJointType(JointComponentyType::kHinge);
+		jointc->setPivot2Origin(Vec3(0.0f, height, 0.0f));
+		jointc->movePivot2ToPivot1();
+
 		bodyc = monkey->newComponent<BodyComponent>();
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
 		bodyc->setMass(2.0f);
 		monkey->setLocalOrigin(Vec3(-0.0f, 4.8f - height / 2.0f, -3.0f));
 
-		monkey->setParent(joint);
+		monkey->setParent(base);
 	}
 
 	// Create a chain
@@ -80,28 +79,26 @@ Error MyApp::userPostInit()
 
 		for(U32 i = 0; i < linkCount; ++i)
 		{
-			SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("joint_chain%u", i));
-			JointComponent* jointc = joint->newComponent<JointComponent>();
-			jointc->setJointType(JointComponentyType::kPoint);
-			joint->setLocalOrigin(trf.getOrigin().xyz);
-			joint->setParent(prevNode);
-
 			SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("monkey_chain%u", i).toCString());
+
 			const MeshComponent& meshc = monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
 			monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");
 			const Aabb aabb = meshc.getLocalAabb();
 			const F32 height = aabb.getMax().y - aabb.getMin().y;
 
-			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));
+			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height + 0.1f, 0.0f, 0.0f));
+			monkey->setLocalTransform(trf);
 
 			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
 			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromMeshComponent);
 			bodyc->setMass(1.0f);
-			monkey->setParent(joint);
-			monkey->setLocalOrigin(trf.getOrigin().xyz);
-			monkey->setLocalRotation(trf.getRotation().getRotationPart());
 
-			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));
+			monkey->setParent(prevNode, anki::ReparentFlag::kKeepWorldTransform);
+
+			JointComponent* jointc = monkey->newComponent<JointComponent>();
+			jointc->setJointType(JointComponentyType::kPoint);
+			jointc->setPivot2Origin(Vec3(0.0f, height / 2.0f, 0.0f));
+			jointc->movePivot1ToPivot2();
 
 			prevNode = monkey;
 		}

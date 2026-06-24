@@ -613,27 +613,31 @@ PhysicsJointPtr PhysicsWorld::newJoint(PhysicsBody* body1, PhysicsBody* body2, T
 	return PhysicsJointPtr(&(*it));
 }
 
-PhysicsJointPtr PhysicsWorld::newPointJoint(PhysicsBody* body1, PhysicsBody* body2, const Vec3& pivot)
+PhysicsJointPtr PhysicsWorld::newPointJoint(PhysicsBody* body1, PhysicsBody* body2, Vec3 pivot1, Vec3 pivot2)
 {
 	ANKI_ASSERT(body1 && body2);
 	JPH::PointConstraintSettings settings;
 	settings.SetEmbedded();
 
-	settings.mPoint1 = settings.mPoint2 = toJPH(pivot);
+	settings.mPoint1 = toJPH(pivot1);
+	settings.mPoint2 = toJPH(pivot2);
 
 	return newJoint<JPH::PointConstraint>(body1, body2, settings);
 }
 
-PhysicsJointPtr PhysicsWorld::newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot)
+PhysicsJointPtr PhysicsWorld::newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot1, const Transform& pivot2)
 {
 	ANKI_ASSERT(body1 && body2);
 	JPH::HingeConstraintSettings settings;
 	settings.SetEmbedded();
 
-	settings.mPoint1 = settings.mPoint2 = toJPH(pivot.getOrigin().xyz);
-	settings.mHingeAxis1 = settings.mHingeAxis2 = toJPH(pivot.getRotation().getXAxis());
+	settings.mPoint1 = toJPH(pivot1.getOrigin().xyz);
+	settings.mHingeAxis1 = toJPH(pivot1.getRotation().getXAxis());
+	settings.mNormalAxis1 = toJPH(pivot1.getRotation().getYAxis());
 
-	settings.mNormalAxis1 = settings.mNormalAxis2 = toJPH(pivot.getRotation().getYAxis());
+	settings.mPoint2 = toJPH(pivot2.getOrigin().xyz);
+	settings.mHingeAxis2 = toJPH(pivot2.getRotation().getXAxis());
+	settings.mNormalAxis2 = toJPH(pivot2.getRotation().getYAxis());
 
 	return newJoint<JPH::HingeConstraint>(body1, body2, settings);
 }

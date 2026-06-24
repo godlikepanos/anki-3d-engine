@@ -53,12 +53,14 @@ public:
 
 	PhysicsBodyPtr newPhysicsBody(const PhysicsBodyInitInfo& init);
 
-	// pivot: world-space point where the 2 bodies get pinned together. Both bodies should already be positioned so that pivot is their common point.
-	// Removes the 3 translational DOF (rotation around it stays free).
-	PhysicsJointPtr newPointJoint(PhysicsBody* body1, PhysicsBody* body2, const Vec3& pivot);
+	// pivot1: World-space point where the 1st body gets pinned
+	// pivot2: Same but for body2
+	// The joint tries to move the two pivot points close. Also, pivot1 and pivot2 can coincide
+	PhysicsJointPtr newPointJoint(PhysicsBody* body1, PhysicsBody* body2, Vec3 pivot1, Vec3 pivot2);
 
-	// pivot: Gives the origin and rotation of the hinge. The hinge rotats in the X axis of the transform.
-	PhysicsJointPtr newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot);
+	// pivot1: Gives the origin and rotation of the hinge for the 1st body. The hinge rotates in the X axis of the transform.
+	// pivot2: Same but for body2
+	PhysicsJointPtr newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot1, const Transform& pivot2);
 
 	PhysicsPlayerControllerPtr newPlayerController(const PhysicsPlayerControllerInitInfo& init);
 

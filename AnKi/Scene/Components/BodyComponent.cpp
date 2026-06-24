@@ -14,6 +14,8 @@
 
 namespace anki {
 
+ANKI_SVAR(BodiesCreated, StatCategory::kScene, "Bodies created", StatFlag::kNone)
+
 BodyComponent::BodyComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 	, m_node(init.m_node)
@@ -132,6 +134,8 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_body = PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(this);
 		m_creationScale = init.m_transform.getScale().xyz;
+
+		g_svarBodiesCreated.increment(1);
 
 		// Adopt the body's current version so next frame's readback doesn't echo our own creation transform back into the node.
 		m_body->getTransform(&m_transformVersion);

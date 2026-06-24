@@ -703,6 +703,64 @@ void SceneNodePropertiesUi::jointComponent(JointComponent& comp)
 		}
 		ImGui::EndCombo();
 	}
+
+	// Pivot1
+	Vec3 pivot1 = comp.getPivot1Origin();
+	if(ImGui::DragFloat3("Pivot1", &pivot1.x, 0.025f, -1000000.0f, 1000000.0f))
+	{
+		comp.setPivot1Origin(pivot1);
+	}
+	ImGui::SetItemTooltip("Relative position from body's center");
+
+	// Pivot1 rotation
+	if(comp.getJointType() == JointComponentyType::kHinge)
+	{
+		const Euler rot(comp.getPivot1Rotation());
+		Array localRotation = {toDegrees(rot.x), toDegrees(rot.y), toDegrees(rot.z)};
+		if(ImGui::DragFloat3(ICON_MDI_ROTATE_ORBIT " Pivot1 Rotation", localRotation.getBegin(), 0.25f, -360.0f, 360.0f, "%.3f",
+							 ImGuiSliderFlags_AlwaysClamp))
+		{
+			const Euler rot(toRad(localRotation[0]), toRad(localRotation[1]), toRad(localRotation[2]));
+			comp.setPivot1Rotation(Mat3(rot));
+		}
+
+		ImGui::SetItemTooltip("Relative rotation from body's center");
+	}
+
+	// Pivot2
+	Vec3 pivot2 = comp.getPivot2Origin();
+	if(ImGui::DragFloat3("Pivot2", &pivot2.x, 0.025f, -1000000.0f, 1000000.0f))
+	{
+		comp.setPivot2Origin(pivot2);
+	}
+	ImGui::SetItemTooltip("Relative position from body's center");
+
+	// Pivot2 rotation
+	if(comp.getJointType() == JointComponentyType::kHinge)
+	{
+		const Euler rot(comp.getPivot2Rotation());
+		Array localRotation = {toDegrees(rot.x), toDegrees(rot.y), toDegrees(rot.z)};
+		if(ImGui::DragFloat3(ICON_MDI_ROTATE_ORBIT " Pivot2 Rotation", localRotation.getBegin(), 0.25f, -360.0f, 360.0f, "%.3f",
+							 ImGuiSliderFlags_AlwaysClamp))
+		{
+			const Euler rot(toRad(localRotation[0]), toRad(localRotation[1]), toRad(localRotation[2]));
+			comp.setPivot2Rotation(Mat3(rot));
+		}
+
+		ImGui::SetItemTooltip("Relative rotation from body's center");
+	}
+
+	// Move to pivot
+	if(ImGui::Button("Pivot1 -> Pivot2"))
+	{
+		comp.movePivot1ToPivot2();
+	}
+
+	ImGui::SameLine();
+	if(ImGui::Button("Pivot2 -> Pivot1"))
+	{
+		comp.movePivot2ToPivot1();
+	}
 }
 
 void SceneNodePropertiesUi::bodyComponent(BodyComponent& comp)
