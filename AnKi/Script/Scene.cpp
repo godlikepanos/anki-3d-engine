@@ -40,7 +40,7 @@ static EventManager* getEventManager(lua_State* l)
 
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponentType = {6682904088918336241, "LightComponentType", 0, nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponentType = {-1102363543018037780, "LightComponentType", 0, nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightComponentType>()
@@ -75,7 +75,7 @@ static inline void wrapLightComponentType(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoBodyComponentCollisionShapeType = {-5547417502083697916, "BodyComponentCollisionShapeType", 0, nullptr,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoBodyComponentCollisionShapeType = {-2785443226514684683, "BodyComponentCollisionShapeType", 0, nullptr,
 																			nullptr};
 
 template<>
@@ -119,7 +119,43 @@ static inline void wrapBodyComponentCollisionShapeType(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoParticleGeometryType = {-5649118084037125437, "ParticleGeometryType", 0, nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoJointComponentyType = {4338710168836734630, "JointComponentyType", 0, nullptr, nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<JointComponentyType>()
+{
+	return g_luaUserDataTypeInfoJointComponentyType;
+}
+
+// Wrap enum JointComponentyType.
+static inline void wrapJointComponentyType(lua_State* l)
+{
+	lua_newtable(l);
+	lua_setglobal(l, g_luaUserDataTypeInfoJointComponentyType.m_typeName);
+	lua_getglobal(l, g_luaUserDataTypeInfoJointComponentyType.m_typeName);
+
+	lua_pushstring(l, "kPoint");
+	ANKI_ASSERT(JointComponentyType(lua_Number(JointComponentyType::kPoint)) == JointComponentyType::kPoint
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(JointComponentyType::kPoint));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kHinge");
+	ANKI_ASSERT(JointComponentyType(lua_Number(JointComponentyType::kHinge)) == JointComponentyType::kHinge
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(JointComponentyType::kHinge));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kCount");
+	ANKI_ASSERT(JointComponentyType(lua_Number(JointComponentyType::kCount)) == JointComponentyType::kCount
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(JointComponentyType::kCount));
+	lua_settable(l, -3);
+
+	lua_settop(l, 0);
+}
+
+LuaUserDataTypeInfo g_luaUserDataTypeInfoParticleGeometryType = {-4803787714060671917, "ParticleGeometryType", 0, nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ParticleGeometryType>()
@@ -149,7 +185,7 @@ static inline void wrapParticleGeometryType(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoSkyboxComponentType = {-6401675645194842243, "SkyboxComponentType", 0, nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoSkyboxComponentType = {1716459571571132531, "SkyboxComponentType", 0, nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SkyboxComponentType>()
@@ -185,7 +221,7 @@ static inline void wrapSkyboxComponentType(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMeshComponentType = {8997786126617841141, "MeshComponentType", 0, nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMeshComponentType = {-2038605783032797729, "MeshComponentType", 0, nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MeshComponentType>()
@@ -215,7 +251,7 @@ static inline void wrapMeshComponentType(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMeshComponentPrimitiveType = {-3550777920173364351, "MeshComponentPrimitiveType", 0, nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMeshComponentPrimitiveType = {6137167722511143893, "MeshComponentPrimitiveType", 0, nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MeshComponentPrimitiveType>()
@@ -245,7 +281,7 @@ static inline void wrapMeshComponentPrimitiveType(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoReparentFlag = {-7677364088433981612, "ReparentFlag", 0, nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoReparentFlag = {6364699856782886620, "ReparentFlag", 0, nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ReparentFlag>()
@@ -275,7 +311,7 @@ static inline void wrapReparentFlag(lua_State* l)
 }
 
 LuaUserDataTypeInfo g_luaUserDataTypeInfoWeakArraySceneNodePtr = {
-	363279548642676292, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(), nullptr, nullptr};
+	-3570792136328772205, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<WeakArraySceneNodePtr>()
@@ -367,7 +403,7 @@ static inline void wrapWeakArraySceneNodePtr(lua_State* l)
 }
 
 LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneComponentUpdateInfo = {
-	-489575320432573989, "SceneComponentUpdateInfo", LuaUserData::computeSizeForGarbageCollected<SceneComponentUpdateInfo>(), nullptr, nullptr};
+	-4784565011479901894, "SceneComponentUpdateInfo", LuaUserData::computeSizeForGarbageCollected<SceneComponentUpdateInfo>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneComponentUpdateInfo>()
@@ -506,7 +542,7 @@ static inline void wrapSceneComponentUpdateInfo(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent = {-5035615920300511475, "LightComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent = {-1995438663742758852, "LightComponent",
 														   LuaUserData::computeSizeForGarbageCollected<LightComponent>(), nullptr, nullptr};
 
 template<>
@@ -948,7 +984,7 @@ static inline void wrapLightComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoDecalComponent = {4973190928293803048, "DecalComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoDecalComponent = {-1423984862481367329, "DecalComponent",
 														   LuaUserData::computeSizeForGarbageCollected<DecalComponent>(), nullptr, nullptr};
 
 template<>
@@ -1248,7 +1284,7 @@ static inline void wrapDecalComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoLensFlareComponent = {-1380697544560140627, "LensFlareComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoLensFlareComponent = {8353659890762499523, "LensFlareComponent",
 															   LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(), nullptr, nullptr};
 
 template<>
@@ -1372,7 +1408,7 @@ static inline void wrapLensFlareComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoBodyComponent = {-1892949053000170085, "BodyComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoBodyComponent = {-454561143985215149, "BodyComponent",
 														  LuaUserData::computeSizeForGarbageCollected<BodyComponent>(), nullptr, nullptr};
 
 template<>
@@ -1558,7 +1594,440 @@ static inline void wrapBodyComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoTriggerComponent = {5603125208160196629, "TriggerComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoJointComponent = {1639046487688147878, "JointComponent",
+														   LuaUserData::computeSizeForGarbageCollected<JointComponent>(), nullptr, nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<JointComponent>()
+{
+	return g_luaUserDataTypeInfoJointComponent;
+}
+
+// Wrap method JointComponent::setJointType.
+static inline int wrapJointComponentsetJointType(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Pop arguments
+	lua_Number arg0Tmp;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0Tmp)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+	const JointComponentyType arg0 = JointComponentyType(arg0Tmp);
+
+	// Call the method
+	self->setJointType(arg0);
+
+	return 0;
+}
+
+// Wrap method JointComponent::getJointType.
+static inline int wrapJointComponentgetJointType(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Call the method
+	JointComponentyType ret = self->getJointType();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<JointComponentyType>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "JointComponentyType");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoJointComponentyType;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoJointComponentyType);
+	::new(ud->getData<JointComponentyType>()) JointComponentyType(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method JointComponent::setPivot1Origin.
+static inline int wrapJointComponentsetPivot1Origin(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	Vec3 arg0(*iarg0);
+
+	// Call the method
+	self->setPivot1Origin(arg0);
+
+	return 0;
+}
+
+// Wrap method JointComponent::getPivot1Origin.
+static inline int wrapJointComponentgetPivot1Origin(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Call the method
+	Vec3 ret = self->getPivot1Origin();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method JointComponent::setPivot2Origin.
+static inline int wrapJointComponentsetPivot2Origin(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	Vec3 arg0(*iarg0);
+
+	// Call the method
+	self->setPivot2Origin(arg0);
+
+	return 0;
+}
+
+// Wrap method JointComponent::getPivot2Origin.
+static inline int wrapJointComponentgetPivot2Origin(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Call the method
+	Vec3 ret = self->getPivot2Origin();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method JointComponent::setPivot1Rotation.
+static inline int wrapJointComponentsetPivot1Rotation(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* iarg0 = ud->getData<Mat3>();
+	const Mat3& arg0(*iarg0);
+
+	// Call the method
+	self->setPivot1Rotation(arg0);
+
+	return 0;
+}
+
+// Wrap method JointComponent::getPivot1Rotation.
+static inline int wrapJointComponentgetPivot1Rotation(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Call the method
+	Mat3 ret = self->getPivot1Rotation();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method JointComponent::setPivot2Rotation.
+static inline int wrapJointComponentsetPivot2Rotation(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* iarg0 = ud->getData<Mat3>();
+	const Mat3& arg0(*iarg0);
+
+	// Call the method
+	self->setPivot2Rotation(arg0);
+
+	return 0;
+}
+
+// Wrap method JointComponent::getPivot2Rotation.
+static inline int wrapJointComponentgetPivot2Rotation(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Call the method
+	Mat3 ret = self->getPivot2Rotation();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method JointComponent::movePivot1ToPivot2.
+static inline int wrapJointComponentmovePivot1ToPivot2(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Call the method
+	self->movePivot1ToPivot2();
+
+	return 0;
+}
+
+// Wrap method JointComponent::movePivot2ToPivot1.
+static inline int wrapJointComponentmovePivot2ToPivot1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJointComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	JointComponent* self = ud->getData<JointComponent>();
+
+	// Call the method
+	self->movePivot2ToPivot1();
+
+	return 0;
+}
+
+// Wrap class JointComponent.
+static inline void wrapJointComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, &g_luaUserDataTypeInfoJointComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setJointType", wrapJointComponentsetJointType);
+	LuaBinder::pushLuaCFuncMethod(l, "getJointType", wrapJointComponentgetJointType);
+	LuaBinder::pushLuaCFuncMethod(l, "setPivot1Origin", wrapJointComponentsetPivot1Origin);
+	LuaBinder::pushLuaCFuncMethod(l, "getPivot1Origin", wrapJointComponentgetPivot1Origin);
+	LuaBinder::pushLuaCFuncMethod(l, "setPivot2Origin", wrapJointComponentsetPivot2Origin);
+	LuaBinder::pushLuaCFuncMethod(l, "getPivot2Origin", wrapJointComponentgetPivot2Origin);
+	LuaBinder::pushLuaCFuncMethod(l, "setPivot1Rotation", wrapJointComponentsetPivot1Rotation);
+	LuaBinder::pushLuaCFuncMethod(l, "getPivot1Rotation", wrapJointComponentgetPivot1Rotation);
+	LuaBinder::pushLuaCFuncMethod(l, "setPivot2Rotation", wrapJointComponentsetPivot2Rotation);
+	LuaBinder::pushLuaCFuncMethod(l, "getPivot2Rotation", wrapJointComponentgetPivot2Rotation);
+	LuaBinder::pushLuaCFuncMethod(l, "movePivot1ToPivot2", wrapJointComponentmovePivot1ToPivot2);
+	LuaBinder::pushLuaCFuncMethod(l, "movePivot2ToPivot1", wrapJointComponentmovePivot2ToPivot1);
+	lua_settop(l, 0);
+}
+
+LuaUserDataTypeInfo g_luaUserDataTypeInfoTriggerComponent = {-8460645248781380275, "TriggerComponent",
 															 LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr, nullptr};
 
 template<>
@@ -1646,7 +2115,7 @@ static inline void wrapTriggerComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoFogDensityComponent = {-544694661919316715, "FogDensityComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoFogDensityComponent = {8866311622257982686, "FogDensityComponent",
 																LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(), nullptr, nullptr};
 
 template<>
@@ -1726,7 +2195,7 @@ static inline void wrapFogDensityComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoCameraComponent = {-2494249990526340509, "CameraComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoCameraComponent = {-1195760528408023635, "CameraComponent",
 															LuaUserData::computeSizeForGarbageCollected<CameraComponent>(), nullptr, nullptr};
 
 template<>
@@ -1795,8 +2264,8 @@ static inline void wrapCameraComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo g_luaUserDataTypeInfoGlobalIlluminationProbeComponent = {
-	2867840365007866935, "GlobalIlluminationProbeComponent", LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeComponent>(), nullptr,
-	nullptr};
+	-3925545460749563619, "GlobalIlluminationProbeComponent", LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeComponent>(),
+	nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<GlobalIlluminationProbeComponent>()
@@ -1940,7 +2409,7 @@ static inline void wrapGlobalIlluminationProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo g_luaUserDataTypeInfoReflectionProbeComponent = {
-	9100987437363645141, "ReflectionProbeComponent", LuaUserData::computeSizeForGarbageCollected<ReflectionProbeComponent>(), nullptr, nullptr};
+	-3354154693181143195, "ReflectionProbeComponent", LuaUserData::computeSizeForGarbageCollected<ReflectionProbeComponent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ReflectionProbeComponent>()
@@ -1956,7 +2425,7 @@ static inline void wrapReflectionProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo g_luaUserDataTypeInfoParticleEmitter2Component = {
-	2385197402540273840, "ParticleEmitter2Component", LuaUserData::computeSizeForGarbageCollected<ParticleEmitter2Component>(), nullptr, nullptr};
+	7182992855692704419, "ParticleEmitter2Component", LuaUserData::computeSizeForGarbageCollected<ParticleEmitter2Component>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ParticleEmitter2Component>()
@@ -2120,7 +2589,7 @@ static inline void wrapParticleEmitter2Component(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMeshComponent = {5420519730542231196, "MeshComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMeshComponent = {-8741097023157578201, "MeshComponent",
 														  LuaUserData::computeSizeForGarbageCollected<MeshComponent>(), nullptr, nullptr};
 
 template<>
@@ -2302,7 +2771,7 @@ static inline void wrapMeshComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMaterialComponent = {7371000794066605846, "MaterialComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMaterialComponent = {-1051088768226830123, "MaterialComponent",
 															  LuaUserData::computeSizeForGarbageCollected<MaterialComponent>(), nullptr, nullptr};
 
 template<>
@@ -2400,7 +2869,7 @@ static inline void wrapMaterialComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoSkinComponent = {8821659118714415574, "SkinComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoSkinComponent = {6452701695474078646, "SkinComponent",
 														  LuaUserData::computeSizeForGarbageCollected<SkinComponent>(), nullptr, nullptr};
 
 template<>
@@ -2457,7 +2926,7 @@ static inline void wrapSkinComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoSkyboxComponent = {-6152202337119390243, "SkyboxComponent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoSkyboxComponent = {1388770259824576299, "SkyboxComponent",
 															LuaUserData::computeSizeForGarbageCollected<SkyboxComponent>(), nullptr, nullptr};
 
 template<>
@@ -2968,7 +3437,7 @@ static inline void wrapSkyboxComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode = {5916139195164049249, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(),
+LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode = {-158055401466028177, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(),
 													  nullptr, nullptr};
 
 template<>
@@ -3903,6 +4372,45 @@ static inline int wrapSceneNodenewSkyboxComponent(lua_State* l)
 	return 1;
 }
 
+// Wrap method SceneNode::newComponent<JointComponent>.
+static inline int wrapSceneNodenewJointComponent(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	JointComponent* ret = self->newComponent<JointComponent>();
+
+	// Push return value
+	if(ret == nullptr) [[unlikely]]
+	{
+		lua_pushnil(l);
+		return 1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "JointComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoJointComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoJointComponent, ret);
+
+	return 1;
+}
+
 // Wrap method SceneNode::getFirstComponentOfType<LightComponent>.
 static inline int wrapSceneNodegetFirstLightComponent(lua_State* l)
 {
@@ -4332,6 +4840,39 @@ static inline int wrapSceneNodegetFirstSkyboxComponent(lua_State* l)
 	return 1;
 }
 
+// Wrap method SceneNode::getFirstComponentOfType<JointComponent>.
+static inline int wrapSceneNodegetFirstJointComponent(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	JointComponent& ret = self->getFirstComponentOfType<JointComponent>();
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "JointComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoJointComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoJointComponent, &ret);
+
+	return 1;
+}
+
 // Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
@@ -4361,6 +4902,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newMaterialComponent", wrapSceneNodenewMaterialComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "newSkinComponent", wrapSceneNodenewSkinComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "newSkyboxComponent", wrapSceneNodenewSkyboxComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newJointComponent", wrapSceneNodenewJointComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstLightComponent", wrapSceneNodegetFirstLightComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstLensFlareComponent", wrapSceneNodegetFirstLensFlareComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstDecalComponent", wrapSceneNodegetFirstDecalComponent);
@@ -4374,10 +4916,11 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstMaterialComponent", wrapSceneNodegetFirstMaterialComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstSkinComponent", wrapSceneNodegetFirstSkinComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstSkyboxComponent", wrapSceneNodegetFirstSkyboxComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getFirstJointComponent", wrapSceneNodegetFirstJointComponent);
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneGraph = {-4686719847057088938, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(),
+LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneGraph = {-4549664365513252034, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(),
 													   nullptr, nullptr};
 
 template<>
@@ -4523,7 +5066,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoEvent = {-8908992481676700396, "Event", LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoEvent = {-5826712947838590721, "Event", LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr,
 												  nullptr};
 
 template<>
@@ -4575,7 +5118,7 @@ static inline void wrapEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoLightEvent = {53633051772373904, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(),
+LuaUserDataTypeInfo g_luaUserDataTypeInfoLightEvent = {2087305409558925035, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(),
 													   nullptr, nullptr};
 
 template<>
@@ -4668,7 +5211,7 @@ static inline void wrapLightEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoScriptEvent = {7929027110028666812, "ScriptEvent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoScriptEvent = {1039583327072489655, "ScriptEvent",
 														LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(), nullptr, nullptr};
 
 template<>
@@ -4684,7 +5227,7 @@ static inline void wrapScriptEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoJitterMoveEvent = {-7051791189590831455, "JitterMoveEvent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoJitterMoveEvent = {-592360776777736247, "JitterMoveEvent",
 															LuaUserData::computeSizeForGarbageCollected<JitterMoveEvent>(), nullptr, nullptr};
 
 template<>
@@ -4746,7 +5289,7 @@ static inline void wrapJitterMoveEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationEvent = {3934215300501414366, "AnimationEvent",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationEvent = {6005917574703449371, "AnimationEvent",
 														   LuaUserData::computeSizeForGarbageCollected<AnimationEvent>(), nullptr, nullptr};
 
 template<>
@@ -4762,7 +5305,7 @@ static inline void wrapAnimationEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoEventManager = {5718475143233654138, "EventManager",
+LuaUserDataTypeInfo g_luaUserDataTypeInfoEventManager = {-6739959748604984136, "EventManager",
 														 LuaUserData::computeSizeForGarbageCollected<EventManager>(), nullptr, nullptr};
 
 template<>
@@ -5088,6 +5631,7 @@ void wrapModuleScene(lua_State* l)
 	wrapDecalComponent(l);
 	wrapLensFlareComponent(l);
 	wrapBodyComponent(l);
+	wrapJointComponent(l);
 	wrapTriggerComponent(l);
 	wrapFogDensityComponent(l);
 	wrapCameraComponent(l);
@@ -5110,6 +5654,7 @@ void wrapModuleScene(lua_State* l)
 	LuaBinder::pushLuaCFunc(l, "getEventManager", wrapgetEventManager);
 	wrapLightComponentType(l);
 	wrapBodyComponentCollisionShapeType(l);
+	wrapJointComponentyType(l);
 	wrapParticleGeometryType(l);
 	wrapSkyboxComponentType(l);
 	wrapMeshComponentType(l);

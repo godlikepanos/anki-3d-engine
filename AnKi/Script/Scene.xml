@@ -56,6 +56,12 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kCount"/>
 		</enum>
 
+		<enum name="JointComponentyType">
+			<enumerant name="kPoint"/>
+			<enumerant name="kHinge"/>
+			<enumerant name="kCount"/>
+		</enum>
+
 		<enum name="ParticleGeometryType">
 			<enumerant name="kQuad"/>
 			<enumerant name="kMeshComponent"/>
@@ -258,6 +264,53 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getSphereRadius">
 					<return>F32</return>
 				</method>
+			</methods>
+		</class>
+
+		<class name="JointComponent">
+			<methods>
+				<method name="setJointType">
+					<args>
+						<arg>JointComponentyType</arg>
+					</args>
+				</method>
+				<method name="getJointType">
+					<return>JointComponentyType</return>
+				</method>
+				<method name="setPivot1Origin">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="getPivot1Origin">
+					<return>Vec3</return>
+				</method>
+				<method name="setPivot2Origin">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="getPivot2Origin">
+					<return>Vec3</return>
+				</method>
+				<method name="setPivot1Rotation">
+					<args>
+						<arg>const Mat3&amp;</arg>
+					</args>
+				</method>
+				<method name="getPivot1Rotation">
+					<return>Mat3</return>
+				</method>
+				<method name="setPivot2Rotation">
+					<args>
+						<arg>const Mat3&amp;</arg>
+					</args>
+				</method>
+				<method name="getPivot2Rotation">
+					<return>Mat3</return>
+				</method>
+				<method name="movePivot1ToPivot2"/>
+				<method name="movePivot2ToPivot1"/>
 			</methods>
 		</class>
 
@@ -563,6 +616,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="newComponent&lt;SkyboxComponent&gt;" alias="newSkyboxComponent">
 					<return canBeNullptr="1">SkyboxComponent*</return>
 				</method>
+				<method name="newComponent&lt;JointComponent&gt;" alias="newJointComponent">
+					<return canBeNullptr="1">JointComponent*</return>
+				</method>
 
 				<method name="getFirstComponentOfType&lt;LightComponent&gt;" alias="getFirstLightComponent">
 					<return>LightComponent&amp;</return>
@@ -602,6 +658,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="getFirstComponentOfType&lt;SkyboxComponent&gt;" alias="getFirstSkyboxComponent">
 					<return>SkyboxComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;JointComponent&gt;" alias="getFirstJointComponent">
+					<return>JointComponent&amp;</return>
 				</method>
 			</methods>
 		</class>
