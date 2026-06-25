@@ -1,0 +1,15 @@
+{
+    "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+    "runtime.version": "Lua 5.2",
+    "workspace.library": [
+        "AnKi/Script/AnKiScriptApi.lua"
+    ],
+    "diagnostics.globals": [
+        "node",
+        "comp",
+        "trf",
+        "rot",
+        "scene",
+        "events"
+    ]
+}
