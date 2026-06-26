@@ -23,13 +23,19 @@ public:
 		m_player->updateState(forwardSpeed, forwardDir, jumpSpeed, crouch);
 	}
 
-	PhysicsPlayerController& getPhysicsPlayerController()
+	ANKI_INTERNAL PhysicsPlayerController& getPhysicsPlayerController()
 	{
 		return *m_player;
 	}
 
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+
 private:
 	PhysicsPlayerControllerPtr m_player;
+	SceneNode* m_node = nullptr;
 	U32 m_positionVersion = kMaxU32;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;

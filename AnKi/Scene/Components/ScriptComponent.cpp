@@ -9,6 +9,7 @@
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Script/ScriptEnvironment.h>
+#include <AnKi/Scene/Components/TriggerComponent.h>
 
 namespace anki {
 
@@ -23,14 +24,14 @@ ScriptComponent::~ScriptComponent()
 	deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
 }
 
-void ScriptComponent::setScriptResourceFilename(CString fname)
+ScriptComponent& ScriptComponent::setScriptResourceFilename(CString fname)
 {
 	if(fname.isEmpty())
 	{
 		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
 		m_environments[1] = nullptr;
 		m_resource.reset(nullptr);
-		return;
+		return *this;
 	}
 
 	// Load
@@ -62,6 +63,8 @@ void ScriptComponent::setScriptResourceFilename(CString fname)
 		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
 		m_environments[1] = newEnv;
 	}
+
+	return *this;
 }
 
 CString ScriptComponent::getScriptResourceFilename() const
@@ -76,14 +79,14 @@ CString ScriptComponent::getScriptResourceFilename() const
 	}
 }
 
-void ScriptComponent::setScriptText(CString text)
+ScriptComponent& ScriptComponent::setScriptText(CString text)
 {
 	if(text.isEmpty())
 	{
 		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
 		m_environments[0] = nullptr;
 		m_text.destroy();
-		return;
+		return *this;
 	}
 
 	// Create the env
@@ -104,6 +107,8 @@ void ScriptComponent::setScriptText(CString text)
 		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
 		m_environments[0] = newEnv;
 	}
+
+	return *this;
 }
 
 CString ScriptComponent::getScriptText() const
@@ -121,27 +126,101 @@ CString ScriptComponent::getScriptText() const
 void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
-	if((!m_environments[0] && !m_environments[1]) || info.m_paused)
+	if(!isValid() || info.m_paused)
 	{
 		return;
 	}
 
 	lua_State* lua = (m_environments[0]) ? &m_environments[0]->getLuaState() : &m_environments[1]->getLuaState();
 
-	// Push function name
-	lua_getglobal(lua, "update");
-
-	// Push args
-	LuaBinder::pushVariableToTheStack(lua, &info);
-
-	// Do the call (1 argument, no result)
-	if(lua_pcall(lua, 1, 0, 0) != 0)
+	// Call update()
 	{
-		ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": %s", lua_tostring(lua, -1));
-		return;
+		// Push function name
+		lua_getglobal(lua, "update");
+
+		if(!lua_isfunction(lua, -1))
+		{
+			// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
+			lua_pop(lua, 1);
+		}
+		else
+		{
+			// Push args
+			LuaBinder::pushVariableToTheStack(lua, &info);
+
+			// Do the call (1 argument, no result)
+			if(lua_pcall(lua, 1, 0, 0) != 0)
+			{
+				ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": %s", lua_tostring(lua, -1));
+				return;
+			}
+
+			updated = true;
+		}
 	}
 
-	updated = true;
+	// Call onTriggerEnter
+	TriggerComponent* comp = info.m_node->tryGetFirstComponentOfType<TriggerComponent>();
+	if(comp)
+	{
+		for(SceneNode* node : comp->getSceneNodesEnter())
+		{
+			// Push function name
+			lua_getglobal(lua, "onTriggerEnter");
+
+			if(!lua_isfunction(lua, -1))
+			{
+				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
+				lua_pop(lua, 1);
+				break;
+			}
+			else
+			{
+				// Push args
+				LuaBinder::pushVariableToTheStack(lua, node);
+
+				// Do the call (1 argument, no result)
+				if(lua_pcall(lua, 1, 0, 0) != 0)
+				{
+					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onTriggerEnter\": %s", lua_tostring(lua, -1));
+					return;
+				}
+
+				updated = true;
+			}
+		}
+	}
+
+	// Call onTriggerExit
+	if(comp)
+	{
+		for(SceneNode* node : comp->getSceneNodesExit())
+		{
+			// Push function name
+			lua_getglobal(lua, "onTriggerExit");
+
+			if(!lua_isfunction(lua, -1))
+			{
+				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
+				lua_pop(lua, 1);
+				break;
+			}
+			else
+			{
+				// Push args
+				LuaBinder::pushVariableToTheStack(lua, node);
+
+				// Do the call (1 argument, no result)
+				if(lua_pcall(lua, 1, 0, 0) != 0)
+				{
+					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onTriggerExit\": %s", lua_tostring(lua, -1));
+					return;
+				}
+
+				updated = true;
+			}
+		}
+	}
 }
 
 Error ScriptComponent::serialize(SceneSerializer& serializer)

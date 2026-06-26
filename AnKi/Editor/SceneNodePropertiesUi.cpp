@@ -243,6 +243,9 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 					case SceneComponentType::kSkybox:
 						skyboxComponent(static_cast<SkyboxComponent&>(comp));
 						break;
+					case SceneComponentType::kTrigger:
+						triggerComponent(static_cast<TriggerComponent&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -367,6 +370,19 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 
 	// Button
 	{
+		const Char* defaultText = R"(function update(info) --info: SceneComponentUpdateInfo
+    -- Your code here
+end
+
+--[[function onTriggerEnter(node)
+    -- Your code here
+end]]
+
+--[[function onTriggerExit(node)
+    -- Your code here
+end]]
+)";
+
 		String buttonTxt;
 		buttonTxt.sprintf(ICON_MDI_LANGUAGE_LUA " Embedded Script (%s)", comp.hasScriptText() ? "Set" : "Unset");
 		const Bool showEditor = ImGui::Button(buttonTxt.cstr(), Vec2(-1.0f, 0.0f));
@@ -374,8 +390,7 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 		{
 			m_textEditorOpen = true;
 			m_scriptComponentThatHasTheTextEditorOpen = comp.getUuid();
-			m_textEditorTxt =
-				(comp.hasScriptText()) ? comp.getScriptText() : "function update(info) --info: SceneComponentUpdateInfo\n    -- Your code here\nend";
+			m_textEditorTxt = (comp.hasScriptText()) ? comp.getScriptText() : defaultText;
 		}
 	}
 
@@ -1004,6 +1019,29 @@ void SceneNodePropertiesUi::skyboxComponent(SkyboxComponent& comp)
 	if(ImGui::SliderFloat3("Color", &fogColor.x, 0.0f, 100.0f))
 	{
 		comp.setFogDiffuseColor(fogColor);
+	}
+}
+
+void SceneNodePropertiesUi::triggerComponent(TriggerComponent& comp)
+{
+	// Shape type
+	if(ImGui::BeginCombo("Type", kTriggerComponentShapeTypeNames[comp.getTriggerComponentType()]))
+	{
+		for(TriggerComponentShapeType type : EnumIterable<TriggerComponentShapeType>())
+		{
+			const Bool selected = type == comp.getTriggerComponentType();
+			if(ImGui::Selectable(kTriggerComponentShapeTypeNames[type], selected))
+			{
+				comp.setTriggerComponentType(type);
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if(selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
 	}
 }
 

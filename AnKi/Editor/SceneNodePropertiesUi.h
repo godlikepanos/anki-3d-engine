@@ -46,6 +46,7 @@ private:
 	void decalComponent(DecalComponent& comp);
 	void cameraComponent(CameraComponent& comp);
 	void skyboxComponent(SkyboxComponent& comp);
+	void triggerComponent(TriggerComponent& comp);
 
 	static void dummyButton(I32 id)
 	{

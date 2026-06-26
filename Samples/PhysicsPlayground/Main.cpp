@@ -109,7 +109,7 @@ Error MyApp::userPostInit()
 	{
 		SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>("trigger");
 		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
-		triggerc->setType(TriggerComponentShapeType::kSphere);
+		triggerc->setTriggerComponentType(TriggerComponentShapeType::kSphere);
 		node->setLocalScale(Vec3(1.8f, 1.8f, 1.8f));
 		node->setLocalOrigin(Vec3(4.0f, 0.5f, 0.0f));
 	}

@@ -5,6 +5,7 @@
 
 #include <AnKi/Scene/Components/TriggerComponent.h>
 #include <AnKi/Scene/Components/BodyComponent.h>
+#include <AnKi/Scene/Components/PlayerControllerComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Physics/PhysicsCollisionShape.h>
@@ -23,7 +24,7 @@ public:
 
 		if(triggerc.m_resetEnter)
 		{
-			triggerc.m_bodiesEnter.destroy();
+			triggerc.m_enteredNodes.destroy();
 			triggerc.m_resetEnter = false;
 		}
 
@@ -32,7 +33,14 @@ public:
 			const PhysicsBody& body = static_cast<const PhysicsBody&>(obj);
 			BodyComponent& bodyc = *reinterpret_cast<BodyComponent*>(body.getUserData());
 			ANKI_ASSERT(bodyc.getType() == BodyComponent::kClassType);
-			triggerc.m_bodiesEnter.emplaceBack(&bodyc.getSceneNode());
+			triggerc.m_enteredNodes.emplaceBack(&bodyc.getSceneNode());
+		}
+		else if(obj.getType() == PhysicsObjectType::kPlayerController)
+		{
+			const PhysicsPlayerController& player = static_cast<const PhysicsPlayerController&>(obj);
+			PlayerControllerComponent& comp = *reinterpret_cast<PlayerControllerComponent*>(player.getUserData());
+			ANKI_ASSERT(comp.getType() == PlayerControllerComponent::kClassType);
+			triggerc.m_enteredNodes.emplaceBack(&comp.getSceneNode());
 		}
 	}
 
@@ -43,7 +51,7 @@ public:
 
 		if(triggerc.m_resetExit)
 		{
-			triggerc.m_bodiesExit.destroy();
+			triggerc.m_exitedNodes.destroy();
 			triggerc.m_resetExit = false;
 		}
 
@@ -52,7 +60,14 @@ public:
 			const PhysicsBody& body = static_cast<const PhysicsBody&>(obj);
 			BodyComponent& bodyc = *reinterpret_cast<BodyComponent*>(body.getUserData());
 			ANKI_ASSERT(bodyc.getType() == BodyComponent::kClassType);
-			triggerc.m_bodiesExit.emplaceBack(&bodyc.getSceneNode());
+			triggerc.m_exitedNodes.emplaceBack(&bodyc.getSceneNode());
+		}
+		else if(obj.getType() == PhysicsObjectType::kPlayerController)
+		{
+			const PhysicsPlayerController& player = static_cast<const PhysicsPlayerController&>(obj);
+			PlayerControllerComponent& comp = *reinterpret_cast<PlayerControllerComponent*>(player.getUserData());
+			ANKI_ASSERT(comp.getType() == PlayerControllerComponent::kClassType);
+			triggerc.m_exitedNodes.emplaceBack(&comp.getSceneNode());
 		}
 	}
 };
@@ -68,7 +83,7 @@ TriggerComponent::~TriggerComponent()
 {
 }
 
-void TriggerComponent::setType(TriggerComponentShapeType type)
+TriggerComponent& TriggerComponent::setTriggerComponentType(TriggerComponentShapeType type)
 {
 	if(type != m_type)
 	{
@@ -77,10 +92,14 @@ void TriggerComponent::setType(TriggerComponentShapeType type)
 		m_shape.reset(nullptr);
 		m_type = type;
 	}
+
+	return *this;
 }
 
 void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
+	ANKI_ASSERT(info.m_node);
+
 	if(m_type == TriggerComponentShapeType::kCount)
 	{
 		return;
@@ -132,13 +151,24 @@ void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	if(m_resetEnter)
 	{
 		// None entered, cleanup
-		m_bodiesEnter.destroy();
+		m_enteredNodes.destroy();
 	}
 
 	if(m_resetExit)
 	{
 		// None exited, cleanup
-		m_bodiesExit.destroy();
+		m_exitedNodes.destroy();
+	}
+
+	// Call the callbacks
+	for(SceneNode* node : m_enteredNodes)
+	{
+		info.m_node->onTriggerEnter(node);
+	}
+
+	for(SceneNode* node : m_exitedNodes)
+	{
+		info.m_node->onTriggerExit(node);
 	}
 
 	// Prepare them for the next frame

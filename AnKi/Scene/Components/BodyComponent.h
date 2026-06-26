@@ -35,13 +35,14 @@ public:
 
 	~BodyComponent();
 
-	void setCollisionShapeType(BodyComponentCollisionShapeType type)
+	BodyComponent& setCollisionShapeType(BodyComponentCollisionShapeType type)
 	{
-		if(ANKI_EXPECT(type <= BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
+		if(ANKI_EXPECT(type < BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
 		{
 			m_shapeType = type;
 			cleanup(); // Force recreate
 		}
+		return *this;
 	}
 
 	BodyComponentCollisionShapeType getCollisionShapeType() const
@@ -49,7 +50,7 @@ public:
 		return m_shapeType;
 	}
 
-	void setBoxExtend(Vec3 extend)
+	BodyComponent& setBoxExtend(Vec3 extend)
 	{
 		if(ANKI_EXPECT(extend > 0.01f) && extend != m_box.m_extend)
 		{
@@ -59,6 +60,7 @@ public:
 				cleanup(); // Force recreate
 			}
 		}
+		return *this;
 	}
 
 	const Vec3& getBoxExtend() const
@@ -66,7 +68,7 @@ public:
 		return m_box.m_extend;
 	}
 
-	void setSphereRadius(F32 radius)
+	BodyComponent& setSphereRadius(F32 radius)
 	{
 		if(ANKI_EXPECT(radius > 0.01f) && radius != m_sphere.m_radius)
 		{
@@ -76,6 +78,7 @@ public:
 				cleanup(); // Force recreate
 			}
 		}
+		return *this;
 	}
 
 	F32 getSphereRadius() const
@@ -83,23 +86,19 @@ public:
 		return m_sphere.m_radius;
 	}
 
-	void setMass(F32 mass)
+	BodyComponent& setMass(F32 mass)
 	{
 		if(ANKI_EXPECT(mass >= 0.0f) && m_mass != mass)
 		{
 			m_mass = mass;
 			cleanup(); // Force recreate
 		}
+		return *this;
 	}
 
 	F32 getMass() const
 	{
 		return m_mass;
-	}
-
-	const PhysicsBodyPtr& getPhysicsBody() const
-	{
-		return m_body;
 	}
 
 	void applyForce(Vec3 force, Vec3 relativePosition)
@@ -108,12 +107,17 @@ public:
 		m_forcePosition = relativePosition;
 	}
 
-	SceneNode& getSceneNode()
+	Bool isValid() const;
+
+	ANKI_INTERNAL const PhysicsBodyPtr& getPhysicsBody() const
+	{
+		return m_body;
+	}
+
+	ANKI_INTERNAL SceneNode& getSceneNode()
 	{
 		return *m_node;
 	}
-
-	Bool isValid() const;
 
 private:
 	SceneNode* m_node = nullptr;

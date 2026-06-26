@@ -12,6 +12,7 @@ namespace anki {
 
 PlayerControllerComponent::PlayerControllerComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
+	, m_node(init.m_node)
 {
 	PhysicsPlayerControllerInitInfo pinit;
 	pinit.m_initialPosition = init.m_node->getWorldTransform().getOrigin().xyz;

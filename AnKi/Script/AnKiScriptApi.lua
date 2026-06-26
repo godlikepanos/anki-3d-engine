@@ -49,6 +49,12 @@ MeshComponentPrimitiveType = {}
 ---@field kKeepWorldTransform integer
 ReparentFlag = {}
 
+---@class TriggerComponentShapeType
+---@field kSphere integer
+---@field kBox integer
+---@field kCount integer
+TriggerComponentShapeType = {}
+
 ---@class WeakArraySceneNodePtr
 WeakArraySceneNodePtr = {}
 
@@ -163,19 +169,39 @@ function LensFlareComponent:setColorMultiplier(vec4) end
 BodyComponent = {}
 
 ---@param bodyComponentCollisionShapeType integer
+---@return BodyComponent
 function BodyComponent:setCollisionShapeType(bodyComponentCollisionShapeType) end
 
+---@return integer
+function BodyComponent:getCollisionShapeType() end
+
 ---@param vec3 Vec3
+---@return BodyComponent
 function BodyComponent:setBoxExtend(vec3) end
 
 ---@return Vec3
 function BodyComponent:getBoxExtend() end
 
 ---@param num number
+---@return BodyComponent
 function BodyComponent:setSphereRadius(num) end
 
 ---@return number
 function BodyComponent:getSphereRadius() end
+
+---@param num number
+---@return BodyComponent
+function BodyComponent:setMass(num) end
+
+---@return number
+function BodyComponent:getMass() end
+
+---@param vec3 Vec3
+---@param vec32 Vec3
+function BodyComponent:applyForce(vec3, vec32) end
+
+---@return boolean
+function BodyComponent:isValid() end
 
 ---@class JointComponent
 JointComponent = {}
@@ -217,11 +243,12 @@ function JointComponent:movePivot2ToPivot1() end
 ---@class TriggerComponent
 TriggerComponent = {}
 
----@return WeakArraySceneNodePtr
-function TriggerComponent:getSceneNodesEnter() end
+---@param triggerComponentShapeType integer
+---@return TriggerComponent
+function TriggerComponent:setTriggerComponentType(triggerComponentShapeType) end
 
----@return WeakArraySceneNodePtr
-function TriggerComponent:getSceneNodesExit() end
+---@return integer
+function TriggerComponent:getTriggerComponentType() end
 
 ---@class FogDensityComponent
 FogDensityComponent = {}
@@ -803,6 +830,9 @@ function getEventManager() end
 ---@return number
 function toRad(num) end
 
+---@return Renderer
+function getRenderer() end
+
 ---@param str string
 function logi(str) end
 
@@ -814,7 +844,4 @@ function logw(str) end
 
 ---@param str string
 function logv(str) end
-
----@return Renderer
-function getRenderer() end
 

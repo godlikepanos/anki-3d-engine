@@ -87,6 +87,12 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kNone"/>
 			<enumerant name="kKeepWorldTransform"/>
 		</enum>
+
+		<enum name="TriggerComponentShapeType">
+			<enumerant name="kSphere"/>
+			<enumerant name="kBox"/>
+			<enumerant name="kCount"/>
+		</enum>
 	</enums>
 
 	<classes>
@@ -247,11 +253,16 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<args>
 						<arg>BodyComponentCollisionShapeType</arg>
 					</args>
+					<return>BodyComponent&amp;</return>
+				</method>
+				<method name="getCollisionShapeType">
+					<return>BodyComponentCollisionShapeType</return>
 				</method>
 				<method name="setBoxExtend">
 					<args>
 						<arg>Vec3</arg>
 					</args>
+					<return>BodyComponent&amp;</return>
 				</method>
 				<method name="getBoxExtend">
 					<return>const Vec3&amp;</return>
@@ -260,9 +271,28 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<args>
 						<arg>F32</arg>
 					</args>
+					<return>BodyComponent&amp;</return>
 				</method>
 				<method name="getSphereRadius">
 					<return>F32</return>
+				</method>
+				<method name="setMass">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>BodyComponent&amp;</return>
+				</method>
+				<method name="getMass">
+					<return>F32</return>
+				</method>
+				<method name="applyForce">
+					<args>
+						<arg>Vec3</arg>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="isValid">
+					<return>Bool</return>
 				</method>
 			</methods>
 		</class>
@@ -316,11 +346,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="TriggerComponent">
 			<methods>
-				<method name="getSceneNodesEnter">
-					<return>WeakArraySceneNodePtr</return>
+				<method name="setTriggerComponentType">
+					<args>
+						<arg>TriggerComponentShapeType</arg>
+					</args>
+					<return>TriggerComponent&amp;</return>
 				</method>
-				<method name="getSceneNodesExit">
-					<return>WeakArraySceneNodePtr</return>
+				<method name="getTriggerComponentType">
+					<return>TriggerComponentShapeType</return>
 				</method>
 			</methods>
 		</class>

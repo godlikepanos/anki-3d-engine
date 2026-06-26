@@ -14,8 +14,13 @@ enum class TriggerComponentShapeType
 {
 	kSphere,
 	kBox,
-	kCount
+
+	kCount,
+	kFirst = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TriggerComponentShapeType);
+
+static inline Array kTriggerComponentShapeTypeNames = {"Sphere", "Box"};
 
 // Trigger component
 class TriggerComponent : public SceneComponent
@@ -27,16 +32,21 @@ public:
 
 	~TriggerComponent();
 
-	void setType(TriggerComponentShapeType type);
+	TriggerComponent& setTriggerComponentType(TriggerComponentShapeType type);
 
-	WeakArray<SceneNode*> getSceneNodesEnter()
+	TriggerComponentShapeType getTriggerComponentType() const
 	{
-		return WeakArray<SceneNode*>(m_bodiesEnter);
+		return m_type;
 	}
 
-	WeakArray<SceneNode*> getSceneNodesExit()
+	ANKI_INTERNAL WeakArray<SceneNode*> getSceneNodesEnter()
 	{
-		return WeakArray<SceneNode*>(m_bodiesExit);
+		return WeakArray<SceneNode*>(m_enteredNodes);
+	}
+
+	ANKI_INTERNAL WeakArray<SceneNode*> getSceneNodesExit()
+	{
+		return WeakArray<SceneNode*>(m_exitedNodes);
 	}
 
 private:
@@ -45,10 +55,10 @@ private:
 	PhysicsCollisionShapePtr m_shape;
 	PhysicsBodyPtr m_trigger;
 
-	SceneDynamicArray<SceneNode*> m_bodiesEnter;
-	SceneDynamicArray<SceneNode*> m_bodiesExit;
+	SceneDynamicArray<SceneNode*> m_enteredNodes;
+	SceneDynamicArray<SceneNode*> m_exitedNodes;
 
-	TriggerComponentShapeType m_type = TriggerComponentShapeType::kCount;
+	TriggerComponentShapeType m_type = TriggerComponentShapeType::kSphere;
 
 	Bool m_resetEnter = true;
 	Bool m_resetExit = true;

@@ -21,11 +21,11 @@ public:
 
 	~ScriptComponent();
 
-	void setScriptResourceFilename(CString fname);
+	ScriptComponent& setScriptResourceFilename(CString fname);
 
 	CString getScriptResourceFilename() const;
 
-	void setScriptText(CString text);
+	ScriptComponent& setScriptText(CString text);
 
 	CString getScriptText() const;
 
@@ -39,7 +39,7 @@ public:
 		return m_resource.isCreated();
 	}
 
-	Bool isEnabled() const
+	Bool isValid() const
 	{
 		return m_environments[0] || m_environments[1];
 	}
@@ -47,7 +47,7 @@ public:
 private:
 	ScriptResourcePtr m_resource;
 	SceneString m_text;
-	Array<ScriptEnvironment*, 2> m_environments = {};
+	Array<ScriptEnvironment*, 2> m_environments = {}; // One env if it contains its source and another if it's a resource
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

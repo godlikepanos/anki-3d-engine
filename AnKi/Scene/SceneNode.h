@@ -129,7 +129,35 @@ public:
 		return m_sceneUuid;
 	}
 
-	// Hierarchy manipulation //
+	// ===========================================================================
+	// Callbacks                                                                 =
+	// ===========================================================================
+
+	// This is called by the scenegraph every frame after all component updates. By default it does nothing.
+	virtual void update([[maybe_unused]] SceneNodeUpdateInfo& info)
+	{
+	}
+
+	// It's called on TriggerComponent::update
+	virtual void onTriggerEnter([[maybe_unused]] SceneNode* enteringNode)
+	{
+	}
+
+	// See onTriggerEnter
+	virtual void onTriggerExit([[maybe_unused]] SceneNode* exitingNode)
+	{
+	}
+
+	// Extra serialization for the derived classes
+	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
+	{
+		return Error::kNone;
+	}
+
+	// ===========================================================================
+	// Hierarchy manipulation                                                    =
+	// ===========================================================================
+
 	// Changes in the hierarchy are deferred and won't be visible until the next frame
 
 	U32 getChildrenCount() const
@@ -218,17 +246,6 @@ public:
 	{
 		ANKI_ASSERT(maxComponentTimestamp > 0);
 		m_maxComponentTimestamp = maxComponentTimestamp;
-	}
-
-	// This is called by the scenegraph every frame after all component updates. By default it does nothing.
-	virtual void update([[maybe_unused]] SceneNodeUpdateInfo& info)
-	{
-	}
-
-	// Extra serialization for the derived classes
-	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
-	{
-		return Error::kNone;
 	}
 
 	virtual const SceneNodeRegistryRecord* getSceneNodeRegistryRecord() const
