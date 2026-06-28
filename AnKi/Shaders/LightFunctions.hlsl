@@ -108,11 +108,38 @@ vector<T, 3> specularIsotropicLobe(vector<T, 3> normal, vector<T, 3> f0, T rough
 	return F * (V * D);
 }
 
+// Average of Schlick Fresnel over the hemisphere (cosine weighted): Fss = F0 + (1 - F0) / 21. Closed form of 2*integral_0^1 (F0 + (1-F0)(1-mu)^5) mu
+// dmu. Per-channel (colored for conductors).
+template<typename T>
+vector<T, 3> averageFresnelSchlick(vector<T, 3> f0)
+{
+	return f0 + (vector<T, 3>(1.0, 1.0, 1.0) - f0) * T(1.0 / 21.0);
+}
+
+// Indirect specular environment BRDF. integrationLut is the pre-integrated DFG generated in the C++ (.x = scale A, .y = bias B), indexed by (NoV,
+// roughness). On top of the single-scattering result (F0*A + B) we apply Turquin's multiple-scattering compensation.
 template<typename T>
 vector<T, 3> specularDFG(vector<T, 3> F0, T roughness, Texture2D<Vec4> integrationLut, SamplerState integrationLutSampler, T NoV)
 {
-	const vector<T, 2> envBRDF = integrationLut.SampleLevel(integrationLutSampler, vector<T, 2>(roughness, NoV), 0.0).xy;
-	return lerp(envBRDF.xxx, envBRDF.yyy, F0);
+	const vector<T, 2> ab = integrationLut.SampleLevel(integrationLutSampler, vector<T, 2>(NoV, roughness), 0.0).xy;
+	const vector<T, 3> singleScatter = F0 * ab.x + ab.y;
+
+	// Turquin 2019, "Practical multiple scattering compensation for microfacet models", applied as a gain to the single-scattering result (Eq. 8):
+	// rho = rho_ss * (1 + Fms * kms).
+	//   Ess  = directional albedo with Fresnel=1 = scale + bias (the DFG at F0=1)
+	//   kms  = (1 - Ess) / Ess                                              (missing energy, Eq. 11)
+	//   Fms  = Eavg / (1 - Fss * (1 - Eavg))                                (multi-bounce Fresnel, Eq. 12)
+	//   Eavg = 2*integral Ess(mu) mu dmu, a roughness-only 1D fit (max err ~0.003 vs MC reference)
+	// Ess >= ~0.31 over the whole domain so kms is bounded; the guard is just for safety.
+	const F32 r = F32(roughness);
+	const F32 ess = max(F32(ab.x) + F32(ab.y), 1.0e-3f);
+	const F32 kms = (1.0f - ess) / ess;
+	const F32 eavg = 0.999900f - 0.017076f * r + 0.349550f * r * r - 2.231931f * r * r * r + 1.311364f * r * r * r * r;
+
+	const vector<T, 3> Fms = T(eavg) / (T(1.0) - averageFresnelSchlick<T>(F0) * T(1.0f - eavg));
+	const vector<T, 3> multiScatter = T(1.0) + Fms * T(kms);
+
+	return singleScatter * multiScatter;
 }
 
 template<typename T>

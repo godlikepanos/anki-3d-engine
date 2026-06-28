@@ -7,7 +7,6 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Utils/TraditionalDeferredShading.h>
-#include <AnKi/Resource/ImageResource.h>
 
 namespace anki {
 
@@ -28,11 +27,6 @@ public:
 		return m_lightShading.m_mipCount;
 	}
 
-	Texture& getIntegrationLut() const
-	{
-		return m_integrationLut->getTexture();
-	}
-
 	RenderTargetHandle getCurrentlyRefreshedReflectionRt() const
 	{
 		ANKI_ASSERT(m_runCtx.m_probeTex.isValid());
@@ -44,6 +38,12 @@ public:
 		return m_runCtx.m_probeTex.isValid();
 	}
 
+	// The pre-integrated specular environment BRDF (DFG) LUT
+	Texture& getIntegrationLut() const
+	{
+		return *m_integrationLut;
+	}
+
 private:
 	class
 	{
@@ -51,7 +51,7 @@ private:
 		U32 m_tileSize = 0;
 		Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 		RenderTargetDesc m_depthRtDescr;
-	} m_gbuffer; ///< G-buffer pass.
+	} m_gbuffer; // G-buffer pass.
 
 	class LS
 	{
@@ -59,7 +59,7 @@ private:
 		U32 m_tileSize = 0;
 		U8 m_mipCount = 0;
 		TraditionalDeferredLightShading m_deferred;
-	} m_lightShading; ///< Light shading.
+	} m_lightShading; // Light shading.
 
 	class
 	{
@@ -73,8 +73,10 @@ private:
 		RenderTargetHandle m_probeTex;
 	} m_runCtx;
 
-	// Other
-	ImageResourcePtr m_integrationLut;
+	// Pre-integrated specular environment BRDF (DFG) LUT.
+	RendererTexture m_integrationLut;
+
+	Error initIntegrationLut();
 };
 
 } // end namespace anki

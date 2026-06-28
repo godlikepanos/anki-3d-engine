@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki {
 

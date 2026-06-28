@@ -20,6 +20,7 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/GpuMemory/CopyEngine.h>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
@@ -29,9 +30,123 @@ namespace anki {
 
 ANKI_SVAR(ProbeReflectionCount, StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates)
 
+// 32-bit radical inverse (Van der Corput), matching Unreal's ReverseBits.
+static U32 reverseBits32(U32 b)
+{
+	b = (b << 16u) | (b >> 16u);
+	b = ((b & 0x00ff00ffu) << 8u) | ((b & 0xff00ff00u) >> 8u);
+	b = ((b & 0x0f0f0f0fu) << 4u) | ((b & 0xf0f0f0f0u) >> 4u);
+	b = ((b & 0x33333333u) << 2u) | ((b & 0xccccccccu) >> 2u);
+	b = ((b & 0x55555555u) << 1u) | ((b & 0xaaaaaaaau) >> 1u);
+	return b;
+}
+
+Error ProbeReflections::initIntegrationLut()
+{
+	// CPU pre-integration of the specular environment BRDF (split-sum DFG), mirroring Unreal's PreintegratedGF generation (FSystemTextures,
+	// SystemTextures.cpp). Replaces EngineAssets/IblDfg.png. R16G16 unorm, indexed by (u = NoV, v = roughness): .r = scale A, .g = bias B, so
+	// single-scattering indirect specular = F0 * A + B. The Turquin multiple-scattering compensation is applied analytically at runtime in
+	// specularDFG() (LightFunctions.hlsl).
+	constexpr U32 kWidth = 128; // NoV
+	constexpr U32 kHeight = 32; // roughness
+	constexpr U32 kSampleCount = 128;
+
+	// Create the texture
+	TextureInitInfo texInit("IntegrationDfgLut");
+	texInit.m_width = kWidth;
+	texInit.m_height = kHeight;
+	texInit.m_format = Format::kR16G16_Unorm;
+	texInit.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kCopyDestination;
+	const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(texInit);
+	m_integrationLut.m_allocation = getRenderer().getRendedererGpuMemoryPool().allocate(memReq, 1);
+	texInit.m_memoryBuffer = m_integrationLut.m_allocation;
+	m_integrationLut.m_texture = GrManager::getSingleton().newTexture(texInit);
+
+	// Integrate on the CPU
+	RendererDynamicArray<U16> data;
+	data.resize(kWidth * kHeight * 2); // 2 channels
+
+	for(U32 y = 0; y < kHeight; ++y)
+	{
+		const F32 roughness = (F32(y) + 0.5f) / F32(kHeight);
+		const F32 m = roughness * roughness;
+		const F32 m2 = m * m;
+
+		for(U32 x = 0; x < kWidth; ++x)
+		{
+			const F32 NoV = (F32(x) + 0.5f) / F32(kWidth);
+			const Vec3 V(sqrt(1.0f - NoV * NoV), 0.0f, NoV);
+
+			F32 A = 0.0f;
+			F32 B = 0.0f;
+			for(U32 i = 0; i < kSampleCount; ++i)
+			{
+				const F32 e1 = F32(i) / F32(kSampleCount);
+				const F32 e2 = F32(F64(reverseBits32(i)) / F64(0x100000000ll));
+
+				const F32 phi = 2.0f * kPi * e1;
+				const F32 cosTheta = sqrt((1.0f - e2) / (1.0f + (m2 - 1.0f) * e2));
+				const F32 sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+				const Vec3 H(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta);
+				const Vec3 L = 2.0f * V.dot(H) * H - V;
+
+				const F32 NoL = max(L.z, 0.0f);
+				const F32 NoH = max(H.z, 0.0f);
+				const F32 VoH = max(V.dot(H), 0.0f);
+
+				if(NoL > 0.0f)
+				{
+					// Schlick-linear Smith visibility, matching Unreal's generator (NOT exact Smith).
+					const F32 visV = NoL * (NoV * (1.0f - m) + m);
+					const F32 visL = NoV * (NoL * (1.0f - m) + m);
+					const F32 vis = 0.5f / (visV + visL);
+
+					const F32 noLVisPdf = NoL * vis * (4.0f * VoH / NoH);
+					F32 fc = 1.0f - VoH;
+					fc *= fc * fc * fc * fc; // (1 - VoH)^5
+					A += noLVisPdf * (1.0f - fc);
+					B += noLVisPdf * fc;
+				}
+			}
+
+			A /= F32(kSampleCount);
+			B /= F32(kSampleCount);
+
+			const U32 idx = (y * kWidth + x) * 2;
+			data[idx + 0] = U16(clamp(A, 0.0f, 1.0f) * 65535.0f + 0.5f);
+			data[idx + 1] = U16(clamp(B, 0.0f, 1.0f) * 65535.0f + 0.5f);
+		}
+	}
+
+	// Upload to the GPU
+	const TextureView view(m_integrationLut.get(), TextureSubresourceDesc::surface(0, 0, 0));
+
+	const TextureBarrierInfo toCopy = {view, TextureUsageBit::kNone, TextureUsageBit::kCopyDestination};
+	CopyEngine::getSingleton().setPipelineBarrier({&toCopy, 1}, {}, {});
+
+	WeakArray<U8> mappedMem;
+	{
+		const CopyEngineLockGuard lock = CopyEngine::getSingleton().copyBufferToTexture(U32(data.getSizeInBytes()), mappedMem, view);
+		memcpy(mappedMem.getBegin(), data.getBegin(), data.getSizeInBytes());
+	}
+
+	const TextureBarrierInfo toSrv = {view, TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvPixel};
+	CopyEngine::getSingleton().setPipelineBarrier({&toSrv, 1}, {}, {});
+
+	FencePtr fence;
+	CopyEngine::getSingleton().flush(fence);
+	const Bool signaled = fence->clientWait(kMaxSecond);
+	if(!signaled)
+	{
+		ANKI_R_LOGF("GPU timeout detected");
+	}
+
+	return Error::kNone;
+}
+
 Error ProbeReflections::init()
 {
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/IblDfg.png", m_integrationLut));
+	ANKI_CHECK(initIntegrationLut());
 
 	m_gbuffer.m_tileSize = g_cvarRenderProbeReflectionsResolution;
 
