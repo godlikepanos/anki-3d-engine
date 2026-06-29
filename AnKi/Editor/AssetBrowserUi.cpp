@@ -112,6 +112,7 @@ public:
 	String m_fullPath;
 	DynamicArray<AssetDir> m_children;
 	DynamicArray<AssetFile> m_files;
+	AssetDir* m_parentDir = nullptr;
 	U32 m_id = 0;
 
 	AssetDir() = default;
@@ -135,6 +136,17 @@ public:
 		b.m_id = 0;
 		return *this;
 	}
+};
+
+class AssetBrowserUi::AssetDirOrFile
+{
+public:
+	union
+	{
+		const AssetDir* m_dir = nullptr;
+		const AssetFile* m_file;
+	};
+	Bool m_isDir = true;
 };
 
 AssetBrowserUi::AssetBrowserUi()
@@ -235,6 +247,12 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 	{
 		sortFilesRecursively(dir);
 	}
+
+	// Assign parents after all dynamic arrays have settled down
+	for(AssetDir& dir : dirs)
+	{
+		assignParentDirRecursively(dir);
+	}
 }
 
 void AssetBrowserUi::sortFilesRecursively(AssetDir& root)
@@ -253,48 +271,12 @@ void AssetBrowserUi::sortFilesRecursively(AssetDir& root)
 	}
 }
 
-void AssetBrowserUi::dirTree(const AssetDir& dir)
+void AssetBrowserUi::assignParentDirRecursively(AssetDir& root)
 {
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-
-	ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_None;
-	treeFlags |= ImGuiTreeNodeFlags_OpenOnArrow
-				 | ImGuiTreeNodeFlags_OpenOnDoubleClick; // Standard opening mode as we are likely to want to add selection afterwards
-	treeFlags |= ImGuiTreeNodeFlags_NavLeftJumpsToParent; // Left arrow support
-	treeFlags |= ImGuiTreeNodeFlags_SpanFullWidth; // Span full width for easier mouse reach
-	treeFlags |= ImGuiTreeNodeFlags_DrawLinesToNodes; // Always draw hierarchy outlines
-
-	if(m_runCtx.m_selectedDir == &dir)
+	for(AssetDir& child : root.m_children)
 	{
-		treeFlags |= ImGuiTreeNodeFlags_Selected;
-	}
-
-	const Bool hasChildren = dir.m_children.getSize();
-	if(!hasChildren)
-	{
-		treeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
-	}
-
-	ImGui::PushID(dir.m_id);
-	const Bool nodeOpen = ImGui::TreeNodeEx("", treeFlags, "%s", dir.m_dirname.cstr());
-	ImGui::PopID();
-	ImGui::SetItemTooltip("%s", dir.m_dirname.cstr());
-
-	if(ImGui::IsItemFocused())
-	{
-		m_runCtx.m_selectedDir = &dir;
-		m_selectedDirPath = dir.m_fullPath;
-	}
-
-	if(nodeOpen)
-	{
-		for(const AssetDir& p : dir.m_children)
-		{
-			dirTree(p);
-		}
-
-		ImGui::TreePop();
+		child.m_parentDir = &root;
+		assignParentDirRecursively(child);
 	}
 }
 
@@ -322,7 +304,7 @@ void AssetBrowserUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 		cache.emplaceBack(ImageCacheEntry{img, crntFrame});
 	}
 
-	// Trym the cache: Try to remove stale entries
+	// Trim the cache: Try to remove stale entries
 	const U32 frameInactivityCount = 60 * 30; // ~30"
 	while(true)
 	{
@@ -360,7 +342,7 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, ImGuiWin
 	}
 
 	m_runCtx = {};
-	setSelected();
+	setSelectedPointers();
 
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
@@ -396,87 +378,86 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, ImGuiWin
 	if(ImGui::Begin("Assets", &m_open, windowFlags | ImGuiWindowFlags_MenuBar))
 	{
 		drawMenu();
+		drawToolbox();
+		drawDirPath();
 
-		// Left side
+		if(ImGui::BeginChild("Icons", Vec2(-1.0f, -1.0f), 0))
 		{
-			if(ImGui::BeginChild("Left", Vec2(300.0f, -1.0f), ImGuiChildFlags_ResizeX | ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened))
-			{
-				if(ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
-				{
-					for(const AssetDir& p : m_assetPaths)
-					{
-						dirTree(p);
-					}
-
-					ImGui::EndTable();
-				}
-			}
-			ImGui::EndChild();
-		} // Left side
-
-		ImGui::SameLine();
-
-		// Right side
-		{
-			// Use the filter to gather the files
-			DynamicArray<const AssetFile*> filteredFiles;
-			if(m_runCtx.m_selectedDir)
-			{
-				for(const AssetFile& f : m_runCtx.m_selectedDir->m_files)
-				{
-					if(m_fileFilter.PassFilter(f.m_filename.cstr()))
-					{
-						filteredFiles.emplaceBack(&f);
-					}
-				}
-			}
-
-			if(ImGui::BeginChild("Right", Vec2(-1.0f, -1.0f), 0))
-			{
-				// Increase/decrease icon size
-				{
-					ImGui::TextUnformatted("Icon Size");
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(64.0f);
-					ImGui::SliderInt("##Icon Size", &m_cellSize, 5, 11, "%d", ImGuiSliderFlags_AlwaysClamp);
-					ImGui::SameLine();
-				}
-
-				// Refresh tree
-				if(ImGui::Button(ICON_MDI_REFRESH))
-				{
-					m_refreshAssetsPathsNextTime = true;
-				}
-				ImGui::SameLine();
-
-				// Filter
-				drawfilteredText(m_fileFilter);
-
-				// Contents
-				if(ImGui::BeginChild("RightBottom", Vec2(-1.0f, -1.0f), 0))
-				{
-					iconsChild(filteredFiles);
-				}
-				ImGui::EndChild();
-			}
-			ImGui::EndChild();
-		} // Right side
+			const DynamicArray<AssetDirOrFile> filteredItems = gatherFilteredItems();
+			drawIcons(filteredItems);
+		}
+		ImGui::EndChild();
 	}
 	ImGui::End();
 
 	rightClickMenuDialog();
 }
 
-void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
+void AssetBrowserUi::drawToolbox()
+{
+	// Increase/decrease icon size
+	{
+		ImGui::TextUnformatted("Icon Size");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(64.0f);
+		ImGui::SliderInt("##Icon Size", &m_cellSize, 5, 11, "%d", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::SameLine();
+	}
+
+	// Refresh tree
+	if(ImGui::Button(ICON_MDI_REFRESH))
+	{
+		m_refreshAssetsPathsNextTime = true;
+	}
+	ImGui::SameLine();
+
+	// Filter
+	drawfilteredText(m_fileFilter);
+}
+
+void AssetBrowserUi::drawDirPath()
+{
+	// Gather dirs from the selected dir to root
+	DynamicArray<const AssetDir*> dirsInSelected;
+	const AssetDir* crntDir = m_runCtx.m_selectedDir;
+	while(crntDir)
+	{
+		dirsInSelected.emplaceBack(crntDir);
+		crntDir = crntDir->m_parentDir;
+	}
+
+	// Reverse
+	std::reverse(dirsInSelected.getBegin(), dirsInSelected.getEnd());
+
+	// Draw the root button
+	if(ImGui::Button(ICON_MDI_FOLDER " /"))
+	{
+		m_selectedDirPath.destroy();
+	}
+
+	// Draw the buttons
+	for(const AssetDir* dir : dirsInSelected)
+	{
+		ImGui::SameLine();
+
+		if(ImGui::Button(String().sprintf("%s/", dir->m_dirname.cstr()).cstr()))
+		{
+			m_selectedDirPath = dir->m_fullPath;
+		}
+	}
+}
+
+void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 {
 	const F32 cellWidth = F32(m_cellSize) * 16;
 	const U32 columnCount = U32(ImGui::GetContentRegionAvail().x / cellWidth);
 	ImGui::SetNextItemWidth(-1.0f);
 	const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter
 								  | ImGuiTableFlags_BordersV | ImGuiTableFlags_ContextMenuInBody;
-	if(filteredFiles.getSize() && ImGui::BeginTable("Grid", columnCount, flags))
+
+	if(filteredItems.getSize() && columnCount && ImGui::BeginTable("Grid", columnCount, flags))
 	{
-		const U32 rowCount = (filteredFiles.getSize() + columnCount - 1) / columnCount;
+		const U32 rowCount = (filteredItems.getSize() + columnCount - 1) / columnCount;
 
 		for(U32 row = 0; row < rowCount; ++row)
 		{
@@ -486,12 +467,24 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 				ImGui::TableNextColumn();
 
 				const U32 idx = row * columnCount + column;
-				if(idx < filteredFiles.getSize())
+				if(idx < filteredItems.getSize())
 				{
-					const AssetFile& file = *filteredFiles[idx];
+					const Bool isDir = filteredItems[idx].m_isDir;
+					const AssetFile& file = *((!isDir) ? filteredItems[idx].m_file : nullptr);
+					const AssetDir& dir = *((isDir) ? filteredItems[idx].m_dir : nullptr);
 
 					ImGui::PushID(idx);
-					if(file.m_type == AssetFileType::kMaterial)
+
+					if(isDir)
+					{
+						ImGui::PushFont(nullptr, cellWidth - 1.0f);
+						if(ImGui::Button(ICON_MDI_FOLDER, Vec2(cellWidth)))
+						{
+							m_selectedDirPath = dir.m_fullPath;
+						}
+						ImGui::PopFont();
+					}
+					else if(file.m_type == AssetFileType::kMaterial)
 					{
 						ImTextureID id;
 						id.m_texture = &m_materialIcon->getTexture();
@@ -552,20 +545,28 @@ void AssetBrowserUi::iconsChild(ConstWeakArray<const AssetFile*> filteredFiles)
 
 					ImGui::PopID();
 
-					// Right click
-					if(ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
+					if(!isDir)
 					{
-						m_selectedFilepath = file.m_fullFilepath;
-						m_showRightClickMenuDialog = true;
-					}
+						// Right click
+						if(ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
+						{
+							m_selectedFilepath = file.m_fullFilepath;
+							m_showRightClickMenuDialog = true;
+						}
 
-					if(m_selectedFilepath == file.m_fullFilepath)
+						if(m_selectedFilepath == file.m_fullFilepath)
+						{
+							m_runCtx.m_selectedFile = &file;
+						}
+
+						ImGui::TextWrapped("%s", file.m_filename.cstr());
+						ImGui::SetItemTooltip("%s", file.m_fullFilepath.cstr());
+					}
+					else
 					{
-						m_runCtx.m_selectedFile = &file;
+						ImGui::TextWrapped("%s", dir.m_dirname.cstr());
+						ImGui::SetItemTooltip("%s", dir.m_fullPath.cstr());
 					}
-
-					ImGui::TextWrapped("%s", file.m_filename.cstr());
-					ImGui::SetItemTooltip("%s", file.m_fullFilepath.cstr());
 				}
 			}
 		}
@@ -603,6 +604,7 @@ void AssetBrowserUi::rightClickMenuDialog()
 		// Rename file
 		Array<Char, kMaxTextInputLen> name;
 		strncpy(name.getBegin(), m_runCtx.m_selectedFile->m_filename.cstr(), name.getSize());
+		name[name.getSize() - 1] = '\0'; // strncpy doesn't null-terminate if the source doesn't fit
 		if(ImGui::InputText("Rename", name.getBegin(), name.getSize(), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			CString newName(name.getBegin());
@@ -769,7 +771,7 @@ FunctorContinue AssetBrowserUi::visitTree(AssetDir& dir, TFunc dirFunc, TFunc2 f
 	return cont;
 }
 
-void AssetBrowserUi::setSelected()
+void AssetBrowserUi::setSelectedPointers()
 {
 	for(AssetDir& rootDir : m_assetPaths)
 	{
@@ -800,6 +802,48 @@ void AssetBrowserUi::setSelected()
 	{
 		m_selectedFilepath.destroy();
 	}
+}
+
+DynamicArray<AssetBrowserUi::AssetDirOrFile> AssetBrowserUi::gatherFilteredItems()
+{
+	DynamicArray<AssetDirOrFile> arr;
+
+	if(!m_runCtx.m_selectedDir)
+	{
+		// Gather root directories
+		for(const AssetDir& dir : m_assetPaths)
+		{
+			if(m_fileFilter.PassFilter(dir.m_dirname.cstr()))
+			{
+				const AssetDirOrFile item{.m_dir = &dir, .m_isDir = true};
+				arr.emplaceBack(item);
+			}
+		}
+	}
+	else
+	{
+		// Gather directories
+		for(const AssetDir& dir : m_runCtx.m_selectedDir->m_children)
+		{
+			if(m_fileFilter.PassFilter(dir.m_dirname.cstr()))
+			{
+				const AssetDirOrFile item{.m_dir = &dir, .m_isDir = true};
+				arr.emplaceBack(item);
+			}
+		}
+
+		// Use the filter to gather the files
+		for(const AssetFile& f : m_runCtx.m_selectedDir->m_files)
+		{
+			if(m_fileFilter.PassFilter(f.m_filename.cstr()))
+			{
+				const AssetDirOrFile item{.m_file = &f, .m_isDir = false};
+				arr.emplaceBack(item);
+			}
+		}
+	}
+
+	return arr;
 }
 
 } // end namespace anki

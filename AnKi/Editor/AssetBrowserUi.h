@@ -26,6 +26,7 @@ public:
 private:
 	class AssetFile;
 	class AssetDir;
+	class AssetDirOrFile;
 
 	class ImageCacheEntry
 	{
@@ -61,20 +62,22 @@ private:
 		const AssetFile* m_selectedFile = nullptr;
 	} m_runCtx;
 
-	void dirTree(const AssetDir& dir); // Like the "tree" command
-
 	void loadImageToCache(CString fname, ImageResourcePtr& img);
 
-	void iconsChild(ConstWeakArray<const AssetFile*> filteredFiles);
-
-	void rightClickMenuDialog();
-
 	void drawMenu();
+	void drawToolbox();
+	void drawDirPath();
+	void drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems);
+	void rightClickMenuDialog();
 
 	static void buildAssetStructure(DynamicArray<AssetDir>& dirs);
 	static void sortFilesRecursively(AssetDir& root);
+	static void assignParentDirRecursively(AssetDir& root);
 
-	void setSelected();
+	// Look at the m_selectedXXX strings and update the pointers in m_runCtx
+	void setSelectedPointers();
+
+	DynamicArray<AssetDirOrFile> gatherFilteredItems();
 
 	template<typename TFunc, typename TFunc2>
 	FunctorContinue visitTree(AssetDir& dir, TFunc dirFunc, TFunc2 fileFunc);
