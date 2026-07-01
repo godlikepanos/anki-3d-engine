@@ -81,7 +81,14 @@ class AssetBrowserUi::AssetFile
 {
 public:
 	String m_filename;
+
+	// Absolute path on the actual filesystem. Use it for filesystem operations (rename, tooltips, selection key).
 	String m_fullFilepath;
+
+	// Path relative to the data path, as understood by ResourceFilesystem/ResourceManager. Use it to load the resource so the browser shares the
+	// engine's resource cache instead of loading the asset a second time.
+	String m_resourceFilepath;
+
 	AssetFileType m_type = AssetFileType::kNone;
 
 	AssetFile() = default;
@@ -99,6 +106,7 @@ public:
 	{
 		m_filename = std::move(b.m_filename);
 		m_fullFilepath = std::move(b.m_fullFilepath);
+		m_resourceFilepath = std::move(b.m_resourceFilepath);
 		m_type = b.m_type;
 		b.m_type = AssetFileType::kNone;
 		return *this;
@@ -231,9 +239,14 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 
 			if(filetype != AssetFileType::kNone)
 			{
+				// filepath is expected to be relative to the data path. A leading '/' or an empty string would mean
+				// it got mixed up with an absolute/full path and would break resource loading below.
+				ANKI_ASSERT(!filepath.isEmpty() && filepath[0] != '/');
+
 				AssetFile* file = crntDir->m_files.emplaceBack();
 				file->m_fullFilepath = String(dataPath) + "/" + filepath;
 				file->m_filename = filename;
+				file->m_resourceFilepath = filepath;
 				file->m_type = filetype;
 			}
 
@@ -491,7 +504,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
 						{
 							MaterialResourcePtr rsrc;
-							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilepath, rsrc));
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
 							m_materialEditorWindow.open(*rsrc);
 						}
 					}
@@ -504,7 +517,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kTexture)
 					{
 						ImageResourcePtr img;
-						loadImageToCache(file.m_fullFilepath, img);
+						loadImageToCache(file.m_resourceFilepath, img);
 						ImTextureID id;
 						id.m_texture = &img->getTexture();
 						id.m_textureSubresource = TextureSubresourceDesc::all();
@@ -520,7 +533,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						if(ImGui::Button(ICON_MDI_CREATION, Vec2(cellWidth)))
 						{
 							ParticleEmitterResource2Ptr rsrc;
-							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_fullFilepath, rsrc));
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
 							m_particleEditorWindow.open(*rsrc);
 						}
 						ImGui::PopFont();
@@ -531,9 +544,9 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						if(ImGui::Button(ICON_MDI_CURTAINS, Vec2(cellWidth)))
 						{
 							Scene* scene = nullptr;
-							if(SceneGraph::getSingleton().loadScene(file.m_fullFilepath, scene))
+							if(SceneGraph::getSingleton().loadScene(file.m_resourceFilepath, scene))
 							{
-								ANKI_LOGE("Failed to load scene: %s", file.m_fullFilepath.cstr());
+								ANKI_LOGE("Failed to load scene: %s", file.m_resourceFilepath.cstr());
 							}
 							else
 							{
