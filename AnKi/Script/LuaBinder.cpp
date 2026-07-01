@@ -249,9 +249,95 @@ Error LuaBinder::checkArgsCount(lua_State* l, const Char* file, U32 line, const 
 	return Error::kNone;
 }
 
+void LuaBinder::visitGlobals(lua_State* l, LuaBinderVisitGlobalsCallbacks& callbacks)
+{
+	ANKI_ASSERT(l);
+
+	[[maybe_unused]] const I topBefore = lua_gettop(l); // For validation
+
+	lua_pushglobaltable(l);
+	const I32 globalsTableIdx = lua_gettop(l); // Absolute index, robust no matter what's pushed later
+	lua_pushnil(l);
+
+	while(lua_next(l, -2) != 0)
+	{
+		// Get type of key and value
+		I keyType = lua_type(l, -2);
+		I valueType = lua_type(l, -1);
+
+		// Only string keys
+		if(keyType != LUA_TSTRING)
+		{
+			lua_pop(l, 1);
+			continue;
+		}
+
+		CString keyString = lua_tostring(l, -2);
+		if(keyString.getLength() == 0 || keyString[0] == '_')
+		{
+			lua_pop(l, 1);
+			continue;
+		}
+
+		switch(valueType)
+		{
+		case LUA_TNUMBER:
+		{
+			F64 value = lua_tonumber(l, -1);
+			const Bool changed = callbacks.onNumber(keyString, value);
+			if(changed)
+			{
+				lua_pushnumber(l, value); // Push value
+				lua_setfield(l, globalsTableIdx, keyString.cstr()); // globals[key] = value, pops the value
+			}
+			break;
+		}
+		case LUA_TSTRING:
+		{
+			ScriptString value = lua_tostring(l, -1);
+			const Bool changed = callbacks.onString(keyString, value);
+			if(changed)
+			{
+				lua_pushstring(l, value.cstr()); // Push value
+				lua_setfield(l, globalsTableIdx, keyString.cstr()); // globals[key] = value, pops the value
+			}
+			break;
+		}
+		case LUA_TBOOLEAN:
+		{
+			Bool value = lua_toboolean(l, -1);
+			const Bool changed = callbacks.onBool(keyString, value);
+			if(changed)
+			{
+				lua_pushboolean(l, value); // Push value
+				lua_setfield(l, globalsTableIdx, keyString.cstr()); // globals[key] = value, pops the value
+			}
+			break;
+		}
+		case LUA_TUSERDATA:
+		{
+			LuaUserData* ud = static_cast<LuaUserData*>(lua_touserdata(l, -1));
+			ANKI_ASSERT(ud);
+			// Ignore return value since the callback has direct access to the user data
+			[[maybe_unused]] const Bool changed = callbacks.onUserData(keyString, *ud);
+			break;
+		}
+		}
+
+		lua_pop(l, 1); // Pop the value, keep the key for the next lua_next
+	}
+
+	// lua_next popped the last key but lua_pushglobaltable's table is still on the stack, pop it
+	lua_pop(l, 1);
+
+	ANKI_ASSERT(lua_gettop(l) == topBefore && "Lua stack is unbalanced");
+}
+
 void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback)
 {
 	ANKI_ASSERT(l);
+
+	[[maybe_unused]] const I topBefore = lua_gettop(l); // For validation
 
 	lua_pushglobaltable(l);
 	lua_pushnil(l);
@@ -351,8 +437,13 @@ void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback
 		}
 		}
 
-		lua_pop(l, 1);
+		lua_pop(l, 1); // Pop the value, keep the key for the next lua_next
 	}
+
+	// lua_next popped the last key but lua_pushglobaltable's table is still on the stack, pop it
+	lua_pop(l, 1);
+
+	ANKI_ASSERT(lua_gettop(l) == topBefore && "Lua stack is unbalanced");
 }
 
 void LuaBinder::deserializeGlobals(lua_State* l, const void* data, PtrSize dataSize)

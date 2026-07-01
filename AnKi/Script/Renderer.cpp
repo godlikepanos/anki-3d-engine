@@ -19,7 +19,7 @@ static Renderer* getRenderer(lua_State* l)
 	return &Renderer::getSingleton();
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoRenderer = {-8680680372486703494, "Renderer", LuaUserData::computeSizeForGarbageCollected<Renderer>(),
+LuaUserDataTypeInfo g_luaUserDataTypeInfoRenderer = {1064592525944744861, "Renderer", LuaUserData::computeSizeForGarbageCollected<Renderer>(),
 													 nullptr, nullptr};
 
 template<>

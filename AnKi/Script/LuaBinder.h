@@ -24,7 +24,7 @@ class LuaUserData;
 #define ANKI_LUA_ERROR() luaL_error(l, "Glue error at: " ANKI_FILE ":" ANKI_STRINGIZE(__LINE__) " %s", ANKI_FUNC)
 #define ANKI_LUA_ERROR_MSG(message) luaL_error(l, "Glue error: " message " (" ANKI_FILE ":" ANKI_STRINGIZE(__LINE__) " %s)", ANKI_FUNC)
 
-using LuaUserDataSerializeCallback = void (*)(LuaUserData& self, void* data, PtrSize& size);
+using LuaUserDataSerializeCallback = void (*)(const LuaUserData& self, void* data, PtrSize& size);
 using LuaUserDataDeserializeCallback = void (*)(const void* data, LuaUserData& self);
 
 class LuaUserDataTypeInfo
@@ -75,28 +75,35 @@ public:
 	}
 
 	template<typename T>
-	T* getData()
+	const T* getData() const
 	{
 		ANKI_ASSERT(m_addressOrGarbageCollect != 0);
 		ANKI_ASSERT(getDataTypeInfoFor<T>().m_signature == m_sig);
-		T* out = nullptr;
+		const T* out = nullptr;
 		if(isGarbageCollected())
 		{
 			// Garbage collected, the data -in memory- are after this object
 			PtrSize mem = ptrToNumber(this);
 			mem += getAlignedRoundUp(alignof(T), sizeof(LuaUserData));
-			out = numberToPtr<T*>(mem);
+			out = numberToPtr<const T*>(mem);
 		}
 		else
 		{
 			// Pointed
 			PtrSize mem = static_cast<PtrSize>(m_addressOrGarbageCollect);
-			out = numberToPtr<T*>(mem);
+			out = numberToPtr<const T*>(mem);
 		}
 
 		ANKI_ASSERT(out);
 		ANKI_ASSERT(isAligned(alignof(T), out));
 		return out;
+	}
+
+	template<typename T>
+	T* getData()
+	{
+		const T* ptr = static_cast<const LuaUserData*>(this)->getData<T>();
+		return const_cast<T*>(ptr);
 	}
 
 	template<typename T>
@@ -117,9 +124,9 @@ public:
 private:
 	static constexpr U64 kGarbageCollectedMagic = 0xFAFC0FEEDEADB1FF;
 
-	I64 m_sig = 0; ///< Signature to identify the user data.
+	I64 m_sig = 0; // Signature to identify the user data.
 
-	U64 m_addressOrGarbageCollect = 0; ///< Encodes an address or a special address if it's for garbage collection.
+	U64 m_addressOrGarbageCollect = 0; // Encodes an address or a special address if it's for garbage collection.
 
 	const LuaUserDataTypeInfo* m_info = nullptr;
 };
@@ -128,6 +135,16 @@ class LuaBinderSerializeGlobalsCallback
 {
 public:
 	virtual void write(const void* data, PtrSize dataSize) = 0;
+};
+
+class LuaBinderVisitGlobalsCallbacks
+{
+public:
+	// Methods return true if the value was touched
+	virtual Bool onNumber(CString name, F64& value) = 0;
+	virtual Bool onBool(CString name, Bool& value) = 0;
+	virtual Bool onString(CString name, ScriptString& value) = 0;
+	virtual Bool onUserData(CString name, LuaUserData& value) = 0;
 };
 
 // Lua binder class. A wrapper on top of LUA
@@ -196,6 +213,9 @@ public:
 
 	// Deserialize global variables.
 	static void deserializeGlobals(lua_State* l, const void* data, PtrSize dataSize);
+
+	// Visit global variables
+	static void visitGlobals(lua_State* l, LuaBinderVisitGlobalsCallbacks& callbacks);
 
 	// Make sure that the arguments match the argsCount number
 	static Error checkArgsCount(lua_State* l, const Char* file, U32 line, const Char* func, I argsCount);

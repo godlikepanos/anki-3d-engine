@@ -13,6 +13,52 @@
 
 namespace anki {
 
+ScriptComponentVariable& ScriptComponentVariable::operator=(ScriptComponentVariable&& b)
+{
+	m_name = std::move(b.m_name);
+
+	if(m_type == ScriptComponentVariableType::kString)
+	{
+		m_string.destroy();
+	}
+	else
+	{
+		callConstructor(m_string);
+	}
+
+	switch(b.m_type)
+	{
+	case ScriptComponentVariableType::kString:
+		m_string = std::move(b.m_string);
+		break;
+	case ScriptComponentVariableType::kNumber:
+		m_number = b.m_number;
+		break;
+	case ScriptComponentVariableType::kBool:
+		m_bool = b.m_bool;
+		break;
+	case ScriptComponentVariableType::kVec2:
+		m_vec2 = b.m_vec2;
+		break;
+	case ScriptComponentVariableType::kVec3:
+		m_vec3 = b.m_vec3;
+		break;
+	case ScriptComponentVariableType::kVec4:
+		m_vec4 = b.m_vec4;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		break;
+	}
+
+	m_type = b.m_type;
+	b.m_type = ScriptComponentVariableType::kCount;
+
+	m_dirty = b.m_dirty;
+	b.m_dirty = false;
+	return *this;
+}
+
 ScriptComponent::ScriptComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 {
@@ -62,6 +108,8 @@ ScriptComponent& ScriptComponent::setScriptResourceFilename(CString fname)
 		m_resource = std::move(rsrc);
 		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
 		m_environments[1] = newEnv;
+
+		rebuildVarsFromLua(*m_environments[1]);
 	}
 
 	return *this;
@@ -106,6 +154,8 @@ ScriptComponent& ScriptComponent::setScriptText(CString text)
 		m_text = text;
 		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
 		m_environments[0] = newEnv;
+
+		rebuildVarsFromLua(*m_environments[0]);
 	}
 
 	return *this;
@@ -221,6 +271,22 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 		}
 	}
+
+	// Update vars
+	Bool varsNeedUpdate = false;
+	for(ScriptComponentVariable& var : m_vars)
+	{
+		if(var.m_dirty)
+		{
+			varsNeedUpdate = true;
+			break;
+		}
+	}
+
+	if(varsNeedUpdate)
+	{
+		flushDirtyVarsToLua((m_environments[0]) ? *m_environments[0] : *m_environments[1]);
+	}
 }
 
 Error ScriptComponent::serialize(SceneSerializer& serializer)
@@ -231,6 +297,180 @@ Error ScriptComponent::serialize(SceneSerializer& serializer)
 	// TODO Serialize environments
 
 	return Error::kNone;
+}
+
+void ScriptComponent::rebuildVarsFromLua(ScriptEnvironment& env)
+{
+	class Callbacks : public LuaBinderVisitGlobalsCallbacks
+	{
+	public:
+		ScriptComponent* m_self;
+
+		Bool onNumber(CString name, F64& value) override
+		{
+			ScriptComponentVariable& var = *m_self->m_vars.emplaceBack();
+			var.m_type = ScriptComponentVariableType::kNumber;
+			var.m_name = name;
+			var.m_number = value;
+			return false;
+		}
+
+		Bool onBool(CString name, Bool& value) override
+		{
+			ScriptComponentVariable& var = *m_self->m_vars.emplaceBack();
+			var.m_type = ScriptComponentVariableType::kBool;
+			var.m_name = name;
+			var.m_bool = value;
+			return false;
+		}
+
+		Bool onString(CString name, ScriptString& value) override
+		{
+			ScriptComponentVariable& var = *m_self->m_vars.emplaceBack();
+			var.m_type = ScriptComponentVariableType::kString;
+			var.m_name = name;
+			var.m_string = value;
+			return false;
+		}
+
+		Bool onUserData(CString name, LuaUserData& value) override
+		{
+			CString typeStr = value.getDataTypeInfo().m_typeName;
+			if(typeStr == "Vec2")
+			{
+				ScriptComponentVariable& var = *m_self->m_vars.emplaceBack();
+				var.m_type = ScriptComponentVariableType::kVec2;
+				var.m_name = name;
+				PtrSize size;
+				value.getDataTypeInfo().m_serializeCallback(value, &var.m_vec2.x, size);
+				ANKI_ASSERT(size == sizeof(Vec2));
+			}
+			else if(typeStr == "Vec3")
+			{
+				ScriptComponentVariable& var = *m_self->m_vars.emplaceBack();
+				var.m_type = ScriptComponentVariableType::kVec3;
+				var.m_name = name;
+				PtrSize size;
+				value.getDataTypeInfo().m_serializeCallback(value, &var.m_vec3.x, size);
+				ANKI_ASSERT(size == sizeof(Vec3));
+			}
+			else if(typeStr == "Vec4")
+			{
+				ScriptComponentVariable& var = *m_self->m_vars.emplaceBack();
+				var.m_type = ScriptComponentVariableType::kVec4;
+				var.m_name = name;
+				PtrSize size;
+				value.getDataTypeInfo().m_serializeCallback(value, &var.m_vec4.x, size);
+				ANKI_ASSERT(size == sizeof(Vec4));
+			}
+			else
+			{
+				ANKI_SCENE_LOGE("Script component can't work with user data of type: %s", typeStr.cstr());
+			}
+
+			return false;
+		}
+	} callbacks;
+	callbacks.m_self = this;
+
+	m_vars.destroy();
+	LuaBinder::visitGlobals(&env.getLuaState(), callbacks);
+}
+
+void ScriptComponent::flushDirtyVarsToLua(ScriptEnvironment& env)
+{
+	class Callbacks : public LuaBinderVisitGlobalsCallbacks
+	{
+	public:
+		ScriptComponent* m_self;
+
+		ScriptComponentVariable* findVar(CString name)
+		{
+			ScriptComponentVariable* found = nullptr;
+			for(ScriptComponentVariable& var : m_self->m_vars)
+			{
+				if(var.m_name == name)
+				{
+					found = &var;
+					break;
+				}
+			}
+
+			if(!found)
+			{
+				ANKI_SCENE_LOGE(
+					"Unable to find LUA var %s. Was that var created inside some function? Did you forget to use \"local\" on some temp vars?",
+					name.cstr());
+			}
+
+			return found;
+		}
+
+		Bool onNumber(CString name, F64& value) override
+		{
+			ScriptComponentVariable* var = findVar(name);
+			if(var && var->m_dirty)
+			{
+				value = var->m_number;
+				var->m_dirty = false;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		Bool onBool(CString name, Bool& value) override
+		{
+			ScriptComponentVariable* var = findVar(name);
+			if(var && var->m_dirty)
+			{
+				value = var->m_bool;
+				var->m_dirty = false;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		Bool onString(CString name, ScriptString& value) override
+		{
+			ScriptComponentVariable* var = findVar(name);
+			if(var && var->m_dirty)
+			{
+				value = var->m_string;
+				var->m_dirty = false;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		Bool onUserData(CString name, LuaUserData& value) override
+		{
+			CString typeStr = value.getDataTypeInfo().m_typeName;
+			if(typeStr == "Vec2" || typeStr == "Vec3" || typeStr == "Vec4")
+			{
+				ScriptComponentVariable* var = findVar(name);
+				if(var && var->m_dirty)
+				{
+					value.getDataTypeInfo().m_deserializeCallback(&var->m_vec4.x, value);
+					var->m_dirty = false;
+					return true;
+				}
+			}
+
+			return false;
+		}
+	} callbacks;
+	callbacks.m_self = this;
+
+	LuaBinder::visitGlobals(&env.getLuaState(), callbacks);
 }
 
 } // end namespace anki

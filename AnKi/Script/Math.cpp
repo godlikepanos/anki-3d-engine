@@ -11,9 +11,9 @@
 namespace anki {
 
 // Serialize Vec2
-static void serializeVec2(LuaUserData& self, void* data, PtrSize& size)
+static void serializeVec2(const LuaUserData& self, void* data, PtrSize& size)
 {
-	Vec2* obj = self.getData<Vec2>();
+	const Vec2* obj = self.getData<Vec2>();
 	obj->serialize(data, size);
 }
 
@@ -26,7 +26,7 @@ static void deserializeVec2(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2 = {-6244337268269259101, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2 = {-9091593388028089909, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
 												 deserializeVec2};
 
 template<>
@@ -758,9 +758,9 @@ static inline void wrapVec2(lua_State* l)
 }
 
 // Serialize Vec3
-static void serializeVec3(LuaUserData& self, void* data, PtrSize& size)
+static void serializeVec3(const LuaUserData& self, void* data, PtrSize& size)
 {
-	Vec3* obj = self.getData<Vec3>();
+	const Vec3* obj = self.getData<Vec3>();
 	obj->serialize(data, size);
 }
 
@@ -773,7 +773,7 @@ static void deserializeVec3(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3 = {-2740589931080892768, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3 = {1527755477802711545, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
 												 deserializeVec3};
 
 template<>
@@ -1569,9 +1569,9 @@ static inline void wrapVec3(lua_State* l)
 }
 
 // Serialize Vec4
-static void serializeVec4(LuaUserData& self, void* data, PtrSize& size)
+static void serializeVec4(const LuaUserData& self, void* data, PtrSize& size)
 {
-	Vec4* obj = self.getData<Vec4>();
+	const Vec4* obj = self.getData<Vec4>();
 	obj->serialize(data, size);
 }
 
@@ -1584,7 +1584,7 @@ static void deserializeVec4(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4 = {8378982108621294078, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4 = {-5795342145682141566, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
 												 deserializeVec4};
 
 template<>
@@ -2409,7 +2409,7 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3 = {2771201786814769536, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3 = {-2795056434948159065, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
@@ -2743,7 +2743,7 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3x4 = {6217558188558067156, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
+LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3x4 = {-7994400913296759198, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
 												   nullptr};
 
 template<>
@@ -3096,7 +3096,7 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoTransform = {-5465408310055952111, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
+LuaUserDataTypeInfo g_luaUserDataTypeInfoTransform = {8478657097175717586, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
 													  nullptr, nullptr};
 
 template<>

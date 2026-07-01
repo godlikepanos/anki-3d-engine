@@ -7,6 +7,7 @@
 
 import os
 import optparse
+import hashlib
 import xml.etree.ElementTree as et
 
 # Globals
@@ -35,10 +36,14 @@ def parse_commandline():
 
 
 def type_sig(value):
-    """ Calculate the signature of a type """
+    """ Calculate a stable signature of a type. Must be deterministic across runs and Python versions because the value
+    ends up in generated source (and potentially in serialized data), so don't use the built-in hash() which is salted
+    per process. """
     if not isinstance(value, str):
         raise Exception("Expecting string")
-    return hash(value)
+    # Take the first 8 bytes of a SHA-256 digest and interpret them as a signed 64-bit int to match the I64 m_sig field
+    digest = hashlib.sha256(value.encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], byteorder="little", signed=True)
 
 
 def get_base_fname(path):
@@ -686,10 +691,10 @@ def class_(class_el):
         # Serialize
         serialize_cb_name = "serialize%s" % class_name
         wglue("// Serialize %s" % class_name)
-        wglue("static void %s(LuaUserData& self, void* data, PtrSize& size)" % serialize_cb_name)
+        wglue("static void %s(const LuaUserData& self, void* data, PtrSize& size)" % serialize_cb_name)
         wglue("{")
         ident(1)
-        wglue("%s* obj = self.getData<%s>();" % (class_name, class_name))
+        wglue("const %s* obj = self.getData<%s>();" % (class_name, class_name))
         wglue("obj->serialize(data, size);")
         ident(-1)
         wglue("}")

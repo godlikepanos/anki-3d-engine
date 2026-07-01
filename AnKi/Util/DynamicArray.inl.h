@@ -22,7 +22,7 @@ void DynamicArray<T, TMemoryPool, TSize>::resizeStorage(Size newSize)
 		{
 			for(Size i = 0; i < m_size; ++i)
 			{
-				callConstructor(newStorage[i], std::move(m_data[i]));
+				::new(&newStorage[i]) T(std::move(m_data[i]));
 				m_data[i].~T();
 			}
 
@@ -56,7 +56,7 @@ void DynamicArray<T, TMemoryPool, TSize>::resizeStorage(Size newSize)
 
 				for(Size i = 0; i < m_size; ++i)
 				{
-					callConstructor(newStorage[i], std::move(m_data[i]));
+					::new(&newStorage[i]) T(std::move(m_data[i]));
 					m_data[i].~T();
 				}
 
@@ -142,7 +142,7 @@ typename DynamicArray<T, TMemoryPool, TSize>::Iterator DynamicArray<T, TMemoryPo
 		else
 		{
 			// Construct the last element because we will move to it
-			callConstructor(m_data[oldSize]);
+			::new(&m_data[oldSize]) T();
 
 			// Move the elements one place to the right
 			while(elementsToMoveRight--)
@@ -171,7 +171,7 @@ typename DynamicArray<T, TMemoryPool, TSize>::Iterator DynamicArray<T, TMemoryPo
 
 	// Construct the new object
 	ANKI_ASSERT(outIdx != getMaxNumericLimit<Size>());
-	callConstructor(m_data[outIdx], std::forward<TArgs>(args)...);
+	::new(&m_data[outIdx]) T(std::forward<TArgs>(args)...);
 
 	// Increase the size because resizeStorage will not
 	++m_size;

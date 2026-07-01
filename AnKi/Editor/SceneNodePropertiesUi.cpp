@@ -368,19 +368,29 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 		ImGui::SameLine();
 	}
 
-	// Button
+	// Embeded script button
 	{
-		const Char* defaultText = R"(function update(info) --info: SceneComponentUpdateInfo
+		const Char* defaultText = R"(-- Add your global vars here. Eg: speed = Vec3.new(0, 0, 0)
+
+-- Component main update
+--- @param info SceneComponentUpdateInfo
+function update(info)
     -- Your code here
 end
 
---[[function onTriggerEnter(node)
+--[[
+--- @param node SceneNode
+function onTriggerEnter(node)
     -- Your code here
-end]]
+end
+]]
 
---[[function onTriggerExit(node)
+--[[
+--- @param node SceneNode
+function onTriggerExit(node)
     -- Your code here
-end]]
+end
+]]
 )";
 
 		String buttonTxt;
@@ -408,6 +418,81 @@ end]]
 			m_textEditorTxt.destroy();
 		}
 	}
+
+	// List vars
+	U32 varCount = 0;
+	comp.iterateVariables([&](ScriptComponentVariable& var) -> FunctorContinue {
+		if(varCount++ == 0)
+		{
+			ImGui::Text(" -- Vars --");
+		}
+
+		const Char* name = var.getName().cstr();
+
+		switch(var.getType())
+		{
+		case ScriptComponentVariableType::kNumber:
+		{
+			F32 value = F32(var.getNumber());
+			if(ImGui::InputFloat(name, &value))
+			{
+				var.setNumber(value);
+			}
+			break;
+		}
+		case ScriptComponentVariableType::kBool:
+		{
+			Bool value = var.getBool();
+			if(ImGui::Checkbox(name, &value))
+			{
+				var.setBool(value);
+			}
+			break;
+		}
+		case ScriptComponentVariableType::kString:
+		{
+			Array<Char, kMaxTextInputLen> buff;
+			std::strncpy(buff.getBegin(), var.getString().cstr(), buff.getSize());
+			buff[buff.getSize() - 1] = '\0';
+			if(ImGui::InputText(name, buff.getBegin(), buff.getSize(), ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				var.setString(&buff[0]);
+			}
+			break;
+		}
+		case ScriptComponentVariableType::kVec2:
+		{
+			Vec2 value = var.getVec2();
+			if(ImGui::InputFloat2(name, &value.x))
+			{
+				var.setVec2(value);
+			}
+			break;
+		}
+		case ScriptComponentVariableType::kVec3:
+		{
+			Vec3 value = var.getVec3();
+			if(ImGui::InputFloat3(name, &value.x))
+			{
+				var.setVec3(value);
+			}
+			break;
+		}
+		case ScriptComponentVariableType::kVec4:
+		{
+			Vec4 value = var.getVec4();
+			if(ImGui::InputFloat4(name, &value.x))
+			{
+				var.setVec4(value);
+			}
+			break;
+		}
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		return FunctorContinue::kContinue;
+	});
 }
 
 void SceneNodePropertiesUi::materialComponent(MaterialComponent& comp)

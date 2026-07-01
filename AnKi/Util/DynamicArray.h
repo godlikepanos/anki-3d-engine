@@ -225,7 +225,7 @@ public:
 	Iterator emplaceBack(TArgs&&... args)
 	{
 		resizeStorage(m_size + 1);
-		callConstructor(m_data[m_size], std::forward<TArgs>(args)...);
+		::new(&m_data[m_size]) T(std::forward<TArgs>(args)...);
 		++m_size;
 		return &m_data[m_size - 1];
 	}
