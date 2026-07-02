@@ -236,6 +236,10 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			{
 				filetype = AssetFileType::kScene;
 			}
+			else if(extension == "lua")
+			{
+				filetype = AssetFileType::kLua;
+			}
 
 			if(filetype != AssetFileType::kNone)
 			{
@@ -462,6 +466,18 @@ void AssetBrowserUi::drawDirPath()
 
 void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 {
+	auto dragDropSource = [](auto& file, const Char* identifier) {
+		if(ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+		{
+			// Copy the resource path incl. the null terminator; ImGui owns the copy for the drag's duration.
+			const CString path = file.m_resourceFilepath;
+			ImGui::SetDragDropPayload(identifier, path.cstr(), path.getLength() + 1);
+
+			ImGui::TextUnformatted(file.m_filename.cstr());
+			ImGui::EndDragDropSource();
+		}
+	};
+
 	const F32 cellWidth = F32(m_cellSize) * 16;
 	const U32 columnCount = U32(ImGui::GetContentRegionAvail().x / cellWidth);
 	ImGui::SetNextItemWidth(-1.0f);
@@ -507,12 +523,16 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
 							m_materialEditorWindow.open(*rsrc);
 						}
+
+						dragDropSource(file, kMaterialAssetDragDropPayload);
 					}
 					else if(file.m_type == AssetFileType::kMesh)
 					{
 						ImTextureID id;
 						id.m_texture = &m_meshIcon->getTexture();
 						ImGui::ImageButton("##", id, Vec2(cellWidth));
+
+						dragDropSource(file, kMeshAssetDragDropPayload);
 					}
 					else if(file.m_type == AssetFileType::kTexture)
 					{
@@ -526,6 +546,8 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 							m_imageViewerWindow.m_image = img;
 							m_imageViewerWindow.m_open = true;
 						}
+
+						dragDropSource(file, kTextureAssetDragDropPayload);
 					}
 					else if(file.m_type == AssetFileType::kParticleEmitter)
 					{
@@ -536,7 +558,9 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
 							m_particleEditorWindow.open(*rsrc);
 						}
+
 						ImGui::PopFont();
+						dragDropSource(file, kParticleEmitterAssetDragDropPayload);
 					}
 					else if(file.m_type == AssetFileType::kScene)
 					{
@@ -554,6 +578,17 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 							}
 						}
 						ImGui::PopFont();
+					}
+					else if(file.m_type == AssetFileType::kLua)
+					{
+						ImGui::PushFont(nullptr, cellWidth - 1.0f);
+						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA, Vec2(cellWidth)))
+						{
+							ANKI_LOGE("TODO");
+						}
+
+						ImGui::PopFont();
+						dragDropSource(file, kScriptAssetDragDropPayload);
 					}
 
 					ImGui::PopID();

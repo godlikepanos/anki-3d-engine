@@ -9,6 +9,25 @@
 
 namespace anki {
 
+// Accept a drag-drop payload of the given type on the last item and return the dropped string (empty if none).
+static String acceptDragDrop(const Char* identifier)
+{
+	String out;
+
+	if(ImGui::BeginDragDropTarget())
+	{
+		if(const ImGuiPayload* pl = ImGui::AcceptDragDropPayload(identifier))
+		{
+			ANKI_ASSERT(pl->Data && pl->DataSize > 0);
+			const CString droppedName(static_cast<const char*>(pl->Data));
+			out = droppedName;
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	return out;
+}
+
 void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sceneGraphView, Vec2 initialPos, Vec2 initialSize, Bool& reparented,
 									   ImGuiWindowFlags windowFlags)
 {
@@ -354,6 +373,15 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 		{
 			comp.setScriptResourceFilename(filenames[newSelectedFilename]);
 		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kScriptAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setScriptResourceFilename(droppedFilename);
+			}
+		}
 	}
 
 	ImGui::Text(" -- or --");
@@ -518,6 +546,15 @@ void SceneNodePropertiesUi::materialComponent(MaterialComponent& comp)
 		{
 			comp.setMaterialFilename(mtlFilenames[newSelectedFilename]);
 		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kMaterialAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setMaterialFilename(droppedFilename);
+			}
+		}
 	}
 
 	// Submesh ID
@@ -607,6 +644,15 @@ void SceneNodePropertiesUi::meshComponent(MeshComponent& comp)
 		{
 			comp.setMeshFilename(meshFilenames[newSelectedFilename]);
 		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kMeshAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setMeshFilename(droppedFilename);
+			}
+		}
 	}
 }
 
@@ -640,7 +686,7 @@ void SceneNodePropertiesUi::particleEmitterComponent(ParticleEmitter2Component& 
 {
 	// Filename
 	{
-		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankiparts");
+		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankipart");
 
 		const String currentFilename = (comp.hasParticleEmitterResource()) ? comp.getParticleEmitterFilename() : "";
 		U32 newSelectedFilename = kMaxU32;
@@ -651,6 +697,15 @@ void SceneNodePropertiesUi::particleEmitterComponent(ParticleEmitter2Component& 
 		if(selected && currentFilename != filenames[newSelectedFilename])
 		{
 			comp.setParticleEmitterFilename(filenames[newSelectedFilename]);
+		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kParticleEmitterAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setParticleEmitterFilename(droppedFilename);
+			}
 		}
 	}
 
@@ -942,6 +997,15 @@ void SceneNodePropertiesUi::decalComponent(DecalComponent& comp)
 		{
 			comp.setDiffuseImageFilename(filenames[newSelectedFilename]);
 		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kTextureAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setDiffuseImageFilename(droppedFilename);
+			}
+		}
 	}
 
 	// Diffuse factor
@@ -968,6 +1032,15 @@ void SceneNodePropertiesUi::decalComponent(DecalComponent& comp)
 		if(selected && currentFilename != filenames[newSelectedFilename])
 		{
 			comp.setRoughnessMetalnessImageFilename(filenames[newSelectedFilename]);
+		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kTextureAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setRoughnessMetalnessImageFilename(droppedFilename);
+			}
 		}
 	}
 
@@ -1062,6 +1135,15 @@ void SceneNodePropertiesUi::skyboxComponent(SkyboxComponent& comp)
 			if(selected && currentFilename != filenames[newSelectedFilename])
 			{
 				comp.setSkyImageFilename(filenames[newSelectedFilename]);
+			}
+
+			// Drag and drop
+			if(String droppedFilename = acceptDragDrop(kTextureAssetDragDropPayload))
+			{
+				if(droppedFilename != currentFilename)
+				{
+					comp.setSkyImageFilename(droppedFilename);
+				}
 			}
 		}
 
