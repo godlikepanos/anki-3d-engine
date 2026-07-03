@@ -10,53 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup graphics
-/// @{
-
-/// Specialization constant value.
-class ShaderSpecializationConstValue
-{
-public:
-	union
-	{
-		F32 m_float;
-		I32 m_int;
-		U32 m_uint;
-	};
-
-	U32 m_constantId = kMaxU32;
-	ShaderVariableDataType m_dataType;
-
-	ShaderSpecializationConstValue()
-		: m_int(0)
-		, m_dataType(ShaderVariableDataType::kNone)
-	{
-	}
-
-	explicit ShaderSpecializationConstValue(F32 f)
-		: m_float(f)
-		, m_dataType(ShaderVariableDataType::kF32)
-	{
-	}
-
-	explicit ShaderSpecializationConstValue(I32 i)
-		: m_int(i)
-		, m_dataType(ShaderVariableDataType::kI32)
-	{
-	}
-
-	explicit ShaderSpecializationConstValue(U32 i)
-		: m_int(i)
-		, m_dataType(ShaderVariableDataType::kU32)
-	{
-	}
-
-	ShaderSpecializationConstValue(const ShaderSpecializationConstValue&) = default;
-
-	ShaderSpecializationConstValue& operator=(const ShaderSpecializationConstValue&) = default;
-};
-
-/// Shader init info.
+// Shader init info.
 class ShaderInitInfo : public GrBaseInitInfo
 {
 public:
@@ -89,7 +43,7 @@ public:
 	}
 };
 
-/// GPU shader.
+// GPU shader.
 class Shader : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -109,7 +63,7 @@ public:
 		return m_shaderBinarySize;
 	}
 
-	/// Pixel shader had a discard.
+	// Pixel shader had a discard.
 	U32 hasDiscard() const
 	{
 		ANKI_ASSERT(m_shaderType == ShaderType::kPixel);
@@ -123,21 +77,17 @@ protected:
 
 	Bool m_hasDiscard = false;
 
-	/// Construct.
 	Shader(CString name)
 		: GrObject(kClassType, name)
 	{
 	}
 
-	/// Destroy.
 	~Shader()
 	{
 	}
 
 private:
-	/// Allocate and initialize a new instance.
 	[[nodiscard]] static Shader* newInstance(const ShaderInitInfo& init);
 };
-/// @}
 
 } // end namespace anki
