@@ -13,13 +13,13 @@
 
 namespace anki {
 
-/// A member of a ShaderBinaryStruct.
+// A member of a ShaderBinaryStruct.
 class ShaderBinaryStructMember
 {
 public:
 	Array<Char, kMaxShaderBinaryNameLength + 1> m_name = {};
 	U32 m_offset = kMaxU32;
-	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
+	ShaderVariableDataType m_type = ShaderVariableDataType::kCount;
 	Array<U8, 16> m_defaultValues = {};
 
 	template<typename TSerializer, typename TClass>
@@ -44,7 +44,7 @@ public:
 	}
 };
 
-/// A type that is a structure.
+// A type that is a structure.
 class ShaderBinaryStruct
 {
 public:
@@ -73,7 +73,7 @@ public:
 	}
 };
 
-/// Contains the IR (SPIR-V or DXIL).
+// Contains the IR (SPIR-V or DXIL).
 class ShaderBinaryCodeBlock
 {
 public:
@@ -102,7 +102,7 @@ public:
 	}
 };
 
-/// ShaderBinaryTechnique class.
+// ShaderBinaryTechnique class.
 class ShaderBinaryTechnique
 {
 public:
@@ -129,7 +129,7 @@ public:
 	}
 };
 
-/// Shader program mutator.
+// Shader program mutator.
 class ShaderBinaryMutator
 {
 public:
@@ -156,11 +156,11 @@ public:
 	}
 };
 
-/// ShaderBinaryTechniqueCodeBlocks class.
+// ShaderBinaryTechniqueCodeBlocks class.
 class ShaderBinaryTechniqueCodeBlocks
 {
 public:
-	/// Points to ShaderBinary::m_codeBlocks. If the shader type is not present the value is kMaxU32.
+	// Points to ShaderBinary::m_codeBlocks. If the shader type is not present the value is kMaxU32.
 	Array<U32, U32(ShaderType::kCount)> m_codeBlockIndices = {};
 
 	template<typename TSerializer, typename TClass>
@@ -183,11 +183,11 @@ public:
 	}
 };
 
-/// ShaderBinaryVariant class.
+// ShaderBinaryVariant class.
 class ShaderBinaryVariant
 {
 public:
-	/// One entry per technique.
+	// One entry per technique.
 	WeakArray<ShaderBinaryTechniqueCodeBlocks> m_techniqueCodeBlocks;
 
 	template<typename TSerializer, typename TClass>
@@ -209,16 +209,16 @@ public:
 	}
 };
 
-/// A mutation is a unique combination of mutator values.
+// A mutation is a unique combination of mutator values.
 class ShaderBinaryMutation
 {
 public:
 	WeakArray<MutatorValue> m_values;
 
-	/// Mutation hash.
+	// Mutation hash.
 	U64 m_hash = 0;
 
-	/// Points to ShaderBinary::m_variants.
+	// Points to ShaderBinary::m_variants.
 	U32 m_variantIndex = kMaxU32;
 
 	template<typename TSerializer, typename TClass>
@@ -242,7 +242,7 @@ public:
 	}
 };
 
-/// ShaderBinary class.
+// ShaderBinary class.
 class ShaderBinary
 {
 public:
@@ -251,7 +251,7 @@ public:
 	WeakArray<ShaderBinaryCodeBlock> m_codeBlocks;
 	WeakArray<ShaderBinaryMutator> m_mutators;
 
-	/// It's sorted using the mutation's hash.
+	// It's sorted using the mutation's hash.
 	WeakArray<ShaderBinaryMutation> m_mutations;
 
 	WeakArray<ShaderBinaryVariant> m_variants;

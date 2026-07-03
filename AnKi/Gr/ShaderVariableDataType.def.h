@@ -6,7 +6,6 @@
 // ShaderVariableDataType defines
 
 // ANKI_SVDT_MACRO(varType, baseType, rowCount, columnCount, isIntegralType)
-#if defined(ANKI_SVDT_MACRO)
 ANKI_SVDT_MACRO(I8, I8, 1, 1, true)
 ANKI_SVDT_MACRO(U8, U8, 1, 1, true)
 ANKI_SVDT_MACRO(I16, I16, 1, 1, true)
@@ -45,32 +44,4 @@ ANKI_SVDT_MACRO(UVec4, U32, 4, 1, true)
 ANKI_SVDT_MACRO(HVec4, F16, 4, 1, false)
 ANKI_SVDT_MACRO(Vec4, F32, 4, 1, false)
 
-ANKI_SVDT_MACRO(Mat3, F32, 3, 3, false)
-ANKI_SVDT_MACRO(Mat3x4, F32, 3, 4, false)
-ANKI_SVDT_MACRO(Mat4, F32, 4, 4, false)
-
-#	undef ANKI_SVDT_MACRO
-#endif
-
-// ANKI_SVDT_MACRO_OPAQUE(const, varType)
-#if defined(ANKI_SVDT_MACRO_OPAQUE)
-ANKI_SVDT_MACRO_OPAQUE(Texture1D, texture1D)
-ANKI_SVDT_MACRO_OPAQUE(Texture1DArray, texture1DArray)
-ANKI_SVDT_MACRO_OPAQUE(Texture2D, texture2D)
-ANKI_SVDT_MACRO_OPAQUE(Texture2DArray, texture2DArray)
-ANKI_SVDT_MACRO_OPAQUE(Texture3D, texture3D)
-ANKI_SVDT_MACRO_OPAQUE(TextureCube, textureCube)
-ANKI_SVDT_MACRO_OPAQUE(TextureCubeArray, textureCubeArray)
-
-ANKI_SVDT_MACRO_OPAQUE(Image1D, image1D)
-ANKI_SVDT_MACRO_OPAQUE(Image1DArray, image1DArray)
-ANKI_SVDT_MACRO_OPAQUE(Image2D, image2D)
-ANKI_SVDT_MACRO_OPAQUE(Image2DArray, image2DArray)
-ANKI_SVDT_MACRO_OPAQUE(Image3D, image3D)
-ANKI_SVDT_MACRO_OPAQUE(ImageCube, imageCube)
-ANKI_SVDT_MACRO_OPAQUE(ImageCubeArray, imageCubeArray)
-
-ANKI_SVDT_MACRO_OPAQUE(Sampler, sampler)
-
-#	undef ANKI_SVDT_MACRO_OPAQUE
-#endif
+#undef ANKI_SVDT_MACRO

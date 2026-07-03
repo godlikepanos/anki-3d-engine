@@ -11,15 +11,14 @@ namespace anki {
 
 /// @warning Don't use Array because the compilers can't handle it for some reason.
 inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
-#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) {ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
-#define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) {ANKI_STRINGIZE(type), sizeof(type), isIntagralType},
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
 };
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {
-	ANKI_ASSERT(type > ShaderVariableDataType::kNone && type < ShaderVariableDataType::kCount);
-	return kShaderVariableDataTypeInfos[U32(type) - 1];
+	ANKI_ASSERT(type < ShaderVariableDataType::kCount);
+	return kShaderVariableDataTypeInfos[U32(type)];
 }
 
 FormatInfo getFormatInfo(Format fmt)

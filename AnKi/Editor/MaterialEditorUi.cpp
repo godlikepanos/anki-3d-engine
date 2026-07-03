@@ -333,13 +333,13 @@ void MaterialEditorUi::rebuildCache(CString programName)
 	for(const ShaderBinaryStructMember& m : prog->m_inputs)
 	{
 		// Set a default value from the binary
-		m_cachedInputs[count].m_Mat4 = Mat4::getZero();
+		m_cachedInputs[count].m_Vec4 = Vec4(0.0f);
 		switch(m.m_type)
 		{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	case ShaderVariableDataType::k##type: \
-		ANKI_ASSERT(sizeof(m_cachedInputs[count].m_Mat4) == m.m_defaultValues.getSizeInBytes()); \
-		memcpy(&m_cachedInputs[count].m_Mat4, m.m_defaultValues.getBegin(), m.m_defaultValues.getSizeInBytes()); \
+		ANKI_ASSERT(sizeof(m_cachedInputs[count].m_Vec4) == m.m_defaultValues.getSizeInBytes()); \
+		memcpy(&m_cachedInputs[count].m_Vec4, m.m_defaultValues.getBegin(), m.m_defaultValues.getSizeInBytes()); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
 		default:

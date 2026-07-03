@@ -20,7 +20,7 @@ class ParticleEmitterResourceProperty
 public:
 	ParticleEmitterResourceProperty()
 	{
-		zeroMemory(m_Mat4);
+		zeroMemory(m_Vec4);
 	}
 
 	ParticleEmitterResourceProperty(const ParticleEmitterResourceProperty&) = delete; // Non-copyable
@@ -37,14 +37,14 @@ public:
 
 	ShaderVariableDataType getDataType() const
 	{
-		ANKI_ASSERT(m_dataType != ShaderVariableDataType::kNone);
+		ANKI_ASSERT(m_dataType != ShaderVariableDataType::kCount);
 		return m_dataType;
 	}
 
 private:
 	ResourceString m_name;
 	U32 m_offsetInAnKiParticleEmitterProperties = kMaxU32;
-	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
+	ShaderVariableDataType m_dataType = ShaderVariableDataType::kCount;
 
 	union
 	{

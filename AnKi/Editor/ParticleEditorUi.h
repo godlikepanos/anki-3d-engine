@@ -28,11 +28,11 @@ private:
 		};
 
 		String m_name;
-		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
+		ShaderVariableDataType m_type = ShaderVariableDataType::kCount;
 
 		Prop()
 		{
-			m_Mat4 = Mat4(0.0f);
+			m_Vec4 = Vec4(0.0f);
 		}
 
 		Prop(const Prop& b)
@@ -44,7 +44,7 @@ private:
 		{
 			m_name = b.m_name;
 			m_type = b.m_type;
-			m_Mat4 = b.m_Mat4;
+			m_Vec4 = b.m_Vec4;
 			return *this;
 		}
 	};

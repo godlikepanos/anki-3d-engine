@@ -264,7 +264,7 @@ void ParticleEditorUi::rebuildCache(CString particleProgramName)
 	{
 		m_otherProps[i].m_name = foundProg->m_props[i].m_name;
 		m_otherProps[i].m_type = foundProg->m_props[i].m_type;
-		m_otherProps[i].m_Mat4 = foundProg->m_props[i].m_Mat4;
+		m_otherProps[i].m_Vec4 = foundProg->m_props[i].m_Vec4;
 	}
 }
 

@@ -285,12 +285,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		if(diffuseRelatedMtlVar)
 		{
-			if(diffuseRelatedMtlVar->getDataType() >= ShaderVariableDataType::kTextureFirst
-			   && diffuseRelatedMtlVar->getDataType() <= ShaderVariableDataType::kTextureLast)
-			{
-				averageDiffuse = diffuseRelatedMtlVar->getValue<ImageResourcePtr>()->getAverageColor();
-			}
-			else if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kVec3)
+			if(diffuseRelatedMtlVar->getDataType() == ShaderVariableDataType::kVec3)
 			{
 				averageDiffuse = diffuseRelatedMtlVar->getValue<Vec3>().xyz1;
 			}

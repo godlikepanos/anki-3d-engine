@@ -15,10 +15,6 @@ namespace anki {
 // Forward
 class ShaderParser;
 
-/// @addtogroup shader_compiler
-/// @{
-
-/// @memberof ShaderParser
 class ShaderParserMutator
 {
 public:
@@ -26,17 +22,15 @@ public:
 	ShaderCompilerDynamicArray<MutatorValue> m_values;
 };
 
-/// @memberof ShaderParser
 class ShaderParserGhostStructMember
 {
 public:
 	ShaderCompilerString m_name;
-	ShaderVariableDataType m_type;
+	ShaderVariableDataType m_type = ShaderVariableDataType::kCount;
 	U32 m_offset = kMaxU32;
 	Array<U8, 16> m_defaultValues = {};
 };
 
-/// @memberof ShaderParser
 class ShaderParserGhostStruct
 {
 public:
@@ -44,7 +38,6 @@ public:
 	ShaderCompilerString m_name;
 };
 
-/// @memberof ShaderParser
 class ShaderParserTechnique
 {
 public:
@@ -53,23 +46,23 @@ public:
 	Array<U64, U32(ShaderType::kCount)> m_activeMutators = {};
 };
 
-/// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
-/// in the shader programs.
-///
-/// It supports the following expressions:
-/// #include {<> | ""}
-/// #pragma once
-/// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2 ...]]
-/// #pragma anki skip_mutation MUTATOR0 VALUE0 [MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]]
-/// #pragma anki technique [NAME] STAGE0 [STAGE1 ...] [mutators [MUTATOR0 [MUTATOR1 ...]]]
-/// #pragma anki extra_compiler_args ARG0 [ARG1 [ARG2...]]
-///
-/// #pragma anki struct NAME
-/// #	pragma anki member TYPE NAME [DEFAULT_VALUE0 [DEFAULT_VALUE1 ...]]
-/// 	...
-/// #pragma anki struct_end
-///
-/// None of the pragmas should be in an ifdef-like guard. It's ignored.
+// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
+// in the shader programs.
+//
+// It supports the following expressions:
+// #include {<> | ""}
+// #pragma once
+// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2 ...]]
+// #pragma anki skip_mutation MUTATOR0 VALUE0 [MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]]
+// #pragma anki technique [NAME] STAGE0 [STAGE1 ...] [mutators [MUTATOR0 [MUTATOR1 ...]]]
+// #pragma anki extra_compiler_args ARG0 [ARG1 [ARG2...]]
+//
+// #pragma anki struct NAME
+// #	pragma anki member TYPE NAME [DEFAULT_VALUE0 [DEFAULT_VALUE1 ...]]
+// 	...
+// #pragma anki struct_end
+//
+// None of the pragmas should be in an ifdef-like guard. It's ignored.
 class ShaderParser
 {
 public:
@@ -81,13 +74,13 @@ public:
 
 	ShaderParser& operator=(const ShaderParser&) = delete; // Non-copyable
 
-	/// Parse the file and its includes.
+	// Parse the file and its includes.
 	Error parse();
 
-	/// Returns true if the mutation should be skipped.
+	// Returns true if the mutation should be skipped.
 	Bool skipMutation(ConstWeakArray<MutatorValue> mutation) const;
 
-	/// Get the source (and a few more things) given a list of mutators.
+	// Get the source (and a few more things) given a list of mutators.
 	void generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderParserTechnique& technique, ShaderType shaderType,
 						 ShaderCompilerString& source) const;
 
@@ -117,7 +110,7 @@ public:
 		return m_extraCompilerArgsCString;
 	}
 
-	/// Generates the common header that will be used by all AnKi shaders.
+	// Generates the common header that will be used by all AnKi shaders.
 	static void generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header);
 
 private:
@@ -203,6 +196,5 @@ private:
 		return Error::kNone;
 	}
 };
-/// @}
 
 } // end namespace anki

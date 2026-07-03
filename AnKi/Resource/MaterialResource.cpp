@@ -69,7 +69,7 @@ static Bool mutatorValueExists(const ShaderBinaryMutator& m, MutatorValue val)
 
 MaterialVariable::MaterialVariable()
 {
-	m_Mat4 = Mat4::getZero();
+	m_Vec4 = Vec4(0.0f);
 }
 
 MaterialVariable::~MaterialVariable()

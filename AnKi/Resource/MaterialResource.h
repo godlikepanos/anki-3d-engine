@@ -54,7 +54,7 @@ public:
 		m_name = std::move(b.m_name);
 		m_offsetInLocalConstants = b.m_offsetInLocalConstants;
 		m_dataType = b.m_dataType;
-		m_Mat4 = b.m_Mat4;
+		m_Vec4 = b.m_Vec4;
 		m_image = std::move(b.m_image);
 		return *this;
 	}
@@ -69,7 +69,7 @@ public:
 
 	ShaderVariableDataType getDataType() const
 	{
-		ANKI_ASSERT(m_dataType != ShaderVariableDataType::kNone);
+		ANKI_ASSERT(m_dataType != ShaderVariableDataType::kCount);
 		return m_dataType;
 	}
 
@@ -87,7 +87,7 @@ public:
 protected:
 	ResourceString m_name;
 	U32 m_offsetInLocalConstants = kMaxU32;
-	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
+	ShaderVariableDataType m_dataType = ShaderVariableDataType::kCount;
 
 	// Values
 	union

@@ -34,7 +34,7 @@ private:
 
 		Data()
 		{
-			m_Mat4 = Mat4::getZero();
+			m_Vec4 = Vec4(0.0f);
 		}
 
 		Data(const Data& b)
@@ -44,7 +44,7 @@ private:
 
 		Data& operator=(const Data& b)
 		{
-			m_Mat4 = b.m_Mat4; // Copy the largest member of the union to copy all its bytes
+			m_Vec4 = b.m_Vec4; // Copy the largest member of the union to copy all its bytes
 			m_image = b.m_image;
 			m_name = b.m_name;
 			m_type = b.m_type;

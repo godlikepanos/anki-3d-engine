@@ -592,7 +592,7 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 
 	// Type
 	const CString typeStr = *begin;
-	member.m_type = ShaderVariableDataType::kNone;
+	member.m_type = ShaderVariableDataType::kCount;
 	if(typeStr == "F32" || typeStr == "RF32")
 	{
 		member.m_type = ShaderVariableDataType::kF32;
@@ -614,7 +614,7 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 		member.m_type = ShaderVariableDataType::kU32;
 	}
 
-	if(member.m_type == ShaderVariableDataType::kNone)
+	if(member.m_type == ShaderVariableDataType::kCount)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Unrecognized type");
 	}

@@ -569,35 +569,11 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)
 
 enum class ShaderVariableDataType : U8
 {
-	kNone,
-
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) k##type,
-#define ANKI_SVDT_MACRO_OPAQUE(constant, type) k##constant,
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
 
-	// Derived
 	kCount,
-
-	kNumericsFirst = kI32,
-	kNumericsLast = kMat4,
-
-	kNumeric1ComponentFirst = kI32,
-	kNumeric1ComponentLast = kF32,
-	kNumeric2ComponentFirst = kIVec2,
-	kNumeric2ComponentLast = kVec2,
-	kNumeric3ComponentFirst = kIVec3,
-	kNumeric3ComponentLast = kVec3,
-	kNumeric4ComponentFirst = kIVec4,
-	kNumeric4ComponentLast = kVec4,
-
-	kMatrixFirst = kMat3,
-	kMatrixLast = kMat4,
-
-	kTextureFirst = kTexture1D,
-	kTextureLast = kTextureCubeArray,
-
-	kImageFirst = kImage1D,
-	kImageLast = kImageCubeArray,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType)
 
@@ -606,7 +582,6 @@ class ShaderVariableDataTypeInfo
 public:
 	const Char* m_name;
 	U32 m_size; // Size of the type.
-	Bool m_opaque;
 	Bool m_isIntegral; // If true is integral type. Else it's float.
 };
 
