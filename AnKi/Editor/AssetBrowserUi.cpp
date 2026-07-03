@@ -89,6 +89,8 @@ public:
 	// engine's resource cache instead of loading the asset a second time.
 	String m_resourceFilepath;
 
+	AssetDir* m_parentDir = nullptr;
+
 	AssetFileType m_type = AssetFileType::kNone;
 
 	AssetFile() = default;
@@ -109,6 +111,7 @@ public:
 		m_resourceFilepath = std::move(b.m_resourceFilepath);
 		m_type = b.m_type;
 		b.m_type = AssetFileType::kNone;
+		m_parentDir = std::move(b.m_parentDir);
 		return *this;
 	}
 };
@@ -290,6 +293,11 @@ void AssetBrowserUi::sortFilesRecursively(AssetDir& root)
 
 void AssetBrowserUi::assignParentDirRecursively(AssetDir& root)
 {
+	for(AssetFile& file : root.m_files)
+	{
+		file.m_parentDir = &root;
+	}
+
 	for(AssetDir& child : root.m_children)
 	{
 		child.m_parentDir = &root;
@@ -344,7 +352,7 @@ void AssetBrowserUi::loadImageToCache(CString fname, ImageResourcePtr& img)
 	}
 }
 
-void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, ImGuiWindowFlags windowFlags)
+void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString resourceToLocate, ImGuiWindowFlags windowFlags)
 {
 	if(!m_open)
 	{
@@ -356,6 +364,15 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, ImGuiWin
 		ANKI_CHECKF(ResourceFilesystem::getSingleton().refreshAll());
 		buildAssetStructure(m_assetPaths);
 		m_refreshAssetsPathsNextTime = false;
+	}
+
+	if(resourceToLocate)
+	{
+		m_resourceToLocate = resourceToLocate;
+		m_rightClickSelectedFilepath.destroy(); // Deselect
+		m_showRightClickMenuDialog = false;
+		m_framesUntilScrollToLocatedFile = 2;
+		m_locatedFileHighlightFramesLeft = kLocatedFileHighlightFrameCount;
 	}
 
 	m_runCtx = {};
@@ -449,7 +466,7 @@ void AssetBrowserUi::drawDirPath()
 	// Draw the root button
 	if(ImGui::Button(ICON_MDI_FOLDER " /"))
 	{
-		m_selectedDirPath.destroy();
+		m_rightClickSelectedFilepath.destroy();
 	}
 
 	// Draw the buttons
@@ -495,6 +512,16 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 			{
 				ImGui::TableNextColumn();
 
+				// Square icon button that fills the cell minus the horizontal frame padding on both sides
+				auto calcIconButtonSize = [] {
+					const F32 iconSize = ImGui::GetContentRegionAvail().x - 2.0f * ImGui::GetStyle().FramePadding.x;
+					return Vec2(iconSize);
+				};
+
+				auto pushFontSize = [&] {
+					ImGui::PushFont(nullptr, ImGui::GetContentRegionAvail().x - 12.0f); // Why 12? After trial and error it looks OK
+				};
+
 				const U32 idx = row * columnCount + column;
 				if(idx < filteredItems.getSize())
 				{
@@ -506,8 +533,8 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 
 					if(isDir)
 					{
-						ImGui::PushFont(nullptr, cellWidth - 1.0f);
-						if(ImGui::Button(ICON_MDI_FOLDER, Vec2(cellWidth)))
+						pushFontSize();
+						if(ImGui::Button(ICON_MDI_FOLDER, calcIconButtonSize()))
 						{
 							m_selectedDirPath = dir.m_fullPath;
 						}
@@ -517,7 +544,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					{
 						ImTextureID id;
 						id.m_texture = &m_materialIcon->getTexture();
-						if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
+						if(ImGui::ImageButton("##", id, calcIconButtonSize()))
 						{
 							MaterialResourcePtr rsrc;
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
@@ -530,7 +557,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					{
 						ImTextureID id;
 						id.m_texture = &m_meshIcon->getTexture();
-						ImGui::ImageButton("##", id, Vec2(cellWidth));
+						ImGui::ImageButton("##", id, calcIconButtonSize());
 
 						dragDropSource(file, kMeshAssetDragDropPayload);
 					}
@@ -541,7 +568,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						ImTextureID id;
 						id.m_texture = &img->getTexture();
 						id.m_textureSubresource = TextureSubresourceDesc::all();
-						if(ImGui::ImageButton("##", id, Vec2(cellWidth)))
+						if(ImGui::ImageButton("##", id, calcIconButtonSize()))
 						{
 							m_imageViewerWindow.m_image = img;
 							m_imageViewerWindow.m_open = true;
@@ -551,8 +578,8 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					}
 					else if(file.m_type == AssetFileType::kParticleEmitter)
 					{
-						ImGui::PushFont(nullptr, cellWidth - 1.0f);
-						if(ImGui::Button(ICON_MDI_CREATION, Vec2(cellWidth)))
+						pushFontSize();
+						if(ImGui::Button(ICON_MDI_CREATION, calcIconButtonSize()))
 						{
 							ParticleEmitterResource2Ptr rsrc;
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
@@ -564,8 +591,8 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					}
 					else if(file.m_type == AssetFileType::kScene)
 					{
-						ImGui::PushFont(nullptr, cellWidth - 1.0f);
-						if(ImGui::Button(ICON_MDI_CURTAINS, Vec2(cellWidth)))
+						pushFontSize();
+						if(ImGui::Button(ICON_MDI_CURTAINS, calcIconButtonSize()))
 						{
 							Scene* scene = nullptr;
 							if(SceneGraph::getSingleton().loadScene(file.m_resourceFilepath, scene))
@@ -581,8 +608,8 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					}
 					else if(file.m_type == AssetFileType::kLua)
 					{
-						ImGui::PushFont(nullptr, cellWidth - 1.0f);
-						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA, Vec2(cellWidth)))
+						pushFontSize();
+						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA, calcIconButtonSize()))
 						{
 							ANKI_LOGE("TODO");
 						}
@@ -598,16 +625,33 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						// Right click
 						if(ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
 						{
-							m_selectedFilepath = file.m_fullFilepath;
+							m_rightClickSelectedFilepath = file.m_resourceFilepath;
 							m_showRightClickMenuDialog = true;
 						}
 
-						if(m_selectedFilepath == file.m_fullFilepath)
+						// Scroll to located file
+						if(m_runCtx.m_fileToLocate && m_runCtx.m_fileToLocate == &file && m_framesUntilScrollToLocatedFile >= 0)
 						{
-							m_runCtx.m_selectedFile = &file;
+							if(m_framesUntilScrollToLocatedFile == 0)
+							{
+								ImGui::SetScrollHereY(0.5f);
+							}
+
+							--m_framesUntilScrollToLocatedFile;
+						}
+
+						// Color the located file to be more pronounced. The countdown is ticked once per frame in setSelectedPointers()
+						if(m_runCtx.m_fileToLocate && m_runCtx.m_fileToLocate == &file && m_locatedFileHighlightFramesLeft > 0)
+						{
+							const F32 factor = F32(m_locatedFileHighlightFramesLeft) / F32(kLocatedFileHighlightFrameCount);
+
+							Vec4 col = ImGui::GetStyleColorVec4(ImGuiCol_NavCursor);
+							col.w *= factor; // fade the alpha, not the hue
+							ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(col));
 						}
 
 						ImGui::TextWrapped("%s", file.m_filename.cstr());
+
 						ImGui::SetItemTooltip("%s", file.m_fullFilepath.cstr());
 					}
 					else
@@ -629,6 +673,12 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 
 void AssetBrowserUi::rightClickMenuDialog()
 {
+	const AssetFile* selectedFile = m_runCtx.m_rightClickSelectedFile;
+	if(!selectedFile)
+	{
+		return;
+	}
+
 	if(m_showRightClickMenuDialog)
 	{
 		ImGui::OpenPopup("Right Click");
@@ -640,9 +690,9 @@ void AssetBrowserUi::rightClickMenuDialog()
 		// Delete file
 		if(ImGui::Button(ICON_MDI_DELETE_FOREVER " Delete"))
 		{
-			if(removeFile(m_selectedFilepath))
+			if(removeFile(selectedFile->m_fullFilepath))
 			{
-				ANKI_LOGE("Failed to remove file: %s", m_selectedFilepath.cstr());
+				ANKI_LOGE("Failed to remove file: %s", selectedFile->m_fullFilepath.cstr());
 			}
 
 			m_refreshAssetsPathsNextTime = true;
@@ -651,26 +701,26 @@ void AssetBrowserUi::rightClickMenuDialog()
 
 		// Rename file
 		Array<Char, kMaxTextInputLen> name;
-		strncpy(name.getBegin(), m_runCtx.m_selectedFile->m_filename.cstr(), name.getSize());
+		strncpy(name.getBegin(), selectedFile->m_filename.cstr(), name.getSize());
 		name[name.getSize() - 1] = '\0'; // strncpy doesn't null-terminate if the source doesn't fit
 		if(ImGui::InputText("Rename", name.getBegin(), name.getSize(), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			CString newName(name.getBegin());
 			if(newName.getLength())
 			{
-				String newFilepath = getParentFilepath(m_runCtx.m_selectedFile->m_fullFilepath);
+				String newFilepath = getParentFilepath(selectedFile->m_fullFilepath);
 				newFilepath += "/";
 				newFilepath += newName;
 
-				ANKI_LOGV("Will rename %s to %s", m_runCtx.m_selectedFile->m_fullFilepath.cstr(), newFilepath.cstr());
-				if(renameFile(m_runCtx.m_selectedFile->m_fullFilepath, newFilepath))
+				ANKI_LOGV("Will rename %s to %s", selectedFile->m_fullFilepath.cstr(), newFilepath.cstr());
+				if(renameFile(selectedFile->m_fullFilepath, newFilepath))
 				{
 					ANKI_LOGE("Renaming failed");
 				}
 				else
 				{
 					m_refreshAssetsPathsNextTime = true;
-					m_selectedFilepath = newFilepath;
+					m_rightClickSelectedFilepath.destroy();
 				}
 			}
 		}
@@ -680,7 +730,7 @@ void AssetBrowserUi::rightClickMenuDialog()
 	else
 	{
 		// Diselect the file
-		m_selectedFilepath.destroy();
+		m_rightClickSelectedFilepath.destroy();
 	}
 }
 
@@ -833,10 +883,16 @@ void AssetBrowserUi::setSelectedPointers()
 				return FunctorContinue::kContinue;
 			},
 			[this](AssetFile& file) {
-				if(file.m_fullFilepath == m_selectedFilepath)
+				if(file.m_resourceFilepath == m_rightClickSelectedFilepath)
 				{
-					m_runCtx.m_selectedFile = &file;
+					m_runCtx.m_rightClickSelectedFile = &file;
 				}
+
+				if(file.m_resourceFilepath == m_resourceToLocate)
+				{
+					m_runCtx.m_fileToLocate = &file;
+				}
+
 				return FunctorContinue::kContinue;
 			});
 	}
@@ -846,9 +902,30 @@ void AssetBrowserUi::setSelectedPointers()
 		m_selectedDirPath.destroy();
 	}
 
-	if(m_runCtx.m_selectedFile == nullptr)
+	if(m_runCtx.m_rightClickSelectedFile == nullptr)
 	{
-		m_selectedFilepath.destroy();
+		m_rightClickSelectedFilepath.destroy();
+	}
+
+	if(m_runCtx.m_fileToLocate == nullptr)
+	{
+		m_resourceToLocate.destroy();
+	}
+	else if(m_locatedFileHighlightFramesLeft > 0)
+	{
+		// Tick the highlight per frame, not per cell draw, so it counts down even when the located file is scrolled out of view
+		--m_locatedFileHighlightFramesLeft;
+		if(m_locatedFileHighlightFramesLeft == 0)
+		{
+			m_resourceToLocate.destroy(); // Done highlighting, forget the located resource
+		}
+	}
+
+	// Change directory if there is a file to be located
+	if(m_runCtx.m_fileToLocate && m_framesUntilScrollToLocatedFile > 0)
+	{
+		m_runCtx.m_selectedDir = m_runCtx.m_fileToLocate->m_parentDir;
+		m_selectedDirPath = m_runCtx.m_fileToLocate->m_parentDir->m_fullPath;
 	}
 }
 

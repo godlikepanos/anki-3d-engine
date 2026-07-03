@@ -29,9 +29,10 @@ static String acceptDragDrop(const Char* identifier)
 }
 
 void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sceneGraphView, Vec2 initialPos, Vec2 initialSize, Bool& reparented,
-									   ImGuiWindowFlags windowFlags)
+									   String& resourceToLocate, ImGuiWindowFlags windowFlags)
 {
 	reparented = false;
+	m_resourceToLocate.destroy();
 
 	if(!m_open)
 	{
@@ -290,6 +291,8 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 	}
 
 	ImGui::End();
+
+	resourceToLocate = m_resourceToLocate;
 }
 
 void SceneNodePropertiesUi::parent(SceneNode& node, const SceneGraphView& sceneGraphView, Bool& reparented)
@@ -358,6 +361,8 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 		ImGui::SetItemTooltip("Clear");
 		ImGui::SameLine();
 	}
+
+	drawLocateResourceButton((comp.hasScriptResource()) ? comp.getScriptResourceFilename() : "");
 
 	// Filename input
 	{
@@ -532,6 +537,8 @@ void SceneNodePropertiesUi::materialComponent(MaterialComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
+	drawLocateResourceButton((comp.hasMaterialResource()) ? comp.getMaterialFilename() : "");
+
 	// Filename
 	{
 		const DynamicArray<CString> mtlFilenames = gatherResourceFilenames(".ankimtl");
@@ -629,6 +636,8 @@ void SceneNodePropertiesUi::meshComponent(MeshComponent& comp)
 		}
 	}
 
+	drawLocateResourceButton((comp.hasMeshResource()) ? comp.getMeshFilename() : "");
+
 	// Filename
 	if(comp.getMeshComponentType() == MeshComponentType::kMeshResource)
 	{
@@ -665,6 +674,8 @@ void SceneNodePropertiesUi::skinComponent(SkinComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
+	drawLocateResourceButton((comp.hasSkeletonResource()) ? comp.getSkeletonFilename() : "");
+
 	// Filename
 	{
 		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankiskel");
@@ -684,6 +695,8 @@ void SceneNodePropertiesUi::skinComponent(SkinComponent& comp)
 
 void SceneNodePropertiesUi::particleEmitterComponent(ParticleEmitter2Component& comp)
 {
+	drawLocateResourceButton((comp.hasParticleEmitterResource()) ? comp.getParticleEmitterFilename() : "");
+
 	// Filename
 	{
 		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankipart");
@@ -983,6 +996,8 @@ void SceneNodePropertiesUi::decalComponent(DecalComponent& comp)
 
 	ImGui::SeparatorText("Diffuse");
 
+	drawLocateResourceButton((comp.hasDiffuseImageResource()) ? comp.getDiffuseImageFilename() : "");
+
 	// Diffuse filename
 	{
 		const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
@@ -1018,6 +1033,8 @@ void SceneNodePropertiesUi::decalComponent(DecalComponent& comp)
 	ImGui::SetItemTooltip("Blend Factor");
 
 	ImGui::SeparatorText("Roughness and Metallic");
+
+	drawLocateResourceButton((comp.hasRoughnessMetalnessImageResource()) ? comp.getRoughnessMetalnessImageFilename() : "");
 
 	// Roughness/metallic filename
 	{
@@ -1122,6 +1139,8 @@ void SceneNodePropertiesUi::skyboxComponent(SkyboxComponent& comp)
 	}
 	else if(comp.getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 	{
+		drawLocateResourceButton((comp.hasSkyImageFilename()) ? comp.getSkyImageFilename() : "");
+
 		// Filenames combo
 		{
 			const DynamicArray<CString> filenames = gatherResourceFilenames(".ankitex");
@@ -1210,6 +1229,20 @@ void SceneNodePropertiesUi::triggerComponent(TriggerComponent& comp)
 		}
 		ImGui::EndCombo();
 	}
+}
+
+void SceneNodePropertiesUi::drawLocateResourceButton(CString resourceFilepath)
+{
+	ImGui::BeginDisabled(resourceFilepath.isEmpty());
+
+	if(ImGui::Button(ICON_MDI_TARGET))
+	{
+		m_resourceToLocate = resourceFilepath;
+	}
+	ImGui::SetItemTooltip("Locate resource in asset browser");
+
+	ImGui::EndDisabled();
+	ImGui::SameLine();
 }
 
 } // end namespace anki

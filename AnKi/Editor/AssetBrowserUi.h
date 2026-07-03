@@ -21,7 +21,7 @@ public:
 
 	~AssetBrowserUi();
 
-	void drawWindow(Vec2 initialPosition, Vec2 initialSize, ImGuiWindowFlags windowFlags);
+	void drawWindow(Vec2 initialPosition, Vec2 initialSize, CString resourceToLocate, ImGuiWindowFlags windowFlags);
 
 private:
 	class AssetFile;
@@ -39,8 +39,15 @@ private:
 	Bool m_refreshAssetsPathsNextTime = true;
 
 	String m_selectedDirPath;
-	String m_selectedFilepath;
+	String m_rightClickSelectedFilepath;
 	Bool m_showRightClickMenuDialog = false;
+
+	// "Locate a resource" state: when a properties panel requests it (m_resourceToLocate), switch to that file's directory, scroll to it once and
+	// briefly highlight it. m_framesUntilScrollToLocatedFile == -1 means idle.
+	String m_resourceToLocate;
+	I32 m_framesUntilScrollToLocatedFile = -1; // Wait a few frames for the table to build its scroll extent before scrolling
+	static constexpr U32 kLocatedFileHighlightFrameCount = 3 * 60;
+	U32 m_locatedFileHighlightFramesLeft = 0; // How many frames until we stop highlighting the located file
 
 	DynamicArray<ImageCacheEntry> m_imageCache;
 
@@ -59,7 +66,8 @@ private:
 	{
 	public:
 		const AssetDir* m_selectedDir = nullptr;
-		const AssetFile* m_selectedFile = nullptr;
+		const AssetFile* m_rightClickSelectedFile = nullptr;
+		const AssetFile* m_fileToLocate = nullptr;
 	} m_runCtx;
 
 	void loadImageToCache(CString fname, ImageResourcePtr& img);

@@ -196,6 +196,7 @@ void EditorUi::draw(UiCanvas& canvas)
 		m_showDeleteSceneNodeDialog = m_showDeleteSceneNodeDialog || deleteSelectedNode;
 	}
 
+	String resourceToLocate;
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
 		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
@@ -204,7 +205,8 @@ void EditorUi::draw(UiCanvas& canvas)
 		const Vec2 initialSize(initialWidth, viewportSize.y - kConsoleHeight);
 		Bool reparented = false;
 
-		m_sceneNodePropertiesWindow.drawWindow(m_selectedNode, m_sceneGraphView, initialPos, initialSize, reparented, ImGuiWindowFlags_NoCollapse);
+		m_sceneNodePropertiesWindow.drawWindow(m_selectedNode, m_sceneGraphView, initialPos, initialSize, reparented, resourceToLocate,
+											   ImGuiWindowFlags_NoCollapse);
 
 		if(reparented)
 		{
@@ -219,7 +221,7 @@ void EditorUi::draw(UiCanvas& canvas)
 		const Vec2 initialSize = Vec2(viewportSize.x / 2.0f, kConsoleHeight);
 		const Vec2 initialPos = Vec2(viewportSize.x / 2.0f, viewportPos.y + viewportSize.y - initialSize.y);
 
-		m_assetBrowserWindow.drawWindow(initialPos, initialSize, ImGuiWindowFlags_NoCollapse);
+		m_assetBrowserWindow.drawWindow(initialPos, initialSize, resourceToLocate, ImGuiWindowFlags_NoCollapse);
 	}
 
 	{

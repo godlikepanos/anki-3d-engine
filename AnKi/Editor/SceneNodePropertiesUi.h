@@ -16,7 +16,7 @@ class SceneNodePropertiesUi : public EditorUiBase
 public:
 	Bool m_open = true;
 
-	void drawWindow(SceneNode* node, const SceneGraphView& sceneView, Vec2 initialPos, Vec2 initialSize, Bool& reparented,
+	void drawWindow(SceneNode* node, const SceneGraphView& sceneView, Vec2 initialPos, Vec2 initialSize, Bool& reparented, String& resourceToLocate,
 					ImGuiWindowFlags windowFlags);
 
 private:
@@ -34,6 +34,8 @@ private:
 	ImFont* m_monospaceFont = nullptr;
 
 	ImGuiTextFilter m_tempFilter;
+
+	String m_resourceToLocate;
 
 	void scriptComponent(ScriptComponent& comp);
 	void materialComponent(MaterialComponent& comp);
@@ -59,6 +61,8 @@ private:
 	};
 
 	void parent(SceneNode& node, const SceneGraphView& sceneGraphView, Bool& reparented);
+
+	void drawLocateResourceButton(CString resourceFilepath);
 };
 
 } // end namespace anki
