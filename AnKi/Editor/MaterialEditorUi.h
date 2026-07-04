@@ -16,7 +16,7 @@ class MaterialEditorUi : public EditorUiBase
 public:
 	void open(const MaterialResource& resource);
 
-	void drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags);
+	void drawWindow(Vec2 initialPos, Vec2 initialSize, String& resourceToLocate, ImGuiWindowFlags windowFlags);
 
 private:
 	class Data
@@ -31,6 +31,7 @@ private:
 		ImageResourcePtr m_image;
 		String m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::kCount;
+		Bool m_isTexture = false;
 
 		Data()
 		{
@@ -48,6 +49,7 @@ private:
 			m_image = b.m_image;
 			m_name = b.m_name;
 			m_type = b.m_type;
+			m_isTexture = b.m_isTexture;
 			return *this;
 		}
 	};
@@ -110,6 +112,8 @@ private:
 	void rebuildCache(CString programName);
 
 	Error saveCache();
+
+	void drawContent(Bool& cacheDirty, String& resourceToLocate);
 };
 
 } // end namespace anki

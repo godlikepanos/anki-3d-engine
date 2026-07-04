@@ -82,7 +82,7 @@ public:
 
 	ImageResource* tryGetImageResource() const
 	{
-		return (m_image) ? m_image.get() : nullptr;
+		return m_image.tryGet();
 	}
 
 protected:
@@ -181,6 +181,9 @@ public:
 //			<input name="name in AnKiLocalConstants struct" value="value(s)"/>
 //		</inputs>]
 //	</material>
+//
+// If some AnKiLocalConstants member is not present in the inputs it will be initialized to its shader default value when returned in
+// getPrefilledLocalConstants(). Also it will not be present in getVariables()
 class MaterialResource : public ResourceObject
 {
 public:

@@ -359,6 +359,36 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 		return;
 	}
 
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_imageViewerWindow.drawWindow(initialPos, initialSize, 0);
+	}
+
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 initialSize = Vec2(800.0f, 600.0f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_particleEditorWindow.drawWindow(initialPos, initialSize, 0);
+	}
+
+	String mtlEditorResourceToLocate;
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 initialSize = Vec2(800.0f, 600.0f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_materialEditorWindow.drawWindow(initialPos, initialSize, mtlEditorResourceToLocate, 0);
+
+		if(!resourceToLocate && mtlEditorResourceToLocate)
+		{
+			resourceToLocate = mtlEditorResourceToLocate;
+		}
+	}
+
 	if(m_assetPaths.getSize() == 0 || m_refreshAssetsPathsNextTime)
 	{
 		ANKI_CHECKF(ResourceFilesystem::getSingleton().refreshAll());
@@ -377,30 +407,6 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 
 	m_runCtx = {};
 	setSelectedPointers();
-
-	{
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
-		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
-
-		m_imageViewerWindow.drawWindow(initialPos, initialSize, 0);
-	}
-
-	{
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 initialSize = Vec2(800.0f, 600.0f);
-		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
-
-		m_particleEditorWindow.drawWindow(initialPos, initialSize, 0);
-	}
-
-	{
-		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
-		const Vec2 initialSize = Vec2(800.0f, 600.0f);
-		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
-
-		m_materialEditorWindow.drawWindow(initialPos, initialSize, 0);
-	}
 
 	if(ImGui::GetFrameCount() > 1)
 	{

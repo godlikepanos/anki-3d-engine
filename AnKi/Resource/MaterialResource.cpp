@@ -438,6 +438,27 @@ void MaterialResource::prefillLocalConstants()
 	m_prefilledLocalConstants = ResourceMemoryPool::getSingleton().allocate(m_localConstantsSize, 1);
 	memset(m_prefilledLocalConstants, 0, m_localConstantsSize);
 
+	// Init the buffer with the shader default values. Members that have an input will be overwritten by the loop bellow.
+	const ShaderBinaryStruct* localConstantsStruct = nullptr;
+	for(const ShaderBinaryStruct& strct : m_prog->getBinary().m_structs)
+	{
+		if(CString(strct.m_name.getBegin()) == "AnKiLocalConstants")
+		{
+			localConstantsStruct = &strct;
+			break;
+		}
+	}
+	ANKI_ASSERT(localConstantsStruct && localConstantsStruct->m_size == m_localConstantsSize);
+
+	for(const ShaderBinaryStructMember& member : localConstantsStruct->m_members)
+	{
+		const U32 memberSize = getShaderVariableDataTypeInfo(member.m_type).m_size;
+		ANKI_ASSERT(member.m_offset + memberSize <= m_localConstantsSize);
+		ANKI_ASSERT(memberSize <= member.m_defaultValues.getSize());
+		memcpy(static_cast<U8*>(m_prefilledLocalConstants) + member.m_offset, member.m_defaultValues.getBegin(), memberSize);
+	}
+
+	// Override what is set by the material
 	for(const MaterialVariable& var : m_vars)
 	{
 		switch(var.m_dataType)

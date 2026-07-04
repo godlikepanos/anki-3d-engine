@@ -27,7 +27,7 @@ void MaterialEditorUi::open(const MaterialResource& resource)
 	m_open = true;
 }
 
-void MaterialEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
+void MaterialEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, String& resourceToLocate, ImGuiWindowFlags windowFlags)
 {
 	if(!m_open)
 	{
@@ -50,7 +50,7 @@ void MaterialEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			{
 				if(saveCache())
 				{
-					ANKI_LOGE("Unnable to save the particles file. Ignoring save");
+					ANKI_LOGE("Unable to save the material file. Ignoring save");
 				}
 				ResourceManager::getSingleton().refreshFileUpdateTimes();
 			}
@@ -62,134 +62,7 @@ void MaterialEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 
 		if(ImGui::BeginChild("Content", Vec2(-1.0f, -1.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX, windowFlags))
 		{
-			if(ImGui::BeginCombo("Program", (m_currentlySelectedProgram.getLength()) ? m_currentlySelectedProgram.cstr() : nullptr,
-								 ImGuiComboFlags_HeightLarge))
-			{
-				for(U32 i = 0; i < m_programs.getSize(); ++i)
-				{
-					const Bool isSelected = (m_programs[i].m_name == m_currentlySelectedProgram);
-					if(ImGui::Selectable(m_programs[i].m_name.cstr(), isSelected))
-					{
-						cacheDirty = cacheDirty || m_currentlySelectedProgram != m_programs[i].m_name;
-						m_currentlySelectedProgram = m_programs[i].m_name;
-					}
-
-					if(isSelected)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
-			}
-
-			// Mutators
-			ImGui::SeparatorText("Mutation");
-			for(PartialMutation& mutator : m_cachedMutators)
-			{
-				String value;
-				value.toString(mutator.m_value);
-				if(ImGui::BeginCombo(mutator.m_mutator->m_name.getBegin(), value.cstr()))
-				{
-					for(MutatorValue mval : mutator.m_mutator->m_values)
-					{
-						const Bool selected = mutator.m_value == mval;
-						String value2;
-						value2.toString(mval);
-						if(ImGui::Selectable(value2.cstr(), selected))
-						{
-							mutator.m_value = mval;
-						}
-
-						if(selected)
-						{
-							ImGui::SetItemDefaultFocus();
-						}
-					}
-
-					ImGui::EndCombo();
-				}
-			}
-
-			// Input variables
-			DynamicArray<CString> textureFilepaths = gatherResourceFilenames(".ankitex");
-			DynamicArray<CString> textureFilepaths2 = gatherResourceFilenames(".png");
-			for(CString other : textureFilepaths2)
-			{
-				textureFilepaths.emplaceBack(other);
-			}
-			ImGui::SeparatorText("Shader Input");
-			for(U32 i = 0; i < m_cachedInputs.getSize(); ++i)
-			{
-				ImGui::PushID(i);
-
-				Data& inp = m_cachedInputs[i];
-
-				if(inp.m_type == ShaderVariableDataType::kVec3)
-				{
-					ImGui::InputFloat3(inp.m_name.cstr(), &inp.m_Vec3[0]);
-				}
-				else if(inp.m_type == ShaderVariableDataType::kVec4)
-				{
-					ImGui::InputFloat4(inp.m_name.cstr(), &inp.m_Vec4[0]);
-				}
-				else if(inp.m_type == ShaderVariableDataType::kF32)
-				{
-					ImGui::InputFloat(inp.m_name.cstr(), &inp.m_F32);
-				}
-				else if(inp.m_type == ShaderVariableDataType::kU32)
-				{
-					Bool bImage = !!inp.m_image;
-					ImGui::Checkbox("Image", &bImage);
-
-					ImGui::SameLine();
-
-					if(bImage)
-					{
-						ImageResourcePtr img = inp.m_image ? inp.m_image : m_placeholderImage;
-						inp.m_image = img;
-
-						// Image dropdown
-						const String currentFilepath = img->getFilename();
-						U32 newSelectedFilepath;
-						const Bool selected = comboWithFilter("##Filenames", textureFilepaths, currentFilepath, newSelectedFilepath, m_tempFilter);
-						if(selected && currentFilepath != textureFilepaths[newSelectedFilepath])
-						{
-							inp.m_image.reset(nullptr);
-							if(ResourceManager::getSingleton().loadResource(textureFilepaths[newSelectedFilepath], inp.m_image))
-							{
-								inp.m_image = m_placeholderImage;
-							}
-						}
-
-						// Name of the input
-						ImGui::SameLine();
-						ImGui::TextUnformatted(inp.m_name.cstr());
-
-						// Show the image
-						ImTextureID id;
-						id.m_texture = &img->getTexture();
-						ImGui::Image(id, Vec2(128.0f));
-					}
-					else
-					{
-						inp.m_image.reset(nullptr);
-
-						I32 val = I32(inp.m_U32);
-						if(ImGui::InputInt(inp.m_name.cstr(), &val))
-						{
-							val = max(0, val);
-						}
-						inp.m_U32 = U32(val);
-					}
-				}
-				else
-				{
-					ImGui::Text("TODO: Unhandled type for: %s", inp.m_name.cstr());
-				}
-
-				ImGui::PopID();
-			}
-
+			drawContent(cacheDirty, resourceToLocate);
 			ImGui::EndChild();
 		}
 	}
@@ -198,6 +71,162 @@ void MaterialEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 	if(cacheDirty)
 	{
 		rebuildCache(m_currentlySelectedProgram);
+	}
+}
+
+void MaterialEditorUi::drawContent(Bool& cacheDirty, String& resourceToLocate)
+{
+	if(ImGui::BeginCombo("Program", (m_currentlySelectedProgram.getLength()) ? m_currentlySelectedProgram.cstr() : nullptr,
+						 ImGuiComboFlags_HeightLarge))
+	{
+		for(U32 i = 0; i < m_programs.getSize(); ++i)
+		{
+			const Bool isSelected = (m_programs[i].m_name == m_currentlySelectedProgram);
+			if(ImGui::Selectable(m_programs[i].m_name.cstr(), isSelected))
+			{
+				cacheDirty = cacheDirty || m_currentlySelectedProgram != m_programs[i].m_name;
+				m_currentlySelectedProgram = m_programs[i].m_name;
+			}
+
+			if(isSelected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	// Mutators
+	ImGui::SeparatorText("Mutation");
+	for(PartialMutation& mutator : m_cachedMutators)
+	{
+		String value;
+		value.toString(mutator.m_value);
+		if(ImGui::BeginCombo(mutator.m_mutator->m_name.getBegin(), value.cstr()))
+		{
+			for(MutatorValue mval : mutator.m_mutator->m_values)
+			{
+				const Bool selected = mutator.m_value == mval;
+				String value2;
+				value2.toString(mval);
+				if(ImGui::Selectable(value2.cstr(), selected))
+				{
+					mutator.m_value = mval;
+				}
+
+				if(selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+	}
+
+	// Input variables
+	DynamicArray<CString> textureFilepaths = gatherResourceFilenames(".ankitex");
+	DynamicArray<CString> textureFilepaths2 = gatherResourceFilenames(".png");
+	for(CString other : textureFilepaths2)
+	{
+		textureFilepaths.emplaceBack(other);
+	}
+	ImGui::SeparatorText("Shader Input");
+	for(U32 i = 0; i < m_cachedInputs.getSize(); ++i)
+	{
+		ImGui::PushID(i);
+
+		Data& inp = m_cachedInputs[i];
+
+		if(inp.m_isTexture)
+		{
+			Bool hasImage = !!inp.m_image;
+
+			// Locate the image
+			ImGui::BeginDisabled(!hasImage);
+			if(ImGui::Button(ICON_MDI_TARGET))
+			{
+				resourceToLocate = inp.m_image->getFilename();
+			}
+			ImGui::EndDisabled();
+			ImGui::SetItemTooltip("Locate resource in asset browser");
+			ImGui::SameLine();
+
+			// Clear image dropdown
+			if(ImGui::Button(ICON_MDI_DELETE))
+			{
+				hasImage = false;
+				inp.m_image.reset(nullptr);
+			}
+			ImGui::SetItemTooltip("Clear the image");
+			ImGui::SameLine();
+
+			// Image dropdown
+			const String currentFilepath = (hasImage) ? inp.m_image->getFilename() : "";
+			U32 newSelectedFilepath;
+			const Bool selected = comboWithFilter("##Filenames", textureFilepaths, currentFilepath, newSelectedFilepath, m_tempFilter);
+			if(selected && currentFilepath != textureFilepaths[newSelectedFilepath])
+			{
+				ImageResourcePtr newImg;
+				if(!ResourceManager::getSingleton().loadResource(textureFilepaths[newSelectedFilepath], newImg))
+				{
+					inp.m_image = newImg;
+				}
+			}
+
+			// Drag and drop
+			if(ImGui::BeginDragDropTarget())
+			{
+				if(const ImGuiPayload* pl = ImGui::AcceptDragDropPayload(kTextureAssetDragDropPayload))
+				{
+					ANKI_ASSERT(pl->Data && pl->DataSize > 0);
+					const CString droppedName(static_cast<const char*>(pl->Data));
+
+					ImageResourcePtr newImg;
+					if(!ResourceManager::getSingleton().loadResource(droppedName, newImg))
+					{
+						inp.m_image = newImg;
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			// Name of the input
+			ImGui::SameLine();
+			ImGui::TextUnformatted(inp.m_name.cstr());
+
+			// Show the image
+			if(inp.m_image)
+			{
+				ImTextureID id;
+				id.m_texture = &inp.m_image->getTexture();
+				ImGui::Image(id, Vec2(128.0f));
+			}
+		}
+		else if(inp.m_type == ShaderVariableDataType::kVec3)
+		{
+			ImGui::InputFloat3(inp.m_name.cstr(), &inp.m_Vec3[0]);
+		}
+		else if(inp.m_type == ShaderVariableDataType::kVec4)
+		{
+			ImGui::InputFloat4(inp.m_name.cstr(), &inp.m_Vec4[0]);
+		}
+		else if(inp.m_type == ShaderVariableDataType::kF32)
+		{
+			ImGui::InputFloat(inp.m_name.cstr(), &inp.m_F32);
+		}
+		else if(inp.m_type == ShaderVariableDataType::kU32)
+		{
+			I32 val = inp.m_U32;
+			ImGui::InputInt(inp.m_name.cstr(), &val);
+			inp.m_U32 = max(val, 0);
+		}
+		else
+		{
+			ImGui::Text("TODO: Unhandled type for: %s", inp.m_name.cstr());
+		}
+
+		ImGui::PopID();
 	}
 }
 
@@ -246,70 +275,59 @@ void MaterialEditorUi::gatherPrograms()
 
 void MaterialEditorUi::rebuildCache(const MaterialResource& mtl)
 {
-	// Do the program
+	// Create a default cache
 	m_currentlySelectedProgram = getBasename(mtl.getShaderProgramResource().getFilename());
-	const Program* prog = nullptr;
-	for(const Program& p : m_programs)
-	{
-		if(p.m_name == m_currentlySelectedProgram)
-		{
-			prog = &p;
-			break;
-		}
-	}
-	ANKI_ASSERT(prog);
+	rebuildCache(m_currentlySelectedProgram);
 
 	// Build the partial mutation
-	m_cachedMutators.resize(mtl.getPartialMutation().getSize());
-	U32 count = 0;
 	for(const PartialMutation& mutation : mtl.getPartialMutation())
 	{
-		// Find the mutator in the program
-		// WARNING: The m_cachedMutators should point to Program::m_programBinary because the m_programBinary is persistent. We can't reference the
-		// mtl at all because it's transient
-		const ShaderBinaryMutator* mutator = nullptr;
-		for(const ShaderBinaryMutator& m : prog->m_programBinary->m_mutators)
+		// Find the mutator in the cache and change its value to what the material has
+		[[maybe_unused]] Bool found = false;
+		for(PartialMutation& m : m_cachedMutators)
 		{
-			if(CString(m.m_name.getBegin()) == mutation.m_mutator->m_name.getBegin())
+			if(CString(m.m_mutator->m_name.getBegin()) == mutation.m_mutator->m_name.getBegin())
 			{
-				mutator = &m;
+				m.m_value = mutation.m_value;
+				found = true;
 				break;
 			}
 		}
-		ANKI_ASSERT(mutator);
-
-		// Store it
-		m_cachedMutators[count++] = PartialMutation{.m_mutator = mutator, .m_value = mutation.m_value};
+		ANKI_ASSERT(found);
 	}
 
-	m_cachedInputs.resize(mtl.getVariables().getSize());
-	count = 0;
 	for(const MaterialVariable& var : mtl.getVariables())
 	{
-		if(var.tryGetImageResource())
+		// Find the var in the cache
+		[[maybe_unused]] Bool found = false;
+		for(Data& d : m_cachedInputs)
 		{
-			// Image
-			m_cachedInputs[count].m_image.reset(var.tryGetImageResource());
-		}
-		else
-		{
-			// Non-image
-
-			switch(var.getDataType())
+			if(d.m_name == var.getName())
 			{
+				if(var.tryGetImageResource())
+				{
+					d.m_image.reset(var.tryGetImageResource());
+				}
+				else
+				{
+					switch(var.getDataType())
+					{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	case ShaderVariableDataType::k##type: \
-		m_cachedInputs[count].m_##type = var.getValue<type>(); \
+		d.m_##type = var.getValue<type>(); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
-			default:
-				ANKI_ASSERT(0);
+					default:
+						ANKI_ASSERT(0);
+					}
+				}
+
+				ANKI_ASSERT(d.m_type == var.getDataType());
+				found = true;
+				break;
 			}
 		}
-
-		m_cachedInputs[count].m_type = var.getDataType();
-		m_cachedInputs[count].m_name = var.getName();
-		++count;
+		ANKI_ASSERT(found);
 	}
 }
 
@@ -348,15 +366,8 @@ void MaterialEditorUi::rebuildCache(CString programName)
 
 		m_cachedInputs[count].m_name = m.m_name.getBegin();
 		m_cachedInputs[count].m_type = m.m_type;
-
-		String lowerName = m.m_name.getBegin();
-		lowerName.toLower();
-
-		const Bool mightBeTexture = m.m_type == ShaderVariableDataType::kU32 && lowerName.find("tex") != String::kNpos;
-		if(mightBeTexture)
-		{
-			m_cachedInputs[count].m_image = m_placeholderImage;
-		}
+		m_cachedInputs[count].m_image.reset(nullptr);
+		m_cachedInputs[count].m_isTexture = m.m_isTexture;
 
 		++count;
 	}
@@ -376,8 +387,10 @@ void MaterialEditorUi::rebuildCache(CString programName)
 
 Error MaterialEditorUi::saveCache()
 {
+	const ResourceString diskFilepath = ResourceFilesystem::getSingleton().getFileFullPath(m_filepath);
+
 	File file;
-	ANKI_CHECK(file.open(m_filepath, FileOpenFlag::kWrite));
+	ANKI_CHECK(file.open(diskFilepath, FileOpenFlag::kWrite));
 
 	ANKI_CHECK(file.writeText("<!-- This file is generated by the editor -->\n"));
 	ANKI_CHECK(file.writeText("<material shadows=\"1\">\n"));
@@ -397,7 +410,17 @@ Error MaterialEditorUi::saveCache()
 	for(const Data& inp : m_cachedInputs)
 	{
 		String value;
-		if(inp.m_type == ShaderVariableDataType::kF32)
+		if(inp.m_isTexture)
+		{
+			if(!inp.m_image)
+			{
+				// No image assigned, skip it
+				continue;
+			}
+
+			value = inp.m_image->getFilename();
+		}
+		else if(inp.m_type == ShaderVariableDataType::kF32)
 		{
 			value.sprintf("%f", inp.m_F32);
 		}
@@ -411,18 +434,12 @@ Error MaterialEditorUi::saveCache()
 		}
 		else if(inp.m_type == ShaderVariableDataType::kU32)
 		{
-			if(inp.m_image)
-			{
-				value = inp.m_image->getFilename();
-			}
-			else
-			{
-				value.sprintf("%u", inp.m_U32);
-			}
+			value.sprintf("%u", inp.m_U32);
 		}
 		else
 		{
-			ANKI_LOGI("Unhandled case");
+			ANKI_LOGW("Unhandled input type, not saving: %s", inp.m_name.cstr());
+			continue;
 		}
 
 		ANKI_CHECK(file.writeTextf("\t\t<input name=\"%s\" value=\"%s\"/>\n", inp.m_name.cstr(), value.cstr()));
