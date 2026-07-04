@@ -581,8 +581,7 @@ Error ShaderParser::parsePragmaStructBegin(const ShaderCompilerString* begin, co
 Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(m_insideStruct);
-	const U tokenCount = U(end - begin);
-	if(tokenCount < 2)
+	if(begin == end)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
@@ -590,22 +589,33 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 	GhostStruct& structure = m_ghostStructs.getBack();
 	Member member;
 
+	// Optional token: "tex"
+	if(*begin == "tex")
+	{
+		member.m_isTexture = true;
+		++begin;
+	}
+
 	// Type
+	if(begin == end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
 	const CString typeStr = *begin;
 	member.m_type = ShaderVariableDataType::kCount;
-	if(typeStr == "F32" || typeStr == "RF32")
+	if(typeStr == "F32")
 	{
 		member.m_type = ShaderVariableDataType::kF32;
 	}
-	else if(typeStr == "Vec2" || typeStr == "RVec2")
+	else if(typeStr == "Vec2")
 	{
 		member.m_type = ShaderVariableDataType::kVec2;
 	}
-	else if(typeStr == "Vec3" || typeStr == "RVec3")
+	else if(typeStr == "Vec3")
 	{
 		member.m_type = ShaderVariableDataType::kVec3;
 	}
-	else if(typeStr == "Vec4" || typeStr == "RVec4")
+	else if(typeStr == "Vec4")
 	{
 		member.m_type = ShaderVariableDataType::kVec4;
 	}
@@ -619,8 +629,17 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 		ANKI_PP_ERROR_MALFORMED_MSG("Unrecognized type");
 	}
 
+	if(member.m_isTexture && member.m_type != ShaderVariableDataType::kU32)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Textures should be U32");
+	}
+
 	// Name
 	++begin;
+	if(begin == end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
 	member.m_name = *begin;
 
 	// Default values

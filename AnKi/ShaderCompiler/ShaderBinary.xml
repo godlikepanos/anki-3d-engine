@@ -12,6 +12,7 @@
 				<member name="m_offset" type="U32" constructor="= kMaxU32" />
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::kCount" />
 				<member name="m_defaultValues" type="U8" array_size="16" constructor="= {}" />
+				<member name="m_isTexture" type="Bool" constructor="= false" />
 			</members>
 		</class>
 

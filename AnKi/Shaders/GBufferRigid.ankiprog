@@ -31,10 +31,10 @@
 
 #pragma anki struct AnKiLocalConstants
 
-#pragma anki member U32 m_diffuseTex 0
-#pragma anki member U32 m_normalTex 0
-#pragma anki member U32 m_roughnessMetalnessTex 0
-#pragma anki member U32 m_emissiveTex 0
+#pragma anki member tex U32 m_diffuseTex 0
+#pragma anki member tex U32 m_normalTex 0
+#pragma anki member tex U32 m_roughnessMetalnessTex 0
+#pragma anki member tex U32 m_emissiveTex 0
 
 #pragma anki member Vec4 m_diffuseScale 1.0 1.0 1.0 1.0
 #pragma anki member F32 m_roughnessScale 1.0

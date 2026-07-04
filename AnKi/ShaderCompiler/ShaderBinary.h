@@ -21,6 +21,7 @@ public:
 	U32 m_offset = kMaxU32;
 	ShaderVariableDataType m_type = ShaderVariableDataType::kCount;
 	Array<U8, 16> m_defaultValues = {};
+	Bool m_isTexture = false;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -29,6 +30,7 @@ public:
 		s.doValue("m_offset", offsetof(ShaderBinaryStructMember, m_offset), self.m_offset);
 		s.doValue("m_type", offsetof(ShaderBinaryStructMember, m_type), self.m_type);
 		s.doArray("m_defaultValues", offsetof(ShaderBinaryStructMember, m_defaultValues), &self.m_defaultValues[0], self.m_defaultValues.getSize());
+		s.doValue("m_isTexture", offsetof(ShaderBinaryStructMember, m_isTexture), self.m_isTexture);
 	}
 
 	template<typename TDeserializer>

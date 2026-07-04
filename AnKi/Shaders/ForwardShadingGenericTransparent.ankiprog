@@ -15,7 +15,7 @@
 #define SW_MESHLETS ANKI_TECHNIQUE_ForwardSwMeshletRendering
 
 #pragma anki struct AnKiLocalConstants
-#pragma anki member U32 m_texture
+#pragma anki member tex U32 m_texture
 #pragma anki member Vec4 m_colorScale
 #pragma anki member Vec4 m_colorBias
 #pragma anki struct_end

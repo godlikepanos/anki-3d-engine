@@ -13,47 +13,6 @@ namespace anki {
 
 inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNames = {{"NONE", "ANKI_BONES", "ANKI_VELOCITY"}};
 
-// This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
-namespace {
-
-template<typename T>
-class IsShaderVarDataTypeAnArray
-{
-public:
-	static constexpr Bool kValue = false;
-};
-
-#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
-	template<> \
-	class IsShaderVarDataTypeAnArray<type> \
-	{ \
-	public: \
-		static constexpr Bool kValue = rowCount * columnCount > 1; \
-	};
-#include <AnKi/Gr/ShaderVariableDataType.def.h>
-
-template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::kValue>
-class GetAttribute
-{
-public:
-	Error operator()(const XmlElement& el, T& out)
-	{
-		return el.getAttributeNumbers("value", out);
-	}
-};
-
-template<typename T>
-class GetAttribute<T, false>
-{
-public:
-	Error operator()(const XmlElement& el, T& out)
-	{
-		return el.getAttributeNumber("value", out);
-	}
-};
-
-} // namespace
-
 static Bool mutatorValueExists(const ShaderBinaryMutator& m, MutatorValue val)
 {
 	for(MutatorValue v : m.m_values)
@@ -395,10 +354,10 @@ Error MaterialResource::createVars()
 		const CString memberName = member.m_name.getBegin();
 
 		MaterialVariable& var = *m_vars.emplaceBack();
-		zeroMemory(var);
 		var.m_name = memberName;
 		var.m_dataType = member.m_type;
 		var.m_offsetInLocalConstants = member.m_offset;
+		var.m_isTexture = member.m_isTexture;
 	}
 
 	m_localConstantsSize = (localConstantsStruct) ? localConstantsStruct->m_size : 0;
@@ -430,49 +389,40 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	varsSet.set(idx);
 
 	// Set the value
-	if(foundVar->m_dataType == ShaderVariableDataType::kU32)
+	if(foundVar->m_dataType == ShaderVariableDataType::kU32 && foundVar->m_isTexture)
 	{
-		// U32 is a bit special. It might be a number or a bindless texture
+		// Bindless texture
 
 		CString value;
 		ANKI_CHECK(inputEl.getAttributeText("value", value));
 
-		// Check if the value has letters
-		Bool containsAlpharithmetic = false;
-		for(Char c : value)
-		{
-			if((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'a'))
-			{
-				containsAlpharithmetic = true;
-				break;
-			}
-		}
-
-		// If it has letters it's a texture
-		if(containsAlpharithmetic)
-		{
-			ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
-
-			foundVar->m_U32 = foundVar->m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
-		}
-		else
-		{
-			ANKI_CHECK(GetAttribute<U32>()(inputEl, foundVar->m_U32));
-		}
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
+		foundVar->m_U32 = foundVar->m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 	}
 	else
 	{
+		Error err = Error::kNone; // Don't use ANKI_CHECK because the compiler can't instantiate the "if constexpr"
 		switch(foundVar->m_dataType)
 		{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	case ShaderVariableDataType::k##type: \
-		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
+		if constexpr(rowCount * columnCount > 1) \
+		{ \
+			auto& var = foundVar->ANKI_CONCATENATE(m_, type); \
+			err = inputEl.getAttributeNumbers("value", var); \
+		} \
+		else \
+		{ \
+			err = inputEl.getAttributeNumber("value", foundVar->ANKI_CONCATENATE(m_, type)); \
+		} \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
 		default:
 			ANKI_ASSERT(0);
 			break;
 		}
+
+		ANKI_CHECK(err);
 	}
 
 	return Error::kNone;

@@ -553,7 +553,8 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 			for(const ShaderBinaryStructMember& member : s.m_members)
 			{
 				const CString typeStr = getShaderVariableDataTypeInfo(member.m_type).m_name;
-				lines.pushBackSprintf(ANKI_TAB "%5s %s; // offset: %u\n", typeStr.cstr(), member.m_name.getBegin(), member.m_offset);
+				lines.pushBackSprintf(ANKI_TAB "%5s %s; // offset: %u%s\n", typeStr.cstr(), member.m_name.getBegin(), member.m_offset,
+									  (member.m_isTexture) ? ", tex" : "");
 			}
 			lines.pushBack("};\n");
 			lines.pushBack("```\n");

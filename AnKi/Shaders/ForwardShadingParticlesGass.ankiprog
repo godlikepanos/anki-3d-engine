@@ -29,7 +29,7 @@ struct VertOut
 #pragma anki member F32 m_textureAnimationPeriod 0.0
 #pragma anki member Vec4 m_colorScale 1.0 1.0 1.0 1.0
 #pragma anki member Vec4 m_colorBias 0.0 0.0 0.0 0.0
-#pragma anki member U32 m_diffuseTex 0
+#pragma anki member tex U32 m_diffuseTex 0
 #pragma anki struct_end
 
 #if ANKI_VERTEX_SHADER

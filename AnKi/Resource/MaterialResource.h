@@ -56,6 +56,7 @@ public:
 		m_dataType = b.m_dataType;
 		m_Vec4 = b.m_Vec4;
 		m_image = std::move(b.m_image);
+		m_isTexture = b.m_isTexture;
 		return *this;
 	}
 
@@ -87,6 +88,7 @@ public:
 protected:
 	ResourceString m_name;
 	U32 m_offsetInLocalConstants = kMaxU32;
+	Bool m_isTexture = false;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::kCount;
 
 	// Values

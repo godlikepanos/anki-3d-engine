@@ -527,6 +527,7 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, Bool debugI
 			outm.m_offset = inm.m_offset;
 			outm.m_type = inm.m_type;
 			static_assert(sizeof(outm.m_defaultValues) == sizeof(inm.m_defaultValues));
+			outm.m_isTexture = inm.m_isTexture;
 			memcpy(outm.m_defaultValues.getBegin(), inm.m_defaultValues.getBegin(), sizeof(inm.m_defaultValues));
 		}
 
