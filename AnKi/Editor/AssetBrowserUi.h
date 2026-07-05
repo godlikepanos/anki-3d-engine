@@ -89,6 +89,15 @@ private:
 
 	template<typename TFunc, typename TFunc2>
 	FunctorContinue visitTree(AssetDir& dir, TFunc dirFunc, TFunc2 fileFunc);
+
+	void setResourceToLocate(CString resourceToLocate)
+	{
+		m_resourceToLocate = resourceToLocate;
+		m_rightClickSelectedFilepath.destroy(); // Deselect
+		m_showRightClickMenuDialog = false;
+		m_framesUntilScrollToLocatedFile = 2;
+		m_locatedFileHighlightFramesLeft = kLocatedFileHighlightFrameCount;
+	}
 };
 
 } // end namespace anki

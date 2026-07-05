@@ -83,7 +83,7 @@ public:
 	String m_filename;
 
 	// Absolute path on the actual filesystem. Use it for filesystem operations (rename, tooltips, selection key).
-	String m_fullFilepath;
+	String m_diskFilepath;
 
 	// Path relative to the data path, as understood by ResourceFilesystem/ResourceManager. Use it to load the resource so the browser shares the
 	// engine's resource cache instead of loading the asset a second time.
@@ -107,7 +107,7 @@ public:
 	AssetFile& operator=(AssetFile&& b)
 	{
 		m_filename = std::move(b.m_filename);
-		m_fullFilepath = std::move(b.m_fullFilepath);
+		m_diskFilepath = std::move(b.m_diskFilepath);
 		m_resourceFilepath = std::move(b.m_resourceFilepath);
 		m_type = b.m_type;
 		b.m_type = AssetFileType::kNone;
@@ -120,7 +120,8 @@ class AssetBrowserUi::AssetDir
 {
 public:
 	String m_dirname;
-	String m_fullPath;
+	String m_diskFilepath;
+	String m_resourceFilepath;
 	DynamicArray<AssetDir> m_children;
 	DynamicArray<AssetFile> m_files;
 	AssetDir* m_parentDir = nullptr;
@@ -140,7 +141,8 @@ public:
 	AssetDir& operator=(AssetDir&& b)
 	{
 		m_dirname = std::move(b.m_dirname);
-		m_fullPath = std::move(b.m_fullPath);
+		m_diskFilepath = std::move(b.m_diskFilepath);
+		m_resourceFilepath = std::move(b.m_resourceFilepath);
 		m_children = std::move(b.m_children);
 		m_files = std::move(b.m_files);
 		m_id = b.m_id;
@@ -179,7 +181,7 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 		// Create root dir for the data path
 		AssetDir& dir = *dirs.emplaceBack();
 		dir.m_dirname = dataPath;
-		dir.m_fullPath = dataPath;
+		dir.m_diskFilepath = dataPath;
 		dir.m_id = id++;
 
 		ResourceFilesystem::getSingleton().iterateFilenamesInDataPath(dataPath, [&](CString filepath) {
@@ -209,7 +211,8 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 				{
 					AssetDir* newDir = crntDir->m_children.emplaceBack();
 					newDir->m_dirname = dirName;
-					newDir->m_fullPath = crntDir->m_fullPath + "/" + dirName;
+					newDir->m_diskFilepath = crntDir->m_diskFilepath + "/" + dirName;
+					newDir->m_resourceFilepath = (crntDir->m_resourceFilepath) ? (crntDir->m_resourceFilepath + "/" + dirName) : String(dirName);
 					newDir->m_id = id++;
 
 					crntDir = newDir;
@@ -246,12 +249,12 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 
 			if(filetype != AssetFileType::kNone)
 			{
-				// filepath is expected to be relative to the data path. A leading '/' or an empty string would mean
-				// it got mixed up with an absolute/full path and would break resource loading below.
+				// filepath is expected to be relative to the data path. A leading '/' or an empty string would mean it got mixed up with an
+				// absolute/full path and would break resource loading below.
 				ANKI_ASSERT(!filepath.isEmpty() && filepath[0] != '/');
 
 				AssetFile* file = crntDir->m_files.emplaceBack();
-				file->m_fullFilepath = String(dataPath) + "/" + filepath;
+				file->m_diskFilepath = String(dataPath) + "/" + filepath;
 				file->m_filename = filename;
 				file->m_resourceFilepath = filepath;
 				file->m_type = filetype;
@@ -398,11 +401,7 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 
 	if(resourceToLocate)
 	{
-		m_resourceToLocate = resourceToLocate;
-		m_rightClickSelectedFilepath.destroy(); // Deselect
-		m_showRightClickMenuDialog = false;
-		m_framesUntilScrollToLocatedFile = 2;
-		m_locatedFileHighlightFramesLeft = kLocatedFileHighlightFrameCount;
+		setResourceToLocate(resourceToLocate);
 	}
 
 	m_runCtx = {};
@@ -482,7 +481,7 @@ void AssetBrowserUi::drawDirPath()
 
 		if(ImGui::Button(String().sprintf("%s/", dir->m_dirname.cstr()).cstr()))
 		{
-			m_selectedDirPath = dir->m_fullPath;
+			m_selectedDirPath = dir->m_diskFilepath;
 		}
 	}
 }
@@ -542,7 +541,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						pushFontSize();
 						if(ImGui::Button(ICON_MDI_FOLDER, calcIconButtonSize()))
 						{
-							m_selectedDirPath = dir.m_fullPath;
+							m_selectedDirPath = dir.m_diskFilepath;
 						}
 						ImGui::PopFont();
 					}
@@ -658,12 +657,12 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 
 						ImGui::TextWrapped("%s", file.m_filename.cstr());
 
-						ImGui::SetItemTooltip("%s", file.m_fullFilepath.cstr());
+						ImGui::SetItemTooltip("%s", file.m_diskFilepath.cstr());
 					}
 					else
 					{
 						ImGui::TextWrapped("%s", dir.m_dirname.cstr());
-						ImGui::SetItemTooltip("%s", dir.m_fullPath.cstr());
+						ImGui::SetItemTooltip("%s", dir.m_diskFilepath.cstr());
 					}
 				}
 			}
@@ -696,9 +695,9 @@ void AssetBrowserUi::rightClickMenuDialog()
 		// Delete file
 		if(ImGui::Button(ICON_MDI_DELETE_FOREVER " Delete"))
 		{
-			if(removeFile(selectedFile->m_fullFilepath))
+			if(removeFile(selectedFile->m_diskFilepath))
 			{
-				ANKI_LOGE("Failed to remove file: %s", selectedFile->m_fullFilepath.cstr());
+				ANKI_LOGE("Failed to remove file: %s", selectedFile->m_diskFilepath.cstr());
 			}
 
 			m_refreshAssetsPathsNextTime = true;
@@ -714,12 +713,12 @@ void AssetBrowserUi::rightClickMenuDialog()
 			CString newName(name.getBegin());
 			if(newName.getLength())
 			{
-				String newFilepath = getParentFilepath(selectedFile->m_fullFilepath);
+				String newFilepath = getParentFilepath(selectedFile->m_diskFilepath);
 				newFilepath += "/";
 				newFilepath += newName;
 
-				ANKI_LOGV("Will rename %s to %s", selectedFile->m_fullFilepath.cstr(), newFilepath.cstr());
-				if(renameFile(selectedFile->m_fullFilepath, newFilepath))
+				ANKI_LOGV("Will rename %s to %s", selectedFile->m_diskFilepath.cstr(), newFilepath.cstr());
+				if(renameFile(selectedFile->m_diskFilepath, newFilepath))
 				{
 					ANKI_LOGE("Renaming failed");
 				}
@@ -742,18 +741,21 @@ void AssetBrowserUi::rightClickMenuDialog()
 
 void AssetBrowserUi::drawMenu()
 {
+	// Returns a resource filepath
 	auto createNewFile = [this](CString suffix, CString fileText) {
+		String outFilepath;
 		U32 index = 0;
 
 		while(index < 10)
 		{
-			String filepath;
-			filepath.sprintf("%s/%04u.%s", m_runCtx.m_selectedDir->m_fullPath.cstr(), index, suffix.cstr());
+			String filename;
+			filename.sprintf("%04u.%s", index, suffix.cstr());
+			String diskFilepath = m_runCtx.m_selectedDir->m_diskFilepath + "/" + filename;
 
-			if(!fileExists(filepath))
+			if(!fileExists(diskFilepath))
 			{
 				File file;
-				Error err = file.open(filepath, FileOpenFlag::kWrite);
+				Error err = file.open(diskFilepath, FileOpenFlag::kWrite);
 				if(!err)
 				{
 					err = file.writeText(fileText);
@@ -761,7 +763,13 @@ void AssetBrowserUi::drawMenu()
 
 				if(err)
 				{
-					ANKI_LOGE("Failed to create new file: %s", filepath.cstr());
+					ANKI_LOGE("Failed to create new file: %s", diskFilepath.cstr());
+				}
+				else
+				{
+					outFilepath =
+						(m_runCtx.m_selectedDir->m_resourceFilepath) ? m_runCtx.m_selectedDir->m_resourceFilepath + "/" + filename : filename;
+					ANKI_LOGI("File created: %s", diskFilepath.cstr());
 				}
 
 				break;
@@ -774,6 +782,8 @@ void AssetBrowserUi::drawMenu()
 		{
 			ANKI_LOGE("Failed to create file: %s", suffix.cstr());
 		}
+
+		return outFilepath;
 	};
 
 	if(ImGui::BeginMenuBar())
@@ -784,13 +794,21 @@ void AssetBrowserUi::drawMenu()
 		{
 			if(ImGui::MenuItem(ICON_MDI_TEXTURE_BOX " Material"))
 			{
-				createNewFile("NewMaterial.ankimtl", kDefaultMaterial);
+				const String filepath = createNewFile("NewMaterial.ankimtl", kDefaultMaterial);
+				if(filepath)
+				{
+					setResourceToLocate(filepath);
+				}
 				m_refreshAssetsPathsNextTime = true;
 			}
 
 			if(ImGui::MenuItem(ICON_MDI_CREATION " Particles"))
 			{
-				createNewFile("NewParticles.ankipart", kDefaultParticles);
+				const String filepath = createNewFile("NewParticles.ankipart", kDefaultParticles);
+				if(filepath)
+				{
+					setResourceToLocate(filepath);
+				}
 				m_refreshAssetsPathsNextTime = true;
 			}
 
@@ -799,19 +817,27 @@ void AssetBrowserUi::drawMenu()
 				U32 index = 0;
 				while(index < 10)
 				{
-					String filepath;
-					filepath.sprintf("%s/%04u.NewScene.ankiscene", m_runCtx.m_selectedDir->m_fullPath.cstr(), index);
+					String filename;
+					filename.sprintf("%04u.NewScene.ankiscene", index);
+					const String diskFilepath = m_runCtx.m_selectedDir->m_diskFilepath + "/" + filename;
 
-					if(!fileExists(filepath))
+					if(!fileExists(diskFilepath))
 					{
 						String randomSceneName;
 						randomSceneName.sprintf("%u", U32(getRandom() % kMaxU32));
 						Scene* tempScene = SceneGraph::getSingleton().newEmptyScene(randomSceneName);
 						tempScene->setCanBeSaved(true);
 
-						if(SceneGraph::getSingleton().saveScene(filepath, *tempScene))
+						if(SceneGraph::getSingleton().saveScene(diskFilepath, *tempScene))
 						{
-							ANKI_LOGE("Failed to create new scene: %s", filepath.cstr());
+							ANKI_LOGE("Failed to create new scene: %s", diskFilepath.cstr());
+						}
+						else
+						{
+							setResourceToLocate((m_runCtx.m_selectedDir->m_resourceFilepath)
+													? m_runCtx.m_selectedDir->m_resourceFilepath + "/" + filename
+													: filename);
+							ANKI_LOGI("File created: %s", diskFilepath.cstr());
 						}
 
 						SceneGraph::getSingleton().deleteScene(tempScene);
@@ -882,7 +908,7 @@ void AssetBrowserUi::setSelectedPointers()
 		visitTree(
 			rootDir,
 			[this](AssetDir& dir) {
-				if(dir.m_fullPath == m_selectedDirPath)
+				if(dir.m_diskFilepath == m_selectedDirPath)
 				{
 					m_runCtx.m_selectedDir = &dir;
 				}
@@ -931,7 +957,7 @@ void AssetBrowserUi::setSelectedPointers()
 	if(m_runCtx.m_fileToLocate && m_framesUntilScrollToLocatedFile > 0)
 	{
 		m_runCtx.m_selectedDir = m_runCtx.m_fileToLocate->m_parentDir;
-		m_selectedDirPath = m_runCtx.m_fileToLocate->m_parentDir->m_fullPath;
+		m_selectedDirPath = m_runCtx.m_fileToLocate->m_parentDir->m_diskFilepath;
 	}
 }
 
