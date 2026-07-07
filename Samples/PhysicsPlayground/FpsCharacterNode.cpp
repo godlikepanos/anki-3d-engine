@@ -28,6 +28,7 @@ function update(event, prevTime, crntTime)
 
 	if density <= 0.0 or radius <= 0.0 then
 		node:markForDeletion()
+		logi(string.format("Marking node for deletion %s", node:getName()))
 	else
 		node:setLocalScale(Vec3.new(radius))
 		fogComponent:setDensity(density)
@@ -38,8 +39,7 @@ function onKilled(event, prevTime, crntTime)
 	-- Nothing
 end
 	)";
-	ScriptEvent* event = SceneGraph::getSingleton().getEventManager().newEvent<ScriptEvent>(-1, 10.0, script);
-	event->addAssociatedSceneNode(node);
+	EventManager::getSingleton().newEvent<ScriptEvent>(-1, 10.0, script, node);
 }
 
 FpsCharacter::FpsCharacter(const SceneNodeInitInfo& inf)

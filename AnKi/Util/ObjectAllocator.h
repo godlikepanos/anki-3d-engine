@@ -9,14 +9,11 @@
 
 namespace anki {
 
-/// @addtogroup util_containers
-/// @{
-
-/// A simple allocator for objects of similar types.
-/// @tparam kTObjectSize      The maximum size of the objects.
-/// @tparam kTObjectAlignment The maximum alignment of the objects.
-/// @tparam kTObjectsPerChunk How much memory (in objects) will be allocated at once.
-/// @tparam TIndexType        If kTObjectsPerChunk>0xFF make it U16. If kTObjectsPerChunk>0xFFFF make it U32.
+// A simple allocator for objects of similar types.
+// kTObjectSize:      The maximum size of the objects.
+// kTObjectAlignment: The maximum alignment of the objects.
+// kTObjectsPerChunk: How much memory (in objects) will be allocated at once.
+// TIndexType:        If kTObjectsPerChunk>0xFF make it U16. If kTObjectsPerChunk>0xFFFF make it U32.
 template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
 class ObjectAllocator
 {
@@ -35,24 +32,24 @@ public:
 		ANKI_ASSERT(m_chunksHead == nullptr && m_chunksTail == nullptr && "Forgot to deallocate");
 	}
 
-	/// Allocate and construct a new object instance.
-	/// @note Not thread-safe.
+	// Allocate and construct a new object instance.
+	// Not thread-safe.
 	template<typename T, typename... TArgs>
 	T* newInstance(TArgs&&... args);
 
-	/// Delete an object.
-	/// @note Not thread-safe.
+	// Delete an object.
+	// Not thread-safe.
 	template<typename T>
 	void deleteInstance(T* obj);
 
 private:
-	/// Storage with equal properties as the object.
+	// Storage with equal properties as the object.
 	struct alignas(kObjectAlignment) Object
 	{
 		U8 m_storage[kObjectSize];
 	};
 
-	/// A  single allocation.
+	// A  single allocation.
 	class Chunk
 	{
 	public:
@@ -69,29 +66,26 @@ private:
 	Chunk* m_chunksTail = nullptr;
 };
 
-/// Convenience wrapper for ObjectAllocator.
+// Convenience wrapper for ObjectAllocator.
 template<typename T, typename TMemoryPool, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
 class ObjectAllocatorSameType : public ObjectAllocator<sizeof(T), U32(alignof(T)), TMemoryPool, kTObjectsPerChunk, TIndexType>
 {
 public:
 	using Base = ObjectAllocator<sizeof(T), U32(alignof(T)), TMemoryPool, kTObjectsPerChunk, TIndexType>;
 
-	/// Allocate and construct a new object instance.
-	/// @note Not thread-safe.
+	// Allocate and construct a new object instance.
 	template<typename... TArgs>
 	T* newInstance(TArgs&&... args)
 	{
 		return Base::template newInstance<T>(std::forward(args)...);
 	}
 
-	/// Delete an object.
-	/// @note Not thread-safe.
+	// Delete an object.
 	void deleteInstance(T* obj)
 	{
 		Base::deleteInstance(obj);
 	}
 };
-/// @}
 
 } // end namespace anki
 

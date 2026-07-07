@@ -21,6 +21,5 @@ function onKilled(event, prevTime, crntTime)
 	event:getAssociatedSceneNodes():getAt(0):markForDeletion()
 end
 	)";
-	ScriptEvent* event = SceneGraph::getSingleton().getEventManager().newEvent<ScriptEvent>(-1.0, timeToKill, script);
-	event->addAssociatedSceneNode(node);
+	EventManager::getSingleton().newEvent<ScriptEvent>(-1.0, timeToKill, script, node);
 }

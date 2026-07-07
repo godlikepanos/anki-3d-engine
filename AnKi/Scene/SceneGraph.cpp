@@ -18,6 +18,7 @@
 #include <AnKi/Scene/StatsUiNode.h>
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
 #include <AnKi/Scene/EditorUiNode.h>
+#include <AnKi/Scene/Events/EventManager.h>
 
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
@@ -91,6 +92,8 @@ SceneGraph::SceneGraph()
 
 SceneGraph::~SceneGraph()
 {
+	EventManager::freeSingleton();
+
 	for(SceneNode* node : m_deferredOps.m_nodesForRegistration)
 	{
 		deleteInstance(SceneMemoryPool::getSingleton(), node);
@@ -115,6 +118,9 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	SceneMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
 	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, "SceneGraphFramePool");
+
+	EventManager::allocateSingleton();
+	EventManager::getSingleton().init();
 
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
 #include <AnKi/Scene/GpuSceneArrays.def.h>
@@ -228,10 +234,7 @@ void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 #endif
 
 	// Update events
-	{
-		ANKI_TRACE_SCOPED_EVENT(EventsUpdate);
-		m_events.updateAllEvents(prevUpdateTime, crntTime);
-	}
+	EventManager::getSingleton().updateAllEvents(prevUpdateTime, crntTime);
 
 	// Update scene nodes
 	UpdateSceneNodesCtx updateCtx(CoreThreadJobManager::getSingleton().getThreadCount());

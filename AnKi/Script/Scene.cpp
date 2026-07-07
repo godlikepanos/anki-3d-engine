@@ -23,19 +23,14 @@ static T* newEvent(EventManager* eventManager, TArgs... args)
 	return eventManager->template newEvent<T>(std::forward<TArgs>(args)...);
 }
 
-static SceneGraph* getSceneGraph(lua_State* l)
+static SceneGraph* getSceneGraph([[maybe_unused]] lua_State* l)
 {
-	LuaBinder* binder = nullptr;
-	lua_getallocf(l, reinterpret_cast<void**>(&binder));
-
-	SceneGraph* scene = &SceneGraph::getSingleton();
-	ANKI_ASSERT(scene);
-	return scene;
+	return &SceneGraph::getSingleton();
 }
 
-static EventManager* getEventManager(lua_State* l)
+static EventManager* getEventManager([[maybe_unused]] lua_State* l)
 {
-	return &getSceneGraph(l)->getEventManager();
+	return &EventManager::getSingleton();
 }
 
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
@@ -5627,7 +5622,7 @@ static inline int wrapEventManagernewScriptEvent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4)) [[unlikely]]
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
@@ -5659,8 +5654,17 @@ static inline int wrapEventManagernewScriptEvent(lua_State* l)
 		return lua_error(l);
 	}
 
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SceneNode* iarg3 = ud->getData<SceneNode>();
+	SceneNode* arg3(iarg3);
+
 	// Call the method
-	ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2);
+	ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2, arg3);
 
 	// Push return value
 	if(ret == nullptr) [[unlikely]]

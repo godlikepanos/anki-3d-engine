@@ -11,23 +11,20 @@
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// A generic event that uses scripts. The script should contain something like this:
-/// @code
-/// function update(event, prevTime, crntTime)
-/// 	-- Do something
-/// end
-///
-/// function onKilled(event, prevTime, crntTime)
-/// 	-- Do something
-/// end
-/// @endcode
+// A generic event that uses scripts. The script should contain something like this:
+// function update(event, prevTime, crntTime)
+// 	-- Do something
+// end
+//
+// function onKilled(event, prevTime, crntTime)
+// 	-- Do something
+// end
 class ScriptEvent : public Event
 {
 public:
-	ScriptEvent(Second startTime, Second duration, CString script);
+	ScriptEvent(Second startTime, Second duration, CString script, SceneNode* node);
+
+	ScriptEvent(Second startTime, Second duration, CString script, WeakArray<SceneNode*> nodes);
 
 	~ScriptEvent();
 
@@ -40,6 +37,5 @@ private:
 	SceneString m_script;
 	ScriptEnvironment m_env;
 };
-/// @}
 
 } // end namespace anki

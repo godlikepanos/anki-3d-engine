@@ -13,7 +13,7 @@
 
 namespace anki {
 
-ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script)
+ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script, WeakArray<SceneNode*> nodes)
 	: Event(startTime, duration)
 {
 	// Do the rest
@@ -47,6 +47,19 @@ ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script)
 			return;
 		}
 	}
+
+	if(!isMarkedForDeletion())
+	{
+		for(SceneNode* node : nodes)
+		{
+			addAssociatedSceneNode(node);
+		}
+	}
+}
+
+ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script, SceneNode* node)
+	: ScriptEvent(startTime, duration, script, WeakArray<SceneNode*>(&node, 1))
+{
 }
 
 ScriptEvent::~ScriptEvent()

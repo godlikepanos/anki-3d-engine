@@ -24,19 +24,14 @@ static T* newEvent(EventManager* eventManager, TArgs... args)
 	return eventManager->template newEvent<T>(std::forward<TArgs>(args)...);
 }
 
-static SceneGraph* getSceneGraph(lua_State* l)
+static SceneGraph* getSceneGraph([[maybe_unused]] lua_State* l)
 {
-	LuaBinder* binder = nullptr;
-	lua_getallocf(l, reinterpret_cast<void**>(&binder));
-
-	SceneGraph* scene = &SceneGraph::getSingleton();
-	ANKI_ASSERT(scene);
-	return scene;
+	return &SceneGraph::getSingleton();
 }
 
-static EventManager* getEventManager(lua_State* l)
+static EventManager* getEventManager([[maybe_unused]] lua_State* l)
 {
-	return &getSceneGraph(l)->getEventManager();
+	return &EventManager::getSingleton();
 }
 
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
@@ -771,11 +766,12 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 
 				<method name="newScriptEvent">
-					<overrideCall><![CDATA[ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<overrideCall><![CDATA[ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2, arg3);]]></overrideCall>
 					<args>
 						<arg>F32</arg>
 						<arg>F32</arg>
 						<arg>CString</arg>
+						<arg>SceneNode*</arg>
 					</args>
 					<return>ScriptEvent*</return>
 				</method>

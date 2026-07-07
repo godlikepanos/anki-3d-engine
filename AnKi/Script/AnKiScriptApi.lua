@@ -567,8 +567,9 @@ function EventManager:newLightEvent(num, num2, sceneNode) end
 ---@param num number
 ---@param num2 number
 ---@param str string
+---@param sceneNode SceneNode
 ---@return ScriptEvent
-function EventManager:newScriptEvent(num, num2, str) end
+function EventManager:newScriptEvent(num, num2, str, sceneNode) end
 
 ---@param num number
 ---@param num2 number

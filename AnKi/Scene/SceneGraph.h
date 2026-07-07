@@ -10,7 +10,6 @@
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/BlockArray.h>
-#include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/Common.h>
@@ -168,15 +167,6 @@ public:
 	const SceneNode& getActiveCameraNode() const;
 
 	void setActiveCameraNode(SceneNode* cam);
-
-	EventManager& getEventManager()
-	{
-		return m_events;
-	}
-	const EventManager& getEventManager() const
-	{
-		return m_events;
-	}
 
 	void update(Second prevUpdateTime, Second crntTime);
 
@@ -392,8 +382,6 @@ private:
 
 	SceneNode* m_mainCamNode = nullptr;
 	SceneNode* m_defaultMainCamNode = nullptr;
-
-	EventManager m_events;
 
 	U64 m_frame = 0;
 

@@ -6,8 +6,40 @@
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Scene/Events/Event.h>
 #include <AnKi/Scene/SceneGraph.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
+
+class EventManager::UpdateCtx
+{
+public:
+	class PerThread
+	{
+	public:
+		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> m_eventsForDeletion;
+
+		PerThread(StackMemoryPool* pool)
+			: m_eventsForDeletion(pool)
+		{
+		}
+	};
+
+	Second m_prevUpdateTime = 0.0;
+	Second m_crntTime = 0.0;
+
+	Atomic<U32> m_crntBlockArrayIdx = {0};
+	U32 m_lastBlockArrayIdx;
+
+	DynamicArray<PerThread, MemoryPoolPtrWrapper<StackMemoryPool>> m_perThread;
+
+	Atomic<Bool> m_nodesMarkedForDeletion = false;
+
+	UpdateCtx(U32 threadCount)
+		: m_perThread(&SceneGraph::getSingleton().getFrameMemoryPool())
+	{
+		m_perThread.resize(threadCount, &SceneGraph::getSingleton().getFrameMemoryPool());
+	}
+};
 
 EventManager::EventManager()
 {
@@ -15,38 +47,149 @@ EventManager::EventManager()
 
 EventManager::~EventManager()
 {
-	while(!m_eventsForRegistration.isEmpty())
+	for(Event* e : m_newEventsWhileUpdate)
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), m_eventsForRegistration.popFront());
+		deleteInstance(SceneMemoryPool::getSingleton(), e);
 	}
 
-	while(!m_events.isEmpty())
+	SceneDynamicArray<U32> indices;
+	for(auto it = m_events.getBegin(); it != m_events.getEnd(); ++it)
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), m_events.popFront());
+		indices.emplaceBack(it.getArrayIndex());
 	}
+	deleteEvents(indices);
+}
+
+void EventManager::init()
+{
+	m_nodeMutexes.resize(g_cvarSceneEventUpdateMutexCount);
 }
 
 void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 {
-	// Register new events
-	while(!m_eventsForRegistration.isEmpty())
+	ANKI_TRACE_SCOPED_EVENT(EventManagerUpdate);
+
+	if(m_events.getSize() == 0 && m_newEventsWhileUpdate.getSize() == 0) [[unlikely]]
 	{
-		Event* e = m_eventsForRegistration.popFront();
-		m_events.pushBack(e);
+		return;
 	}
 
-	for(Event& event : m_events)
+	ANKI_ASSERT(!m_inUpdate);
+	m_inUpdate = true;
+
+	// Move new events to m_events
+	for(Event* e : m_newEventsWhileUpdate)
 	{
-		if(event.isMarkedForDeletion())
+		auto it = m_events.emplace();
+		it->m_pEvent.m_magic = kIsPtrMagic;
+		it->m_pEvent.m_pEvent = e;
+		e->m_blockArrayIndex = it.getArrayIndex();
+	}
+	m_newEventsWhileUpdate.destroy();
+
+	// Update all events
+	UpdateCtx ctx(CoreThreadJobManager::getSingleton().getThreadCount());
+	ctx.m_prevUpdateTime = prevUpdateTime;
+	ctx.m_crntTime = crntTime;
+	ctx.m_lastBlockArrayIdx = m_events.getBack().getArrayIndex();
+
+	for(U32 i = 0; i < CoreThreadJobManager::getSingleton().getThreadCount(); i++)
+	{
+		CoreThreadJobManager::getSingleton().dispatchTask([this, &ctx](U32 tid) {
+			updateEvents(tid, ctx);
+		});
+	}
+
+	CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
+
+	// Now that update has finished, take another look and kill some events
+	if(ctx.m_nodesMarkedForDeletion.getNonAtomically())
+	{
+		for(EventStorage& s : m_events)
 		{
-			continue;
+			Event& event = toEvent(s);
+			if(!event.isMarkedForDeletion() && associatedNodesMarkedForDeletion(event))
+			{
+				event.markForDeletion(); // Will be cleaned next frame but it's OK
+			}
+		}
+	}
+
+	// Cleanup
+	for(UpdateCtx::PerThread& perThread : ctx.m_perThread)
+	{
+		if(perThread.m_eventsForDeletion.getSize())
+		{
+			deleteEvents(perThread.m_eventsForDeletion);
+		}
+	}
+
+	m_inUpdate = false;
+}
+
+void EventManager::updateEvents(U32 threadId, UpdateCtx& ctx)
+{
+	ANKI_TRACE_SCOPED_EVENT(EventsUpdate);
+
+	while(1)
+	{
+		// Fetch a batch
+		constexpr U32 batchMaxSize = 8;
+		const U32 entryIndex = ctx.m_crntBlockArrayIdx.fetchAdd(batchMaxSize);
+		if(entryIndex > ctx.m_lastBlockArrayIdx)
+		{
+			break;
 		}
 
-		if(assosiatedNodesMarkedForDeletion(event))
+		for(U32 i = entryIndex; i < min(entryIndex + batchMaxSize, ctx.m_lastBlockArrayIdx + 1); ++i)
 		{
-			event.markForDeletion();
-			continue;
+			const Bool exists = m_events.indexExists(i);
+			if(!exists)
+			{
+				continue;
+			}
+
+			Event& event = toEvent(m_events[i]);
+			ANKI_ASSERT(i == event.m_blockArrayIndex);
+			updateEvent(threadId, ctx, event);
 		}
+	}
+}
+
+void EventManager::updateEvent(U32 threadId, UpdateCtx& ctx, Event& event)
+{
+	UpdateCtx::PerThread& perThread = ctx.m_perThread[threadId];
+
+	if(event.isMarkedForDeletion())
+	{
+		perThread.m_eventsForDeletion.emplaceBack(event.m_blockArrayIndex);
+		return;
+	}
+
+	// Lock the scene node mutexes to protect the scene nodes. Lock in order
+	BitSet<128, U64> mutexesToLockMask(false);
+	ANKI_ASSERT(m_nodeMutexes.getSize() <= 128);
+	for(SceneNode* node : event.m_associatedNodes)
+	{
+		const U32 mtxIdx = node->getUuid() % m_nodeMutexes.getSize();
+		mutexesToLockMask.set(mtxIdx);
+	}
+
+	U32 mtxIdx;
+	BitSet<128, U64> tmpMask = mutexesToLockMask;
+	while((mtxIdx = tmpMask.getLeastSignificantBit()) != kMaxU32)
+	{
+		m_nodeMutexes[mtxIdx].lock();
+		tmpMask.unset(mtxIdx);
+	}
+
+	// Try update
+	if(!associatedNodesMarkedForDeletion(event)) // Touch the nodes while holding the locks
+	{
+		// Do the event update
+
+		const Second crntTime = ctx.m_crntTime;
+		const Second prevUpdateTime = ctx.m_prevUpdateTime;
 
 		if(event.m_startTime < 0.0)
 		{
@@ -62,12 +205,6 @@ void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 			if(event.getStartTime() <= crntTime)
 			{
 				event.update(prevUpdateTime, crntTime);
-			}
-
-			if(assosiatedNodesMarkedForDeletion(event))
-			{
-				// Maybe the event marked the node for deletion, delete the event
-				event.markForDeletion();
 			}
 		}
 		else
@@ -88,29 +225,28 @@ void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 				}
 			}
 		}
+
+		// Do an additional check in case the event marked nodes for deletion
+		if(associatedNodesMarkedForDeletion(event))
+		{
+			event.markForDeletion();
+			ctx.m_nodesMarkedForDeletion.store(true);
+		}
+	}
+	else
+	{
+		event.markForDeletion();
 	}
 
-	// Cleanup
-	auto it = m_events.getBegin();
-	while(it != m_events.getEnd())
+	// Unlock the mutexes in reverse order
+	while((mtxIdx = mutexesToLockMask.getMostSignificantBit()) != kMaxU32)
 	{
-		if(it->isMarkedForDeletion() || assosiatedNodesMarkedForDeletion(*it))
-		{
-			Event* e = &(*it);
-
-			++it; // Point to the next before deleting
-
-			m_events.erase(e);
-			deleteInstance(SceneMemoryPool::getSingleton(), e);
-		}
-		else
-		{
-			++it;
-		}
+		m_nodeMutexes[mtxIdx].unlock();
+		mutexesToLockMask.unset(mtxIdx);
 	}
 }
 
-Bool EventManager::assosiatedNodesMarkedForDeletion(const Event& e)
+Bool EventManager::associatedNodesMarkedForDeletion(const Event& e)
 {
 	for(const SceneNode* node : e.getAssociatedSceneNodes())
 	{
@@ -121,6 +257,28 @@ Bool EventManager::assosiatedNodesMarkedForDeletion(const Event& e)
 	}
 
 	return false;
+}
+
+void EventManager::deleteEvents(ConstWeakArray<U32> eventIndices)
+{
+	for(U32 idx : eventIndices)
+	{
+		auto it = m_events.indexToIterator(idx);
+		const Bool isPtr = it->m_pEvent.m_magic == kIsPtrMagic;
+		if(isPtr)
+		{
+			ANKI_ASSERT(it->m_pEvent.m_pEvent->m_blockArrayIndex == idx);
+			deleteInstance(SceneMemoryPool::getSingleton(), it->m_pEvent.m_pEvent);
+		}
+		else
+		{
+			Event& e = *reinterpret_cast<Event*>(it->m_eventStorage);
+			ANKI_ASSERT(e.m_blockArrayIndex == idx);
+			e.~Event();
+		}
+
+		m_events.erase(it);
+	}
 }
 
 } // end namespace anki

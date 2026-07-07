@@ -6,22 +6,18 @@
 #pragma once
 
 #include <AnKi/Scene/Common.h>
-#include <AnKi/Util/List.h>
 #include <AnKi/Util/WeakArray.h>
 
 namespace anki {
 
-/// @addtogroup scene
-/// @{
-
-/// The base class for all events
-class Event : public IntrusiveListEnabled<Event>
+// The base class for all events
+class Event
 {
 	friend class EventManager;
 
 public:
-	/// @param startTime The time the event will start. If it's < 0 then start the event now.
-	/// @param duration The duration of the event.
+	// startTime: The time the event will start. If it's < 0 then start the event now.
+	// duration: The duration of the event.
 	Event(Second startTime, Second duration)
 	{
 		init(startTime, duration);
@@ -66,30 +62,22 @@ public:
 
 	WeakArray<SceneNode*> getAssociatedSceneNodes()
 	{
-		return (m_associatedNodes.getSize() == 0) ? WeakArray<SceneNode*>()
-												  : WeakArray<SceneNode*>(&m_associatedNodes[0], m_associatedNodes.getSize());
+		return WeakArray(m_associatedNodes);
 	}
 
 	ConstWeakArray<SceneNode*> getAssociatedSceneNodes() const
 	{
-		return (m_associatedNodes.getSize() == 0) ? ConstWeakArray<SceneNode*>()
-												  : ConstWeakArray<SceneNode*>(&m_associatedNodes[0], m_associatedNodes.getSize());
+		return m_associatedNodes;
 	}
 
-	void addAssociatedSceneNode(SceneNode* node)
-	{
-		ANKI_ASSERT(node);
-		m_associatedNodes.emplaceBack(node);
-	}
-
-	/// This method should be implemented by the derived classes
-	/// @param prevUpdateTime The time of the previous update (sec)
-	/// @param crntTime The current time (sec)
+	// This method should be implemented by the derived classes
+	// prevUpdateTime: The time of the previous update (sec)
+	// crntTime: The current time (sec)
 	virtual void update(Second prevUpdateTime, Second crntTime) = 0;
 
-	/// This is called when the event is killed
-	/// @param prevUpdateTime The time of the previous update (sec)
-	/// @param crntTime The current time (sec)
+	// This is called when the event is killed
+	// prevUpdateTime: The time of the previous update (sec)
+	// crntTime: The current time (sec)
 	virtual void onKilled([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
 	}
@@ -98,17 +86,22 @@ protected:
 	Second m_startTime = 0.0;
 	Second m_duration = 0.0;
 
+	U32 m_blockArrayIndex = kMaxU32;
 	Bool m_markedForDeletion = false;
 	Bool m_reanimate = false;
 
 	SceneDynamicArray<SceneNode*> m_associatedNodes;
 
-	/// Return the u between current time and when the event started
-	/// @return A number [0.0, 1.0]
+	// Return the u between current time and when the event started. A number [0.0, 1.0]
 	Second getDelta(Second crntTime) const;
 
 	void init(Second startTime, Second duration);
+
+	void addAssociatedSceneNode(SceneNode* node)
+	{
+		ANKI_ASSERT(node);
+		m_associatedNodes.emplaceBack(node);
+	}
 };
-/// @}
 
 } // end namespace anki
