@@ -1105,30 +1105,6 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 		}
 	}
 
-	auto lightEventIntensity = extras.find("light_event_intensity");
-	auto lightEventFrequency = extras.find("light_event_frequency");
-	if(lightEventIntensity != extras.getEnd() || lightEventFrequency != extras.getEnd())
-	{
-		ANKI_CHECK(m_sceneFile.writeText("event = events:newLightEvent(0.0, -1.0, node)\n"));
-
-		if(lightEventIntensity != extras.getEnd())
-		{
-			ImporterDynamicArray<F64> numbers;
-			const U32 count = 4;
-			ANKI_CHECK(parseArrayOfNumbers(lightEventIntensity->toCString(), numbers, &count));
-			ANKI_CHECK(
-				m_sceneFile.writeTextf("event:setIntensityMultiplier(Vec4.new(%f, %f, %f, %f))\n", numbers[0], numbers[1], numbers[2], numbers[3]));
-		}
-
-		if(lightEventFrequency != extras.getEnd())
-		{
-			ImporterDynamicArray<F64> numbers;
-			const U32 count = 2;
-			ANKI_CHECK(parseArrayOfNumbers(lightEventFrequency->toCString(), numbers, &count));
-			ANKI_CHECK(m_sceneFile.writeTextf("event:setFrequency(%f, %f)\n", numbers[0], numbers[1]));
-		}
-	}
-
 	return Error::kNone;
 }
 

@@ -26,6 +26,7 @@
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Scene/Components/MeshComponent.h>
 #include <AnKi/Scene/Components/MaterialComponent.h>
+#include <AnKi/Scene/Components/AnimationComponent.h>
 
 namespace anki {
 

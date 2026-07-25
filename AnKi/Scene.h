@@ -26,11 +26,9 @@
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Scene/Components/MeshComponent.h>
 #include <AnKi/Scene/Components/MaterialComponent.h>
+#include <AnKi/Scene/Components/AnimationComponent.h>
 
 #include <AnKi/Scene/Events/EventManager.h>
-#include <AnKi/Scene/Events/AnimationEvent.h>
-#include <AnKi/Scene/Events/JitterMoveEvent.h>
-#include <AnKi/Scene/Events/LightEvent.h>
 #include <AnKi/Scene/Events/ScriptEvent.h>
 
 #include <AnKi/Scene/EditorUiNode.h>

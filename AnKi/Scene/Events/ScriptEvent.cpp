@@ -13,52 +13,8 @@
 
 namespace anki {
 
-ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script, WeakArray<SceneNode*> nodes)
-	: Event(startTime, duration)
-{
-	// Do the rest
-	const String extension = getFileExtension(script);
-
-	if(!extension.isEmpty() && extension == "lua")
-	{
-		// It's a file
-		if(!ANKI_EXPECT(!ResourceManager::getSingleton().loadResource(script, m_scriptRsrc)))
-		{
-			markForDeletion();
-			return;
-		}
-
-		// Exec the script
-		if(!ANKI_EXPECT(!m_env.evalString(m_scriptRsrc->getSource())))
-		{
-			markForDeletion();
-			return;
-		}
-	}
-	else
-	{
-		// It's a string
-		m_script = script;
-
-		// Exec the script
-		if(!ANKI_EXPECT(!m_env.evalString(m_script.toCString())))
-		{
-			markForDeletion();
-			return;
-		}
-	}
-
-	if(!isMarkedForDeletion())
-	{
-		for(SceneNode* node : nodes)
-		{
-			addAssociatedSceneNode(node);
-		}
-	}
-}
-
-ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script, SceneNode* node)
-	: ScriptEvent(startTime, duration, script, WeakArray<SceneNode*>(&node, 1))
+ScriptEvent::ScriptEvent(Second startTime, Second duration, WeakArray<SceneNode*> nodes)
+	: Event(startTime, duration, nodes)
 {
 }
 
@@ -68,6 +24,13 @@ ScriptEvent::~ScriptEvent()
 
 void ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 {
+	if(!m_initialized)
+	{
+		return;
+	}
+
+	m_vars.flushDirtyVarsToLua(m_env);
+
 	lua_State* lua = &m_env.getLuaState();
 
 	// Push function name
@@ -88,6 +51,11 @@ void ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 
 void ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 {
+	if(!m_initialized)
+	{
+		return;
+	}
+
 	lua_State* lua = &m_env.getLuaState();
 
 	// Push function name
@@ -104,6 +72,49 @@ void ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 		ANKI_SCENE_LOGE("Error running ScriptEvent's \"onKilled\": %s", lua_tostring(lua, -1));
 		return;
 	}
+}
+
+ScriptEvent& ScriptEvent::setScriptResourceFilename(CString fname)
+{
+	if(!ANKI_EXPECT(!m_initialized))
+	{
+		return *this;
+	}
+
+	if(!ANKI_EXPECT(!ResourceManager::getSingleton().loadResource(fname, m_scriptRsrc)))
+	{
+		return *this;
+	}
+
+	if(!ANKI_EXPECT(!m_env.evalString(m_scriptRsrc->getSource())))
+	{
+		markForDeletion();
+		return *this;
+	}
+
+	m_vars.rebuildVarsFromLua(m_env);
+
+	m_initialized = true;
+	return *this;
+}
+
+ScriptEvent& ScriptEvent::setScriptText(CString text)
+{
+	if(!ANKI_EXPECT(!m_initialized))
+	{
+		return *this;
+	}
+
+	if(!ANKI_EXPECT(!m_env.evalString(text)))
+	{
+		markForDeletion();
+		return *this;
+	}
+
+	m_vars.rebuildVarsFromLua(m_env);
+
+	m_initialized = true;
+	return *this;
 }
 
 } // end namespace anki

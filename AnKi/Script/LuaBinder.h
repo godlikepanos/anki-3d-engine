@@ -242,6 +242,9 @@ public:
 	static Error checkUserData(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo,
 							   LuaUserData*& out);
 
+	// Check if the type is a table
+	static Error checkTable(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, U32& tableSize);
+
 private:
 	lua_State* m_l = nullptr;
 	ScriptHashMap<I64, const LuaUserDataTypeInfo*> m_userDataSigToDataInfo;

@@ -39,7 +39,7 @@ function onKilled(event, prevTime, crntTime)
 	-- Nothing
 end
 	)";
-	EventManager::getSingleton().newEvent<ScriptEvent>(-1, 10.0, script, node);
+	EventManager::getSingleton().newEvent<ScriptEvent>(-1, 10.0, WeakArray<SceneNode*>(&node, 1))->setScriptText(script);
 }
 
 FpsCharacter::FpsCharacter(const SceneNodeInitInfo& inf)

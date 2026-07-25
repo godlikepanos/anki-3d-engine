@@ -59,6 +59,7 @@ ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Scene, SceneMemoryPool)
 enum class GlobalRegistryRecordType : U32
 {
 	kSceneNode,
+	kEvent,
 
 	kCount,
 	kFirst = 0

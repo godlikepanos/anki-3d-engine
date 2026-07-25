@@ -43,7 +43,7 @@ class AnimationChannel
 public:
 	ResourceString m_name;
 
-	I32 m_boneIndex = -1; ///< For skeletal animations
+	I32 m_boneIndex = -1; // For skeletal animations
 
 	ResourceDynamicArray<AnimationKeyframe<Vec3>> m_positions;
 	ResourceDynamicArray<AnimationKeyframe<Quat>> m_rotations;

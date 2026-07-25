@@ -41,7 +41,7 @@ public:
 		return *this;
 	}
 
-	DynamicBitSet& setBit(U32 pos)
+	DynamicBitSet& setBit(U32 pos, Bool setBit = true)
 	{
 		U32 index, bit;
 		decode(pos, index, bit);
@@ -50,8 +50,20 @@ public:
 			m_storage.resize(index + 1, 0u);
 		}
 
-		m_storage[index] |= TElementType(1) << TElementType(bit);
+		if(setBit)
+		{
+			m_storage[index] |= TElementType(1) << TElementType(bit);
+		}
+		else
+		{
+			m_storage[index] &= ~(TElementType(1) << TElementType(bit));
+		}
 		return *this;
+	}
+
+	DynamicBitSet& unsetBit(U32 pos)
+	{
+		return setBit(pos, false);
 	}
 
 	Bool getBit(U32 pos) const
@@ -99,6 +111,11 @@ public:
 		}
 
 		return FunctorContinue::kContinue;
+	}
+
+	void destroy()
+	{
+		m_storage.destroy();
 	}
 
 private:

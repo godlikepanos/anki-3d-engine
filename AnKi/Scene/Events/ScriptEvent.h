@@ -8,6 +8,7 @@
 #include <AnKi/Scene/Events/Event.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Script/ScriptEnvironment.h>
+#include <AnKi/Scene/ScriptUtils.h>
 
 namespace anki {
 
@@ -19,12 +20,12 @@ namespace anki {
 // function onKilled(event, prevTime, crntTime)
 // 	-- Do something
 // end
-class ScriptEvent : public Event
+class ScriptEvent final : public Event
 {
-public:
-	ScriptEvent(Second startTime, Second duration, CString script, SceneNode* node);
+	ANKI_REGISTER_EVENT_CLASS(ScriptEvent)
 
-	ScriptEvent(Second startTime, Second duration, CString script, WeakArray<SceneNode*> nodes);
+public:
+	ScriptEvent(Second startTime, Second duration, WeakArray<SceneNode*> nodes);
 
 	~ScriptEvent();
 
@@ -32,10 +33,18 @@ public:
 
 	void onKilled(Second prevUpdateTime, Second crntTime) override;
 
+	ScriptEvent& setScriptResourceFilename(CString fname);
+
+	ScriptEvent& setScriptText(CString text);
+
 private:
 	ScriptResourcePtr m_scriptRsrc;
-	SceneString m_script;
+
 	ScriptEnvironment m_env;
+
+	ScriptVariables m_vars;
+
+	Bool m_initialized = false;
 };
 
 } // end namespace anki

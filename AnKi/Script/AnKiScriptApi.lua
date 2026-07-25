@@ -55,6 +55,25 @@ ReparentFlag = {}
 ---@field kCount integer
 TriggerComponentShapeType = {}
 
+---@class AnimationWrapMode
+---@field kOnce integer
+---@field kLoop integer
+---@field kCount integer
+AnimationWrapMode = {}
+
+---@class AnimationBlendMode
+---@field kBlend integer
+---@field kAdditive integer
+---@field kCount integer
+AnimationBlendMode = {}
+
+---@class AnimationState
+---@field kStopped integer
+---@field kPaused integer
+---@field kPlaying integer
+---@field kCount integer
+AnimationState = {}
+
 ---@class WeakArraySceneNodePtr
 WeakArraySceneNodePtr = {}
 
@@ -340,6 +359,82 @@ SkinComponent = {}
 ---@return SkinComponent
 function SkinComponent:setSkeletonFilename(str) end
 
+---@class AnimationComponent
+AnimationComponent = {}
+
+---@param num number
+---@param str string
+---@return AnimationComponent
+function AnimationComponent:setAnimationFilename(num, str) end
+
+---@param num number
+---@return string
+function AnimationComponent:getAnimationFilename(num) end
+
+---@param num number
+---@return boolean
+function AnimationComponent:hasAnimationFilename(num) end
+
+---@param num number
+---@param str string
+---@return AnimationComponent
+function AnimationComponent:setAnimationChannel(num, str) end
+
+---@param num number
+---@return string
+function AnimationComponent:getAnimationChannel(num) end
+
+---@param num number
+---@param num2 number
+---@return AnimationComponent
+function AnimationComponent:setAnimationBlendWeight(num, num2) end
+
+---@param num number
+---@return number
+function AnimationComponent:getAnimationBlendWeight(num) end
+
+---@param num number
+---@param animationWrapMode integer
+---@return AnimationComponent
+function AnimationComponent:setAnimationWrapMode(num, animationWrapMode) end
+
+---@param num number
+---@return integer
+function AnimationComponent:getAnimationWrapMode(num) end
+
+---@param num number
+---@param animationBlendMode integer
+---@return AnimationComponent
+function AnimationComponent:setAnimationBlendMode(num, animationBlendMode) end
+
+---@param num number
+---@return integer
+function AnimationComponent:getAnimationBlendMode(num) end
+
+---@param num number
+---@param num2 number
+---@return AnimationComponent
+function AnimationComponent:setAnimationSpeed(num, num2) end
+
+---@param num number
+---@return number
+function AnimationComponent:getAnimationSpeed(num) end
+
+---@param num number
+function AnimationComponent:resetTrack(num) end
+
+---@param num number
+---@param animationState integer
+---@return AnimationComponent
+function AnimationComponent:setAnimationState(num, animationState) end
+
+---@param num number
+---@return integer
+function AnimationComponent:getAnimationState(num) end
+
+---@return boolean
+function AnimationComponent:isValid() end
+
 ---@class SkyboxComponent
 SkyboxComponent = {}
 
@@ -464,6 +559,9 @@ function SceneNode:newMaterialComponent() end
 ---@return SkinComponent
 function SceneNode:newSkinComponent() end
 
+---@return AnimationComponent
+function SceneNode:newAnimationComponent() end
+
 ---@return SkyboxComponent
 function SceneNode:newSkyboxComponent() end
 
@@ -506,6 +604,9 @@ function SceneNode:getFirstMaterialComponent() end
 ---@return SkinComponent
 function SceneNode:getFirstSkinComponent() end
 
+---@return AnimationComponent
+function SceneNode:getFirstAnimationComponent() end
+
 ---@return SkyboxComponent
 function SceneNode:getFirstSkyboxComponent() end
 
@@ -532,56 +633,17 @@ Event = {}
 ---@return WeakArraySceneNodePtr
 function Event:getAssociatedSceneNodes() end
 
----@class LightEvent
-LightEvent = {}
-
----@param vec4 Vec4
-function LightEvent:setIntensityMultiplier(vec4) end
-
----@param num number
----@param num2 number
-function LightEvent:setFrequency(num, num2) end
-
 ---@class ScriptEvent
 ScriptEvent = {}
-
----@class JitterMoveEvent
-JitterMoveEvent = {}
-
----@param vec3 Vec3
----@param vec32 Vec3
-function JitterMoveEvent:setPositionLimits(vec3, vec32) end
-
----@class AnimationEvent
-AnimationEvent = {}
 
 ---@class EventManager
 EventManager = {}
 
 ---@param num number
 ---@param num2 number
----@param sceneNode SceneNode
----@return LightEvent
-function EventManager:newLightEvent(num, num2, sceneNode) end
-
----@param num number
----@param num2 number
----@param str string
----@param sceneNode SceneNode
+---@param weakArray<SceneNode*> WeakArray<SceneNode*>
 ---@return ScriptEvent
-function EventManager:newScriptEvent(num, num2, str, sceneNode) end
-
----@param num number
----@param num2 number
----@param sceneNode SceneNode
----@return JitterMoveEvent
-function EventManager:newJitterMoveEvent(num, num2, sceneNode) end
-
----@param str string
----@param str2 string
----@param sceneNode SceneNode
----@return AnimationEvent
-function EventManager:newAnimationEvent(str, str2, sceneNode) end
+function EventManager:newScriptEvent(num, num2, weakArray<SceneNode*>) end
 
 ---@class Vec2
 ---@field x number

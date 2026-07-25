@@ -368,8 +368,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		// No idea how to distinguise the bone nodes so wrap it in an if
 		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
 		ANKI_CHECK(m_sceneFile.writeText("if node ~= nil then\n"));
-		ANKI_CHECK(
-			m_sceneFile.writeTextf("\tgetEventManager():newAnimationEvent(\"%s%s\", \"%s\", node)\n", m_rpath.cstr(), animFname.cstr(), node.name));
+		ANKI_CHECK(m_sceneFile.writeText("\tcomp = node:newAnimationComponent()\n"));
+		ANKI_CHECK(m_sceneFile.writeTextf("\tcomp:setAnimationFilename(0, \"%s%s\")\n", m_rpath.cstr(), animFname.cstr()));
+		ANKI_CHECK(m_sceneFile.writeText("\tcomp:setAnimationState(0, AnimationState.kPlaying)\n"));
 		ANKI_CHECK(m_sceneFile.writeText("end\n"));
 	}
 

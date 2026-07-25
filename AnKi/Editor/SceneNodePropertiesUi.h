@@ -49,6 +49,7 @@ private:
 	void cameraComponent(CameraComponent& comp);
 	void skyboxComponent(SkyboxComponent& comp);
 	void triggerComponent(TriggerComponent& comp);
+	void animationComponent(AnimationComponent& comp);
 
 	static void dummyButton(I32 id)
 	{

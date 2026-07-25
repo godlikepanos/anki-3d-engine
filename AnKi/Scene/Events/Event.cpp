@@ -6,11 +6,10 @@
 #include <AnKi/Scene/Events/Event.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
 
-void Event::init(Second startTime, Second duration)
+Event::Event(Second startTime, Second duration, WeakArray<SceneNode*> nodes)
 {
 	m_startTime = startTime;
 	m_duration = (duration < 0.0) ? kMaxSecond : duration;
@@ -19,13 +18,8 @@ void Event::init(Second startTime, Second duration)
 	{
 		m_reanimate = true;
 	}
-}
 
-Second Event::getDelta(Second crntTime) const
-{
-	const Second d = crntTime - m_startTime; // delta
-	const Second dp = d / m_duration; // delta as persentage
-	return dp;
+	m_associatedNodes = SceneDynamicArray<SceneNode*>(nodes);
 }
 
 } // end namespace anki

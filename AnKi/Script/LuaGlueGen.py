@@ -9,6 +9,7 @@ import os
 import optparse
 import hashlib
 import xml.etree.ElementTree as et
+import re
 
 # Globals
 g_identation_level = 0
@@ -92,28 +93,26 @@ def type_is_number(type):
 
 
 def parse_type_decl(arg_txt):
-    """ Parse an arg text """
+    """ Parse an arg text. A full expression that can be parsed is: WeakArray<const type&> """
 
-    tokens = arg_txt.split(" ")
-    tokens_size = len(tokens)
+    regex = re.compile(
+        r"^(?P<array>(?:Const)?WeakArray<)?"  # optional WeakArray< wrapper
+        r"(?:(?P<const>const)\s+)?"           # optional const
+        r"(?P<type>.+?)"                      # the type (non-greedy)
+        r"\s*(?P<qual>[&*]?)"                 # optional & or *
+        r"(?(array)>)$"                       # closing > required iff WeakArray< matched
+    )
 
-    type = tokens[tokens_size - 1]
-    type_len = len(type)
-    is_ptr = False
-    is_ref = False
-    if type[type_len - 1] == "&":
-        is_ref = True
-    elif type[type_len - 1] == "*":
-        is_ptr = True
+    m = regex.match(arg_txt.strip())
+    if not m:
+        raise RuntimeError("Cannot parse type declaration: %s" % arg_txt)
 
-    if is_ref or is_ptr:
-        type = type[:-1]
+    is_weak_array = m.group("array") is not None
+    is_const = m.group("const") is not None
+    type = m.group("type")
+    qual = m.group("qual")
 
-    is_const = False
-    if tokens[0] == "const":
-        is_const = True
-
-    return (type, is_ref, is_ptr, is_const)
+    return (type, qual == "&", qual == "*", is_const, is_weak_array)
 
 
 def ret(ret_el):
@@ -126,7 +125,7 @@ def ret(ret_el):
     wglue("// Push return value")
 
     type_txt = ret_el.text
-    (type, is_ref, is_ptr, is_const) = parse_type_decl(type_txt)
+    (type, is_ref, is_ptr, is_const, is_weak_array) = parse_type_decl(type_txt)
 
     if is_ptr:
         if ret_el.get("canBeNullptr") is not None and ret_el.get("canBeNullptr") == "1":
@@ -190,9 +189,75 @@ def ret(ret_el):
 def arg(arg_txt, stack_index, index):
     """ Write the pop code for a single argument """
 
-    (type, is_ref, is_ptr, is_const) = parse_type_decl(arg_txt)
+    (type, is_ref, is_ptr, is_const, is_weak_array) = parse_type_decl(arg_txt)
 
-    if type_is_bool(type) or type_is_number(type):
+    if is_weak_array:
+        if is_ref:
+            raise RuntimeError("References not supported: %s" % arg_txt)
+
+        if is_const:
+            raise RuntimeError("const not supported: %s" % arg_txt)
+
+        wglue("U32 arg%dTableSize;" % index)
+        wglue("if(LuaBinder::checkTable(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, arg%dTableSize)) [[unlikely]]" % (stack_index, index))
+        wglue("{")
+        ident(1)
+        wglue("return lua_error(l);")
+        ident(-1)
+        wglue("}")
+
+        wglue("ScriptDynamicArray<%s%s> arg%dArr;" % (type, "*" if is_ptr else "", index))
+        wglue("arg%dArr.resize(arg%dTableSize);" % (index, index))
+        wglue("WeakArray<%s%s> arg%d(arg%dArr);" % (type, "*" if is_ptr else "", index, index))
+
+        wglue("for(U32 i = 0; i < arg%dTableSize; ++i)" % index)
+        wglue("{")
+        ident(1)
+        wglue("lua_rawgeti(l, %d, int(i) + 1); // Push the element at the top of the stack" % stack_index)
+
+        if type_is_bool(type) or type_is_number(type):
+            wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, arg%d[i])) [[unlikely]]" % index)
+            wglue("{")
+            ident(1)
+            wglue("lua_pop(l, 1); // Pop because of the rawgeti")
+            wglue("return lua_error(l);")
+            ident(-1)
+            wglue("}")
+        elif type == "char" or type == "CString":
+            raise RuntimeError("Strings not supported at the moment: %s" % arg_txt)
+        elif type_is_enum(type):
+            wglue("lua_Number tmp;")
+            wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, tmp)) [[unlikely]]")
+            wglue("{")
+            ident(1)
+            wglue("lua_pop(l, 1); // Pop because of the rawgeti")
+            wglue("return lua_error(l);")
+            ident(-1)
+            wglue("}")
+            wglue("arg%d[i] = %s(tmp);" % (index, type))
+        else:
+            # User data
+            wglue("extern LuaUserDataTypeInfo g_luaUserDataTypeInfo%s;" % type)
+            wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % type)
+            wglue("{")
+            ident(1)
+            wglue("lua_pop(l, 1); // Pop because of the rawgeti")
+            wglue("return lua_error(l);")
+            ident(-1)
+            wglue("}")
+            wglue("")
+
+            wglue("%s* iarg = ud->getData<%s>();" % (type, type))
+
+            if is_ptr:
+                wglue("arg%d[i] = iarg;" % index)
+            else:
+                wglue("arg%d[i] = *iarg;" % index)
+
+        wglue("lua_pop(l, 1); // Pop because of the rawgeti")
+        ident(-1)
+        wglue("}")
+    elif type_is_bool(type) or type_is_number(type):
         wglue("%s arg%d;" % (type, index))
         wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, arg%d)) [[unlikely]]" % (stack_index, index))
         wglue("{")

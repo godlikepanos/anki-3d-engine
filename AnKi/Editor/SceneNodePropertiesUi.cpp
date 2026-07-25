@@ -5,6 +5,8 @@
 
 #include <AnKi/Editor/SceneNodePropertiesUi.h>
 #include <AnKi/Scene.h>
+#include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Resource/AnimationResource.h>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
 
 namespace anki {
@@ -266,6 +268,9 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 					case SceneComponentType::kTrigger:
 						triggerComponent(static_cast<TriggerComponent&>(comp));
 						break;
+					case SceneComponentType::kAnimation:
+						animationComponent(static_cast<AnimationComponent&>(comp));
+						break;
 					default:
 						ImGui::Text("TODO");
 					}
@@ -454,7 +459,7 @@ end
 
 	// List vars
 	U32 varCount = 0;
-	comp.iterateVariables([&](ScriptComponentVariable& var) -> FunctorContinue {
+	comp.iterateVariables([&](ScriptVariable& var) -> FunctorContinue {
 		if(varCount++ == 0)
 		{
 			ImGui::Text(" -- Vars --");
@@ -464,7 +469,7 @@ end
 
 		switch(var.getType())
 		{
-		case ScriptComponentVariableType::kNumber:
+		case ScriptVariableType::kNumber:
 		{
 			F32 value = F32(var.getNumber());
 			if(ImGui::InputFloat(name, &value))
@@ -473,7 +478,7 @@ end
 			}
 			break;
 		}
-		case ScriptComponentVariableType::kBool:
+		case ScriptVariableType::kBool:
 		{
 			Bool value = var.getBool();
 			if(ImGui::Checkbox(name, &value))
@@ -482,7 +487,7 @@ end
 			}
 			break;
 		}
-		case ScriptComponentVariableType::kString:
+		case ScriptVariableType::kString:
 		{
 			Array<Char, kMaxTextInputLen> buff;
 			std::strncpy(buff.getBegin(), var.getString().cstr(), buff.getSize());
@@ -493,7 +498,7 @@ end
 			}
 			break;
 		}
-		case ScriptComponentVariableType::kVec2:
+		case ScriptVariableType::kVec2:
 		{
 			Vec2 value = var.getVec2();
 			if(ImGui::InputFloat2(name, &value.x))
@@ -502,7 +507,7 @@ end
 			}
 			break;
 		}
-		case ScriptComponentVariableType::kVec3:
+		case ScriptVariableType::kVec3:
 		{
 			Vec3 value = var.getVec3();
 			if(ImGui::InputFloat3(name, &value.x))
@@ -511,7 +516,7 @@ end
 			}
 			break;
 		}
-		case ScriptComponentVariableType::kVec4:
+		case ScriptVariableType::kVec4:
 		{
 			Vec4 value = var.getVec4();
 			if(ImGui::InputFloat4(name, &value.x))
@@ -1228,6 +1233,186 @@ void SceneNodePropertiesUi::triggerComponent(TriggerComponent& comp)
 			}
 		}
 		ImGui::EndCombo();
+	}
+}
+
+void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
+{
+	if(!comp.isValid())
+	{
+		ImGui::SameLine();
+		ImGui::TextUnformatted(ICON_MDI_ALERT);
+		ImGui::SetItemTooltip("Component not valid");
+	}
+
+	const DynamicArray<CString> filenames = gatherResourceFilenames(".ankianim");
+
+	for(U32 i = 0; i < comp.kMaxAnimationTracks; ++i)
+	{
+		if(!ImGui::TreeNode(String().sprintf("Track #%u", i).cstr()))
+		{
+			continue;
+		}
+
+		// Playback buttons
+		{
+			if(ImGui::Button(ICON_MDI_PLAY))
+			{
+				comp.setEditorAnimationState(i, AnimationState::kPlaying);
+			}
+			ImGui::SetItemTooltip("Play");
+			ImGui::SameLine();
+
+			if(ImGui::Button(ICON_MDI_PAUSE))
+			{
+				comp.setEditorAnimationState(i, AnimationState::kPaused);
+			}
+			ImGui::SetItemTooltip("Pause");
+			ImGui::SameLine();
+
+			if(ImGui::Button(ICON_MDI_STOP))
+			{
+				comp.setEditorAnimationState(i, AnimationState::kStopped);
+			}
+			ImGui::SetItemTooltip("Stop");
+			ImGui::SameLine();
+
+			if(ImGui::Button(ICON_MDI_DELETE))
+			{
+				comp.resetTrack(i);
+			}
+			ImGui::SetItemTooltip("Clear track");
+			ImGui::SameLine();
+		}
+
+		drawLocateResourceButton(comp.hasAnimationFilename(i) ? comp.getAnimationFilename(i) : "");
+
+		// Filename
+		{
+			const String currentFilename = comp.hasAnimationFilename(i) ? comp.getAnimationFilename(i) : "";
+			U32 newSelectedFilename = kMaxU32;
+
+			ImGui::SetNextItemWidth(-1.0f);
+			const Bool selected = comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
+
+			if(selected && currentFilename != filenames[newSelectedFilename])
+			{
+				comp.setAnimationFilename(i, filenames[newSelectedFilename]);
+			}
+		}
+
+		// Channel
+		{
+			ImGui::BeginDisabled(!comp.hasAnimationFilename(i));
+
+			const CString currentChannel = comp.hasAnimationFilename(i) ? comp.getAnimationChannel(i) : "";
+			if(ImGui::BeginCombo("Channel", currentChannel.cstr()))
+			{
+				// Load the (cached) resource only while the dropdown is open, to enumerate its channels
+				AnimationResourcePtr anim;
+				if(!ResourceManager::getSingleton().loadResource(comp.getAnimationFilename(i), anim))
+				{
+					for(const AnimationChannel& channel : anim->getChannels())
+					{
+						const CString channelName = channel.m_name;
+						const Bool isSelected = channelName == currentChannel;
+						if(ImGui::Selectable(channelName.cstr(), isSelected))
+						{
+							comp.setAnimationChannel(i, channelName);
+						}
+
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if(isSelected)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			ImGui::EndDisabled();
+		}
+
+		// Blend weight
+		{
+			F32 blendWeight = comp.getAnimationBlendWeight(i);
+			if(ImGui::SliderFloat("Blend Weight", &blendWeight, 0.01f, 1.0f))
+			{
+				comp.setAnimationBlendWeight(i, blendWeight);
+			}
+		}
+
+		// Speed
+		{
+			F32 speed = comp.getAnimationSpeed(i);
+			if(ImGui::DragFloat("Speed", &speed, 0.01f, -100.0f, 100.0f, "%.3f"))
+			{
+				comp.setAnimationSpeed(i, speed);
+			}
+		}
+
+		// Wrap mode
+		if(ImGui::BeginCombo("Wrap Mode", kAnimationWrapModeNames[comp.getAnimationWrapMode(i)]))
+		{
+			for(AnimationWrapMode mode : EnumIterable<AnimationWrapMode>())
+			{
+				const Bool selected = mode == comp.getAnimationWrapMode(i);
+				if(ImGui::Selectable(kAnimationWrapModeNames[mode], selected))
+				{
+					comp.setAnimationWrapMode(i, mode);
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if(selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		// Blend mode
+		if(ImGui::BeginCombo("Blend Mode", kAnimationBlendModeNames[comp.getAnimationBlendMode(i)]))
+		{
+			for(AnimationBlendMode mode : EnumIterable<AnimationBlendMode>())
+			{
+				const Bool selected = mode == comp.getAnimationBlendMode(i);
+				if(ImGui::Selectable(kAnimationBlendModeNames[mode], selected))
+				{
+					comp.setAnimationBlendMode(i, mode);
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if(selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		// State
+		if(ImGui::BeginCombo("State", kAnimationStateNames[comp.getAnimationState(i)]))
+		{
+			for(AnimationState state : EnumIterable<AnimationState>())
+			{
+				const Bool selected = state == comp.getAnimationState(i);
+				if(ImGui::Selectable(kAnimationStateNames[state], selected))
+				{
+					comp.setAnimationState(i, state);
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if(selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::TreePop();
 	}
 }
 

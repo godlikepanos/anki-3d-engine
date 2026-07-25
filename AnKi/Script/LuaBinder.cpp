@@ -236,6 +236,23 @@ Error LuaBinder::checkUserData(lua_State* l, const Char* file, U32 line, const C
 	return err;
 }
 
+Error LuaBinder::checkTable(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, U32& tableSize)
+{
+	Error err = Error::kNone;
+
+	if(lua_type(l, stackIdx) != LUA_TTABLE)
+	{
+		err = Error::kUserData;
+		lua_pushfstring(l, "Table expected, got %s. Location: %s:%d %s", luaL_typename(l, stackIdx), file, line, func);
+	}
+	else
+	{
+		tableSize = U32(lua_rawlen(l, stackIdx));
+	}
+
+	return err;
+}
+
 Error LuaBinder::checkArgsCount(lua_State* l, const Char* file, U32 line, const Char* func, I argsCount)
 {
 	const I actualArgsCount = lua_gettop(l);

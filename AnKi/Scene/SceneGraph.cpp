@@ -39,6 +39,7 @@
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Scene/Components/MeshComponent.h>
 #include <AnKi/Scene/Components/MaterialComponent.h>
+#include <AnKi/Scene/Components/AnimationComponent.h>
 
 namespace anki {
 
@@ -566,7 +567,7 @@ void SceneGraph::updateNodes(U32 tid, UpdateSceneNodesCtx& ctx)
 		// Process nodes
 		for(U32 i = 0; i < batchSize; ++i)
 		{
-			SceneNode& node = *batch[i];
+			[[maybe_unused]] SceneNode& node = *batch[i];
 			ANKI_ASSERT(node.getParent() == nullptr);
 			updateNode(tid, *batch[i], ctx);
 		}

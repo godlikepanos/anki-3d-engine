@@ -9,21 +9,18 @@
 
 namespace anki {
 
-/// @addtogroup script
-/// @{
-
-/// A sandboxed LUA environment.
+// A sandboxed LUA environment.
 class ScriptEnvironment
 {
 public:
-	/// Expose a variable to the scripting engine.
+	// Expose a variable to the scripting engine.
 	template<typename T>
 	void exposeVariable(const char* name, T* y)
 	{
 		LuaBinder::exposeVariable<T>(m_thread.getLuaState(), name, y);
 	}
 
-	/// Evaluate a string
+	// Evaluate a string
 	Error evalString(const CString& str)
 	{
 		return LuaBinder::evalString(m_thread.getLuaState(), str);
@@ -47,6 +44,5 @@ public:
 private:
 	LuaBinder m_thread;
 };
-/// @}
 
 } // end namespace anki

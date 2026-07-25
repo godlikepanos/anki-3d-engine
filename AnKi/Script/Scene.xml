@@ -88,6 +88,22 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kBox"/>
 			<enumerant name="kCount"/>
 		</enum>
+		<enum name="AnimationWrapMode">
+			<enumerant name="kOnce"/>
+			<enumerant name="kLoop"/>
+			<enumerant name="kCount"/>
+		</enum>
+		<enum name="AnimationBlendMode">
+			<enumerant name="kBlend"/>
+			<enumerant name="kAdditive"/>
+			<enumerant name="kCount"/>
+		</enum>
+		<enum name="AnimationState">
+			<enumerant name="kStopped"/>
+			<enumerant name="kPaused"/>
+			<enumerant name="kPlaying"/>
+			<enumerant name="kCount"/>
+		</enum>
 	</enums>
 
 	<classes>
@@ -484,6 +500,116 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 
+		<class name="AnimationComponent">
+			<methods>
+				<method name="setAnimationFilename">
+					<args>
+						<arg>U32</arg>
+						<arg>CString</arg>
+					</args>
+					<return>AnimationComponent&amp;</return>
+				</method>
+				<method name="getAnimationFilename">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>CString</return>
+				</method>
+				<method name="hasAnimationFilename">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>Bool</return>
+				</method>
+				<method name="setAnimationChannel">
+					<args>
+						<arg>U32</arg>
+						<arg>CString</arg>
+					</args>
+					<return>AnimationComponent&amp;</return>
+				</method>
+				<method name="getAnimationChannel">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>CString</return>
+				</method>
+				<method name="setAnimationBlendWeight">
+					<args>
+						<arg>U32</arg>
+						<arg>F32</arg>
+					</args>
+					<return>AnimationComponent&amp;</return>
+				</method>
+				<method name="getAnimationBlendWeight">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>F32</return>
+				</method>
+				<method name="setAnimationWrapMode">
+					<args>
+						<arg>U32</arg>
+						<arg>AnimationWrapMode</arg>
+					</args>
+					<return>AnimationComponent&amp;</return>
+				</method>
+				<method name="getAnimationWrapMode">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationWrapMode</return>
+				</method>
+				<method name="setAnimationBlendMode">
+					<args>
+						<arg>U32</arg>
+						<arg>AnimationBlendMode</arg>
+					</args>
+					<return>AnimationComponent&amp;</return>
+				</method>
+				<method name="getAnimationBlendMode">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationBlendMode</return>
+				</method>
+				<method name="setAnimationSpeed">
+					<args>
+						<arg>U32</arg>
+						<arg>F32</arg>
+					</args>
+					<return>AnimationComponent&amp;</return>
+				</method>
+				<method name="getAnimationSpeed">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>F32</return>
+				</method>
+				<method name="resetTrack">
+					<args>
+						<arg>U32</arg>
+					</args>
+				</method>
+				<method name="setAnimationState">
+					<args>
+						<arg>U32</arg>
+						<arg>AnimationState</arg>
+					</args>
+					<return>AnimationComponent&amp;</return>
+				</method>
+				<method name="getAnimationState">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationState</return>
+				</method>
+				<method name="isValid">
+					<return>Bool</return>
+				</method>
+			</methods>
+		</class>
+
 		<class name="SkyboxComponent">
 			<methods>
 				<method name="setSkyboxComponentType">
@@ -641,6 +767,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="newComponent&lt;SkinComponent&gt;" alias="newSkinComponent">
 					<return canBeNullptr="1">SkinComponent*</return>
 				</method>
+				<method name="newComponent&lt;AnimationComponent&gt;" alias="newAnimationComponent">
+					<return canBeNullptr="1">AnimationComponent*</return>
+				</method>
 				<method name="newComponent&lt;SkyboxComponent&gt;" alias="newSkyboxComponent">
 					<return canBeNullptr="1">SkyboxComponent*</return>
 				</method>
@@ -684,6 +813,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getFirstComponentOfType&lt;SkinComponent&gt;" alias="getFirstSkinComponent">
 					<return>SkinComponent&amp;</return>
 				</method>
+				<method name="getFirstComponentOfType&lt;AnimationComponent&gt;" alias="getFirstAnimationComponent">
+					<return>AnimationComponent&amp;</return>
+				</method>
 				<method name="getFirstComponentOfType&lt;SkyboxComponent&gt;" alias="getFirstSkyboxComponent">
 					<return>SkyboxComponent&amp;</return>
 				</method>
@@ -724,76 +856,18 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 
-		<class name="LightEvent">
-			<methods>
-				<method name="setIntensityMultiplier">
-					<args><arg>const Vec4&amp;</arg></args>
-				</method>
-				<method name="setFrequency">
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-					</args>
-				</method>
-			</methods>
-		</class>
-
 		<class name="ScriptEvent"/>
-
-		<class name="JitterMoveEvent">
-			<methods>
-				<method name="setPositionLimits">
-					<args>
-						<arg>Vec3</arg>
-						<arg>Vec3</arg>
-					</args>
-				</method>
-			</methods>
-		</class>
-
-		<class name="AnimationEvent"/>
 
 		<class name="EventManager">
 			<methods>
-				<method name="newLightEvent">
-					<overrideCall><![CDATA[LightEvent* ret = newEvent<LightEvent>(self, arg0, arg1, arg2);]]></overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>SceneNode*</arg>
-					</args>
-					<return>LightEvent*</return>
-				</method>
-
 				<method name="newScriptEvent">
-					<overrideCall><![CDATA[ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2, arg3);]]></overrideCall>
+					<overrideCall><![CDATA[ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2);]]></overrideCall>
 					<args>
 						<arg>F32</arg>
 						<arg>F32</arg>
-						<arg>CString</arg>
-						<arg>SceneNode*</arg>
+						<arg>WeakArray&lt;SceneNode*&gt;</arg>
 					</args>
 					<return>ScriptEvent*</return>
-				</method>
-
-				<method name="newJitterMoveEvent">
-					<overrideCall><![CDATA[JitterMoveEvent* ret = newEvent<JitterMoveEvent>(self, arg0, arg1, arg2);]]></overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>SceneNode*</arg>
-					</args>
-					<return>JitterMoveEvent*</return>
-				</method>
-
-				<method name="newAnimationEvent">
-					<overrideCall><![CDATA[AnimationEvent* ret = newEvent<AnimationEvent>(self, arg0, arg1, arg2);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-						<arg>CString</arg>
-						<arg>SceneNode*</arg>
-					</args>
-					<return>AnimationEvent*</return>
 				</method>
 			</methods>
 		</class>

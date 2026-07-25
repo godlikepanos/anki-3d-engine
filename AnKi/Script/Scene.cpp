@@ -341,6 +341,113 @@ static inline void wrapTriggerComponentShapeType(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationWrapMode = {4951281577899447569, "AnimationWrapMode", 0, nullptr, nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<AnimationWrapMode>()
+{
+	return g_luaUserDataTypeInfoAnimationWrapMode;
+}
+
+// Wrap enum AnimationWrapMode.
+static inline void wrapAnimationWrapMode(lua_State* l)
+{
+	lua_newtable(l);
+	lua_setglobal(l, g_luaUserDataTypeInfoAnimationWrapMode.m_typeName);
+	lua_getglobal(l, g_luaUserDataTypeInfoAnimationWrapMode.m_typeName);
+
+	lua_pushstring(l, "kOnce");
+	ANKI_ASSERT(AnimationWrapMode(lua_Number(AnimationWrapMode::kOnce)) == AnimationWrapMode::kOnce && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationWrapMode::kOnce));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kLoop");
+	ANKI_ASSERT(AnimationWrapMode(lua_Number(AnimationWrapMode::kLoop)) == AnimationWrapMode::kLoop && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationWrapMode::kLoop));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kCount");
+	ANKI_ASSERT(AnimationWrapMode(lua_Number(AnimationWrapMode::kCount)) == AnimationWrapMode::kCount && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationWrapMode::kCount));
+	lua_settable(l, -3);
+
+	lua_settop(l, 0);
+}
+
+LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationBlendMode = {-5700154232241555023, "AnimationBlendMode", 0, nullptr, nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<AnimationBlendMode>()
+{
+	return g_luaUserDataTypeInfoAnimationBlendMode;
+}
+
+// Wrap enum AnimationBlendMode.
+static inline void wrapAnimationBlendMode(lua_State* l)
+{
+	lua_newtable(l);
+	lua_setglobal(l, g_luaUserDataTypeInfoAnimationBlendMode.m_typeName);
+	lua_getglobal(l, g_luaUserDataTypeInfoAnimationBlendMode.m_typeName);
+
+	lua_pushstring(l, "kBlend");
+	ANKI_ASSERT(AnimationBlendMode(lua_Number(AnimationBlendMode::kBlend)) == AnimationBlendMode::kBlend
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationBlendMode::kBlend));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kAdditive");
+	ANKI_ASSERT(AnimationBlendMode(lua_Number(AnimationBlendMode::kAdditive)) == AnimationBlendMode::kAdditive
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationBlendMode::kAdditive));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kCount");
+	ANKI_ASSERT(AnimationBlendMode(lua_Number(AnimationBlendMode::kCount)) == AnimationBlendMode::kCount
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationBlendMode::kCount));
+	lua_settable(l, -3);
+
+	lua_settop(l, 0);
+}
+
+LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationState = {5372083587492955195, "AnimationState", 0, nullptr, nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<AnimationState>()
+{
+	return g_luaUserDataTypeInfoAnimationState;
+}
+
+// Wrap enum AnimationState.
+static inline void wrapAnimationState(lua_State* l)
+{
+	lua_newtable(l);
+	lua_setglobal(l, g_luaUserDataTypeInfoAnimationState.m_typeName);
+	lua_getglobal(l, g_luaUserDataTypeInfoAnimationState.m_typeName);
+
+	lua_pushstring(l, "kStopped");
+	ANKI_ASSERT(AnimationState(lua_Number(AnimationState::kStopped)) == AnimationState::kStopped && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationState::kStopped));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kPaused");
+	ANKI_ASSERT(AnimationState(lua_Number(AnimationState::kPaused)) == AnimationState::kPaused && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationState::kPaused));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kPlaying");
+	ANKI_ASSERT(AnimationState(lua_Number(AnimationState::kPlaying)) == AnimationState::kPlaying && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationState::kPlaying));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kCount");
+	ANKI_ASSERT(AnimationState(lua_Number(AnimationState::kCount)) == AnimationState::kCount && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(AnimationState::kCount));
+	lua_settable(l, -3);
+
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo g_luaUserDataTypeInfoWeakArraySceneNodePtr = {
 	8167149759966498512, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(), nullptr, nullptr};
 
@@ -3167,6 +3274,732 @@ static inline void wrapSkinComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent = {-1479869773986351942, "AnimationComponent",
+															   LuaUserData::computeSizeForGarbageCollected<AnimationComponent>(), nullptr, nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<AnimationComponent>()
+{
+	return g_luaUserDataTypeInfoAnimationComponent;
+}
+
+// Wrap method AnimationComponent::setAnimationFilename.
+static inline int wrapAnimationComponentsetAnimationFilename(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	const char* arg1;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	AnimationComponent& ret = self->setAnimationFilename(arg0, arg1);
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::getAnimationFilename.
+static inline int wrapAnimationComponentgetAnimationFilename(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	CString ret = self->getAnimationFilename(arg0);
+
+	// Push return value
+	lua_pushstring(l, &ret[0]);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::hasAnimationFilename.
+static inline int wrapAnimationComponenthasAnimationFilename(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Bool ret = self->hasAnimationFilename(arg0);
+
+	// Push return value
+	lua_pushboolean(l, ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::setAnimationChannel.
+static inline int wrapAnimationComponentsetAnimationChannel(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	const char* arg1;
+	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	AnimationComponent& ret = self->setAnimationChannel(arg0, arg1);
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::getAnimationChannel.
+static inline int wrapAnimationComponentgetAnimationChannel(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	CString ret = self->getAnimationChannel(arg0);
+
+	// Push return value
+	lua_pushstring(l, &ret[0]);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::setAnimationBlendWeight.
+static inline int wrapAnimationComponentsetAnimationBlendWeight(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	AnimationComponent& ret = self->setAnimationBlendWeight(arg0, arg1);
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::getAnimationBlendWeight.
+static inline int wrapAnimationComponentgetAnimationBlendWeight(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	F32 ret = self->getAnimationBlendWeight(arg0);
+
+	// Push return value
+	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::setAnimationWrapMode.
+static inline int wrapAnimationComponentsetAnimationWrapMode(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	lua_Number arg1Tmp;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1Tmp)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+	const AnimationWrapMode arg1 = AnimationWrapMode(arg1Tmp);
+
+	// Call the method
+	AnimationComponent& ret = self->setAnimationWrapMode(arg0, arg1);
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::getAnimationWrapMode.
+static inline int wrapAnimationComponentgetAnimationWrapMode(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	AnimationWrapMode ret = self->getAnimationWrapMode(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<AnimationWrapMode>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "AnimationWrapMode");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationWrapMode;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoAnimationWrapMode);
+	::new(ud->getData<AnimationWrapMode>()) AnimationWrapMode(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::setAnimationBlendMode.
+static inline int wrapAnimationComponentsetAnimationBlendMode(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	lua_Number arg1Tmp;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1Tmp)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+	const AnimationBlendMode arg1 = AnimationBlendMode(arg1Tmp);
+
+	// Call the method
+	AnimationComponent& ret = self->setAnimationBlendMode(arg0, arg1);
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::getAnimationBlendMode.
+static inline int wrapAnimationComponentgetAnimationBlendMode(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	AnimationBlendMode ret = self->getAnimationBlendMode(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<AnimationBlendMode>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "AnimationBlendMode");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationBlendMode;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoAnimationBlendMode);
+	::new(ud->getData<AnimationBlendMode>()) AnimationBlendMode(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::setAnimationSpeed.
+static inline int wrapAnimationComponentsetAnimationSpeed(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	AnimationComponent& ret = self->setAnimationSpeed(arg0, arg1);
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::getAnimationSpeed.
+static inline int wrapAnimationComponentgetAnimationSpeed(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	F32 ret = self->getAnimationSpeed(arg0);
+
+	// Push return value
+	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::resetTrack.
+static inline int wrapAnimationComponentresetTrack(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->resetTrack(arg0);
+
+	return 0;
+}
+
+// Wrap method AnimationComponent::setAnimationState.
+static inline int wrapAnimationComponentsetAnimationState(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	lua_Number arg1Tmp;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1Tmp)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+	const AnimationState arg1 = AnimationState(arg1Tmp);
+
+	// Call the method
+	AnimationComponent& ret = self->setAnimationState(arg0, arg1);
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::getAnimationState.
+static inline int wrapAnimationComponentgetAnimationState(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	AnimationState ret = self->getAnimationState(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<AnimationState>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "AnimationState");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationState;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoAnimationState);
+	::new(ud->getData<AnimationState>()) AnimationState(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method AnimationComponent::isValid.
+static inline int wrapAnimationComponentisValid(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoAnimationComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	AnimationComponent* self = ud->getData<AnimationComponent>();
+
+	// Call the method
+	Bool ret = self->isValid();
+
+	// Push return value
+	lua_pushboolean(l, ret);
+
+	return 1;
+}
+
+// Wrap class AnimationComponent.
+static inline void wrapAnimationComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, &g_luaUserDataTypeInfoAnimationComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setAnimationFilename", wrapAnimationComponentsetAnimationFilename);
+	LuaBinder::pushLuaCFuncMethod(l, "getAnimationFilename", wrapAnimationComponentgetAnimationFilename);
+	LuaBinder::pushLuaCFuncMethod(l, "hasAnimationFilename", wrapAnimationComponenthasAnimationFilename);
+	LuaBinder::pushLuaCFuncMethod(l, "setAnimationChannel", wrapAnimationComponentsetAnimationChannel);
+	LuaBinder::pushLuaCFuncMethod(l, "getAnimationChannel", wrapAnimationComponentgetAnimationChannel);
+	LuaBinder::pushLuaCFuncMethod(l, "setAnimationBlendWeight", wrapAnimationComponentsetAnimationBlendWeight);
+	LuaBinder::pushLuaCFuncMethod(l, "getAnimationBlendWeight", wrapAnimationComponentgetAnimationBlendWeight);
+	LuaBinder::pushLuaCFuncMethod(l, "setAnimationWrapMode", wrapAnimationComponentsetAnimationWrapMode);
+	LuaBinder::pushLuaCFuncMethod(l, "getAnimationWrapMode", wrapAnimationComponentgetAnimationWrapMode);
+	LuaBinder::pushLuaCFuncMethod(l, "setAnimationBlendMode", wrapAnimationComponentsetAnimationBlendMode);
+	LuaBinder::pushLuaCFuncMethod(l, "getAnimationBlendMode", wrapAnimationComponentgetAnimationBlendMode);
+	LuaBinder::pushLuaCFuncMethod(l, "setAnimationSpeed", wrapAnimationComponentsetAnimationSpeed);
+	LuaBinder::pushLuaCFuncMethod(l, "getAnimationSpeed", wrapAnimationComponentgetAnimationSpeed);
+	LuaBinder::pushLuaCFuncMethod(l, "resetTrack", wrapAnimationComponentresetTrack);
+	LuaBinder::pushLuaCFuncMethod(l, "setAnimationState", wrapAnimationComponentsetAnimationState);
+	LuaBinder::pushLuaCFuncMethod(l, "getAnimationState", wrapAnimationComponentgetAnimationState);
+	LuaBinder::pushLuaCFuncMethod(l, "isValid", wrapAnimationComponentisValid);
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo g_luaUserDataTypeInfoSkyboxComponent = {5936716203201276114, "SkyboxComponent",
 															LuaUserData::computeSizeForGarbageCollected<SkyboxComponent>(), nullptr, nullptr};
 
@@ -4574,6 +5407,45 @@ static inline int wrapSceneNodenewSkinComponent(lua_State* l)
 	return 1;
 }
 
+// Wrap method SceneNode::newComponent<AnimationComponent>.
+static inline int wrapSceneNodenewAnimationComponent(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	AnimationComponent* ret = self->newComponent<AnimationComponent>();
+
+	// Push return value
+	if(ret == nullptr) [[unlikely]]
+	{
+		lua_pushnil(l);
+		return 1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, ret);
+
+	return 1;
+}
+
 // Wrap method SceneNode::newComponent<SkyboxComponent>.
 static inline int wrapSceneNodenewSkyboxComponent(lua_State* l)
 {
@@ -5048,6 +5920,39 @@ static inline int wrapSceneNodegetFirstSkinComponent(lua_State* l)
 	return 1;
 }
 
+// Wrap method SceneNode::getFirstComponentOfType<AnimationComponent>.
+static inline int wrapSceneNodegetFirstAnimationComponent(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	AnimationComponent& ret = self->getFirstComponentOfType<AnimationComponent>();
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "AnimationComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoAnimationComponent, &ret);
+
+	return 1;
+}
+
 // Wrap method SceneNode::getFirstComponentOfType<SkyboxComponent>.
 static inline int wrapSceneNodegetFirstSkyboxComponent(lua_State* l)
 {
@@ -5142,6 +6047,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newMeshComponent", wrapSceneNodenewMeshComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "newMaterialComponent", wrapSceneNodenewMaterialComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "newSkinComponent", wrapSceneNodenewSkinComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newAnimationComponent", wrapSceneNodenewAnimationComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "newSkyboxComponent", wrapSceneNodenewSkyboxComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "newJointComponent", wrapSceneNodenewJointComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstLightComponent", wrapSceneNodegetFirstLightComponent);
@@ -5156,6 +6062,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstMeshComponent", wrapSceneNodegetFirstMeshComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstMaterialComponent", wrapSceneNodegetFirstMaterialComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstSkinComponent", wrapSceneNodegetFirstSkinComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getFirstAnimationComponent", wrapSceneNodegetFirstAnimationComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstSkyboxComponent", wrapSceneNodegetFirstSkyboxComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFirstJointComponent", wrapSceneNodegetFirstJointComponent);
 	lua_settop(l, 0);
@@ -5359,99 +6266,6 @@ static inline void wrapEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoLightEvent = {-7263557460300842587, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(),
-													   nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightEvent>()
-{
-	return g_luaUserDataTypeInfoLightEvent;
-}
-
-// Wrap method LightEvent::setIntensityMultiplier.
-static inline int wrapLightEventsetIntensityMultiplier(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightEvent, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	LightEvent* self = ud->getData<LightEvent>();
-
-	// Pop arguments
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec4* iarg0 = ud->getData<Vec4>();
-	const Vec4& arg0(*iarg0);
-
-	// Call the method
-	self->setIntensityMultiplier(arg0);
-
-	return 0;
-}
-
-// Wrap method LightEvent::setFrequency.
-static inline int wrapLightEventsetFrequency(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightEvent, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	LightEvent* self = ud->getData<LightEvent>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	self->setFrequency(arg0, arg1);
-
-	return 0;
-}
-
-// Wrap class LightEvent.
-static inline void wrapLightEvent(lua_State* l)
-{
-	LuaBinder::createClass(l, &g_luaUserDataTypeInfoLightEvent);
-	LuaBinder::pushLuaCFuncMethod(l, "setIntensityMultiplier", wrapLightEventsetIntensityMultiplier);
-	LuaBinder::pushLuaCFuncMethod(l, "setFrequency", wrapLightEventsetFrequency);
-	lua_settop(l, 0);
-}
-
 LuaUserDataTypeInfo g_luaUserDataTypeInfoScriptEvent = {8802998188749779973, "ScriptEvent",
 														LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(), nullptr, nullptr};
 
@@ -5468,84 +6282,6 @@ static inline void wrapScriptEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo g_luaUserDataTypeInfoJitterMoveEvent = {3371435104623557985, "JitterMoveEvent",
-															LuaUserData::computeSizeForGarbageCollected<JitterMoveEvent>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<JitterMoveEvent>()
-{
-	return g_luaUserDataTypeInfoJitterMoveEvent;
-}
-
-// Wrap method JitterMoveEvent::setPositionLimits.
-static inline int wrapJitterMoveEventsetPositionLimits(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoJitterMoveEvent, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	JitterMoveEvent* self = ud->getData<JitterMoveEvent>();
-
-	// Pop arguments
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec3* iarg0 = ud->getData<Vec3>();
-	Vec3 arg0(*iarg0);
-
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec3* iarg1 = ud->getData<Vec3>();
-	Vec3 arg1(*iarg1);
-
-	// Call the method
-	self->setPositionLimits(arg0, arg1);
-
-	return 0;
-}
-
-// Wrap class JitterMoveEvent.
-static inline void wrapJitterMoveEvent(lua_State* l)
-{
-	LuaBinder::createClass(l, &g_luaUserDataTypeInfoJitterMoveEvent);
-	LuaBinder::pushLuaCFuncMethod(l, "setPositionLimits", wrapJitterMoveEventsetPositionLimits);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationEvent = {5208313369124018135, "AnimationEvent",
-														   LuaUserData::computeSizeForGarbageCollected<AnimationEvent>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<AnimationEvent>()
-{
-	return g_luaUserDataTypeInfoAnimationEvent;
-}
-
-// Wrap class AnimationEvent.
-static inline void wrapAnimationEvent(lua_State* l)
-{
-	LuaBinder::createClass(l, &g_luaUserDataTypeInfoAnimationEvent);
-	lua_settop(l, 0);
-}
-
 LuaUserDataTypeInfo g_luaUserDataTypeInfoEventManager = {-6340090835501105634, "EventManager",
 														 LuaUserData::computeSizeForGarbageCollected<EventManager>(), nullptr, nullptr};
 
@@ -5555,8 +6291,8 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<EventManager>()
 	return g_luaUserDataTypeInfoEventManager;
 }
 
-// Wrap method EventManager::newLightEvent.
-static inline int wrapEventManagernewLightEvent(lua_State* l)
+// Wrap method EventManager::newScriptEvent.
+static inline int wrapEventManagernewScriptEvent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -5588,83 +6324,31 @@ static inline int wrapEventManagernewLightEvent(lua_State* l)
 		return lua_error(l);
 	}
 
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
+	U32 arg2TableSize;
+	if(LuaBinder::checkTable(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg2TableSize)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
+	ScriptDynamicArray<SceneNode*> arg2Arr;
+	arg2Arr.resize(arg2TableSize);
+	WeakArray<SceneNode*> arg2(arg2Arr);
+	for(U32 i = 0; i < arg2TableSize; ++i)
+	{
+		lua_rawgeti(l, 4, int(i) + 1); // Push the element at the top of the stack
+		extern LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode;
+		if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
+		{
+			lua_pop(l, 1); // Pop because of the rawgeti
+			return lua_error(l);
+		}
 
-	SceneNode* iarg2 = ud->getData<SceneNode>();
-	SceneNode* arg2(iarg2);
+		SceneNode* iarg = ud->getData<SceneNode>();
+		arg2[i] = iarg;
+		lua_pop(l, 1); // Pop because of the rawgeti
+	}
 
 	// Call the method
-	LightEvent* ret = newEvent<LightEvent>(self, arg0, arg1, arg2);
-
-	// Push return value
-	if(ret == nullptr) [[unlikely]]
-	{
-		return luaL_error(l, "Returned nullptr. Location %s:%d %s", ANKI_FILE, __LINE__, ANKI_FUNC);
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "LightEvent");
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightEvent;
-	ud->initPointed(&g_luaUserDataTypeInfoLightEvent, ret);
-
-	return 1;
-}
-
-// Wrap method EventManager::newScriptEvent.
-static inline int wrapEventManagernewScriptEvent(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoEventManager, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	EventManager* self = ud->getData<EventManager>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	const char* arg2;
-	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	SceneNode* iarg3 = ud->getData<SceneNode>();
-	SceneNode* arg3(iarg3);
-
-	// Call the method
-	ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2, arg3);
+	ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2);
 
 	// Push return value
 	if(ret == nullptr) [[unlikely]]
@@ -5681,134 +6365,11 @@ static inline int wrapEventManagernewScriptEvent(lua_State* l)
 	return 1;
 }
 
-// Wrap method EventManager::newJitterMoveEvent.
-static inline int wrapEventManagernewJitterMoveEvent(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoEventManager, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	EventManager* self = ud->getData<EventManager>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	SceneNode* iarg2 = ud->getData<SceneNode>();
-	SceneNode* arg2(iarg2);
-
-	// Call the method
-	JitterMoveEvent* ret = newEvent<JitterMoveEvent>(self, arg0, arg1, arg2);
-
-	// Push return value
-	if(ret == nullptr) [[unlikely]]
-	{
-		return luaL_error(l, "Returned nullptr. Location %s:%d %s", ANKI_FILE, __LINE__, ANKI_FUNC);
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "JitterMoveEvent");
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoJitterMoveEvent;
-	ud->initPointed(&g_luaUserDataTypeInfoJitterMoveEvent, ret);
-
-	return 1;
-}
-
-// Wrap method EventManager::newAnimationEvent.
-static inline int wrapEventManagernewAnimationEvent(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoEventManager, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	EventManager* self = ud->getData<EventManager>();
-
-	// Pop arguments
-	const char* arg0;
-	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	const char* arg1;
-	if(LuaBinder::checkString(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	SceneNode* iarg2 = ud->getData<SceneNode>();
-	SceneNode* arg2(iarg2);
-
-	// Call the method
-	AnimationEvent* ret = newEvent<AnimationEvent>(self, arg0, arg1, arg2);
-
-	// Push return value
-	if(ret == nullptr) [[unlikely]]
-	{
-		return luaL_error(l, "Returned nullptr. Location %s:%d %s", ANKI_FILE, __LINE__, ANKI_FUNC);
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "AnimationEvent");
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationEvent;
-	ud->initPointed(&g_luaUserDataTypeInfoAnimationEvent, ret);
-
-	return 1;
-}
-
 // Wrap class EventManager.
 static inline void wrapEventManager(lua_State* l)
 {
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoEventManager);
-	LuaBinder::pushLuaCFuncMethod(l, "newLightEvent", wrapEventManagernewLightEvent);
 	LuaBinder::pushLuaCFuncMethod(l, "newScriptEvent", wrapEventManagernewScriptEvent);
-	LuaBinder::pushLuaCFuncMethod(l, "newJitterMoveEvent", wrapEventManagernewJitterMoveEvent);
-	LuaBinder::pushLuaCFuncMethod(l, "newAnimationEvent", wrapEventManagernewAnimationEvent);
 	lua_settop(l, 0);
 }
 
@@ -5891,14 +6452,12 @@ void wrapModuleScene(lua_State* l)
 	wrapMeshComponent(l);
 	wrapMaterialComponent(l);
 	wrapSkinComponent(l);
+	wrapAnimationComponent(l);
 	wrapSkyboxComponent(l);
 	wrapSceneNode(l);
 	wrapSceneGraph(l);
 	wrapEvent(l);
-	wrapLightEvent(l);
 	wrapScriptEvent(l);
-	wrapJitterMoveEvent(l);
-	wrapAnimationEvent(l);
 	wrapEventManager(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 	LuaBinder::pushLuaCFunc(l, "getEventManager", wrapgetEventManager);
@@ -5911,6 +6470,9 @@ void wrapModuleScene(lua_State* l)
 	wrapMeshComponentPrimitiveType(l);
 	wrapReparentFlag(l);
 	wrapTriggerComponentShapeType(l);
+	wrapAnimationWrapMode(l);
+	wrapAnimationBlendMode(l);
+	wrapAnimationState(l);
 }
 
 } // end namespace anki
