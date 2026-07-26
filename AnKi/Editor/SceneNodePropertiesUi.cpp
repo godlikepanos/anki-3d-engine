@@ -1282,7 +1282,6 @@ void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
 				comp.resetTrack(i);
 			}
 			ImGui::SetItemTooltip("Clear track");
-			ImGui::SameLine();
 		}
 
 		drawLocateResourceButton(comp.hasAnimationFilename(i) ? comp.getAnimationFilename(i) : "");
@@ -1298,6 +1297,15 @@ void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
 			if(selected && currentFilename != filenames[newSelectedFilename])
 			{
 				comp.setAnimationFilename(i, filenames[newSelectedFilename]);
+			}
+
+			// Drag and drop
+			if(String droppedFilename = acceptDragDrop(kAnimationAssetDragDropPayload))
+			{
+				if(droppedFilename != currentFilename)
+				{
+					comp.setAnimationFilename(i, droppedFilename);
+				}
 			}
 		}
 

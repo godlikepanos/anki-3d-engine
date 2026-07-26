@@ -74,7 +74,8 @@ enum class AssetFileType : U32
 	kMesh,
 	kLua,
 	kParticleEmitter,
-	kScene
+	kScene,
+	kAnimation,
 };
 
 class AssetBrowserUi::AssetFile
@@ -245,6 +246,10 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			else if(extension == "lua")
 			{
 				filetype = AssetFileType::kLua;
+			}
+			else if(extension == "ankianim")
+			{
+				filetype = AssetFileType::kAnimation;
 			}
 
 			if(filetype != AssetFileType::kNone)
@@ -621,6 +626,17 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 
 						ImGui::PopFont();
 						dragDropSource(file, kScriptAssetDragDropPayload);
+					}
+					else if(file.m_type == AssetFileType::kAnimation)
+					{
+						pushFontSize();
+						if(ImGui::Button(ICON_MDI_ANIMATION, calcIconButtonSize()))
+						{
+							ANKI_LOGE("TODO");
+						}
+
+						ImGui::PopFont();
+						dragDropSource(file, kAnimationAssetDragDropPayload);
 					}
 
 					ImGui::PopID();
