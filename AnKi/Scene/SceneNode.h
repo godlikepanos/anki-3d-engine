@@ -102,6 +102,10 @@ public:
 
 	virtual ~SceneNode();
 
+	// ===========================================================================
+	// Misc                                                                      =
+	// ===========================================================================
+
 	// Return the name. It may be empty for nodes that we don't want to track.
 	CString getName() const
 	{
@@ -129,6 +133,60 @@ public:
 		return m_sceneUuid;
 	}
 
+	Scene& getScene()
+	{
+		const SceneNode* constThis = this;
+		return const_cast<Scene&>(constThis->getScene());
+	}
+
+	const Scene& getScene() const;
+
+	Bool isMarkedForDeletion() const
+	{
+		return m_markedForDeletion;
+	}
+
+	// Mark this and the children nodes for deletion
+	void markForDeletion();
+
+	// Enable serialization for this node, its components and its children
+	void setSerialization(Bool enable)
+	{
+		m_serialize = enable;
+	}
+
+	Bool getSerialization() const
+	{
+		return m_serialize;
+	}
+
+	// Some nodes may need to be updated even on pause
+	void setUpdateOnPause(Bool update)
+	{
+		m_updateOnPause = update;
+	}
+
+	Bool getUpdateOnPause() const
+	{
+		return m_updateOnPause;
+	}
+
+	Timestamp getComponentMaxTimestamp() const
+	{
+		return m_maxComponentTimestamp;
+	}
+
+	void setComponentMaxTimestamp(Timestamp maxComponentTimestamp)
+	{
+		ANKI_ASSERT(maxComponentTimestamp > 0);
+		m_maxComponentTimestamp = maxComponentTimestamp;
+	}
+
+	virtual const SceneNodeRegistryRecord* getSceneNodeRegistryRecord() const
+	{
+		return nullptr;
+	}
+
 	// ===========================================================================
 	// Callbacks                                                                 =
 	// ===========================================================================
@@ -138,7 +196,7 @@ public:
 	{
 	}
 
-	// It's called on TriggerComponent::update
+	// It's called when a node enters a trigger. "this" is the trigger. It's safe to touch the enteringNode
 	virtual void onTriggerEnter([[maybe_unused]] SceneNode* enteringNode)
 	{
 	}
@@ -197,61 +255,9 @@ public:
 		return m_parent;
 	}
 
-	// End hierarchy manipulation //
-
-	Scene& getScene()
-	{
-		const SceneNode* constThis = this;
-		return const_cast<Scene&>(constThis->getScene());
-	}
-
-	const Scene& getScene() const;
-
-	Bool isMarkedForDeletion() const
-	{
-		return m_markedForDeletion;
-	}
-
-	// Mark this and the children nodes for deletion
-	void markForDeletion();
-
-	// Enable serialization for this node, its components and its children
-	void setSerialization(Bool enable)
-	{
-		m_serialize = enable;
-	}
-
-	Bool getSerialization() const
-	{
-		return m_serialize;
-	}
-
-	// Some nodes may need to be updated even on pause
-	void setUpdateOnPause(Bool update)
-	{
-		m_updateOnPause = update;
-	}
-
-	Bool getUpdateOnPause() const
-	{
-		return m_updateOnPause;
-	}
-
-	Timestamp getComponentMaxTimestamp() const
-	{
-		return m_maxComponentTimestamp;
-	}
-
-	void setComponentMaxTimestamp(Timestamp maxComponentTimestamp)
-	{
-		ANKI_ASSERT(maxComponentTimestamp > 0);
-		m_maxComponentTimestamp = maxComponentTimestamp;
-	}
-
-	virtual const SceneNodeRegistryRecord* getSceneNodeRegistryRecord() const
-	{
-		return nullptr;
-	}
+	// ===========================================================================
+	// Component manipulation                                                    =
+	// ===========================================================================
 
 	// Iterate all components.
 	template<typename TFunct>
@@ -452,7 +458,9 @@ public:
 		return m_componentTypeMask;
 	}
 
-	// Movement methods //
+	// ===========================================================================
+	// Transform manipulation                                                    =
+	// ===========================================================================
 
 	// Ignore parent nodes's transform.
 	void setIgnoreParentTransform(Bool ignore)
@@ -588,8 +596,6 @@ public:
 	{
 		return m_localTransformDirty;
 	}
-
-	// End movement methods //
 
 private:
 	class SerializeCommonArgs

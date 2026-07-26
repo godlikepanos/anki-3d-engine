@@ -30,5 +30,6 @@
 
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Scene/Events/ScriptEvent.h>
+#include <AnKi/Scene/Events/TriggerEvent.h>
 
 #include <AnKi/Scene/EditorUiNode.h>

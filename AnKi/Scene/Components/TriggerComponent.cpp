@@ -8,6 +8,8 @@
 #include <AnKi/Scene/Components/PlayerControllerComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
+#include <AnKi/Scene/Events/TriggerEvent.h>
+#include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
@@ -163,12 +165,16 @@ void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	// Call the callbacks
 	for(SceneNode* node : m_enteredNodes)
 	{
-		info.m_node->onTriggerEnter(node);
+		Array nodes{info.m_node, node};
+		TriggerEvent* event = EventManager::getSingleton().newEvent<TriggerEvent>(-1.0, 1.0, WeakArray(nodes));
+		event->setTriggerEnter();
 	}
 
 	for(SceneNode* node : m_exitedNodes)
 	{
-		info.m_node->onTriggerExit(node);
+		Array nodes{info.m_node, node};
+		TriggerEvent* event = EventManager::getSingleton().newEvent<TriggerEvent>(-1.0, 1.0, WeakArray(nodes));
+		event->setTriggerExit();
 	}
 
 	// Prepare them for the next frame
