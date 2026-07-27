@@ -7,7 +7,6 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ScriptResource.h>
-#include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Script/ScriptEnvironment.h>
 #include <AnKi/Scene/Components/TriggerComponent.h>
 
@@ -20,51 +19,52 @@ ScriptComponent::ScriptComponent(const SceneComponentInitInfo& init)
 
 ScriptComponent::~ScriptComponent()
 {
-	deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
-	deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
+	deleteInstance(SceneMemoryPool::getSingleton(), m_env);
 }
 
 ScriptComponent& ScriptComponent::setScriptResourceFilename(CString fname)
 {
-	if(fname.isEmpty())
-	{
-		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
-		m_environments[1] = nullptr;
-		m_resource.reset(nullptr);
-		return *this;
-	}
-
-	// Load
+	// Load resource
 	ScriptResourcePtr rsrc;
-	Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
-
-	// Create the env
-	ScriptEnvironment* newEnv = nullptr;
-	if(!err)
+	Error err = Error::kNone;
+	if(fname)
 	{
-		newEnv = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
+		err = ResourceManager::getSingleton().loadResource(fname, rsrc);
 	}
 
-	// Exec the script
-	if(!err)
+	// Init the env
+	ScriptEnvironment* env = nullptr;
+	if(fname && !err)
 	{
-		err = newEnv->evalString(rsrc->getSource());
+		env = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
+		err = env->evalString(rsrc->getSource());
 	}
 
-	// Error
 	if(err)
 	{
-		ANKI_SCENE_LOGE("Failed to load the script");
-		deleteInstance(SceneMemoryPool::getSingleton(), newEnv);
+		deleteInstance(SceneMemoryPool::getSingleton(), env);
+		ANKI_SCENE_LOGE("Failed to load the script resource");
+	}
+	else if(!fname)
+	{
+		m_text.destroy();
+		m_resource.reset(nullptr);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
+		m_env = nullptr;
+		m_vars.destroy();
 	}
 	else
 	{
+		m_text.destroy();
 		m_resource = std::move(rsrc);
-		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[1]);
-		m_environments[1] = newEnv;
-
-		m_vars.rebuildVarsFromLua(*m_environments[1]);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
+		m_env = env;
+		m_vars.rebuildVarsFromLua(*m_env);
 	}
+
+#if ANKI_WITH_EDITOR
+	m_playOnEditor = false;
+#endif
 
 	return *this;
 }
@@ -83,34 +83,40 @@ CString ScriptComponent::getScriptResourceFilename() const
 
 ScriptComponent& ScriptComponent::setScriptText(CString text)
 {
-	if(text.isEmpty())
+	// Init the env
+	ScriptEnvironment* env = nullptr;
+	Error err = Error::kNone;
+	if(text)
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
-		m_environments[0] = nullptr;
-		m_text.destroy();
-		return *this;
+		env = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
+		err = env->evalString(text);
 	}
 
-	// Create the env
-	ScriptEnvironment* newEnv = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
-
-	// Exec the script
-	const Error err = newEnv->evalString(text);
-
-	// Error
 	if(err)
 	{
-		ANKI_SCENE_LOGE("Failed to load the script");
-		deleteInstance(SceneMemoryPool::getSingleton(), newEnv);
+		deleteInstance(SceneMemoryPool::getSingleton(), env);
+		ANKI_SCENE_LOGE("Failed to init the script");
+	}
+	else if(!text)
+	{
+		m_text.destroy();
+		m_resource.reset(nullptr);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
+		m_env = nullptr;
+		m_vars.destroy();
 	}
 	else
 	{
+		m_resource.reset(nullptr);
 		m_text = text;
-		deleteInstance(SceneMemoryPool::getSingleton(), m_environments[0]);
-		m_environments[0] = newEnv;
-
-		m_vars.rebuildVarsFromLua(*m_environments[0]);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
+		m_env = env;
+		m_vars.rebuildVarsFromLua(*m_env);
 	}
+
+#if ANKI_WITH_EDITOR
+	m_playOnEditor = false;
+#endif
 
 	return *this;
 }
@@ -130,12 +136,29 @@ CString ScriptComponent::getScriptText() const
 void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
-	if(!isValid() || info.m_paused)
+	if(!isValid() || info.m_paused
+#if ANKI_WITH_EDITOR
+	   || !m_playOnEditor
+#endif
+	)
 	{
 		return;
 	}
 
-	lua_State* lua = (m_environments[0]) ? &m_environments[0]->getLuaState() : &m_environments[1]->getLuaState();
+#if ANKI_WITH_EDITOR
+	if(info.m_checkForResourceUpdates && !!m_resource && m_resource->isObsolete()) [[unlikely]]
+	{
+		ANKI_SCENE_LOGV("Script resource is obsolete. Will reload it");
+		BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> fname(info.m_framePool);
+		fname = m_resource->getFilename();
+		setScriptResourceFilename(fname);
+	}
+#endif
+
+	lua_State* lua = &m_env->getLuaState();
+
+	// Flush C++ to LUA env
+	m_vars.flushDirtyVarsToLua(*m_env);
 
 	// Call update()
 	{
@@ -226,8 +249,11 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 	}
 
-	// Update vars
-	m_vars.flushDirtyVarsToLua((m_environments[0]) ? *m_environments[0] : *m_environments[1]);
+	// Update C++ from LUA env if LUA run
+	if(updated)
+	{
+		m_vars.updateVarsFromLua(*m_env);
+	}
 }
 
 Error ScriptComponent::serialize(SceneSerializer& serializer)
@@ -235,7 +261,35 @@ Error ScriptComponent::serialize(SceneSerializer& serializer)
 	ANKI_SERIALIZE(m_resource, 1);
 	ANKI_SERIALIZE(m_text, 1);
 
-	// TODO Serialize environments
+	if(serializer.isInReadMode())
+	{
+		ANKI_ASSERT(!(m_resource && m_text) && "The 2 script sources are mutually exclusive");
+
+		// A component without any script source is valid, only complain if a source is set but the env failed to init
+		const Bool hasSource = !!m_resource || !!m_text;
+
+		if(m_resource)
+		{
+			const SceneString fname = m_resource->getFilename(); // Use a temp to avoid aliasing vars
+			setScriptResourceFilename(fname);
+		}
+		else if(m_text)
+		{
+			const SceneString text = m_text; // Use a temp to avoid aliasing vars
+			setScriptText(text);
+		}
+
+		if(hasSource && !m_env)
+		{
+			ANKI_SCENE_LOGE("Failed to initialize the script environment of the ScriptComponent");
+			return Error::kUserData;
+		}
+	}
+
+	if(m_env)
+	{
+		ANKI_CHECK(m_vars.serialize(serializer, *m_env));
+	}
 
 	return Error::kNone;
 }

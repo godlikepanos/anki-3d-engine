@@ -151,13 +151,11 @@ public:
 class LuaBinder
 {
 public:
+	ANKI_NON_COPYABLE(LuaBinder)
+
 	LuaBinder();
 
-	LuaBinder(const LuaBinder&) = delete; // Non-copyable
-
 	~LuaBinder();
-
-	LuaBinder& operator=(const LuaBinder&) = delete; // Non-copyable
 
 	lua_State* getLuaState()
 	{

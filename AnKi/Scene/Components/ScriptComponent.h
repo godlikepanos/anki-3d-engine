@@ -7,7 +7,6 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Resource/Forward.h>
-#include <AnKi/Script/ScriptEnvironment.h>
 #include <AnKi/Scene/ScriptUtils.h>
 
 namespace anki {
@@ -22,10 +21,12 @@ public:
 
 	~ScriptComponent();
 
+	// Initialize using a script resource. Calling this will remove what was set with setScriptText()
 	ScriptComponent& setScriptResourceFilename(CString fname);
 
 	CString getScriptResourceFilename() const;
 
+	// Initialize using plain LUA text. Calling this will remove what was set with setScriptResourceFilename()
 	ScriptComponent& setScriptText(CString text);
 
 	CString getScriptText() const;
@@ -42,7 +43,7 @@ public:
 
 	Bool isValid() const
 	{
-		return m_environments[0] || m_environments[1];
+		return m_env != nullptr;
 	}
 
 	template<typename TFunc>
@@ -51,12 +52,29 @@ public:
 		return m_vars.iterateVariables(func);
 	}
 
+#if ANKI_WITH_EDITOR
+	Bool getPlayOnEditor() const
+	{
+		return m_playOnEditor;
+	}
+
+	void setPlayOnEditor(Bool play)
+	{
+		m_playOnEditor = play;
+	}
+#endif
+
 private:
 	ScriptResourcePtr m_resource;
 	SceneString m_text;
-	Array<ScriptEnvironment*, 2> m_environments = {}; // One env if it contains its source and another if it's a resource
+
+	ScriptEnvironment* m_env = nullptr;
 
 	ScriptVariables m_vars;
+
+#if ANKI_WITH_EDITOR
+	Bool m_playOnEditor = false;
+#endif
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

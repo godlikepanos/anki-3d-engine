@@ -11,18 +11,20 @@ Error SceneSerializer::write(CString name, ConstWeakArray<F64> values)
 {
 	Array<F32, 32> tmpArray;
 	WeakArray<F32> arr;
-	if(values.getSize() < tmpArray.getSize())
+	if(values.getSize() <= tmpArray.getSize())
 	{
 		arr = {tmpArray.getBegin(), values.getSize()};
 	}
 	else
 	{
+		// Falling through would write through an empty arr
 		ANKI_ASSERT(!"TODO");
+		return Error::kFunctionFailed;
 	}
 
 	for(U32 i = 0; i < values.getSize(); ++i)
 	{
-		arr[i] = F32(values[i]);
+		arr[i] = F32(values[i]); // Truncation is fine. Don't care about precision that much
 	}
 
 	return write(name, arr);
@@ -32,16 +34,73 @@ Error SceneSerializer::read(CString name, WeakArray<F64> values)
 {
 	Array<F32, 32> tmpArray;
 	WeakArray<F32> arr;
-	if(values.getSize() < tmpArray.getSize())
+	if(values.getSize() <= tmpArray.getSize())
 	{
 		arr = {tmpArray.getBegin(), values.getSize()};
 	}
 	else
 	{
+		// Falling through would read into an empty arr
 		ANKI_ASSERT(!"TODO");
+		return Error::kFunctionFailed;
 	}
 
-	return read(name, arr);
+	ANKI_CHECK(read(name, arr));
+
+	for(U32 i = 0; i < values.getSize(); ++i)
+	{
+		values[i] = arr[i];
+	}
+
+	return Error::kNone;
+}
+
+Error SceneSerializer::write(CString name, ConstWeakArray<Bool> values)
+{
+	Array<U32, 32> tmpArray;
+	WeakArray<U32> arr;
+	if(values.getSize() <= tmpArray.getSize())
+	{
+		arr = {tmpArray.getBegin(), values.getSize()};
+	}
+	else
+	{
+		// Falling through would write through an empty arr
+		ANKI_ASSERT(!"TODO");
+		return Error::kFunctionFailed;
+	}
+
+	for(U32 i = 0; i < values.getSize(); ++i)
+	{
+		arr[i] = values[i];
+	}
+
+	return write(name, arr);
+}
+
+Error SceneSerializer::read(CString name, WeakArray<Bool> values)
+{
+	Array<U32, 32> tmpArray;
+	WeakArray<U32> arr;
+	if(values.getSize() <= tmpArray.getSize())
+	{
+		arr = {tmpArray.getBegin(), values.getSize()};
+	}
+	else
+	{
+		// Falling through would read into an empty arr
+		ANKI_ASSERT(!"TODO");
+		return Error::kFunctionFailed;
+	}
+
+	ANKI_CHECK(read(name, arr));
+
+	for(U32 i = 0; i < values.getSize(); ++i)
+	{
+		values[i] = Bool(arr[i]);
+	}
+
+	return Error::kNone;
 }
 
 Error TextSceneSerializer::parseCurrentLine(SceneStringList& tokens, CString fieldName, U32 checkTokenCount)

@@ -347,19 +347,21 @@ void SceneNodePropertiesUi::parent(SceneNode& node, const SceneGraphView& sceneG
 
 void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 {
-	// Play button
+	// Play or stop button
 	{
+		const bool playing = comp.getPlayOnEditor();
+
 		ImGui::SameLine();
-		if(ImGui::Button(ICON_MDI_PLAY "##ScriptComponentResourceFilename"))
+		if(ImGui::Button((playing) ? ICON_MDI_STOP : ICON_MDI_PLAY))
 		{
-			ANKI_LOGV("TODO");
+			comp.setPlayOnEditor(!playing);
 		}
-		ImGui::SetItemTooltip("Play script");
+		ImGui::SetItemTooltip("Play/Stop script");
 	}
 
 	// Clear button
 	{
-		if(ImGui::Button(ICON_MDI_DELETE "##ScriptComponentResourceFilename"))
+		if(ImGui::Button(ICON_MDI_DELETE))
 		{
 			comp.setScriptResourceFilename("");
 		}
@@ -394,7 +396,7 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 		}
 	}
 
-	ImGui::Text(" -- or --");
+	ImGui::SeparatorText("or");
 
 	// Clear button
 	{
@@ -462,7 +464,7 @@ end
 	comp.iterateVariables([&](ScriptVariable& var) -> FunctorContinue {
 		if(varCount++ == 0)
 		{
-			ImGui::Text(" -- Vars --");
+			ImGui::SeparatorText("Variables");
 		}
 
 		const Char* name = var.getName().cstr();

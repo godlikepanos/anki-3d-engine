@@ -13,6 +13,10 @@ namespace anki {
 class ScriptEnvironment
 {
 public:
+	ANKI_NON_COPYABLE(ScriptEnvironment)
+
+	ScriptEnvironment() = default;
+
 	// Expose a variable to the scripting engine.
 	template<typename T>
 	void exposeVariable(const char* name, T* y)

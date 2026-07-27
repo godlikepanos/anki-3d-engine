@@ -51,6 +51,9 @@ public:
 	Error write(CString name, ConstWeakArray<F64> values);
 	Error read(CString name, WeakArray<F64> values);
 
+	Error write(CString name, ConstWeakArray<Bool> values);
+	Error read(CString name, WeakArray<Bool> values);
+
 	virtual Error write(CString name, CString value) = 0;
 	virtual Error read(CString name, SceneString& value) = 0;
 
@@ -93,6 +96,14 @@ public:
 		}
 
 		WeakArray<T> arr(array);
+		return serializeInternal(varName, varVersion, varDeprecated, arr);
+	}
+
+	// Vector 2
+	template<typename T>
+	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TVec<T, 2>& varValue)
+	{
+		WeakArray<T> arr(&varValue[0], 2);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
 	}
 
@@ -299,7 +310,7 @@ public:
 		return Error::kNone;
 	}
 
-	Error read(CString name, WeakArray<F32> values)
+	Error read(CString name, WeakArray<F32> values) final
 	{
 		SceneStringList tokens;
 		ANKI_CHECK(parseCurrentLine(tokens, name, values.getSize()));

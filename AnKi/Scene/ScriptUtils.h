@@ -12,6 +12,7 @@ namespace anki {
 
 class ScriptEnvironment;
 class ScriptVariables;
+class SceneSerializer;
 
 enum class ScriptVariableType : U8
 {
@@ -42,14 +43,22 @@ public:
 		destroy();
 	}
 
+	void destroy();
+
 	// Look at the environment and gather all the global variables.
 	void rebuildVarsFromLua(ScriptEnvironment& env);
 
-	// Update the variables in the environment.
+	// Update the variables in the environment. C++ to LUA.
 	void flushDirtyVarsToLua(ScriptEnvironment& env);
+
+	// Update the mirorred vars from the environment. LUA to C++.
+	void updateVarsFromLua(ScriptEnvironment& env);
 
 	template<typename TFunc>
 	FunctorContinue iterateVariables(TFunc func);
+
+	// It assumes that rebuildVarsFromLua() is already called to populate the vars
+	Error serialize(SceneSerializer& serializer, ScriptEnvironment& env);
 
 private:
 	union Value
@@ -68,7 +77,7 @@ private:
 	SceneDynamicArray<ScriptVariableType> m_types;
 	SceneDynamicBitSet<> m_dirty;
 
-	void destroy();
+	Bool findVar(CString name, ScriptVariableType type, U32& idx) const;
 };
 
 class ScriptVariable

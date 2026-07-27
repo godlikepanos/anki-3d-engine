@@ -92,7 +92,7 @@ void DynamicArray<T, TMemoryPool, TSize>::resize(Size newSize, TArgs... args)
 			m_size = newSize;
 		}
 	}
-	else
+	else if(newSize != m_size)
 	{
 		ANKI_ASSERT(m_size == 0 && "Cannot resize storage for non-copyable");
 		m_data = static_cast<T*>(m_pool.allocate(sizeof(T) * newSize, alignof(T)));
