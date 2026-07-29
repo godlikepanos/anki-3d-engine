@@ -268,6 +268,15 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 	ANKI_SERIALIZE(scale, 1);
 	m_ltrf.setScale(scale);
 
+	// Flags. Can't serialize the bitfields directly
+	Bool ignoreParentNodeTransform = m_ignoreParentNodeTransform;
+	ANKI_SERIALIZE(ignoreParentNodeTransform, 1);
+	m_ignoreParentNodeTransform = ignoreParentNodeTransform;
+
+	Bool updateOnPause = m_updateOnPause;
+	ANKI_SERIALIZE(updateOnPause, 1);
+	m_updateOnPause = updateOnPause;
+
 	// Components
 	U32 componentCount = 0;
 	SceneDynamicArray<U32> componentUuids;
@@ -320,6 +329,12 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 
 		SceneNode* parent = *it;
 		setParent(parent, ReparentFlag::kNone);
+	}
+
+	// Update the mapping
+	if(serializer.isInReadMode())
+	{
+		args.m_read.m_nodeUuidToNode.emplace(m_nodeUuid, this);
 	}
 
 	return Error::kNone;

@@ -54,10 +54,7 @@ void FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 Error FogDensityComponent::serialize(SceneSerializer& serializer)
 {
-	U32 type = U32(m_type);
-	ANKI_SERIALIZE(type, 1);
-	m_type = FogDensityComponentShape(type);
-
+	ANKI_SERIALIZE(m_type, 1);
 	ANKI_SERIALIZE(m_density, 1);
 
 	return Error::kNone;

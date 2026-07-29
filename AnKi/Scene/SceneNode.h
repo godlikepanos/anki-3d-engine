@@ -604,7 +604,7 @@ private:
 		class
 		{
 		public:
-			// Given an index to the component array find out if the component should be serialized
+			// The component arrays are global to the SceneGraph so this marks which of their elements belong to a node that is being serialized
 			Array<SceneDynamicBitSet<U32>, U32(SceneComponentType::kCount)> m_serializableComponentMask;
 
 			Array<U32, U32(SceneComponentType::kCount)> m_componentsToBeSerializedCount = {};
@@ -623,7 +623,7 @@ private:
 	U32 m_nodeArrayIndex = kMaxU32; // Index in Scene::m_nodes
 	U32 m_updatableNodesArrayIndex = kMaxU32; // Index in SceneGraph::m_updatableNodes
 
-	U32 m_nodeUuid : kSceneNodeUuidBits = 0;
+	U32 m_nodeUuid : kSceneNodeUuidBits = 0; // Persists serialization. Can have many scene nodes sharing the same UUID but be in different scenes
 	U32 m_sceneUuid : kSceneUuidBits = 0;
 
 	U8 m_sceneIndex = kMaxU8; // Index in SceneGraph::m_scenes

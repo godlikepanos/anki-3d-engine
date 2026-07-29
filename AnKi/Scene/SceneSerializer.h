@@ -59,7 +59,7 @@ public:
 
 	// For resources
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, IntrusiveNoDelPtr<T>& rsrc)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, IntrusiveNoDelPtr<T>& rsrc)
 	{
 		SceneString filename;
 
@@ -80,7 +80,7 @@ public:
 
 	// For regular arithmetic
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, T& varValue) requires(std::is_arithmetic_v<T>)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, T& varValue) requires(std::is_arithmetic_v<T>)
 	{
 		WeakArray<T> arr(&varValue, 1);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
@@ -88,7 +88,7 @@ public:
 
 	// SceneDynamicArray of numbers
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, SceneDynamicArray<T>& array) requires(std::is_arithmetic_v<T>)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, SceneDynamicArray<T>& array) requires(std::is_arithmetic_v<T>)
 	{
 		if(array.getSize() == 0)
 		{
@@ -101,7 +101,7 @@ public:
 
 	// Vector 2
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TVec<T, 2>& varValue)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, TVec<T, 2>& varValue)
 	{
 		WeakArray<T> arr(&varValue[0], 2);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
@@ -109,7 +109,7 @@ public:
 
 	// Vector 3
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TVec<T, 3>& varValue)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, TVec<T, 3>& varValue)
 	{
 		WeakArray<T> arr(&varValue[0], 3);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
@@ -117,7 +117,7 @@ public:
 
 	// Vector 4
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TVec<T, 4>& varValue)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, TVec<T, 4>& varValue)
 	{
 		WeakArray<T> arr(&varValue[0], 4);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
@@ -125,7 +125,7 @@ public:
 
 	// Mat
 	template<typename T, U32 kTRowCount, U32 kTColumnCount>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, TMat<T, kTRowCount, kTColumnCount>& varValue)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, TMat<T, kTRowCount, kTColumnCount>& varValue)
 	{
 		WeakArray<T> arr(&varValue[0], kTRowCount * kTColumnCount);
 		return serializeInternal(varName, varVersion, varDeprecated, arr);
@@ -133,18 +133,23 @@ public:
 
 	// Enums
 	template<typename T>
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, T& varValue) requires(std::is_enum_v<T>)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, T& varValue) requires(std::is_enum_v<T>)
 	{
 		static_assert(sizeof(T) <= sizeof(U32));
 		U32 val = U32(varValue);
 		WeakArray<U32> arr(&val, 1);
 		ANKI_CHECK(serializeInternal(varName, varVersion, varDeprecated, arr));
+		if(!m_writeMode && val >= U32(T::kCount))
+		{
+			ANKI_SCENE_LOGE("Can't allow to read enum values greater or equal to kCount");
+			return Error::kUserData;
+		}
 		varValue = T(val);
 		return Error::kNone;
 	}
 
 	// Strings
-	Error serialize(String varName, U32 varVersion, Bool varDeprecated, SceneString& varValue)
+	Error serialize(CString varName, U32 varVersion, Bool varDeprecated, SceneString& varValue)
 	{
 		return serializeInternal(varName, varVersion, varDeprecated, varValue);
 	}
@@ -157,6 +162,12 @@ public:
 	Bool isInReadMode() const
 	{
 		return !m_writeMode;
+	}
+
+	void setBinaryVersion(U32 ver)
+	{
+		ANKI_ASSERT(!m_writeMode);
+		m_crntBinaryVersion = ver;
 	}
 
 public:
@@ -181,7 +192,7 @@ public:
 		else
 		{
 			// Var is newer than the binary we are reading, skip it
-			Bool skip = varVersion >= m_crntBinaryVersion;
+			Bool skip = varVersion > m_crntBinaryVersion;
 
 			// Var is depracated and binary is newer, skip it
 			skip = skip || (varDeprecated && m_crntBinaryVersion > varVersion);

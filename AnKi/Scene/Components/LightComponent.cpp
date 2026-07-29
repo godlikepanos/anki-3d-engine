@@ -447,9 +447,9 @@ Error LightComponent::serialize(SceneSerializer& serializer)
 	ANKI_SERIALIZE(m_dir.m_day, 1);
 	ANKI_SERIALIZE(m_dir.m_hour, 1);
 
-	U32 shadow = m_shadow;
+	Bool shadow = m_shadow; // Can't serialize the bitfield directly
 	ANKI_SERIALIZE(shadow, 1);
-	m_shadow = Bool(shadow);
+	m_shadow = shadow;
 
 	return Error::kNone;
 }

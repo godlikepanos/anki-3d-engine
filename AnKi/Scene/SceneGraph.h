@@ -187,7 +187,7 @@ public:
 		return cont;
 	}
 
-	Scene* newEmptyScene(CString name);
+	Error newEmptyScene(CString name, Scene*& scene);
 
 	Scene* tryFindScene(CString name);
 
@@ -442,6 +442,8 @@ private:
 	// End deferred operations //
 
 	static void countSerializableNodes(SceneNode& root, U32& serializableNodeCount);
+	static void serializeSerializableNodes(SceneSerializer& serializer, SceneNode& root, SceneNode::SerializeCommonArgs& args,
+										   U32& serializedNodeCount, Error& err);
 
 	void forbidCallOnUpdate() const
 	{

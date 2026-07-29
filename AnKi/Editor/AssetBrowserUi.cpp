@@ -6,6 +6,7 @@
 #include <AnKi/Editor/AssetBrowserUi.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Util/Filesystem.h>
+#include <AnKi/Script/ScriptEnvironment.h>
 
 namespace anki {
 
@@ -746,6 +747,24 @@ void AssetBrowserUi::rightClickMenuDialog()
 			}
 		}
 
+		// Execute lua script
+		if(selectedFile->m_type == AssetFileType::kLua)
+		{
+			if(ImGui::Button("Execute Now"))
+			{
+				File file;
+				if(!file.open(selectedFile->m_diskFilepath, FileOpenFlag::kRead))
+				{
+					String text;
+					if(!file.readAllText(text))
+					{
+						ScriptEnvironment env;
+						[[maybe_unused]] const Error err = env.evalString(text);
+					}
+				}
+			}
+		}
+
 		ImGui::EndPopup();
 	}
 	else
@@ -841,12 +860,17 @@ void AssetBrowserUi::drawMenu()
 					{
 						String randomSceneName;
 						randomSceneName.sprintf("%u", U32(getRandom() % kMaxU32));
-						Scene* tempScene = SceneGraph::getSingleton().newEmptyScene(randomSceneName);
+						Scene* tempScene;
+						if(SceneGraph::getSingleton().newEmptyScene(randomSceneName, tempScene))
+						{
+							ANKI_LOGE("Failed to create new scene: %s", diskFilepath.cstr());
+						}
+
 						tempScene->setCanBeSaved(true);
 
 						if(SceneGraph::getSingleton().saveScene(diskFilepath, *tempScene))
 						{
-							ANKI_LOGE("Failed to create new scene: %s", diskFilepath.cstr());
+							ANKI_LOGE("Failed to save new scene: %s", diskFilepath.cstr());
 						}
 						else
 						{

@@ -309,7 +309,7 @@ private:
 	U32 m_type : 8 = 0; // Cache the type ID
 
 	U32 m_sceneUuid : kSceneUuidBits = 0;
-	U32 m_componentUuid : kSceneComponentUuidBits = 0;
+	U32 m_componentUuid : kSceneComponentUuidBits = 0; // Multiple components can have the same comp UUID but belong to different scenes
 };
 
 } // end namespace anki

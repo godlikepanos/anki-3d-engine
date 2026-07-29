@@ -347,6 +347,7 @@ U32 ParticleEmitter2Component::getGpuSceneMeshLodIndex(U32 submeshIdx) const
 Error ParticleEmitter2Component::serialize(SceneSerializer& serializer)
 {
 	ANKI_SERIALIZE(m_resource, 1);
+	ANKI_SERIALIZE(m_geomType, 1);
 	return Error::kNone;
 }
 

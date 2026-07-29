@@ -142,7 +142,8 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 
 void SceneGraph::createDefaultScene()
 {
-	Scene* scene = newEmptyScene("_DefaultScene");
+	Scene* scene;
+	[[maybe_unused]] const Error err = newEmptyScene("_DefaultScene", scene);
 	setActiveScene(scene);
 
 	// Init the default main camera
@@ -614,8 +615,54 @@ void SceneGraph::countSerializableNodes(SceneNode& root, U32& serializableNodeCo
 	}
 }
 
+void SceneGraph::serializeSerializableNodes(SceneSerializer& serializer, SceneNode& root, SceneNode::SerializeCommonArgs& args,
+											U32& serializedNodeCount, Error& err)
+{
+	auto serializeNode = [&](SceneNode& node) -> Error {
+		SceneString className = (node.getSceneNodeRegistryRecord()) ? node.getSceneNodeRegistryRecord()->m_name : "SceneNode";
+		ANKI_SERIALIZE(className, 1);
+
+		SceneString name = (node.getName() != "Unnamed") ? node.getName() : "";
+		ANKI_SERIALIZE(name, 1);
+
+		U32 uuid = node.getNodeUuid();
+		ANKI_SERIALIZE(uuid, 1);
+
+		ANKI_CHECK(node.serializeCommon(serializer, args));
+		ANKI_CHECK(node.serialize(serializer));
+
+		++serializedNodeCount;
+
+		return Error::kNone;
+	};
+
+	if(!err && root.getSerialization())
+	{
+		err = serializeNode(root);
+
+		if(!err)
+		{
+			root.visitChildrenMaxDepth(0, [&](SceneNode& child) {
+				serializeSerializableNodes(serializer, child, args, serializedNodeCount, err);
+				return (!err) ? FunctorContinue::kContinue : FunctorContinue::kStop;
+			});
+		}
+	}
+}
+
 Error SceneGraph::saveScene(CString filename, Scene& scene)
 {
+	// How it works:
+	// - Writes a header
+	// - Counts the serializable nodes and saves the count. Count needs to be first
+	// - For every node that is serializable
+	//   - Serialize common stuff
+	//   - Iterate its components to save their UUIDs but also count per component type (used in [componentCounts])
+	//   - Call the virtual SceneNode::serialize()
+	// - For every type of component
+	//   - [componentCounts] Save the total count of serializable components
+	//   - For every serializable component call SceneComponent::serialize()
+
 	ANKI_TRACE_FUNCTION();
 	forbidCallOnUpdate();
 
@@ -659,46 +706,15 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 	ANKI_SERIALIZE(nodeCount, 1);
 
 	Error err = Error::kNone;
-	auto serializeNode = [&](SceneNode& node) -> Error {
-		SceneString className = (node.getSceneNodeRegistryRecord()) ? node.getSceneNodeRegistryRecord()->m_name : "SceneNode";
-		ANKI_SERIALIZE(className, 1);
-
-		SceneString name = (node.getName() != "Unnamed") ? node.getName() : "";
-		ANKI_SERIALIZE(name, 1);
-
-		U32 uuid = node.getNodeUuid();
-		ANKI_SERIALIZE(uuid, 1);
-
-		ANKI_CHECK(node.serializeCommon(serializer, serializationArgs));
-		ANKI_CHECK(node.serialize(serializer));
-
-		--nodeCount;
-
-		return Error::kNone;
-	};
-
+	U32 serializedNodeCount = 0;
 	scene.visitNodes([&](SceneNode& node) {
-		if(node.getParent() != nullptr || !node.getSerialization())
+		if(!err && node.getParent() == nullptr)
 		{
-			// Skip non-root nodes (they will be visited later) and non-serializable nodes
-			return FunctorContinue::kContinue;
+			// Only root nodes, rest will be visited later
+			serializeSerializableNodes(serializer, node, serializationArgs, serializedNodeCount, err);
 		}
 
-		node.visitThisAndChildren([&](SceneNode& node) {
-			if(!node.getSerialization() || (err = serializeNode(node)))
-			{
-				return FunctorContinue::kStop;
-			}
-
-			return FunctorContinue::kContinue;
-		});
-
-		if(err)
-		{
-			return FunctorContinue::kStop;
-		}
-
-		return FunctorContinue::kContinue;
+		return (!err) ? FunctorContinue::kContinue : FunctorContinue::kStop;
 	});
 
 	if(err)
@@ -706,10 +722,11 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 		return err;
 	}
 
-	ANKI_ASSERT(nodeCount == 0);
+	ANKI_ASSERT(serializedNodeCount == nodeCount);
 
 	// Components
 	auto serializeComponent = [&](auto& comp) -> Error {
+		// The component arrays are global to the SceneGraph. The mask tells which components belong to a node of this scene that got serialized
 		if(!serializationArgs.m_write.m_serializableComponentMask[comp.getType()].getBit(comp.getArrayIndex()))
 		{
 			return Error::kNone;
@@ -748,6 +765,20 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 
 Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 {
+	// How it works:
+	// - Read header and stuff
+	// - Read number of scene nodes
+	// - For every scene node
+	//   - Create node and deserialize common stuff like name. Depending on the class name use a different constructor, this is why records are for
+	//   - Deserialize the component UUIDs and just store a component UUID to node ptr mapping. Will be used later in [mapNodeToComp]
+	//   - [parentMapping] Use the node UUID mapping to find which node to set as parent
+	//   - Add a node UUID to node ptr mapping. Will be used by the nodes that follow in [parentMapping]
+	// - For every type of component
+	//   - Create the component array
+	//   - For every component
+	//     - [mapNodeToComp] Use the mapping created before to pass the proper node to the constructor
+	//     - Deserialize using SceneComponent::serialize()
+
 	ANKI_ASSERT(scene == nullptr);
 
 	ANKI_TRACE_FUNCTION();
@@ -761,7 +792,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 
 	if(extension == "lua")
 	{
-		scene = newEmptyScene(getBasename(filepath));
+		ANKI_CHECK(newEmptyScene(getBasename(filepath), scene));
 		const U32 oldActiveScene = m_activeSceneIndex;
 		setActiveScene(scene);
 
@@ -798,8 +829,9 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 		ANKI_LOGE("Wrong version number");
 		return Error::kUserData;
 	}
+	serializer.setBinaryVersion(version);
 
-	scene = newEmptyScene(getBasename(filepath));
+	ANKI_CHECK(newEmptyScene(getBasename(filepath), scene));
 	scene->m_filepath = filepath;
 	scene->m_canBeSaved = true;
 
@@ -807,6 +839,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 	SceneNode::SerializeCommonArgs serializationArgs;
 	U32 nodeCount = 0;
 	ANKI_SERIALIZE(nodeCount, 1);
+	U32 maxNodesUuid = 0;
 
 	for(U32 i = 0; i < nodeCount; ++i)
 	{
@@ -825,11 +858,20 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 		initInf.m_sceneUuid = scene->m_sceneUuid;
 		initInf.m_sceneIndex = scene->m_arrayIndex;
 
+		maxNodesUuid = max(maxNodesUuid, uuid);
+
 		SceneNode* node;
 		if(className != "SceneNode")
 		{
 			// Derived SceneNode class
-			const SceneNodeRegistryRecord& record = *static_cast<SceneNodeRegistryRecord*>(GlobalRegistry::getSingleton().findRecord(className));
+			GlobalRegistryRecord* rec = GlobalRegistry::getSingleton().tryFindRecord(className);
+			if(!rec || rec->m_type != GlobalRegistryRecordType::kSceneNode)
+			{
+				ANKI_SCENE_LOGE("Can't load scene. Failed to find record for class: %s", className.cstr());
+				return Error::kUserData;
+			}
+
+			const SceneNodeRegistryRecord& record = *static_cast<SceneNodeRegistryRecord*>(rec);
 
 			void* mem = SceneMemoryPool::getSingleton().allocate(record.m_getClassSizeCallback(), ANKI_SAFE_ALIGNMENT);
 			record.m_constructCallback(mem, initInf);
@@ -867,6 +909,8 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 		initInf.m_componentUuid = uuid;
 		initInf.m_sceneUuid = scene->m_sceneUuid;
 
+		maxNodesUuid = max(maxNodesUuid, uuid); // Components also use the same UUID generator as nodes
+
 		auto it = compArray.emplace(initInf);
 		SceneComponent& comp = *it;
 		comp.setArrayIndex(it.getArrayIndex());
@@ -888,6 +932,9 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 		} \
 	}
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
+	// Need to adjust the scene's UUID generator
+	scene->m_nodesUuid.setNonAtomically(maxNodesUuid + 1);
 
 	ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 	return Error::kNone;
@@ -1082,7 +1129,7 @@ void SceneGraph::removeNodeFromDeferredOps(SceneNode* node)
 	}
 }
 
-Scene* SceneGraph::newEmptyScene(CString name)
+Error SceneGraph::newEmptyScene(CString name, Scene*& scene)
 {
 	forbidCallOnUpdate();
 
@@ -1094,14 +1141,15 @@ Scene* SceneGraph::newEmptyScene(CString name)
 	if(tryFindScene(name))
 	{
 		ANKI_SCENE_LOGE("Scene found with the same name %s", name.cstr());
-		return nullptr;
+		return Error::kUserData;
 	}
 
 	auto it = m_scenes.emplace();
 	it->m_name = name;
 	it->m_arrayIndex = U8(it.getArrayIndex());
 
-	return &(*it);
+	scene = &(*it);
+	return Error::kNone;
 }
 
 Scene* SceneGraph::tryFindScene(CString name)

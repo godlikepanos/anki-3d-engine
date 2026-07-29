@@ -68,7 +68,8 @@ public:
 
 	Error userPostInit() override
 	{
-		Scene* scene = SceneGraph::getSingleton().newEmptyScene("Temp");
+		Scene* scene;
+		ANKI_CHECK(SceneGraph::getSingleton().newEmptyScene("Temp", scene));
 		SceneGraph::getSingleton().setActiveScene(scene);
 
 		// Load the texture

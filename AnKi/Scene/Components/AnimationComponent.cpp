@@ -243,7 +243,16 @@ Error AnimationComponent::serialize(SceneSerializer& serializer)
 		ANKI_SERIALIZE(t.m_wrapMode, 1);
 		ANKI_SERIALIZE(t.m_blendMode, 1);
 
-		m_validTracks.set(U32(&t - m_tracks.getBegin()), !!t.m_anim);
+		if(serializer.isInReadMode())
+		{
+			if(t.m_anim && t.m_channel >= t.m_anim->getChannels().getSize())
+			{
+				ANKI_SCENE_LOGE("Animation channel index is out of bounds: %u", t.m_channel);
+				return Error::kUserData;
+			}
+
+			m_validTracks.set(U32(&t - m_tracks.getBegin()), !!t.m_anim);
+		}
 	}
 
 	return Error::kNone;

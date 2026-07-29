@@ -46,27 +46,31 @@ void CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 Error CameraComponent::serialize(SceneSerializer& serializer)
 {
-	Frustum frustum;
-
 	F32 near = m_frustum.getNear();
 	ANKI_SERIALIZE(near, 1);
-	frustum.setNear(near);
 
 	F32 far = m_frustum.getFar();
 	ANKI_SERIALIZE(far, 1);
-	frustum.setFar(far);
 
 	F32 fovX = m_frustum.getFovX();
 	ANKI_SERIALIZE(fovX, 1);
-	frustum.setFovX(fovX);
 
 	F32 fovY = m_frustum.getFovY();
 	ANKI_SERIALIZE(fovY, 1);
-	frustum.setFovY(fovY);
+
+	ANKI_SERIALIZE(m_fovYDerivesByAspect, 1);
 
 	if(serializer.isInReadMode())
 	{
-		m_frustum = frustum;
+		const Bool valid = near > kEpsilonf && far > near && far < kMaxF32 && fovX > 0.0f && fovX < kPi && fovY > 0.0f && fovY < kPi;
+		if(!valid)
+		{
+			ANKI_SCENE_LOGE("Camera frustum values are out of range");
+			return Error::kUserData;
+		}
+
+		// The ctor has already init()ed the frustum as perspective and set its world transform
+		m_frustum.setPerspective(near, far, fovX, fovY);
 	}
 
 	return Error::kNone;

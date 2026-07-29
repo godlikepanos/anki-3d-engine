@@ -96,6 +96,19 @@ public:
 		return rec;
 	}
 
+	GlobalRegistryRecord* tryFindRecord(CString name)
+	{
+		for(auto& it : m_records)
+		{
+			if(it.m_name == name)
+			{
+				return &it;
+			}
+		}
+
+		return nullptr;
+	}
+
 	template<typename TFunc>
 	FunctorContinue iterateRecords(TFunc func) const
 	{
@@ -113,19 +126,6 @@ public:
 
 private:
 	IntrusiveList<GlobalRegistryRecord> m_records;
-
-	GlobalRegistryRecord* tryFindRecord(CString name)
-	{
-		for(auto& it : m_records)
-		{
-			if(it.m_name == name)
-			{
-				return &it;
-			}
-		}
-
-		return nullptr;
-	}
 };
 
 inline GlobalRegistryRecord::GlobalRegistryRecord(const Char* name, GlobalRegistryRecordType type)
