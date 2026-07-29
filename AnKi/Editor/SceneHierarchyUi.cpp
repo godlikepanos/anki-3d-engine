@@ -84,7 +84,8 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			ImGui::BeginDisabled(!activeScene.canBeSaved());
 			if(ImGui::Button(ICON_MDI_CONTENT_SAVE))
 			{
-				if(SceneGraph::getSingleton().saveScene(activeScene.getFilepath(), activeScene))
+				const ResourceString diskFilepath = ResourceFilesystem::getSingleton().getDiskFilepath(activeScene.getFilepath());
+				if(SceneGraph::getSingleton().saveScene(diskFilepath, activeScene))
 				{
 					ANKI_LOGE("Failed to save scene");
 				}
@@ -102,7 +103,8 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			SceneGraph::getSingleton().visitScenes([&](Scene& scene) {
 				if(scene.canBeSaved())
 				{
-					if(SceneGraph::getSingleton().saveScene(scene.getFilepath(), scene))
+					const ResourceString diskFilepath = ResourceFilesystem::getSingleton().getDiskFilepath(scene.getFilepath());
+					if(SceneGraph::getSingleton().saveScene(diskFilepath, scene))
 					{
 						ANKI_LOGE("Failed to save scene");
 					}

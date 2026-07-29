@@ -32,15 +32,6 @@ void CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_frustum.setWorldTransform(info.m_node->getWorldTransform());
 	}
 
-	if(m_fovYDerivesByAspect)
-	{
-		const F32 desiredFovY = m_frustum.getFovX() / Renderer::getSingleton().getAspectRatio();
-		if(m_frustum.getFovY() != desiredFovY)
-		{
-			m_frustum.setFovY(desiredFovY);
-		}
-	}
-
 	updated = m_frustum.update();
 }
 
@@ -57,8 +48,6 @@ Error CameraComponent::serialize(SceneSerializer& serializer)
 
 	F32 fovY = m_frustum.getFovY();
 	ANKI_SERIALIZE(fovY, 1);
-
-	ANKI_SERIALIZE(m_fovYDerivesByAspect, 1);
 
 	if(serializer.isInReadMode())
 	{

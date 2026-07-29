@@ -872,7 +872,13 @@ Error Renderer::render(FencePtr& fence, Second prevTime, Second crntTime)
 	updatePipelineStats();
 #endif
 
-	const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
+	CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
+	const F32 aspectCorrectFovX = cam.getFovY() * getAspectRatio();
+	if(cam.getFovX() != aspectCorrectFovX)
+	{
+		// The camera should be aspect correct
+		cam.setFovX(aspectCorrectFovX);
+	}
 
 	ctx.m_prevMatrices = m_prevMatrices;
 

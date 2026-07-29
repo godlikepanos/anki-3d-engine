@@ -19,7 +19,7 @@ void ParticleEditorUi::open(const ParticleEmitterResource2& resource)
 	}
 
 	rebuildCache(resource);
-	m_filepath = ResourceFilesystem::getSingleton().getFileFullPath(resource.getFilename());
+	m_filepath = ResourceFilesystem::getSingleton().getDiskFilepath(resource.getFilename());
 	m_open = true;
 }
 

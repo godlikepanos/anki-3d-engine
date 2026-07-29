@@ -101,7 +101,7 @@ public:
 	U64 getFileUpdateTime(ResourceFilename filename) const;
 
 	// Take the filename (which is relative) and return the full path of the file. Only works for filesystem files
-	ResourceString getFileFullPath(ResourceFilename filename) const;
+	ResourceString getDiskFilepath(ResourceFilename filename) const;
 
 	// Refresh the whole tree.
 	Error refreshAll();

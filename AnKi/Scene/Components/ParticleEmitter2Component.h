@@ -65,6 +65,11 @@ public:
 
 	ANKI_INTERNAL U32 getGpuSceneMeshLodIndex(U32 submeshIdx) const;
 
+	ANKI_INTERNAL Bool hasValidGpuSceneAllocation() const
+	{
+		return m_gpuScene.m_gpuSceneParticleEmitter.isValid();
+	}
+
 	ANKI_INTERNAL U32 getGpuSceneParticleEmitter2Index() const
 	{
 		ANKI_ASSERT(isValid());

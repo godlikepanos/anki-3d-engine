@@ -147,10 +147,10 @@ void SceneGraph::createDefaultScene()
 	setActiveScene(scene);
 
 	// Init the default main camera
-	m_defaultMainCamNode = newSceneNode<SceneNode>("_MainCamera");
+	m_defaultMainCamNode = newSceneNode<SceneNode>("_DefaultCamera");
 	m_defaultMainCamNode->setSerialization(false);
 	CameraComponent* camc = m_defaultMainCamNode->newComponent<CameraComponent>();
-	camc->setPerspective(0.1f, 1000.0f, toRad(100.0f), toRad(100.0f));
+	camc->setPerspective(0.1f, 1000.0f, toRad(70.0f), toRad(70.0f));
 	m_mainCamNode = m_defaultMainCamNode;
 
 	RenderStateBucketContainer::allocateSingleton();

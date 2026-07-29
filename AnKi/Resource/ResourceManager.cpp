@@ -70,8 +70,6 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 template<typename T>
 Error ResourceManager::loadResource(CString filename, IntrusiveNoDelPtr<T>& out, Bool async)
 {
-	ANKI_ASSERT(!out.isCreated() && "Already loaded");
-
 	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
 
 	// Try to find the resource

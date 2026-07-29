@@ -64,7 +64,7 @@ void GpuParticles::populateRenderGraph()
 		// Handle the readbacks
 		for(ParticleEmitter2Component& emitter : emitters)
 		{
-			if(!emitter.isValid())
+			if(!emitter.isValid() || !emitter.hasValidGpuSceneAllocation())
 			{
 				continue;
 			}
@@ -117,7 +117,7 @@ void GpuParticles::populateRenderGraph()
 		U32 count = 0;
 		for(ParticleEmitter2Component& emitter : emitters)
 		{
-			if(!emitter.isValid())
+			if(!emitter.isValid() || !emitter.hasValidGpuSceneAllocation())
 			{
 				continue;
 			}

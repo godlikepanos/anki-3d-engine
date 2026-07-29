@@ -1092,25 +1092,19 @@ void SceneNodePropertiesUi::cameraComponent(CameraComponent& comp)
 		comp.setFar(far);
 	}
 
+	const Bool isActive = &SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>() == &comp;
+	ImGui::BeginDisabled(isActive); // No point changing fovX for main camera because the renderer will adjust it anyway
 	F32 fovX = toDegrees(comp.getFovX());
 	if(ImGui::SliderFloat("FovX", &fovX, 10.0f, 200.0f))
 	{
 		comp.setFovX(toRad(fovX));
 	}
+	ImGui::EndDisabled();
 
-	Bool fovYDirivedFromAspect = comp.getFovYDerivesByRendererAspect();
-	if(ImGui::Checkbox("FovX derived by aspect", &fovYDirivedFromAspect))
+	F32 fovY = toDegrees(comp.getFovY());
+	if(ImGui::SliderFloat("FovY", &fovY, 10.0f, 200.0f))
 	{
-		comp.setFovYDerivesByRendererAspect(fovYDirivedFromAspect);
-	}
-
-	if(!comp.getFovYDerivesByRendererAspect())
-	{
-		F32 fovY = toDegrees(comp.getFovY());
-		if(ImGui::SliderFloat("FovY", &fovY, 10.0f, 200.0f))
-		{
-			comp.setFovY(toRad(fovY));
-		}
+		comp.setFovY(toRad(fovY));
 	}
 }
 

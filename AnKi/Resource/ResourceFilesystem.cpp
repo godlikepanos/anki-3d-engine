@@ -528,7 +528,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	return Error::kNone;
 }
 
-ResourceString ResourceFilesystem::getFileFullPath(ResourceFilename filename) const
+ResourceString ResourceFilesystem::getDiskFilepath(ResourceFilename filename) const
 {
 	ResourceString out;
 	const U64 filenameHash = filename.computeHash();
@@ -575,7 +575,7 @@ U64 ResourceFilesystem::getFileUpdateTime(ResourceFilename filename) const
 {
 	ANKI_TRACE_FUNCTION();
 
-	const ResourceString fullFilename = getFileFullPath(filename);
+	const ResourceString fullFilename = getDiskFilepath(filename);
 
 	const std::filesystem::path stdpath = fullFilename.cstr();
 	ANKI_ASSERT(std::filesystem::exists(stdpath));

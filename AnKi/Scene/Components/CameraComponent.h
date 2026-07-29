@@ -79,16 +79,6 @@ public:
 		m_frustum.setPerspective(near, far, fovx, fovy);
 	}
 
-	Bool getFovYDerivesByRendererAspect() const
-	{
-		return m_fovYDerivesByAspect;
-	}
-
-	void setFovYDerivesByRendererAspect(Bool derives)
-	{
-		m_fovYDerivesByAspect = derives;
-	}
-
 	ANKI_INTERNAL const Frustum& getFrustum() const
 	{
 		return m_frustum;
@@ -101,7 +91,6 @@ public:
 
 private:
 	Frustum m_frustum;
-	Bool m_fovYDerivesByAspect = true; // Whatever the user sets if this flag is true fovY will change based on aspect
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

@@ -387,7 +387,7 @@ void MaterialEditorUi::rebuildCache(CString programName)
 
 Error MaterialEditorUi::saveCache()
 {
-	const ResourceString diskFilepath = ResourceFilesystem::getSingleton().getFileFullPath(m_filepath);
+	const ResourceString diskFilepath = ResourceFilesystem::getSingleton().getDiskFilepath(m_filepath);
 
 	File file;
 	ANKI_CHECK(file.open(diskFilepath, FileOpenFlag::kWrite));
