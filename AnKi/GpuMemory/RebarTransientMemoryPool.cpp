@@ -130,7 +130,7 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 
 	// Finalize the active slice
 	const PtrSize crntOffset = m_offset.getNonAtomically();
-	const PtrSize crntNormalizedOffset = crntOffset % m_bufferSize;
+	[[maybe_unused]] const PtrSize crntNormalizedOffset = crntOffset % m_bufferSize;
 
 	FrameSlice& slice = m_slices[m_crntActiveSlice];
 	ANKI_ASSERT(slice.m_offset < kMaxPtrSize && slice.m_range == 0 && !m_sliceFences[m_crntActiveSlice]);
@@ -264,7 +264,7 @@ void RebarTransientMemoryPool::validateSlices() const
 		}
 		else
 		{
-			const FrameSlice& a = m_slices[sliceIdxA];
+			[[maybe_unused]] const FrameSlice& a = m_slices[sliceIdxA];
 			ANKI_ASSERT(a.m_offset == kMaxPtrSize && a.m_range == 0 && !m_sliceFences[sliceIdxA]);
 		}
 	}

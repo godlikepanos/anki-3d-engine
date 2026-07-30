@@ -339,6 +339,50 @@ def count_args(args_el):
     return count
 
 
+def args_signature(args_el, var_name : str, class_name):
+    """ Generates an imperfect signature of the function arguments. It's imperfect because it needs to be fast to compute at runtime. Signature used
+        to choose the proper function overload """
+
+    signature = ""
+    is_first = True
+    count = 0
+
+    # Add the "this" which is the implicit 1st argument in methods
+    if class_name is not None:
+        signature += "LUA_TUSERDATA, " + str(type_sig(class_name))
+        is_first = False
+        count += 2
+
+    if args_el is not None:
+        for arg_el in args_el.iter("arg"):
+            (type, is_ref, is_ptr, is_const, is_weak_array) = parse_type_decl(arg_el.text)
+
+            if not is_first:
+                signature += ", "
+            else:
+                is_first = False
+
+            count += 1
+
+            if is_weak_array:
+                signature += "LUA_TTABLE"
+            elif type_is_bool(type) or type_is_number(type):
+                signature += "LUA_TNUMBER"
+            elif type == "char" or type == "CString":
+                signature += "LUA_TSTRING"
+            elif type_is_enum(type):
+                signature += "LUA_TNUMBER"
+            else:
+                signature += "LUA_TUSERDATA, " + str(type_sig(type))
+                count += 1
+
+    if count == 0:
+        wglue("constexpr U64 %s = 0;" % var_name)
+    else:
+        wglue("constexpr I64 %sArr[] = {%s};" % (var_name, signature))
+        wglue("constexpr U64 %s = computeArrayHashConstexpr(%sArr, sizeof(%sArr) / sizeof(I64));" % (var_name, var_name, var_name))
+
+
 def check_args(args_el, bias):
     """ Check number of args. Call that first because it throws error """
 
@@ -356,10 +400,10 @@ def check_args(args_el, bias):
     wglue("")
 
 
-def get_meth_alias(meth_el):
-    """ Return the method alias """
+def get_meth_alias(meth_name : str):
+    """ Return the method alias. Some C++ method names don't map to LUA directly """
 
-    meth_name = meth_el.get("name")
+    assert(isinstance(meth_name, str))
 
     if meth_name == "operator+":
         meth_alias = "__add"
@@ -384,10 +428,6 @@ def get_meth_alias(meth_el):
     else:
         meth_alias = meth_name
 
-    meth_alias_txt = meth_el.get("alias")
-    if meth_alias_txt is not None:
-        meth_alias = meth_alias_txt
-
     return meth_alias
 
 
@@ -398,19 +438,23 @@ def write_local_vars():
     wglue("")
 
 
-def method(class_name, meth_el):
+def method(class_name, meth_el, overload_idx):
     """ Handle a method """
 
+    is_overloaded = overload_idx is not None
+    args_el = meth_el.find("args")
     meth_name = meth_el.get("name")
-    meth_alias = get_meth_alias(meth_el)
+    meth_alias = get_meth_alias(meth_name)
 
-    wglue("// Wrap method %s::%s." % (class_name, meth_name))
-    wglue("static inline int wrap%s%s(lua_State* l)" % (class_name, meth_alias))
+    wglue("// Wrap method %s::%s" % (class_name, meth_name))
+    if is_overloaded:
+        args_signature(args_el, "k%s%s%dArgsSignature" % (class_name, meth_alias, overload_idx), class_name)
+    wglue("static inline int wrap%s%s%s(lua_State* l)" % (class_name, meth_alias, str(overload_idx) if is_overloaded else ""))
     wglue("{")
     ident(1)
     write_local_vars()
 
-    check_args(meth_el.find("args"), 1)
+    check_args(args_el, 1)
 
     # Get this pointer
     wglue("// Get \"this\" as \"self\"")
@@ -424,7 +468,7 @@ def method(class_name, meth_el):
     wglue("%s* self = ud->getData<%s>();" % (class_name, class_name))
     wglue("")
 
-    args_str = args(meth_el.find("args"), 2)
+    args_str = args(args_el, 2)
 
     # Return value
     ret_txt = None
@@ -434,17 +478,14 @@ def method(class_name, meth_el):
 
     # Method call
     wglue("// Call the method")
-    call = meth_el.find("overrideCall")
-    if call is not None:
-        call = call.text
+    override_call = meth_el.find("overrideCall")
+    if override_call is not None:
+        override_call = override_call.text
 
-    if call is not None:
-        wglue("%s" % call)
+    if override_call is not None:
+        wglue("%s" % override_call)
     else:
-        if ret_txt is None:
-            wglue("self->%s(%s);" % (meth_name, args_str))
-        else:
-            wglue("%s ret = self->%s(%s);" % (ret_txt, meth_name, args_str))
+        wglue("%sself->%s(%s);" % ("" if ret_txt is None else ret_txt + " ret = ", meth_name, args_str))
 
     wglue("")
     ret(ret_el)
@@ -454,14 +495,18 @@ def method(class_name, meth_el):
     wglue("")
 
 
-def static_method(class_name, meth_el):
+def static_method(class_name : str, meth_el, overload_idx):
     """ Handle a static method """
 
-    meth_name = meth_el.get("name")
-    meth_alias = get_meth_alias(meth_el)
+    is_overloaded = overload_idx is not None
 
-    wglue("// Wrap static method %s::%s." % (class_name, meth_name))
-    wglue("static inline int pwrap%s%s(lua_State* l)" % (class_name, meth_alias))
+    meth_name = meth_el.get("name")
+    meth_alias = get_meth_alias(meth_name)
+
+    wglue("// Wrap static method %s::%s" % (class_name, meth_name))
+    if is_overloaded:
+        args_signature(meth_el.find("args"), "k%s%s%dArgsSignature" % (class_name, meth_alias, overload_idx), None)
+    wglue("static inline int wrap%s%s%s(lua_State* l)" % (class_name, meth_alias, str(overload_idx) if is_overloaded else ""))
     wglue("{")
     ident(1)
     write_local_vars()
@@ -479,10 +524,14 @@ def static_method(class_name, meth_el):
 
     # Method call
     wglue("// Call the method")
-    if ret_txt is None:
-        wglue("%s::%s(%s);" % (class_name, meth_name, args_str))
+    override_call = meth_el.find("overrideCall")
+    if override_call is not None:
+        override_call = override_call.text
+
+    if override_call is not None:
+        wglue("%s" % override_call)
     else:
-        wglue("%s ret = %s::%s(%s);" % (ret_txt, class_name, meth_name, args_str))
+        wglue("%s%s::%s(%s);" % ("" if ret_txt is None else ret_txt + " ret = ", class_name, meth_name, args_str))
 
     wglue("")
     ret(ret_el)
@@ -495,16 +544,19 @@ def static_method(class_name, meth_el):
 def constructor(constr_el, class_name, constructor_idx):
     """ Handle constructor """
 
-    wglue("// Pre-wrap constructor for %s." % (class_name))
-    wglue("static inline int pwrap%sCtor%d(lua_State* l)" % (class_name, constructor_idx))
+    args_el = constr_el.find("args")
+
+    wglue("// Wrap constructor for %s" % (class_name))
+    args_signature(args_el, "k%sCtor%dArgsSignature" % (class_name, constructor_idx), None) # Pass None, it's essentially a static function
+    wglue("static inline int wrap%sCtor%d(lua_State* l)" % (class_name, constructor_idx))
     wglue("{")
     ident(1)
     write_local_vars()
 
-    check_args(constr_el.find("args"), 0)
+    check_args(args_el, 0)
 
     # Args
-    args_str = args(constr_el.find("args"), 1)
+    args_str = args(args_el, 1)
 
     # Create new userdata
     wglue("// Create user data")
@@ -528,59 +580,45 @@ def constructor(constr_el, class_name, constructor_idx):
 def constructors(constructors_el, class_name):
     """ Wrap all constructors """
 
-    idx = 0
-    func_names_and_arg_counts = []
+    ctor_count = 0
 
     # Create the pre-wrap C functions
     for constructor_el in constructors_el.iter("constructor"):
-        arg_count = count_args(constructor_el.find("args"))
+        constructor(constructor_el, class_name, ctor_count)
+        ctor_count += 1
 
-        # Iterate all arg counts and make sure there are no duplicates
-        for i in range(idx):
-            if func_names_and_arg_counts[i][1] == arg_count:
-                raise Exception("Every constructor overload should have a unique arg count. class: %s" % class_name)
-
-        constructor(constructor_el, class_name, idx)
-        func_names_and_arg_counts.append(["pwrap%sCtor%d" % (class_name, idx), arg_count])
-        idx += 1
-
-    if idx == 0:
+    if ctor_count == 0:
         raise Exception("Found no <constructor>")
 
-    # Create the landing function
+    # Create the landing function. If there are signature collisions the C++ compiler will fail
     wglue("// Wrap constructors for %s." % class_name)
     wglue("static int wrap%sCtor(lua_State* l)" % class_name)
     wglue("{")
     ident(1)
-    if idx == 1:
-        wglue("int res = pwrap%sCtor0(l);" % class_name)
+    if ctor_count == 1:
+        wglue("int ret = wrap%sCtor0(l);" % class_name)
     else:
         wglue("// Chose the right overload")
-        wglue("const int argCount = lua_gettop(l);")
-        wglue("int res = 0;")
-        wglue("switch(argCount)")
+        wglue("const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);")
+        wglue("int ret;")
+        wglue("switch(argsSignature)")
         wglue("{")
-        for name_and_arg_count in func_names_and_arg_counts:
-            func_name = name_and_arg_count[0]
-            arg_count = name_and_arg_count[1]
-            wglue("case %d:" % arg_count)
-            wglue("res = %s(l); break;" % func_name)
+        for i in range(0, ctor_count):
+            wglue("case k%sCtor%dArgsSignature:" % (class_name, i))
+            ident(1)
+            wglue("ret = wrap%sCtor%d(l);" % (class_name, i))
+            wglue("break;")
+            ident(-1)
 
         wglue("default:")
-        wglue("lua_pushfstring(l, \"Wrong overloaded new. Wrong number of arguments: %d\", argCount);")
-        wglue("res = -1;")
+        ident(1)
+        wglue("lua_pushfstring(l, \"Wrong arguments for constructor of class: %s\");" % class_name)
+        wglue("ret = lua_error(l);")
+        ident(-1)
         wglue("}")
     wglue("")
 
-    wglue("if(res >= 0)")
-    wglue("{")
-    ident(1)
-    wglue("return res;")
-    ident(-1)
-    wglue("}")
-    wglue("")
-    wglue("lua_error(l);")
-    wglue("return 0;")
+    wglue("return ret;")
     ident(-1)
     wglue("}")
     wglue("")
@@ -820,22 +858,74 @@ def class_(class_el):
         do__newindex(vars_el, class_name)
         do__index(vars_el, class_name)
 
-    # Methods LUA C functions declarations
-    meth_names_aliases = []
+    # Find which methods are overloaded and how many times
     meths_el = class_el.find("methods")
+    method_is_overloaded = {}
+    method_to_overload_count = {}
     if meths_el is not None:
         for meth_el in meths_el.iter("method"):
+            meth_name = meth_el.get("name")
+
+            if meth_name in method_is_overloaded:
+                method_is_overloaded[meth_name] = True
+                method_to_overload_count[meth_name] = 0
+            else:
+                method_is_overloaded[meth_name] = False
+
+    # Methods LUA C functions declarations
+    meth_names_aliases = []
+    if meths_el is not None:
+        for meth_el in meths_el.iter("method"):
+            meth_name = meth_el.get("name")
+            meth_alias = get_meth_alias(meth_name)
+
             is_static = meth_el.get("static")
             is_static = is_static is not None and is_static == "1"
+            is_overloaded = method_is_overloaded[meth_name]
+
+            if is_overloaded:
+                overload_idx = method_to_overload_count[meth_name]
+                method_to_overload_count[meth_name] += 1
+            else:
+                overload_idx = None
 
             if is_static:
-                static_method(class_name, meth_el)
+                static_method(class_name, meth_el, overload_idx)
             else:
-                method(class_name, meth_el)
+                method(class_name, meth_el, overload_idx)
 
-            meth_name = meth_el.get("name")
-            meth_alias = get_meth_alias(meth_el)
-            meth_names_aliases.append([meth_name, meth_alias, is_static])
+            if overload_idx is None or overload_idx == 0:
+                meth_names_aliases.append([meth_name, meth_alias, is_static])
+
+    # Generate the overload selector functions. If there are collisions in the hash C++ will fail to compile
+    for meth_name, overload_count in method_to_overload_count.items():
+        meth_alias = get_meth_alias(meth_name)
+        wglue("// Wrap overload selector for %s::%s" % (class_name, meth_name))
+        wglue("static inline int wrap%s%s(lua_State* l)" % (class_name, meth_alias))
+        wglue("{")
+        ident(1)
+        wglue("const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);")
+        wglue("int ret;")
+
+        wglue("switch(argsSignature)")
+        wglue("{")
+        for i in range(0, overload_count):
+            wglue("case k%s%s%dArgsSignature:" % (class_name, meth_alias, i))
+            ident(1)
+            wglue("ret = wrap%s%s%d(l);" % (class_name, meth_alias, i))
+            wglue("break;")
+            ident(-1)
+        wglue("default:")
+        ident(1)
+        wglue("lua_pushfstring(l, \"Wrong arguments for method: %s::%s\");" % (class_name, meth_alias))
+        wglue("ret = lua_error(l);")
+        ident(-1)
+        wglue("}")
+
+        wglue("return ret;")
+        ident(-1)
+        wglue("}")
+        wglue("")
 
     # Start class declaration
     wglue("// Wrap class %s." % class_name)
@@ -870,51 +960,6 @@ def class_(class_el):
         wglue("LuaBinder::pushLuaCFuncMethod(l, \"__index\", wrap%s__index);" % class_name)
 
     wglue("lua_settop(l, 0);")
-
-    ident(-1)
-    wglue("}")
-    wglue("")
-
-
-def function(func_el):
-    """ Handle a plain function """
-
-    func_name = func_el.get("name")
-    func_alias = get_meth_alias(func_el)
-
-    wglue("// Wrap function %s." % func_name)
-    wglue("static inline int wrap%s(lua_State* l)" % func_alias)
-    wglue("{")
-    ident(1)
-    write_local_vars()
-
-    check_args(func_el.find("args"), 0)
-
-    # Args
-    args_str = args(func_el.find("args"), 1)
-
-    # Return value
-    ret_txt = None
-    ret_el = func_el.find("return")
-    if ret_el is not None:
-        ret_txt = ret_el.text
-
-    # Call
-    wglue("// Call the function")
-    call = func_el.find("overrideCall")
-    if call is not None:
-        call = call.text
-
-    if call is not None:
-        wglue("%s" % call)
-    else:
-        if ret_txt is None:
-            wglue("%s(%s);" % (func_name, args_str))
-        else:
-            wglue("%s ret = %s(%s);" % (ret_txt, func_name, args_str))
-
-    wglue("")
-    ret(ret_el)
 
     ident(-1)
     wglue("}")
@@ -973,6 +1018,116 @@ def enum(enum_el):
     wglue("")
 
 
+def function(func_el, overload_idx):
+    """ Handle a plain function """
+
+    func_name = func_el.get("name")
+    func_alias = get_meth_alias(func_name)
+    is_overloaded = overload_idx is not None
+    args_el = func_el.find("args")
+
+    wglue("// Wrap function %s" % func_name)
+    if is_overloaded:
+        args_signature(args_el, "k%s%dArgsSignature" % (func_alias, overload_idx), None)
+    wglue("static inline int wrap%s%s(lua_State* l)" % (func_alias, str(overload_idx) if is_overloaded else ""))
+    wglue("{")
+    ident(1)
+    write_local_vars()
+
+    check_args(args_el, 0)
+
+    # Args
+    args_str = args(args_el, 1)
+
+    # Return value
+    ret_txt = None
+    ret_el = func_el.find("return")
+    if ret_el is not None:
+        ret_txt = ret_el.text
+
+    # Call
+    wglue("// Call the function")
+    override_call = func_el.find("overrideCall")
+    if override_call is not None:
+        override_call = override_call.text
+
+    if override_call is not None:
+        wglue("%s" % override_call)
+    else:
+        wglue("%s%s(%s);" % ("" if ret_txt is None else ret_txt + " ret = ", func_name, args_str))
+
+    wglue("")
+    ret(ret_el)
+
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+
+def functions(funcs_el) :
+    func_is_overloaded = {}
+    func_to_overload_count = {}
+
+    # Find which funcs are overloaded and how many times
+    func_names = []
+    for func_el in funcs_el.iter("function"):
+        func_name = func_el.get("name")
+        func_alias = get_meth_alias(func_name)
+
+        if func_name in func_is_overloaded:
+            func_is_overloaded[func_name] = True
+            func_to_overload_count[func_name] = 0
+        else:
+            func_is_overloaded[func_name] = False
+            func_names.append(func_alias)
+
+    # Do func declarations
+    for func_el in funcs_el.iter("function"):
+        func_name = func_el.get("name")
+
+        is_overloaded = func_is_overloaded[func_name]
+
+        if is_overloaded:
+            overload_idx = func_to_overload_count[func_name]
+            func_to_overload_count[func_name] += 1
+        else:
+            overload_idx = None
+
+        function(func_el, overload_idx)
+
+    # Generate the overload selector functions. If there are collisions in the hash C++ will fail to compile
+    for func_name, overload_count in func_to_overload_count.items():
+        func_alias = get_meth_alias(func_name)
+
+        wglue("// Wrap overload selector for %s" % func_name)
+        wglue("static inline int wrap%s(lua_State* l)" % func_alias)
+        wglue("{")
+        ident(1)
+        wglue("const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);")
+        wglue("int ret;")
+
+        wglue("switch(argsSignature)")
+        wglue("{")
+        for i in range(0, overload_count):
+            wglue("case k%s%dArgsSignature:" % (func_alias, i))
+            ident(1)
+            wglue("ret = wrap%s%d(l);" % (func_alias, i))
+            wglue("break;")
+            ident(-1)
+        wglue("default:")
+        ident(1)
+        wglue("lua_pushfstring(l, \"Wrong arguments for function: %s\");" % func_alias)
+        wglue("ret = lua_error(l);")
+        ident(-1)
+        wglue("}")
+
+        wglue("return ret;")
+        ident(-1)
+        wglue("}")
+        wglue("")
+
+    return func_names
+
 def main():
     """ Main function """
 
@@ -1009,11 +1164,9 @@ def main():
         # Functions
         func_names = []
         for fs in root.iter("functions"):
-            for f in fs.iter("function"):
-                function(f)
-                func_names.append(f.get("name"))
+            func_names += functions(fs)
 
-        # Wrap function
+        # Final wrap function
         wglue("// Wrap the module.")
         wglue("void wrapModule%s(lua_State* l)" % get_base_fname(filename))
         wglue("{")

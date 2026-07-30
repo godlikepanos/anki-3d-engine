@@ -728,99 +728,130 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<return>const Transform&amp;</return>
 				</method>
 
-				<method name="newComponent&lt;LightComponent&gt;" alias="newLightComponent">
+				<method name="newLightComponent">
 					<return canBeNullptr="1">LightComponent*</return>
+					<overrideCall><![CDATA[LightComponent* ret = self->newComponent<LightComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;LensFlareComponent&gt;" alias="newLensFlareComponent">
+				<method name="newLensFlareComponent">
 					<return canBeNullptr="1">LensFlareComponent*</return>
+					<overrideCall><![CDATA[LensFlareComponent* ret = self->newComponent<LensFlareComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;DecalComponent&gt;" alias="newDecalComponent">
+				<method name="newDecalComponent">
 					<return canBeNullptr="1">DecalComponent*</return>
+					<overrideCall><![CDATA[DecalComponent* ret = self->newComponent<DecalComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;TriggerComponent&gt;" alias="newTriggerComponent">
+				<method name="newTriggerComponent">
 					<return canBeNullptr="1">TriggerComponent*</return>
+					<overrideCall><![CDATA[TriggerComponent* ret = self->newComponent<TriggerComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;FogDensityComponent&gt;" alias="newFogDensityComponent">
+				<method name="newFogDensityComponent">
 					<return canBeNullptr="1">FogDensityComponent*</return>
+					<overrideCall><![CDATA[FogDensityComponent* ret = self->newComponent<FogDensityComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;CameraComponent&gt;" alias="newCameraComponent">
+				<method name="newCameraComponent">
 					<return canBeNullptr="1">CameraComponent*</return>
+					<overrideCall><![CDATA[CameraComponent* ret = self->newComponent<CameraComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;GlobalIlluminationProbeComponent&gt;" alias="newGlobalIlluminationProbeComponent">
+				<method name="newGlobalIlluminationProbeComponent">
 					<return canBeNullptr="1">GlobalIlluminationProbeComponent*</return>
+					<overrideCall><![CDATA[GlobalIlluminationProbeComponent* ret = self->newComponent<GlobalIlluminationProbeComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;ReflectionProbeComponent&gt;" alias="newReflectionProbeComponent">
+				<method name="newReflectionProbeComponent">
 					<return canBeNullptr="1">ReflectionProbeComponent*</return>
+					<overrideCall><![CDATA[ReflectionProbeComponent* ret = self->newComponent<ReflectionProbeComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;BodyComponent&gt;" alias="newBodyComponent">
+				<method name="newBodyComponent">
 					<return canBeNullptr="1">BodyComponent*</return>
+					<overrideCall><![CDATA[BodyComponent* ret = self->newComponent<BodyComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;ParticleEmitter2Component&gt;" alias="newParticleEmitter2Component">
+				<method name="newParticleEmitter2Component">
 					<return canBeNullptr="1">ParticleEmitter2Component*</return>
+					<overrideCall><![CDATA[ParticleEmitter2Component* ret = self->newComponent<ParticleEmitter2Component>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;MeshComponent&gt;" alias="newMeshComponent">
+				<method name="newMeshComponent">
 					<return canBeNullptr="1">MeshComponent*</return>
+					<overrideCall><![CDATA[MeshComponent* ret = self->newComponent<MeshComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;MaterialComponent&gt;" alias="newMaterialComponent">
+				<method name="newMaterialComponent">
 					<return canBeNullptr="1">MaterialComponent*</return>
+					<overrideCall><![CDATA[MaterialComponent* ret = self->newComponent<MaterialComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;SkinComponent&gt;" alias="newSkinComponent">
+				<method name="newSkinComponent">
 					<return canBeNullptr="1">SkinComponent*</return>
+					<overrideCall><![CDATA[SkinComponent* ret = self->newComponent<SkinComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;AnimationComponent&gt;" alias="newAnimationComponent">
+				<method name="newAnimationComponent">
 					<return canBeNullptr="1">AnimationComponent*</return>
+					<overrideCall><![CDATA[AnimationComponent* ret = self->newComponent<AnimationComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;SkyboxComponent&gt;" alias="newSkyboxComponent">
+				<method name="newSkyboxComponent">
 					<return canBeNullptr="1">SkyboxComponent*</return>
+					<overrideCall><![CDATA[SkyboxComponent* ret = self->newComponent<SkyboxComponent>();]]></overrideCall>
 				</method>
-				<method name="newComponent&lt;JointComponent&gt;" alias="newJointComponent">
+				<method name="newJointComponent">
 					<return canBeNullptr="1">JointComponent*</return>
+					<overrideCall><![CDATA[JointComponent* ret = self->newComponent<JointComponent>();]]></overrideCall>
 				</method>
 
-				<method name="getFirstComponentOfType&lt;LightComponent&gt;" alias="getFirstLightComponent">
+				<method name="getFirstLightComponent">
 					<return>LightComponent&amp;</return>
+					<overrideCall><![CDATA[LightComponent& ret = self->getFirstComponentOfType<LightComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;LensFlareComponent&gt;" alias="getFirstLensFlareComponent">
+				<method name="getFirstLensFlareComponent">
 					<return>LensFlareComponent&amp;</return>
+					<overrideCall><![CDATA[LensFlareComponent& ret = self->getFirstComponentOfType<LensFlareComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;DecalComponent&gt;" alias="getFirstDecalComponent">
+				<method name="getFirstDecalComponent">
 					<return>DecalComponent&amp;</return>
+					<overrideCall><![CDATA[DecalComponent& ret = self->getFirstComponentOfType<DecalComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;TriggerComponent&gt;" alias="getFirstTriggerComponent">
+				<method name="getFirstTriggerComponent">
 					<return>TriggerComponent&amp;</return>
+					<overrideCall><![CDATA[TriggerComponent& ret = self->getFirstComponentOfType<TriggerComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;FogDensityComponent&gt;" alias="getFirstFogDensityComponent">
+				<method name="getFirstFogDensityComponent">
 					<return>FogDensityComponent&amp;</return>
+					<overrideCall><![CDATA[FogDensityComponent& ret = self->getFirstComponentOfType<FogDensityComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;CameraComponent&gt;" alias="getFirstCameraComponent">
+				<method name="getFirstCameraComponent">
 					<return>CameraComponent&amp;</return>
+					<overrideCall><![CDATA[CameraComponent& ret = self->getFirstComponentOfType<CameraComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;GlobalIlluminationProbeComponent&gt;" alias="getFirstGlobalIlluminationProbeComponent">
+				<method name="getFirstGlobalIlluminationProbeComponent">
 					<return>GlobalIlluminationProbeComponent&amp;</return>
+					<overrideCall><![CDATA[GlobalIlluminationProbeComponent& ret = self->getFirstComponentOfType<GlobalIlluminationProbeComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;ReflectionProbeComponent&gt;" alias="getFirstReflectionProbeComponent">
+				<method name="getFirstReflectionProbeComponent">
 					<return>ReflectionProbeComponent&amp;</return>
+					<overrideCall><![CDATA[ReflectionProbeComponent& ret = self->getFirstComponentOfType<ReflectionProbeComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;BodyComponent&gt;" alias="getFirstBodyComponent">
+				<method name="getFirstBodyComponent">
 					<return>BodyComponent&amp;</return>
+					<overrideCall><![CDATA[BodyComponent& ret = self->getFirstComponentOfType<BodyComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;MeshComponent&gt;" alias="getFirstMeshComponent">
+				<method name="getFirstMeshComponent">
 					<return>MeshComponent&amp;</return>
+					<overrideCall><![CDATA[MeshComponent& ret = self->getFirstComponentOfType<MeshComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;MaterialComponent&gt;" alias="getFirstMaterialComponent">
+				<method name="getFirstMaterialComponent">
 					<return>MaterialComponent&amp;</return>
+					<overrideCall><![CDATA[MaterialComponent& ret = self->getFirstComponentOfType<MaterialComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;SkinComponent&gt;" alias="getFirstSkinComponent">
+				<method name="getFirstSkinComponent">
 					<return>SkinComponent&amp;</return>
+					<overrideCall><![CDATA[SkinComponent& ret = self->getFirstComponentOfType<SkinComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;AnimationComponent&gt;" alias="getFirstAnimationComponent">
+				<method name="getFirstAnimationComponent">
 					<return>AnimationComponent&amp;</return>
+					<overrideCall><![CDATA[AnimationComponent& ret = self->getFirstComponentOfType<AnimationComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;SkyboxComponent&gt;" alias="getFirstSkyboxComponent">
+				<method name="getFirstSkyboxComponent">
 					<return>SkyboxComponent&amp;</return>
+					<overrideCall><![CDATA[SkyboxComponent& ret = self->getFirstComponentOfType<SkyboxComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstComponentOfType&lt;JointComponent&gt;" alias="getFirstJointComponent">
+				<method name="getFirstJointComponent">
 					<return>JointComponent&amp;</return>
+					<overrideCall><![CDATA[JointComponent& ret = self->getFirstComponentOfType<JointComponent>();]]></overrideCall>
 				</method>
 			</methods>
 		</class>
@@ -877,8 +908,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<overrideCall>SceneGraph* ret = getSceneGraph(l);</overrideCall>
 			<return>SceneGraph*</return>
 		</function>
-	</functions>
-	<functions>
 		<function name="getEventManager">
 			<overrideCall>EventManager* ret = getEventManager(l);</overrideCall>
 			<return>EventManager*</return>

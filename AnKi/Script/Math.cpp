@@ -35,8 +35,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec2>()
 	return g_luaUserDataTypeInfoVec2;
 }
 
-// Pre-wrap constructor for Vec2.
-static inline int pwrapVec2Ctor0(lua_State* l)
+// Wrap constructor for Vec2
+constexpr U64 kVec2Ctor0ArgsSignature = 0;
+static inline int wrapVec2Ctor0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -59,8 +60,43 @@ static inline int pwrapVec2Ctor0(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Vec2.
-static inline int pwrapVec2Ctor1(lua_State* l)
+// Wrap constructor for Vec2
+constexpr I64 kVec2Ctor1ArgsSignatureArr[] = {LUA_TNUMBER};
+constexpr U64 kVec2Ctor1ArgsSignature = computeArrayHashConstexpr(kVec2Ctor1ArgsSignatureArr, sizeof(kVec2Ctor1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2Ctor1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Create user data
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, g_luaUserDataTypeInfoVec2.m_typeName);
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec2);
+	::new(ud->getData<Vec2>()) Vec2(arg0);
+
+	return 1;
+}
+
+// Wrap constructor for Vec2
+constexpr I64 kVec2Ctor2ArgsSignatureArr[] = {LUA_TNUMBER, LUA_TNUMBER};
+constexpr U64 kVec2Ctor2ArgsSignature = computeArrayHashConstexpr(kVec2Ctor2ArgsSignatureArr, sizeof(kVec2Ctor2ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2Ctor2(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -100,28 +136,25 @@ static inline int pwrapVec2Ctor1(lua_State* l)
 static int wrapVec2Ctor(lua_State* l)
 {
 	// Chose the right overload
-	const int argCount = lua_gettop(l);
-	int res = 0;
-	switch(argCount)
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
 	{
-	case 0:
-		res = pwrapVec2Ctor0(l);
+	case kVec2Ctor0ArgsSignature:
+		ret = wrapVec2Ctor0(l);
 		break;
-	case 2:
-		res = pwrapVec2Ctor1(l);
+	case kVec2Ctor1ArgsSignature:
+		ret = wrapVec2Ctor1(l);
+		break;
+	case kVec2Ctor2ArgsSignature:
+		ret = wrapVec2Ctor2(l);
 		break;
 	default:
-		lua_pushfstring(l, "Wrong overloaded new. Wrong number of arguments: %d", argCount);
-		res = -1;
+		lua_pushfstring(l, "Wrong arguments for constructor of class: Vec2");
+		ret = lua_error(l);
 	}
 
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
+	return ret;
 }
 
 // Wrap destructor for Vec2.
@@ -262,46 +295,7 @@ static int wrapVec2__index(lua_State* l)
 	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
-// Wrap method Vec2::setAll.
-static inline int wrapVec2setAll(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec2, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec2* self = ud->getData<Vec2>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self) = Vec2(arg0, arg1);
-
-	return 0;
-}
-
-// Wrap method Vec2::getAt.
+// Wrap method Vec2::getAt
 static inline int wrapVec2getAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -337,7 +331,7 @@ static inline int wrapVec2getAt(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::setAt.
+// Wrap method Vec2::setAt
 static inline int wrapVec2setAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -376,7 +370,7 @@ static inline int wrapVec2setAt(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec2::operator=.
+// Wrap method Vec2::operator=
 static inline int wrapVec2copy(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -412,8 +406,10 @@ static inline int wrapVec2copy(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec2::operator+.
-static inline int wrapVec2__add(lua_State* l)
+// Wrap method Vec2::operator+
+constexpr I64 kVec2__add0ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TUSERDATA, -9091593388028089909};
+constexpr U64 kVec2__add0ArgsSignature = computeArrayHashConstexpr(kVec2__add0ArgsSignatureArr, sizeof(kVec2__add0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__add0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -457,8 +453,54 @@ static inline int wrapVec2__add(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::operator-.
-static inline int wrapVec2__sub(lua_State* l)
+// Wrap method Vec2::operator+
+constexpr I64 kVec2__add1ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TNUMBER};
+constexpr U64 kVec2__add1ArgsSignature = computeArrayHashConstexpr(kVec2__add1ArgsSignatureArr, sizeof(kVec2__add1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__add1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec2, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec2* self = ud->getData<Vec2>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec2 ret = self->operator+(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec2");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec2);
+	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec2::operator-
+constexpr I64 kVec2__sub0ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TUSERDATA, -9091593388028089909};
+constexpr U64 kVec2__sub0ArgsSignature = computeArrayHashConstexpr(kVec2__sub0ArgsSignatureArr, sizeof(kVec2__sub0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__sub0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -502,8 +544,54 @@ static inline int wrapVec2__sub(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::operator*.
-static inline int wrapVec2__mul(lua_State* l)
+// Wrap method Vec2::operator-
+constexpr I64 kVec2__sub1ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TNUMBER};
+constexpr U64 kVec2__sub1ArgsSignature = computeArrayHashConstexpr(kVec2__sub1ArgsSignatureArr, sizeof(kVec2__sub1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__sub1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec2, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec2* self = ud->getData<Vec2>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec2 ret = self->operator-(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec2");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec2);
+	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec2::operator*
+constexpr I64 kVec2__mul0ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TUSERDATA, -9091593388028089909};
+constexpr U64 kVec2__mul0ArgsSignature = computeArrayHashConstexpr(kVec2__mul0ArgsSignatureArr, sizeof(kVec2__mul0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__mul0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -547,8 +635,54 @@ static inline int wrapVec2__mul(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::operator/.
-static inline int wrapVec2__div(lua_State* l)
+// Wrap method Vec2::operator*
+constexpr I64 kVec2__mul1ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TNUMBER};
+constexpr U64 kVec2__mul1ArgsSignature = computeArrayHashConstexpr(kVec2__mul1ArgsSignatureArr, sizeof(kVec2__mul1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__mul1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec2, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec2* self = ud->getData<Vec2>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec2 ret = self->operator*(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec2");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec2);
+	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec2::operator/
+constexpr I64 kVec2__div0ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TUSERDATA, -9091593388028089909};
+constexpr U64 kVec2__div0ArgsSignature = computeArrayHashConstexpr(kVec2__div0ArgsSignatureArr, sizeof(kVec2__div0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__div0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -592,7 +726,51 @@ static inline int wrapVec2__div(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::operator==.
+// Wrap method Vec2::operator/
+constexpr I64 kVec2__div1ArgsSignatureArr[] = {LUA_TUSERDATA, -9091593388028089909, LUA_TNUMBER};
+constexpr U64 kVec2__div1ArgsSignature = computeArrayHashConstexpr(kVec2__div1ArgsSignatureArr, sizeof(kVec2__div1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec2__div1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec2, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec2* self = ud->getData<Vec2>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec2 ret = self->operator/(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec2");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec2);
+	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec2::operator==
 static inline int wrapVec2__eq(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -631,7 +809,7 @@ static inline int wrapVec2__eq(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::length.
+// Wrap method Vec2::length
 static inline int wrapVec2length(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -660,7 +838,7 @@ static inline int wrapVec2length(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::normalize.
+// Wrap method Vec2::normalize
 static inline int wrapVec2normalize(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -695,7 +873,7 @@ static inline int wrapVec2normalize(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec2::dot.
+// Wrap method Vec2::dot
 static inline int wrapVec2dot(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -734,13 +912,92 @@ static inline int wrapVec2dot(lua_State* l)
 	return 1;
 }
 
+// Wrap overload selector for Vec2::operator+
+static inline int wrapVec2__add(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec2__add0ArgsSignature:
+		ret = wrapVec2__add0(l);
+		break;
+	case kVec2__add1ArgsSignature:
+		ret = wrapVec2__add1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec2::__add");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec2::operator-
+static inline int wrapVec2__sub(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec2__sub0ArgsSignature:
+		ret = wrapVec2__sub0(l);
+		break;
+	case kVec2__sub1ArgsSignature:
+		ret = wrapVec2__sub1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec2::__sub");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec2::operator*
+static inline int wrapVec2__mul(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec2__mul0ArgsSignature:
+		ret = wrapVec2__mul0(l);
+		break;
+	case kVec2__mul1ArgsSignature:
+		ret = wrapVec2__mul1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec2::__mul");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec2::operator/
+static inline int wrapVec2__div(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec2__div0ArgsSignature:
+		ret = wrapVec2__div0(l);
+		break;
+	case kVec2__div1ArgsSignature:
+		ret = wrapVec2__div1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec2::__div");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
 // Wrap class Vec2.
 static inline void wrapVec2(lua_State* l)
 {
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoVec2);
 	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoVec2.m_typeName, "new", wrapVec2Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec2Dtor);
-	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapVec2setAll);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapVec2getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapVec2setAt);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapVec2copy);
@@ -782,8 +1039,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec3>()
 	return g_luaUserDataTypeInfoVec3;
 }
 
-// Pre-wrap constructor for Vec3.
-static inline int pwrapVec3Ctor0(lua_State* l)
+// Wrap constructor for Vec3
+constexpr U64 kVec3Ctor0ArgsSignature = 0;
+static inline int wrapVec3Ctor0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -806,8 +1064,10 @@ static inline int pwrapVec3Ctor0(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Vec3.
-static inline int pwrapVec3Ctor1(lua_State* l)
+// Wrap constructor for Vec3
+constexpr I64 kVec3Ctor1ArgsSignatureArr[] = {LUA_TNUMBER};
+constexpr U64 kVec3Ctor1ArgsSignature = computeArrayHashConstexpr(kVec3Ctor1ArgsSignatureArr, sizeof(kVec3Ctor1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3Ctor1(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -837,8 +1097,10 @@ static inline int pwrapVec3Ctor1(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Vec3.
-static inline int pwrapVec3Ctor2(lua_State* l)
+// Wrap constructor for Vec3
+constexpr I64 kVec3Ctor2ArgsSignatureArr[] = {LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER};
+constexpr U64 kVec3Ctor2ArgsSignature = computeArrayHashConstexpr(kVec3Ctor2ArgsSignatureArr, sizeof(kVec3Ctor2ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3Ctor2(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -884,31 +1146,25 @@ static inline int pwrapVec3Ctor2(lua_State* l)
 static int wrapVec3Ctor(lua_State* l)
 {
 	// Chose the right overload
-	const int argCount = lua_gettop(l);
-	int res = 0;
-	switch(argCount)
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
 	{
-	case 0:
-		res = pwrapVec3Ctor0(l);
+	case kVec3Ctor0ArgsSignature:
+		ret = wrapVec3Ctor0(l);
 		break;
-	case 1:
-		res = pwrapVec3Ctor1(l);
+	case kVec3Ctor1ArgsSignature:
+		ret = wrapVec3Ctor1(l);
 		break;
-	case 3:
-		res = pwrapVec3Ctor2(l);
+	case kVec3Ctor2ArgsSignature:
+		ret = wrapVec3Ctor2(l);
 		break;
 	default:
-		lua_pushfstring(l, "Wrong overloaded new. Wrong number of arguments: %d", argCount);
-		res = -1;
+		lua_pushfstring(l, "Wrong arguments for constructor of class: Vec3");
+		ret = lua_error(l);
 	}
 
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
+	return ret;
 }
 
 // Wrap destructor for Vec3.
@@ -1067,52 +1323,7 @@ static int wrapVec3__index(lua_State* l)
 	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
-// Wrap method Vec3::setAll.
-static inline int wrapVec3setAll(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec3* self = ud->getData<Vec3>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg2;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self) = Vec3(arg0, arg1, arg2);
-
-	return 0;
-}
-
-// Wrap method Vec3::getAt.
+// Wrap method Vec3::getAt
 static inline int wrapVec3getAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1148,7 +1359,7 @@ static inline int wrapVec3getAt(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::setAt.
+// Wrap method Vec3::setAt
 static inline int wrapVec3setAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1187,7 +1398,7 @@ static inline int wrapVec3setAt(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec3::operator=.
+// Wrap method Vec3::operator=
 static inline int wrapVec3copy(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1223,8 +1434,10 @@ static inline int wrapVec3copy(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec3::operator+.
-static inline int wrapVec3__add(lua_State* l)
+// Wrap method Vec3::operator+
+constexpr I64 kVec3__add0ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TUSERDATA, 1527755477802711545};
+constexpr U64 kVec3__add0ArgsSignature = computeArrayHashConstexpr(kVec3__add0ArgsSignatureArr, sizeof(kVec3__add0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__add0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1268,8 +1481,54 @@ static inline int wrapVec3__add(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::operator-.
-static inline int wrapVec3__sub(lua_State* l)
+// Wrap method Vec3::operator+
+constexpr I64 kVec3__add1ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TNUMBER};
+constexpr U64 kVec3__add1ArgsSignature = computeArrayHashConstexpr(kVec3__add1ArgsSignatureArr, sizeof(kVec3__add1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__add1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* self = ud->getData<Vec3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec3 ret = self->operator+(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec3::operator-
+constexpr I64 kVec3__sub0ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TUSERDATA, 1527755477802711545};
+constexpr U64 kVec3__sub0ArgsSignature = computeArrayHashConstexpr(kVec3__sub0ArgsSignatureArr, sizeof(kVec3__sub0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__sub0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1313,8 +1572,54 @@ static inline int wrapVec3__sub(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::operator*.
-static inline int wrapVec3__mul(lua_State* l)
+// Wrap method Vec3::operator-
+constexpr I64 kVec3__sub1ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TNUMBER};
+constexpr U64 kVec3__sub1ArgsSignature = computeArrayHashConstexpr(kVec3__sub1ArgsSignatureArr, sizeof(kVec3__sub1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__sub1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* self = ud->getData<Vec3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec3 ret = self->operator-(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec3::operator*
+constexpr I64 kVec3__mul0ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TUSERDATA, 1527755477802711545};
+constexpr U64 kVec3__mul0ArgsSignature = computeArrayHashConstexpr(kVec3__mul0ArgsSignatureArr, sizeof(kVec3__mul0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__mul0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1358,8 +1663,54 @@ static inline int wrapVec3__mul(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::operator/.
-static inline int wrapVec3__div(lua_State* l)
+// Wrap method Vec3::operator*
+constexpr I64 kVec3__mul1ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TNUMBER};
+constexpr U64 kVec3__mul1ArgsSignature = computeArrayHashConstexpr(kVec3__mul1ArgsSignatureArr, sizeof(kVec3__mul1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__mul1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* self = ud->getData<Vec3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec3 ret = self->operator*(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec3::operator/
+constexpr I64 kVec3__div0ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TUSERDATA, 1527755477802711545};
+constexpr U64 kVec3__div0ArgsSignature = computeArrayHashConstexpr(kVec3__div0ArgsSignatureArr, sizeof(kVec3__div0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__div0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1403,7 +1754,51 @@ static inline int wrapVec3__div(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::operator==.
+// Wrap method Vec3::operator/
+constexpr I64 kVec3__div1ArgsSignatureArr[] = {LUA_TUSERDATA, 1527755477802711545, LUA_TNUMBER};
+constexpr U64 kVec3__div1ArgsSignature = computeArrayHashConstexpr(kVec3__div1ArgsSignatureArr, sizeof(kVec3__div1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec3__div1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* self = ud->getData<Vec3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec3 ret = self->operator/(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec3::operator==
 static inline int wrapVec3__eq(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1442,7 +1837,7 @@ static inline int wrapVec3__eq(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::length.
+// Wrap method Vec3::length
 static inline int wrapVec3length(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1471,7 +1866,7 @@ static inline int wrapVec3length(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::normalize.
+// Wrap method Vec3::normalize
 static inline int wrapVec3normalize(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1506,7 +1901,7 @@ static inline int wrapVec3normalize(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec3::dot.
+// Wrap method Vec3::dot
 static inline int wrapVec3dot(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1545,13 +1940,92 @@ static inline int wrapVec3dot(lua_State* l)
 	return 1;
 }
 
+// Wrap overload selector for Vec3::operator+
+static inline int wrapVec3__add(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec3__add0ArgsSignature:
+		ret = wrapVec3__add0(l);
+		break;
+	case kVec3__add1ArgsSignature:
+		ret = wrapVec3__add1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec3::__add");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec3::operator-
+static inline int wrapVec3__sub(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec3__sub0ArgsSignature:
+		ret = wrapVec3__sub0(l);
+		break;
+	case kVec3__sub1ArgsSignature:
+		ret = wrapVec3__sub1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec3::__sub");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec3::operator*
+static inline int wrapVec3__mul(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec3__mul0ArgsSignature:
+		ret = wrapVec3__mul0(l);
+		break;
+	case kVec3__mul1ArgsSignature:
+		ret = wrapVec3__mul1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec3::__mul");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec3::operator/
+static inline int wrapVec3__div(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec3__div0ArgsSignature:
+		ret = wrapVec3__div0(l);
+		break;
+	case kVec3__div1ArgsSignature:
+		ret = wrapVec3__div1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec3::__div");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
 // Wrap class Vec3.
 static inline void wrapVec3(lua_State* l)
 {
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoVec3);
 	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoVec3.m_typeName, "new", wrapVec3Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec3Dtor);
-	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapVec3setAll);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapVec3getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapVec3setAt);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapVec3copy);
@@ -1593,8 +2067,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec4>()
 	return g_luaUserDataTypeInfoVec4;
 }
 
-// Pre-wrap constructor for Vec4.
-static inline int pwrapVec4Ctor0(lua_State* l)
+// Wrap constructor for Vec4
+constexpr U64 kVec4Ctor0ArgsSignature = 0;
+static inline int wrapVec4Ctor0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1617,8 +2092,10 @@ static inline int pwrapVec4Ctor0(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Vec4.
-static inline int pwrapVec4Ctor1(lua_State* l)
+// Wrap constructor for Vec4
+constexpr I64 kVec4Ctor1ArgsSignatureArr[] = {LUA_TNUMBER};
+constexpr U64 kVec4Ctor1ArgsSignature = computeArrayHashConstexpr(kVec4Ctor1ArgsSignatureArr, sizeof(kVec4Ctor1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4Ctor1(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1648,8 +2125,10 @@ static inline int pwrapVec4Ctor1(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Vec4.
-static inline int pwrapVec4Ctor2(lua_State* l)
+// Wrap constructor for Vec4
+constexpr I64 kVec4Ctor2ArgsSignatureArr[] = {LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER};
+constexpr U64 kVec4Ctor2ArgsSignature = computeArrayHashConstexpr(kVec4Ctor2ArgsSignatureArr, sizeof(kVec4Ctor2ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4Ctor2(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1701,31 +2180,25 @@ static inline int pwrapVec4Ctor2(lua_State* l)
 static int wrapVec4Ctor(lua_State* l)
 {
 	// Chose the right overload
-	const int argCount = lua_gettop(l);
-	int res = 0;
-	switch(argCount)
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
 	{
-	case 0:
-		res = pwrapVec4Ctor0(l);
+	case kVec4Ctor0ArgsSignature:
+		ret = wrapVec4Ctor0(l);
 		break;
-	case 1:
-		res = pwrapVec4Ctor1(l);
+	case kVec4Ctor1ArgsSignature:
+		ret = wrapVec4Ctor1(l);
 		break;
-	case 4:
-		res = pwrapVec4Ctor2(l);
+	case kVec4Ctor2ArgsSignature:
+		ret = wrapVec4Ctor2(l);
 		break;
 	default:
-		lua_pushfstring(l, "Wrong overloaded new. Wrong number of arguments: %d", argCount);
-		res = -1;
+		lua_pushfstring(l, "Wrong arguments for constructor of class: Vec4");
+		ret = lua_error(l);
 	}
 
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
+	return ret;
 }
 
 // Wrap destructor for Vec4.
@@ -1902,58 +2375,7 @@ static int wrapVec4__index(lua_State* l)
 	return luaL_error(l, "Unknown field %s. Location %s:%d %s", key.cstr(), ANKI_FILE, __LINE__, ANKI_FUNC);
 }
 
-// Wrap method Vec4::setAll.
-static inline int wrapVec4setAll(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Vec4* self = ud->getData<Vec4>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg2;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg3;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5, arg3)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self) = Vec4(arg0, arg1, arg2, arg3);
-
-	return 0;
-}
-
-// Wrap method Vec4::getAt.
+// Wrap method Vec4::getAt
 static inline int wrapVec4getAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1989,7 +2411,7 @@ static inline int wrapVec4getAt(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::setAt.
+// Wrap method Vec4::setAt
 static inline int wrapVec4setAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2028,7 +2450,7 @@ static inline int wrapVec4setAt(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec4::operator=.
+// Wrap method Vec4::operator=
 static inline int wrapVec4copy(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2064,8 +2486,10 @@ static inline int wrapVec4copy(lua_State* l)
 	return 0;
 }
 
-// Wrap method Vec4::operator+.
-static inline int wrapVec4__add(lua_State* l)
+// Wrap method Vec4::operator+
+constexpr I64 kVec4__add0ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TUSERDATA, -5795342145682141566};
+constexpr U64 kVec4__add0ArgsSignature = computeArrayHashConstexpr(kVec4__add0ArgsSignatureArr, sizeof(kVec4__add0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__add0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2109,8 +2533,54 @@ static inline int wrapVec4__add(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::operator-.
-static inline int wrapVec4__sub(lua_State* l)
+// Wrap method Vec4::operator+
+constexpr I64 kVec4__add1ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TNUMBER};
+constexpr U64 kVec4__add1ArgsSignature = computeArrayHashConstexpr(kVec4__add1ArgsSignatureArr, sizeof(kVec4__add1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__add1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec4* self = ud->getData<Vec4>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec4 ret = self->operator+(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec4");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec4);
+	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec4::operator-
+constexpr I64 kVec4__sub0ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TUSERDATA, -5795342145682141566};
+constexpr U64 kVec4__sub0ArgsSignature = computeArrayHashConstexpr(kVec4__sub0ArgsSignatureArr, sizeof(kVec4__sub0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__sub0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2154,8 +2624,54 @@ static inline int wrapVec4__sub(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::operator*.
-static inline int wrapVec4__mul(lua_State* l)
+// Wrap method Vec4::operator-
+constexpr I64 kVec4__sub1ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TNUMBER};
+constexpr U64 kVec4__sub1ArgsSignature = computeArrayHashConstexpr(kVec4__sub1ArgsSignatureArr, sizeof(kVec4__sub1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__sub1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec4* self = ud->getData<Vec4>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec4 ret = self->operator-(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec4");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec4);
+	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec4::operator*
+constexpr I64 kVec4__mul0ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TUSERDATA, -5795342145682141566};
+constexpr U64 kVec4__mul0ArgsSignature = computeArrayHashConstexpr(kVec4__mul0ArgsSignatureArr, sizeof(kVec4__mul0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__mul0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2199,8 +2715,54 @@ static inline int wrapVec4__mul(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::operator/.
-static inline int wrapVec4__div(lua_State* l)
+// Wrap method Vec4::operator*
+constexpr I64 kVec4__mul1ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TNUMBER};
+constexpr U64 kVec4__mul1ArgsSignature = computeArrayHashConstexpr(kVec4__mul1ArgsSignatureArr, sizeof(kVec4__mul1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__mul1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec4* self = ud->getData<Vec4>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec4 ret = self->operator*(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec4");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec4);
+	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec4::operator/
+constexpr I64 kVec4__div0ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TUSERDATA, -5795342145682141566};
+constexpr U64 kVec4__div0ArgsSignature = computeArrayHashConstexpr(kVec4__div0ArgsSignatureArr, sizeof(kVec4__div0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__div0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2244,7 +2806,51 @@ static inline int wrapVec4__div(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::operator==.
+// Wrap method Vec4::operator/
+constexpr I64 kVec4__div1ArgsSignatureArr[] = {LUA_TUSERDATA, -5795342145682141566, LUA_TNUMBER};
+constexpr U64 kVec4__div1ArgsSignature = computeArrayHashConstexpr(kVec4__div1ArgsSignatureArr, sizeof(kVec4__div1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapVec4__div1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec4* self = ud->getData<Vec4>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec4 ret = self->operator/(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec4");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec4);
+	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Vec4::operator==
 static inline int wrapVec4__eq(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2283,7 +2889,7 @@ static inline int wrapVec4__eq(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::length.
+// Wrap method Vec4::length
 static inline int wrapVec4length(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2312,7 +2918,7 @@ static inline int wrapVec4length(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::normalize.
+// Wrap method Vec4::normalize
 static inline int wrapVec4normalize(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2347,7 +2953,7 @@ static inline int wrapVec4normalize(lua_State* l)
 	return 1;
 }
 
-// Wrap method Vec4::dot.
+// Wrap method Vec4::dot
 static inline int wrapVec4dot(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2386,13 +2992,92 @@ static inline int wrapVec4dot(lua_State* l)
 	return 1;
 }
 
+// Wrap overload selector for Vec4::operator+
+static inline int wrapVec4__add(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec4__add0ArgsSignature:
+		ret = wrapVec4__add0(l);
+		break;
+	case kVec4__add1ArgsSignature:
+		ret = wrapVec4__add1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec4::__add");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec4::operator-
+static inline int wrapVec4__sub(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec4__sub0ArgsSignature:
+		ret = wrapVec4__sub0(l);
+		break;
+	case kVec4__sub1ArgsSignature:
+		ret = wrapVec4__sub1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec4::__sub");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec4::operator*
+static inline int wrapVec4__mul(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec4__mul0ArgsSignature:
+		ret = wrapVec4__mul0(l);
+		break;
+	case kVec4__mul1ArgsSignature:
+		ret = wrapVec4__mul1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec4::__mul");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
+// Wrap overload selector for Vec4::operator/
+static inline int wrapVec4__div(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kVec4__div0ArgsSignature:
+		ret = wrapVec4__div0(l);
+		break;
+	case kVec4__div1ArgsSignature:
+		ret = wrapVec4__div1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Vec4::__div");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
 // Wrap class Vec4.
 static inline void wrapVec4(lua_State* l)
 {
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoVec4);
 	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoVec4.m_typeName, "new", wrapVec4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec4Dtor);
-	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapVec4setAll);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapVec4getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapVec4setAt);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapVec4copy);
@@ -2417,8 +3102,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
 	return g_luaUserDataTypeInfoMat3;
 }
 
-// Pre-wrap constructor for Mat3.
-static inline int pwrapMat3Ctor0(lua_State* l)
+// Wrap constructor for Mat3
+constexpr U64 kMat3Ctor0ArgsSignature = 0;
+static inline int wrapMat3Ctor0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2441,8 +3127,10 @@ static inline int pwrapMat3Ctor0(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Mat3.
-static inline int pwrapMat3Ctor1(lua_State* l)
+// Wrap constructor for Mat3
+constexpr I64 kMat3Ctor1ArgsSignatureArr[] = {LUA_TNUMBER};
+constexpr U64 kMat3Ctor1ArgsSignature = computeArrayHashConstexpr(kMat3Ctor1ArgsSignatureArr, sizeof(kMat3Ctor1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapMat3Ctor1(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2472,32 +3160,111 @@ static inline int pwrapMat3Ctor1(lua_State* l)
 	return 1;
 }
 
+// Wrap constructor for Mat3
+constexpr I64 kMat3Ctor2ArgsSignatureArr[] = {LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER,
+											  LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER};
+constexpr U64 kMat3Ctor2ArgsSignature = computeArrayHashConstexpr(kMat3Ctor2ArgsSignatureArr, sizeof(kMat3Ctor2ArgsSignatureArr) / sizeof(I64));
+static inline int wrapMat3Ctor2(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 9)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg3;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg4;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5, arg4)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg5;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 6, arg5)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg6;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 7, arg6)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg7;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 8, arg7)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg8;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 9, arg8)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Create user data
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, g_luaUserDataTypeInfoMat3.m_typeName);
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+
+	return 1;
+}
+
 // Wrap constructors for Mat3.
 static int wrapMat3Ctor(lua_State* l)
 {
 	// Chose the right overload
-	const int argCount = lua_gettop(l);
-	int res = 0;
-	switch(argCount)
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
 	{
-	case 0:
-		res = pwrapMat3Ctor0(l);
+	case kMat3Ctor0ArgsSignature:
+		ret = wrapMat3Ctor0(l);
 		break;
-	case 1:
-		res = pwrapMat3Ctor1(l);
+	case kMat3Ctor1ArgsSignature:
+		ret = wrapMat3Ctor1(l);
+		break;
+	case kMat3Ctor2ArgsSignature:
+		ret = wrapMat3Ctor2(l);
 		break;
 	default:
-		lua_pushfstring(l, "Wrong overloaded new. Wrong number of arguments: %d", argCount);
-		res = -1;
+		lua_pushfstring(l, "Wrong arguments for constructor of class: Mat3");
+		ret = lua_error(l);
 	}
 
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
+	return ret;
 }
 
 // Wrap destructor for Mat3.
@@ -2526,7 +3293,7 @@ static int wrapMat3Dtor(lua_State* l)
 	return 0;
 }
 
-// Wrap method Mat3::operator=.
+// Wrap method Mat3::operator=
 static inline int wrapMat3copy(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2562,7 +3329,7 @@ static inline int wrapMat3copy(lua_State* l)
 	return 0;
 }
 
-// Wrap method Mat3::getAt.
+// Wrap method Mat3::getAt
 static inline int wrapMat3getAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2604,7 +3371,7 @@ static inline int wrapMat3getAt(lua_State* l)
 	return 1;
 }
 
-// Wrap method Mat3::setAt.
+// Wrap method Mat3::setAt
 static inline int wrapMat3setAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2649,87 +3416,6 @@ static inline int wrapMat3setAt(lua_State* l)
 	return 0;
 }
 
-// Wrap method Mat3::setAll.
-static inline int wrapMat3setAll(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 10)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Mat3* self = ud->getData<Mat3>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg2;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg3;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5, arg3)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg4;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 6, arg4)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg5;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 7, arg5)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg6;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 8, arg6)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg7;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 9, arg7)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg8;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 10, arg8)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self) = Mat3(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-
-	return 0;
-}
-
 // Wrap class Mat3.
 static inline void wrapMat3(lua_State* l)
 {
@@ -2739,7 +3425,6 @@ static inline void wrapMat3(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3copy);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapMat3getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapMat3setAt);
-	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapMat3setAll);
 	lua_settop(l, 0);
 }
 
@@ -2752,8 +3437,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3x4>()
 	return g_luaUserDataTypeInfoMat3x4;
 }
 
-// Pre-wrap constructor for Mat3x4.
-static inline int pwrapMat3x4Ctor0(lua_State* l)
+// Wrap constructor for Mat3x4
+constexpr U64 kMat3x4Ctor0ArgsSignature = 0;
+static inline int wrapMat3x4Ctor0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2776,8 +3462,10 @@ static inline int pwrapMat3x4Ctor0(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Mat3x4.
-static inline int pwrapMat3x4Ctor1(lua_State* l)
+// Wrap constructor for Mat3x4
+constexpr I64 kMat3x4Ctor1ArgsSignatureArr[] = {LUA_TNUMBER};
+constexpr U64 kMat3x4Ctor1ArgsSignature = computeArrayHashConstexpr(kMat3x4Ctor1ArgsSignatureArr, sizeof(kMat3x4Ctor1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapMat3x4Ctor1(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2807,32 +3495,129 @@ static inline int pwrapMat3x4Ctor1(lua_State* l)
 	return 1;
 }
 
+// Wrap constructor for Mat3x4
+constexpr I64 kMat3x4Ctor2ArgsSignatureArr[] = {LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER,
+												LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER, LUA_TNUMBER};
+constexpr U64 kMat3x4Ctor2ArgsSignature = computeArrayHashConstexpr(kMat3x4Ctor2ArgsSignatureArr, sizeof(kMat3x4Ctor2ArgsSignatureArr) / sizeof(I64));
+static inline int wrapMat3x4Ctor2(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 12)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg3;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg4;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5, arg4)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg5;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 6, arg5)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg6;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 7, arg6)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg7;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 8, arg7)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg8;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 9, arg8)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg9;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 10, arg9)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg10;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 11, arg10)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	F32 arg11;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 12, arg11)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Create user data
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3x4>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, g_luaUserDataTypeInfoMat3x4.m_typeName);
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3x4;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3x4);
+	::new(ud->getData<Mat3x4>()) Mat3x4(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+
+	return 1;
+}
+
 // Wrap constructors for Mat3x4.
 static int wrapMat3x4Ctor(lua_State* l)
 {
 	// Chose the right overload
-	const int argCount = lua_gettop(l);
-	int res = 0;
-	switch(argCount)
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
 	{
-	case 0:
-		res = pwrapMat3x4Ctor0(l);
+	case kMat3x4Ctor0ArgsSignature:
+		ret = wrapMat3x4Ctor0(l);
 		break;
-	case 1:
-		res = pwrapMat3x4Ctor1(l);
+	case kMat3x4Ctor1ArgsSignature:
+		ret = wrapMat3x4Ctor1(l);
+		break;
+	case kMat3x4Ctor2ArgsSignature:
+		ret = wrapMat3x4Ctor2(l);
 		break;
 	default:
-		lua_pushfstring(l, "Wrong overloaded new. Wrong number of arguments: %d", argCount);
-		res = -1;
+		lua_pushfstring(l, "Wrong arguments for constructor of class: Mat3x4");
+		ret = lua_error(l);
 	}
 
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
+	return ret;
 }
 
 // Wrap destructor for Mat3x4.
@@ -2861,7 +3646,7 @@ static int wrapMat3x4Dtor(lua_State* l)
 	return 0;
 }
 
-// Wrap method Mat3x4::operator=.
+// Wrap method Mat3x4::operator=
 static inline int wrapMat3x4copy(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2897,7 +3682,7 @@ static inline int wrapMat3x4copy(lua_State* l)
 	return 0;
 }
 
-// Wrap method Mat3x4::getAt.
+// Wrap method Mat3x4::getAt
 static inline int wrapMat3x4getAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2939,7 +3724,7 @@ static inline int wrapMat3x4getAt(lua_State* l)
 	return 1;
 }
 
-// Wrap method Mat3x4::setAt.
+// Wrap method Mat3x4::setAt
 static inline int wrapMat3x4setAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2984,105 +3769,6 @@ static inline int wrapMat3x4setAt(lua_State* l)
 	return 0;
 }
 
-// Wrap method Mat3x4::setAll.
-static inline int wrapMat3x4setAll(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 13)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3x4, ud)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	Mat3x4* self = ud->getData<Mat3x4>();
-
-	// Pop arguments
-	F32 arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, arg1)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg2;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 4, arg2)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg3;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 5, arg3)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg4;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 6, arg4)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg5;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 7, arg5)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg6;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 8, arg6)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg7;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 9, arg7)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg8;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 10, arg8)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg9;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 11, arg9)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg10;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 12, arg10)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	F32 arg11;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 13, arg11)) [[unlikely]]
-	{
-		return lua_error(l);
-	}
-
-	// Call the method
-	(*self) = Mat3x4(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
-
-	return 0;
-}
-
 // Wrap class Mat3x4.
 static inline void wrapMat3x4(lua_State* l)
 {
@@ -3092,7 +3778,6 @@ static inline void wrapMat3x4(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3x4copy);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapMat3x4getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapMat3x4setAt);
-	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapMat3x4setAll);
 	lua_settop(l, 0);
 }
 
@@ -3105,8 +3790,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Transform>()
 	return g_luaUserDataTypeInfoTransform;
 }
 
-// Pre-wrap constructor for Transform.
-static inline int pwrapTransformCtor0(lua_State* l)
+// Wrap constructor for Transform
+constexpr U64 kTransformCtor0ArgsSignature = 0;
+static inline int wrapTransformCtor0(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3129,8 +3815,12 @@ static inline int pwrapTransformCtor0(lua_State* l)
 	return 1;
 }
 
-// Pre-wrap constructor for Transform.
-static inline int pwrapTransformCtor1(lua_State* l)
+// Wrap constructor for Transform
+constexpr I64 kTransformCtor1ArgsSignatureArr[] = {LUA_TUSERDATA,        1527755477802711545, LUA_TUSERDATA,
+												   -2795056434948159065, LUA_TUSERDATA,       1527755477802711545};
+constexpr U64 kTransformCtor1ArgsSignature =
+	computeArrayHashConstexpr(kTransformCtor1ArgsSignatureArr, sizeof(kTransformCtor1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapTransformCtor1(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3185,28 +3875,22 @@ static inline int pwrapTransformCtor1(lua_State* l)
 static int wrapTransformCtor(lua_State* l)
 {
 	// Chose the right overload
-	const int argCount = lua_gettop(l);
-	int res = 0;
-	switch(argCount)
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
 	{
-	case 0:
-		res = pwrapTransformCtor0(l);
+	case kTransformCtor0ArgsSignature:
+		ret = wrapTransformCtor0(l);
 		break;
-	case 3:
-		res = pwrapTransformCtor1(l);
+	case kTransformCtor1ArgsSignature:
+		ret = wrapTransformCtor1(l);
 		break;
 	default:
-		lua_pushfstring(l, "Wrong overloaded new. Wrong number of arguments: %d", argCount);
-		res = -1;
+		lua_pushfstring(l, "Wrong arguments for constructor of class: Transform");
+		ret = lua_error(l);
 	}
 
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
+	return ret;
 }
 
 // Wrap destructor for Transform.
@@ -3235,7 +3919,7 @@ static int wrapTransformDtor(lua_State* l)
 	return 0;
 }
 
-// Wrap method Transform::operator=.
+// Wrap method Transform::operator=
 static inline int wrapTransformcopy(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3271,7 +3955,7 @@ static inline int wrapTransformcopy(lua_State* l)
 	return 0;
 }
 
-// Wrap method Transform::getOrigin.
+// Wrap method Transform::getOrigin
 static inline int wrapTransformgetOrigin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3306,7 +3990,7 @@ static inline int wrapTransformgetOrigin(lua_State* l)
 	return 1;
 }
 
-// Wrap method Transform::setOrigin.
+// Wrap method Transform::setOrigin
 static inline int wrapTransformsetOrigin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3342,7 +4026,7 @@ static inline int wrapTransformsetOrigin(lua_State* l)
 	return 0;
 }
 
-// Wrap method Transform::getRotation.
+// Wrap method Transform::getRotation
 static inline int wrapTransformgetRotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3377,7 +4061,7 @@ static inline int wrapTransformgetRotation(lua_State* l)
 	return 1;
 }
 
-// Wrap method Transform::setRotation.
+// Wrap method Transform::setRotation
 static inline int wrapTransformsetRotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3413,7 +4097,7 @@ static inline int wrapTransformsetRotation(lua_State* l)
 	return 0;
 }
 
-// Wrap method Transform::getScale.
+// Wrap method Transform::getScale
 static inline int wrapTransformgetScale(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3448,7 +4132,7 @@ static inline int wrapTransformgetScale(lua_State* l)
 	return 1;
 }
 
-// Wrap method Transform::setScale.
+// Wrap method Transform::setScale
 static inline int wrapTransformsetScale(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3500,7 +4184,7 @@ static inline void wrapTransform(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Wrap function toRad.
+// Wrap function toRad
 static inline int wraptoRad(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;

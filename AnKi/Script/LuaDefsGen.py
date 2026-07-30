@@ -17,6 +17,7 @@
 import os
 import optparse
 import xml.etree.ElementTree as et
+import re
 
 # Globals
 g_out_file = None
@@ -72,19 +73,24 @@ def wlua(txt):
 
 
 def parse_type_decl(arg_txt):
-    """ Parse a type text and strip cv/ref/ptr qualifiers. Same logic as LuaGlueGen.py """
+    """ Parse a type text and strip cv/ref/ptr qualifiers. A full expression that can be parsed is: WeakArray<const type&>. Keep this in sync with
+    LuaGlueGen.py's parse_type_decl() """
 
-    tokens = arg_txt.split(" ")
-    type = tokens[len(tokens) - 1]
+    regex = re.compile(
+        r"^(?P<array>(?:Const)?WeakArray<)?"  # optional WeakArray< wrapper
+        r"(?:(?P<const>const)\s+)?"           # optional const
+        r"(?P<type>.+?)"                      # the type (non-greedy)
+        r"\s*(?P<qual>[&*]?)"                 # optional & or *
+        r"(?(array)>)$"                       # closing > required iff WeakArray< matched
+    )
 
-    is_ptr = type.endswith("*")
-    is_ref = type.endswith("&")
-    if is_ref or is_ptr:
-        type = type[:-1]
+    m = regex.match(arg_txt.strip())
+    if not m:
+        raise RuntimeError("Cannot parse type declaration: %s" % arg_txt)
 
-    is_const = tokens[0] == "const"
+    qual = m.group("qual")
 
-    return (type, is_ref, is_ptr, is_const)
+    return (m.group("type"), qual == "&", qual == "*", m.group("const") is not None, m.group("array") is not None)
 
 
 def type_is_bool(type):
@@ -106,23 +112,26 @@ def lua_type(anki_type):
     if anki_type is None:
         return None
 
-    (type, is_ref, is_ptr, is_const) = parse_type_decl(anki_type)
+    (type, is_ref, is_ptr, is_const, is_weak_array) = parse_type_decl(anki_type)
 
     if type == "void" or type == "Error":
         return None
     if type_is_bool(type):
-        return "boolean"
-    if type_is_number(type):
-        return "number"
-    if type == "char" or type == "CString":
-        return "string"
-    if type_is_enum(type):
+        lua = "boolean"
+    elif type_is_number(type):
+        lua = "number"
+    elif type == "char" or type == "CString":
+        lua = "string"
+    elif type_is_enum(type):
         # Enums are passed/returned as plain numbers in Lua but the global table
         # (e.g. SkyboxComponentType.kGenerated) resolves to an integer.
-        return "integer"
+        lua = "integer"
+    else:
+        # User class type
+        lua = type
 
-    # User class type
-    return type
+    # A WeakArray is passed as a Lua table with 1-based integer keys
+    return (lua + "[]") if is_weak_array else lua
 
 
 def to_camel(s):
@@ -133,15 +142,18 @@ def to_camel(s):
 def param_base_name(anki_type):
     """ Pick a readable parameter name based on the type """
 
-    (type, is_ref, is_ptr, is_const) = parse_type_decl(anki_type)
+    (type, is_ref, is_ptr, is_const, is_weak_array) = parse_type_decl(anki_type)
 
     if type_is_bool(type):
-        return "b"
-    if type_is_number(type):
-        return "num"
-    if type == "char" or type == "CString":
-        return "str"
-    return to_camel(type)
+        name = "b"
+    elif type_is_number(type):
+        name = "num"
+    elif type == "char" or type == "CString":
+        name = "str"
+    else:
+        name = to_camel(type)
+
+    return (name + "s") if is_weak_array else name
 
 
 def build_params(args_el):
@@ -185,6 +197,17 @@ def get_return_lua(el):
     if ret_el is None:
         return None
     return lua_type(ret_el.text)
+
+
+def emit_overloaded(decl, els, ret_override=None):
+    """ Emit a single declaration for a group of same-named overloads. The signature with the most args becomes the primary one so the richest hint
+    shows up and the rest become ---@overload lines. Emitting one declaration per overload instead would make the language server report a duplicate
+    definition. """
+
+    sigs = [(build_params(el.find("args")), ret_override or get_return_lua(el)) for el in els]
+    sigs.sort(key=lambda sig: len(sig[0]), reverse=True)
+    overloads = [params_to_fun(params, ret_lua) for (params, ret_lua) in sigs[1:]]
+    emit_callable(decl, sigs[0][0], sigs[0][1], overloads)
 
 
 def emit_callable(decl, params, ret_lua, overloads=None):
@@ -254,62 +277,53 @@ def emit_class(class_el):
     # Constructors -> ClassName.new(...)
     constructors_el = class_el.find("constructors")
     if constructors_el is not None:
-        ctors = list(constructors_el.iter("constructor"))
-        ctor_params = [build_params(c.find("args")) for c in ctors]
-        # Use the constructor with the most args as the primary signature so the
-        # richest hint shows up; the rest become overloads.
-        ctor_params.sort(key=len, reverse=True)
-        primary = ctor_params[0]
-        overloads = [params_to_fun(p, class_name) for p in ctor_params[1:]]
-        emit_callable("function %s.new" % class_name, primary, class_name, overloads)
+        emit_overloaded("function %s.new" % class_name, list(constructors_el.iter("constructor")), class_name)
 
-    # Methods
+    # Methods. Group the same-named ones because the XML expresses an overload as a repeated <method>
     if meths_el is not None:
-        seen = set()
-        for meth_el in meths_el.iter("method"):
-            meth_name = meth_el.get("name")
+        groups = group_by_lua_name(meths_el.iter("method"), method_lua_name)
 
-            # Arithmetic operators are already covered by @operator above
-            if meth_name in OPERATOR_MAP:
-                continue
-            # Comparison metamethods are implicit in Lua; skip them
-            if meth_name.startswith("operator") and meth_name != "operator=":
-                continue
-
-            # operator= is bound as a regular method called "copy"
-            alias = meth_el.get("alias")
-            if alias is not None:
-                lua_name = alias
-            elif meth_name == "operator=":
-                lua_name = "copy"
-            else:
-                lua_name = meth_name
-
-            is_static = meth_el.get("static") == "1"
+        for ((lua_name, is_static), meth_els) in groups:
             sep = "." if is_static else ":"
-
-            params = build_params(meth_el.find("args"))
-            ret_lua = get_return_lua(meth_el)
-
-            # Duplicate names within a class become overloads of the first decl
-            key = (lua_name, is_static)
-            if key in seen:
-                wlua("---@overload %s" % params_to_fun(params, ret_lua))
-                wlua("%s%s%s() end" % ("function ", class_name + sep, lua_name))
-                wlua("")
-                continue
-            seen.add(key)
-
-            emit_callable("function %s%s%s" % (class_name, sep, lua_name), params, ret_lua)
+            emit_overloaded("function %s%s%s" % (class_name, sep, lua_name), meth_els)
 
 
-def emit_function(func_el):
-    """ Emit a free/global function """
+def method_lua_name(meth_el):
+    """ The name a method is bound under, or None if it shouldn't appear as a method at all. Mirrors LuaGlueGen.py's get_meth_alias() """
 
-    func_name = func_el.get("name")
-    params = build_params(func_el.find("args"))
-    ret_lua = get_return_lua(func_el)
-    emit_callable("function %s" % func_name, params, ret_lua)
+    meth_name = meth_el.get("name")
+
+    # Arithmetic operators are already covered by @operator on the class header
+    if meth_name in OPERATOR_MAP:
+        return None
+    # Comparison metamethods are implicit in Lua; skip them
+    if meth_name.startswith("operator") and meth_name != "operator=":
+        return None
+
+    # operator= is bound as a regular method called "copy"
+    lua_name = "copy" if meth_name == "operator=" else meth_name
+    return (lua_name, meth_el.get("static") == "1")
+
+
+def group_by_lua_name(els, key_func):
+    """ Group elements by the key key_func returns, preserving the XML order of both the groups and the elements within a group. Elements whose key is
+    None are dropped. """
+
+    groups = []
+    key_to_group = {}
+
+    for el in els:
+        key = key_func(el)
+        if key is None:
+            continue
+
+        if key not in key_to_group:
+            key_to_group[key] = []
+            groups.append((key, key_to_group[key]))
+
+        key_to_group[key].append(el)
+
+    return groups
 
 
 def main():
@@ -348,10 +362,14 @@ def main():
             for class_el in classes.iter("class"):
                 emit_class(class_el)
 
+    # Global functions share a single Lua namespace, so group across every <functions> block of every file
+    func_els = []
     for root in roots:
         for functions in root.iter("functions"):
-            for func_el in functions.iter("function"):
-                emit_function(func_el)
+            func_els += list(functions.iter("function"))
+
+    for ((func_name, ), func_group) in group_by_lua_name(func_els, lambda el: (el.get("name"), )):
+        emit_overloaded("function %s" % func_name, func_group)
 
     g_out_file.close()
 

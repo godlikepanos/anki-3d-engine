@@ -28,7 +28,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Renderer>()
 	return g_luaUserDataTypeInfoRenderer;
 }
 
-// Wrap method Renderer::getAspectRatio.
+// Wrap method Renderer::getAspectRatio
 static inline int wrapRenderergetAspectRatio(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -57,7 +57,7 @@ static inline int wrapRenderergetAspectRatio(lua_State* l)
 	return 1;
 }
 
-// Wrap method Renderer::setCurrentDebugRenderTarget.
+// Wrap method Renderer::setCurrentDebugRenderTarget
 static inline int wrapRenderersetCurrentDebugRenderTarget(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -99,7 +99,7 @@ static inline void wrapRenderer(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Wrap function getRenderer.
+// Wrap function getRenderer
 static inline int wrapgetRenderer(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;

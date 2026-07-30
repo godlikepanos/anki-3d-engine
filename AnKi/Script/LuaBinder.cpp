@@ -535,4 +535,28 @@ void LuaBinder::deserializeGlobals(lua_State* l, const void* data, PtrSize dataS
 	}
 }
 
+U64 LuaBinder::computeFunctionArgumentSignature(lua_State* l)
+{
+	const int argCount = lua_gettop(l);
+
+	Array<I64, 64> sigArray; // 64 is high enough to catch all cases
+	U32 sigArraySize = 0;
+	for(int i = 0; i < argCount; ++i)
+	{
+		const I luaType = lua_type(l, i + 1);
+
+		sigArray[sigArraySize++] = luaType;
+
+		if(luaType == LUA_TUSERDATA)
+		{
+			// Need to also push the userdata's signature. Can't use getDataTypeInfo() because the userdata may not be an AnKi one (eg a file handle
+			// from Lua's io library) and following its m_info would be a wild pointer read. A foreign signature just won't match any overload
+			const Bool isAnKiUserData = lua_rawlen(l, i + 1) >= sizeof(LuaUserData);
+			sigArray[sigArraySize++] = (isAnKiUserData) ? static_cast<LuaUserData*>(lua_touserdata(l, i + 1))->getSig() : 0;
+		}
+	}
+
+	return (sigArraySize > 0) ? computeArrayHashConstexpr(sigArray.getBegin(), sigArraySize) : 0;
+}
+
 } // end namespace anki

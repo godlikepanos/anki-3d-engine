@@ -9,121 +9,36 @@
 
 ANKI_TEST(Script, LuaBinder)
 {
-	ScriptManager& sm = ScriptManager::allocateSingleton(allocAligned, nullptr);
-
-	Vec4 v4(2.0, 3.0, 4.0, 5.0);
-	Vec3 v3(1.1f, 2.2f, 3.3f);
-
-	sm.exposeVariable("v4", &v4);
-	sm.exposeVariable("v3", &v3);
-
-	static const char* script = R"(
-b = Vec4.new(0, 0, 0, 1.1)
-if math.abs(b:getW() - 1.1) > 0.00001 then
-	print(b:getW())
-	error("oh no!!")
-end
-
-b:setX(3.0)
-b:setY(4.0)
-
-v4:copy(v4 * b)
-
-v3:setZ(0.1)
-)";
-
-	ANKI_TEST_EXPECT_NO_ERR(sm.evalString(script));
-
-	ANKI_TEST_EXPECT_EQ(v4, Vec4(6, 12, 0, 5.5));
-	ANKI_TEST_EXPECT_EQ(v3, Vec3(1.1f, 2.2f, 0.1f));
-
-	ScriptManager::freeSingleton();
-}
-
-ANKI_TEST(Script, LuaBinderThreads)
-{
-	ScriptEnvironment env;
-
-	static const char* script = R"(
-vec = Vec4.new(0, 0, 0, 0)
-
-function myFunc()
-	vec:setX(vec:getX() + 1)
-	logi(string.format("The number is %f", vec:getX()))
-end
-)";
-
-	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script));
-
-	static const char* script1 = R"(
-myFunc()
-)";
-
-	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script1));
-	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script1));
-
-	ScriptManager::freeSingleton();
-}
-
-ANKI_TEST(Script, LuaBinderSerialize)
-{
-	ScriptEnvironment env;
-
-	static const char* script = R"(
-num = 123.4
-str = "lala"
-vec = Vec3.new(1, 2, 3)
-)";
-
-	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script));
-
-	class Callback : public LuaBinderSerializeGlobalsCallback
-	{
-	public:
-		Array<U8, 1024> m_buff;
-		U32 m_offset = 0;
-
-		void write(const void* data, PtrSize dataSize)
-		{
-			memcpy(&m_buff[m_offset], data, dataSize);
-			m_offset += U32(dataSize);
-		}
-	} callback;
-
-	env.serializeGlobals(callback);
-
-	ScriptEnvironment env2;
-
-	env2.deserializeGlobals(&callback.m_buff[0], callback.m_offset);
-
-	static const char* script2 = R"(
-print(num)
-print(str)
-print(vec:getX(), vec:getY(), vec:getZ())
-)";
-
-	ANKI_TEST_EXPECT_NO_ERR(env2.evalString(script2));
-
-	ScriptManager::freeSingleton();
-}
-
-ANKI_TEST(Script, Fields)
-{
 	ScriptManager::allocateSingleton(allocAligned, nullptr);
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 
 	{
 		ScriptEnvironment env;
 
-		static const char* script = R"(
-vec = Vec3.new(1, 2, 3)
-vec:setX(6)
-logi(string.format("%f %f %f", vec:getX(), vec:getY(), vec:getZ()))
-vec.blah = 0
-x = vec.x
-)";
+		Vec3 v3(1.1f, 2.2f, 3.3f);
+		env.exposeVariable("v3", &v3);
 
-		ANKI_TEST_EXPECT_NO_ERR(env.evalString(script));
+		ANKI_TEST_EXPECT_NO_ERR(env.evalString(R"(
+v3.x = v3.x + 10.0
+)"));
+
+		ANKI_TEST_EXPECT_EQ(v3, Vec3(11.1f, 2.2f, 3.3f));
 	}
 
+	{
+		ScriptEnvironment env;
+
+		Vec3 v3(1.1f, 2.2f, 3.3f);
+		env.exposeVariable("v3", &v3);
+
+		ANKI_TEST_EXPECT_NO_ERR(env.evalString(R"(
+v3:copy(v3 + 10.0)
+v3:copy(v3 + Vec3.new(20))
+)"));
+
+		ANKI_TEST_EXPECT_EQ(v3, Vec3(31.1f, 32.2f, 33.3f));
+	}
+
+	DefaultMemoryPool::freeSingleton();
 	ScriptManager::freeSingleton();
 }

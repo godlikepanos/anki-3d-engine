@@ -9,7 +9,7 @@
 
 namespace anki {
 
-// Wrap function logi.
+// Wrap function logi
 static inline int wraplogi(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -34,7 +34,7 @@ static inline int wraplogi(lua_State* l)
 	return 0;
 }
 
-// Wrap function loge.
+// Wrap function loge
 static inline int wraploge(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -59,7 +59,7 @@ static inline int wraploge(lua_State* l)
 	return 0;
 }
 
-// Wrap function logw.
+// Wrap function logw
 static inline int wraplogw(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -84,7 +84,7 @@ static inline int wraplogw(lua_State* l)
 	return 0;
 }
 
-// Wrap function logv.
+// Wrap function logv
 static inline int wraplogv(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;

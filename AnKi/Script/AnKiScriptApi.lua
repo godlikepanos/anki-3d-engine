@@ -641,28 +641,29 @@ EventManager = {}
 
 ---@param num number
 ---@param num2 number
----@param weakArray<SceneNode*> WeakArray<SceneNode*>
+---@param sceneNodes SceneNode[]
 ---@return ScriptEvent
-function EventManager:newScriptEvent(num, num2, weakArray<SceneNode*>) end
+function EventManager:newScriptEvent(num, num2, sceneNodes) end
 
 ---@class Vec2
 ---@field x number
 ---@field y number
 ---@operator add(Vec2): Vec2
+---@operator add(number): Vec2
 ---@operator sub(Vec2): Vec2
+---@operator sub(number): Vec2
 ---@operator mul(Vec2): Vec2
+---@operator mul(number): Vec2
 ---@operator div(Vec2): Vec2
+---@operator div(number): Vec2
 Vec2 = {}
 
+---@overload fun(num: number): Vec2
 ---@overload fun(): Vec2
 ---@param num number
 ---@param num2 number
 ---@return Vec2
 function Vec2.new(num, num2) end
-
----@param num number
----@param num2 number
-function Vec2:setAll(num, num2) end
 
 ---@param num number
 ---@return number
@@ -690,9 +691,13 @@ function Vec2:dot(vec2) end
 ---@field y number
 ---@field z number
 ---@operator add(Vec3): Vec3
+---@operator add(number): Vec3
 ---@operator sub(Vec3): Vec3
+---@operator sub(number): Vec3
 ---@operator mul(Vec3): Vec3
+---@operator mul(number): Vec3
 ---@operator div(Vec3): Vec3
+---@operator div(number): Vec3
 Vec3 = {}
 
 ---@overload fun(num: number): Vec3
@@ -702,11 +707,6 @@ Vec3 = {}
 ---@param num3 number
 ---@return Vec3
 function Vec3.new(num, num2, num3) end
-
----@param num number
----@param num2 number
----@param num3 number
-function Vec3:setAll(num, num2, num3) end
 
 ---@param num number
 ---@return number
@@ -735,9 +735,13 @@ function Vec3:dot(vec3) end
 ---@field z number
 ---@field w number
 ---@operator add(Vec4): Vec4
+---@operator add(number): Vec4
 ---@operator sub(Vec4): Vec4
+---@operator sub(number): Vec4
 ---@operator mul(Vec4): Vec4
+---@operator mul(number): Vec4
 ---@operator div(Vec4): Vec4
+---@operator div(number): Vec4
 Vec4 = {}
 
 ---@overload fun(num: number): Vec4
@@ -748,12 +752,6 @@ Vec4 = {}
 ---@param num4 number
 ---@return Vec4
 function Vec4.new(num, num2, num3, num4) end
-
----@param num number
----@param num2 number
----@param num3 number
----@param num4 number
-function Vec4:setAll(num, num2, num3, num4) end
 
 ---@param num number
 ---@return number
@@ -779,10 +777,19 @@ function Vec4:dot(vec4) end
 ---@class Mat3
 Mat3 = {}
 
+---@overload fun(num: number): Mat3
 ---@overload fun(): Mat3
 ---@param num number
+---@param num2 number
+---@param num3 number
+---@param num4 number
+---@param num5 number
+---@param num6 number
+---@param num7 number
+---@param num8 number
+---@param num9 number
 ---@return Mat3
-function Mat3.new(num) end
+function Mat3.new(num, num2, num3, num4, num5, num6, num7, num8, num9) end
 
 ---@param mat3 Mat3
 function Mat3:copy(mat3) end
@@ -797,6 +804,11 @@ function Mat3:getAt(num, num2) end
 ---@param num3 number
 function Mat3:setAt(num, num2, num3) end
 
+---@class Mat3x4
+Mat3x4 = {}
+
+---@overload fun(num: number): Mat3x4
+---@overload fun(): Mat3x4
 ---@param num number
 ---@param num2 number
 ---@param num3 number
@@ -806,15 +818,11 @@ function Mat3:setAt(num, num2, num3) end
 ---@param num7 number
 ---@param num8 number
 ---@param num9 number
-function Mat3:setAll(num, num2, num3, num4, num5, num6, num7, num8, num9) end
-
----@class Mat3x4
-Mat3x4 = {}
-
----@overload fun(): Mat3x4
----@param num number
+---@param num10 number
+---@param num11 number
+---@param num12 number
 ---@return Mat3x4
-function Mat3x4.new(num) end
+function Mat3x4.new(num, num2, num3, num4, num5, num6, num7, num8, num9, num10, num11, num12) end
 
 ---@param mat3x4 Mat3x4
 function Mat3x4:copy(mat3x4) end
@@ -828,20 +836,6 @@ function Mat3x4:getAt(num, num2) end
 ---@param num2 number
 ---@param num3 number
 function Mat3x4:setAt(num, num2, num3) end
-
----@param num number
----@param num2 number
----@param num3 number
----@param num4 number
----@param num5 number
----@param num6 number
----@param num7 number
----@param num8 number
----@param num9 number
----@param num10 number
----@param num11 number
----@param num12 number
-function Mat3x4:setAll(num, num2, num3, num4, num5, num6, num7, num8, num9, num10, num11, num12) end
 
 ---@class Transform
 Transform = {}

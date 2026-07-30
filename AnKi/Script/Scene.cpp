@@ -457,7 +457,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<WeakArraySceneNodePtr
 	return g_luaUserDataTypeInfoWeakArraySceneNodePtr;
 }
 
-// Wrap method WeakArraySceneNodePtr::getSize.
+// Wrap method WeakArraySceneNodePtr::getSize
 static inline int wrapWeakArraySceneNodePtrgetSize(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -486,7 +486,7 @@ static inline int wrapWeakArraySceneNodePtrgetSize(lua_State* l)
 	return 1;
 }
 
-// Wrap method WeakArraySceneNodePtr::getAt.
+// Wrap method WeakArraySceneNodePtr::getAt
 static inline int wrapWeakArraySceneNodePtrgetAt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -549,7 +549,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneComponentUpdateI
 	return g_luaUserDataTypeInfoSceneComponentUpdateInfo;
 }
 
-// Wrap method SceneComponentUpdateInfo::getSceneNode.
+// Wrap method SceneComponentUpdateInfo::getSceneNode
 static inline int wrapSceneComponentUpdateInfogetSceneNode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -582,7 +582,7 @@ static inline int wrapSceneComponentUpdateInfogetSceneNode(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneComponentUpdateInfo::getDt.
+// Wrap method SceneComponentUpdateInfo::getDt
 static inline int wrapSceneComponentUpdateInfogetDt(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -611,7 +611,7 @@ static inline int wrapSceneComponentUpdateInfogetDt(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneComponentUpdateInfo::getPreviousTime.
+// Wrap method SceneComponentUpdateInfo::getPreviousTime
 static inline int wrapSceneComponentUpdateInfogetPreviousTime(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -640,7 +640,7 @@ static inline int wrapSceneComponentUpdateInfogetPreviousTime(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneComponentUpdateInfo::getCurrentTime.
+// Wrap method SceneComponentUpdateInfo::getCurrentTime
 static inline int wrapSceneComponentUpdateInfogetCurrentTime(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -689,7 +689,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightComponent>()
 	return g_luaUserDataTypeInfoLightComponent;
 }
 
-// Wrap method LightComponent::setLightComponentType.
+// Wrap method LightComponent::setLightComponentType
 static inline int wrapLightComponentsetLightComponentType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -723,7 +723,7 @@ static inline int wrapLightComponentsetLightComponentType(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::setDiffuseColor.
+// Wrap method LightComponent::setDiffuseColor
 static inline int wrapLightComponentsetDiffuseColor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -759,7 +759,7 @@ static inline int wrapLightComponentsetDiffuseColor(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::getDiffuseColor.
+// Wrap method LightComponent::getDiffuseColor
 static inline int wrapLightComponentgetDiffuseColor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -792,7 +792,7 @@ static inline int wrapLightComponentgetDiffuseColor(lua_State* l)
 	return 1;
 }
 
-// Wrap method LightComponent::setRadius.
+// Wrap method LightComponent::setRadius
 static inline int wrapLightComponentsetRadius(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -825,7 +825,7 @@ static inline int wrapLightComponentsetRadius(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::getRadius.
+// Wrap method LightComponent::getRadius
 static inline int wrapLightComponentgetRadius(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -854,7 +854,7 @@ static inline int wrapLightComponentgetRadius(lua_State* l)
 	return 1;
 }
 
-// Wrap method LightComponent::setDistance.
+// Wrap method LightComponent::setDistance
 static inline int wrapLightComponentsetDistance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -887,7 +887,7 @@ static inline int wrapLightComponentsetDistance(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::getDistance.
+// Wrap method LightComponent::getDistance
 static inline int wrapLightComponentgetDistance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -916,7 +916,7 @@ static inline int wrapLightComponentgetDistance(lua_State* l)
 	return 1;
 }
 
-// Wrap method LightComponent::setInnerAngle.
+// Wrap method LightComponent::setInnerAngle
 static inline int wrapLightComponentsetInnerAngle(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -949,7 +949,7 @@ static inline int wrapLightComponentsetInnerAngle(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::getInnerAngle.
+// Wrap method LightComponent::getInnerAngle
 static inline int wrapLightComponentgetInnerAngle(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -978,7 +978,7 @@ static inline int wrapLightComponentgetInnerAngle(lua_State* l)
 	return 1;
 }
 
-// Wrap method LightComponent::setOuterAngle.
+// Wrap method LightComponent::setOuterAngle
 static inline int wrapLightComponentsetOuterAngle(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1011,7 +1011,7 @@ static inline int wrapLightComponentsetOuterAngle(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::getOuterAngle.
+// Wrap method LightComponent::getOuterAngle
 static inline int wrapLightComponentgetOuterAngle(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1040,7 +1040,7 @@ static inline int wrapLightComponentgetOuterAngle(lua_State* l)
 	return 1;
 }
 
-// Wrap method LightComponent::setShadowEnabled.
+// Wrap method LightComponent::setShadowEnabled
 static inline int wrapLightComponentsetShadowEnabled(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1073,7 +1073,7 @@ static inline int wrapLightComponentsetShadowEnabled(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::getShadowEnabled.
+// Wrap method LightComponent::getShadowEnabled
 static inline int wrapLightComponentgetShadowEnabled(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1131,7 +1131,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DecalComponent>()
 	return g_luaUserDataTypeInfoDecalComponent;
 }
 
-// Wrap method DecalComponent::setDiffuseImageFilename.
+// Wrap method DecalComponent::setDiffuseImageFilename
 static inline int wrapDecalComponentsetDiffuseImageFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1171,7 +1171,7 @@ static inline int wrapDecalComponentsetDiffuseImageFilename(lua_State* l)
 	return 1;
 }
 
-// Wrap method DecalComponent::getDiffuseImageFilename.
+// Wrap method DecalComponent::getDiffuseImageFilename
 static inline int wrapDecalComponentgetDiffuseImageFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1200,7 +1200,7 @@ static inline int wrapDecalComponentgetDiffuseImageFilename(lua_State* l)
 	return 1;
 }
 
-// Wrap method DecalComponent::setDiffuseBlendFactor.
+// Wrap method DecalComponent::setDiffuseBlendFactor
 static inline int wrapDecalComponentsetDiffuseBlendFactor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1240,7 +1240,7 @@ static inline int wrapDecalComponentsetDiffuseBlendFactor(lua_State* l)
 	return 1;
 }
 
-// Wrap method DecalComponent::getDiffuseBlendFactor.
+// Wrap method DecalComponent::getDiffuseBlendFactor
 static inline int wrapDecalComponentgetDiffuseBlendFactor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1269,7 +1269,7 @@ static inline int wrapDecalComponentgetDiffuseBlendFactor(lua_State* l)
 	return 1;
 }
 
-// Wrap method DecalComponent::setRoughnessMetalnessImageFilename.
+// Wrap method DecalComponent::setRoughnessMetalnessImageFilename
 static inline int wrapDecalComponentsetRoughnessMetalnessImageFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1309,7 +1309,7 @@ static inline int wrapDecalComponentsetRoughnessMetalnessImageFilename(lua_State
 	return 1;
 }
 
-// Wrap method DecalComponent::getRoughnessMetalnessImageFilename.
+// Wrap method DecalComponent::getRoughnessMetalnessImageFilename
 static inline int wrapDecalComponentgetRoughnessMetalnessImageFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1338,7 +1338,7 @@ static inline int wrapDecalComponentgetRoughnessMetalnessImageFilename(lua_State
 	return 1;
 }
 
-// Wrap method DecalComponent::setRoughnessMetalnessBlendFactor.
+// Wrap method DecalComponent::setRoughnessMetalnessBlendFactor
 static inline int wrapDecalComponentsetRoughnessMetalnessBlendFactor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1378,7 +1378,7 @@ static inline int wrapDecalComponentsetRoughnessMetalnessBlendFactor(lua_State* 
 	return 1;
 }
 
-// Wrap method DecalComponent::getRoughnessMetalnessBlendFactor.
+// Wrap method DecalComponent::getRoughnessMetalnessBlendFactor
 static inline int wrapDecalComponentgetRoughnessMetalnessBlendFactor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1431,7 +1431,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LensFlareComponent>()
 	return g_luaUserDataTypeInfoLensFlareComponent;
 }
 
-// Wrap method LensFlareComponent::loadImageResource.
+// Wrap method LensFlareComponent::loadImageResource
 static inline int wrapLensFlareComponentloadImageResource(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1464,7 +1464,7 @@ static inline int wrapLensFlareComponentloadImageResource(lua_State* l)
 	return 0;
 }
 
-// Wrap method LensFlareComponent::setFirstFlareSize.
+// Wrap method LensFlareComponent::setFirstFlareSize
 static inline int wrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1500,7 +1500,7 @@ static inline int wrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	return 0;
 }
 
-// Wrap method LensFlareComponent::setColorMultiplier.
+// Wrap method LensFlareComponent::setColorMultiplier
 static inline int wrapLensFlareComponentsetColorMultiplier(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1555,7 +1555,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<BodyComponent>()
 	return g_luaUserDataTypeInfoBodyComponent;
 }
 
-// Wrap method BodyComponent::setCollisionShapeType.
+// Wrap method BodyComponent::setCollisionShapeType
 static inline int wrapBodyComponentsetCollisionShapeType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1596,7 +1596,7 @@ static inline int wrapBodyComponentsetCollisionShapeType(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::getCollisionShapeType.
+// Wrap method BodyComponent::getCollisionShapeType
 static inline int wrapBodyComponentgetCollisionShapeType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1631,7 +1631,7 @@ static inline int wrapBodyComponentgetCollisionShapeType(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::setBoxExtend.
+// Wrap method BodyComponent::setBoxExtend
 static inline int wrapBodyComponentsetBoxExtend(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1674,7 +1674,7 @@ static inline int wrapBodyComponentsetBoxExtend(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::getBoxExtend.
+// Wrap method BodyComponent::getBoxExtend
 static inline int wrapBodyComponentgetBoxExtend(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1707,7 +1707,7 @@ static inline int wrapBodyComponentgetBoxExtend(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::setSphereRadius.
+// Wrap method BodyComponent::setSphereRadius
 static inline int wrapBodyComponentsetSphereRadius(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1747,7 +1747,7 @@ static inline int wrapBodyComponentsetSphereRadius(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::getSphereRadius.
+// Wrap method BodyComponent::getSphereRadius
 static inline int wrapBodyComponentgetSphereRadius(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1776,7 +1776,7 @@ static inline int wrapBodyComponentgetSphereRadius(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::setMass.
+// Wrap method BodyComponent::setMass
 static inline int wrapBodyComponentsetMass(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1816,7 +1816,7 @@ static inline int wrapBodyComponentsetMass(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::getMass.
+// Wrap method BodyComponent::getMass
 static inline int wrapBodyComponentgetMass(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1845,7 +1845,7 @@ static inline int wrapBodyComponentgetMass(lua_State* l)
 	return 1;
 }
 
-// Wrap method BodyComponent::applyForce.
+// Wrap method BodyComponent::applyForce
 static inline int wrapBodyComponentapplyForce(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1890,7 +1890,7 @@ static inline int wrapBodyComponentapplyForce(lua_State* l)
 	return 0;
 }
 
-// Wrap method BodyComponent::isValid.
+// Wrap method BodyComponent::isValid
 static inline int wrapBodyComponentisValid(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1945,7 +1945,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<JointComponent>()
 	return g_luaUserDataTypeInfoJointComponent;
 }
 
-// Wrap method JointComponent::setJointType.
+// Wrap method JointComponent::setJointType
 static inline int wrapJointComponentsetJointType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -1979,7 +1979,7 @@ static inline int wrapJointComponentsetJointType(lua_State* l)
 	return 0;
 }
 
-// Wrap method JointComponent::getJointType.
+// Wrap method JointComponent::getJointType
 static inline int wrapJointComponentgetJointType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2014,7 +2014,7 @@ static inline int wrapJointComponentgetJointType(lua_State* l)
 	return 1;
 }
 
-// Wrap method JointComponent::setPivot1Origin.
+// Wrap method JointComponent::setPivot1Origin
 static inline int wrapJointComponentsetPivot1Origin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2050,7 +2050,7 @@ static inline int wrapJointComponentsetPivot1Origin(lua_State* l)
 	return 0;
 }
 
-// Wrap method JointComponent::getPivot1Origin.
+// Wrap method JointComponent::getPivot1Origin
 static inline int wrapJointComponentgetPivot1Origin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2085,7 +2085,7 @@ static inline int wrapJointComponentgetPivot1Origin(lua_State* l)
 	return 1;
 }
 
-// Wrap method JointComponent::setPivot2Origin.
+// Wrap method JointComponent::setPivot2Origin
 static inline int wrapJointComponentsetPivot2Origin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2121,7 +2121,7 @@ static inline int wrapJointComponentsetPivot2Origin(lua_State* l)
 	return 0;
 }
 
-// Wrap method JointComponent::getPivot2Origin.
+// Wrap method JointComponent::getPivot2Origin
 static inline int wrapJointComponentgetPivot2Origin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2156,7 +2156,7 @@ static inline int wrapJointComponentgetPivot2Origin(lua_State* l)
 	return 1;
 }
 
-// Wrap method JointComponent::setPivot1Rotation.
+// Wrap method JointComponent::setPivot1Rotation
 static inline int wrapJointComponentsetPivot1Rotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2192,7 +2192,7 @@ static inline int wrapJointComponentsetPivot1Rotation(lua_State* l)
 	return 0;
 }
 
-// Wrap method JointComponent::getPivot1Rotation.
+// Wrap method JointComponent::getPivot1Rotation
 static inline int wrapJointComponentgetPivot1Rotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2227,7 +2227,7 @@ static inline int wrapJointComponentgetPivot1Rotation(lua_State* l)
 	return 1;
 }
 
-// Wrap method JointComponent::setPivot2Rotation.
+// Wrap method JointComponent::setPivot2Rotation
 static inline int wrapJointComponentsetPivot2Rotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2263,7 +2263,7 @@ static inline int wrapJointComponentsetPivot2Rotation(lua_State* l)
 	return 0;
 }
 
-// Wrap method JointComponent::getPivot2Rotation.
+// Wrap method JointComponent::getPivot2Rotation
 static inline int wrapJointComponentgetPivot2Rotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2298,7 +2298,7 @@ static inline int wrapJointComponentgetPivot2Rotation(lua_State* l)
 	return 1;
 }
 
-// Wrap method JointComponent::movePivot1ToPivot2.
+// Wrap method JointComponent::movePivot1ToPivot2
 static inline int wrapJointComponentmovePivot1ToPivot2(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2324,7 +2324,7 @@ static inline int wrapJointComponentmovePivot1ToPivot2(lua_State* l)
 	return 0;
 }
 
-// Wrap method JointComponent::movePivot2ToPivot1.
+// Wrap method JointComponent::movePivot2ToPivot1
 static inline int wrapJointComponentmovePivot2ToPivot1(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2378,7 +2378,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<TriggerComponent>()
 	return g_luaUserDataTypeInfoTriggerComponent;
 }
 
-// Wrap method TriggerComponent::setTriggerComponentType.
+// Wrap method TriggerComponent::setTriggerComponentType
 static inline int wrapTriggerComponentsetTriggerComponentType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2419,7 +2419,7 @@ static inline int wrapTriggerComponentsetTriggerComponentType(lua_State* l)
 	return 1;
 }
 
-// Wrap method TriggerComponent::getTriggerComponentType.
+// Wrap method TriggerComponent::getTriggerComponentType
 static inline int wrapTriggerComponentgetTriggerComponentType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2472,7 +2472,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<FogDensityComponent>(
 	return g_luaUserDataTypeInfoFogDensityComponent;
 }
 
-// Wrap method FogDensityComponent::setDensity.
+// Wrap method FogDensityComponent::setDensity
 static inline int wrapFogDensityComponentsetDensity(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2505,7 +2505,7 @@ static inline int wrapFogDensityComponentsetDensity(lua_State* l)
 	return 0;
 }
 
-// Wrap method FogDensityComponent::getDensity.
+// Wrap method FogDensityComponent::getDensity
 static inline int wrapFogDensityComponentgetDensity(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2552,7 +2552,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<CameraComponent>()
 	return g_luaUserDataTypeInfoCameraComponent;
 }
 
-// Wrap method CameraComponent::setPerspective.
+// Wrap method CameraComponent::setPerspective
 static inline int wrapCameraComponentsetPerspective(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2621,7 +2621,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<GlobalIlluminationPro
 	return g_luaUserDataTypeInfoGlobalIlluminationProbeComponent;
 }
 
-// Wrap method GlobalIlluminationProbeComponent::setCellSize.
+// Wrap method GlobalIlluminationProbeComponent::setCellSize
 static inline int wrapGlobalIlluminationProbeComponentsetCellSize(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2654,7 +2654,7 @@ static inline int wrapGlobalIlluminationProbeComponentsetCellSize(lua_State* l)
 	return 0;
 }
 
-// Wrap method GlobalIlluminationProbeComponent::getCellSize.
+// Wrap method GlobalIlluminationProbeComponent::getCellSize
 static inline int wrapGlobalIlluminationProbeComponentgetCellSize(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2683,7 +2683,7 @@ static inline int wrapGlobalIlluminationProbeComponentgetCellSize(lua_State* l)
 	return 1;
 }
 
-// Wrap method GlobalIlluminationProbeComponent::setFadeDistance.
+// Wrap method GlobalIlluminationProbeComponent::setFadeDistance
 static inline int wrapGlobalIlluminationProbeComponentsetFadeDistance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2716,7 +2716,7 @@ static inline int wrapGlobalIlluminationProbeComponentsetFadeDistance(lua_State*
 	return 0;
 }
 
-// Wrap method GlobalIlluminationProbeComponent::getFadeDistance.
+// Wrap method GlobalIlluminationProbeComponent::getFadeDistance
 static inline int wrapGlobalIlluminationProbeComponentgetFadeDistance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2781,7 +2781,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ParticleEmitter2Compo
 	return g_luaUserDataTypeInfoParticleEmitter2Component;
 }
 
-// Wrap method ParticleEmitter2Component::setParticleEmitterFilename.
+// Wrap method ParticleEmitter2Component::setParticleEmitterFilename
 static inline int wrapParticleEmitter2ComponentsetParticleEmitterFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2821,7 +2821,7 @@ static inline int wrapParticleEmitter2ComponentsetParticleEmitterFilename(lua_St
 	return 1;
 }
 
-// Wrap method ParticleEmitter2Component::getParticleEmitterFilename.
+// Wrap method ParticleEmitter2Component::getParticleEmitterFilename
 static inline int wrapParticleEmitter2ComponentgetParticleEmitterFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2850,7 +2850,7 @@ static inline int wrapParticleEmitter2ComponentgetParticleEmitterFilename(lua_St
 	return 1;
 }
 
-// Wrap method ParticleEmitter2Component::setParticleGeometryType.
+// Wrap method ParticleEmitter2Component::setParticleGeometryType
 static inline int wrapParticleEmitter2ComponentsetParticleGeometryType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2891,7 +2891,7 @@ static inline int wrapParticleEmitter2ComponentsetParticleGeometryType(lua_State
 	return 1;
 }
 
-// Wrap method ParticleEmitter2Component::getParticleGeometryType.
+// Wrap method ParticleEmitter2Component::getParticleGeometryType
 static inline int wrapParticleEmitter2ComponentgetParticleGeometryType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2946,7 +2946,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MeshComponent>()
 	return g_luaUserDataTypeInfoMeshComponent;
 }
 
-// Wrap method MeshComponent::setMeshComponentType.
+// Wrap method MeshComponent::setMeshComponentType
 static inline int wrapMeshComponentsetMeshComponentType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -2987,7 +2987,7 @@ static inline int wrapMeshComponentsetMeshComponentType(lua_State* l)
 	return 1;
 }
 
-// Wrap method MeshComponent::setMeshComponentPrimitiveType.
+// Wrap method MeshComponent::setMeshComponentPrimitiveType
 static inline int wrapMeshComponentsetMeshComponentPrimitiveType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3028,7 +3028,7 @@ static inline int wrapMeshComponentsetMeshComponentPrimitiveType(lua_State* l)
 	return 1;
 }
 
-// Wrap method MeshComponent::setSpherePrimitiveSubdivision.
+// Wrap method MeshComponent::setSpherePrimitiveSubdivision
 static inline int wrapMeshComponentsetSpherePrimitiveSubdivision(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3068,7 +3068,7 @@ static inline int wrapMeshComponentsetSpherePrimitiveSubdivision(lua_State* l)
 	return 1;
 }
 
-// Wrap method MeshComponent::setMeshFilename.
+// Wrap method MeshComponent::setMeshFilename
 static inline int wrapMeshComponentsetMeshFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3128,7 +3128,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MaterialComponent>()
 	return g_luaUserDataTypeInfoMaterialComponent;
 }
 
-// Wrap method MaterialComponent::setMaterialFilename.
+// Wrap method MaterialComponent::setMaterialFilename
 static inline int wrapMaterialComponentsetMaterialFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3168,7 +3168,7 @@ static inline int wrapMaterialComponentsetMaterialFilename(lua_State* l)
 	return 1;
 }
 
-// Wrap method MaterialComponent::setSubmeshIndex.
+// Wrap method MaterialComponent::setSubmeshIndex
 static inline int wrapMaterialComponentsetSubmeshIndex(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3226,7 +3226,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SkinComponent>()
 	return g_luaUserDataTypeInfoSkinComponent;
 }
 
-// Wrap method SkinComponent::setSkeletonFilename.
+// Wrap method SkinComponent::setSkeletonFilename
 static inline int wrapSkinComponentsetSkeletonFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3283,7 +3283,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<AnimationComponent>()
 	return g_luaUserDataTypeInfoAnimationComponent;
 }
 
-// Wrap method AnimationComponent::setAnimationFilename.
+// Wrap method AnimationComponent::setAnimationFilename
 static inline int wrapAnimationComponentsetAnimationFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3329,7 +3329,7 @@ static inline int wrapAnimationComponentsetAnimationFilename(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::getAnimationFilename.
+// Wrap method AnimationComponent::getAnimationFilename
 static inline int wrapAnimationComponentgetAnimationFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3365,7 +3365,7 @@ static inline int wrapAnimationComponentgetAnimationFilename(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::hasAnimationFilename.
+// Wrap method AnimationComponent::hasAnimationFilename
 static inline int wrapAnimationComponenthasAnimationFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3401,7 +3401,7 @@ static inline int wrapAnimationComponenthasAnimationFilename(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::setAnimationChannel.
+// Wrap method AnimationComponent::setAnimationChannel
 static inline int wrapAnimationComponentsetAnimationChannel(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3447,7 +3447,7 @@ static inline int wrapAnimationComponentsetAnimationChannel(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::getAnimationChannel.
+// Wrap method AnimationComponent::getAnimationChannel
 static inline int wrapAnimationComponentgetAnimationChannel(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3483,7 +3483,7 @@ static inline int wrapAnimationComponentgetAnimationChannel(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::setAnimationBlendWeight.
+// Wrap method AnimationComponent::setAnimationBlendWeight
 static inline int wrapAnimationComponentsetAnimationBlendWeight(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3529,7 +3529,7 @@ static inline int wrapAnimationComponentsetAnimationBlendWeight(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::getAnimationBlendWeight.
+// Wrap method AnimationComponent::getAnimationBlendWeight
 static inline int wrapAnimationComponentgetAnimationBlendWeight(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3565,7 +3565,7 @@ static inline int wrapAnimationComponentgetAnimationBlendWeight(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::setAnimationWrapMode.
+// Wrap method AnimationComponent::setAnimationWrapMode
 static inline int wrapAnimationComponentsetAnimationWrapMode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3612,7 +3612,7 @@ static inline int wrapAnimationComponentsetAnimationWrapMode(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::getAnimationWrapMode.
+// Wrap method AnimationComponent::getAnimationWrapMode
 static inline int wrapAnimationComponentgetAnimationWrapMode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3654,7 +3654,7 @@ static inline int wrapAnimationComponentgetAnimationWrapMode(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::setAnimationBlendMode.
+// Wrap method AnimationComponent::setAnimationBlendMode
 static inline int wrapAnimationComponentsetAnimationBlendMode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3701,7 +3701,7 @@ static inline int wrapAnimationComponentsetAnimationBlendMode(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::getAnimationBlendMode.
+// Wrap method AnimationComponent::getAnimationBlendMode
 static inline int wrapAnimationComponentgetAnimationBlendMode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3743,7 +3743,7 @@ static inline int wrapAnimationComponentgetAnimationBlendMode(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::setAnimationSpeed.
+// Wrap method AnimationComponent::setAnimationSpeed
 static inline int wrapAnimationComponentsetAnimationSpeed(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3789,7 +3789,7 @@ static inline int wrapAnimationComponentsetAnimationSpeed(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::getAnimationSpeed.
+// Wrap method AnimationComponent::getAnimationSpeed
 static inline int wrapAnimationComponentgetAnimationSpeed(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3825,7 +3825,7 @@ static inline int wrapAnimationComponentgetAnimationSpeed(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::resetTrack.
+// Wrap method AnimationComponent::resetTrack
 static inline int wrapAnimationComponentresetTrack(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3858,7 +3858,7 @@ static inline int wrapAnimationComponentresetTrack(lua_State* l)
 	return 0;
 }
 
-// Wrap method AnimationComponent::setAnimationState.
+// Wrap method AnimationComponent::setAnimationState
 static inline int wrapAnimationComponentsetAnimationState(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3905,7 +3905,7 @@ static inline int wrapAnimationComponentsetAnimationState(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::getAnimationState.
+// Wrap method AnimationComponent::getAnimationState
 static inline int wrapAnimationComponentgetAnimationState(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -3947,7 +3947,7 @@ static inline int wrapAnimationComponentgetAnimationState(lua_State* l)
 	return 1;
 }
 
-// Wrap method AnimationComponent::isValid.
+// Wrap method AnimationComponent::isValid
 static inline int wrapAnimationComponentisValid(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4009,7 +4009,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SkyboxComponent>()
 	return g_luaUserDataTypeInfoSkyboxComponent;
 }
 
-// Wrap method SkyboxComponent::setSkyboxComponentType.
+// Wrap method SkyboxComponent::setSkyboxComponentType
 static inline int wrapSkyboxComponentsetSkyboxComponentType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4050,7 +4050,7 @@ static inline int wrapSkyboxComponentsetSkyboxComponentType(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::getSkyboxComponentType.
+// Wrap method SkyboxComponent::getSkyboxComponentType
 static inline int wrapSkyboxComponentgetSkyboxComponentType(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4085,7 +4085,7 @@ static inline int wrapSkyboxComponentgetSkyboxComponentType(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setSkySolidColor.
+// Wrap method SkyboxComponent::setSkySolidColor
 static inline int wrapSkyboxComponentsetSkySolidColor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4128,7 +4128,7 @@ static inline int wrapSkyboxComponentsetSkySolidColor(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::getSkySolidColor.
+// Wrap method SkyboxComponent::getSkySolidColor
 static inline int wrapSkyboxComponentgetSkySolidColor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4163,7 +4163,7 @@ static inline int wrapSkyboxComponentgetSkySolidColor(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setSkyImageFilename.
+// Wrap method SkyboxComponent::setSkyImageFilename
 static inline int wrapSkyboxComponentsetSkyImageFilename(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4203,7 +4203,7 @@ static inline int wrapSkyboxComponentsetSkyImageFilename(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setSkyImageColorBias.
+// Wrap method SkyboxComponent::setSkyImageColorBias
 static inline int wrapSkyboxComponentsetSkyImageColorBias(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4246,7 +4246,7 @@ static inline int wrapSkyboxComponentsetSkyImageColorBias(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setSkyImageColorScale.
+// Wrap method SkyboxComponent::setSkyImageColorScale
 static inline int wrapSkyboxComponentsetSkyImageColorScale(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4289,7 +4289,7 @@ static inline int wrapSkyboxComponentsetSkyImageColorScale(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setMinFogDensity.
+// Wrap method SkyboxComponent::setMinFogDensity
 static inline int wrapSkyboxComponentsetMinFogDensity(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4329,7 +4329,7 @@ static inline int wrapSkyboxComponentsetMinFogDensity(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setMaxFogDensity.
+// Wrap method SkyboxComponent::setMaxFogDensity
 static inline int wrapSkyboxComponentsetMaxFogDensity(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4369,7 +4369,7 @@ static inline int wrapSkyboxComponentsetMaxFogDensity(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setHeightOfMinFogDensity.
+// Wrap method SkyboxComponent::setHeightOfMinFogDensity
 static inline int wrapSkyboxComponentsetHeightOfMinFogDensity(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4409,7 +4409,7 @@ static inline int wrapSkyboxComponentsetHeightOfMinFogDensity(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setHeightOfMaxFogDensity.
+// Wrap method SkyboxComponent::setHeightOfMaxFogDensity
 static inline int wrapSkyboxComponentsetHeightOfMaxFogDensity(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4449,7 +4449,7 @@ static inline int wrapSkyboxComponentsetHeightOfMaxFogDensity(lua_State* l)
 	return 1;
 }
 
-// Wrap method SkyboxComponent::setFogDiffuseColor.
+// Wrap method SkyboxComponent::setFogDiffuseColor
 static inline int wrapSkyboxComponentsetFogDiffuseColor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4520,7 +4520,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneNode>()
 	return g_luaUserDataTypeInfoSceneNode;
 }
 
-// Wrap method SceneNode::getName.
+// Wrap method SceneNode::getName
 static inline int wrapSceneNodegetName(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4549,7 +4549,7 @@ static inline int wrapSceneNodegetName(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::setParent.
+// Wrap method SceneNode::setParent
 static inline int wrapSceneNodesetParent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4592,7 +4592,7 @@ static inline int wrapSceneNodesetParent(lua_State* l)
 	return 0;
 }
 
-// Wrap method SceneNode::markForDeletion.
+// Wrap method SceneNode::markForDeletion
 static inline int wrapSceneNodemarkForDeletion(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4618,7 +4618,7 @@ static inline int wrapSceneNodemarkForDeletion(lua_State* l)
 	return 0;
 }
 
-// Wrap method SceneNode::setLocalOrigin.
+// Wrap method SceneNode::setLocalOrigin
 static inline int wrapSceneNodesetLocalOrigin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4654,7 +4654,7 @@ static inline int wrapSceneNodesetLocalOrigin(lua_State* l)
 	return 0;
 }
 
-// Wrap method SceneNode::getLocalOrigin.
+// Wrap method SceneNode::getLocalOrigin
 static inline int wrapSceneNodegetLocalOrigin(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4689,7 +4689,7 @@ static inline int wrapSceneNodegetLocalOrigin(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::setLocalRotation.
+// Wrap method SceneNode::setLocalRotation
 static inline int wrapSceneNodesetLocalRotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4725,7 +4725,7 @@ static inline int wrapSceneNodesetLocalRotation(lua_State* l)
 	return 0;
 }
 
-// Wrap method SceneNode::getLocalRotation.
+// Wrap method SceneNode::getLocalRotation
 static inline int wrapSceneNodegetLocalRotation(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4760,7 +4760,7 @@ static inline int wrapSceneNodegetLocalRotation(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::setLocalScale.
+// Wrap method SceneNode::setLocalScale
 static inline int wrapSceneNodesetLocalScale(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4796,7 +4796,7 @@ static inline int wrapSceneNodesetLocalScale(lua_State* l)
 	return 0;
 }
 
-// Wrap method SceneNode::getLocalScale.
+// Wrap method SceneNode::getLocalScale
 static inline int wrapSceneNodegetLocalScale(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4831,7 +4831,7 @@ static inline int wrapSceneNodegetLocalScale(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::setLocalTransform.
+// Wrap method SceneNode::setLocalTransform
 static inline int wrapSceneNodesetLocalTransform(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4867,7 +4867,7 @@ static inline int wrapSceneNodesetLocalTransform(lua_State* l)
 	return 0;
 }
 
-// Wrap method SceneNode::getLocalTransform.
+// Wrap method SceneNode::getLocalTransform
 static inline int wrapSceneNodegetLocalTransform(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4900,7 +4900,7 @@ static inline int wrapSceneNodegetLocalTransform(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<LightComponent>.
+// Wrap method SceneNode::newLightComponent
 static inline int wrapSceneNodenewLightComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4939,7 +4939,7 @@ static inline int wrapSceneNodenewLightComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<LensFlareComponent>.
+// Wrap method SceneNode::newLensFlareComponent
 static inline int wrapSceneNodenewLensFlareComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -4978,7 +4978,7 @@ static inline int wrapSceneNodenewLensFlareComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<DecalComponent>.
+// Wrap method SceneNode::newDecalComponent
 static inline int wrapSceneNodenewDecalComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5017,7 +5017,7 @@ static inline int wrapSceneNodenewDecalComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<TriggerComponent>.
+// Wrap method SceneNode::newTriggerComponent
 static inline int wrapSceneNodenewTriggerComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5056,7 +5056,7 @@ static inline int wrapSceneNodenewTriggerComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<FogDensityComponent>.
+// Wrap method SceneNode::newFogDensityComponent
 static inline int wrapSceneNodenewFogDensityComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5095,7 +5095,7 @@ static inline int wrapSceneNodenewFogDensityComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<CameraComponent>.
+// Wrap method SceneNode::newCameraComponent
 static inline int wrapSceneNodenewCameraComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5134,7 +5134,7 @@ static inline int wrapSceneNodenewCameraComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<GlobalIlluminationProbeComponent>.
+// Wrap method SceneNode::newGlobalIlluminationProbeComponent
 static inline int wrapSceneNodenewGlobalIlluminationProbeComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5173,7 +5173,7 @@ static inline int wrapSceneNodenewGlobalIlluminationProbeComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<ReflectionProbeComponent>.
+// Wrap method SceneNode::newReflectionProbeComponent
 static inline int wrapSceneNodenewReflectionProbeComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5212,7 +5212,7 @@ static inline int wrapSceneNodenewReflectionProbeComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<BodyComponent>.
+// Wrap method SceneNode::newBodyComponent
 static inline int wrapSceneNodenewBodyComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5251,7 +5251,7 @@ static inline int wrapSceneNodenewBodyComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<ParticleEmitter2Component>.
+// Wrap method SceneNode::newParticleEmitter2Component
 static inline int wrapSceneNodenewParticleEmitter2Component(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5290,7 +5290,7 @@ static inline int wrapSceneNodenewParticleEmitter2Component(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<MeshComponent>.
+// Wrap method SceneNode::newMeshComponent
 static inline int wrapSceneNodenewMeshComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5329,7 +5329,7 @@ static inline int wrapSceneNodenewMeshComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<MaterialComponent>.
+// Wrap method SceneNode::newMaterialComponent
 static inline int wrapSceneNodenewMaterialComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5368,7 +5368,7 @@ static inline int wrapSceneNodenewMaterialComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<SkinComponent>.
+// Wrap method SceneNode::newSkinComponent
 static inline int wrapSceneNodenewSkinComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5407,7 +5407,7 @@ static inline int wrapSceneNodenewSkinComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<AnimationComponent>.
+// Wrap method SceneNode::newAnimationComponent
 static inline int wrapSceneNodenewAnimationComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5446,7 +5446,7 @@ static inline int wrapSceneNodenewAnimationComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<SkyboxComponent>.
+// Wrap method SceneNode::newSkyboxComponent
 static inline int wrapSceneNodenewSkyboxComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5485,7 +5485,7 @@ static inline int wrapSceneNodenewSkyboxComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::newComponent<JointComponent>.
+// Wrap method SceneNode::newJointComponent
 static inline int wrapSceneNodenewJointComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5524,7 +5524,7 @@ static inline int wrapSceneNodenewJointComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<LightComponent>.
+// Wrap method SceneNode::getFirstLightComponent
 static inline int wrapSceneNodegetFirstLightComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5557,7 +5557,7 @@ static inline int wrapSceneNodegetFirstLightComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<LensFlareComponent>.
+// Wrap method SceneNode::getFirstLensFlareComponent
 static inline int wrapSceneNodegetFirstLensFlareComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5590,7 +5590,7 @@ static inline int wrapSceneNodegetFirstLensFlareComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<DecalComponent>.
+// Wrap method SceneNode::getFirstDecalComponent
 static inline int wrapSceneNodegetFirstDecalComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5623,7 +5623,7 @@ static inline int wrapSceneNodegetFirstDecalComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<TriggerComponent>.
+// Wrap method SceneNode::getFirstTriggerComponent
 static inline int wrapSceneNodegetFirstTriggerComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5656,7 +5656,7 @@ static inline int wrapSceneNodegetFirstTriggerComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<FogDensityComponent>.
+// Wrap method SceneNode::getFirstFogDensityComponent
 static inline int wrapSceneNodegetFirstFogDensityComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5689,7 +5689,7 @@ static inline int wrapSceneNodegetFirstFogDensityComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<CameraComponent>.
+// Wrap method SceneNode::getFirstCameraComponent
 static inline int wrapSceneNodegetFirstCameraComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5722,7 +5722,7 @@ static inline int wrapSceneNodegetFirstCameraComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<GlobalIlluminationProbeComponent>.
+// Wrap method SceneNode::getFirstGlobalIlluminationProbeComponent
 static inline int wrapSceneNodegetFirstGlobalIlluminationProbeComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5755,7 +5755,7 @@ static inline int wrapSceneNodegetFirstGlobalIlluminationProbeComponent(lua_Stat
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<ReflectionProbeComponent>.
+// Wrap method SceneNode::getFirstReflectionProbeComponent
 static inline int wrapSceneNodegetFirstReflectionProbeComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5788,7 +5788,7 @@ static inline int wrapSceneNodegetFirstReflectionProbeComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<BodyComponent>.
+// Wrap method SceneNode::getFirstBodyComponent
 static inline int wrapSceneNodegetFirstBodyComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5821,7 +5821,7 @@ static inline int wrapSceneNodegetFirstBodyComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<MeshComponent>.
+// Wrap method SceneNode::getFirstMeshComponent
 static inline int wrapSceneNodegetFirstMeshComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5854,7 +5854,7 @@ static inline int wrapSceneNodegetFirstMeshComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<MaterialComponent>.
+// Wrap method SceneNode::getFirstMaterialComponent
 static inline int wrapSceneNodegetFirstMaterialComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5887,7 +5887,7 @@ static inline int wrapSceneNodegetFirstMaterialComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<SkinComponent>.
+// Wrap method SceneNode::getFirstSkinComponent
 static inline int wrapSceneNodegetFirstSkinComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5920,7 +5920,7 @@ static inline int wrapSceneNodegetFirstSkinComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<AnimationComponent>.
+// Wrap method SceneNode::getFirstAnimationComponent
 static inline int wrapSceneNodegetFirstAnimationComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5953,7 +5953,7 @@ static inline int wrapSceneNodegetFirstAnimationComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<SkyboxComponent>.
+// Wrap method SceneNode::getFirstSkyboxComponent
 static inline int wrapSceneNodegetFirstSkyboxComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -5986,7 +5986,7 @@ static inline int wrapSceneNodegetFirstSkyboxComponent(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneNode::getFirstComponentOfType<JointComponent>.
+// Wrap method SceneNode::getFirstJointComponent
 static inline int wrapSceneNodegetFirstJointComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -6077,7 +6077,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneGraph>()
 	return g_luaUserDataTypeInfoSceneGraph;
 }
 
-// Wrap method SceneGraph::newSceneNode.
+// Wrap method SceneGraph::newSceneNode
 static inline int wrapSceneGraphnewSceneNode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -6122,7 +6122,7 @@ static inline int wrapSceneGraphnewSceneNode(lua_State* l)
 	return 1;
 }
 
-// Wrap method SceneGraph::setActiveCameraNode.
+// Wrap method SceneGraph::setActiveCameraNode
 static inline int wrapSceneGraphsetActiveCameraNode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -6158,7 +6158,7 @@ static inline int wrapSceneGraphsetActiveCameraNode(lua_State* l)
 	return 0;
 }
 
-// Wrap method SceneGraph::tryFindSceneNode.
+// Wrap method SceneGraph::tryFindSceneNode
 static inline int wrapSceneGraphtryFindSceneNode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -6223,7 +6223,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Event>()
 	return g_luaUserDataTypeInfoEvent;
 }
 
-// Wrap method Event::getAssociatedSceneNodes.
+// Wrap method Event::getAssociatedSceneNodes
 static inline int wrapEventgetAssociatedSceneNodes(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -6291,7 +6291,7 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<EventManager>()
 	return g_luaUserDataTypeInfoEventManager;
 }
 
-// Wrap method EventManager::newScriptEvent.
+// Wrap method EventManager::newScriptEvent
 static inline int wrapEventManagernewScriptEvent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -6373,7 +6373,7 @@ static inline void wrapEventManager(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Wrap function getSceneGraph.
+// Wrap function getSceneGraph
 static inline int wrapgetSceneGraph(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
@@ -6403,7 +6403,7 @@ static inline int wrapgetSceneGraph(lua_State* l)
 	return 1;
 }
 
-// Wrap function getEventManager.
+// Wrap function getEventManager
 static inline int wrapgetEventManager(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;

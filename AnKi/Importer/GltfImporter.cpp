@@ -914,8 +914,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 	ANKI_CHECK(m_sceneFile.writeText("trf = Transform.new()\n"));
 	ANKI_CHECK(m_sceneFile.writeTextf("trf:setOrigin(Vec3.new(%f, %f, %f))\n", trf.getOrigin().x, trf.getOrigin().y, trf.getOrigin().z));
 
-	ANKI_CHECK(m_sceneFile.writeText("rot = Mat3.new()\n"));
-	ANKI_CHECK(m_sceneFile.writeText("rot:setAll("));
+	ANKI_CHECK(m_sceneFile.writeText("rot = Mat3.new("));
 	for(U32 i = 0; i < 9; i++)
 	{
 		ANKI_CHECK(m_sceneFile.writeTextf((i != 8) ? "%f, " : "%f)\n", trf.getRotation().getRotationPart()[i]));

@@ -235,13 +235,15 @@ public:
 	static Error checkString(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const char*& out);
 
 	// Get some user data from the stack.
-	// The function uses the type signature to validate the type and not the
-	// typeName. That is supposed to be faster.
+	// The function uses the type signature to validate the type and not the typeName. That is supposed to be faster.
 	static Error checkUserData(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo,
 							   LuaUserData*& out);
 
 	// Check if the type is a table
 	static Error checkTable(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, U32& tableSize);
+
+	// Looks at the function arguments and creates a signature. It mirrors what Python's args_signature() is doing
+	static U64 computeFunctionArgumentSignature(lua_State* l);
 
 private:
 	lua_State* m_l = nullptr;

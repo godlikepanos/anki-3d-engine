@@ -18,6 +18,11 @@ namespace anki {]]></head>
 				<constructor>
 					<args>
 						<arg>F32</arg>
+					</args>
+				</constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
 						<arg>F32</arg>
 					</args>
 				</constructor>
@@ -27,13 +32,6 @@ namespace anki {]]></head>
 				<var name="y">F32</var>
 			</vars>
 			<methods>
-				<method name="setAll">
-					<overrideCall>(*self) = Vec2(arg0, arg1);</overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-					</args>
-				</method>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
 					<args>
@@ -59,9 +57,21 @@ namespace anki {]]></head>
 					</args>
 					<return>Vec2</return>
 				</method>
+				<method name="operator+">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
 				<method name="operator-">
 					<args>
 						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
+				<method name="operator-">
+					<args>
+						<arg>F32</arg>
 					</args>
 					<return>Vec2</return>
 				</method>
@@ -71,9 +81,21 @@ namespace anki {]]></head>
 					</args>
 					<return>Vec2</return>
 				</method>
+				<method name="operator*">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
 				<method name="operator/">
 					<args>
 						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
+				<method name="operator/">
+					<args>
+						<arg>F32</arg>
 					</args>
 					<return>Vec2</return>
 				</method>
@@ -119,14 +141,6 @@ namespace anki {]]></head>
 				<var name="z">F32</var>
 			</vars>
 			<methods>
-				<method name="setAll">
-					<overrideCall>(*self) = Vec3(arg0, arg1, arg2);</overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-					</args>
-				</method>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
 					<args>
@@ -152,9 +166,21 @@ namespace anki {]]></head>
 					</args>
 					<return>Vec3</return>
 				</method>
+				<method name="operator+">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
 				<method name="operator-">
 					<args>
 						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="operator-">
+					<args>
+						<arg>F32</arg>
 					</args>
 					<return>Vec3</return>
 				</method>
@@ -164,9 +190,21 @@ namespace anki {]]></head>
 					</args>
 					<return>Vec3</return>
 				</method>
+				<method name="operator*">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
 				<method name="operator/">
 					<args>
 						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="operator/">
+					<args>
+						<arg>F32</arg>
 					</args>
 					<return>Vec3</return>
 				</method>
@@ -215,15 +253,6 @@ namespace anki {]]></head>
 				<var name="w">F32</var>
 			</vars>
 			<methods>
-				<method name="setAll">
-					<overrideCall>(*self) = Vec4(arg0, arg1, arg2, arg3);</overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-					</args>
-				</method>
 				<method name="getAt">
 					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
 					<args>
@@ -249,9 +278,21 @@ namespace anki {]]></head>
 					</args>
 					<return>Vec4</return>
 				</method>
+				<method name="operator+">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
 				<method name="operator-">
 					<args>
 						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
+				<method name="operator-">
+					<args>
+						<arg>F32</arg>
 					</args>
 					<return>Vec4</return>
 				</method>
@@ -261,9 +302,21 @@ namespace anki {]]></head>
 					</args>
 					<return>Vec4</return>
 				</method>
+				<method name="operator*">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
 				<method name="operator/">
 					<args>
 						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
+				<method name="operator/">
+					<args>
+						<arg>F32</arg>
 					</args>
 					<return>Vec4</return>
 				</method>
@@ -296,6 +349,19 @@ namespace anki {]]></head>
 						<arg>F32</arg>
 					</args>
 				</constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</constructor>
 			</constructors>
 			<methods>
 				<method name="operator=">
@@ -319,20 +385,6 @@ namespace anki {]]></head>
 						<arg>F32</arg>
 					</args>
 				</method>
-				<method name="setAll">
-					<overrideCall>(*self) = Mat3(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);</overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-					</args>
-				</method>
 			</methods>
 		</class>
 		<class name="Mat3x4">
@@ -340,6 +392,22 @@ namespace anki {]]></head>
 				<constructor></constructor>
 				<constructor>
 					<args>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
 						<arg>F32</arg>
 					</args>
 				</constructor>
@@ -363,23 +431,6 @@ namespace anki {]]></head>
 					<args>
 						<arg>U32</arg>
 						<arg>U32</arg>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setAll">
-					<overrideCall>(*self) = Mat3x4(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);</overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
 						<arg>F32</arg>
 					</args>
 				</method>
