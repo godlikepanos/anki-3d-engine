@@ -28,8 +28,8 @@ public:
 	}
 
 protected:
-	Fence(CString name)
-		: GrObject(kClassType, name)
+	Fence(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -38,7 +38,7 @@ protected:
 	}
 
 private:
-	[[nodiscard]] static Fence* newInstance();
+	[[nodiscard]] static Fence* newInstance(U32 uuid);
 };
 
 } // end namespace anki

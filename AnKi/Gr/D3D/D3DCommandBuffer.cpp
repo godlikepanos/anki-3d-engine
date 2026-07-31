@@ -15,10 +15,10 @@
 
 namespace anki {
 
-CommandBuffer* CommandBuffer::newInstance(const CommandBufferInitInfo& init)
+CommandBuffer* CommandBuffer::newInstance(const CommandBufferInitInfo& init, U32 uuid)
 {
 	ANKI_TRACE_SCOPED_EVENT(D3DNewCommandBuffer);
-	CommandBufferImpl* impl = anki::newInstance<CommandBufferImpl>(GrMemoryPool::getSingleton(), init.getName());
+	CommandBufferImpl* impl = anki::newInstance<CommandBufferImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = impl->init(init);
 	if(err)
 	{

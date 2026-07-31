@@ -19,8 +19,8 @@ class SamplerImpl final : public Sampler
 public:
 	DescriptorHeapHandle m_handle;
 
-	SamplerImpl(CString name)
-		: Sampler(name)
+	SamplerImpl(CString name, U32 uuid)
+		: Sampler(name, uuid)
 	{
 	}
 

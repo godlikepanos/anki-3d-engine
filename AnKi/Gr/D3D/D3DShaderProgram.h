@@ -49,8 +49,8 @@ public:
 		GrDynamicArray<U8> m_handlesCpuBuff;
 	} m_rt;
 
-	ShaderProgramImpl(CString name)
-		: ShaderProgram(name)
+	ShaderProgramImpl(CString name, U32 uuid)
+		: ShaderProgram(name, uuid)
 	{
 	}
 

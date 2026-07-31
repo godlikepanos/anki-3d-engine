@@ -420,8 +420,8 @@ public:
 	}
 };
 
-RenderGraph::RenderGraph(CString name)
-	: GrObject(kClassType, name)
+RenderGraph::RenderGraph(CString name, U32 uuid)
+	: GrObject(kClassType, name, uuid)
 {
 	const Array<PtrSize, 8> memoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 256_MB};
 	m_texMemPool.init(memoryClasses.getBack(), 32, "RenderGraph memory", memoryClasses, BufferUsageBit::kTexture);
@@ -432,9 +432,9 @@ RenderGraph::~RenderGraph()
 	ANKI_ASSERT(m_ctx == nullptr);
 }
 
-RenderGraph* RenderGraph::newInstance()
+RenderGraph* RenderGraph::newInstance(U32 uuid)
 {
-	return anki::newInstance<RenderGraph>(GrMemoryPool::getSingleton(), "N/A");
+	return anki::newInstance<RenderGraph>(GrMemoryPool::getSingleton(), "N/A", uuid);
 }
 
 void RenderGraph::reset()

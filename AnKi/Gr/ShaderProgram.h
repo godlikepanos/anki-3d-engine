@@ -124,8 +124,8 @@ protected:
 	ShaderReflection m_refl;
 
 	/// Construct.
-	ShaderProgram(CString name)
-		: GrObject(kClassType, name)
+	ShaderProgram(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -136,7 +136,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static ShaderProgram* newInstance(const ShaderProgramInitInfo& init);
+	[[nodiscard]] static ShaderProgram* newInstance(const ShaderProgramInitInfo& init, U32 uuid);
 };
 /// @}
 

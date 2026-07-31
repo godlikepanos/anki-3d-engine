@@ -35,8 +35,8 @@ class CommandBufferImpl final : public CommandBuffer
 
 public:
 	/// Default constructor
-	CommandBufferImpl(CString name)
-		: CommandBuffer(name)
+	CommandBufferImpl(CString name, U32 uuid)
+		: CommandBuffer(name, uuid)
 	{
 	}
 

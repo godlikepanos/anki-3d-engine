@@ -10,9 +10,9 @@
 
 namespace anki {
 
-Texture* Texture::newInstance(const TextureInitInfo& init)
+Texture* Texture::newInstance(const TextureInitInfo& init, U32 uuid)
 {
-	TextureImpl* impl = anki::newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
+	TextureImpl* impl = anki::newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = impl->init(init);
 	if(err)
 	{
@@ -257,7 +257,7 @@ VkImageCreateInfo TextureImpl::calcVkImageCreateInfo(const TextureInitInfo& init
 	return ci;
 }
 
-void TextureImpl::getMemoryRequirement(const TextureInitInfo& init, PtrSize& size)
+PtrSize TextureImpl::getMemoryRequirement(const TextureInitInfo& init)
 {
 	const VkImageCreateInfo ci = calcVkImageCreateInfo(init);
 
@@ -270,7 +270,7 @@ void TextureImpl::getMemoryRequirement(const TextureInitInfo& init, PtrSize& siz
 
 	vkGetDeviceImageMemoryRequirements(getVkDevice(), &in, &req);
 
-	size = req.memoryRequirements.size + req.memoryRequirements.alignment;
+	return req.memoryRequirements.size + req.memoryRequirements.alignment;
 }
 
 Error TextureImpl::initImage(const TextureInitInfo& init)

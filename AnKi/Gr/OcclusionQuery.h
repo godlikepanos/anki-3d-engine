@@ -25,8 +25,8 @@ public:
 
 protected:
 	/// Construct.
-	OcclusionQuery(CString name)
-		: GrObject(kClassType, name)
+	OcclusionQuery(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -37,7 +37,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static OcclusionQuery* newInstance();
+	[[nodiscard]] static OcclusionQuery* newInstance(U32 uuid);
 };
 /// @}
 

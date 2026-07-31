@@ -163,9 +163,9 @@ Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& p
 	return err;
 }
 
-Sampler* Sampler::newInstance(const SamplerInitInfo& init)
+Sampler* Sampler::newInstance(const SamplerInitInfo& init, U32 uuid)
 {
-	SamplerImpl* impl = anki::newInstance<SamplerImpl>(GrMemoryPool::getSingleton(), init.getName());
+	SamplerImpl* impl = anki::newInstance<SamplerImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = SamplerFactory::getSingleton().newInstance(init, impl->m_sampler);
 	if(err)
 	{

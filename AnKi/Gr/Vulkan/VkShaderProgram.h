@@ -21,8 +21,8 @@ class GraphicsPipelineFactory;
 class ShaderProgramImpl final : public ShaderProgram
 {
 public:
-	ShaderProgramImpl(CString name)
-		: ShaderProgram(name)
+	ShaderProgramImpl(CString name, U32 uuid)
+		: ShaderProgram(name, uuid)
 	{
 	}
 

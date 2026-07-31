@@ -29,8 +29,8 @@ public:
 	PipelineQueryResult getResult(U64& value) const;
 
 protected:
-	PipelineQuery(CString name)
-		: GrObject(kClassType, name)
+	PipelineQuery(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -39,7 +39,7 @@ protected:
 	}
 
 private:
-	[[nodiscard]] static PipelineQuery* newInstance(const PipelineQueryInitInfo& inf);
+	[[nodiscard]] static PipelineQuery* newInstance(const PipelineQueryInitInfo& inf, U32 uuid);
 };
 
 } // end namespace anki

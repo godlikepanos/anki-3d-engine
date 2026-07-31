@@ -177,8 +177,8 @@ protected:
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 
 	// Construct.
-	Texture(CString name)
-		: GrObject(kClassType, name)
+	Texture(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -189,7 +189,7 @@ protected:
 
 private:
 	// Allocate and initialize a new instance.
-	[[nodiscard]] static Texture* newInstance(const TextureInitInfo& init);
+	[[nodiscard]] static Texture* newInstance(const TextureInitInfo& init, U32 uuid);
 };
 
 // Defines a part of a texture. This part can be a single surface or volume or the whole texture.

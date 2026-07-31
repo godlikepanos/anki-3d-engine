@@ -4,15 +4,16 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/GrObject.h>
-#include <AnKi/Gr/GrManager.h>
 
 namespace anki {
 
-GrObject::GrObject(GrObjectType type, CString name)
-	: m_uuid(GrManager::getSingleton().getNewUuid())
+GrObject::GrObject(GrObjectType type, CString name, U32 uuid)
+	: m_uuid(uuid)
 	, m_refcount(0)
 	, m_type(type)
 {
+	ANKI_ASSERT(uuid > 0);
+
 	if(name.getLength() == 0)
 	{
 		name = "N/A";

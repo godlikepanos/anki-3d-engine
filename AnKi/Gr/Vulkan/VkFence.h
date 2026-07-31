@@ -19,8 +19,8 @@ class FenceImpl final : public Fence
 public:
 	MicroSemaphorePtr m_semaphore; ///< Yes, it's a timeline semaphore and not a VkFence.
 
-	FenceImpl(CString name)
-		: Fence(name)
+	FenceImpl(CString name, U32 uuid)
+		: Fence(name, uuid)
 	{
 	}
 

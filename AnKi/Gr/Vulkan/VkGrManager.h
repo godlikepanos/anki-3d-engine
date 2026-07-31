@@ -46,6 +46,8 @@ class GrManagerImpl : public GrManager
 	friend class GrManager;
 
 public:
+	using GrManager::newGrObjectUuid;
+
 	GrManagerImpl()
 	{
 	}

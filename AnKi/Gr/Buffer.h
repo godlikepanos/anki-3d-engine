@@ -106,8 +106,8 @@ protected:
 	BufferMapAccessBit m_access = BufferMapAccessBit::kNone;
 	U64 m_gpuAddress = 0;
 
-	Buffer(CString name)
-		: GrObject(kClassType, name)
+	Buffer(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -116,7 +116,7 @@ protected:
 	}
 
 private:
-	[[nodiscard]] static Buffer* newInstance(const BufferInitInfo& init);
+	[[nodiscard]] static Buffer* newInstance(const BufferInitInfo& init, U32 uuid);
 };
 
 // A part of a buffer.

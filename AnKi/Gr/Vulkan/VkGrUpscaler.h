@@ -24,8 +24,8 @@ public:
 class GrUpscalerImpl final : public GrUpscaler
 {
 public:
-	GrUpscalerImpl(CString name)
-		: GrUpscaler(name)
+	GrUpscalerImpl(CString name, U32 uuid)
+		: GrUpscaler(name, uuid)
 	{
 	}
 

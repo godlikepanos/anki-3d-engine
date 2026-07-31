@@ -21,8 +21,8 @@ public:
 	ShaderReflection m_reflection;
 	GrDynamicArray<U32> m_spirvBin;
 
-	ShaderImpl(CString name)
-		: Shader(name)
+	ShaderImpl(CString name, U32 uuid)
+		: Shader(name, uuid)
 	{
 	}
 

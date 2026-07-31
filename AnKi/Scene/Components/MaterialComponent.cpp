@@ -326,7 +326,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				alphaTested = alphaTested || mvariant.getShaderProgram()->hasDiscard();
 			}
 
-			averageDiffuse.w = (alphaTested) ? 0.0 : 1.0; // Be a bit conservative
+			averageDiffuse.w = (alphaTested) ? 0.0f : 1.0f; // Be a bit conservative
 		}
 	}
 

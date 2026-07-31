@@ -9,9 +9,9 @@
 
 namespace anki {
 
-AccelerationStructure* AccelerationStructure::newInstance(const AccelerationStructureInitInfo& init)
+AccelerationStructure* AccelerationStructure::newInstance(const AccelerationStructureInitInfo& init, U32 uuid)
 {
-	AccelerationStructureImpl* impl = anki::newInstance<AccelerationStructureImpl>(GrMemoryPool::getSingleton(), init.getName());
+	AccelerationStructureImpl* impl = anki::newInstance<AccelerationStructureImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = impl->init(init);
 	if(err)
 	{

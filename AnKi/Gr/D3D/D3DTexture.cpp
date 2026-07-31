@@ -9,9 +9,9 @@
 
 namespace anki {
 
-Texture* Texture::newInstance(const TextureInitInfo& init)
+Texture* Texture::newInstance(const TextureInitInfo& init, U32 uuid)
 {
-	TextureImpl* impl = anki::newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
+	TextureImpl* impl = anki::newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = impl->init(init);
 	if(err)
 	{
@@ -108,54 +108,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 	else
 	{
 		ANKI_ASSERT(!(m_usage & TextureUsageBit::kPresent));
-
-		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
-
-		D3D12_RESOURCE_DESC desc = {};
-		if(m_texType == TextureType::k1D)
-		{
-			desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-			desc.DepthOrArraySize = U16(init.m_layerCount);
-		}
-		else if(m_texType == TextureType::k3D)
-		{
-			desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-			desc.DepthOrArraySize = U16(init.m_depth);
-		}
-		else
-		{
-			desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-			desc.DepthOrArraySize = U16(init.m_layerCount * faceCount);
-		}
-		desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-		desc.Width = m_width;
-		desc.Height = m_height;
-		desc.MipLevels = m_mipCount;
-		desc.Format = convertFormat(m_format);
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		desc.Flags = {};
-
-		if(!!(m_usage & TextureUsageBit::kAllRtvDsv) && m_aspect == DepthStencilAspectBit::kNone)
-		{
-			desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-		}
-
-		if(!!(m_usage & TextureUsageBit::kAllRtvDsv) && m_aspect != DepthStencilAspectBit::kNone)
-		{
-			desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-		}
-
-		if(!!(m_usage & TextureUsageBit::kAllUav))
-		{
-			desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-		}
-
-		if(!(m_usage & TextureUsageBit::kAllShaderResource))
-		{
-			desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-		}
+		const D3D12_RESOURCE_DESC desc = computeResourceDesc(init);
 
 		D3D12_HEAP_PROPERTIES heapProperties = {};
 		heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -794,6 +747,82 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 	}
 
 	return out;
+}
+
+D3D12_RESOURCE_DESC TextureImpl::computeResourceDesc(const TextureInitInfo& init)
+{
+	ANKI_ASSERT(init.isValid());
+
+	D3D12_RESOURCE_DESC desc = {};
+
+	const U32 faceCount = textureTypeIsCube(init.m_type) ? 6 : 1;
+
+	if(init.m_type == TextureType::k1D)
+	{
+		desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+		desc.DepthOrArraySize = U16(init.m_layerCount);
+	}
+	else if(init.m_type == TextureType::k3D)
+	{
+		desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+		desc.DepthOrArraySize = U16(init.m_depth);
+	}
+	else
+	{
+		desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		desc.DepthOrArraySize = U16(init.m_layerCount * faceCount);
+	}
+
+	desc.Alignment = 0; // Let the implementation decide
+	desc.Width = init.m_width;
+	desc.Height = init.m_height;
+	desc.Format = convertFormat(init.m_format);
+	desc.SampleDesc.Count = init.m_samples;
+	desc.SampleDesc.Quality = 0;
+	desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+	if(init.m_type == TextureType::k3D)
+	{
+		desc.MipLevels = min(init.m_mipmapCount, computeMaxMipmapCount3d(init.m_width, init.m_height, init.m_depth));
+	}
+	else
+	{
+		desc.MipLevels = min(init.m_mipmapCount, computeMaxMipmapCount2d(init.m_width, init.m_height));
+	}
+
+	desc.Flags = {};
+	const Bool isDepth = getFormatInfo(init.m_format).isDepth();
+	const Bool isStencil = getFormatInfo(init.m_format).isStencil();
+	const Bool isDepthOrStencil = isDepth || isStencil;
+
+	if(!!(init.m_usage & TextureUsageBit::kAllRtvDsv) && !isDepthOrStencil)
+	{
+		desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	}
+
+	if(!!(init.m_usage & TextureUsageBit::kAllRtvDsv) && isDepthOrStencil)
+	{
+		desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	}
+
+	if(!!(init.m_usage & TextureUsageBit::kAllUav))
+	{
+		desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	}
+
+	if(!(init.m_usage & TextureUsageBit::kAllShaderResource))
+	{
+		desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+	}
+
+	return desc;
+}
+
+PtrSize TextureImpl::getMemoryRequirement(const TextureInitInfo& init)
+{
+	const D3D12_RESOURCE_DESC desc = computeResourceDesc(init);
+	const D3D12_RESOURCE_ALLOCATION_INFO info = getDevice().GetResourceAllocationInfo(0, 1, &desc);
+	return info.SizeInBytes + info.Alignment;
 }
 
 } // end namespace anki

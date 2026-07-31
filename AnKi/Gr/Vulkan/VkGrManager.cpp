@@ -107,7 +107,7 @@ void GrManager::finish()
 #define ANKI_NEW_GR_OBJECT(type) \
 	type##Ptr GrManager::new##type(const type##InitInfo& init) \
 	{ \
-		type##Ptr ptr(type::newInstance(init)); \
+		type##Ptr ptr(type::newInstance(init, newGrObjectUuid())); \
 		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
@@ -118,7 +118,7 @@ void GrManager::finish()
 #define ANKI_NEW_GR_OBJECT_NO_INIT_INFO(type) \
 	type##Ptr GrManager::new##type() \
 	{ \
-		type##Ptr ptr(type::newInstance()); \
+		type##Ptr ptr(type::newInstance(newGrObjectUuid())); \
 		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
@@ -158,9 +158,7 @@ PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationS
 
 PtrSize GrManager::getTextureMemoryRequirement(const TextureInitInfo& init) const
 {
-	PtrSize size;
-	TextureImpl::getMemoryRequirement(init, size);
-	return size;
+	return TextureImpl::getMemoryRequirement(init);
 }
 
 GrManagerImpl::~GrManagerImpl()
@@ -1480,7 +1478,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 	GrDynamicArray<U64> signalTimelineValues;
 	if(signalFence)
 	{
-		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
+		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence", newGrObjectUuid());
 		fenceImpl->m_semaphore = SemaphoreFactory::getSingleton().newInstance(true, "SubmitSignal");
 
 		signalFence->reset(fenceImpl);

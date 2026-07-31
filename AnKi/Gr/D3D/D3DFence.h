@@ -152,8 +152,8 @@ class FenceImpl final : public Fence
 public:
 	MicroFencePtr m_fence;
 
-	FenceImpl(CString name)
-		: Fence(name)
+	FenceImpl(CString name, U32 uuid)
+		: Fence(name, uuid)
 	{
 	}
 };

@@ -19,8 +19,8 @@ class AccelerationStructureImpl final : public AccelerationStructure
 	friend class AccelerationStructure;
 
 public:
-	AccelerationStructureImpl(CString name)
-		: AccelerationStructure(name)
+	AccelerationStructureImpl(CString name, U32 uuid)
+		: AccelerationStructure(name, uuid)
 	{
 	}
 

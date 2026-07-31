@@ -23,8 +23,8 @@ class CommandBufferImpl final : public CommandBuffer
 	friend class CommandBuffer;
 
 public:
-	CommandBufferImpl(CString name)
-		: CommandBuffer(name)
+	CommandBufferImpl(CString name, U32 uuid)
+		: CommandBuffer(name, uuid)
 	{
 	}
 

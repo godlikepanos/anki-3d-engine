@@ -102,9 +102,9 @@ private:
 	Mutex m_mtx;
 };
 
-ShaderProgram* ShaderProgram::newInstance(const ShaderProgramInitInfo& init)
+ShaderProgram* ShaderProgram::newInstance(const ShaderProgramInitInfo& init, U32 uuid)
 {
-	ShaderProgramImpl* impl = anki::newInstance<ShaderProgramImpl>(GrMemoryPool::getSingleton(), init.getName());
+	ShaderProgramImpl* impl = anki::newInstance<ShaderProgramImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = impl->init(init);
 	if(err)
 	{

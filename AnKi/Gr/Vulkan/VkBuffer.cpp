@@ -8,9 +8,9 @@
 
 namespace anki {
 
-Buffer* Buffer::newInstance(const BufferInitInfo& init)
+Buffer* Buffer::newInstance(const BufferInitInfo& init, U32 uuid)
 {
-	BufferImpl* impl = anki::newInstance<BufferImpl>(GrMemoryPool::getSingleton(), init.getName());
+	BufferImpl* impl = anki::newInstance<BufferImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = impl->init(init);
 	if(err)
 	{

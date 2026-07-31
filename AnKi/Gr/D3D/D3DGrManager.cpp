@@ -110,8 +110,7 @@ PtrSize GrManager::getAccelerationStructureMemoryRequirement(const AccelerationS
 
 PtrSize GrManager::getTextureMemoryRequirement(const TextureInitInfo& init) const
 {
-	ANKI_ASSERT(!"TODO");
-	return 0;
+	return TextureImpl::getMemoryRequirement(init);
 }
 
 Error GrManager::init(GrManagerInitInfo& inf)
@@ -154,7 +153,7 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 #define ANKI_NEW_GR_OBJECT(type) \
 	type##Ptr GrManager::new##type(const type##InitInfo& init) \
 	{ \
-		type##Ptr ptr(type::newInstance(init)); \
+		type##Ptr ptr(type::newInstance(init, newGrObjectUuid())); \
 		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_D3D_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
@@ -165,7 +164,7 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 #define ANKI_NEW_GR_OBJECT_NO_INIT_INFO(type) \
 	type##Ptr GrManager::new##type() \
 	{ \
-		type##Ptr ptr(type::newInstance()); \
+		type##Ptr ptr(type::newInstance(newGrObjectUuid())); \
 		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_D3D_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
@@ -271,7 +270,7 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 
 	if(signalFence)
 	{
-		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
+		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence", newGrObjectUuid());
 		fenceImpl->m_fence = fence;
 		signalFence->reset(fenceImpl);
 	}

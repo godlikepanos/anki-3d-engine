@@ -228,7 +228,7 @@ Error MicroSwapchain::initInternal()
 			init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
 			init.m_type = TextureType::k2D;
 
-			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
+			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName(), getGrManagerImpl().newGrObjectUuid());
 			m_textures[i].reset(tex);
 			ANKI_CHECK(tex->initExternal(images[i], init));
 

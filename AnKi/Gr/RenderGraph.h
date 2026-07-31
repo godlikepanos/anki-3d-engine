@@ -433,11 +433,11 @@ private:
 		GrDynamicArray<StatsElement> m_frames;
 	} m_statistics;
 
-	RenderGraph(CString name);
+	RenderGraph(CString name, U32 uuid);
 
 	~RenderGraph();
 
-	[[nodiscard]] static RenderGraph* newInstance();
+	[[nodiscard]] static RenderGraph* newInstance(U32 uuid);
 
 	BakeContext* newContext(const RenderGraphBuilder& descr, StackMemoryPool& pool);
 	void initRenderPassesAndSetDeps(const RenderGraphBuilder& descr);

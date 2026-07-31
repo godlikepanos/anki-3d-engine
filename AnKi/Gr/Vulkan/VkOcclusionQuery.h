@@ -19,8 +19,8 @@ class OcclusionQueryImpl final : public OcclusionQuery
 public:
 	MicroQuery m_handle = {};
 
-	OcclusionQueryImpl(CString name)
-		: OcclusionQuery(name)
+	OcclusionQueryImpl(CString name, U32 uuid)
+		: OcclusionQuery(name, uuid)
 	{
 	}
 

@@ -17,8 +17,8 @@ class TextureImpl final : public Texture
 	friend class Texture;
 
 public:
-	TextureImpl(CString name)
-		: Texture(name)
+	TextureImpl(CString name, U32 uuid)
+		: Texture(name, uuid)
 	{
 	}
 
@@ -74,7 +74,7 @@ public:
 		return getTextureViewEntry(subresource).m_handle;
 	}
 
-	static void getMemoryRequirement(const TextureInitInfo& init, PtrSize& size);
+	static PtrSize getMemoryRequirement(const TextureInitInfo& init);
 
 	VkImage getVkImage() const
 	{

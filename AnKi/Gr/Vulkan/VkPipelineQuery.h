@@ -21,8 +21,8 @@ public:
 
 	PipelineQueryType m_type = PipelineQueryType::kCount;
 
-	PipelineQueryImpl(CString name)
-		: PipelineQuery(name)
+	PipelineQueryImpl(CString name, U32 uuid)
+		: PipelineQuery(name, uuid)
 	{
 	}
 

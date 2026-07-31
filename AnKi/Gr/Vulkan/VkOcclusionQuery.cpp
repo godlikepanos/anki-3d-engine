@@ -8,9 +8,9 @@
 
 namespace anki {
 
-OcclusionQuery* OcclusionQuery::newInstance()
+OcclusionQuery* OcclusionQuery::newInstance(U32 uuid)
 {
-	OcclusionQueryImpl* impl = anki::newInstance<OcclusionQueryImpl>(GrMemoryPool::getSingleton(), "N/A");
+	OcclusionQueryImpl* impl = anki::newInstance<OcclusionQueryImpl>(GrMemoryPool::getSingleton(), "N/A", uuid);
 	const Error err = impl->init();
 	if(err)
 	{

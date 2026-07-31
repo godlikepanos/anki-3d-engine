@@ -90,12 +90,12 @@ public:
 		return m_cacheDir.toCString();
 	}
 
-	ANKI_INTERNAL U32 getNewUuid()
+protected:
+	U32 newGrObjectUuid()
 	{
 		return m_uuidIndex.fetchAdd(1);
 	}
 
-protected:
 	GrString m_cacheDir;
 	Atomic<U32> m_uuidIndex = {1};
 	GpuDeviceCapabilities m_capabilities;

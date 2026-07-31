@@ -19,8 +19,8 @@ class PipelineQueryImpl final : public PipelineQuery
 public:
 	QueryHandle m_handle;
 
-	PipelineQueryImpl(CString name)
-		: PipelineQuery(name)
+	PipelineQueryImpl(CString name, U32 uuid)
+		: PipelineQuery(name, uuid)
 	{
 	}
 

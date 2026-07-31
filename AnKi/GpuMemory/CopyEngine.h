@@ -13,8 +13,8 @@
 
 namespace anki {
 
-ANKI_CVAR2(NumericCVar<U32>, GpuMem, CopyEngine, BufferSize, 64_MB, 16_MB, 2_GB, "Memory size for the copy engine")
-ANKI_CVAR2(NumericCVar<U32>, GpuMem, CopyEngine, AccelerationStructureScratchBufferSize, 64_MB, 16_MB, 2_GB,
+ANKI_CVAR2(NumericCVar<U32>, GpuMem, CopyEngine, BufferSize, U32(64_MB), U32(16_MB), U32(2_GB), "Memory size for the copy engine")
+ANKI_CVAR2(NumericCVar<U32>, GpuMem, CopyEngine, AccelerationStructureScratchBufferSize, U32(64_MB), U32(16_MB), U32(2_GB),
 		   "Memory size for the ring buffer used for BLAS builds")
 
 // A mutex lock guard for some CopyEngine operations

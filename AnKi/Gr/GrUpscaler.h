@@ -60,8 +60,8 @@ protected:
 	GrUpscalerType m_upscalerType = GrUpscalerType::kCount;
 
 	/// Construct.
-	GrUpscaler(CString name)
-		: GrObject(kClassType, name)
+	GrUpscaler(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -72,7 +72,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static GrUpscaler* newInstance(const GrUpscalerInitInfo& initInfo);
+	[[nodiscard]] static GrUpscaler* newInstance(const GrUpscalerInitInfo& initInfo, U32 uuid);
 };
 /// @}
 

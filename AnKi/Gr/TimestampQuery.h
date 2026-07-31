@@ -25,8 +25,8 @@ public:
 
 protected:
 	/// Construct.
-	TimestampQuery(CString name)
-		: GrObject(kClassType, name)
+	TimestampQuery(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -37,7 +37,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static TimestampQuery* newInstance();
+	[[nodiscard]] static TimestampQuery* newInstance(U32 uuid);
 };
 /// @}
 

@@ -7,9 +7,9 @@
 
 namespace anki {
 
-GrUpscaler* GrUpscaler::newInstance(const GrUpscalerInitInfo& initInfo)
+GrUpscaler* GrUpscaler::newInstance(const GrUpscalerInitInfo& initInfo, U32 uuid)
 {
-	GrUpscalerImpl* impl = anki::newInstance<GrUpscalerImpl>(GrMemoryPool::getSingleton(), initInfo.getName());
+	GrUpscalerImpl* impl = anki::newInstance<GrUpscalerImpl>(GrMemoryPool::getSingleton(), initInfo.getName(), uuid);
 	const Error err = impl->initInternal(initInfo);
 	if(err)
 	{

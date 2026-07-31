@@ -8,9 +8,9 @@
 
 namespace anki {
 
-TimestampQuery* TimestampQuery::newInstance()
+TimestampQuery* TimestampQuery::newInstance(U32 uuid)
 {
-	TimestampQueryImpl* impl = anki::newInstance<TimestampQueryImpl>(GrMemoryPool::getSingleton(), "N/A");
+	TimestampQueryImpl* impl = anki::newInstance<TimestampQueryImpl>(GrMemoryPool::getSingleton(), "N/A", uuid);
 	const Error err = impl->init();
 	if(err)
 	{

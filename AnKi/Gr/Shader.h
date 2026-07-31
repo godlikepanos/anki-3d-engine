@@ -77,8 +77,8 @@ protected:
 
 	Bool m_hasDiscard = false;
 
-	Shader(CString name)
-		: GrObject(kClassType, name)
+	Shader(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -87,7 +87,7 @@ protected:
 	}
 
 private:
-	[[nodiscard]] static Shader* newInstance(const ShaderInitInfo& init);
+	[[nodiscard]] static Shader* newInstance(const ShaderInitInfo& init, U32 uuid);
 };
 
 } // end namespace anki

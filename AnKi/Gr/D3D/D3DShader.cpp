@@ -7,9 +7,9 @@
 
 namespace anki {
 
-Shader* Shader::newInstance(const ShaderInitInfo& init)
+Shader* Shader::newInstance(const ShaderInitInfo& init, U32 uuid)
 {
-	ShaderImpl* impl = anki::newInstance<ShaderImpl>(GrMemoryPool::getSingleton(), init.getName());
+	ShaderImpl* impl = anki::newInstance<ShaderImpl>(GrMemoryPool::getSingleton(), init.getName(), uuid);
 	const Error err = impl->init(init);
 	if(err)
 	{

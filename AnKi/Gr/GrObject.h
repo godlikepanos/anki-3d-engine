@@ -36,7 +36,7 @@ enum class GrObjectType : U8
 class GrObject
 {
 public:
-	GrObject(GrObjectType type, CString name);
+	GrObject(GrObjectType type, CString name, U32 uuid);
 
 	GrObject(const GrObject&) = delete; // Non-copyable
 

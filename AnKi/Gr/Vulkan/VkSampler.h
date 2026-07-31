@@ -95,8 +95,8 @@ class SamplerImpl final : public Sampler
 public:
 	MicroSamplerPtr m_sampler;
 
-	SamplerImpl(CString name)
-		: Sampler(name)
+	SamplerImpl(CString name, U32 uuid)
+		: Sampler(name, uuid)
 	{
 	}
 

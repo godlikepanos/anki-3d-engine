@@ -70,7 +70,9 @@ private:
 
 	Error serialize(SceneSerializer& serializer) override;
 
+	ANKI_SILENCE_INTERNAL_BEGIN
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
+	ANKI_SILENCE_INTERNAL_END
 
 	Aabb computeAabb(const SceneNode& node) const;
 };

@@ -383,8 +383,8 @@ protected:
 	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
 
 	// Construct.
-	CommandBuffer(CString name)
-		: GrObject(kClassType, name)
+	CommandBuffer(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -395,7 +395,7 @@ protected:
 
 private:
 	// Allocate and initialize a new instance.
-	[[nodiscard]] static CommandBuffer* newInstance(const CommandBufferInitInfo& init);
+	[[nodiscard]] static CommandBuffer* newInstance(const CommandBufferInitInfo& init, U32 uuid);
 };
 
 } // end namespace anki

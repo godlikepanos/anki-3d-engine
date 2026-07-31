@@ -17,8 +17,8 @@ class BufferImpl final : public Buffer
 	friend class Buffer;
 
 public:
-	BufferImpl(CString name)
-		: Buffer(name)
+	BufferImpl(CString name, U32 uuid)
+		: Buffer(name, uuid)
 	{
 	}
 

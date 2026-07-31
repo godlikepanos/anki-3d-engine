@@ -19,8 +19,8 @@ public:
 	GrDynamicArray<U8> m_binary;
 	ShaderReflection m_reflection;
 
-	ShaderImpl(CString name)
-		: Shader(name)
+	ShaderImpl(CString name, U32 uuid)
+		: Shader(name, uuid)
 	{
 	}
 

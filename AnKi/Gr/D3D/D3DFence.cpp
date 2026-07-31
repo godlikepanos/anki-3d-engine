@@ -37,9 +37,9 @@ MicroFencePtr FenceFactory::newFence(CString name)
 	return MicroFencePtr(fence);
 }
 
-Fence* Fence::newInstance()
+Fence* Fence::newInstance(U32 uuid)
 {
-	return anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "N/A");
+	return anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "N/A", uuid);
 }
 
 Bool Fence::clientWait(Second seconds)

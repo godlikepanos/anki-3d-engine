@@ -135,8 +135,8 @@ protected:
 	PtrSize m_scratchBufferSize = 0; // Contains more bytes than what the APIs report. This is done to avoid exposing the alignment.
 	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 
-	AccelerationStructure(CString name)
-		: GrObject(kClassType, name)
+	AccelerationStructure(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -145,7 +145,7 @@ protected:
 	}
 
 private:
-	[[nodiscard]] static AccelerationStructure* newInstance(const AccelerationStructureInitInfo& init);
+	[[nodiscard]] static AccelerationStructure* newInstance(const AccelerationStructureInitInfo& init, U32 uuid);
 };
 
 } // end namespace anki

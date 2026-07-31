@@ -19,8 +19,8 @@ class TimestampQueryImpl final : public TimestampQuery
 public:
 	QueryHandle m_handle;
 
-	TimestampQueryImpl(CString name)
-		: TimestampQuery(name)
+	TimestampQueryImpl(CString name, U32 uuid)
+		: TimestampQuery(name, uuid)
 	{
 	}
 

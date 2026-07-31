@@ -11,17 +11,14 @@
 
 namespace anki {
 
-/// @addtogroup directx
-/// @{
-
-/// Texture container.
+// Texture container.
 class TextureImpl final : public Texture
 {
 	friend class Texture;
 
 public:
-	TextureImpl(CString name)
-		: Texture(name)
+	TextureImpl(CString name, U32 uuid)
+		: Texture(name, uuid)
 	{
 	}
 
@@ -89,6 +86,8 @@ public:
 		return convertFormat(m_format);
 	}
 
+	static PtrSize getMemoryRequirement(const TextureInitInfo& init);
+
 private:
 	enum class ViewType : U8
 	{
@@ -153,7 +152,8 @@ private:
 	{
 		return !!(m_usage & TextureUsageBit::kPresent);
 	}
+
+	static D3D12_RESOURCE_DESC computeResourceDesc(const TextureInitInfo& init);
 };
-/// @}
 
 } // end namespace anki

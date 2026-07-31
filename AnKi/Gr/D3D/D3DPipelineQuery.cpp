@@ -7,9 +7,9 @@
 
 namespace anki {
 
-PipelineQuery* PipelineQuery::newInstance(const PipelineQueryInitInfo& inf)
+PipelineQuery* PipelineQuery::newInstance(const PipelineQueryInitInfo& inf, U32 uuid)
 {
-	PipelineQueryImpl* impl = anki::newInstance<PipelineQueryImpl>(GrMemoryPool::getSingleton(), inf.getName());
+	PipelineQueryImpl* impl = anki::newInstance<PipelineQueryImpl>(GrMemoryPool::getSingleton(), inf.getName(), uuid);
 	const Error err = impl->init(inf.m_type);
 	if(err)
 	{

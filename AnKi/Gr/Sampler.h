@@ -54,8 +54,8 @@ public:
 	static constexpr GrObjectType kClassType = GrObjectType::kSampler;
 
 protected:
-	Sampler(CString name)
-		: GrObject(kClassType, name)
+	Sampler(CString name, U32 uuid)
+		: GrObject(kClassType, name, uuid)
 	{
 	}
 
@@ -64,7 +64,7 @@ protected:
 	}
 
 private:
-	[[nodiscard]] static Sampler* newInstance(const SamplerInitInfo& init);
+	[[nodiscard]] static Sampler* newInstance(const SamplerInitInfo& init, U32 uuid);
 };
 
 } // end namespace anki

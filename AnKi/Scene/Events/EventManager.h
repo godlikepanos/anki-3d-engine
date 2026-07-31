@@ -34,8 +34,8 @@ public:
 
 private:
 	static constexpr U64 kIsPtrMagic = 0xDEADC0FEE2531821;
-	static constexpr U32 kEventStorageSize = getAlignedRoundUp(16, sizeof(Event) + sizeof(void*));
-	static constexpr U32 kEventStorageAlignment = max(alignof(Event), alignof(Vec4));
+	static constexpr U32 kEventStorageSize = getAlignedRoundUp<U32>(16, sizeof(Event) + sizeof(void*));
+	static constexpr U32 kEventStorageAlignment = max<U32>(alignof(Event), alignof(Vec4));
 
 	class UpdateCtx;
 
