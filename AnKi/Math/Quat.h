@@ -191,8 +191,8 @@ public:
 		return m_vec != b.m_vec;
 	}
 
-	// Combine rotations (SIMD version)
-	TQuat operator*(const TQuat& b) requires(kSseEnabled)
+	// Combine rotations
+	TQuat operator*(const TQuat& b)
 	{
 #if ANKI_SIMD_SSE
 		if constexpr(kSseEnabled)
