@@ -262,7 +262,7 @@ public:
 			const T z = lw * rz + lx * ry - ly * rx + lz * rw;
 			const T w = lw * rw - lx * rx - ly * ry - lz * rz;
 
-			return Quat(x, y, z, w);
+			return TQuat(x, y, z, w);
 		}
 	}
 
@@ -376,19 +376,19 @@ public:
 
 	[[nodiscard]] TQuat rotateXAxis(const T rad) const
 	{
-		const TQuat r(Axisang<T>(rad, TVec<T, 3>(T(1), T(0), T(0))));
+		const TQuat r(TAxisang<T>(rad, TVec<T, 3>(T(1), T(0), T(0))));
 		return r * (*this);
 	}
 
 	[[nodiscard]] TQuat rotateYAxis(const T rad) const
 	{
-		const TQuat r(Axisang<T>(rad, TVec<T, 3>(T(0), T(1), T(0))));
+		const TQuat r(TAxisang<T>(rad, TVec<T, 3>(T(0), T(1), T(0))));
 		return r * (*this);
 	}
 
 	[[nodiscard]] TQuat rotateZAxis(const T rad) const
 	{
-		const TQuat r(Axisang<T>(rad, TVec<T, 3>(T(0), T(0), T(1))));
+		const TQuat r(TAxisang<T>(rad, TVec<T, 3>(T(0), T(0), T(1))));
 		return r * (*this);
 	}
 
