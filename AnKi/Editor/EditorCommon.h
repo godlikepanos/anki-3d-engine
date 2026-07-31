@@ -30,6 +30,29 @@ protected:
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 	};
 
+	static constexpr const Char* kScriptComponentTemplateScript = R"(-- Add your global vars here. Eg: speed = Vec3.new(0, 0, 0)
+
+-- Component main update
+--- @param info SceneComponentUpdateInfo
+function update(info)
+    -- Your code here
+end
+
+--[[
+--- @param node SceneNode
+function onTriggerEnter(node)
+    -- Your code here
+end
+]]
+
+--[[
+--- @param node SceneNode
+function onTriggerExit(node)
+    -- Your code here
+end
+]]
+)";
+
 	class SceneGraphViewScene
 	{
 	public:

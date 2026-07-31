@@ -42,6 +42,9 @@ private:
 	String m_rightClickSelectedFilepath;
 	Bool m_showRightClickMenuDialog = false;
 
+	String m_selectedScriptFilepath;
+	String m_selectedScriptSource;
+
 	// "Locate a resource" state: when a properties panel requests it (m_resourceToLocate), switch to that file's directory, scroll to it once and
 	// briefly highlight it. m_framesUntilScrollToLocatedFile == -1 means idle.
 	String m_resourceToLocate;
@@ -68,6 +71,7 @@ private:
 		const AssetDir* m_selectedDir = nullptr;
 		const AssetFile* m_rightClickSelectedFile = nullptr;
 		const AssetFile* m_fileToLocate = nullptr;
+		const AssetFile* m_selectedScript = nullptr;
 	} m_runCtx;
 
 	void loadImageToCache(CString fname, ImageResourcePtr& img);

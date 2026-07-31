@@ -75,17 +75,24 @@ Bool EditorUiBase::textEditorWindow(CString windowTitle, Bool* pOpen, ImFont* te
 			std::strncpy(buffer.getBegin(), inout.cstr(), inout.getLength());
 		}
 
-		auto replaceTabCallback = [](ImGuiInputTextCallbackData* data) -> int {
-			if(data->CursorPos > 0 && data->Buf[data->CursorPos - 1] == '\t')
+		// ImGui won't insert anything once the text fills the buffer unless it can ask for a bigger one, which would make any text that is already
+		// buffer sized effectively read-only
+		auto inputTextCallback = [](ImGuiInputTextCallbackData* data) -> int {
+			if(data->EventFlag == ImGuiInputTextFlags_CallbackResize)
 			{
+				DynamicArray<Char>& buff = *static_cast<DynamicArray<Char>*>(data->UserData);
+				ANKI_ASSERT(data->Buf == buff.getBegin());
+				buff.resize(U32(data->BufSize), '\0');
+				data->Buf = buff.getBegin();
+			}
+			else if(data->CursorPos > 0 && data->Buf[data->CursorPos - 1] == '\t')
+			{
+				// Expand tabs to spaces
 				data->DeleteChars(data->CursorPos - 1, 1);
 				data->InsertChars(data->CursorPos, "    ");
-				return 0;
 			}
-			else
-			{
-				return 0;
-			}
+
+			return 0;
 		};
 
 		if(textFont)
@@ -94,7 +101,8 @@ Bool EditorUiBase::textEditorWindow(CString windowTitle, Bool* pOpen, ImFont* te
 		}
 
 		if(ImGui::InputTextMultiline("##", buffer.getBegin(), buffer.getSize(), Vec2(-1.0f),
-									 ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_CallbackEdit, replaceTabCallback))
+									 ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_CallbackEdit | ImGuiInputTextFlags_CallbackResize,
+									 inputTextCallback, &buffer))
 		{
 			inout = buffer.getBegin();
 		}

@@ -5,6 +5,7 @@
 
 #include <AnKi/Editor/AssetBrowserUi.h>
 #include <AnKi/Resource/ImageResource.h>
+#include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Script/ScriptEnvironment.h>
 
@@ -436,6 +437,38 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 	ImGui::End();
 
 	rightClickMenuDialog();
+
+	if(m_runCtx.m_selectedScript)
+	{
+		const AssetFile& file = *m_runCtx.m_selectedScript;
+		ANKI_ASSERT(file.m_type == AssetFileType::kLua);
+		ANKI_ASSERT(m_selectedScriptFilepath);
+
+		Bool open = true;
+		if(textEditorWindow(file.m_resourceFilepath, &open, nullptr, m_selectedScriptSource))
+		{
+			File diskFile;
+			Error err = diskFile.open(file.m_diskFilepath, FileOpenFlag::kWrite);
+			if(!err)
+			{
+				err = diskFile.writeText(m_selectedScriptSource);
+			}
+
+			if(err)
+			{
+				ANKI_LOGE("Error saving the script file: %s", file.m_diskFilepath.cstr());
+			}
+			else
+			{
+				ResourceManager::getSingleton().refreshFileUpdateTimes();
+			}
+		}
+
+		if(!open)
+		{
+			m_selectedScriptFilepath.destroy();
+		}
+	}
 }
 
 void AssetBrowserUi::drawToolbox()
@@ -622,7 +655,11 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						pushFontSize();
 						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA, calcIconButtonSize()))
 						{
-							ANKI_LOGE("TODO");
+							ScriptResourcePtr rsrc;
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
+							m_selectedScriptSource = rsrc->getSource();
+
+							m_selectedScriptFilepath = file.m_resourceFilepath;
 						}
 
 						ImGui::PopFont();
@@ -847,6 +884,16 @@ void AssetBrowserUi::drawMenu()
 				m_refreshAssetsPathsNextTime = true;
 			}
 
+			if(ImGui::MenuItem(ICON_MDI_LANGUAGE_LUA " Lua Script"))
+			{
+				const String filepath = createNewFile("NewScript.lua", kScriptComponentTemplateScript);
+				if(filepath)
+				{
+					setResourceToLocate(filepath);
+				}
+				m_refreshAssetsPathsNextTime = true;
+			}
+
 			if(ImGui::MenuItem(ICON_MDI_CURTAINS " Scene"))
 			{
 				U32 index = 0;
@@ -965,6 +1012,11 @@ void AssetBrowserUi::setSelectedPointers()
 					m_runCtx.m_fileToLocate = &file;
 				}
 
+				if(file.m_resourceFilepath == m_selectedScriptFilepath)
+				{
+					m_runCtx.m_selectedScript = &file;
+				}
+
 				return FunctorContinue::kContinue;
 			});
 	}
@@ -998,6 +1050,11 @@ void AssetBrowserUi::setSelectedPointers()
 	{
 		m_runCtx.m_selectedDir = m_runCtx.m_fileToLocate->m_parentDir;
 		m_selectedDirPath = m_runCtx.m_fileToLocate->m_parentDir->m_diskFilepath;
+	}
+
+	if(m_runCtx.m_selectedScript == nullptr)
+	{
+		m_selectedScriptFilepath.destroy();
 	}
 }
 

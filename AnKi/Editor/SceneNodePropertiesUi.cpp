@@ -410,29 +410,6 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 
 	// Embeded script button
 	{
-		const Char* defaultText = R"(-- Add your global vars here. Eg: speed = Vec3.new(0, 0, 0)
-
--- Component main update
---- @param info SceneComponentUpdateInfo
-function update(info)
-    -- Your code here
-end
-
---[[
---- @param node SceneNode
-function onTriggerEnter(node)
-    -- Your code here
-end
-]]
-
---[[
---- @param node SceneNode
-function onTriggerExit(node)
-    -- Your code here
-end
-]]
-)";
-
 		String buttonTxt;
 		buttonTxt.sprintf(ICON_MDI_LANGUAGE_LUA " Embedded Script (%s)", comp.hasScriptText() ? "Set" : "Unset");
 		const Bool showEditor = ImGui::Button(buttonTxt.cstr(), Vec2(-1.0f, 0.0f));
@@ -440,13 +417,13 @@ end
 		{
 			m_textEditorOpen = true;
 			m_scriptComponentThatHasTheTextEditorOpen = comp.getUuid();
-			m_textEditorTxt = (comp.hasScriptText()) ? comp.getScriptText() : defaultText;
+			m_textEditorTxt = (comp.hasScriptText()) ? comp.getScriptText() : kScriptComponentTemplateScript;
 		}
 	}
 
 	if(m_textEditorOpen && m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid())
 	{
-		if(textEditorWindow(String().sprintf("ScriptComponent %u", comp.getUuid()), &m_textEditorOpen, m_monospaceFont, m_textEditorTxt))
+		if(textEditorWindow(String().sprintf("ScriptComponent %u", comp.getUuid()), &m_textEditorOpen, nullptr, m_textEditorTxt))
 		{
 			ANKI_LOGV("Updating ScriptComponent");
 			comp.setScriptText(m_textEditorTxt);

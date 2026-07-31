@@ -31,8 +31,6 @@ private:
 
 	ImGuiTextFilter m_nodeParentFilter;
 
-	ImFont* m_monospaceFont = nullptr;
-
 	ImGuiTextFilter m_tempFilter;
 
 	String m_resourceToLocate;
