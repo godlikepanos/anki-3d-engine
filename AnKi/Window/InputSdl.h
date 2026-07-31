@@ -10,16 +10,24 @@
 
 namespace anki {
 
-/// SDL input implementation
+// SDL input implementation
 class InputSdl : public Input
 {
 public:
 	Array<SDL_Cursor*, U32(MouseCursor::kCount)> m_cursors = {};
 
+	// Only a single gamepad is supported. It's the 1st one that connected
+	SDL_Gamepad* m_gamepad = nullptr;
+
 	~InputSdl();
 
 	Error initInternal();
 	Error handleEventsInternal();
+
+	// Adopt the 1st connected gamepad. Does nothing if one is already open
+	void openFirstGamepad();
+
+	void closeGamepad();
 };
 
 } // end namespace anki

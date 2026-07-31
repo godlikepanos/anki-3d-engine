@@ -12,6 +12,7 @@ using namespace anki;
 
 ANKI_CVAR(NumericCVar<F32>, Game, Fov, 90.0f, 60.0f, 110.0f, "Field of view")
 ANKI_CVAR(NumericCVar<F32>, Game, MouseLookPower, 5.0f, 1.0f, 100.0f, "Mouselook")
+ANKI_CVAR(NumericCVar<F32>, Game, GamepadLookSpeed, 180.0f, 30.0f, 720.0f, "Gamepad look speed in degrees per second")
 
 class FpsCharacter final : public SceneNode
 {
@@ -31,6 +32,10 @@ public:
 
 	SceneNode* m_cameraNode = nullptr;
 	SceneNode* m_shotgunNode = nullptr;
+
+	// Transient input state for the analog triggers, see updateTriggerPressEdge(). Not serialized on purpose
+	Bool m_shotgunTriggerPressed = false;
+	Bool m_grenadeTriggerPressed = false;
 
 	FpsCharacter(const SceneNodeInitInfo& inf);
 

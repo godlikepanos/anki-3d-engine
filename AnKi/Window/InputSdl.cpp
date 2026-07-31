@@ -48,6 +48,43 @@ static KeyCode sdlKeytoAnKi(SDL_Keycode sdlk)
 	return akk;
 }
 
+// GamepadButton mirrors SDL_GamepadButton so the translation is a cast. Verify the ends and a few in between
+static_assert(U32(GamepadButton::kCount) == U32(SDL_GAMEPAD_BUTTON_COUNT));
+static_assert(U32(GamepadButton::kSouth) == U32(SDL_GAMEPAD_BUTTON_SOUTH));
+static_assert(U32(GamepadButton::kDpadRight) == U32(SDL_GAMEPAD_BUTTON_DPAD_RIGHT));
+static_assert(U32(GamepadButton::kTouchpad) == U32(SDL_GAMEPAD_BUTTON_TOUCHPAD));
+static_assert(U32(GamepadButton::kMisc6) == U32(SDL_GAMEPAD_BUTTON_MISC6));
+
+// A stick doesn't rest exactly at zero. SDL documents the resting point as being within ~8000 of it, which is about a quarter of the range
+constexpr F32 kGamepadStickDeadzone = 0.25f;
+
+// Read a stick as a vector in [-1, 1] with +Y being up
+static Vec2 readGamepadStick(SDL_Gamepad* gamepad, SDL_GamepadAxis xAxis, SDL_GamepadAxis yAxis)
+{
+	ANKI_ASSERT(gamepad);
+
+	// SDL reports +Y downwards. Also the negative end of the range is -32768 so the division needs a clamp
+	Vec2 stick(F32(SDL_GetGamepadAxis(gamepad, xAxis)), -F32(SDL_GetGamepadAxis(gamepad, yAxis)));
+	stick = (stick / 32767.0f).clamp(-1.0f, 1.0f);
+
+	// Deadzone the magnitude and not each axis on its own, otherwise the dead region is a square and diagonals snap to the axes
+	const F32 len = stick.length();
+	if(len <= kGamepadStickDeadzone)
+	{
+		return Vec2(0.0f);
+	}
+
+	// Rescale so the magnitude ramps from 0 at the deadzone edge up to 1, otherwise it jumps the moment the stick leaves the deadzone
+	return stick.normalize() * min((len - kGamepadStickDeadzone) / (1.0f - kGamepadStickDeadzone), 1.0f);
+}
+
+// Read a trigger in [0, 1]. Unlike the sticks, SDL never reports a negative value for these
+static F32 readGamepadTrigger(SDL_Gamepad* gamepad, SDL_GamepadAxis axis)
+{
+	ANKI_ASSERT(gamepad);
+	return clamp(F32(SDL_GetGamepadAxis(gamepad, axis)) / 32767.0f, 0.0f, 1.0f);
+}
+
 template<>
 template<>
 Input& MakeSingletonPtr<Input>::allocateSingleton<>()
@@ -82,8 +119,8 @@ Error Input::init()
 
 Error Input::handleEvents()
 {
-	InputSdl* self = static_cast<InputSdl*>(this);
-	return self->handleEventsInternal();
+	InputSdl& self = *static_cast<InputSdl*>(this);
+	return self.handleEventsInternal();
 }
 
 Bool Input::hasTouchDevice() const
@@ -91,8 +128,16 @@ Bool Input::hasTouchDevice() const
 	return false;
 }
 
+Bool Input::hasGamepad() const
+{
+	const InputSdl& self = *static_cast<const InputSdl*>(this);
+	return self.m_gamepad != nullptr;
+}
+
 InputSdl::~InputSdl()
 {
+	closeGamepad();
+
 	for(MouseCursor cursor : EnumIterable<MouseCursor>())
 	{
 		if(m_cursors[cursor])
@@ -100,6 +145,49 @@ InputSdl::~InputSdl()
 			SDL_DestroyCursor(m_cursors[cursor]);
 		}
 	}
+}
+
+void InputSdl::openFirstGamepad()
+{
+	if(m_gamepad)
+	{
+		return;
+	}
+
+	I32 count;
+	SDL_JoystickID* ids = SDL_GetGamepads(&count);
+	if(!ids)
+	{
+		ANKI_WIND_LOGE("SDL_GetGamepads() failed: %s", SDL_GetError());
+		return;
+	}
+
+	for(I32 i = 0; i < count; ++i)
+	{
+		m_gamepad = SDL_OpenGamepad(ids[i]);
+		if(m_gamepad)
+		{
+			ANKI_WIND_LOGI("Gamepad connected: %s", SDL_GetGamepadName(m_gamepad));
+			break;
+		}
+
+		ANKI_WIND_LOGE("SDL_OpenGamepad() failed: %s", SDL_GetError());
+	}
+
+	SDL_free(ids);
+}
+
+void InputSdl::closeGamepad()
+{
+	if(m_gamepad)
+	{
+		SDL_CloseGamepad(m_gamepad);
+		m_gamepad = nullptr;
+	}
+
+	zeroMemory(m_gamepadBtns);
+	zeroMemory(m_gamepadSticks);
+	zeroMemory(m_gamepadTriggers);
 }
 
 Error InputSdl::initInternal()
@@ -146,6 +234,17 @@ Error InputSdl::handleEventsInternal()
 		}
 	}
 	for(I32& k : m_mouseBtns)
+	{
+		if(k > 0)
+		{
+			++k;
+		}
+		else if(k < 0)
+		{
+			k = 0;
+		}
+	}
+	for(I32& k : m_gamepadBtns)
 	{
 		if(k > 0)
 		{
@@ -219,8 +318,41 @@ Error InputSdl::handleEventsInternal()
 		case SDL_EVENT_TEXT_INPUT:
 			std::strncpy(&m_textInput[0], event.text.text, m_textInput.getSize() - 1);
 			break;
+		case SDL_EVENT_GAMEPAD_ADDED:
+			// SDL queues one of these for every gamepad that was already connected at SDL_Init, so this is the startup path as well
+			openFirstGamepad();
+			break;
+		case SDL_EVENT_GAMEPAD_REMOVED:
+			if(m_gamepad && event.gdevice.which == SDL_GetGamepadID(m_gamepad))
+			{
+				ANKI_WIND_LOGI("Gamepad removed: %s", SDL_GetGamepadName(m_gamepad));
+				closeGamepad();
+
+				// Fall back to another gamepad if one is still around
+				openFirstGamepad();
+			}
+			break;
+		case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+		case SDL_EVENT_GAMEPAD_BUTTON_UP:
+			// SDL doesn't repeat these while the button is held so there's no repeat flag to skip, unlike the keyboard
+			if(m_gamepad && event.gbutton.which == SDL_GetGamepadID(m_gamepad) && event.gbutton.button < U8(GamepadButton::kCount))
+			{
+				m_gamepadBtns[GamepadButton(event.gbutton.button)] = (event.gbutton.down) ? 1 : -1;
+			}
+			break;
 		}
 	} // end while events
+
+	// Sticks and triggers are polled and not read from events because a held stick emits a flood of motion events but only the latest value
+	// matters. SDL_PollEvent() above has already refreshed the state so there's no need for a SDL_UpdateGamepads()
+	if(m_gamepad)
+	{
+		m_gamepadSticks[GamepadStick::kLeft] = readGamepadStick(m_gamepad, SDL_GAMEPAD_AXIS_LEFTX, SDL_GAMEPAD_AXIS_LEFTY);
+		m_gamepadSticks[GamepadStick::kRight] = readGamepadStick(m_gamepad, SDL_GAMEPAD_AXIS_RIGHTX, SDL_GAMEPAD_AXIS_RIGHTY);
+
+		m_gamepadTriggers[GamepadTrigger::kLeft] = readGamepadTrigger(m_gamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+		m_gamepadTriggers[GamepadTrigger::kRight] = readGamepadTrigger(m_gamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+	}
 
 	if(scrollKeyEvent != MouseButton::kScrollDown)
 	{

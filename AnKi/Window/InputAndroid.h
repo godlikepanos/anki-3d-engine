@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Window/Input.h>
-#include <AnKi/Window/KeyCode.h>
 #include <android_native_app_glue.h>
 
 namespace anki {

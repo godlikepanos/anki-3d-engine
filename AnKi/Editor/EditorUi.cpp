@@ -1219,6 +1219,49 @@ void EditorUi::handleInput()
 		}
 	}
 
+	// Gamepad camera control. Unlike the mouse it's always live because there's no equivalent of "hold right click to grab the viewport"
+	if(input.hasGamepad())
+	{
+		SceneNode& mover = SceneGraph::getSingleton().getActiveCameraNode();
+
+		// The sticks are analog so the rates are per second and scaled by the frame time, unlike the keyboard which moves a fixed step per frame
+		constexpr F32 kMoveSpeed = 6.0f;
+		constexpr F32 kRotateSpeed = toRad(120.0f);
+
+		// Clicking the left stick in boosts the speed, same as shift does for the keyboard
+		F32 moveDistance = kMoveSpeed * F32(m_dt);
+		if(input.getGamepadButton(GamepadButton::kLeftStick) > 0)
+		{
+			moveDistance *= 4.0f;
+		}
+
+		const Vec2 moveStick = input.getGamepadStick(GamepadStick::kLeft);
+		if(moveStick != Vec2(0.0f))
+		{
+			mover.moveLocalX(moveStick.x * moveDistance);
+			mover.moveLocalZ(-moveStick.y * moveDistance); // Pushing the stick up moves forward, which is -Z
+		}
+
+		// The triggers move up and down. Taking them as a signed pair means pressing both cancels out
+		const F32 upDown = input.getGamepadTrigger(GamepadTrigger::kRight) - input.getGamepadTrigger(GamepadTrigger::kLeft);
+		if(upDown != 0.0f)
+		{
+			mover.moveLocalY(upDown * moveDistance);
+		}
+
+		const Vec2 rotateStick = input.getGamepadStick(GamepadStick::kRight);
+		if(rotateStick != Vec2(0.0f))
+		{
+			const F32 rotateAngle = kRotateSpeed * F32(m_dt);
+			Euler angles(mover.getLocalRotation().getRotationPart());
+			angles.x += rotateStick.y * rotateAngle;
+			angles.x = clamp(angles.x, toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y += -rotateStick.x * rotateAngle;
+			angles.z = 0.0f;
+			mover.setLocalRotation(Mat3(angles));
+		}
+	}
+
 	// Delete key deletes the selected node
 	m_showDeleteSceneNodeDialog = m_showDeleteSceneNodeDialog || (input.getKey(KeyCode::kDelete) == 1 && m_selectedNode);
 }

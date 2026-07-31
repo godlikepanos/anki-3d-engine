@@ -7,6 +7,28 @@
 #include <Samples/PhysicsPlayground/GrenadeNode.h>
 #include <Samples/PhysicsPlayground/Events.h>
 
+// The release threshold is lower than the press one so a trigger left resting near the edge doesn't chatter
+constexpr F32 kTriggerPressThreshold = 0.6f;
+constexpr F32 kTriggerReleaseThreshold = 0.4f;
+
+// The gamepad triggers are analog so unlike the mouse buttons the Input doesn't track a press count, the edge has to be detected here. Returns true
+// only on the frame the trigger crosses into the pressed state
+static Bool updateTriggerPressEdge(F32 triggerValue, Bool& pressed)
+{
+	const Bool wasPressed = pressed;
+
+	if(triggerValue >= kTriggerPressThreshold)
+	{
+		pressed = true;
+	}
+	else if(triggerValue <= kTriggerReleaseThreshold)
+	{
+		pressed = false;
+	}
+
+	return pressed && !wasPressed;
+}
+
 static void createFogVolumeFadeEvent(SceneNode* node)
 {
 	CString script = R"(
@@ -76,14 +98,17 @@ void FpsCharacter::update([[maybe_unused]] SceneNodeUpdateInfo& info)
 		camc.setFovY(toRad<F32>(g_cvarGameFov));
 	}
 
-	// Mouselook
+	// Look. The mouse is locked to the window center so its NDC position is already a per frame delta, but the stick is a held position so it has to
+	// be scaled by the frame time to stay framerate independent
 	Input& input = Input::getSingleton();
-	const Vec2 mousePos = input.getMousePositionNdc();
-	if(mousePos != 0.0f)
+	Vec2 lookVec = input.getMousePositionNdc() * g_cvarGameMouseLookPower;
+	lookVec += input.getGamepadStick(GamepadStick::kRight) * toRad<F32>(g_cvarGameGamepadLookSpeed) * F32(info.m_dt);
+
+	if(lookVec != 0.0f)
 	{
 		Mat3 camRot = m_cameraNode->getLocalRotation();
 
-		Mat3 newRot(Euler(g_cvarGameMouseLookPower * mousePos.y, g_cvarGameMouseLookPower * -mousePos.x, 0.0f));
+		Mat3 newRot(Euler(lookVec.y, -lookVec.x, 0.0f));
 		newRot = camRot * newRot;
 
 		const Vec3 newz = newRot.getColumn(2).normalize();
@@ -118,8 +143,13 @@ void FpsCharacter::update([[maybe_unused]] SceneNodeUpdateInfo& info)
 			moveVec.x -= 1.0f;
 		}
 
+		// The stick feeds the same vector as the keyboard. X is negated because +X means left here, see the negation when computing dir below
+		const Vec2 moveStick = input.getGamepadStick(GamepadStick::kLeft);
+		moveVec.x -= moveStick.x;
+		moveVec.z += moveStick.y;
+
 		F32 jumpSpeed = 0.0f;
-		if(input.getKey(KeyCode::kSpace) > 0)
+		if(input.getKey(KeyCode::kSpace) > 0 || input.getGamepadButton(GamepadButton::kSouth) > 0)
 		{
 			jumpSpeed += m_jumpSpeed;
 		}
@@ -134,18 +164,24 @@ void FpsCharacter::update([[maybe_unused]] SceneNodeUpdateInfo& info)
 		if(moveVec != 0.0f || jumpSpeed != 0.0f || crouchChanged)
 		{
 			Vec3 dir;
+			F32 analogFactor = 1.0f;
 			if(moveVec != 0.0f)
 			{
+				// dir gets normalized so a partially pushed stick has to slow the speed down instead, otherwise a light push walks at full speed.
+				// The keyboard always lands on 1 or more so it's unaffected
+				analogFactor = min(moveVec.length(), 1.0f);
+
 				dir = -(m_cameraNode->getLocalRotation() * moveVec);
 				dir.y = 0.0f;
 				dir = dir.normalize();
 			}
 
 			F32 speed = m_walkingSpeed;
-			if(input.getKey(KeyCode::kLeftShift) > 0)
+			if(input.getKey(KeyCode::kLeftShift) > 0 || input.getGamepadButton(GamepadButton::kLeftStick) > 0)
 			{
 				speed *= 2.0f;
 			}
+			speed *= analogFactor;
 
 			PlayerControllerComponent& playerc = getFirstComponentOfType<PlayerControllerComponent>();
 			playerc.setVelocity(speed, jumpSpeed, dir, m_crouching);
@@ -181,8 +217,11 @@ void FpsCharacter::update([[maybe_unused]] SceneNodeUpdateInfo& info)
 		}
 	}
 
-	// Shooting
-	if(input.getMouseButton(MouseButton::kLeft) == 1)
+	// Shooting. Both edges are updated before the branches below because a mouse click must not short-circuit the trigger state and leave it stale
+	const Bool shotgunTriggerEdge = updateTriggerPressEdge(input.getGamepadTrigger(GamepadTrigger::kRight), m_shotgunTriggerPressed);
+	const Bool grenadeTriggerEdge = updateTriggerPressEdge(input.getGamepadTrigger(GamepadTrigger::kLeft), m_grenadeTriggerPressed);
+
+	if(input.getMouseButton(MouseButton::kLeft) == 1 || shotgunTriggerEdge)
 	{
 		fireShotgun();
 
@@ -192,7 +231,7 @@ void FpsCharacter::update([[maybe_unused]] SceneNodeUpdateInfo& info)
 		m_shotgunNode->setLocalRotation(Mat3(newRotation) * Mat3(m_shotgunRestingRotation));
 	}
 
-	if(input.getMouseButton(MouseButton::kRight) == 1)
+	if(input.getMouseButton(MouseButton::kRight) == 1 || grenadeTriggerEdge)
 	{
 		fireGrenade();
 	}

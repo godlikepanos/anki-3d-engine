@@ -75,6 +75,11 @@ Bool Input::hasTouchDevice() const
 	return true;
 }
 
+Bool Input::hasGamepad() const
+{
+	return false;
+}
+
 Error InputAndroid::initInternal()
 {
 	g_androidApp->userData = this;

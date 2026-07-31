@@ -115,7 +115,6 @@ Error MyApp::userPostInit()
 	}
 
 	Input::getSingleton().moveMouseNdc(Vec2(0.0f));
-	ANKI_CHECK(Input::getSingleton().handleEvents());
 
 	return Error::kNone;
 }

@@ -51,4 +51,9 @@ Bool Input::hasTouchDevice() const
 	return false;
 }
 
+Bool Input::hasGamepad() const
+{
+	return false;
+}
+
 } // end namespace anki
