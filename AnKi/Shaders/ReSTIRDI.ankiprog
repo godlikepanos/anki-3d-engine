@@ -1,0 +1,192 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <AnKi/Shaders/ReSTIR.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#include <AnKi/Shaders/LightFunctions.hlsl>
+
+#pragma anki technique GroundTruth comp
+
+// ===========================================================================
+// Ground Truth                                                              =
+// ===========================================================================
+#if ANKI_TECHNIQUE_GroundTruth
+
+ConstantBuffer<GlobalRendererConstants> g_globalConsts : register(b0);
+
+StructuredBuffer<GpuSceneLight> g_lights : register(t0);
+
+Texture2D<Vec4> g_gbuffer0Tex : register(t1);
+Texture2D<Vec4> g_gbuffer1Tex : register(t2);
+Texture2D<Vec4> g_gbuffer2Tex : register(t3);
+Texture2D g_depthTex : register(t4);
+
+RaytracingAccelerationStructure g_tlas : register(t5);
+
+RWTexture2D<Vec4> g_uav : register(u0);
+
+// Computes the visibility term
+F32 visibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax)
+{
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = 0.01;
+	ray.Direction = rayDir;
+	ray.TMax = tMax;
+
+	const U32 cullMask = 0xFFu;
+	constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
+
+	RayQuery<RAY_FLAG_NONE> q;
+	q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
+
+	while(q.Proceed())
+	{
+	}
+	const Bool hit = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+
+	return (hit) ? 0.0 : 1.0;
+}
+
+Vec3 directLighting(UVec2 coord)
+{
+	const F32 depth = TEX(g_depthTex, coord).r;
+
+	if(depth == 1.0)
+	{
+		return 0.0;
+	}
+
+	const Vec2 viewportSize = getDimensions(g_uav);
+	const Vec2 ndc = uvToNdc((coord + 0.5) / viewportSize);
+
+	const Vec4 worldPos4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - worldPos);
+
+	RandomGenerator randGen = createRandomGenerator(coord, g_globalConsts.m_frame);
+
+	// Decode GBuffer
+	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
+	unpackGBufferNoVelocity<F32>(TEX(g_gbuffer0Tex, coord), TEX(g_gbuffer1Tex, coord), TEX(g_gbuffer2Tex, coord), gbuffer);
+	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
+
+	const Vec3 biasedPosW = worldPos + viewDir * 0.01;
+
+	Vec3 Lo = gbuffer.m_emission; // Outgoing radiance (to the eye)
+
+	// Dir light
+	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
+	if(dirLight.m_active)
+	{
+		const Vec3 l = -dirLight.m_direction;
+
+		const F32 geom = max(0.0, dot(l, gbuffer.m_normal));
+
+		if(geom > kEpsilonF32)
+		{
+			const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+			const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
+			const Vec3 brdf = diffC + specC;
+
+			const F32 vis = visibility(biasedPosW, l, 1000.0);
+
+			Lo += brdf * dirLight.m_diffuseColor * (geom * vis);
+		}
+	}
+
+	// Punctual lights
+	const U32 lightCount = getStructuredBufferElementCount(g_lights);
+	for(U32 i = 0; i < lightCount; ++i)
+	{
+		// A couple of hack consts for now
+		constexpr F32 kSourceRadius = 0.1;
+		constexpr U32 kSampleCount = 1u;
+
+		const GpuSceneLight light = SBUFF(g_lights, i);
+
+		const Vec3 frag2Light = light.m_position - worldPos;
+		const F32 distToCenter = length(frag2Light);
+		if(distToCenter <= kSourceRadius)
+		{
+			// Inside the sphere, the cone is undefined
+			continue;
+		}
+
+		const Vec3 dirToCenter = frag2Light / distToCenter;
+
+		const F32 sinThetaMax = kSourceRadius / distToCenter;
+		const F32 cosThetaMax = sqrt(max(0.0, 1.0 - square(sinThetaMax)));
+		const F32 invPdf = k2Pi * (1.0 - cosThetaMax); // Solid angle
+
+		// Bail before tracing anything. Freed light slots are nullified with a position of kSomeFarDistance so their solid angle is zero but they'd
+		// still cost kSampleCount scene-long rays per pixel
+		if(invPdf <= kEpsilonF32 || all(light.m_diffuseColor <= 0.0))
+		{
+			continue;
+		}
+
+		// m_diffuseColor is intensity I which is W/sr. Radiance Le is in other units though W/(sr*m^2). In other words Le=I/area. The area in this
+		// case is not the area of the sphere of the light but that one that is projected to the viewer. The viewer sees a disk which has area of
+		// π*r^2. Thus:
+		const Vec3 Le = light.m_diffuseColor / (kPi * square(kSourceRadius));
+
+		const Mat3 coneToWorld = rotationFromDirection(dirToCenter);
+
+		Vec3 sum = 0.0;
+		for(U32 s = 0; s < kSampleCount; ++s)
+		{
+			// Uniform direction inside the cone
+			const F32 cosTheta = lerp(cosThetaMax, 1.0, rand(randGen));
+			const F32 sinTheta = sqrt(max(0.0, 1.0 - square(cosTheta)));
+			const F32 phi = k2Pi * rand(randGen);
+			const Vec3 l = mul(coneToWorld, Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta));
+
+			const F32 geom = dot(l, gbuffer.m_normal);
+			if(geom < kEpsilonF32)
+			{
+				continue;
+			}
+
+			const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+			if(spot <= kEpsilonF32)
+			{
+				continue;
+			}
+
+			const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+			const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
+			const Vec3 brdf = diffC + specC;
+
+			// Compute a tMax that pushes the ray on the edge of the sphere of light
+			const F32 ct = dot(l, dirToCenter);
+			const F32 tMax = distToCenter * ct - sqrt(max(0.0, square(kSourceRadius) - square(distToCenter) * (1.0 - square(ct))));
+			const F32 vis = visibility(biasedPosW, l, max(0.0, tMax - 0.01));
+
+			sum += brdf * Le * (geom * vis * spot);
+		}
+
+		Lo += sum * invPdf / F32(kSampleCount);
+	}
+
+	return Lo;
+}
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const UVec2 viewportSize = getDimensions(g_uav);
+
+	if(all(coord < viewportSize))
+	{
+		TEX(g_uav, coord) = Vec4(directLighting(coord), 0.0);
+	}
+}
+
+#endif

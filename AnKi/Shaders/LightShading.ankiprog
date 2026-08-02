@@ -14,7 +14,7 @@
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
+ConstantBuffer<GlobalRendererConstants> g_globalConsts : register(b0);
 StructuredBuffer<GpuSceneLight> g_lights : register(t0);
 #	if INDIRECT_DIFFUSE_TEX
 Texture2D<Vec4> g_indirectDiffuseTex : register(t1);
@@ -57,13 +57,13 @@ Vec4 main(VertOut input) : SV_TARGET0
 	}
 
 	// Get world position
-	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const HVec3 viewDir = normalize(g_globalConstants.m_cameraPosition - worldPos);
+	const HVec3 viewDir = normalize(g_globalConsts.m_cameraPosition - worldPos);
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants.m_clusterer, Vec3(input.m_svPosition.xy, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConsts.m_clusterer, Vec3(input.m_svPosition.xy, depth));
 
 	// return clusterHeatmap(cluster, 1u << (U32)GpuSceneNonRenderableObjectType::kLight, 3);
 
@@ -107,7 +107,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	U32 resolvedSmIdx = 0u;
 
 	// Dir light
-	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
+	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
 	if(dirLight.m_active)
 	{
 		F16 shadowFactor;

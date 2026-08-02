@@ -43,6 +43,7 @@ ANKI_RENDERER_OBJECT_DEF(RtMaterialFetchDbg, rtMaterialFetchDbg,
 ANKI_RENDERER_OBJECT_DEF(Reflections, reflections, 1)
 ANKI_RENDERER_OBJECT_DEF(GpuParticles, gpuParticles, 1)
 ANKI_RENDERER_OBJECT_DEF(ScreenshotPass, screenshotPass, 1)
+ANKI_RENDERER_OBJECT_DEF(ReSTIRDI, reSTIRDI, GrManager::getSingleton().getDeviceCapabilities().m_rayTracing&& g_cvarRenderReSTIRDI)
 
 // Util objects
 ANKI_RENDERER_OBJECT_DEF(RenderableDrawer, drawer, 1)

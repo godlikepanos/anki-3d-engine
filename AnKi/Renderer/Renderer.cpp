@@ -51,6 +51,7 @@
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/GpuParticles.h>
 #include <AnKi/Renderer/ScreenshotPass.h>
+#include <AnKi/Renderer/ReSTIRDI.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -377,6 +378,10 @@ Error Renderer::populateRenderGraph()
 	m_volumetricFog->populateRenderGraph();
 	m_lensFlare->populateRenderGraph();
 	m_forwardShading->populateRenderGraph(); // This may feel out of place but it's only visibility. Keep it just before light shading
+	if(m_reSTIRDI)
+	{
+		m_reSTIRDI->populateRenderGraph();
+	}
 	m_lightShading->populateRenderGraph();
 	if(getTemporalUpscaler().getEnabled())
 	{
