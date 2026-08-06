@@ -5,63 +5,256 @@
 
 // Does tonemapping
 
-#pragma anki technique vert pixel comp
+#pragma anki technique Histogram comp
+#pragma anki technique AvgLuminance comp
+#pragma anki technique Tonemapping vert pixel comp
 
-#include <AnKi/Shaders/QuadVert.hlsl>
-#if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
-#	include <AnKi/Shaders/Functions.hlsl>
-#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-SamplerState g_nearestAnyClampSampler : register(s0);
-SamplerState g_trilinearRepeatSampler : register(s1);
+constexpr U32 kBinCount = 256; // Needs to match the C++
+
+// ===========================================================================
+// Histogram                                                                 =
+// ===========================================================================
+
+// This is based on https://bruop.github.io/tonemapping/
+
+#if ANKI_TECHNIQUE_Histogram
+Texture2D g_hdrTex : register(t0);
+
+RWStructuredBuffer<U32> g_histogram : register(u0);
+
+struct Consts
+{
+	F32 m_minLog2Luminance;
+	F32 m_maxLog2Luminance;
+	F32 m_padding1;
+	F32 m_padding2;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts);
+
+U32 colorToBin(Vec3 hdrColor)
+{
+	const F32 lum = computeLuminance(hdrColor);
+
+	// Avoid taking the log of zero
+	if(lum <= kEpsilonF32)
+	{
+		return 0;
+	}
+
+	// Calculate the log_2 luminance and express it as a value in [0.0, 1.0] where 0.0 represents the minimum luminance, and 1.0 represents the max.
+	const F32 range = g_consts.m_maxLog2Luminance - g_consts.m_minLog2Luminance;
+	const F32 logLum = saturate((log2(lum) - g_consts.m_minLog2Luminance) / range);
+
+	// Map [0, 1] to [1, binCount). The zeroth bin is handled by the epsilon check above.
+	return logLum * (kBinCount - 2) + 1.0;
+}
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 texSize = getDimensions(g_hdrTex);
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	if(any(coord >= texSize))
+	{
+		return;
+	}
+
+	const Vec3 hdr = TEX(g_hdrTex, coord);
+	const U32 bin = colorToBin(hdr);
+
+	InterlockedAdd(SBUFF(g_histogram, bin), 1);
+}
+#endif
+
+// ===========================================================================
+// Avg Luminance                                                             =
+// ===========================================================================
+
+// This is based on https://bruop.github.io/tonemapping/ and it also adds the idea from Narkowicz to trim very dark and very bright pixels. The
+// algorithm starts by storing the histogram to groupshared and then calculating an inclusive prefix sum (if histogram is [3, 4, 9] inclusive prefix
+// sum is [3, 7, 16]). With the prefix sum we can calculate how many samples each bin will have. To experiment with the trimming you can use the
+// TonemappingBinTrim.py
+
+#if ANKI_TECHNIQUE_AvgLuminance
+RWStructuredBuffer<U32> g_histogram : register(u0);
+
+#	define TONEMAPPING_REGISTER u1
+#	include <AnKi/Shaders/TonemappingResources.hlsl>
+
+struct Consts
+{
+	F32 m_minLog2Luminance;
+	F32 m_maxLog2Luminance;
+	F32 m_timeCoeff;
+	U32 m_padding1;
+
+	F32 m_darkPixelsToTrimPercent;
+	F32 m_brightPixelsToTrimPercent;
+	U32 m_padding2;
+	U32 m_padding3;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts);
+
+DEF_GS1(I32, kBinCount * 2, g_prefixSum)
+DEF_GS1(I32, kBinCount, g_newHistogram)
+groupshared I32 g_newPixelCount;
+
+[numthreads(kBinCount, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const U32 binIdx = svGroupIndex;
+
+	// Initialize groupshared stuff
+	const I32 crntBinCount = (binIdx == 0) ? 0 : SBUFF(g_histogram, binIdx); // Forget the dark pixels of the 1st bin now and forever
+	GS1(g_prefixSum, binIdx) = crntBinCount; // Fill the 1st half of the array
+
+	g_newPixelCount = 0;
+
+	GroupMemoryBarrierWithGroupSync();
+
+	// Zero the histogram buffer for the next frame
+	SBUFF(g_histogram, binIdx) = 0;
+
+	// Do an inclusive prefix sum. The src gives the new offset
+	U32 src = 0u;
+	U32 dst = kBinCount;
+	for(U32 offset = 1u; offset < kBinCount; offset <<= 1u)
+	{
+		GS1(g_prefixSum, dst + binIdx) = GS1(g_prefixSum, src + binIdx) + ((binIdx >= offset) ? GS1(g_prefixSum, src + binIdx - offset) : 0);
+
+		GroupMemoryBarrierWithGroupSync();
+
+		const U32 tmp = src;
+		src = dst;
+		dst = tmp;
+	}
+
+	// Trim dark pixels
+	const I32 nonBlackPixelCount = GS1(g_prefixSum, src + kBinCount - 1);
+	const I32 darkPixelsToTrim = I32(F32(nonBlackPixelCount) * g_consts.m_darkPixelsToTrimPercent);
+	I32 binPixelCount = crntBinCount;
+	I32 pixelsRemainingThisBin = max(0, GS1(g_prefixSum, src + binIdx) - darkPixelsToTrim);
+	pixelsRemainingThisBin = min(pixelsRemainingThisBin, binPixelCount);
+	binPixelCount = pixelsRemainingThisBin;
+
+	// Trim bright pixels
+	const I32 brightPixelsToKeep = nonBlackPixelCount - I32(F32(nonBlackPixelCount) * g_consts.m_brightPixelsToTrimPercent);
+	I32 pixelsToRemoveThisBin = max(0, GS1(g_prefixSum, src + binIdx) - brightPixelsToKeep);
+	pixelsRemainingThisBin = max(0, binPixelCount - pixelsToRemoveThisBin);
+	binPixelCount = pixelsRemainingThisBin;
+
+	// What we actually want is not the histogram but the weighted sum
+	ANKI_ASSERT(binPixelCount == 0 || binIdx != 0);
+	GS1(g_newHistogram, binIdx) = binPixelCount * binIdx;
+
+	// Update the new pixel count
+	InterlockedAdd(g_newPixelCount, binPixelCount);
+
+	GroupMemoryBarrierWithGroupSync();
+
+	// Compute the weighted sum
+	for(U32 cutoff = (kBinCount >> 1u); cutoff > 0u; cutoff >>= 1u)
+	{
+		if(binIdx < cutoff)
+		{
+			GS1(g_newHistogram, binIdx) += GS1(g_newHistogram, binIdx + cutoff);
+		}
+
+		GroupMemoryBarrierWithGroupSync();
+	}
+
+	if(svGroupIndex == 0)
+	{
+		const F32 lumLastFrame = readExposureAndAverageLuminance<F32>().y;
+
+		F32 weightedAvgLum;
+		if(g_newPixelCount > 0)
+		{
+			// Here we take our weighted sum and divide it by the number of pixels that had luminance greater than zero
+			const F32 weightedLogAverage = F32(GS1(g_newHistogram, 0)) / F32(g_newPixelCount) - 1.0;
+
+			// Map from our histogram space to actual luminance
+			const F32 range = g_consts.m_maxLog2Luminance - g_consts.m_minLog2Luminance;
+			weightedAvgLum = exp2(((weightedLogAverage / (kBinCount - 2)) * range) + g_consts.m_minLog2Luminance);
+		}
+		else
+		{
+			// We trimmed all pixels, just use the previous frame's luminance
+			weightedAvgLum = lumLastFrame;
+		}
+
+		// The new stored value will be interpolated using the last frames value to prevent sudden shifts in the exposure.
+		const F32 adaptedLum = lumLastFrame + (weightedAvgLum - lumLastFrame) * g_consts.m_timeCoeff;
+		const F32 finalAvgLum = clamp(adaptedLum, kEpsilonF32, kMaxF32); // Just in case
+		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0f), finalAvgLum);
+	}
+}
+#endif
+
+// ===========================================================================
+// Tonemapping                                                               =
+// ===========================================================================
+#if ANKI_TECHNIQUE_Tonemapping
+
+#	include <AnKi/Shaders/QuadVert.hlsl>
+
+#	if ANKI_PIXEL_SHADER || ANKI_COMPUTE_SHADER
+SamplerState g_trilinearRepeatSampler : register(s0);
 Texture2D<Vec4> g_inputRt : register(t0);
 Texture3D<Vec4> g_lut : register(t1);
 
-#	define TONEMAPPING_REGISTER u0
-#	include <AnKi/Shaders/TonemappingResources.hlsl>
+#		define TONEMAPPING_REGISTER u0
+#		include <AnKi/Shaders/TonemappingResources.hlsl>
 
-#	if ANKI_COMPUTE_SHADER
-RWTexture2D<Vec4> g_storageTex : register(u1);
-#		define THREADGROUP_SIZE_SQRT 8
-#	endif
+#		if ANKI_COMPUTE_SHADER
+RWTexture2D<Vec4> g_uav : register(u1);
+#		endif
 
-HVec3 colorGrading(HVec3 color)
+Vec3 colorGrading(Vec3 color)
 {
-	Vec3 lutSize;
-	g_lut.GetDimensions(lutSize.x, lutSize.y, lutSize.y);
+	const Vec3 lutSize = getDimensions(g_lut);
 
-	const HVec3 lutScale = ((lutSize.x - 1.0) / lutSize.x).xxx;
-	const HVec3 lutOffset = (1.0 / (2.0 * lutSize.x)).xxx;
+	const Vec3 lutScale = ((lutSize.x - 1.0) / lutSize.x).xxx;
+	const Vec3 lutOffset = (1.0 / (2.0 * lutSize.x)).xxx;
 
-	color = min(color, HVec3(1.0, 1.0, 1.0));
-	const HVec3 lutCoords = color * lutScale + lutOffset;
+	color = min(color, Vec3(1.0, 1.0, 1.0));
+	const Vec3 lutCoords = color * lutScale + lutOffset;
 	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
-#	if ANKI_COMPUTE_SHADER
-[numthreads(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
-#	else
+#		if ANKI_COMPUTE_SHADER
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+#		else
 Vec3 main(VertOut input) : SV_TARGET0
-#	endif
+#		endif
 {
-#	if ANKI_COMPUTE_SHADER
-	Vec2 texSize;
-	g_storageTex.GetDimensions(texSize.x, texSize.y);
+#		if ANKI_COMPUTE_SHADER
+	const UVec2 texSize = getDimensions(g_uav);
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	if(any(coord >= texSize))
+	{
+		return;
+	}
+#		else
+	const UVec2 coord = input.m_svPosition.xy;
+#		endif
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) / texSize;
-#	else
-	const Vec2 uv = input.m_uv;
-#	endif
+	Vec3 hdr = TEX(g_inputRt, coord);
 
-	const HVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;
-	HVec3 tonemapped = linearToSRgb(tonemap<F16>(hdr, readExposureAndAverageLuminance<F16>().x));
+	hdr = tonemap<F32>(hdr, readExposureAndAverageLuminance<F32>().x);
 
-	tonemapped = colorGrading(tonemapped);
+	hdr = linearToSRgb(hdr);
 
-#	if ANKI_COMPUTE_SHADER
-	g_storageTex[svDispatchThreadId.xy] = Vec4(tonemapped, 0.0);
-#	else
-	return tonemapped;
-#	endif
+	hdr = colorGrading(hdr);
+
+#		if ANKI_COMPUTE_SHADER
+	TEX(g_uav, coord) = Vec4(hdr, 0.0);
+#		else
+	return hdr;
+#		endif
 }
-#endif // ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
+#	endif // ANKI_PIXEL_SHADER || ANKI_COMPUTE_SHADER
+#endif

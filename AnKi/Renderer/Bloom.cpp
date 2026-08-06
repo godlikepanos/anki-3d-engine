@@ -165,26 +165,31 @@ void Bloom::populateRenderGraph()
 		// Set the render pass
 		const TextureSubresourceDesc inputTexSubresource = TextureSubresourceDesc::surface(m_pyramidTex->getMipmapCount() - 1, 0, 0);
 
+		TextureUsageBit readUsage, writeUsage, exposureUsage;
 		RenderPassBase* prpass;
 		if(preferCompute)
 		{
 			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Bloom Main");
-
-			rpass.newTextureDependency(m_runCtx.m_pyramidRt, TextureUsageBit::kSrvCompute, inputTexSubresource);
-			rpass.newTextureDependency(exposureRt, TextureUsageBit::kUavCompute);
-
 			prpass = &rpass;
+
+			readUsage = TextureUsageBit::kSrvCompute;
+			writeUsage = TextureUsageBit::kUavCompute;
+			exposureUsage = TextureUsageBit::kUavCompute;
 		}
 		else
 		{
 			GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
 			rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(exposureRt)});
-
-			rpass.newTextureDependency(m_runCtx.m_pyramidRt, TextureUsageBit::kSrvPixel, inputTexSubresource);
-			rpass.newTextureDependency(exposureRt, TextureUsageBit::kRtvDsvWrite);
-
 			prpass = &rpass;
+
+			readUsage = TextureUsageBit::kSrvPixel;
+			writeUsage = TextureUsageBit::kRtvDsvWrite;
+			exposureUsage = TextureUsageBit::kUavPixel;
 		}
+
+		prpass->newTextureDependency(m_runCtx.m_pyramidRt, readUsage, inputTexSubresource);
+		prpass->newTextureDependency(exposureRt, writeUsage);
+		prpass->newTextureDependency(getTonemapping().getExposureAndAvgLuminanceRt(), exposureUsage);
 
 		prpass->setWork([this, exposureRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(BoomExposure);
@@ -197,7 +202,7 @@ void Bloom::populateRenderGraph()
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, m_runCtx.m_pyramidRt, inputTexSubresource);
-			rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getExposureAndAvgLuminanceRt());
+			rgraphCtx.bindUav(0, 0, getTonemapping().getExposureAndAvgLuminanceRt());
 
 			const Vec4 consts(g_cvarRenderBloomThreshold, g_cvarRenderBloomScale, 0.0f, 0.0f);
 			cmdb.setFastConstants(&consts, sizeof(consts));

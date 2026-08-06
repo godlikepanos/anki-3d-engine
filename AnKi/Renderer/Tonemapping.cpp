@@ -9,30 +9,35 @@
 #include <AnKi/Renderer/TemporalUpscaler.h>
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Resource/ImageAtlasResource.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki {
 
 Error Tonemapping::init()
 {
 	{
-		m_expAndAvgLum.m_inputTexMip =
-			(getRenderer().getBloom().getPyramidTextureMipmapCount() > 2) ? getRenderer().getBloom().getPyramidTextureMipmapCount() - 2 : 0;
+		ANKI_CHECK(m_histogram.m_prog.load("ShaderBinaries/Tonemap.ankiprogbin", {}, "Histogram"));
 
+		m_histogram.m_histogramBuff = getRenderer().getRendedererGpuMemoryPool().allocateStructuredBuffer<U32>(Histogram::kBinCount);
+		zeroBuffer(m_histogram.m_histogramBuff);
+
+		m_histogram.m_inputTexMip = (getBloom().getPyramidTextureMipmapCount() > 1) ? 1 : 0;
+	}
+
+	{
 		// Create program
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_expAndAvgLum.m_prog, m_expAndAvgLum.m_grProg));
+		ANKI_CHECK(m_expAndAvgLum.m_prog.load("ShaderBinaries/Tonemap.ankiprogbin", {}, "AvgLuminance"));
 
-		// Create exposure texture.
-		// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no automatic image transitions
+		// Create the exposure texture. WARNING: Use it only as UAV, including for reads, since every pass that touches it declares a UAV dependency
 		const TextureUsageBit usage = TextureUsageBit::kAllUav;
-		const TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(1, 1, Format::kR16G16_Sfloat, usage, "ExposureAndAvgLum1x1");
+		const TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(1, 1, Format::kR32G32_Sfloat, usage, "ExposureAndAvgLum1x1");
 		ClearValue clearValue;
 		clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
 		m_expAndAvgLum.m_exposureAndAvgLuminance1x1 = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kUavCompute, clearValue);
 	}
 
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Tonemap.ankiprogbin", m_tonemapping.m_prog, m_tonemapping.m_grProg));
+		ANKI_CHECK(m_tonemapping.m_prog.load("ShaderBinaries/Tonemap.ankiprogbin", {}, "Tonemapping"));
 
 		m_tonemapping.m_rtDesc = getRenderer().create2DRenderTargetDescription(
 			getRenderer().getPostProcessResolution().x, getRenderer().getPostProcessResolution().y,
@@ -40,7 +45,6 @@ Error Tonemapping::init()
 			"Tonemapped");
 		m_tonemapping.m_rtDesc.bake();
 
-		m_tonemapping.m_lut.reset(nullptr);
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/DefaultLut.ankitex", m_tonemapping.m_lut));
 		ANKI_ASSERT(m_tonemapping.m_lut->getTexture().getWidth() == m_tonemapping.m_lut->getTexture().getHeight());
 		ANKI_ASSERT(m_tonemapping.m_lut->getTexture().getWidth() == m_tonemapping.m_lut->getTexture().getDepth());
@@ -51,9 +55,9 @@ Error Tonemapping::init()
 
 void Tonemapping::importRenderTargets()
 {
-	// Just import it. It will not be used in resource tracking
 	m_runCtx.m_exposureLuminanceHandle = getRenderingContext().m_renderGraphDescr.importRenderTarget(
-		m_expAndAvgLum.m_exposureAndAvgLuminance1x1.get(), true, TextureUsageBit::kUavCompute);
+		m_expAndAvgLum.m_exposureAndAvgLuminance1x1.get(), !m_expAndAvgLum.m_importedOnce, TextureUsageBit::kUavCompute);
+	m_expAndAvgLum.m_importedOnce = true;
 }
 
 void Tonemapping::populateRenderGraph()
@@ -61,61 +65,100 @@ void Tonemapping::populateRenderGraph()
 	ANKI_TRACE_SCOPED_EVENT(Tonemapping);
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	// Create avg lum pass
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("AvgLuminance");
+	BufferHandle histogramHandle = rgraph.importBuffer(m_histogram.m_histogramBuff, BufferUsageBit::kNone);
 
-		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+	// Histogram
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Tonemapping: Histogram");
+
+		pass.newTextureDependency(getRenderer().getBloom().getPyramidRt(), TextureUsageBit::kSrvCompute,
+								  TextureSubresourceDesc::surface(m_histogram.m_inputTexMip, 0, 0));
+		pass.newBufferDependency(histogramHandle, BufferUsageBit::kUavCompute);
+
+		pass.setWork([this, histogramHandle](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Tonemapping);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_expAndAvgLum.m_grProg.get());
-			rgraphCtx.bindUav(0, 0, m_runCtx.m_exposureLuminanceHandle);
-			rgraphCtx.bindSrv(0, 0, getRenderer().getBloom().getPyramidRt(), TextureSubresourceDesc::surface(m_expAndAvgLum.m_inputTexMip, 0, 0));
+			cmdb.bindShaderProgram(m_histogram.m_prog.get());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getBloom().getPyramidRt(), TextureSubresourceDesc::surface(m_histogram.m_inputTexMip, 0, 0));
+			rgraphCtx.bindUav(0, 0, histogramHandle);
+
+			const Vec4 consts(g_cvarRenderTonemappingMinLog2Luminance, g_cvarRenderTonemappingMaxLog2Luminance, 0.0f, 0.0f);
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			const UVec2 inputTexSize = getRenderer().getInternalResolution() >> (1u + m_histogram.m_inputTexMip);
+			dispatchPPCompute(cmdb, 8, 8, inputTexSize.x, inputTexSize.y);
+		});
+	}
+
+	// Avg luminance
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Tonemapping: AvgLuminance");
+
+		pass.newBufferDependency(histogramHandle, BufferUsageBit::kUavCompute);
+		pass.newTextureDependency(m_runCtx.m_exposureLuminanceHandle, TextureUsageBit::kUavCompute);
+
+		pass.setWork([this, histogramHandle](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(Tonemapping);
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_expAndAvgLum.m_prog.get());
+
+			// The fraction of the way towards the metered luminance to travel this frame. Derived from the frame time so that the adaptation takes
+			// the same wall clock time regardless of the frame rate. See https://bruop.github.io/exposure/
+			const F32 timeCoeff = saturate(1.0f - std::exp(-F32(getRenderingContext().m_dt) * F32(g_cvarRenderTonemappingAdaptationRate)));
+
+			const Array<Vec4, 2> consts = {
+				Vec4(g_cvarRenderTonemappingMinLog2Luminance, g_cvarRenderTonemappingMaxLog2Luminance, timeCoeff, 0.0f),
+				Vec4(g_cvarRenderTonemappingDarkPixelTrimPercent / 100.0f, g_cvarRenderTonemappingBrightPixelTrimPercent / 100.f, 0.0f, 0.0f)};
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			rgraphCtx.bindUav(0, 0, histogramHandle);
+			rgraphCtx.bindUav(1, 0, m_runCtx.m_exposureLuminanceHandle);
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});
-
-		pass.newTextureDependency(getRenderer().getBloom().getPyramidRt(), TextureUsageBit::kSrvCompute,
-								  TextureSubresourceDesc::surface(m_expAndAvgLum.m_inputTexMip, 0, 0));
 	}
 
 	// Tonemapp pass
 	{
 		m_runCtx.m_rt = rgraph.newRenderTarget(m_tonemapping.m_rtDesc);
-		const RenderTargetHandle inRt =
-			(getRenderer().getTemporalUpscaler().getEnabled()) ? getRenderer().getTemporalUpscaler().getRt() : getRenderer().getTemporalAA().getRt();
+		const RenderTargetHandle inRt = (getTemporalUpscaler().getEnabled()) ? getTemporalUpscaler().getRt() : getTemporalAA().getRt();
 		const RenderTargetHandle outRt = m_runCtx.m_rt;
 
+		TextureUsageBit readUsage, writeUsage, exposureUsage;
 		RenderPassBase* ppass;
 		if(g_cvarRenderPreferCompute)
 		{
 			NonGraphicsRenderPass& pass = getRenderingContext().m_renderGraphDescr.newNonGraphicsRenderPass("Tonemap");
-			pass.newTextureDependency(inRt, TextureUsageBit::kSrvCompute);
-			pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
 			ppass = &pass;
+			readUsage = TextureUsageBit::kSrvCompute;
+			writeUsage = TextureUsageBit::kUavCompute;
+			exposureUsage = TextureUsageBit::kUavCompute;
 		}
 		else
 		{
 			GraphicsRenderPass& pass = getRenderingContext().m_renderGraphDescr.newGraphicsRenderPass("Tonemap");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
-			pass.newTextureDependency(inRt, TextureUsageBit::kSrvPixel);
-			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 			ppass = &pass;
+			readUsage = TextureUsageBit::kSrvPixel;
+			writeUsage = TextureUsageBit::kRtvDsvWrite;
+			exposureUsage = TextureUsageBit::kUavPixel;
 		}
 
-		ppass->setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ppass->newTextureDependency(inRt, readUsage);
+		ppass->newTextureDependency(outRt, writeUsage);
+		ppass->newTextureDependency(m_runCtx.m_exposureLuminanceHandle, exposureUsage);
+
+		ppass->setWork([this, inRt, outRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Tonemapping);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			const Bool preferCompute = g_cvarRenderPreferCompute;
-			const RenderTargetHandle inRt = (getRenderer().getTemporalUpscaler().getEnabled()) ? getRenderer().getTemporalUpscaler().getRt()
-																							   : getRenderer().getTemporalAA().getRt();
-			const RenderTargetHandle outRt = m_runCtx.m_rt;
 
-			cmdb.bindShaderProgram(m_tonemapping.m_grProg.get());
+			cmdb.bindShaderProgram(m_tonemapping.m_prog.get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+
 			rgraphCtx.bindSrv(0, 0, inRt);
 			cmdb.bindSrv(1, 0, TextureView(&m_tonemapping.m_lut->getTexture(), TextureSubresourceDesc::all()));
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_exposureLuminanceHandle);

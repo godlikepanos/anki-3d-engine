@@ -635,7 +635,8 @@ void EditorUi::cVarsWindow()
 					{
 						NumericCVar<F32>& bcvar = static_cast<NumericCVar<F32>&>(cvar);
 						F32 val = bcvar;
-						if(ImGui::InputFloat("", &val, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
+						ImGui::InputFloat("", &val, 0.0f, 0.0f, "%.3f");
+						if(ImGui::IsItemDeactivatedAfterEdit())
 						{
 							bcvar = val;
 						}
@@ -644,7 +645,8 @@ void EditorUi::cVarsWindow()
 					{
 						NumericCVar<F64>& bcvar = static_cast<NumericCVar<F64>&>(cvar);
 						F64 val = bcvar;
-						if(ImGui::InputDouble("", &val, 0.0f, 0.0f, "%.6f", ImGuiInputTextFlags_EnterReturnsTrue))
+						ImGui::InputDouble("", &val, 0.0f, 0.0f, "%.6f");
+						if(ImGui::IsItemDeactivatedAfterEdit())
 						{
 							bcvar = val;
 						}
@@ -653,7 +655,8 @@ void EditorUi::cVarsWindow()
 					{
 						NumericCVar<U8>& bcvar = static_cast<NumericCVar<U8>&>(cvar);
 						I32 val = bcvar;
-						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						ImGui::InputInt("", &val, 0, 0);
+						if(ImGui::IsItemDeactivatedAfterEdit())
 						{
 							bcvar = U8(val);
 						}
@@ -662,7 +665,8 @@ void EditorUi::cVarsWindow()
 					{
 						NumericCVar<U16>& bcvar = static_cast<NumericCVar<U16>&>(cvar);
 						I32 val = bcvar;
-						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						ImGui::InputInt("", &val, 0, 0);
+						if(ImGui::IsItemDeactivatedAfterEdit())
 						{
 							bcvar = U16(val);
 						}
@@ -671,7 +675,8 @@ void EditorUi::cVarsWindow()
 					{
 						NumericCVar<U32>& bcvar = static_cast<NumericCVar<U32>&>(cvar);
 						I32 val = bcvar;
-						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						ImGui::InputInt("", &val, 0, 0);
+						if(ImGui::IsItemDeactivatedAfterEdit())
 						{
 							bcvar = val;
 						}
@@ -680,7 +685,8 @@ void EditorUi::cVarsWindow()
 					{
 						NumericCVar<PtrSize>& bcvar = static_cast<NumericCVar<PtrSize>&>(cvar);
 						I32 val = I32(bcvar);
-						if(ImGui::InputInt("", &val, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+						ImGui::InputInt("", &val, 0, 0);
+						if(ImGui::IsItemDeactivatedAfterEdit())
 						{
 							bcvar = val;
 						}

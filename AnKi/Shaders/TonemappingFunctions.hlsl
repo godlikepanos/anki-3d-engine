@@ -7,22 +7,21 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-// A tick to compute log of base 10
-template<typename T>
-T log10(T x)
-{
-	return log(x) / log(T(10));
-}
-
+// Computes the exposure using the "Saturation Based Sensitivity" method. See https://bruop.github.io/exposure/. "threshold" is expressed in EV and it
+// stops down the exposure, so a positive value darkens the image.
 template<typename T>
 T computeExposure(T avgLum, T threshold)
 {
-	const T keyValue = T(1.03) - (T(2) / (T(2) + log10(avgLum + T(1))));
-	const T linearExposure = (keyValue / avgLum);
-	T exposure = log2(linearExposure);
+	constexpr F32 kIso = 100.0; // Sensitivity. EV100 means it's pinned at 100
+	constexpr F32 kCalibration = 12.5; // Reflected-light meter calibration constant. Canon, Nikon and Sekonic use 12.5
 
-	exposure -= threshold;
-	return exp2(exposure);
+	const T ev100 = log2(avgLum * T(kIso / kCalibration)) + threshold;
+
+	// The luminance that saturates the sensor is 78 / (q * S) * 2^EV100 = 1.2 * 2^EV100, with a lens/vignetting factor q of 0.65. The exposure is its
+	// reciprocal, computed as a negative power of two so bright scenes don't overflow the intermediate in F16.
+	constexpr F32 kSaturationLuminanceFactor = 78.0 / (0.65 * kIso);
+
+	return exp2(-ev100) / T(kSaturationLuminanceFactor);
 }
 
 template<typename T>
@@ -133,21 +132,6 @@ vector<T, 3> invertTonemapNeutral(vector<T, 3> color)
 }
 
 template<typename T>
-vector<T, 3> tonemap(vector<T, 3> color, vector<T, 3> exposure)
-{
-	color *= exposure;
-	return tonemapNatural(color);
-}
-
-template<typename T>
-vector<T, 3> invertTonemap(vector<T, 3> color, T exposure)
-{
-	color = invertTonemapNeutral(color);
-	color /= max(getEpsilon<T>(), exposure);
-	return color;
-}
-
-template<typename T>
 vector<T, 3> tonemap(vector<T, 3> color, T avgLum, T threshold)
 {
 	const T exposure = computeExposure(avgLum, threshold);
@@ -167,4 +151,19 @@ vector<T, 3> invertTonemapReinhard(vector<T, 3> color)
 {
 	// rgb / (1 - max(rgb))
 	return color / max(T(1.0 / 32768.0), T(1) - max3(color));
+}
+
+template<typename T>
+vector<T, 3> tonemap(vector<T, 3> color, vector<T, 3> exposure)
+{
+	color *= exposure;
+	return tonemapNatural(color);
+}
+
+template<typename T>
+vector<T, 3> invertTonemap(vector<T, 3> color, T exposure)
+{
+	color = invertTonemapNeutral(color);
+	color /= max(getEpsilon<T>(), exposure);
+	return color;
 }

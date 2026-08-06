@@ -67,6 +67,7 @@ void TemporalUpscaler::populateRenderGraph()
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 		pass.newTextureDependency(getGBuffer().getDepthRt(), readUsage, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(getTonemapping().getExposureAndAvgLuminanceRt(), TextureUsageBit::kUavCompute);
 		pass.newTextureDependency(m_runCtx.m_rt, writeUsage);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
