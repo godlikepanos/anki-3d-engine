@@ -8,6 +8,7 @@
 #include <AnKi/Util/ThreadJobManager.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/Xml.h>
+#include <AnKi/Scene/Components/LightComponent.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -20,14 +21,6 @@
 #endif
 
 namespace anki {
-
-static F32 computeLightRadius(const Vec3 color)
-{
-	// Based on the attenuation equation: att = 1 - fragLightDist^2 / lightRadius^2
-	const F32 minAtt = 0.01f;
-	const F32 maxIntensity = max(max(color.x, color.y), color.z);
-	return sqrt(maxIntensity / minAtt);
-}
 
 #if 0
 static Error getUniformScale(const Mat4& m, F32& out)
@@ -292,8 +285,6 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	m_optimizeMeshes = initInfo.m_optimizeMeshes;
 	m_optimizeAnimations = initInfo.m_optimizeAnimations;
 	m_comment = initInfo.m_comment;
-
-	m_lightIntensityScale = max(initInfo.m_lightIntensityScale, kEpsilonf);
 
 	m_lodCount = clamp(initInfo.m_lodCount, 1u, 3u);
 	m_lodFactor = clamp(initInfo.m_lodFactor, 0.0f, 1.0f);
@@ -1025,10 +1016,26 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 	ANKI_CHECK(m_sceneFile.writeText("lcomp = node:newLightComponent()\n"));
 	ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setLightComponentType(LightComponentType.k%s)\n", lightTypeStr.cstr()));
 
-	Vec3 color(light.color[0], light.color[1], light.color[2]);
-	color *= light.intensity;
-	color *= m_lightIntensityScale;
-	ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x, color.y, color.z));
+	ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setColor(Vec3.new(%f, %f, %f))\n", light.color[0], light.color[1], light.color[2]));
+
+	if(light.type == cgltf_light_type_point)
+	{
+		// GLTF's intensity is in candela so multiply by sr of a sphere to convert to lm. A sphere has 4*π sr
+		const F32 lumen = light.intensity * 4.0f * kPi;
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setLuminousPower(%f)\n", lumen));
+	}
+	else if(light.type == cgltf_light_type_spot)
+	{
+		// Use π srs to convert to lm. π is somewhat arbitary.
+		const F32 lumen = light.intensity * kPi;
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setLuminousPower(%f)\n", lumen));
+	}
+	else
+	{
+		// At the moment ignore what is in the GLTF and use a value that -while not physically correct- won't blow up
+		const F32 fakeIlluminance = 20000.0f;
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setIlluminance(%f)\n", fakeIlluminance));
+	}
 
 	auto shadow = extras.find("shadow");
 	if(shadow != extras.getEnd())
@@ -1043,13 +1050,25 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 		}
 	}
 
+	auto sourceRadiusEl = extras.find("source_radius");
+	if(sourceRadiusEl != extras.getEnd())
+	{
+		F32 sourceRadius = 0.0f;
+		ANKI_CHECK((*sourceRadiusEl).toNumber(sourceRadius));
+
+		if(light.type == cgltf_light_type_point || light.type == cgltf_light_type_spot)
+		{
+			ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setSourceRadius(%f)\n", sourceRadius));
+		}
+	}
+
 	if(light.type == cgltf_light_type_point)
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setRadius(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setInfluenceRadius(%f)\n", LightComponent::computeLightInfluenceRadius(light.intensity)));
 	}
 	else if(light.type == cgltf_light_type_spot)
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setDistance(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setInfluenceDistance(%f)\n", LightComponent::computeLightInfluenceRadius(light.intensity)));
 
 		const F32 outer = light.spot_outer_cone_angle * 2.0f;
 		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setOuterAngle(%f)\n", outer));

@@ -195,7 +195,7 @@ GBufferPixelOut packGBuffer(GbufferInfo<T> g)
 
 	const T packedSubsurfaceMetallic = packUnorm2ToUnorm1(vector<T, 2>(g.m_subsurface, g.m_metallic));
 
-	const vector<T, 3> tonemappedEmission = tonemapReinhard(g.m_emission);
+	const vector<T, 3> tonemappedEmission = tonemapReinhard(g.m_emission * T(kPreExposure));
 
 	output.m_rt0 = vector<T, 4>(g.m_diffuse, packedSubsurfaceMetallic);
 	output.m_rt1 = vector<T, 4>(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);

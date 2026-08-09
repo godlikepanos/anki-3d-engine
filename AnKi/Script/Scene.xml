@@ -146,28 +146,52 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>LightComponentType</arg>
 					</args>
 				</method>
-				<method name="setDiffuseColor">
+				<method name="setColor">
 					<args>
-						<arg>const Vec4&amp;</arg>
+						<arg>Vec3</arg>
 					</args>
 				</method>
-				<method name="getDiffuseColor">
-					<return>const Vec4&amp;</return>
+				<method name="getColor">
+					<return>const Vec3&amp;</return>
 				</method>
-				<method name="setRadius">
+				<method name="setLuminousPower">
 					<args>
 						<arg>F32</arg>
 					</args>
 				</method>
-				<method name="getRadius">
+				<method name="getLuminousPower">
 					<return>F32</return>
 				</method>
-				<method name="setDistance">
+				<method name="setIlluminance">
 					<args>
 						<arg>F32</arg>
 					</args>
 				</method>
-				<method name="getDistance">
+				<method name="getIlluminance">
+					<return>F32</return>
+				</method>
+				<method name="setSourceRadius">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getSourceRadius">
+					<return>F32</return>
+				</method>
+				<method name="setInfluenceRadius">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getInfluenceRadius">
+					<return>F32</return>
+				</method>
+				<method name="setInfluenceDistance">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getInfluenceDistance">
 					<return>F32</return>
 				</method>
 				<method name="setInnerAngle">

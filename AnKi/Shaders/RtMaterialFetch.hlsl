@@ -237,7 +237,7 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 
 			// Simple light shading
 			const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
-			color += diffC * dirLight.m_diffuseColor * lambert * shadow;
+			color += diffC * dirLight.m_illuminance * kPreExposure * lambert * shadow;
 		}
 	}
 
@@ -266,7 +266,7 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 			const Vec3 nFrag2Light = normalize(frag2Light);
 			const T lambert = max(T(0), dot(nFrag2Light, gbuffer.m_worldNormal));
 
-			F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+			F32 attenuation = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 			if(light.m_isSpotLight)
 			{
 				attenuation *= computeSpotFactor(nFrag2Light, light.m_outerCos, light.m_innerCos, light.m_direction);
@@ -279,7 +279,7 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 			}
 
 			const vector<T, 3> diffC = diffuseLobe(gbuffer.m_diffuse);
-			color += diffC * light.m_diffuseColor * lambert * attenuation * gridEdgesAttenuation;
+			color += diffC * light.m_luminousIntensity * kPreExposure * lambert * attenuation * gridEdgesAttenuation;
 			// color += Vec3(0.5, 0, 0);
 		}
 	}

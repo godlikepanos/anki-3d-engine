@@ -58,12 +58,12 @@ void GeneratedSky::populateRenderGraph()
 
 	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 	ANKI_ASSERT(dirLightc);
-	const F32 sunPower = dirLightc->getLightPower();
-	const Bool renderSkyLut = dirLightc->getDirection() != m_sunDir || m_sunPower != sunPower;
+	const F32 sunIlluminance = dirLightc->getIlluminance();
+	const Bool renderSkyLut = dirLightc->getDirection() != m_sunDir || m_sunIlluminance != sunIlluminance;
 	const Bool renderTransAndMultiScatLuts = !m_transmittanceAndMultiScatterLutsGenerated;
 
 	m_sunDir = dirLightc->getDirection();
-	m_sunPower = sunPower;
+	m_sunIlluminance = sunIlluminance;
 
 	// Create render targets
 	const RenderTargetHandle transmittanceLutRt =

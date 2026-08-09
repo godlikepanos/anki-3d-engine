@@ -25,6 +25,22 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	SceneGraph& scene = SceneGraph::getSingleton();
 	Input& in = Input::getSingleton();
 
+	// HACK: headless screenshot for debugging. Set ANKI_VERIFY_SCREENSHOT to grab one frame and exit. Remove me
+	if(getenv("ANKI_VERIFY_SCREENSHOT"))
+	{
+		static U32 frame = 0;
+		++frame;
+		if(frame == 200)
+		{
+			Renderer::getSingleton().getScreenshotPass().setFramesToCapture(1);
+		}
+		else if(frame > 206)
+		{
+			quit = true;
+			return Error::kNone;
+		}
+	}
+
 	if(scene.isPaused())
 	{
 		// Editor running

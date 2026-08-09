@@ -751,11 +751,12 @@ void SceneNodePropertiesUi::lightComponent(LightComponent& comp)
 		ImGui::EndCombo();
 	}
 
-	// Diffuse color
-	Vec4 diffuseCol = comp.getDiffuseColor();
-	if(ImGui::InputFloat4("Diffuse Color", &diffuseCol[0]))
+	const LightComponentType lightType = comp.getLightComponentType();
+
+	Vec3 color = comp.getColor();
+	if(ImGui::ColorEdit3("Color", &color[0]))
 	{
-		comp.setDiffuseColor(diffuseCol.max(0.01f));
+		comp.setColor(color);
 	}
 
 	// Shadow
@@ -765,22 +766,60 @@ void SceneNodePropertiesUi::lightComponent(LightComponent& comp)
 		comp.setShadowEnabled(shadow);
 	}
 
-	if(comp.getLightComponentType() == LightComponentType::kPoint)
+	if(lightType == LightComponentType::kPoint)
 	{
-		// Radius
-		F32 radius = comp.getRadius();
-		if(ImGui::SliderFloat("Radius", &radius, 0.01f, 100.0f))
+		F32 luminousPower = comp.getLuminousPower();
+		if(ImGui::SliderFloat("Luminous power (lm)", &luminousPower, 0.0f, 100000.0f))
 		{
-			comp.setRadius(max(radius, 0.01f));
+			comp.setLuminousPower(luminousPower);
+		}
+
+		if(ImGui::Button(ICON_MDI_RADIUS))
+		{
+			const F32 candela = comp.getLuminousPower() / (4.0f * kPi);
+			comp.setInfluenceRadius(LightComponent::computeLightInfluenceRadius(candela));
+		}
+		ImGui::SetItemTooltip("Recalculate a physical influence radius");
+		ImGui::SameLine();
+
+		F32 radius = comp.getInfluenceRadius();
+		if(ImGui::SliderFloat("Influence radius", &radius, LightComponent::kMinSourceRadius, LightComponent::kMaxInfluenceRadius))
+		{
+			comp.setInfluenceRadius(radius);
+		}
+
+		F32 sradius = comp.getSourceRadius();
+		if(ImGui::SliderFloat("Source radius", &sradius, LightComponent::kMinSourceRadius, radius))
+		{
+			comp.setSourceRadius(sradius);
 		}
 	}
-	else if(comp.getLightComponentType() == LightComponentType::kSpot)
+	else if(lightType == LightComponentType::kSpot)
 	{
-		// Radius
-		F32 distance = comp.getDistance();
-		if(ImGui::SliderFloat("Distance", &distance, 0.01f, 100.0f))
+		F32 luminousPower = comp.getLuminousPower();
+		if(ImGui::SliderFloat("Luminous power (lm)", &luminousPower, 0.0f, 100000.0f))
 		{
-			comp.setDistance(max(distance, 0.01f));
+			comp.setLuminousPower(luminousPower);
+		}
+
+		if(ImGui::Button(ICON_MDI_RADIUS))
+		{
+			const F32 candela = comp.getLuminousPower() / kPi;
+			comp.setInfluenceDistance(LightComponent::computeLightInfluenceRadius(candela));
+		}
+		ImGui::SetItemTooltip("Recalculate a physical influence radius");
+		ImGui::SameLine();
+
+		F32 distance = comp.getInfluenceDistance();
+		if(ImGui::SliderFloat("Influence distance", &distance, LightComponent::kMinSourceRadius, LightComponent::kMaxInfluenceDistance))
+		{
+			comp.setInfluenceDistance(distance);
+		}
+
+		F32 sradius = comp.getSourceRadius();
+		if(ImGui::SliderFloat("Source radius", &sradius, LightComponent::kMinSourceRadius, distance))
+		{
+			comp.setSourceRadius(sradius);
 		}
 
 		// Inner & outter angles
@@ -799,6 +838,12 @@ void SceneNodePropertiesUi::lightComponent(LightComponent& comp)
 	else
 	{
 		ANKI_ASSERT(comp.getLightComponentType() == LightComponentType::kDirectional);
+
+		F32 illuminance = comp.getIlluminance();
+		if(ImGui::SliderFloat("Illuminance (lx)", &illuminance, 0.0f, 300000.0f))
+		{
+			comp.setIlluminance(max(illuminance, 0.0f));
+		}
 
 		// Day of month
 		I32 month, day;

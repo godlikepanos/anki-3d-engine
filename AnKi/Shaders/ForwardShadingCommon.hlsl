@@ -23,11 +23,6 @@ struct PixelOut
 	Vec4 m_color : SV_TARGET0;
 };
 
-void packGBuffer(Vec4 color, out PixelOut output)
-{
-	output.m_color = Vec4(color.rgb, color.a);
-}
-
 Vec4 readAnimatedTextureRgba(Texture2DArray<Vec4> tex, SamplerState sampl, F32 period, Vec2 uv, F32 time)
 {
 	Vec2 texSize;
@@ -54,10 +49,10 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	{
 		const GpuSceneLight light = g_lights[idx];
 
-		const Vec3 diffC = diffCol * light.m_diffuseColor;
+		const Vec3 diffC = diffCol * light.m_luminousIntensity * kPreExposure;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
+		const F32 att = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 
 		F32 shadow = 1.0;
 		if(light.m_shadow)
@@ -73,10 +68,10 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	{
 		const GpuSceneLight light = g_lights[idx];
 
-		const Vec3 diffC = diffCol * light.m_diffuseColor;
+		const Vec3 diffC = diffCol * light.m_luminousIntensity * kPreExposure;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
+		const F32 att = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 
 		const Vec3 l = normalize(frag2Light);
 
@@ -94,7 +89,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	return outColor;
 }
 
-// Just read the light color from the vol texture
+// Just read the light color from the vol texture. See VolumetricLightingAccumulation.ankiprog on what exactly the volume contains and how you use it
 Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 {
 	Vec3 uvw;
@@ -104,11 +99,6 @@ Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 
 	const Vec3 light = g_lightVol.SampleLevel(g_trilinearClampSampler, uvw, 0.0).rgb;
 	return diffuseLobe(diffCol) * light;
-}
-
-void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor, out PixelOut output)
-{
-	packGBuffer(color * scaleColor + biasColor, output);
 }
 
 void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out PixelOut output)
@@ -126,7 +116,7 @@ void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpac
 
 	zFeatherFactor = min(1.0, diff / fogDistanceOfMaxThikness);
 
-	packGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale), output);
+	output.m_color = Vec4(color, zFeatherFactor * fogAlphaScale);
 }
 
 #endif // ANKI_PIXEL_SHADER

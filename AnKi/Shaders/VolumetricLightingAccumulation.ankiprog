@@ -19,28 +19,39 @@
 // ===========================================================================
 // Accumulate                                                                =
 // ===========================================================================
-#if ANKI_TECHNIQUE_Accumulate
 
+// This shader does two things. To light up particles in the scene we need to compute Lo=L_direct+L_indirect. As an approximation we collapse all
+// lights of the froxel into 1. So L_direct=Σi{Le_i*G_i*V_i}*ρ/π where the Σ is collapsing all the lights with Le being the illuminance, G is the
+// geometry term (attenuation) and V is the visilibity term (shadow). ρ is the albedo of the particle. Also L_indirect=E*ρ/π were E is the probe
+// irradiance. So Lo=(Σi{Le_i*G_i*V_i}+E)*ρ/π. This shader computes what's in the parenthesis. Besides the collapsing of lights we are making
+// additional simplifications: We assumed that the material is perfect lambertian and we omited the N.L from G since particles always look at the
+// light.
+// The 2nd thing we compute is a variation of the Σ that includes the phase. This is needed for the vol fog.
+
+#if ANKI_TECHNIQUE_Accumulate
 constexpr F32 kPhaseFunctionAnisotropy = 0.3;
+
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 
 SamplerState g_linearAnyRepeatSampler : register(s0);
 SamplerState g_linearAnyClampSampler : register(s1);
 SamplerComparisonState g_linearAnyClampShadowSampler : register(s2);
 
-RWTexture3D<Vec4> g_volume : register(u0);
 Texture2D<Vec4> g_noiseTex : register(t0);
-Texture3D<Vec4> g_prevVolume : register(t1);
+Texture3D<Vec4> g_prevLightVolume : register(t1);
+Texture3D<Vec4> g_prevInScatteringVolume : register(t2);
 
-StructuredBuffer<GpuSceneLight> g_lights : register(t2);
-Texture2D<Vec4> g_shadowAtlasTex : register(t3);
-StructuredBuffer<GpuSceneFogDensityVolume> g_fogDensityVolumes : register(t4);
-StructuredBuffer<Cluster> g_clusters : register(t5);
-Texture2D g_depthMap : register(t6);
+StructuredBuffer<GpuSceneLight> g_lights : register(t3);
+Texture2D<Vec4> g_shadowAtlasTex : register(t4);
+StructuredBuffer<GpuSceneFogDensityVolume> g_fogDensityVolumes : register(t5);
+StructuredBuffer<Cluster> g_clusters : register(t6);
+Texture2D g_depthMap : register(t7);
 #	if !CLIPMAP_DIFFUSE_INDIRECT
-StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t7);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t8);
 #	endif
 
-ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
+RWTexture3D<Vec4> g_lightVolume : register(u0);
+RWTexture3D<Vec4> g_inScatteringVolume : register(u1);
 
 ANKI_FAST_CONSTANTS(VolumetricLightingConstants, g_consts)
 
@@ -63,19 +74,22 @@ float phaseFunction(Vec3 pont2CameraDir, Vec3 point2LightDir, F32 g)
 	return 1.0 / (4.0 * kPi);
 }
 
-Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpace, F32 noise)
+void accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpace, F32 noise, out Vec3 lightCol, out Vec3 inScattering,
+							out F32 fogDensity)
 {
 	ANKI_MAYBE_UNUSED(negativeZViewSpace);
 
-	Vec3 color = 0.0;
+	lightCol = 0.0;
+	inScattering = 0.0;
 	const Vec3 viewDir = normalize(g_globalConstants.m_cameraPosition - worldPos);
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
 	if(dirLight.m_active)
 	{
-		F32 factor = phaseFunction(viewDir, -dirLight.m_direction, kPhaseFunctionAnisotropy);
+		F32 phase = phaseFunction(viewDir, -dirLight.m_direction, kPhaseFunctionAnisotropy);
 
+		F32 visibility = 1.0;
 #	if ENABLE_SHADOWS
 		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount;
 
@@ -83,11 +97,12 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		{
 			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
 
-			factor *= computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			visibility = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #	endif
 
-		color += dirLight.m_diffuseColor * factor;
+		lightCol += dirLight.m_illuminance * kPreExposure * visibility;
+		inScattering += dirLight.m_illuminance * kPreExposure * (visibility * phase);
 	}
 
 	// Point lights
@@ -97,18 +112,20 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		F32 factor = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
+		const F32 geometry = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 
-		factor *= phaseFunction(viewDir, normalize(frag2Light), kPhaseFunctionAnisotropy);
+		const F32 phase = phaseFunction(viewDir, normalize(frag2Light), kPhaseFunctionAnisotropy);
 
+		F32 visibility = 1.0;
 #	if ENABLE_SHADOWS
 		if(light.m_shadow)
 		{
-			factor *= computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			visibility = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #	endif
 
-		color += light.m_diffuseColor * factor;
+		lightCol += light.m_luminousIntensity * kPreExposure * (geometry * visibility);
+		inScattering += light.m_luminousIntensity * kPreExposure * (geometry * visibility * phase);
 	}
 
 	// Spot lights
@@ -117,22 +134,23 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const GpuSceneLight light = g_lights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		F32 factor = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
-
 		const Vec3 l = normalize(frag2Light);
 
-		factor *= computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
+		F32 geometry = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
+		geometry *= computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
-		factor *= phaseFunction(viewDir, -light.m_direction, kPhaseFunctionAnisotropy);
+		const F32 phase = phaseFunction(viewDir, -light.m_direction, kPhaseFunctionAnisotropy);
 
+		F32 visibility = 1.0;
 #	if ENABLE_SHADOWS
 		if(light.m_shadow)
 		{
-			factor *= computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			visibility = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #	endif
 
-		color += light.m_diffuseColor * factor;
+		lightCol += light.m_luminousIntensity * kPreExposure * (geometry * visibility);
+		inScattering += light.m_luminousIntensity * kPreExposure * (geometry * visibility * phase);
 	}
 
 	// Indirect diffuse GI
@@ -142,19 +160,21 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const Vec3 irradiance = sampleClipmapAvgIrradiance(worldPos, 0.0, g_globalConstants.m_cameraPosition,
 														   g_globalConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags, noise);
 
-		color += irradiance * kPi; // Not sure why the multiplication with Pi but it looks more correct
+		lightCol += irradiance;
+		inScattering += irradiance / kPi;
 	}
 #	else
 	{
-		Vec3 diffIndirect = sampleGiProbes<F32>(cluster, g_giProbes, viewDir, worldPos, g_linearAnyClampSampler);
-		diffIndirect *= kPi; // Irradiance is pre-divided with PI so fix it
+		Vec3 irradiance = sampleGiProbes<F32>(cluster, g_giProbes, viewDir, worldPos, g_linearAnyClampSampler);
+		irradiance *= kPi; // Irradiance is pre-divided with PI so fix it
 
-		color += diffIndirect;
+		lightCol += irradiance;
+		inScattering += irradiance / kPi;
 	}
 #	endif
 
 	// Fog density
-	F32 fogDensity = 0.0;
+	fogDensity = 0.0;
 	{
 		// Calculate the constant density
 		const F32 fogFactor = saturate((worldPos.y - g_consts.m_minHeight) * g_consts.m_oneOverMaxMinusMinHeight);
@@ -183,8 +203,6 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			fogDensity += vol.m_density * factor;
 		}
 	}
-
-	return Vec4(color, fogDensity);
 }
 
 [numthreads(8, 8, 8)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -220,7 +238,9 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	const F32 depth = g_depthMap.SampleLevel(g_linearAnyClampSampler, uvw.xy, 0.0).x;
 
 	Bool validSample;
-	Vec4 lightAndFog;
+	Vec3 light;
+	Vec3 inScattering;
+	F32 fogDensity;
 	if(depthSample < depth)
 	{
 		// Valid sample, do lighting
@@ -240,14 +260,16 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		cluster = mergeClusters(cluster, split);
 
 		// Do lighting
-		lightAndFog = accumulateLightsAndFog(cluster, worldPos, negativeZViewSpace, randomFactor.x);
+		accumulateLightsAndFog(cluster, worldPos, negativeZViewSpace, randomFactor.x, light, inScattering, fogDensity);
 	}
 	else
 	{
 		// Invalid sample, regect it
 
 		validSample = false;
-		lightAndFog = 0.0;
+		light = 0.0;
+		inScattering = 0.0;
+		fogDensity = 0.0;
 	}
 
 	// Read the prev result
@@ -269,13 +291,18 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			uvw.xy = ndcToUv(prevClipPos.xy);
 			uvw.z = computeVolumeWTexCoord(prevClipPos.z, clustererConsts.m_lightVolumeWMagic.x, clustererConsts.m_lightVolumeWMagic.y);
 
-			const Vec4 history = g_prevVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
-			lightAndFog = lerp(history, lightAndFog, (validSample) ? 1.0 / 16.0 : 0.0);
+			const Vec4 history = g_prevLightVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
+			const Vec4 history2 = g_prevInScatteringVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
+			const F32 factor = (validSample) ? 1.0 / 16.0 : 0.0;
+			light = lerp(history.xyz, light, factor);
+			inScattering = lerp(history2.xyz, inScattering, factor);
+			fogDensity = lerp(history2.w, fogDensity, factor);
 		}
 	}
 
 	// Write result
-	TEX(g_volume, subClusterId) = lightAndFog;
+	TEX(g_lightVolume, subClusterId) = Vec4(light, 0.0);
+	TEX(g_inScatteringVolume, subClusterId) = Vec4(inScattering, fogDensity);
 }
 
 #endif

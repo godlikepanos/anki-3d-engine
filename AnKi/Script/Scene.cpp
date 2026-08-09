@@ -723,8 +723,8 @@ static inline int wrapLightComponentsetLightComponentType(lua_State* l)
 	return 0;
 }
 
-// Wrap method LightComponent::setDiffuseColor
-static inline int wrapLightComponentsetDiffuseColor(lua_State* l)
+// Wrap method LightComponent::setColor
+static inline int wrapLightComponentsetColor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -744,23 +744,23 @@ static inline int wrapLightComponentsetDiffuseColor(lua_State* l)
 	LightComponent* self = ud->getData<LightComponent>();
 
 	// Pop arguments
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
 
-	Vec4* iarg0 = ud->getData<Vec4>();
-	const Vec4& arg0(*iarg0);
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
 
 	// Call the method
-	self->setDiffuseColor(arg0);
+	self->setColor(arg0);
 
 	return 0;
 }
 
-// Wrap method LightComponent::getDiffuseColor
-static inline int wrapLightComponentgetDiffuseColor(lua_State* l)
+// Wrap method LightComponent::getColor
+static inline int wrapLightComponentgetColor(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -780,20 +780,20 @@ static inline int wrapLightComponentgetDiffuseColor(lua_State* l)
 	LightComponent* self = ud->getData<LightComponent>();
 
 	// Call the method
-	const Vec4& ret = self->getDiffuseColor();
+	const Vec3& ret = self->getColor();
 
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "Vec4");
-	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec4;
-	ud->initPointed(&g_luaUserDataTypeInfoVec4, &ret);
+	luaL_setmetatable(l, "Vec3");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initPointed(&g_luaUserDataTypeInfoVec3, &ret);
 
 	return 1;
 }
 
-// Wrap method LightComponent::setRadius
-static inline int wrapLightComponentsetRadius(lua_State* l)
+// Wrap method LightComponent::setLuminousPower
+static inline int wrapLightComponentsetLuminousPower(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -820,13 +820,13 @@ static inline int wrapLightComponentsetRadius(lua_State* l)
 	}
 
 	// Call the method
-	self->setRadius(arg0);
+	self->setLuminousPower(arg0);
 
 	return 0;
 }
 
-// Wrap method LightComponent::getRadius
-static inline int wrapLightComponentgetRadius(lua_State* l)
+// Wrap method LightComponent::getLuminousPower
+static inline int wrapLightComponentgetLuminousPower(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -846,7 +846,7 @@ static inline int wrapLightComponentgetRadius(lua_State* l)
 	LightComponent* self = ud->getData<LightComponent>();
 
 	// Call the method
-	F32 ret = self->getRadius();
+	F32 ret = self->getLuminousPower();
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
@@ -854,8 +854,8 @@ static inline int wrapLightComponentgetRadius(lua_State* l)
 	return 1;
 }
 
-// Wrap method LightComponent::setDistance
-static inline int wrapLightComponentsetDistance(lua_State* l)
+// Wrap method LightComponent::setIlluminance
+static inline int wrapLightComponentsetIlluminance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -882,13 +882,13 @@ static inline int wrapLightComponentsetDistance(lua_State* l)
 	}
 
 	// Call the method
-	self->setDistance(arg0);
+	self->setIlluminance(arg0);
 
 	return 0;
 }
 
-// Wrap method LightComponent::getDistance
-static inline int wrapLightComponentgetDistance(lua_State* l)
+// Wrap method LightComponent::getIlluminance
+static inline int wrapLightComponentgetIlluminance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -908,7 +908,193 @@ static inline int wrapLightComponentgetDistance(lua_State* l)
 	LightComponent* self = ud->getData<LightComponent>();
 
 	// Call the method
-	F32 ret = self->getDistance();
+	F32 ret = self->getIlluminance();
+
+	// Push return value
+	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method LightComponent::setSourceRadius
+static inline int wrapLightComponentsetSourceRadius(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->setSourceRadius(arg0);
+
+	return 0;
+}
+
+// Wrap method LightComponent::getSourceRadius
+static inline int wrapLightComponentgetSourceRadius(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Call the method
+	F32 ret = self->getSourceRadius();
+
+	// Push return value
+	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method LightComponent::setInfluenceRadius
+static inline int wrapLightComponentsetInfluenceRadius(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->setInfluenceRadius(arg0);
+
+	return 0;
+}
+
+// Wrap method LightComponent::getInfluenceRadius
+static inline int wrapLightComponentgetInfluenceRadius(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Call the method
+	F32 ret = self->getInfluenceRadius();
+
+	// Push return value
+	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method LightComponent::setInfluenceDistance
+static inline int wrapLightComponentsetInfluenceDistance(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->setInfluenceDistance(arg0);
+
+	return 0;
+}
+
+// Wrap method LightComponent::getInfluenceDistance
+static inline int wrapLightComponentgetInfluenceDistance(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Call the method
+	F32 ret = self->getInfluenceDistance();
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
@@ -1107,12 +1293,18 @@ static inline void wrapLightComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, &g_luaUserDataTypeInfoLightComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setLightComponentType", wrapLightComponentsetLightComponentType);
-	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseColor", wrapLightComponentsetDiffuseColor);
-	LuaBinder::pushLuaCFuncMethod(l, "getDiffuseColor", wrapLightComponentgetDiffuseColor);
-	LuaBinder::pushLuaCFuncMethod(l, "setRadius", wrapLightComponentsetRadius);
-	LuaBinder::pushLuaCFuncMethod(l, "getRadius", wrapLightComponentgetRadius);
-	LuaBinder::pushLuaCFuncMethod(l, "setDistance", wrapLightComponentsetDistance);
-	LuaBinder::pushLuaCFuncMethod(l, "getDistance", wrapLightComponentgetDistance);
+	LuaBinder::pushLuaCFuncMethod(l, "setColor", wrapLightComponentsetColor);
+	LuaBinder::pushLuaCFuncMethod(l, "getColor", wrapLightComponentgetColor);
+	LuaBinder::pushLuaCFuncMethod(l, "setLuminousPower", wrapLightComponentsetLuminousPower);
+	LuaBinder::pushLuaCFuncMethod(l, "getLuminousPower", wrapLightComponentgetLuminousPower);
+	LuaBinder::pushLuaCFuncMethod(l, "setIlluminance", wrapLightComponentsetIlluminance);
+	LuaBinder::pushLuaCFuncMethod(l, "getIlluminance", wrapLightComponentgetIlluminance);
+	LuaBinder::pushLuaCFuncMethod(l, "setSourceRadius", wrapLightComponentsetSourceRadius);
+	LuaBinder::pushLuaCFuncMethod(l, "getSourceRadius", wrapLightComponentgetSourceRadius);
+	LuaBinder::pushLuaCFuncMethod(l, "setInfluenceRadius", wrapLightComponentsetInfluenceRadius);
+	LuaBinder::pushLuaCFuncMethod(l, "getInfluenceRadius", wrapLightComponentgetInfluenceRadius);
+	LuaBinder::pushLuaCFuncMethod(l, "setInfluenceDistance", wrapLightComponentsetInfluenceDistance);
+	LuaBinder::pushLuaCFuncMethod(l, "getInfluenceDistance", wrapLightComponentgetInfluenceDistance);
 	LuaBinder::pushLuaCFuncMethod(l, "setInnerAngle", wrapLightComponentsetInnerAngle);
 	LuaBinder::pushLuaCFuncMethod(l, "getInnerAngle", wrapLightComponentgetInnerAngle);
 	LuaBinder::pushLuaCFuncMethod(l, "setOuterAngle", wrapLightComponentsetOuterAngle);

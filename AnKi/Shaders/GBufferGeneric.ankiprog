@@ -675,7 +675,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 	HVec3 emission = 1.0;
 #		endif
 	emission *= HVec3(localConstants.m_emissionScale);
-	payload.m_emission = emission;
+	payload.m_emission = emission * kPreExposure;
 
 	// Normal
 	const Mat3x4 worldTransform = g_transforms[g_record.m_worldTransformsIndex];

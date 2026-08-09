@@ -27,7 +27,6 @@ public:
 	Bool m_optimizeAnimations = true;
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
-	F32 m_lightIntensityScale = 1.0f;
 	U32 m_threadCount = kMaxU32;
 	CString m_comment;
 	Bool m_importTextures = false;

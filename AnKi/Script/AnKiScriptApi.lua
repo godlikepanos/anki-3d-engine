@@ -105,23 +105,41 @@ LightComponent = {}
 ---@param lightComponentType integer
 function LightComponent:setLightComponentType(lightComponentType) end
 
----@param vec4 Vec4
-function LightComponent:setDiffuseColor(vec4) end
+---@param vec3 Vec3
+function LightComponent:setColor(vec3) end
 
----@return Vec4
-function LightComponent:getDiffuseColor() end
-
----@param num number
-function LightComponent:setRadius(num) end
-
----@return number
-function LightComponent:getRadius() end
+---@return Vec3
+function LightComponent:getColor() end
 
 ---@param num number
-function LightComponent:setDistance(num) end
+function LightComponent:setLuminousPower(num) end
 
 ---@return number
-function LightComponent:getDistance() end
+function LightComponent:getLuminousPower() end
+
+---@param num number
+function LightComponent:setIlluminance(num) end
+
+---@return number
+function LightComponent:getIlluminance() end
+
+---@param num number
+function LightComponent:setSourceRadius(num) end
+
+---@return number
+function LightComponent:getSourceRadius() end
+
+---@param num number
+function LightComponent:setInfluenceRadius(num) end
+
+---@return number
+function LightComponent:getInfluenceRadius() end
+
+---@param num number
+function LightComponent:setInfluenceDistance(num) end
+
+---@return number
+function LightComponent:getInfluenceDistance() end
 
 ---@param num number
 function LightComponent:setInnerAngle(num) end

@@ -27,8 +27,10 @@ struct VertOut
 
 #pragma anki struct AnKiLocalConstants
 #pragma anki member F32 m_textureAnimationPeriod 0.0
-#pragma anki member Vec4 m_colorScale 1.0 1.0 1.0 1.0
-#pragma anki member Vec4 m_colorBias 0.0 0.0 0.0 0.0
+#pragma anki member Vec3 m_albedoScale 1.0 1.0 1.0
+#pragma anki member Vec3 m_albedoBias 0.0 0.0 0.0
+#pragma anki member Vec3 m_emissionScale 0.0 0.0 0.0
+#pragma anki member Vec3 m_emissionBias 0.0 0.0 0.0
 #pragma anki member tex U32 m_diffuseTex 0
 #pragma anki struct_end
 
@@ -74,7 +76,6 @@ VertOut main(VertIn input)
 #if ANKI_PIXEL_SHADER
 PixelOut main(VertOut input)
 {
-	PixelOut output = (PixelOut)0;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
 #	if ANIMATED_TEXTURE == 1
@@ -85,14 +86,18 @@ PixelOut main(VertOut input)
 	Vec4 texCol = getBindlessTexture2DVec4(localConstants.m_diffuseTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, input.m_uv);
 #	endif
 
+	const Vec3 albedo = texCol.xyz * localConstants.m_albedoScale + localConstants.m_albedoBias;
+
+	Vec3 light = 0.0;
 #	if LIGHT
-	texCol.rgb = computeLightColorLow(texCol.rgb, input.m_worldPos, input.m_svPosition);
+	light += computeLightColorLow(albedo, input.m_worldPos, input.m_svPosition);
 #	endif
 
-	Vec4 colScale = localConstants.m_colorScale;
-	colScale.a *= input.m_alpha;
-	particleAlpha(texCol, colScale, localConstants.m_colorBias, output);
+	const Vec3 emission = (texCol.xyz * localConstants.m_emissionScale + localConstants.m_emissionBias) * kPreExposure;
 
+	PixelOut output;
+	output.m_color.xyz = light + emission;
+	output.m_color.w = texCol.w * input.m_alpha;
 	return output;
 }
 #endif // ANKI_PIXEL_SHADER

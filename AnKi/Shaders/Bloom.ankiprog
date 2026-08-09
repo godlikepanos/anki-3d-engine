@@ -96,7 +96,7 @@ Vec3 main(VertOut input) : SV_TARGET0
 	const Vec2 uv = input.m_uv;
 #	endif
 
-	const F32 weight = 1.0 / 5.0;
+	const F32 weight = 1.0 / 5.0 / kPreExposure;
 	Vec3 color = g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb * weight;
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(+1, +1)).rgb * weight;
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(-1, -1)).rgb * weight;

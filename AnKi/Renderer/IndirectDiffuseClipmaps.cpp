@@ -280,6 +280,7 @@ Error IndirectDiffuseClipmaps::init()
 	ANKI_CHECK(m_populateCachesProg.load(kProgFname, mutation, "PopulateCaches"));
 	ANKI_CHECK(m_probeIrradianceProg.load(kProgFname, mutation, "ProbeIrradiance"));
 	ANKI_CHECK(m_temporalDenoiseProg.load(kProgFname, mutation, "TemporalDenoise"));
+	ANKI_CHECK(m_antiFireflyProg.load(kProgFname, mutation, "AntiFirefly"));
 	ANKI_CHECK(m_bilateralDenoiseProg.load(kProgFname, mutation, "BilateralDenoise"));
 	ANKI_CHECK(m_probeInlineRtProg.load(kProgFname, mutation, "ProbeInlineRt"));
 	ANKI_CHECK(m_applyGiUsingInlineRtProg.load(kProgFname, mutation, "ApplyInlineRt"));
@@ -783,14 +784,41 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 		});
 	}
 
+	// Anti-firefly
+	if(firstBounceUsesRt)
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Anti-firefly");
+
+		pass.newTextureDependency(tmpRt2, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(tmpRt1, TextureUsageBit::kUavCompute);
+
+		pass.setWork([this, tmpRt1, tmpRt2, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(IdcAntiFirefly);
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_antiFireflyProg.get());
+
+			rgraphCtx.bindSrv(0, 0, tmpRt2);
+			rgraphCtx.bindUav(0, 0, tmpRt1);
+
+			UVec2 rez = getRenderer().getInternalResolution();
+			if(bQuarterRez)
+			{
+				rez /= 2;
+			}
+
+			dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
+		});
+	}
+
 	// Bilateral denoise
 	if(firstBounceUsesRt)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Bilateral denoise");
 
-		pass.newTextureDependency(tmpRt2, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(tmpRt1, TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(getHistoryLength().getRt(), TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency((bQuarterRez) ? tmpRt1 : finalRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency((bQuarterRez) ? tmpRt2 : finalRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this, tmpRt1, tmpRt2, bQuarterRez, finalRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IdcDenoise);
@@ -798,9 +826,9 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 
 			cmdb.bindShaderProgram(m_bilateralDenoiseProg.get());
 
-			rgraphCtx.bindSrv(0, 0, tmpRt2);
+			rgraphCtx.bindSrv(0, 0, tmpRt1);
 			rgraphCtx.bindSrv(1, 0, getHistoryLength().getRt());
-			rgraphCtx.bindUav(0, 0, (bQuarterRez) ? tmpRt1 : finalRt);
+			rgraphCtx.bindUav(0, 0, (bQuarterRez) ? tmpRt2 : finalRt);
 
 			UVec2 rez = getRenderer().getInternalResolution();
 			if(bQuarterRez)
@@ -817,20 +845,22 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps: Upscale");
 
-		rpass.newTextureDependency(tmpRt1, TextureUsageBit::kSrvCompute);
+		const RenderTargetHandle srcRt = (firstBounceUsesRt) ? tmpRt2 : tmpRt1;
+
+		rpass.newTextureDependency(srcRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(finalRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, tmpRt1, finalRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, srcRt, finalRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IdcUpscale);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_upscaleProg.get());
 
-			rgraphCtx.bindSrv(0, 0, tmpRt1);
+			rgraphCtx.bindSrv(0, 0, srcRt);
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(2, 0, getGBuffer().getColorRt(2));
 

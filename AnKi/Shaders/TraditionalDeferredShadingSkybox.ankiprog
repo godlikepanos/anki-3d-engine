@@ -42,7 +42,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 #	if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	const Vec3 outColor = g_consts.m_solidColor;
+	const Vec3 outColor = g_consts.m_solidColor * kPreExposure;
 #	elif METHOD == 1
 	const F32 depthFar = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
@@ -52,7 +52,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
 
 	const Vec2 uv2 = equirectangularMapping(eyeToFrag);
-	const Vec3 outColor = g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_consts.m_scale + g_consts.m_bias;
+	const Vec3 outColor = (g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_consts.m_scale + g_consts.m_bias) * kPreExposure;
 #	else
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depth, 1.0));
@@ -60,10 +60,10 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
 
-	const F32 sunPower = computeLuminance(g_globalRendererConsts.m_directionalLight.m_diffuseColor);
+	const F32 sunIlluminance = g_globalRendererConsts.m_directionalLight.m_illuminanceOutsideAtmosphere * kPreExposure;
 
 	const Vec3 outColor =
-		computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_globalRendererConsts.m_directionalLight.m_direction, sunPower, false);
+		computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_globalRendererConsts.m_directionalLight.m_direction, sunIlluminance, false);
 #	endif
 
 	return Vec4(outColor, 0.0);

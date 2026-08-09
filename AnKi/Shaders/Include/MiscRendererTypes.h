@@ -12,8 +12,8 @@ ANKI_BEGIN_NAMESPACE
 // Directional light (sun).
 struct DirectionalLight
 {
-	Vec3 m_diffuseColor;
-	F32 m_power;
+	Vec3 m_illuminance; // In lux arriving
+	F32 m_illuminanceOutsideAtmosphere; // Scalar illuminance before atmospheric extinction. Scales the sky LUT, which is normalized to 1 lux.
 
 	Vec3 m_direction;
 	U32 m_shadowCascadeCount : 31; ///< If shadowCascadeCount is zero then it doesn't cast shadow.
@@ -77,7 +77,8 @@ struct Sky
 {
 	Vec3 m_solidColor;
 	U32 m_type : 2; // One of SkyType
-	U32 m_texture : 30;
+	U32 m_textureGenerated : 1;
+	U32 m_texture : 29;
 };
 
 struct IndirectDiffuseClipmapTextures

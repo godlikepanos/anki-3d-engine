@@ -72,6 +72,10 @@ constexpr F32 kNaN = 0.0 / 0.0;
 
 constexpr F32 kMaxHistoryLength = 16.0;
 
+// All emitters' luminous power/illuminance is multiplied by this constant. It helps to fit physically based light values to 16bit or lower precision
+// textures. In tonemapping the pre-exposure is reversed
+constexpr F32 kPreExposure = 0.01;
+
 struct Barycentrics
 {
 	Vec2 m_value;

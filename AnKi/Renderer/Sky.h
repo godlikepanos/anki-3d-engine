@@ -69,7 +69,7 @@ public:
 	RendererTexture m_envMap;
 
 	Vec3 m_sunDir = Vec3(0.0f);
-	F32 m_sunPower = -100.0f;
+	F32 m_sunIlluminance = -100.0f;
 
 	Bool m_transmittanceAndMultiScatterLutsGenerated = false;
 	Bool m_skyLutImportedOnce = false;

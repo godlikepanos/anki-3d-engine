@@ -125,9 +125,14 @@ struct GpuSceneLightVisibleRenderablesHash
 struct GpuSceneLight
 {
 	Vec3 m_position ANKI_CPP_CODE(= Vec3(kSomeFarDistance)); // Position in world space.
-	F32 m_radius ANKI_CPP_CODE(= 0.0f); // Radius
+	F32 m_influenceRadius ANKI_CPP_CODE(= 0.0f); // Radius
 
-	Vec3 m_diffuseColor;
+	F32 m_sourceRadius ANKI_CPP_CODE(= 0.0f); // Physical size of the emitter
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
+
+	Vec3 m_luminousIntensity ANKI_CPP_CODE(= Vec3(0.0f)); // In candela, spread over RGB. Feeds both the diffuse and the specular lobe
 	U32 m_visibleRenderablesHashIndex; // Points to a GpuSceneLightVisibleRenderablesHash
 
 	U32 m_isPointLight : 1;

@@ -237,7 +237,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 fullCoord, F32 depth)
 	const Vec3 irradiance =
 		sampleClipmapIrradiance(worldPos, gbuffer.m_normal, g_globalRendererConstants.m_cameraPosition,
 								g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, kSampleClipmapFlags);
-	outColor += irradiance * gbuffer.m_diffuse;
+	outColor += irradiance * gbuffer.m_diffuse / kPi;
 #	else
 	outColor += sampleGiProbes<F32>(cluster, g_giProbes, gbuffer.m_normal, worldPos.xyz, g_trilinearClampSampler) * gbuffer.m_diffuse;
 #	endif
@@ -265,7 +265,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 fullCoord, F32 depth)
 
 		const Vec3 l = -dirLight.m_direction;
 		const F32 lambert = max(0.0, dot(l, gbuffer.m_normal));
-		outColor += diffC * dirLight.m_diffuseColor * lambert * shadowFactor;
+		outColor += diffC * dirLight.m_illuminance * kPreExposure * lambert * shadowFactor;
 	}
 
 	// Point lights
@@ -275,10 +275,10 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 fullCoord, F32 depth)
 		const GpuSceneLight light = SBUFF(g_lights, idx);
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+		const F32 attenuation = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
 
-		outColor += diffC * light.m_diffuseColor * (attenuation * lambert);
+		outColor += diffC * light.m_luminousIntensity * kPreExposure * (attenuation * lambert);
 	}
 
 	// Spot lights
@@ -287,11 +287,11 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 fullCoord, F32 depth)
 		const GpuSceneLight light = SBUFF(g_lights, idx);
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		F32 attenuation = computeAttenuationFactor(light.m_radius, frag2Light);
+		F32 attenuation = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 		attenuation *= computeSpotFactor(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction);
 		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
 
-		outColor += diffC * light.m_diffuseColor * (attenuation * lambert);
+		outColor += diffC * light.m_luminousIntensity * kPreExposure * (attenuation * lambert);
 	}
 
 	return outColor;
@@ -854,7 +854,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 			kSampleClipmapFlagFullQuality & ~(kSampleClipmapFlagChebyshevOcclusion | kSampleClipmapFlagAccurateClipmapSelection);
 		const HVec3 irradiance = sampleClipmapIrradiance(hitPos, gbuffer.m_worldNormal, g_globalRendererConstants.m_cameraPosition,
 														 g_globalRendererConstants.m_indirectDiffuseClipmaps, g_linearAnyRepeatSampler, flags);
-		radiance += gbuffer.m_diffuse * irradiance;
+		radiance += gbuffer.m_diffuse * irradiance / kPi;
 #	else
 		if(g_consts.m_giProbeCount > 0)
 		{

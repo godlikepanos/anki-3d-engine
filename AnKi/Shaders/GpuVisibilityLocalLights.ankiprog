@@ -60,8 +60,8 @@ void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 cellIdx, 
 		Vec3 worldLightAabbMax;
 		if(light.m_isPointLight)
 		{
-			worldLightAabbMin = light.m_position - light.m_radius;
-			worldLightAabbMax = light.m_position + light.m_radius;
+			worldLightAabbMin = light.m_position - light.m_influenceRadius;
+			worldLightAabbMax = light.m_position + light.m_influenceRadius;
 		}
 		else
 		{
@@ -97,7 +97,7 @@ void lightVsCellVisibility(StructuredBuffer<GpuSceneLight> lights, U32 cellIdx, 
 				spotLightPlanes[4] = computePlane(p3, p0, p1);
 			}
 
-			if(light.m_isPointLight && !aabbSphereOverlap(cellMin, cellMax, light.m_position, light.m_radius))
+			if(light.m_isPointLight && !aabbSphereOverlap(cellMin, cellMax, light.m_position, light.m_influenceRadius))
 			{
 				continue;
 			}

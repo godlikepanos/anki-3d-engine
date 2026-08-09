@@ -70,7 +70,7 @@ Vec3 sunWithBloom(Vec3 rayDir, Vec3 dirToSun)
 // Compute the sky color.
 // rayDir: It's the vector: normalize(frag-cameraOrigin)
 // dirToSun: It's opposite direction the light travels.
-Vec3 computeSkyColor(Texture2D<Vec4> skyLut, SamplerState linearAnyClampSampler, Vec3 rayDir, Vec3 dirToSun, F32 sunPower, Bool drawSun)
+Vec3 computeSkyColor(Texture2D<Vec4> skyLut, SamplerState linearAnyClampSampler, Vec3 rayDir, Vec3 dirToSun, F32 sunIlluminance, Bool drawSun)
 {
 	Vec3 col = getValFromSkyLut(skyLut, linearAnyClampSampler, rayDir, dirToSun);
 
@@ -79,7 +79,7 @@ Vec3 computeSkyColor(Texture2D<Vec4> skyLut, SamplerState linearAnyClampSampler,
 		col += sunWithBloom(rayDir, dirToSun);
 	}
 
-	col *= sunPower;
+	col *= sunIlluminance;
 
 	return col;
 }
@@ -90,13 +90,16 @@ vector<T, 3> sampleSkyCheap(Sky sky, vector<Y, 3> direction, SamplerState trilin
 	vector<T, 3> color;
 	if(sky.m_type == (U32)SkyType::kSolidColor)
 	{
-		color = sky.m_solidColor;
+		color = sky.m_solidColor * kPreExposure;
 	}
 	else
 	{
+		// The generated sky has pre-exposure already applied but an env-map from a texture hasn't
+		const T preExposure = (sky.m_textureGenerated) ? 1.0 : kPreExposure;
+
 		const Vec2 uv =
 			(sky.m_type == (U32)SkyType::kTextureWithEquirectangularMapping) ? equirectangularMapping(direction) : octahedronEncode(direction);
-		color = getBindlessTexture2DVec4(sky.m_texture).SampleLevel(trilinearClampSampler, uv, 0.0).xyz;
+		color = getBindlessTexture2DVec4(sky.m_texture).SampleLevel(trilinearClampSampler, uv, 0.0).xyz * preExposure;
 	}
 
 	return color;

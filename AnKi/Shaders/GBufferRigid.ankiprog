@@ -490,7 +490,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 	{
 		emission *= SAMPLE_TEX(localConstants.m_emissiveTex).rgb;
 	}
-	payload.m_emission = emission;
+	payload.m_emission = emission * kPreExposure;
 
 	// Ray T
 	const Bool backfacing = !ALPHA_TEST && HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;

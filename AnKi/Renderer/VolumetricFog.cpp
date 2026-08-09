@@ -46,7 +46,7 @@ void VolumetricFog::populateRenderGraph()
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol fog");
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
-	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSrvCompute);
+	pass.newTextureDependency(getVolumetricLightingAccumulation().getInScatteringRt(), TextureUsageBit::kSrvCompute);
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(VolumetricFog);
@@ -55,7 +55,7 @@ void VolumetricFog::populateRenderGraph()
 		cmdb.bindShaderProgram(m_grProg.get());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindSrv(0, 0, getRenderer().getVolumetricLightingAccumulation().getRt());
+		rgraphCtx.bindSrv(0, 0, getVolumetricLightingAccumulation().getInScatteringRt());
 
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 

@@ -436,8 +436,11 @@ void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 		DirectionalLight& out = consts.m_directionalLight;
 		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_cvarRenderShadowCascadeCount : 0;
 
-		out.m_diffuseColor = dirLight->getDiffuseColor().xyz;
-		out.m_power = dirLight->getLightPower();
+		// Normalize the colour to a luminance of exactly 1 so the hue doesn't affect the brightness. Weights are the Y row of the Rec.709 RGB to XYZ
+		// matrix. Illuminance needs no conversion, unlike the punctual lights, since the sun is far enough away for it to be constant everywhere.
+		const Vec3 chromaticity = dirLight->getColor() / max(dirLight->getColor().dot(Vec3(0.2126f, 0.7152f, 0.0722f)), kEpsilonf);
+		out.m_illuminance = chromaticity * dirLight->getIlluminance();
+		out.m_illuminanceOutsideAtmosphere = dirLight->getIlluminance();
 		out.m_shadowCascadeCount = shadowCascadeCount;
 		out.m_active = 1;
 		out.m_direction = dirLight->getDirection();
@@ -462,17 +465,20 @@ void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 	if(getGeneratedSky().isEnabled())
 	{
 		consts.m_sky.m_type = U32(SkyType::kTextureWithEctahedronMapping);
+		consts.m_sky.m_textureGenerated = 1;
 		consts.m_sky.m_texture =
-			m_generatedSky->getEnvironmentMapTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
+			m_generatedSky->getEnvironmentMapTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 29u) - 1u);
 	}
 	else if(sky && sky->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 	{
 		consts.m_sky.m_type = U32(SkyType::kTextureWithEquirectangularMapping);
-		consts.m_sky.m_texture = sky->getSkyTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 30u) - 1u);
+		consts.m_sky.m_textureGenerated = 0;
+		consts.m_sky.m_texture = sky->getSkyTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) & ((1u << 29u) - 1u);
 	}
 	else
 	{
 		consts.m_sky.m_solidColor = (sky) ? sky->getSkySolidColor() : Vec3(0.0);
+		consts.m_sky.m_textureGenerated = 0;
 		consts.m_sky.m_type = U32(SkyType::kSolidColor);
 	}
 

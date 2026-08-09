@@ -137,7 +137,7 @@ void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent&
 {
 	if(lightc.getLightComponentType() == LightComponentType::kPoint)
 	{
-		const F32 distFromTheCamera = (cameraOrigin - lightc.getWorldPosition()).length() - lightc.getRadius();
+		const F32 distFromTheCamera = (cameraOrigin - lightc.getWorldPosition()).length() - lightc.getInfluenceRadius();
 		if(distFromTheCamera < lodDistances[0])
 		{
 			tileAllocatorHierarchy = kPointLightMaxTileAllocHierarchy;
@@ -332,7 +332,7 @@ void ShadowMapping::processLights()
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
 			visIn.m_pointOfTest = lightc->getWorldPosition();
-			visIn.m_testRadius = lightc->getRadius();
+			visIn.m_testRadius = lightc->getInfluenceRadius();
 			visIn.m_hashVisibles = true;
 
 			GpuVisibilityOutput visOut;
@@ -353,7 +353,7 @@ void ShadowMapping::processLights()
 			{
 				Frustum frustum;
 				frustum.init(FrustumType::kPerspective);
-				frustum.setPerspective(kClusterObjectFrustumNearPlane, lightc->getRadius(), kPi / 2.0f, kPi / 2.0f);
+				frustum.setPerspective(kClusterObjectFrustumNearPlane, lightc->getInfluenceRadius(), kPi / 2.0f, kPi / 2.0f);
 				frustum.setWorldTransform(
 					Transform(lightc->getWorldPosition().xyz0, Frustum::getOmnidirectionalFrustumRotations()[face], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();

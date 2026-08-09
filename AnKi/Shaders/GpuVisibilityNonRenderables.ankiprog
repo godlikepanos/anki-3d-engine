@@ -49,7 +49,7 @@ RWStructuredBuffer<U32> g_cpuFeedbackBuffer : register(u2);
 
 Vec4 getSphere(GpuSceneLight l)
 {
-	return Vec4(l.m_position, l.m_radius);
+	return Vec4(l.m_position, l.m_influenceRadius);
 }
 
 Vec4 getSphere(GpuSceneDecal l)

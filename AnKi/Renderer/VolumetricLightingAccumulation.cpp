@@ -42,11 +42,17 @@ Error VolumetricLightingAccumulation::init()
 	// Create RTs
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 		m_volumeSize.x, m_volumeSize.y, Format::kR16G16B16A16_Sfloat,
-		TextureUsageBit::kUavCompute | TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute, "VolLight");
+		TextureUsageBit::kUavCompute | TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute, "VolLight #1");
 	texinit.m_depth = m_volumeSize.z;
 	texinit.m_type = TextureType::k3D;
-	m_rtTextures[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
-	m_rtTextures[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
+	m_lightTextures[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
+	texinit.setName("VolLight #2");
+	m_lightTextures[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
+
+	texinit.setName("InScattering #1");
+	m_inScatteringTextures[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
+	texinit.setName("InScattering #2");
+	m_inScatteringTextures[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 
 	m_debugRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
 																  Format::kR16G16B16A16_Sfloat);
@@ -62,15 +68,20 @@ void VolumetricLightingAccumulation::populateRenderGraph()
 	ANKI_TRACE_SCOPED_EVENT(VolumetricLightingAccumulation);
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	const U readRtIdx = getRenderer().getFrameCount() & 1;
+	const U32 readRtIdx = getRenderer().getFrameCount() & 1;
 
-	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx].get(), true, TextureUsageBit::kSrvPixel);
-	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx].get(), true, TextureUsageBit::kNone);
+	m_runCtx.m_lightRts[0] = rgraph.importRenderTarget(m_lightTextures[readRtIdx].get(), m_firstRtImport, TextureUsageBit::kSrvPixel);
+	m_runCtx.m_lightRts[1] = rgraph.importRenderTarget(m_lightTextures[!readRtIdx].get(), m_firstRtImport, TextureUsageBit::kNone);
+	m_runCtx.m_inScatteringRts[0] = rgraph.importRenderTarget(m_inScatteringTextures[readRtIdx].get(), m_firstRtImport, TextureUsageBit::kSrvPixel);
+	m_runCtx.m_inScatteringRts[1] = rgraph.importRenderTarget(m_inScatteringTextures[!readRtIdx].get(), m_firstRtImport, TextureUsageBit::kNone);
+	m_firstRtImport = false;
 
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol light");
 
-	pass.newTextureDependency(m_runCtx.m_rts[0], TextureUsageBit::kSrvCompute);
-	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kUavCompute);
+	pass.newTextureDependency(m_runCtx.m_lightRts[0], TextureUsageBit::kSrvCompute);
+	pass.newTextureDependency(m_runCtx.m_lightRts[1], TextureUsageBit::kUavCompute);
+	pass.newTextureDependency(m_runCtx.m_inScatteringRts[0], TextureUsageBit::kSrvCompute);
+	pass.newTextureDependency(m_runCtx.m_inScatteringRts[1], TextureUsageBit::kUavCompute);
 	pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 
 	pass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
@@ -98,13 +109,12 @@ void VolumetricLightingAccumulation::populateRenderGraph()
 		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-		rgraphCtx.bindUav(0, 0, m_runCtx.m_rts[1]);
-
 		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
 		U32 srv = 0;
 		cmdb.bindSrv(srv++, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
-		rgraphCtx.bindSrv(srv++, 0, m_runCtx.m_rts[0]);
+		rgraphCtx.bindSrv(srv++, 0, m_runCtx.m_lightRts[0]);
+		rgraphCtx.bindSrv(srv++, 0, m_runCtx.m_inScatteringRts[0]);
 
 		cmdb.bindSrv(srv++, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		rgraphCtx.bindSrv(srv++, 0, getShadowMapping().getShadowmapRt());
@@ -150,6 +160,9 @@ void VolumetricLightingAccumulation::populateRenderGraph()
 
 		cmdb.setFastConstants(&consts, sizeof(consts));
 
+		rgraphCtx.bindUav(0, 0, m_runCtx.m_lightRts[1]);
+		rgraphCtx.bindUav(1, 0, m_runCtx.m_inScatteringRts[1]);
+
 		dispatchPPCompute(cmdb, 8, 8, 8, m_volumeSize.x, m_volumeSize.y, m_volumeSize.z);
 	});
 
@@ -159,7 +172,7 @@ void VolumetricLightingAccumulation::populateRenderGraph()
 
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol debug");
 
-		pass.newTextureDependency(getRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getLightRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(m_runCtx.m_debugRt, TextureUsageBit::kUavCompute);
 
@@ -169,7 +182,7 @@ void VolumetricLightingAccumulation::populateRenderGraph()
 
 			cmdb.bindShaderProgram(m_debugGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, getRt());
+			rgraphCtx.bindSrv(0, 0, getLightRt());
 			rgraphCtx.bindSrv(1, 0, getGBuffer().getDepthRt());
 
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_debugRt);

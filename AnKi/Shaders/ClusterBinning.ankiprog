@@ -164,7 +164,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 	if(obj.m_isPointLight)
 	{
-		collides = testRaySphere(rayOrigin, rayDir, obj.m_position, obj.m_radius, t0, t1);
+		collides = testRaySphere(rayOrigin, rayDir, obj.m_position, obj.m_influenceRadius, t0, t1);
 	}
 	else
 	{

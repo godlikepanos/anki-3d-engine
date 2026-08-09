@@ -69,8 +69,6 @@ LightComponent::LightComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 	, m_type(LightComponentType::kPoint)
 {
-	m_point.m_radius = 1.0f;
-
 	setLightComponentType(LightComponentType::kPoint);
 	m_worldTransform = init.m_node->getWorldTransform();
 }
@@ -124,8 +122,19 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
-		gpuLight.m_radius = m_point.m_radius;
-		gpuLight.m_diffuseColor = m_diffColor.xyz;
+		gpuLight.m_influenceRadius = m_pointAndSpot.m_influenceRadius;
+
+		m_pointAndSpot.m_sourceRadius = clamp(m_pointAndSpot.m_sourceRadius, kMinSourceRadius, m_pointAndSpot.m_influenceRadius);
+		gpuLight.m_sourceRadius = m_pointAndSpot.m_sourceRadius;
+
+		// Normalize the colour to a luminance of exactly 1 so the hue doesn't affect the brightness. Weights are the Y row of the Rec.709 RGB to XYZ
+		// matrix. Then divide the luminous power by the 4pi steradians a point light emits into, which turns lumens into the candela the shaders
+		// want.
+		{
+			const Vec3 chromaticity = m_color / max(m_color.dot(Vec3(0.2126f, 0.7152f, 0.0722f)), kEpsilonf);
+			gpuLight.m_luminousIntensity = chromaticity * (m_pointAndSpot.m_luminousPower / (4.0f * kPi));
+		}
+
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_isPointLight = 1;
 		gpuLight.m_isSpotLight = 0;
@@ -167,8 +176,18 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
-		gpuLight.m_radius = m_spot.m_distance;
-		gpuLight.m_diffuseColor = m_diffColor.xyz;
+		gpuLight.m_influenceRadius = m_pointAndSpot.m_influenceRadius;
+
+		m_pointAndSpot.m_sourceRadius = clamp(m_pointAndSpot.m_sourceRadius, kMinSourceRadius, m_pointAndSpot.m_influenceRadius);
+		gpuLight.m_sourceRadius = m_pointAndSpot.m_sourceRadius;
+
+		// Same as the point light above, except the divisor is a constant pi rather than the cone's true solid angle 2pi(1 - cos(outerAngle/2)). That
+		// keeps narrowing the cone from brightening the light. Filament and Frostbite do the same, Unreal uses the exact solid angle instead.
+		{
+			const Vec3 chromaticity = m_color / max(m_color.dot(Vec3(0.2126f, 0.7152f, 0.0722f)), kEpsilonf);
+			gpuLight.m_luminousIntensity = chromaticity * (m_pointAndSpot.m_luminousPower / kPi);
+		}
+
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_isPointLight = 0;
 		gpuLight.m_isSpotLight = 1;
@@ -182,7 +201,7 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 
 		Array<Vec3, 4> points;
-		computeEdgesOfFrustum(m_spot.m_distance, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
+		computeEdgesOfFrustum(m_pointAndSpot.m_influenceRadius, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
 		for(U32 i = 0; i < 4; ++i)
 		{
 			points[i] = m_worldTransform.transform(points[i]);
@@ -193,7 +212,7 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		{
 			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 			const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle, kClusterObjectFrustumNearPlane,
-																		 m_spot.m_distance);
+																		 m_pointAndSpot.m_influenceRadius);
 			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z, 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x, 0.0f, m_shadowAtlasUvViewports[0].w, 0.0f,
 								 m_shadowAtlasUvViewports[0].y, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -438,9 +457,11 @@ void LightComponent::setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports)
 Error LightComponent::serialize(SceneSerializer& serializer)
 {
 	ANKI_SERIALIZE(m_type, 1);
-	ANKI_SERIALIZE(m_diffColor, 1);
-	ANKI_SERIALIZE(m_point.m_radius, 1);
-	ANKI_SERIALIZE(m_spot.m_distance, 1);
+	ANKI_SERIALIZE(m_color, 1);
+	ANKI_SERIALIZE(m_pointAndSpot.m_sourceRadius, 1);
+	ANKI_SERIALIZE(m_pointAndSpot.m_luminousPower, 1);
+	ANKI_SERIALIZE(m_pointAndSpot.m_influenceRadius, 1);
+	ANKI_SERIALIZE(m_dir.m_illuminance, 1);
 	ANKI_SERIALIZE(m_spot.m_outerAngle, 1);
 	ANKI_SERIALIZE(m_spot.m_innerAngle, 1);
 	ANKI_SERIALIZE(m_dir.m_month, 1);

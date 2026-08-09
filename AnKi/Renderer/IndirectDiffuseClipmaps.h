@@ -162,6 +162,7 @@ private:
 	RendererShaderProgram m_applyGiUsingInlineRtProg;
 	RendererShaderProgram m_visProbesProg;
 	RendererShaderProgram m_temporalDenoiseProg;
+	RendererShaderProgram m_antiFireflyProg;
 	RendererShaderProgram m_bilateralDenoiseProg;
 	RendererShaderProgram m_upscaleProg;
 

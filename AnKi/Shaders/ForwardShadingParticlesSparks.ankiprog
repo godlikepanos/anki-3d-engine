@@ -90,7 +90,6 @@ VertOut main(VertIn input)
 
 PixelOut main(VertOut input)
 {
-	PixelOut output;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
 
 	const Vec2 ndc = uvToNdc(input.m_uv);
@@ -102,10 +101,10 @@ PixelOut main(VertOut input)
 	F32 emissionFactor = input.m_lifeFactor;
 	// emissionFactor = sqrt(emissionFactor);
 	emissionFactor *= 1.0 - alpha;
-	const Vec3 emission = lerp(localConstants.m_initialEmission, localConstants.m_finalEmission, emissionFactor);
+	const Vec3 emission = lerp(localConstants.m_initialEmission, localConstants.m_finalEmission, emissionFactor) * kPreExposure;
 
-	particleAlpha(Vec4(emission, alpha), 1.0, 0.0, output);
-
+	PixelOut output;
+	output.m_color = Vec4(emission, alpha);
 	return output;
 }
 #endif // ANKI_PIXEL_SHADER

@@ -30,9 +30,16 @@ public:
 
 	void populateRenderGraph();
 
-	RenderTargetHandle getRt() const
+	// A volume that can be used to light forward shaded stuff, especially particles
+	RenderTargetHandle getLightRt() const
 	{
-		return m_runCtx.m_rts[1];
+		return m_runCtx.m_lightRts[1];
+	}
+
+	// A volume that will be used in volumetric fog
+	RenderTargetHandle getInScatteringRt() const
+	{
+		return m_runCtx.m_inScatteringRts[1];
 	}
 
 	void fillClustererConstants(ClustererConstants& consts);
@@ -55,18 +62,21 @@ private:
 	ShaderProgramPtr m_grProg;
 	ShaderProgramPtr m_debugGrProg;
 
-	Array<RendererTexture, 2> m_rtTextures;
+	Array<RendererTexture, 2> m_lightTextures;
+	Array<RendererTexture, 2> m_inScatteringTextures;
 	ImageResourcePtr m_noiseImage;
 
 	RenderTargetDesc m_debugRtDesc;
 
 	UVec3 m_volumeSize;
 	Bool m_debugResult = false;
+	Bool m_firstRtImport = true;
 
 	class
 	{
 	public:
-		Array<RenderTargetHandle, 2> m_rts;
+		Array<RenderTargetHandle, 2> m_lightRts;
+		Array<RenderTargetHandle, 2> m_inScatteringRts;
 		RenderTargetHandle m_debugRt;
 	} m_runCtx; // Runtime context.
 };

@@ -13,9 +13,9 @@ pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit
 if(bForwardShading)
 {
 	pass.newTextureDependency(getDepthDownscale().getDepthRt(), TextureUsageBit::kSrvPixel);
-	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSrvPixel);
-	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvPixel);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
+	pass.newTextureDependency(getVolumetricLightingAccumulation().getLightRt(), TextureUsageBit::kSrvPixel);
+	pass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvPixel);
+	pass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 }
 
 #	define ANKI_SAMPLER(hlslType, hlslVarName, reg, bindTo, bindObject, condition)
@@ -105,7 +105,7 @@ ANKI_SRV(StructuredBuffer<MeshletGeometryDescriptor>, g_meshletGeometryDescripto
 
 // Only for forward:
 ANKI_SRV(Texture2D<Vec4>, g_gbufferDepthTex, 18, rgraphCtx, getDepthDownscale().getDepthRt(), bForwardShading)
-ANKI_SRV(Texture3D<Vec4>, g_lightVol, 19, rgraphCtx, getRenderer().getVolumetricLightingAccumulation().getRt(), bForwardShading)
+ANKI_SRV(Texture3D<Vec4>, g_lightVol, 19, rgraphCtx, getVolumetricLightingAccumulation().getLightRt(), bForwardShading)
 ANKI_SRV(StructuredBuffer<GpuSceneLight>, g_lights, 20, cmdb, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight),
 		 bForwardShading)
 ANKI_SRV(Texture2D<Vec4>, g_shadowAtlasTex, 21, rgraphCtx, getShadowMapping().getShadowmapRt(), bForwardShading)

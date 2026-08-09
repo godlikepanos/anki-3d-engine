@@ -9,8 +9,6 @@
 
 	<inputs>
 		<input name="m_diffuseTex" value="Assets/Smoke.ankitex"/>
-		<input name="m_colorScale" value="1.0 1.0 1.0 1.0"/>
-		<input name="m_colorBias" value="0 0 0 0"/>
 	</inputs>
 </material>
 

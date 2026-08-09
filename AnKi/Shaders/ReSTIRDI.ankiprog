@@ -97,7 +97,7 @@ Vec3 directLighting(UVec2 coord)
 
 			const F32 vis = visibility(biasedPosW, l, 1000.0);
 
-			Lo += brdf * dirLight.m_diffuseColor * (geom * vis);
+			Lo += brdf * dirLight.m_illuminance * kPreExposure * (geom * vis);
 		}
 	}
 
@@ -105,15 +105,15 @@ Vec3 directLighting(UVec2 coord)
 	const U32 lightCount = getStructuredBufferElementCount(g_lights);
 	for(U32 i = 0; i < lightCount; ++i)
 	{
-		// A couple of hack consts for now
-		constexpr F32 kSourceRadius = 0.1;
+		// A hack const for now
 		constexpr U32 kSampleCount = 1u;
 
 		const GpuSceneLight light = SBUFF(g_lights, i);
+		const F32 sourceRadius = light.m_sourceRadius;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		const F32 distToCenter = length(frag2Light);
-		if(distToCenter <= kSourceRadius)
+		if(distToCenter <= sourceRadius)
 		{
 			// Inside the sphere, the cone is undefined
 			continue;
@@ -121,21 +121,20 @@ Vec3 directLighting(UVec2 coord)
 
 		const Vec3 dirToCenter = frag2Light / distToCenter;
 
-		const F32 sinThetaMax = kSourceRadius / distToCenter;
+		const F32 sinThetaMax = sourceRadius / distToCenter;
 		const F32 cosThetaMax = sqrt(max(0.0, 1.0 - square(sinThetaMax)));
 		const F32 invPdf = k2Pi * (1.0 - cosThetaMax); // Solid angle
 
 		// Bail before tracing anything. Freed light slots are nullified with a position of kSomeFarDistance so their solid angle is zero but they'd
 		// still cost kSampleCount scene-long rays per pixel
-		if(invPdf <= kEpsilonF32 || all(light.m_diffuseColor <= 0.0))
+		if(invPdf <= kEpsilonF32 || all(light.m_luminousIntensity <= 0.0))
 		{
 			continue;
 		}
 
-		// m_diffuseColor is intensity I which is W/sr. Radiance Le is in other units though W/(sr*m^2). In other words Le=I/area. The area in this
-		// case is not the area of the sphere of the light but that one that is projected to the viewer. The viewer sees a disk which has area of
-		// π*r^2. Thus:
-		const Vec3 Le = light.m_diffuseColor / (kPi * square(kSourceRadius));
+		// Luminous intensity I is in cd, aka lm/sr. Luminance Le is in nits, aka lm/(sr*m^2). In other words Le=I/area. The area in this case is not
+		// the area of the sphere of the light but the one projected to the viewer. The viewer sees a disk which has area of π*r^2. Thus:
+		const Vec3 Le = light.m_luminousIntensity * kPreExposure / (kPi * square(sourceRadius));
 
 		const Mat3 coneToWorld = rotationFromDirection(dirToCenter);
 
@@ -166,7 +165,7 @@ Vec3 directLighting(UVec2 coord)
 
 			// Compute a tMax that pushes the ray on the edge of the sphere of light
 			const F32 ct = dot(l, dirToCenter);
-			const F32 tMax = distToCenter * ct - sqrt(max(0.0, square(kSourceRadius) - square(distToCenter) * (1.0 - square(ct))));
+			const F32 tMax = distToCenter * ct - sqrt(max(0.0, square(sourceRadius) - square(distToCenter) * (1.0 - square(ct))));
 			const F32 vis = visibility(biasedPosW, l, max(0.0, tMax - 0.01));
 
 			sum += brdf * Le * (geom * vis * spot);

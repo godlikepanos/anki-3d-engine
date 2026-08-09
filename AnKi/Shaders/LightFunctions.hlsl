@@ -51,7 +51,7 @@ T D_GGX(T roughness, T NoH, vector<T, 3> h, vector<T, 3> worldNormal)
 	const T v = NoH * a;
 	const T k = a / (oneMinusNoHSquared + v * v);
 	const T d = k * k * T(1.0 / kPi);
-	return saturate(d);
+	return d;
 }
 
 // Visibility term: Geometric shadowing divided by BRDF denominator
@@ -70,7 +70,7 @@ T V_SmithGGXCorrelatedFast(T roughness, T NoV, T NoL)
 {
 	const T a = roughness * roughness;
 	const T v = T(0.5) / lerp(T(2) * NoL * NoV, NoL + NoV, a);
-	return saturate(v);
+	return v;
 }
 
 template<typename T>
@@ -240,7 +240,7 @@ T computeShadowFactorSpotLightGeneric(GpuSceneLight light, Vec3 worldPos, Textur
 
 		// PCSS
 		const vector<T, 2> pcssRes =
-			pcss.computePenumbra(shadowTex, smTexelSize * kPcssSearchTexelRadius, texCoords3, cosTheta, sinTheta, light.m_radius, false);
+			pcss.computePenumbra(shadowTex, smTexelSize * kPcssSearchTexelRadius, texCoords3, cosTheta, sinTheta, light.m_influenceRadius, false);
 		T pcfPixels;
 		if(pcssRes.x == -1.0)
 		{
@@ -318,7 +318,7 @@ T computeShadowFactorPointLightGeneric(GpuSceneLight light, Vec3 frag2Light, Tex
 	// 1) Project the dist to light's proj mat
 	//
 	const F32 near = kClusterObjectFrustumNearPlane;
-	const F32 far = light.m_radius;
+	const F32 far = light.m_influenceRadius;
 	const F32 g = near - far;
 
 	const F32 zVSpace = -dist;
@@ -546,14 +546,24 @@ Vec3 computeCubemapVecCheap(Vec3 r, F32 R2, Vec3 f)
 	return r;
 }
 
+// Distance attenuation of a punctual light. Inverse-square falloff windowed so it reaches exactly zero at lightRadius, which is the bound the cluster
+// binner culls against. The window is (1 - d^4/r^4)^2: the 4th power keeps it near 1 for most of the range, so the visible falloff stays 1/d^2 and
+// lightRadius only controls reach, not brightness. sourceRadius is the emitter's physical size; a uniform sphere lights everything outside itself
+// exactly like a point source at its centre, so clamping the distance to it bounds the 1/d^2 singularity instead of hacking around it. Returns
+// illuminance per unit luminous intensity, so it peaks at 1/sourceRadius^2, not at 1.
 template<typename T>
-T computeAttenuationFactor(T lightRadius, Vec3 frag2Light)
+T computeAttenuationFactor(T lightRadius, F32 sourceRadius, Vec3 frag2Light)
 {
-	const F32 fragLightDist = dot(frag2Light, frag2Light);
-	T att = fragLightDist / (lightRadius * lightRadius);
-	att = T(1) - att;
-	att = max(0.0, att);
-	return att * att;
+	// Keep the distance math in F32. The result spans a few orders of magnitude and the squarings overflow F16 well before the division does
+	const F32 distSq = dot(frag2Light, frag2Light);
+	const F32 radiusSq = F32(lightRadius) * F32(lightRadius);
+
+	// d^4/r^4 as (d^2/r^2)^2, which avoids squaring two large numbers separately. saturate() covers the fragment being outside lightRadius
+	const F32 ratio = distSq / radiusSq;
+	F32 window = saturate(1.0f - ratio * ratio);
+	window *= window;
+
+	return T(window / max(distSq, sourceRadius * sourceRadius));
 }
 
 // Given the probe properties trace a ray inside the probe and find the cube tex coordinates to sample
