@@ -215,11 +215,17 @@ def arg(arg_txt, stack_index, index):
         ident(1)
         wglue("lua_rawgeti(l, %d, int(i) + 1); // Push the element at the top of the stack" % stack_index)
 
-        if type_is_bool(type) or type_is_number(type):
+        if type_is_bool(type):
+            wglue("if(LuaBinder::checkBool(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, arg%d[i])) [[unlikely]]" % index)
+            wglue("{")
+            ident(1)
+            wglue("return lua_error(l);")
+            ident(-1)
+            wglue("}")
+        elif type_is_number(type):
             wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, arg%d[i])) [[unlikely]]" % index)
             wglue("{")
             ident(1)
-            wglue("lua_pop(l, 1); // Pop because of the rawgeti")
             wglue("return lua_error(l);")
             ident(-1)
             wglue("}")
@@ -230,7 +236,6 @@ def arg(arg_txt, stack_index, index):
             wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, tmp)) [[unlikely]]")
             wglue("{")
             ident(1)
-            wglue("lua_pop(l, 1); // Pop because of the rawgeti")
             wglue("return lua_error(l);")
             ident(-1)
             wglue("}")
@@ -241,7 +246,6 @@ def arg(arg_txt, stack_index, index):
             wglue("if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, g_luaUserDataTypeInfo%s, ud)) [[unlikely]]" % type)
             wglue("{")
             ident(1)
-            wglue("lua_pop(l, 1); // Pop because of the rawgeti")
             wglue("return lua_error(l);")
             ident(-1)
             wglue("}")
@@ -257,7 +261,15 @@ def arg(arg_txt, stack_index, index):
         wglue("lua_pop(l, 1); // Pop because of the rawgeti")
         ident(-1)
         wglue("}")
-    elif type_is_bool(type) or type_is_number(type):
+    elif type_is_bool(type):
+        wglue("%s arg%d;" % (type, index))
+        wglue("if(LuaBinder::checkBool(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, arg%d)) [[unlikely]]" % (stack_index, index))
+        wglue("{")
+        ident(1)
+        wglue("return lua_error(l);")
+        ident(-1)
+        wglue("}")
+    elif type_is_number(type):
         wglue("%s arg%d;" % (type, index))
         wglue("if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, %d, arg%d)) [[unlikely]]" % (stack_index, index))
         wglue("{")
@@ -366,7 +378,9 @@ def args_signature(args_el, var_name : str, class_name):
 
             if is_weak_array:
                 signature += "LUA_TTABLE"
-            elif type_is_bool(type) or type_is_number(type):
+            elif type_is_bool(type):
+                signature += "LUA_TBOOLEAN"
+            elif type_is_number(type):
                 signature += "LUA_TNUMBER"
             elif type == "char" or type == "CString":
                 signature += "LUA_TSTRING"

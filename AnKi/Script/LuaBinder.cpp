@@ -179,6 +179,22 @@ Error LuaBinder::checkNumberInternal(lua_State* l, const Char* file, U32 line, c
 	return err;
 }
 
+Error LuaBinder::checkBool(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, Bool& b)
+{
+	Error err = Error::kNone;
+	if(lua_isboolean(l, stackIdx)) [[likely]]
+	{
+		b = lua_toboolean(l, stackIdx);
+	}
+	else
+	{
+		err = Error::kUserData;
+		lua_pushfstring(l, "Boolean expected, got %s. Location: %s:%d %s", luaL_typename(l, stackIdx), file, line, func);
+	}
+
+	return err;
+}
+
 Error LuaBinder::checkString(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const char*& out)
 {
 	Error err = Error::kNone;

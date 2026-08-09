@@ -231,6 +231,8 @@ public:
 		return err;
 	}
 
+	static Error checkBool(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, Bool& b);
+
 	// Get a string from the stack.
 	static Error checkString(lua_State* l, const Char* file, U32 line, const Char* func, I32 stackIdx, const char*& out);
 

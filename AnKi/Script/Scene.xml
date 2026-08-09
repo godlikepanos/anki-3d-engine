@@ -152,7 +152,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					</args>
 				</method>
 				<method name="getColor">
-					<return>const Vec3&amp;</return>
+					<return>Vec3</return>
 				</method>
 				<method name="setLuminousPower">
 					<args>
@@ -271,12 +271,12 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="setFirstFlareSize">
 					<args>
-						<arg>const Vec2&amp;</arg>
+						<arg>Vec2</arg>
 					</args>
 				</method>
 				<method name="setColorMultiplier">
 					<args>
-						<arg>const Vec4&amp;</arg>
+						<arg>Vec4</arg>
 					</args>
 				</method>
 			</methods>
@@ -300,7 +300,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<return>BodyComponent&amp;</return>
 				</method>
 				<method name="getBoxExtend">
-					<return>const Vec3&amp;</return>
+					<return>Vec3</return>
 				</method>
 				<method name="setSphereRadius">
 					<args>
@@ -721,7 +721,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 				<method name="setLocalOrigin">
 					<args>
-						<arg>const Vec3&amp;</arg>
+						<arg>Vec3</arg>
 					</args>
 				</method>
 				<method name="getLocalOrigin">
@@ -737,7 +737,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="setLocalScale">
 					<args>
-						<arg>const Vec3&amp;</arg>
+						<arg>Vec3</arg>
 					</args>
 				</method>
 				<method name="getLocalScale">

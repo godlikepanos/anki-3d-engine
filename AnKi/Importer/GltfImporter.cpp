@@ -1040,14 +1040,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 	auto shadow = extras.find("shadow");
 	if(shadow != extras.getEnd())
 	{
-		if(*shadow == "true" || *shadow == "1")
-		{
-			ANKI_CHECK(m_sceneFile.writeText("lcomp:setShadowEnabled(1)\n"));
-		}
-		else
-		{
-			ANKI_CHECK(m_sceneFile.writeText("lcomp:setShadowEnabled(0)\n"));
-		}
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setShadowEnabled(%s)\n", (*shadow == "true" || *shadow == "1") ? "true" : "false"));
 	}
 
 	auto sourceRadiusEl = extras.find("source_radius");

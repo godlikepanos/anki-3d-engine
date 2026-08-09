@@ -751,7 +751,7 @@ static inline int wrapLightComponentsetColor(lua_State* l)
 	}
 
 	Vec3* iarg0 = ud->getData<Vec3>();
-	const Vec3& arg0(*iarg0);
+	Vec3 arg0(*iarg0);
 
 	// Call the method
 	self->setColor(arg0);
@@ -780,14 +780,16 @@ static inline int wrapLightComponentgetColor(lua_State* l)
 	LightComponent* self = ud->getData<LightComponent>();
 
 	// Call the method
-	const Vec3& ret = self->getColor();
+	Vec3 ret = self->getColor();
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
 	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
-	ud->initPointed(&g_luaUserDataTypeInfoVec3, &ret);
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
 }
@@ -1248,7 +1250,7 @@ static inline int wrapLightComponentsetShadowEnabled(lua_State* l)
 
 	// Pop arguments
 	Bool arg0;
-	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	if(LuaBinder::checkBool(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
 	{
 		return lua_error(l);
 	}
@@ -1684,7 +1686,7 @@ static inline int wrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	}
 
 	Vec2* iarg0 = ud->getData<Vec2>();
-	const Vec2& arg0(*iarg0);
+	Vec2 arg0(*iarg0);
 
 	// Call the method
 	self->setFirstFlareSize(arg0);
@@ -1720,7 +1722,7 @@ static inline int wrapLensFlareComponentsetColorMultiplier(lua_State* l)
 	}
 
 	Vec4* iarg0 = ud->getData<Vec4>();
-	const Vec4& arg0(*iarg0);
+	Vec4 arg0(*iarg0);
 
 	// Call the method
 	self->setColorMultiplier(arg0);
@@ -1887,14 +1889,16 @@ static inline int wrapBodyComponentgetBoxExtend(lua_State* l)
 	BodyComponent* self = ud->getData<BodyComponent>();
 
 	// Call the method
-	const Vec3& ret = self->getBoxExtend();
+	Vec3 ret = self->getBoxExtend();
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
 	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
-	ud->initPointed(&g_luaUserDataTypeInfoVec3, &ret);
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
 }
@@ -4838,7 +4842,7 @@ static inline int wrapSceneNodesetLocalOrigin(lua_State* l)
 	}
 
 	Vec3* iarg0 = ud->getData<Vec3>();
-	const Vec3& arg0(*iarg0);
+	Vec3 arg0(*iarg0);
 
 	// Call the method
 	self->setLocalOrigin(arg0);
@@ -4980,7 +4984,7 @@ static inline int wrapSceneNodesetLocalScale(lua_State* l)
 	}
 
 	Vec3* iarg0 = ud->getData<Vec3>();
-	const Vec3& arg0(*iarg0);
+	Vec3 arg0(*iarg0);
 
 	// Call the method
 	self->setLocalScale(arg0);
@@ -6530,7 +6534,6 @@ static inline int wrapEventManagernewScriptEvent(lua_State* l)
 		extern LuaUserDataTypeInfo g_luaUserDataTypeInfoSceneNode;
 		if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, -1, g_luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
 		{
-			lua_pop(l, 1); // Pop because of the rawgeti
 			return lua_error(l);
 		}
 
