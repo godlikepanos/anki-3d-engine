@@ -105,47 +105,34 @@ void accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		inScattering += dirLight.m_illuminance * kPreExposure * (visibility * phase);
 	}
 
-	// Point lights
+	// Lights
 	U32 idx = 0;
-	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
+	[loop] while((idx = iterateLights(cluster)) != kMaxU32)
 	{
 		const GpuSceneLight light = g_lights[idx];
-
-		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 geometry = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
-
-		const F32 phase = phaseFunction(viewDir, normalize(frag2Light), kPhaseFunctionAnisotropy);
-
-		F32 visibility = 1.0;
-#	if ENABLE_SHADOWS
-		if(light.m_shadow)
-		{
-			visibility = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
-		}
-#	endif
-
-		lightCol += light.m_luminousIntensity * kPreExposure * (geometry * visibility);
-		inScattering += light.m_luminousIntensity * kPreExposure * (geometry * visibility * phase);
-	}
-
-	// Spot lights
-	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
-	{
-		const GpuSceneLight light = g_lights[idx];
+		ANKI_ASSERT(light.m_isPointLight != light.m_isSpotLight);
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		const Vec3 l = normalize(frag2Light);
-
 		F32 geometry = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
-		geometry *= computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
+		geometry *= (light.m_isSpotLight) ? computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
 
-		const F32 phase = phaseFunction(viewDir, -light.m_direction, kPhaseFunctionAnisotropy);
+		// phaseFunction() wants the sample to light direction. A spot is treated as a collimated beam so it uses the cone axis like the dir light
+		// does, while a point actually emits towards the sample.
+		const F32 phase = phaseFunction(viewDir, (light.m_isSpotLight) ? -light.m_direction : l, kPhaseFunctionAnisotropy);
 
 		F32 visibility = 1.0;
 #	if ENABLE_SHADOWS
 		if(light.m_shadow)
 		{
-			visibility = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			if(light.m_isSpotLight)
+			{
+				visibility = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			}
+			else
+			{
+				visibility = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			}
 		}
 #	endif
 

@@ -89,13 +89,17 @@ String MaliOfflineCompilerOut::toString() const
 Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, MaliOfflineCompilerOut& out)
 {
 	out = {};
-	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
+
+	// The counter alone only makes the filename unique within this process and the temp dir is shared by every process on the machine. Keep the two
+	// as separate components, adding them together makes different processes collide
+	String fileId;
+	fileId.sprintf("%u_%u", getCurrentProcessId(), g_nextFileId.fetchAdd(1));
 
 	// Create temp file to dump the spirv
 	String tmpDir;
 	ANKI_CHECK(getTempDirectory(tmpDir));
 	String spirvFilename;
-	spirvFilename.sprintf("%s/AnKiMaliocInputSpirv_%u.spv", tmpDir.cstr(), rand);
+	spirvFilename.sprintf("%s/AnKiMaliocInputSpirv_%s.spv", tmpDir.cstr(), fileId.cstr());
 
 	File spirvFile;
 	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
@@ -106,7 +110,7 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 
 	// Tmp filename
 	String analysisFilename;
-	analysisFilename.sprintf("%s/AnKiMaliocOut_%u.txt", tmpDir.cstr(), rand);
+	analysisFilename.sprintf("%s/AnKiMaliocOut_%s.txt", tmpDir.cstr(), fileId.cstr());
 
 	// Set the arguments
 	Array<CString, 6> args;

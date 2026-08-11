@@ -131,9 +131,9 @@ Vec4 main(VertOut input) : SV_TARGET0
 		outColor += (diffC + specC) * dirLight.m_illuminance * kPreExposure * (shadowFactor * lambert);
 	}
 
-	// Point lights
+	// Lights
 	U32 idx;
-	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
+	[loop] while((idx = iterateLights(cluster)) != kMaxU32)
 	{
 		const GpuSceneLight light = g_lights[idx];
 
@@ -145,23 +145,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 			lambert *= shadow;
 		}
 
-		outColor += (diffC + specC) * light.m_luminousIntensity * kPreExposure * (att * max(gbuffer.m_subsurface, lambert));
-	}
-
-	// Spot lights
-	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
-	{
-		const GpuSceneLight light = g_lights[idx];
-
-		LIGHTING_COMMON_BRDF();
-
-		const F32 spot = computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
-
-		[branch] if(light.m_shadow)
-		{
-			const F32 shadow = getNextResolvedShadow(resolvedSm, resolvedShadowsLayer);
-			lambert *= shadow;
-		}
+		const F32 spot = (light.m_isSpotLight) ? computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
 
 		outColor += (diffC + specC) * light.m_luminousIntensity * kPreExposure * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}

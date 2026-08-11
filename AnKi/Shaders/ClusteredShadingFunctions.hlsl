@@ -18,7 +18,7 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask, U32 maxObjectOverride =
 		maxObjects += kMaxVisibleLights;
 		for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
 		{
-			count += I32(countbits(cluster.m_pointLightsMask[i] | cluster.m_spotLightsMask[i]));
+			count += I32(countbits(cluster.m_lightsMask[i]));
 		}
 	}
 
@@ -88,8 +88,7 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 	{
 		[unroll] for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
 		{
-			outCluster.m_pointLightsMask[i] = WaveActiveBitAnd(tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
-			outCluster.m_spotLightsMask[i] = WaveActiveBitAnd(tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
+			outCluster.m_lightsMask[i] = WaveActiveBitAnd(tileCluster.m_lightsMask[i] & zCluster.m_lightsMask[i]);
 		}
 
 		[unroll] for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
@@ -105,8 +104,7 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 	{
 		[unroll] for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
 		{
-			outCluster.m_pointLightsMask[i] = (tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
-			outCluster.m_spotLightsMask[i] = (tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
+			outCluster.m_lightsMask[i] = (tileCluster.m_lightsMask[i] & zCluster.m_lightsMask[i]);
 		}
 
 		[unroll] for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
@@ -137,29 +135,14 @@ Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClustererConstan
 	return mergeClusters<kDynamicallyUniform>(tileCluster, zCluster);
 }
 
-U32 iteratePointLights(inout Cluster cluster)
+U32 iterateLights(inout Cluster cluster)
 {
 	for(U32 block = 0; block < kMaxVisibleLights / 32; ++block)
 	{
-		if(cluster.m_pointLightsMask[block] != 0)
+		if(cluster.m_lightsMask[block] != 0)
 		{
-			const U32 idx = (U32)firstbitlow2(cluster.m_pointLightsMask[block]);
-			cluster.m_pointLightsMask[block] ^= 1u << idx;
-			return idx + block * 32;
-		}
-	}
-
-	return kMaxU32;
-}
-
-U32 iterateSpotLights(inout Cluster cluster)
-{
-	for(U32 block = 0; block < kMaxVisibleLights / 32; ++block)
-	{
-		if(cluster.m_spotLightsMask[block] != 0)
-		{
-			const U32 idx = (U32)firstbitlow2(cluster.m_spotLightsMask[block]);
-			cluster.m_spotLightsMask[block] ^= 1u << idx;
+			const U32 idx = (U32)firstbitlow2(cluster.m_lightsMask[block]);
+			cluster.m_lightsMask[block] ^= 1u << idx;
 			return idx + block * 32;
 		}
 	}

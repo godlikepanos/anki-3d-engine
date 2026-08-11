@@ -42,13 +42,17 @@ static CString getPipelineStageString(ShaderType shaderType)
 Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out)
 {
 	ANKI_ASSERT(spirv.getSize() > 0);
-	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
+
+	// The counter alone only makes the filename unique within this process and the temp dir is shared by every process on the machine. Keep the two
+	// as separate components, adding them together makes different processes collide
+	ShaderCompilerString fileId;
+	fileId.sprintf("%u_%u", getCurrentProcessId(), g_nextFileId.fetchAdd(1));
 
 	// Store SPIRV
 	String tmpDir;
 	ANKI_CHECK(getTempDirectory(tmpDir));
 	ShaderCompilerString spvFilename;
-	spvFilename.sprintf("%s/AnKiRgaInput_%u.spv", tmpDir.cstr(), rand);
+	spvFilename.sprintf("%s/AnKiRgaInput_%s.spv", tmpDir.cstr(), fileId.cstr());
 	File spvFile;
 	ANKI_CHECK(spvFile.open(spvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 	ANKI_CHECK(spvFile.write(&spirv[0], spirv.getSizeInBytes()));
@@ -57,10 +61,10 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 
 	// Call RGA
 	ShaderCompilerString analysisFilename;
-	analysisFilename.sprintf("%s/AnKiRgaOutAnalysis_%u.csv", tmpDir.cstr(), rand);
+	analysisFilename.sprintf("%s/AnKiRgaOutAnalysis_%s.csv", tmpDir.cstr(), fileId.cstr());
 
 	ShaderCompilerString isaFilename;
-	isaFilename.sprintf("%s/AnKiAmdIsa_%u.txt", tmpDir.cstr(), rand);
+	isaFilename.sprintf("%s/AnKiAmdIsa_%s.txt", tmpDir.cstr(), fileId.cstr());
 
 	ShaderCompilerString stageStr = "--";
 	stageStr += getPipelineStageString(shaderType);
@@ -104,12 +108,12 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 
 	// Construct the output filename
 	ShaderCompilerString outFilename;
-	outFilename.sprintf("%s/%s_AnKiRgaOutAnalysis_%u_%s.csv", tmpDir.cstr(), kAmdAsic, rand, getPipelineStageString(shaderType).cstr());
+	outFilename.sprintf("%s/%s_AnKiRgaOutAnalysis_%s_%s.csv", tmpDir.cstr(), kAmdAsic, fileId.cstr(), getPipelineStageString(shaderType).cstr());
 
 	CleanupFile rgaFileCleanup(outFilename);
 
 	ShaderCompilerString isaOutFilename;
-	isaOutFilename.sprintf("%s/%s_AnKiAmdIsa_%u_%s.txt", tmpDir.cstr(), kAmdAsic, rand, getPipelineStageString(shaderType).cstr());
+	isaOutFilename.sprintf("%s/%s_AnKiAmdIsa_%s_%s.txt", tmpDir.cstr(), kAmdAsic, fileId.cstr(), getPipelineStageString(shaderType).cstr());
 
 	CleanupFile isaFileCleanup(isaOutFilename);
 

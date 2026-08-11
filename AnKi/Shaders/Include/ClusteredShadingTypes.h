@@ -25,8 +25,7 @@ constexpr U32 kClusteredShadingTileSize = 64; ///< The size of the tile in clust
 // Information that a tile or a Z-split will contain.
 struct Cluster
 {
-	U32 m_pointLightsMask[kMaxVisibleLights / 32];
-	U32 m_spotLightsMask[kMaxVisibleLights / 32];
+	U32 m_lightsMask[kMaxVisibleLights / 32];
 	U32 m_decalsMask[kMaxVisibleDecals / 32];
 	U32 m_fogDensityVolumesMask;
 	U32 m_reflectionProbesMask;

@@ -231,14 +231,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 
 		// Set the tile
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-		if(obj.m_isPointLight)
-		{
-			InterlockedOr(SBUFF(g_clusters, tileIdx).m_pointLightsMask[maskArrayIdx], mask);
-		}
-		else
-		{
-			InterlockedOr(SBUFF(g_clusters, tileIdx).m_spotLightsMask[maskArrayIdx], mask);
-		}
+		InterlockedOr(SBUFF(g_clusters, tileIdx).m_lightsMask[maskArrayIdx], mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 		InterlockedOr(SBUFF(g_clusters, tileIdx).m_decalsMask[maskArrayIdx], mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
@@ -275,14 +268,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
 #	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-			if(obj.m_isPointLight)
-			{
-				InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_pointLightsMask[maskArrayIdx], mask);
-			}
-			else
-			{
-				InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_spotLightsMask[maskArrayIdx], mask);
-			}
+			InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_lightsMask[maskArrayIdx], mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 			InterlockedOr(SBUFF(g_clusters, g_consts.m_tileCount + i).m_decalsMask[maskArrayIdx], mask);
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME

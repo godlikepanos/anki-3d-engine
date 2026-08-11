@@ -268,27 +268,16 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 fullCoord, F32 depth)
 		outColor += diffC * dirLight.m_illuminance * kPreExposure * lambert * shadowFactor;
 	}
 
-	// Point lights
+	// Lights
 	U32 idx;
-	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
+	[loop] while((idx = iterateLights(cluster)) != kMaxU32)
 	{
 		const GpuSceneLight light = SBUFF(g_lights, idx);
-
-		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 attenuation = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
-		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
-
-		outColor += diffC * light.m_luminousIntensity * kPreExposure * (attenuation * lambert);
-	}
-
-	// Spot lights
-	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
-	{
-		const GpuSceneLight light = SBUFF(g_lights, idx);
+		ANKI_ASSERT(light.m_isPointLight != light.m_isSpotLight);
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 attenuation = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
-		attenuation *= computeSpotFactor(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction);
+		attenuation *= (light.m_isSpotLight) ? computeSpotFactor(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
 		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
 
 		outColor += diffC * light.m_luminousIntensity * kPreExposure * (attenuation * lambert);

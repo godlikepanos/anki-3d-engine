@@ -34,56 +34,41 @@ Vec4 readAnimatedTextureRgba(Texture2DArray<Vec4> tex, SamplerState sampl, F32 p
 	return tex.Sample(sampl, Vec3(uv, layer));
 }
 
-// Iterate the clusters to compute the light color
-Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
+// Iterate the clusters to compute the light color. Assume a fully lambertian surface
+Vec3 computeLightColorHigh(Vec3 albedo, Vec3 worldPos, Vec4 svPosition)
 {
-	diffCol = diffuseLobe(diffCol);
+	const Vec3 brdf = diffuseLobe(albedo);
 	Vec3 outColor = Vec3(0.0, 0.0, 0.0);
 
 	// Find the cluster and then the light counts
 	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, svPosition.xyz);
 
-	// Point lights
+	// Lights
 	U32 idx = 0;
-	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
+	[loop] while((idx = iterateLights(cluster)) != kMaxU32)
 	{
 		const GpuSceneLight light = g_lights[idx];
-
-		const Vec3 diffC = diffCol * light.m_luminousIntensity * kPreExposure;
+		ANKI_ASSERT(light.m_isPointLight != light.m_isSpotLight);
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
+		F32 att = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
+
+		att *= (light.m_isSpotLight) ? computeSpotFactor<F32>(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
 
 		F32 shadow = 1.0;
 		if(light.m_shadow)
 		{
-			shadow = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_trilinearClampShadowSampler);
+			if(light.m_isSpotLight)
+			{
+				shadow = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_trilinearClampShadowSampler);
+			}
+			else
+			{
+				shadow = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_trilinearClampShadowSampler);
+			}
 		}
 
-		outColor += diffC * (att * shadow);
-	}
-
-	// Spot lights
-	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
-	{
-		const GpuSceneLight light = g_lights[idx];
-
-		const Vec3 diffC = diffCol * light.m_luminousIntensity * kPreExposure;
-
-		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
-
-		const Vec3 l = normalize(frag2Light);
-
-		const F32 spot = computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
-
-		F32 shadow = 1.0;
-		[branch] if(light.m_shadow != 0u)
-		{
-			shadow = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_trilinearClampShadowSampler);
-		}
-
-		outColor += diffC * (att * spot * shadow);
+		outColor += brdf * light.m_luminousIntensity * kPreExposure * (att * shadow);
 	}
 
 	return outColor;
