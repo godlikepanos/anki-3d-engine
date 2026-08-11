@@ -142,10 +142,12 @@ vector<T, 3> yCbCrToRgb(const vector<T, 3> ycbcr)
 
 // Pack a Vec2 to a single F32.
 // comp should be in [0, 1] and the output will be in [0, 1].
+// NOTE: It's designed for the output to be stored in unorm 8bit
 template<typename T>
-T packUnorm2ToUnorm1(const vector<T, 2> comp)
+T packUnorm2ToUnorm1(vector<T, 2> comp)
 {
-	return dot(round(comp * T(15)), Vec2(T(1) / T(255.0 / 16.0), T(1.0 / 255.0)));
+	comp = round(comp * T(15));
+	return dot(comp, Vec2(T(1) / T(255.0 / 16.0), T(1.0 / 255.0)));
 }
 
 // Unpack a single F32 to Vec2. Does the oposite of packUnorm2ToUnorm1.

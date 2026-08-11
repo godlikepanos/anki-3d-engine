@@ -13,6 +13,7 @@
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#	include <AnKi/Shaders/ShadowmapsResolve.hlsl>
 
 ConstantBuffer<GlobalRendererConstants> g_globalConsts : register(b0);
 StructuredBuffer<GpuSceneLight> g_lights : register(t0);
@@ -103,8 +104,8 @@ Vec4 main(VertOut input) : SV_TARGET0
 	}
 
 	// SM
-	Vec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
-	U32 resolvedSmIdx = 0u;
+	const Vec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
+	U32 resolvedShadowsLayer = 0u;
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
@@ -113,8 +114,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 		F32 shadowFactor;
 		if(dirLight.m_shadowCascadeCount)
 		{
-			shadowFactor = resolvedSm[0];
-			++resolvedSmIdx;
+			shadowFactor = getNextResolvedShadow(resolvedSm, resolvedShadowsLayer);
 		}
 		else
 		{
@@ -141,7 +141,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 		[branch] if(light.m_shadow)
 		{
-			const F32 shadow = resolvedSm[resolvedSmIdx++];
+			const F32 shadow = getNextResolvedShadow(resolvedSm, resolvedShadowsLayer);
 			lambert *= shadow;
 		}
 
@@ -159,7 +159,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 		[branch] if(light.m_shadow)
 		{
-			const F32 shadow = resolvedSm[resolvedSmIdx++];
+			const F32 shadow = getNextResolvedShadow(resolvedSm, resolvedShadowsLayer);
 			lambert *= shadow;
 		}
 

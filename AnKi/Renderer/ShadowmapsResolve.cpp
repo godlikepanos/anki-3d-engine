@@ -101,7 +101,6 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
-	cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	if(m_quarterRez)
 	{
@@ -112,12 +111,6 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindSrv(3, 0, getGBuffer().getDepthRt());
 	}
 	cmdb.bindSrv(4, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
-
-	if(g_cvarRenderPreferCompute || g_cvarRenderSmPcf || g_cvarRenderSmPcss)
-	{
-		const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
-		cmdb.setFastConstants(&consts, sizeof(consts));
-	}
 
 	if(g_cvarRenderPreferCompute)
 	{
