@@ -1016,3 +1016,9 @@ vector<T, 3> ycbcr2rgb(vector<T, 3> yuv)
 {
 	return vector<T, 3>(yuv.x + 1.403 * yuv.z, yuv.x - 0.344 * yuv.y - 0.714 * yuv.z, yuv.x + 1.770 * yuv.y);
 }
+
+template<typename T>
+T toRad(const T degrees)
+{
+	return degrees * (kPi / T(180));
+}

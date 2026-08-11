@@ -85,7 +85,16 @@ Vec3 directLighting(UVec2 coord)
 	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
 	if(dirLight.m_active)
 	{
-		const Vec3 l = -dirLight.m_direction;
+		const F32 thetaMax = toRad(0.266); // This is a typical angle of a cone that has its apex at the worldPos and its tail the sun sphere
+		const F32 cosThetaMax = cos(thetaMax);
+
+		const Mat3 coneToWorld = rotationFromDirection(-dirLight.m_direction);
+
+		const F32 cosTheta = lerp(cosThetaMax, 1.0, rand(randGen));
+		const F32 sinTheta = sqrt(max(0.0, 1.0 - square(cosTheta)));
+		const F32 phi = k2Pi * rand(randGen);
+
+		const Vec3 l = mul(coneToWorld, Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta));
 
 		const F32 geom = max(0.0, dot(l, gbuffer.m_normal));
 
