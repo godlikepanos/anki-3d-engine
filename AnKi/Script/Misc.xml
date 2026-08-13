@@ -1,0 +1,32 @@
+<glue>
+	<head><![CDATA[// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// WARNING: This file is auto generated.
+
+#include <AnKi/Script/LuaBinder.h>
+
+namespace anki {
+
+]]></head>
+
+	<functions>
+		<function name="round">
+			<args><arg>F32</arg></args>
+			<overrideCall>const F32 ret = std::round(arg0);</overrideCall>
+			<return>F32</return>
+		</function>
+		<function name="getRandomRange">
+			<args>
+				<arg>F32</arg>
+				<arg>F32</arg>
+			</args>
+			<overrideCall>const F32 ret = getRandomRange(min(arg0, arg1), max(arg0, arg1));</overrideCall>
+			<return>F32</return>
+		</function>
+	</functions>
+	<tail><![CDATA[} // end namespace anki]]></tail>
+</glue>
+

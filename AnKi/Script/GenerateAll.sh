@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(dirname "$(readlink -f "$0")")"
 
-xmls="Scene.xml Math.xml Renderer.xml Logger.xml"
+xmls="Scene.xml Math.xml Renderer.xml Logger.xml Misc.xml"
 
 for xml in $xmls; do
 	python3 LuaGlueGen.py -i "$xml"

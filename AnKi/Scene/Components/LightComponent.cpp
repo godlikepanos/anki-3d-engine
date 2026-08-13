@@ -77,7 +77,7 @@ LightComponent::~LightComponent()
 {
 }
 
-void LightComponent::setLightComponentType(LightComponentType newType)
+LightComponent& LightComponent::setLightComponentType(LightComponentType newType)
 {
 	ANKI_ASSERT(newType >= LightComponentType::kFirst && newType < LightComponentType::kCount);
 	const Bool typeChanged = newType != m_type;
@@ -88,6 +88,7 @@ void LightComponent::setLightComponentType(LightComponentType newType)
 		m_shapeDirty = true;
 		m_otherDirty = true;
 	}
+	return *this;
 }
 
 void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)

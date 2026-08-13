@@ -718,9 +718,16 @@ static inline int wrapLightComponentsetLightComponentType(lua_State* l)
 	const LightComponentType arg0 = LightComponentType(arg0Tmp);
 
 	// Call the method
-	self->setLightComponentType(arg0);
+	LightComponent& ret = self->setLightComponentType(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::setColor
@@ -754,9 +761,16 @@ static inline int wrapLightComponentsetColor(lua_State* l)
 	Vec3 arg0(*iarg0);
 
 	// Call the method
-	self->setColor(arg0);
+	LightComponent& ret = self->setColor(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getColor
@@ -822,9 +836,16 @@ static inline int wrapLightComponentsetLuminousPower(lua_State* l)
 	}
 
 	// Call the method
-	self->setLuminousPower(arg0);
+	LightComponent& ret = self->setLuminousPower(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getLuminousPower
@@ -884,9 +905,16 @@ static inline int wrapLightComponentsetIlluminance(lua_State* l)
 	}
 
 	// Call the method
-	self->setIlluminance(arg0);
+	LightComponent& ret = self->setIlluminance(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getIlluminance
@@ -946,9 +974,16 @@ static inline int wrapLightComponentsetSourceRadius(lua_State* l)
 	}
 
 	// Call the method
-	self->setSourceRadius(arg0);
+	LightComponent& ret = self->setSourceRadius(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getSourceRadius
@@ -1008,9 +1043,16 @@ static inline int wrapLightComponentsetInfluenceRadius(lua_State* l)
 	}
 
 	// Call the method
-	self->setInfluenceRadius(arg0);
+	LightComponent& ret = self->setInfluenceRadius(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getInfluenceRadius
@@ -1038,6 +1080,39 @@ static inline int wrapLightComponentgetInfluenceRadius(lua_State* l)
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method LightComponent::recomputeInfluenceRadius
+static inline int wrapLightComponentrecomputeInfluenceRadius(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Call the method
+	LightComponent& ret = self->recomputeInfluenceRadius();
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
 
 	return 1;
 }
@@ -1070,9 +1145,16 @@ static inline int wrapLightComponentsetInfluenceDistance(lua_State* l)
 	}
 
 	// Call the method
-	self->setInfluenceDistance(arg0);
+	LightComponent& ret = self->setInfluenceDistance(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getInfluenceDistance
@@ -1100,6 +1182,39 @@ static inline int wrapLightComponentgetInfluenceDistance(lua_State* l)
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method LightComponent::recomputeInfluenceDistance
+static inline int wrapLightComponentrecomputeInfluenceDistance(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoLightComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	LightComponent* self = ud->getData<LightComponent>();
+
+	// Call the method
+	LightComponent& ret = self->recomputeInfluenceDistance();
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
 
 	return 1;
 }
@@ -1132,9 +1247,16 @@ static inline int wrapLightComponentsetInnerAngle(lua_State* l)
 	}
 
 	// Call the method
-	self->setInnerAngle(arg0);
+	LightComponent& ret = self->setInnerAngle(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getInnerAngle
@@ -1194,9 +1316,16 @@ static inline int wrapLightComponentsetOuterAngle(lua_State* l)
 	}
 
 	// Call the method
-	self->setOuterAngle(arg0);
+	LightComponent& ret = self->setOuterAngle(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getOuterAngle
@@ -1256,9 +1385,16 @@ static inline int wrapLightComponentsetShadowEnabled(lua_State* l)
 	}
 
 	// Call the method
-	self->setShadowEnabled(arg0);
+	LightComponent& ret = self->setShadowEnabled(arg0);
 
-	return 0;
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoLightComponent;
+	ud->initPointed(&g_luaUserDataTypeInfoLightComponent, &ret);
+
+	return 1;
 }
 
 // Wrap method LightComponent::getShadowEnabled
@@ -1305,8 +1441,10 @@ static inline void wrapLightComponent(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getSourceRadius", wrapLightComponentgetSourceRadius);
 	LuaBinder::pushLuaCFuncMethod(l, "setInfluenceRadius", wrapLightComponentsetInfluenceRadius);
 	LuaBinder::pushLuaCFuncMethod(l, "getInfluenceRadius", wrapLightComponentgetInfluenceRadius);
+	LuaBinder::pushLuaCFuncMethod(l, "recomputeInfluenceRadius", wrapLightComponentrecomputeInfluenceRadius);
 	LuaBinder::pushLuaCFuncMethod(l, "setInfluenceDistance", wrapLightComponentsetInfluenceDistance);
 	LuaBinder::pushLuaCFuncMethod(l, "getInfluenceDistance", wrapLightComponentgetInfluenceDistance);
+	LuaBinder::pushLuaCFuncMethod(l, "recomputeInfluenceDistance", wrapLightComponentrecomputeInfluenceDistance);
 	LuaBinder::pushLuaCFuncMethod(l, "setInnerAngle", wrapLightComponentsetInnerAngle);
 	LuaBinder::pushLuaCFuncMethod(l, "getInnerAngle", wrapLightComponentgetInnerAngle);
 	LuaBinder::pushLuaCFuncMethod(l, "setOuterAngle", wrapLightComponentsetOuterAngle);

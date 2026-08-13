@@ -103,57 +103,73 @@ function SceneComponentUpdateInfo:getCurrentTime() end
 LightComponent = {}
 
 ---@param lightComponentType integer
+---@return LightComponent
 function LightComponent:setLightComponentType(lightComponentType) end
 
 ---@param vec3 Vec3
+---@return LightComponent
 function LightComponent:setColor(vec3) end
 
 ---@return Vec3
 function LightComponent:getColor() end
 
 ---@param num number
+---@return LightComponent
 function LightComponent:setLuminousPower(num) end
 
 ---@return number
 function LightComponent:getLuminousPower() end
 
 ---@param num number
+---@return LightComponent
 function LightComponent:setIlluminance(num) end
 
 ---@return number
 function LightComponent:getIlluminance() end
 
 ---@param num number
+---@return LightComponent
 function LightComponent:setSourceRadius(num) end
 
 ---@return number
 function LightComponent:getSourceRadius() end
 
 ---@param num number
+---@return LightComponent
 function LightComponent:setInfluenceRadius(num) end
 
 ---@return number
 function LightComponent:getInfluenceRadius() end
 
+---@return LightComponent
+function LightComponent:recomputeInfluenceRadius() end
+
 ---@param num number
+---@return LightComponent
 function LightComponent:setInfluenceDistance(num) end
 
 ---@return number
 function LightComponent:getInfluenceDistance() end
 
+---@return LightComponent
+function LightComponent:recomputeInfluenceDistance() end
+
 ---@param num number
+---@return LightComponent
 function LightComponent:setInnerAngle(num) end
 
 ---@return number
 function LightComponent:getInnerAngle() end
 
 ---@param num number
+---@return LightComponent
 function LightComponent:setOuterAngle(num) end
 
 ---@return number
 function LightComponent:getOuterAngle() end
 
 ---@param b boolean
+---@return LightComponent
 function LightComponent:setShadowEnabled(b) end
 
 ---@return boolean
@@ -919,4 +935,13 @@ function logw(str) end
 
 ---@param str string
 function logv(str) end
+
+---@param num number
+---@return number
+function round(num) end
+
+---@param num number
+---@param num2 number
+---@return number
+function getRandomRange(num, num2) end
 

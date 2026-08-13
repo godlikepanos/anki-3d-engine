@@ -776,8 +776,7 @@ void SceneNodePropertiesUi::lightComponent(LightComponent& comp)
 
 		if(ImGui::Button(ICON_MDI_RADIUS))
 		{
-			const F32 candela = comp.getLuminousPower() / (4.0f * kPi);
-			comp.setInfluenceRadius(LightComponent::computeLightInfluenceRadius(candela));
+			comp.recomputeInfluenceRadius();
 		}
 		ImGui::SetItemTooltip("Recalculate a physical influence radius");
 		ImGui::SameLine();
@@ -804,8 +803,7 @@ void SceneNodePropertiesUi::lightComponent(LightComponent& comp)
 
 		if(ImGui::Button(ICON_MDI_RADIUS))
 		{
-			const F32 candela = comp.getLuminousPower() / kPi;
-			comp.setInfluenceDistance(LightComponent::computeLightInfluenceRadius(candela));
+			comp.recomputeInfluenceDistance();
 		}
 		ImGui::SetItemTooltip("Recalculate a physical influence radius");
 		ImGui::SameLine();

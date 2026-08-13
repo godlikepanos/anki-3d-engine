@@ -57,7 +57,7 @@ public:
 		return refDistance * sqrt(luminousIntensity / refLuminousIntensity);
 	}
 
-	void setLightComponentType(LightComponentType type);
+	LightComponent& setLightComponentType(LightComponentType type);
 
 	LightComponentType getLightComponentType() const
 	{
@@ -71,7 +71,7 @@ public:
 		return m_color;
 	}
 
-	void setColor(Vec3 x)
+	LightComponent& setColor(Vec3 x)
 	{
 		x = (ANKI_EXPECT(x >= Vec3(0.0f))) ? x : x.max(Vec3(0.0f));
 		if(m_color != x)
@@ -79,6 +79,7 @@ public:
 			m_color = x;
 			m_otherDirty = true;
 		}
+		return *this;
 	}
 
 	// Total light emitted by the bulb, in lumens. Point and spot lights only.
@@ -87,7 +88,7 @@ public:
 		return ANKI_EXPECT(m_type == LightComponentType::kPoint || m_type == LightComponentType::kSpot) ? m_pointAndSpot.m_luminousPower : 0.0f;
 	}
 
-	void setLuminousPower(F32 lumens)
+	LightComponent& setLuminousPower(F32 lumens)
 	{
 		lumens = (ANKI_EXPECT(lumens >= 0.0f)) ? lumens : 0.0f;
 		if(ANKI_EXPECT(m_type == LightComponentType::kPoint || m_type == LightComponentType::kSpot) && m_pointAndSpot.m_luminousPower != lumens)
@@ -95,6 +96,7 @@ public:
 			m_pointAndSpot.m_luminousPower = lumens;
 			m_otherDirty = true;
 		}
+		return *this;
 	}
 
 	// Light arriving on a surface facing the light, in lux. Directional lights only, since they're the ones far enough away for it to be constant.
@@ -103,7 +105,7 @@ public:
 		return (ANKI_EXPECT(m_type == LightComponentType::kDirectional)) ? m_dir.m_illuminance : 0.0f;
 	}
 
-	void setIlluminance(F32 lux)
+	LightComponent& setIlluminance(F32 lux)
 	{
 		lux = (ANKI_EXPECT(lux >= 0.0f)) ? lux : 0.0f;
 		if(ANKI_EXPECT(m_type == LightComponentType::kDirectional) && m_dir.m_illuminance != lux)
@@ -111,6 +113,7 @@ public:
 			m_dir.m_illuminance = lux;
 			m_otherDirty = true;
 		}
+		return *this;
 	}
 
 	// Physical size of the emitter. Bounds the inverse-square falloff up close and is the sphere that the ray traced paths sample.
@@ -119,7 +122,7 @@ public:
 		return (ANKI_EXPECT(m_type == LightComponentType::kPoint || m_type == LightComponentType::kSpot)) ? m_pointAndSpot.m_sourceRadius : 0.0f;
 	}
 
-	void setSourceRadius(F32 x)
+	LightComponent& setSourceRadius(F32 x)
 	{
 		x = (ANKI_EXPECT(x >= kMinSourceRadius && x <= kMaxSourceRadius)) ? x : clamp(x, kMinSourceRadius, kMaxSourceRadius);
 		if(ANKI_EXPECT(m_type == LightComponentType::kPoint || m_type == LightComponentType::kSpot) && m_pointAndSpot.m_sourceRadius != x)
@@ -127,6 +130,7 @@ public:
 			m_pointAndSpot.m_sourceRadius = x;
 			m_otherDirty = true;
 		}
+		return *this;
 	}
 
 	// How far the light reaches. Only feeds culling and the falloff window, it doesn't change how bright the light is.
@@ -135,7 +139,7 @@ public:
 		return (ANKI_EXPECT(m_type == LightComponentType::kPoint)) ? m_pointAndSpot.m_influenceRadius : 0.0f;
 	}
 
-	void setInfluenceRadius(F32 x)
+	LightComponent& setInfluenceRadius(F32 x)
 	{
 		x = (ANKI_EXPECT(x >= kMinSourceRadius && x <= kMaxInfluenceRadius)) ? x : clamp(x, kMinSourceRadius, kMaxInfluenceRadius);
 		if(ANKI_EXPECT(m_type == LightComponentType::kPoint) && m_pointAndSpot.m_influenceRadius != x)
@@ -143,6 +147,19 @@ public:
 			m_pointAndSpot.m_influenceRadius = x;
 			m_shapeDirty = true;
 		}
+		return *this;
+	}
+
+	// Recalculates the influence radius based on the light's luminous power. See computeLightInfluenceRadius()
+	LightComponent& recomputeInfluenceRadius()
+	{
+		if(ANKI_EXPECT(m_type == LightComponentType::kPoint))
+		{
+			const F32 candela = getLuminousPower() / (4.0f * kPi);
+			const F32 newRadius = clamp(computeLightInfluenceRadius(candela), kMinSourceRadius, kMaxInfluenceRadius);
+			setInfluenceRadius(newRadius);
+		}
+		return *this;
 	}
 
 	// The spot light's equivalent of the influence radius: the length of the cone.
@@ -151,7 +168,7 @@ public:
 		return (ANKI_EXPECT(m_type == LightComponentType::kSpot)) ? m_pointAndSpot.m_influenceRadius : 0.0f;
 	}
 
-	void setInfluenceDistance(F32 x)
+	LightComponent& setInfluenceDistance(F32 x)
 	{
 		x = (ANKI_EXPECT(x >= kMinSourceRadius && x <= kMaxInfluenceDistance)) ? x : clamp(x, kMinSourceRadius, kMaxInfluenceDistance);
 		if(ANKI_EXPECT(m_type == LightComponentType::kSpot) && m_pointAndSpot.m_influenceRadius != x)
@@ -159,6 +176,19 @@ public:
 			m_pointAndSpot.m_influenceRadius = x;
 			m_shapeDirty = true;
 		}
+		return *this;
+	}
+
+	// Recalculates the influence distance based on the light's luminous power. See computeLightInfluenceRadius()
+	LightComponent& recomputeInfluenceDistance()
+	{
+		if(ANKI_EXPECT(m_type == LightComponentType::kSpot))
+		{
+			const F32 candela = getLuminousPower() / kPi;
+			const F32 newDist = clamp(computeLightInfluenceRadius(candela), kMinSourceRadius, kMaxInfluenceDistance);
+			setInfluenceDistance(newDist);
+		}
+		return *this;
 	}
 
 	F32 getInnerAngle() const
@@ -166,7 +196,7 @@ public:
 		return (ANKI_EXPECT(m_type == LightComponentType::kSpot)) ? m_spot.m_innerAngle : 0.0f;
 	}
 
-	void setInnerAngle(F32 ang)
+	LightComponent& setInnerAngle(F32 ang)
 	{
 		ang = (ANKI_EXPECT(ang >= 0.0f)) ? ang : 0.0f;
 		if(ANKI_EXPECT(m_type == LightComponentType::kSpot) && m_spot.m_innerAngle != ang)
@@ -174,6 +204,7 @@ public:
 			m_spot.m_innerAngle = ang;
 			m_shapeDirty = true;
 		}
+		return *this;
 	}
 
 	F32 getOuterAngle() const
@@ -181,7 +212,7 @@ public:
 		return (ANKI_EXPECT(m_type == LightComponentType::kSpot)) ? m_spot.m_outerAngle : 0.0f;
 	}
 
-	void setOuterAngle(F32 ang)
+	LightComponent& setOuterAngle(F32 ang)
 	{
 		ang = (ANKI_EXPECT(ang >= 0.0f)) ? ang : 0.0f;
 		if(ANKI_EXPECT(m_type == LightComponentType::kSpot) && m_spot.m_outerAngle != ang)
@@ -189,6 +220,7 @@ public:
 			m_spot.m_outerAngle = ang;
 			m_shapeDirty = true;
 		}
+		return *this;
 	}
 
 	Bool getShadowEnabled() const
@@ -196,13 +228,14 @@ public:
 		return m_shadow;
 	}
 
-	void setShadowEnabled(Bool x)
+	LightComponent& setShadowEnabled(Bool x)
 	{
 		if(x != m_shadow)
 		{
 			m_shadow = x;
 			m_shapeDirty = m_otherDirty = true;
 		}
+		return *this;
 	}
 
 	Vec3 getDirection() const
@@ -216,7 +249,7 @@ public:
 	}
 
 	// Set the direction of the directional light by setting the date and hour.
-	void setDirectionFromTimeOfDay(I32 month, I32 day, F32 hour)
+	LightComponent& setDirectionFromTimeOfDay(I32 month, I32 day, F32 hour)
 	{
 		if(ANKI_EXPECT(m_type == LightComponentType::kDirectional))
 		{
@@ -228,6 +261,7 @@ public:
 			m_dir.m_hour = clamp(hour, 0.0f, 24.0f);
 			m_shapeDirty = true;
 		}
+		return *this;
 	}
 
 	// Get the fields which might or might not have come from the direction of the light
