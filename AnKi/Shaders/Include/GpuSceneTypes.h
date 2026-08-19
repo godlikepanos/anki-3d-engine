@@ -124,28 +124,28 @@ struct GpuSceneLightVisibleRenderablesHash
 // Point or spot light.
 struct GpuSceneLight
 {
-	Vec3 m_position ANKI_CPP_CODE(= Vec3(kSomeFarDistance)); // Position in world space.
-	F32 m_influenceRadius ANKI_CPP_CODE(= 0.0f); // Radius
-
-	F32 m_sourceRadius ANKI_CPP_CODE(= 0.0f); // Physical size of the emitter
-	U32 m_padding0;
-	U32 m_padding1;
-	U32 m_padding2;
-
-	Vec3 m_luminousIntensity ANKI_CPP_CODE(= Vec3(0.0f)); // In candela, spread over RGB. Feeds both the diffuse and the specular lobe
-	U32 m_visibleRenderablesHashIndex; // Points to a GpuSceneLightVisibleRenderablesHash
-
 	U32 m_isPointLight : 1;
 	U32 m_isSpotLight : 1;
 	U32 m_shadow : 1;
 	U32 m_cpuFeedback : 1; // If true the GPU visibility will inform the CPU about it
-	U32 m_componentArrayIndex : 28; // Array index of the LightComponent in the CPU scene.
+	U32 m_padding0 : 28;
+	F32 m_influenceRadius ANKI_CPP_CODE(= 0.0f); // Radius
+	F32 m_innerCos; // Only for spot light.
+	F32 m_outerCos; // Only for spot light.
+
+	Vec3 m_position ANKI_CPP_CODE(= Vec3(kSomeFarDistance)); // Position in world space.
+	F32 m_sourceRadius ANKI_CPP_CODE(= 0.0f); // Physical size of the emitter
+
+	Vec3 m_luminousIntensity ANKI_CPP_CODE(= Vec3(0.0f)); // In candela, spread over RGB. Feeds both the diffuse and the specular lobe
+	U32 m_visibleRenderablesHashIndex; // Points to a GpuSceneLightVisibleRenderablesHash
+
+	U32 m_componentArrayIndex; // Array index of the LightComponent in the CPU scene.
+	U32 m_gpuSceneArrayIndex; // The index in the GPU scene array
 	U32 m_sceneNodeUuid; // For object picking
 	U32 m_componentUuid; // The UUID of the LightComponent
-	F32 m_innerCos; // Only for spot light.
 
 	Vec3 m_direction; // Only for spot light. Light direction.
-	F32 m_outerCos; // Only for spot light.
+	U32 m_padding1;
 
 	// If it's a spot light the 4 first rows are the texture matrix. If it's point light it's the UV viewports in the shadow atlas
 	Vec4 m_spotLightMatrixOrPointLightUvViewports[6u];

@@ -29,7 +29,7 @@ ANKI_RENDERER_OBJECT_DEF(VolumetricLightingAccumulation, volumetricLightingAccum
 ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracing
-							 && (g_cvarRenderDbgRtMaterialFetch || g_cvarRenderReflectionsRt || g_cvarRenderIdc))
+							 && (g_cvarRenderDbgRtMaterialFetch || g_cvarRenderReflectionsRt || g_cvarRenderIdc || g_cvarRenderReSTIRDI))
 ANKI_RENDERER_OBJECT_DEF(LightShading, lightShading, 1)
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalUpscaler, temporalUpscaler, 1)

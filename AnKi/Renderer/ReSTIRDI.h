@@ -39,8 +39,13 @@ public:
 
 private:
 	RendererShaderProgram m_groundTruthGrProg;
+	RendererShaderProgram m_genInitialCandidatesGrProg;
+	RendererShaderProgram m_sampleReuseGrProg;
 
-	RenderTargetDesc m_rtDesc;
+	RenderTargetDesc m_shadedPixelsRtDesc;
+	RenderTargetDesc m_initialCandidatesRtDesc;
+	Array<RendererTexture, 2> m_reservoirTextures;
+	Bool m_texturesFirstImport = true;
 
 	class
 	{

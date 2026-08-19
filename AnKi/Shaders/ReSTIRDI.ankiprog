@@ -11,24 +11,60 @@
 #include <AnKi/Shaders/LightFunctions.hlsl>
 
 #pragma anki technique GroundTruth comp
+#pragma anki technique GenInitialCandidates comp
+#pragma anki technique SampleReuse comp
 
-// ===========================================================================
-// Ground Truth                                                              =
-// ===========================================================================
-#if ANKI_TECHNIQUE_GroundTruth
+constexpr F32 kDirLightMaxRayT = 1000.0; // TODO
 
 ConstantBuffer<GlobalRendererConstants> g_globalConsts : register(b0);
 
-StructuredBuffer<GpuSceneLight> g_lights : register(t0);
+StructuredBuffer<GpuSceneLight> g_gpuSceneLights : register(t0);
+StructuredBuffer<GpuSceneLight> g_clustererLights : register(t1);
+StructuredBuffer<Cluster> g_clusters : register(t2);
 
-Texture2D<Vec4> g_gbuffer0Tex : register(t1);
-Texture2D<Vec4> g_gbuffer1Tex : register(t2);
-Texture2D<Vec4> g_gbuffer2Tex : register(t3);
-Texture2D g_depthTex : register(t4);
+RaytracingAccelerationStructure g_tlas : register(t3);
 
-RaytracingAccelerationStructure g_tlas : register(t5);
+Texture2D<Vec4> g_gbuffer0Tex : register(t4);
+Texture2D<Vec4> g_gbuffer1Tex : register(t5);
+Texture2D<Vec4> g_gbuffer2Tex : register(t6);
+Texture2D g_depthTex : register(t7);
 
-RWTexture2D<Vec4> g_uav : register(u0);
+struct DISample
+{
+	U32 m_gpuSceneArrayIndex; // Index in the GPU scene or kMaxU32 if it's the sun
+	Vec3 m_pointOnLight; // For punctual lights it's relative to light position. If it's the sun it's the l direction
+};
+
+using DIReservoir = Reservoir<DISample>;
+
+constexpr U32 kDISunLightIndex = 0xFFFFu; // The 16bit form of the kMaxU32 the sun stores in DISample::m_gpuSceneArrayIndex
+
+// m_weightSum is not stored. It's only meaningful while the reservoir is being built. Everything that reads a stored reservoir goes through
+// combineReservoirs() which only touches m_weight and m_sampleCount
+UVec3 packReservoir(DIReservoir r)
+{
+	UVec3 o;
+	o.x = (asuint(f32tof16(r.m_sample.m_pointOnLight.x)) << 16u) | asuint(f32tof16(r.m_sample.m_pointOnLight.y));
+	o.y = (r.m_sample.m_gpuSceneArrayIndex << 16u) | asuint(f32tof16(r.m_sample.m_pointOnLight.z));
+	const F32 weight = min(r.m_weight, F32(kMaxF16)); // Can't leave it unbounded
+	o.z = (U32(r.m_sampleCount) << 16u) | asuint(f32tof16(weight));
+
+	return o;
+}
+
+DIReservoir unpackReservoir(UVec3 p)
+{
+	const U32 lightIdx = p.y >> 16u;
+
+	DIReservoir r;
+	r.m_sample.m_gpuSceneArrayIndex = (lightIdx == kDISunLightIndex) ? kMaxU32 : lightIdx;
+	r.m_sample.m_pointOnLight = Vec3(f16tof32(p.x >> 16u), f16tof32(p.x & 0xFFFFu), f16tof32(p.y & 0xFFFFu));
+	r.m_weightSum = 0.0; // Not stored. See packReservoir
+	r.m_sampleCount = F32(p.z >> 16u);
+	r.m_weight = f16tof32(p.z & 0xFFFFu);
+
+	return r;
+}
 
 // Computes the visibility term
 F32 visibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax)
@@ -52,6 +88,49 @@ F32 visibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax)
 
 	return (hit) ? 0.0 : 1.0;
 }
+
+F32 computePHat(GpuSceneLight light, GbufferInfo<F32> gbuffer, Vec3 surfacePosW, Vec3 pointOnLight)
+{
+	const Vec3 frag2Light = pointOnLight - surfacePosW;
+	const Vec3 l = normalize(frag2Light);
+
+	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - surfacePosW);
+	const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+	const Vec3 brdf = specC + diffC;
+
+	const F32 att = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, light.m_position - surfacePosW);
+	const F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
+	const F32 geom = att * lambert;
+
+	const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+	const Vec3 I = light.m_luminousIntensity * spot;
+
+	const Vec3 LoNoVis = brdf * I * geom * kPreExposure;
+
+	return computeLuminance(LoNoVis);
+}
+
+F32 computePHat(DirectionalLight dirLight, GbufferInfo<F32> gbuffer, Vec3 surfacePosW, Vec3 l)
+{
+	const F32 geom = max(0.0, dot(l, gbuffer.m_normal));
+
+	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - surfacePosW);
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+	const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
+	const Vec3 brdf = diffC + specC;
+
+	const Vec3 LoNoVis = brdf * dirLight.m_illuminance * kPreExposure * geom;
+
+	return computeLuminance(LoNoVis);
+}
+
+// ===========================================================================
+// Ground Truth                                                              =
+// ===========================================================================
+#if ANKI_TECHNIQUE_GroundTruth
+
+RWTexture2D<Vec4> g_uav : register(u0);
 
 Vec3 directLighting(UVec2 coord)
 {
@@ -104,20 +183,20 @@ Vec3 directLighting(UVec2 coord)
 			const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
 			const Vec3 brdf = diffC + specC;
 
-			const F32 vis = visibility(biasedPosW, l, 1000.0);
+			const F32 vis = visibility(biasedPosW, l, kDirLightMaxRayT);
 
 			Lo += brdf * dirLight.m_illuminance * kPreExposure * (geom * vis);
 		}
 	}
 
 	// Punctual lights
-	const U32 lightCount = getStructuredBufferElementCount(g_lights);
+	const U32 lightCount = getStructuredBufferElementCount(g_gpuSceneLights);
 	for(U32 i = 0; i < lightCount; ++i)
 	{
 		// A hack const for now
 		constexpr U32 kSampleCount = 1u;
 
-		const GpuSceneLight light = SBUFF(g_lights, i);
+		const GpuSceneLight light = SBUFF(g_gpuSceneLights, i);
 		const F32 sourceRadius = light.m_sourceRadius;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
@@ -196,5 +275,315 @@ Vec3 directLighting(UVec2 coord)
 		TEX(g_uav, coord) = Vec4(directLighting(coord), 0.0);
 	}
 }
+#endif
 
+// ===========================================================================
+// GenInitialCandidates                                                      =
+// ===========================================================================
+#if ANKI_TECHNIQUE_GenInitialCandidates
+
+RWTexture2D<UVec4> g_reservoirsUav : register(u0);
+
+// Implements algorithm 3 lines 3 - 9. One candidate per light, so no selection probability. The cone jitter only softens the shadow ray, so a
+// light's contribution is the average over its cone and that average's 1/solidAngle cancels the direction pdf's. Leaves a candidate density of 1
+DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, inout RandomGenerator randg, out F32 selectedSamplePHat)
+{
+	DIReservoir reservoir = (DIReservoir)0;
+	selectedSamplePHat = 0.0;
+
+	// Do the sun
+	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
+	if(dirLight.m_active)
+	{
+		const F32 thetaMax = toRad(0.266); // This is a typical angle of a cone that has its apex at the surfacePosW and its tail the sun sphere
+		const F32 cosThetaMax = cos(thetaMax);
+
+		const Mat3 coneToWorld = rotationFromDirection(-dirLight.m_direction);
+
+		const F32 cosTheta = lerp(cosThetaMax, 1.0, rand(randg));
+		const F32 sinTheta = sqrt(max(0.0, 1.0 - square(cosTheta)));
+		const F32 phi = k2Pi * rand(randg);
+
+		const Vec3 l = mul(coneToWorld, Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta));
+
+		const F32 pHat = computePHat(dirLight, gbuffer, surfacePosW, l);
+
+		const F32 pdf = 1.0; // No random light selection, so no selection probability.
+		const F32 risWeight = pHat / pdf;
+		const DISample s = {kMaxU32, l};
+		if(updateReservoir(reservoir, s, risWeight, randg))
+		{
+			selectedSamplePHat = pHat;
+		}
+	}
+
+	// Do punctual lights
+	U32 idx;
+	[loop] while((idx = iterateLights(cluster)) != kMaxU32)
+	{
+		const GpuSceneLight light = SBUFF(g_clustererLights, idx);
+
+		const Vec3 frag2Light = light.m_position - surfacePosW;
+		const F32 distToCenter = length(frag2Light);
+		const Vec3 dirToCenter = frag2Light / distToCenter;
+
+		const F32 sinThetaMax = light.m_sourceRadius / distToCenter;
+		const F32 cosThetaMax = sqrt(max(0.0, 1.0 - square(sinThetaMax)));
+
+		const Mat3 coneToWorld = rotationFromDirection(dirToCenter);
+
+		const F32 cosTheta = lerp(cosThetaMax, 1.0, rand(randg));
+		const F32 sinTheta = sqrt(max(0.0, 1.0 - square(cosTheta)));
+		const F32 phi = k2Pi * rand(randg);
+		const Vec3 l = mul(coneToWorld, Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta));
+
+		// Compute a tMax that pushes the ray on the edge of the sphere of light
+		const F32 ct = dot(l, dirToCenter);
+		const F32 tMax = distToCenter * ct - sqrt(max(0.0, square(light.m_sourceRadius) - square(distToCenter) * (1.0 - square(ct))));
+
+		const Vec3 pointOnLight = surfacePosW + l * tMax;
+		const F32 pHat = computePHat(light, gbuffer, surfacePosW, pointOnLight);
+
+		const F32 pdf = 1.0; // No random light selection, so no selection probability.
+		const F32 risWeight = pHat / pdf;
+
+		const DISample s = {light.m_gpuSceneArrayIndex, pointOnLight - light.m_position};
+		if(updateReservoir(reservoir, s, risWeight, randg))
+		{
+			selectedSamplePHat = pHat;
+		}
+	}
+
+	// Line 8
+	// The MIS weight is 1 and not 1/M because each candidate is sampled on its own light, so no other candidate could have produced this sample
+	finalizeReservoir(reservoir, selectedSamplePHat, 1.0);
+
+	return reservoir;
+}
+
+// Implements algorithm 5 lines 4 - 5
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const UVec2 viewportSize = getDimensions(g_reservoirsUav);
+
+	if(any(coord >= viewportSize))
+	{
+		return;
+	}
+
+	F32 phat = 0.0;
+	DIReservoir r;
+
+	const F32 depth = TEX(g_depthTex, coord);
+	if(depth == 1.0)
+	{
+		r = (DIReservoir)0;
+	}
+	else
+	{
+		const Vec2 uv = (coord + 0.5) / viewportSize;
+		const Vec2 ndc = uvToNdc(uv);
+		const Vec4 surfacePosW4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+		const Vec3 surfacePosW = surfacePosW4.xyz / surfacePosW4.w;
+
+		const Cluster cluster = getClusterFragCoord(g_clusters, g_globalConsts.m_clusterer, coord, depth);
+
+		RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
+
+		GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
+		unpackGBufferNoVelocity<F32>(TEX(g_gbuffer0Tex, coord), TEX(g_gbuffer1Tex, coord), TEX(g_gbuffer2Tex, coord), gbuffer);
+		gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
+
+		r = RIS(cluster, surfacePosW, gbuffer, randg, phat);
+	}
+
+	const UVec3 packedReservoir = packReservoir(r);
+	TEX(g_reservoirsUav, coord) = UVec4(packedReservoir, asuint(phat));
+}
+#endif
+
+// ===========================================================================
+// Sample Reuse                                                              =
+// ===========================================================================
+#if ANKI_TECHNIQUE_SampleReuse
+
+Texture2D<UVec4> g_initialReservoirsTex : register(t8);
+Texture2D<UVec4> g_prevReservoirsTex : register(t9);
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t10);
+
+RWTexture2D<UVec4> g_reservoirUav : register(u0);
+RWTexture2D<Vec4> g_sampleUav : register(u1);
+
+// Algorithm 3 lines 10, 11
+Vec3 computeSample(GbufferInfo<F32> gbuffer, Vec3 surfacePosW, DIReservoir reservoir, Bool isInitialCandidate, F32 visInitialCandidate, Vec3 viewDir,
+				   Vec3 biasedSurfacePosW)
+{
+	if(reservoir.m_weight <= kEpsilonF32)
+	{
+		return 0.0;
+	}
+
+	const Bool isDirectional = reservoir.m_sample.m_gpuSceneArrayIndex == kMaxU32;
+
+	// 1st branch
+	Vec3 l;
+	Vec3 emission; // Intensity (cd) for punctual lights, illuminance (lux) for the sun
+	F32 atten;
+	F32 rayT;
+	if(isDirectional)
+	{
+		l = reservoir.m_sample.m_pointOnLight;
+		emission = g_globalConsts.m_directionalLight.m_illuminance;
+		rayT = kDirLightMaxRayT;
+		atten = 1.0;
+	}
+	else
+	{
+		const GpuSceneLight light = SBUFF(g_gpuSceneLights, reservoir.m_sample.m_gpuSceneArrayIndex);
+		const Vec3 surfToLight = reservoir.m_sample.m_pointOnLight + light.m_position - surfacePosW;
+		rayT = length(surfToLight);
+		l = surfToLight / rayT;
+		emission = light.m_luminousIntensity;
+		atten = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, surfToLight);
+		atten *= (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+	}
+
+	const F32 geom = dot(l, gbuffer.m_normal);
+
+	if(geom * atten <= 0.0)
+	{
+		return 0.0;
+	}
+
+	// Compute vis
+	F32 vis;
+	if(isInitialCandidate)
+	{
+		vis = visInitialCandidate;
+	}
+	else
+	{
+		vis = visibility(biasedSurfacePosW, l, rayT);
+	}
+
+	// BRDF
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+	const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
+	const Vec3 brdf = diffC + specC;
+
+	// Outgoing radiance
+	const Vec3 Lo = brdf * emission * (kPreExposure * vis * geom * atten);
+
+	return Lo * reservoir.m_weight;
+}
+
+// Implements algorithm 5
+Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir)
+{
+	reservoir = (DIReservoir)0;
+
+	const F32 depth = TEX(g_depthTex, coord);
+	if(depth == 1.0)
+	{
+		return 0.0;
+	}
+
+	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
+	unpackGBufferNoVelocity<F32>(TEX(g_gbuffer0Tex, coord), TEX(g_gbuffer1Tex, coord), TEX(g_gbuffer2Tex, coord), gbuffer);
+	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
+
+	const Vec2 uv = (coord + 0.5) / viewportSize;
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - worldPos);
+	const Vec3 biasedSurfacePosW = worldPos + viewDir * 0.01;
+
+	RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
+
+	// Read initial candidate and do line 8
+	const UVec4 packedReservoirAndPhat = TEX(g_initialReservoirsTex, coord);
+	const F32 crntPHat = asfloat(packedReservoirAndPhat.w);
+	DIReservoir crntReservoir = unpackReservoir(packedReservoirAndPhat.xyz);
+	F32 visInitialCandidate = 0.0;
+	if(crntReservoir.m_weight > kEpsilonF32)
+	{
+		const Bool isDirectional = crntReservoir.m_sample.m_gpuSceneArrayIndex == kMaxU32;
+		F32 rayT;
+		Vec3 rayDir;
+		if(isDirectional)
+		{
+			rayT = kDirLightMaxRayT;
+			rayDir = normalize(crntReservoir.m_sample.m_pointOnLight);
+		}
+		else
+		{
+			const GpuSceneLight light = SBUFF(g_gpuSceneLights, crntReservoir.m_sample.m_gpuSceneArrayIndex);
+			const Vec3 surfaceToHitPoint = (crntReservoir.m_sample.m_pointOnLight + light.m_position) - biasedSurfacePosW;
+			rayT = length(surfaceToHitPoint);
+			rayDir = surfaceToHitPoint / rayT;
+		}
+		visInitialCandidate = visibility(biasedSurfacePosW, rayDir, rayT);
+		crntReservoir.m_weight *= visInitialCandidate;
+	}
+
+	// Temporal re-use. Lines 12 - 14
+	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, coord);
+	const Bool disocclusion = all(mv == 1.0);
+
+	if(!disocclusion)
+	{
+		const Vec2 uv = (coord + 0.5) / viewportSize;
+		const Vec2 historyUv = uv + mv;
+		const UVec2 historyCoord = clamp(historyUv * viewportSize, 0.0, viewportSize - 1);
+		DIReservoir prevReservoir = unpackReservoir(TEX(g_prevReservoirsTex, historyCoord));
+
+		// Clamp the history's M to 20x the current frame's, like the paper does. The history's resampling weight is pHat * W * M, so an unbounded M
+		// makes the fresh candidate lose every time and the lighting stops reacting to anything that moves
+		prevReservoir.m_sampleCount = min(prevReservoir.m_sampleCount, crntReservoir.m_sampleCount * 20.0);
+
+		F32 prevPHat;
+		const Bool isDirectional = prevReservoir.m_sample.m_gpuSceneArrayIndex == kMaxU32;
+		if(isDirectional)
+		{
+			prevPHat = computePHat(g_globalConsts.m_directionalLight, gbuffer, worldPos, prevReservoir.m_sample.m_pointOnLight);
+		}
+		else
+		{
+			const GpuSceneLight light = SBUFF(g_gpuSceneLights, prevReservoir.m_sample.m_gpuSceneArrayIndex);
+			prevPHat = computePHat(light, gbuffer, worldPos, prevReservoir.m_sample.m_pointOnLight);
+		}
+
+		reservoir = combineReservoirs(crntReservoir, prevReservoir, crntPHat, prevPHat, randg);
+	}
+	else
+	{
+		reservoir = crntReservoir;
+	}
+
+	// Compute pixel color. Line 23
+	const Bool isInitialCandidate = reservoir.m_sample.m_gpuSceneArrayIndex == crntReservoir.m_sample.m_gpuSceneArrayIndex
+									&& all(reservoir.m_sample.m_pointOnLight == crntReservoir.m_sample.m_pointOnLight);
+	const Vec3 color = computeSample(gbuffer, worldPos, reservoir, isInitialCandidate, visInitialCandidate, viewDir, biasedSurfacePosW);
+
+	return color;
+}
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const UVec2 viewportSize = getDimensions(g_initialReservoirsTex);
+
+	if(any(coord >= viewportSize))
+	{
+		return;
+	}
+
+	DIReservoir reservoir;
+	const Vec3 color = resampleAndShade(coord, viewportSize, reservoir);
+
+	TEX(g_reservoirUav, coord) = UVec4(packReservoir(reservoir), 0u);
+	TEX(g_sampleUav, coord) = Vec4(color, 0.0);
+}
 #endif

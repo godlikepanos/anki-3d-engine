@@ -41,7 +41,7 @@ Vec3 computeLightColorHigh(Vec3 albedo, Vec3 worldPos, Vec4 svPosition)
 	Vec3 outColor = Vec3(0.0, 0.0, 0.0);
 
 	// Find the cluster and then the light counts
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, svPosition.xyz);
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants.m_clusterer, svPosition.xy, svPosition.z);
 
 	// Lights
 	U32 idx = 0;

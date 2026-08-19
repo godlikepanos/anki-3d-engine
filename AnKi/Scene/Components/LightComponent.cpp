@@ -121,6 +121,11 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Upload to the GPU scene
+		if(!m_gpuSceneLight.isValid())
+		{
+			m_gpuSceneLight.allocate();
+		}
+
 		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
 		gpuLight.m_influenceRadius = m_pointAndSpot.m_influenceRadius;
@@ -144,15 +149,12 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_componentArrayIndex = getArrayIndex();
 		gpuLight.m_componentUuid = getUuid();
 		gpuLight.m_sceneNodeUuid = info.m_node->getUuid();
+		gpuLight.m_gpuSceneArrayIndex = m_gpuSceneLight.getIndex();
 		for(U32 f = 0; f < m_shadowAtlasUvViewportCount; ++f)
 		{
 			gpuLight.m_spotLightMatrixOrPointLightUvViewports[f] = m_shadowAtlasUvViewports[f];
 		}
 
-		if(!m_gpuSceneLight.isValid())
-		{
-			m_gpuSceneLight.allocate();
-		}
 		m_gpuSceneLight.uploadToGpuScene(gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
@@ -175,6 +177,11 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Upload to the GPU scene
+		if(!m_gpuSceneLight.isValid())
+		{
+			m_gpuSceneLight.allocate();
+		}
+
 		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz;
 		gpuLight.m_influenceRadius = m_pointAndSpot.m_influenceRadius;
@@ -200,6 +207,7 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
+		gpuLight.m_gpuSceneArrayIndex = m_gpuSceneLight.getIndex();
 
 		Array<Vec3, 4> points;
 		computeEdgesOfFrustum(m_pointAndSpot.m_influenceRadius, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
@@ -227,10 +235,6 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			gpuLight.m_spotLightMatrixOrPointLightUvViewports[3] = texMat.getRow(3);
 		}
 
-		if(!m_gpuSceneLight.isValid())
-		{
-			m_gpuSceneLight.allocate();
-		}
 		m_gpuSceneLight.uploadToGpuScene(gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)

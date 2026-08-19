@@ -74,6 +74,8 @@ void finalizeReservoirBiased(inout Reservoir<T> r, F32 pHatq)
 }
 
 // Algorithm 4 but only for 2 reservoirs
+// pHatqr1: It's the p_hat of the 1st reservoir's sample
+// pHatqr2: It's the p_hat of the 2nd reservoir's sample
 template<typename T>
 Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F32 pHatqr2, inout RandomGenerator randg)
 {

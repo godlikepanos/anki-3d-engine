@@ -72,9 +72,9 @@ F32 computeVolumeWTexCoord(F32 depth, F32 a, F32 b)
 }
 
 // Return the tile index.
-U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileCountX)
+U32 computeTileClusterIndexFragCoord(UVec2 coord, U32 tileCountX)
 {
-	const UVec2 tileXY = UVec2(fragCoord / F32(kClusteredShadingTileSize));
+	const UVec2 tileXY = coord / kClusteredShadingTileSize;
 	return tileXY.y * tileCountX + tileXY.x;
 }
 
@@ -120,14 +120,15 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 	return outCluster;
 }
 
-// Get the final cluster after ORing and ANDing the masks.
+// Get the final cluster after ORing and ANDing the masks
+// coord: It's a coordinate in the "internal renderer resolution"
 template<Bool kDynamicallyUniform = false>
-Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClustererConstants consts, Vec3 fragCoord)
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClustererConstants consts, UVec2 coord, F32 depth)
 {
-	U32 idx = computeTileClusterIndexFragCoord(fragCoord.xy, consts.m_tileCounts.x);
+	U32 idx = computeTileClusterIndexFragCoord(coord, consts.m_tileCounts.x);
 	const Cluster tileCluster = SBUFF(clusters, idx);
 
-	idx = computeZSplitClusterIndex(fragCoord.z, consts.m_zSplitMagic.x, consts.m_zSplitMagic.y);
+	idx = computeZSplitClusterIndex(depth, consts.m_zSplitMagic.x, consts.m_zSplitMagic.y);
 	idx += consts.m_tileCounts.x * consts.m_tileCounts.y;
 	idx = min(idx, consts.m_clusterCount); // The "consts.m_clusterCount" is intentional. There is a hiden cluster at the end that is all zeroes
 	const Cluster zCluster = SBUFF(clusters, idx);
