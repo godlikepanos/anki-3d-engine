@@ -3,6 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// TODO:
+// - subsurface
+// - less complex p_hat
+
 #include <AnKi/Shaders/ReSTIR.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -15,6 +19,7 @@
 #pragma anki technique SampleReuse comp
 
 constexpr F32 kDirLightMaxRayT = 1000.0; // TODO
+constexpr F32 kRayBias = 0.01; // Bias to apply to various ray tracing operations
 
 ConstantBuffer<GlobalRendererConstants> g_globalConsts : register(b0);
 
@@ -63,6 +68,12 @@ DIReservoir unpackReservoir(UVec3 p)
 	r.m_sampleCount = F32(p.z >> 16u);
 	r.m_weight = f16tof32(p.z & 0xFFFFu);
 
+	if(lightIdx == kDISunLightIndex)
+	{
+		// Normalize the direction
+		r.m_sample.m_pointOnLight = normalize(r.m_sample.m_pointOnLight);
+	}
+
 	return r;
 }
 
@@ -71,7 +82,7 @@ F32 visibility(Vec3 rayOrigin, Vec3 rayDir, F32 tMax)
 {
 	RayDesc ray;
 	ray.Origin = rayOrigin;
-	ray.TMin = 0.01;
+	ray.TMin = kRayBias;
 	ray.Direction = rayDir;
 	ray.TMax = tMax;
 
@@ -125,6 +136,23 @@ F32 computePHat(DirectionalLight dirLight, GbufferInfo<F32> gbuffer, Vec3 surfac
 	return computeLuminance(LoNoVis);
 }
 
+F32 computePHat(DIReservoir reservoir, GbufferInfo<F32> gbuffer, Vec3 surfacePosW)
+{
+	F32 pHat;
+	const Bool isDirectional = reservoir.m_sample.m_gpuSceneArrayIndex == kMaxU32;
+	if(isDirectional)
+	{
+		pHat = computePHat(g_globalConsts.m_directionalLight, gbuffer, surfacePosW, reservoir.m_sample.m_pointOnLight);
+	}
+	else
+	{
+		const GpuSceneLight light = SBUFF(g_gpuSceneLights, reservoir.m_sample.m_gpuSceneArrayIndex);
+		pHat = computePHat(light, gbuffer, surfacePosW, reservoir.m_sample.m_pointOnLight + light.m_position);
+	}
+
+	return pHat;
+}
+
 // ===========================================================================
 // Ground Truth                                                              =
 // ===========================================================================
@@ -156,7 +184,7 @@ Vec3 directLighting(UVec2 coord)
 	unpackGBufferNoVelocity<F32>(TEX(g_gbuffer0Tex, coord), TEX(g_gbuffer1Tex, coord), TEX(g_gbuffer2Tex, coord), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
-	const Vec3 biasedPosW = worldPos + viewDir * 0.01;
+	const Vec3 biasedPosW = worldPos + viewDir * kRayBias;
 
 	Vec3 Lo = gbuffer.m_emission; // Outgoing radiance (to the eye)
 
@@ -254,7 +282,7 @@ Vec3 directLighting(UVec2 coord)
 			// Compute a tMax that pushes the ray on the edge of the sphere of light
 			const F32 ct = dot(l, dirToCenter);
 			const F32 tMax = distToCenter * ct - sqrt(max(0.0, square(sourceRadius) - square(distToCenter) * (1.0 - square(ct))));
-			const F32 vis = visibility(biasedPosW, l, max(0.0, tMax - 0.01));
+			const F32 vis = visibility(biasedPosW, l, tMax);
 
 			sum += brdf * Le * (geom * vis * spot);
 		}
@@ -445,7 +473,7 @@ Vec3 computeSample(GbufferInfo<F32> gbuffer, Vec3 surfacePosW, DIReservoir reser
 		rayT = length(surfToLight);
 		l = surfToLight / rayT;
 		emission = light.m_luminousIntensity;
-		atten = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, surfToLight);
+		atten = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, light.m_position - surfacePosW);
 		atten *= (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
 	}
 
@@ -498,7 +526,7 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir
 	const Vec4 worldPos4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - worldPos);
-	const Vec3 biasedSurfacePosW = worldPos + viewDir * 0.01;
+	const Vec3 biasedSurfacePosW = worldPos + viewDir * kRayBias;
 
 	RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
 
@@ -515,7 +543,7 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir
 		if(isDirectional)
 		{
 			rayT = kDirLightMaxRayT;
-			rayDir = normalize(crntReservoir.m_sample.m_pointOnLight);
+			rayDir = crntReservoir.m_sample.m_pointOnLight;
 		}
 		else
 		{
@@ -543,17 +571,7 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir
 		// makes the fresh candidate lose every time and the lighting stops reacting to anything that moves
 		prevReservoir.m_sampleCount = min(prevReservoir.m_sampleCount, crntReservoir.m_sampleCount * 20.0);
 
-		F32 prevPHat;
-		const Bool isDirectional = prevReservoir.m_sample.m_gpuSceneArrayIndex == kMaxU32;
-		if(isDirectional)
-		{
-			prevPHat = computePHat(g_globalConsts.m_directionalLight, gbuffer, worldPos, prevReservoir.m_sample.m_pointOnLight);
-		}
-		else
-		{
-			const GpuSceneLight light = SBUFF(g_gpuSceneLights, prevReservoir.m_sample.m_gpuSceneArrayIndex);
-			prevPHat = computePHat(light, gbuffer, worldPos, prevReservoir.m_sample.m_pointOnLight);
-		}
+		const F32 prevPHat = computePHat(prevReservoir, gbuffer, worldPos);
 
 		reservoir = combineReservoirs(crntReservoir, prevReservoir, crntPHat, prevPHat, randg);
 	}
