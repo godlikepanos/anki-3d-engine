@@ -66,7 +66,7 @@ void finalizeReservoir(inout Reservoir<T> r, F32 pHatq, F32 misWeight)
 	r.m_weight = (pHatq > 0.0) ? (misWeight * r.m_weightSum / pHatq) : 0.0;
 }
 
-// This is Algorithm 3 line 8 and Algorithm 4 line 6
+// Equation (6). In Algorithm 3 line 8 and Algorithm 4 line 6
 template<typename T>
 void finalizeReservoirBiased(inout Reservoir<T> r, F32 pHatq)
 {
@@ -76,11 +76,12 @@ void finalizeReservoirBiased(inout Reservoir<T> r, F32 pHatq)
 // Algorithm 4 but only for 2 reservoirs
 // pHatqr1: It's the p_hat of the 1st reservoir's sample
 // pHatqr2: It's the p_hat of the 2nd reservoir's sample
+// pHatqs: This is the pHat of the selected candidate
 template<typename T>
-Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F32 pHatqr2, inout RandomGenerator randg)
+Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F32 pHatqr2, out F32 pHatqs, inout RandomGenerator randg)
 {
 	Reservoir<T> s = (Reservoir<T>)0;
-	F32 pHatqs = 0.0; // The p^q(s.y)
+	pHatqs = 0.0; // The p^q(s.y)
 
 	if(updateReservoir(s, r1.m_sample, pHatqr1 * r1.m_weight * r1.m_sampleCount, randg))
 	{

@@ -10,6 +10,8 @@
 namespace anki {
 
 ANKI_CVAR(BoolCVar, Render, ReSTIRDI, false, "Enable ReSTIR direct lighting")
+ANKI_CVAR2(NumericCVar<U32>, Render, ReSTIRDI, SpatialReuseSampleCount, 4, 1, 64, "Samples to gather in spatial re-use")
+ANKI_CVAR2(NumericCVar<U32>, Render, ReSTIRDI, SpatialReuseSampleRadius, 16, 1, 64, "Radius (in pixels) for the spatial re-use filter")
 
 // ReSTIR direct lighting
 class ReSTIRDI : public RendererObject
@@ -39,11 +41,11 @@ public:
 
 private:
 	RendererShaderProgram m_groundTruthGrProg;
-	RendererShaderProgram m_genInitialCandidatesGrProg;
-	RendererShaderProgram m_sampleReuseGrProg;
+	RendererShaderProgram m_phase1GrProg;
+	RendererShaderProgram m_phase2GrProg;
 
 	RenderTargetDesc m_shadedPixelsRtDesc;
-	RenderTargetDesc m_initialCandidatesRtDesc;
+	RenderTargetDesc m_phase1ReservoirsRtDesc; // Transient. Phase 2 is the only consumer
 	Array<RendererTexture, 2> m_reservoirTextures;
 	Bool m_texturesFirstImport = true;
 

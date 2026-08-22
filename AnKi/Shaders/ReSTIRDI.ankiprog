@@ -13,10 +13,11 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
+#include <AnKi/Shaders/BilateralFilter.hlsl>
 
 #pragma anki technique GroundTruth comp
-#pragma anki technique GenInitialCandidates comp
-#pragma anki technique SampleReuse comp
+#pragma anki technique Phase1 comp
+#pragma anki technique Phase2 comp
 
 constexpr F32 kDirLightMaxRayT = 1000.0; // TODO
 constexpr F32 kRayBias = 0.01; // Bias to apply to various ray tracing operations
@@ -46,18 +47,24 @@ constexpr U32 kDISunLightIndex = 0xFFFFu; // The 16bit form of the kMaxU32 the s
 
 // m_weightSum is not stored. It's only meaningful while the reservoir is being built. Everything that reads a stored reservoir goes through
 // combineReservoirs() which only touches m_weight and m_sampleCount
-UVec3 packReservoir(DIReservoir r)
+UVec3 packReservoir(DIReservoir r, Bool extraBool)
 {
 	UVec3 o;
 	o.x = (asuint(f32tof16(r.m_sample.m_pointOnLight.x)) << 16u) | asuint(f32tof16(r.m_sample.m_pointOnLight.y));
 	o.y = (r.m_sample.m_gpuSceneArrayIndex << 16u) | asuint(f32tof16(r.m_sample.m_pointOnLight.z));
-	const F32 weight = min(r.m_weight, F32(kMaxF16)); // Can't leave it unbounded
-	o.z = (U32(r.m_sampleCount) << 16u) | asuint(f32tof16(weight));
+
+	const F32 weight = clamp(r.m_weight, 0.0, F32(kMaxF16)); // Can't leave it unbounded or negative (because of the packing bellow)
+
+	// M gets 16 bits. Phase 2 sums the neighbours' M so it can pass that. Saturating loses nothing because Phase 1's temporal clamp discards
+	// anything above 20x the fresh candidate count when it reads this back
+	const F32 sampleCount = min(r.m_sampleCount, 65535.0);
+
+	o.z = (U32(sampleCount) << 16u) | (asuint(f32tof16(weight)) << 1u) | (!!extraBool);
 
 	return o;
 }
 
-DIReservoir unpackReservoir(UVec3 p)
+DIReservoir unpackReservoir(UVec3 p, out Bool extraBool)
 {
 	const U32 lightIdx = p.y >> 16u;
 
@@ -66,7 +73,8 @@ DIReservoir unpackReservoir(UVec3 p)
 	r.m_sample.m_pointOnLight = Vec3(f16tof32(p.x >> 16u), f16tof32(p.x & 0xFFFFu), f16tof32(p.y & 0xFFFFu));
 	r.m_weightSum = 0.0; // Not stored. See packReservoir
 	r.m_sampleCount = F32(p.z >> 16u);
-	r.m_weight = f16tof32(p.z & 0xFFFFu);
+	r.m_weight = f16tof32((p.z & 0xFFFFu) >> 1u);
+	extraBool = p.z & 1u;
 
 	if(lightIdx == kDISunLightIndex)
 	{
@@ -75,6 +83,17 @@ DIReservoir unpackReservoir(UVec3 p)
 	}
 
 	return r;
+}
+
+DIReservoir unpackReservoir(UVec3 p)
+{
+	Bool unused;
+	return unpackReservoir(p, unused);
+}
+
+Bool isSameSample(DIReservoir a, DIReservoir b)
+{
+	return a.m_sample.m_gpuSceneArrayIndex == b.m_sample.m_gpuSceneArrayIndex && all(a.m_sample.m_pointOnLight == b.m_sample.m_pointOnLight);
 }
 
 // Computes the visibility term
@@ -306,9 +325,12 @@ Vec3 directLighting(UVec2 coord)
 #endif
 
 // ===========================================================================
-// GenInitialCandidates                                                      =
+// Phase 1                                                                   =
 // ===========================================================================
-#if ANKI_TECHNIQUE_GenInitialCandidates
+#if ANKI_TECHNIQUE_Phase1
+
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t8);
+Texture2D<UVec4> g_prevReservoirsTex : register(t9);
 
 RWTexture2D<UVec4> g_reservoirsUav : register(u0);
 
@@ -389,7 +411,7 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 	return reservoir;
 }
 
-// Implements algorithm 5 lines 4 - 5
+// Implements algorithm 5 lines 4 - 14
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
@@ -402,8 +424,12 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 
 	F32 phat = 0.0;
 	DIReservoir r;
+	RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
 
+	// Lines 4 - 5
 	const F32 depth = TEX(g_depthTex, coord);
+	Vec3 surfacePosW = 0.0;
+	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
 	if(depth == 1.0)
 	{
 		r = (DIReservoir)0;
@@ -413,38 +439,93 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 		const Vec2 uv = (coord + 0.5) / viewportSize;
 		const Vec2 ndc = uvToNdc(uv);
 		const Vec4 surfacePosW4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
-		const Vec3 surfacePosW = surfacePosW4.xyz / surfacePosW4.w;
+		surfacePosW = surfacePosW4.xyz / surfacePosW4.w;
 
 		const Cluster cluster = getClusterFragCoord(g_clusters, g_globalConsts.m_clusterer, coord, depth);
 
-		RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
-
-		GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
 		unpackGBufferNoVelocity<F32>(TEX(g_gbuffer0Tex, coord), TEX(g_gbuffer1Tex, coord), TEX(g_gbuffer2Tex, coord), gbuffer);
 		gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 		r = RIS(cluster, surfacePosW, gbuffer, randg, phat);
 	}
 
-	const UVec3 packedReservoir = packReservoir(r);
-	TEX(g_reservoirsUav, coord) = UVec4(packedReservoir, asuint(phat));
+	// Visibility of initial candidates. Lines 7 - 9
+	F32 vis = 0.0;
+	if(r.m_weight > kEpsilonF32)
+	{
+		const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - surfacePosW);
+		const Vec3 biasedSurfacePosW = surfacePosW + viewDir * kRayBias;
+		const Bool isDirectional = r.m_sample.m_gpuSceneArrayIndex == kMaxU32;
+		F32 rayT;
+		Vec3 rayDir;
+		if(isDirectional)
+		{
+			rayT = kDirLightMaxRayT;
+			rayDir = r.m_sample.m_pointOnLight;
+		}
+		else
+		{
+			const GpuSceneLight light = SBUFF(g_gpuSceneLights, r.m_sample.m_gpuSceneArrayIndex);
+			const Vec3 surfaceToHitPoint = (r.m_sample.m_pointOnLight + light.m_position) - biasedSurfacePosW;
+			rayT = length(surfaceToHitPoint);
+			rayDir = surfaceToHitPoint / rayT;
+		}
+
+		vis = visibility(biasedSurfacePosW, rayDir, rayT);
+		r.m_weight *= vis;
+	}
+
+	// Temporal re-use. Lines 12 - 14
+	const DIReservoir initialReservoir = r;
+	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, coord);
+	const Bool disocclusion = all(mv == 1.0);
+	if(!disocclusion)
+	{
+		const Vec2 uv = (coord + 0.5) / viewportSize;
+		const Vec2 historyUv = uv + mv;
+		const UVec2 historyCoord = clamp(historyUv * viewportSize, 0.0, viewportSize - 1.0);
+		DIReservoir prevReservoir = unpackReservoir(TEX(g_prevReservoirsTex, historyCoord));
+
+		// Clamp the history's M to 20x the current frame's, like the paper does. The history's resampling weight is pHat * W * M, so an unbounded M
+		// makes the fresh candidate lose every time and the lighting stops reacting to anything that moves
+		prevReservoir.m_sampleCount = min(prevReservoir.m_sampleCount, r.m_sampleCount * 20.0);
+
+		const F32 prevPHat = computePHat(prevReservoir, gbuffer, surfacePosW);
+
+		r = combineReservoirs(r, prevReservoir, phat, prevPHat, phat, randg);
+	}
+
+	// Write result
+	const Bool isInitialCandidate = isSameSample(r, initialReservoir);
+	const Bool visKnown = isInitialCandidate;
+	const UVec3 packedReservoir = packReservoir(r, vis != 0.0);
+	U32 pHatAndVisibility = asuint(abs(phat));
+	pHatAndVisibility |= U32(visKnown) << 31u; // Encode if the visibility is known in the sign bit
+	TEX(g_reservoirsUav, coord) = UVec4(packedReservoir, pHatAndVisibility);
 }
 #endif
 
 // ===========================================================================
-// Sample Reuse                                                              =
+// Phase 2                                                                   =
 // ===========================================================================
-#if ANKI_TECHNIQUE_SampleReuse
+#if ANKI_TECHNIQUE_Phase2
 
-Texture2D<UVec4> g_initialReservoirsTex : register(t8);
-Texture2D<UVec4> g_prevReservoirsTex : register(t9);
-Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t10);
+Texture2D<UVec4> g_inReservoirsTex : register(t8);
 
-RWTexture2D<UVec4> g_reservoirUav : register(u0);
-RWTexture2D<Vec4> g_sampleUav : register(u1);
+RWTexture2D<UVec4> g_outReservoirsUav : register(u0);
+RWTexture2D<Vec4> g_samplesUav : register(u1);
+
+struct Consts
+{
+	U32 m_spatialSampleCount;
+	F32 m_spatialRadius; // In pixels
+	U32 m_padding1;
+	U32 m_padding2;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 // Algorithm 3 lines 10, 11
-Vec3 computeSample(GbufferInfo<F32> gbuffer, Vec3 surfacePosW, DIReservoir reservoir, Bool isInitialCandidate, F32 visInitialCandidate, Vec3 viewDir,
+Vec3 computeSample(GbufferInfo<F32> gbuffer, Vec3 surfacePosW, DIReservoir reservoir, Bool visibilityKnown, F32 visibility_, Vec3 viewDir,
 				   Vec3 biasedSurfacePosW)
 {
 	if(reservoir.m_weight <= kEpsilonF32)
@@ -486,9 +567,9 @@ Vec3 computeSample(GbufferInfo<F32> gbuffer, Vec3 surfacePosW, DIReservoir reser
 
 	// Compute vis
 	F32 vis;
-	if(isInitialCandidate)
+	if(visibilityKnown)
 	{
-		vis = visInitialCandidate;
+		vis = visibility_;
 	}
 	else
 	{
@@ -506,10 +587,10 @@ Vec3 computeSample(GbufferInfo<F32> gbuffer, Vec3 surfacePosW, DIReservoir reser
 	return Lo * reservoir.m_weight;
 }
 
-// Implements algorithm 5
-Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir)
+// Implements algorithm 5 lines 16 - 23
+Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir r)
 {
-	reservoir = (DIReservoir)0;
+	r = (DIReservoir)0;
 
 	const F32 depth = TEX(g_depthTex, coord);
 	if(depth == 1.0)
@@ -530,60 +611,81 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir
 
 	RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
 
-	// Read initial candidate and do line 8
-	const UVec4 packedReservoirAndPhat = TEX(g_initialReservoirsTex, coord);
-	const F32 crntPHat = asfloat(packedReservoirAndPhat.w);
-	DIReservoir crntReservoir = unpackReservoir(packedReservoirAndPhat.xyz);
-	F32 visInitialCandidate = 0.0;
-	if(crntReservoir.m_weight > kEpsilonF32)
+	// Read reservoir so far
+	const UVec4 packedReservoirAndPhat = TEX(g_inReservoirsTex, coord);
+	const F32 initialPHat = abs(asfloat(packedReservoirAndPhat.w));
+	Bool visKnown = !!(packedReservoirAndPhat.w & 0x80000000u);
+	Bool bVis;
+	const DIReservoir initialReservoir = unpackReservoir(packedReservoirAndPhat.xyz, bVis);
+
+	// Spatial re-use. Lines 16 - 20
 	{
-		const Bool isDirectional = crntReservoir.m_sample.m_gpuSceneArrayIndex == kMaxU32;
-		F32 rayT;
-		Vec3 rayDir;
-		if(isDirectional)
+		r = initialReservoir;
+		F32 pHat = initialPHat;
+
+		// unpackReservoir() doesn't restore w_sum but the spatial loop accumulates onto it. Rebuild it by inverting W = (1/M) * w_sum / pHat
+		r.m_weightSum = pHat * r.m_weight * r.m_sampleCount;
+
+		F32 totalSampleCount = r.m_sampleCount;
+
+		const Vec4 unprojParams = g_globalConsts.m_matrices.m_unprojectionParameters;
+		const F32 viewZ = unprojParams.z / (unprojParams.w + depth);
+		constexpr F32 kSpatialMinNormalCos = cos(toRad(25.0)); // the paper's threshold
+		constexpr F32 kSpatialMaxDepthDiff = 0.1; // 10% of the view depth, the paper's threshold
+
+		for(U32 i = 0; i < g_consts.m_spatialSampleCount; ++i)
 		{
-			rayT = kDirLightMaxRayT;
-			rayDir = crntReservoir.m_sample.m_pointOnLight;
+			// Uniform point in a disk. The sqrt is what keeps it uniform instead of clustered in the middle
+			const F32 theta = k2Pi * rand(randg);
+			const F32 radius = g_consts.m_spatialRadius * sqrt(rand(randg));
+			const IVec2 offset = IVec2(round(Vec2(cos(theta), sin(theta)) * radius));
+			const UVec2 neighbourCoord = clamp(IVec2(coord) + offset, 0, IVec2(viewportSize) - 1);
+
+			if(all(coord == neighbourCoord))
+			{
+				continue;
+			}
+
+			const F32 neighbourDepth = TEX(g_depthTex, neighbourCoord);
+			const F32 neighbourViewZ = unprojParams.z / (unprojParams.w + neighbourDepth);
+			if(abs(neighbourViewZ - viewZ) > abs(viewZ) * kSpatialMaxDepthDiff)
+			{
+				continue;
+			}
+
+			const Vec3 neighbourNormal = unpackNormalFromGBuffer<F32>(TEX(g_gbuffer2Tex, neighbourCoord));
+			if(dot(neighbourNormal, gbuffer.m_normal) < kSpatialMinNormalCos)
+			{
+				continue;
+			}
+
+			DIReservoir neighbourReservoir = unpackReservoir(TEX(g_inReservoirsTex, neighbourCoord));
+			const F32 neighbourPHat = computePHat(neighbourReservoir, gbuffer, worldPos);
+
+			if(updateReservoir(r, neighbourReservoir.m_sample, neighbourPHat * neighbourReservoir.m_weight * neighbourReservoir.m_sampleCount, randg))
+			{
+				pHat = neighbourPHat;
+			}
+
+			totalSampleCount += neighbourReservoir.m_sampleCount;
 		}
-		else
+
+		r.m_sampleCount = totalSampleCount;
+		finalizeReservoirBiased(r, pHat);
+
+		// Boiling filter from "Wyman & Panteleev, HPG 2021"
+		const F32 waveMeanWeight = WaveActiveSum(r.m_weight) / F32(max(1u, WaveActiveCountBits(r.m_weight > 0.0)));
+		const F32 threshold = 10.0; // Lower is more aggressive
+		if(r.m_weight > waveMeanWeight * threshold)
 		{
-			const GpuSceneLight light = SBUFF(g_gpuSceneLights, crntReservoir.m_sample.m_gpuSceneArrayIndex);
-			const Vec3 surfaceToHitPoint = (crntReservoir.m_sample.m_pointOnLight + light.m_position) - biasedSurfacePosW;
-			rayT = length(surfaceToHitPoint);
-			rayDir = surfaceToHitPoint / rayT;
+			r = (DIReservoir)0;
 		}
-		visInitialCandidate = visibility(biasedSurfacePosW, rayDir, rayT);
-		crntReservoir.m_weight *= visInitialCandidate;
-	}
-
-	// Temporal re-use. Lines 12 - 14
-	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, coord);
-	const Bool disocclusion = all(mv == 1.0);
-
-	if(!disocclusion)
-	{
-		const Vec2 uv = (coord + 0.5) / viewportSize;
-		const Vec2 historyUv = uv + mv;
-		const UVec2 historyCoord = clamp(historyUv * viewportSize, 0.0, viewportSize - 1);
-		DIReservoir prevReservoir = unpackReservoir(TEX(g_prevReservoirsTex, historyCoord));
-
-		// Clamp the history's M to 20x the current frame's, like the paper does. The history's resampling weight is pHat * W * M, so an unbounded M
-		// makes the fresh candidate lose every time and the lighting stops reacting to anything that moves
-		prevReservoir.m_sampleCount = min(prevReservoir.m_sampleCount, crntReservoir.m_sampleCount * 20.0);
-
-		const F32 prevPHat = computePHat(prevReservoir, gbuffer, worldPos);
-
-		reservoir = combineReservoirs(crntReservoir, prevReservoir, crntPHat, prevPHat, randg);
-	}
-	else
-	{
-		reservoir = crntReservoir;
 	}
 
 	// Compute pixel color. Line 23
-	const Bool isInitialCandidate = reservoir.m_sample.m_gpuSceneArrayIndex == crntReservoir.m_sample.m_gpuSceneArrayIndex
-									&& all(reservoir.m_sample.m_pointOnLight == crntReservoir.m_sample.m_pointOnLight);
-	const Vec3 color = computeSample(gbuffer, worldPos, reservoir, isInitialCandidate, visInitialCandidate, viewDir, biasedSurfacePosW);
+	const Bool isInitialCandidate = isSameSample(r, initialReservoir);
+	visKnown = visKnown && isInitialCandidate;
+	const Vec3 color = computeSample(gbuffer, worldPos, r, visKnown, bVis, viewDir, biasedSurfacePosW);
 
 	return color;
 }
@@ -591,7 +693,7 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
 	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	const UVec2 viewportSize = getDimensions(g_initialReservoirsTex);
+	const UVec2 viewportSize = getDimensions(g_inReservoirsTex);
 
 	if(any(coord >= viewportSize))
 	{
@@ -601,7 +703,7 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir reservoir
 	DIReservoir reservoir;
 	const Vec3 color = resampleAndShade(coord, viewportSize, reservoir);
 
-	TEX(g_reservoirUav, coord) = UVec4(packReservoir(reservoir), 0u);
-	TEX(g_sampleUav, coord) = Vec4(color, 0.0);
+	TEX(g_outReservoirsUav, coord) = UVec4(packReservoir(reservoir, false), 0u);
+	TEX(g_samplesUav, coord) = Vec4(color, 0.0);
 }
 #endif
