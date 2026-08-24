@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator INDIRECT_DIFFUSE_TEX 0 1
+#pragma anki mutator DIRECT_LIGHTING_TEX 0 1
 
 #pragma anki technique vert pixel
 
@@ -35,6 +36,7 @@ Texture2D<Vec4> g_resolvedShadowsTex : register(t7);
 Texture2D<Vec4> g_ssaoTex : register(t8);
 Texture2D<Vec4> g_reflectionsTex : register(t9);
 Texture2D<Vec4> g_integrationLut : register(t10);
+Texture2D<Vec4> g_directLightingTex : register(t11);
 
 // Common code for lighting
 #	define LIGHTING_COMMON_BRDF() \
@@ -80,7 +82,11 @@ Vec4 main(VertOut input) : SV_TARGET0
 	gbuffer.m_diffuse *= ssao;
 
 	// Ambient and emissive color
+#	if DIRECT_LIGHTING_TEX
+	Vec3 outColor = 0.0;
+#	else
 	Vec3 outColor = gbuffer.m_emission;
+#	endif
 
 	// Indirect diffuse
 #	if INDIRECT_DIFFUSE_TEX
@@ -103,6 +109,9 @@ Vec4 main(VertOut input) : SV_TARGET0
 		outColor += refl;
 	}
 
+#	if DIRECT_LIGHTING_TEX
+	outColor += g_directLightingTex[coord];
+#	else
 	// SM
 	const Vec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
 	U32 resolvedShadowsLayer = 0u;
@@ -149,6 +158,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 		outColor += (diffC + specC) * light.m_luminousIntensity * kPreExposure * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
+#	endif
 
 	if(any(isnan(outColor)) || any(isinf(outColor)))
 	{

@@ -18,6 +18,7 @@
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/ReSTIRDI.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -29,9 +30,10 @@ Error LightShading::init()
 {
 	{
 		// Load shaders and programs
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShading.ankiprogbin",
-									 {{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseClipmapsEnabled()}}, m_lightShading.m_prog,
-									 m_lightShading.m_grProg));
+		ANKI_CHECK(loadShaderProgram(
+			"ShaderBinaries/LightShading.ankiprogbin",
+			{{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseClipmapsEnabled()}, {"DIRECT_LIGHTING_TEX", getRenderer().isReSTIRDIEnabled()}},
+			m_lightShading.m_prog, m_lightShading.m_grProg));
 
 		// Create RT descr
 		const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -102,6 +104,10 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindSrv(8, 0, getSsao().getRt());
 		rgraphCtx.bindSrv(9, 0, getReflections().getRt());
 		cmdb.bindSrv(10, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
+		if(isReSTIRDIEnabled())
+		{
+			rgraphCtx.bindSrv(11, 0, getReSTIRDI().getRt());
+		}
 
 		// Draw
 		drawQuad(cmdb);
@@ -268,6 +274,11 @@ void LightShading::populateRenderGraph()
 	if(getRenderer().isIndirectDiffuseClipmapsEnabled())
 	{
 		pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance, TextureUsageBit::kSrvPixel);
+	}
+
+	if(getRenderer().isReSTIRDIEnabled())
+	{
+		pass.newTextureDependency(getReSTIRDI().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
 	// Fog

@@ -30,6 +30,7 @@ ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracing
 							 && (g_cvarRenderDbgRtMaterialFetch || g_cvarRenderReflectionsRt || g_cvarRenderIdc || g_cvarRenderReSTIRDI))
+ANKI_RENDERER_OBJECT_DEF(ReSTIRDI, reSTIRDI, GrManager::getSingleton().getDeviceCapabilities().m_rayTracing&& g_cvarRenderReSTIRDI)
 ANKI_RENDERER_OBJECT_DEF(LightShading, lightShading, 1)
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalUpscaler, temporalUpscaler, 1)
@@ -43,7 +44,6 @@ ANKI_RENDERER_OBJECT_DEF(RtMaterialFetchDbg, rtMaterialFetchDbg,
 ANKI_RENDERER_OBJECT_DEF(Reflections, reflections, 1)
 ANKI_RENDERER_OBJECT_DEF(GpuParticles, gpuParticles, 1)
 ANKI_RENDERER_OBJECT_DEF(ScreenshotPass, screenshotPass, 1)
-ANKI_RENDERER_OBJECT_DEF(ReSTIRDI, reSTIRDI, GrManager::getSingleton().getDeviceCapabilities().m_rayTracing&& g_cvarRenderReSTIRDI)
 
 // Util objects
 ANKI_RENDERER_OBJECT_DEF(RenderableDrawer, drawer, 1)

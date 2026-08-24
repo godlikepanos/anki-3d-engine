@@ -83,8 +83,21 @@ Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F3
 	Reservoir<T> s = (Reservoir<T>)0;
 	pHatqs = 0.0; // The p^q(s.y)
 
-	if(updateReservoir(s, r1.m_sample, pHatqr1 * r1.m_weight * r1.m_sampleCount, randg))
+	constexpr Bool optimal = true;
+	if(!optimal)
 	{
+		// This is the original clean code
+		if(updateReservoir(s, r1.m_sample, pHatqr1 * r1.m_weight * r1.m_sampleCount, randg))
+		{
+			pHatqs = pHatqr1;
+		}
+	}
+	else
+	{
+		// This is the optimal version of the above code
+		s.m_weightSum = pHatqr1 * r1.m_weight * r1.m_sampleCount;
+		s.m_sampleCount = 1.0;
+		s.m_sample = r1.m_sample;
 		pHatqs = pHatqr1;
 	}
 

@@ -157,19 +157,41 @@ F32 computePHat(DirectionalLight dirLight, GbufferInfo<F32> gbuffer, Vec3 surfac
 
 F32 computePHat(DIReservoir reservoir, GbufferInfo<F32> gbuffer, Vec3 surfacePosW)
 {
-	F32 pHat;
 	const Bool isDirectional = reservoir.m_sample.m_gpuSceneArrayIndex == kMaxU32;
+	Vec3 l;
+	Vec3 lightEmission;
+	F32 attenuationAndSpot;
 	if(isDirectional)
 	{
-		pHat = computePHat(g_globalConsts.m_directionalLight, gbuffer, surfacePosW, reservoir.m_sample.m_pointOnLight);
+		l = reservoir.m_sample.m_pointOnLight;
+		lightEmission = g_globalConsts.m_directionalLight.m_illuminance;
+		attenuationAndSpot = 1.0;
 	}
 	else
 	{
 		const GpuSceneLight light = SBUFF(g_gpuSceneLights, reservoir.m_sample.m_gpuSceneArrayIndex);
-		pHat = computePHat(light, gbuffer, surfacePosW, reservoir.m_sample.m_pointOnLight + light.m_position);
+
+		const Vec3 pointOnLight = reservoir.m_sample.m_pointOnLight + light.m_position;
+		const Vec3 frag2Light = pointOnLight - surfacePosW;
+		l = normalize(frag2Light);
+
+		const F32 att = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, light.m_position - surfacePosW);
+		const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+		attenuationAndSpot = att * spot;
+
+		lightEmission = light.m_luminousIntensity;
 	}
 
-	return pHat;
+	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - surfacePosW);
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+	const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
+	const Vec3 brdf = diffC + specC;
+
+	const F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
+
+	const Vec3 LoNoVis = brdf * lightEmission * (kPreExposure * lambert * attenuationAndSpot);
+
+	return computeLuminance(LoNoVis);
 }
 
 // ===========================================================================
@@ -687,7 +709,7 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir r)
 	visKnown = visKnown && isInitialCandidate;
 	const Vec3 color = computeSample(gbuffer, worldPos, r, visKnown, bVis, viewDir, biasedSurfacePosW);
 
-	return color;
+	return color + gbuffer.m_emission;
 }
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
