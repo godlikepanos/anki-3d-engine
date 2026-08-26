@@ -1,0 +1,439 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Contains the shaders used by the editor
+
+#pragma anki technique RenderableBoxes vert pixel
+
+#pragma anki technique BilboardsRenderMain vert pixel
+#pragma anki technique BilboardsRenderPicking vert pixel
+
+#pragma anki technique GizmosRenderMain vert pixel
+#pragma anki technique GizmosRenderPicking vert pixel
+
+#pragma anki technique Lines vert pixel
+
+#pragma anki technique RenderablesPreparePicking comp
+#pragma anki technique RenderablesRenderPicking vert pixel
+
+// Pick one UUID at mouse position
+#pragma anki technique ReadPickingBuffer comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+
+constexpr F32 kBillboardScale = 0.25f;
+
+// ===========================================================================
+// RenderableBoxes                                                           =
+// ===========================================================================
+#if ANKI_TECHNIQUE_RenderableBoxes
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t1);
+StructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleRenderableBoundingVolumeIndices : register(t2);
+
+Texture2D g_depthRt : register(t0);
+
+struct Constants
+{
+	Vec4 m_color;
+	Mat4 m_viewProjMat;
+
+	UVec3 m_padding;
+	U32 m_depthFailureVisualization;
+};
+ANKI_FAST_CONSTANTS(Constants, g_consts)
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+};
+
+struct VertIn
+{
+	Vec3 m_position : POSITION;
+	U32 m_svInstanceId : SV_INSTANCEID;
+};
+
+#	if ANKI_VERTEX_SHADER
+VertOut main(VertIn input)
+{
+	VertOut output;
+
+	const U32 bvolumeCount = SBUFF(g_visibleRenderableBoundingVolumeIndices, 0);
+
+	if(input.m_svInstanceId < bvolumeCount)
+	{
+		const U32 bvolIdx = SBUFF(g_visibleRenderableBoundingVolumeIndices, input.m_svInstanceId + 1) & ((1u << 29u) - 1u);
+		const GpuSceneRenderableBoundingVolume bvol = SBUFF(g_renderableBoundingVolumes, bvolIdx);
+		const Vec3 boxCenter = (bvol.m_aabbMin + bvol.m_aabbMax) * 0.5f;
+		Vec3 localPos = input.m_position * (bvol.m_aabbMax - boxCenter) + boxCenter;
+		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(localPos, 1.0));
+	}
+	else
+	{
+		// Skip this instance by making the vertex degenerate
+		output.m_svPosition = 0.0f;
+	}
+
+	return output;
+}
+#	endif // ANKI_VERTEX_SHADER
+
+#	if ANKI_PIXEL_SHADER
+Vec4 main(VertOut input) : SV_TARGET0
+{
+	Vec4 col = g_consts.m_color;
+
+	if(g_consts.m_depthFailureVisualization)
+	{
+		UVec2 texSize;
+		g_depthRt.GetDimensions(texSize.x, texSize.y);
+		const F32 depthRef = TEX(g_depthRt, min(UVec2(input.m_svPosition.xy), texSize - 1u)).r;
+		const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+		if(depthTestFailed)
+		{
+			col.xyz *= 0.4;
+		}
+	}
+
+	// Write the color
+	return col;
+}
+#	endif // ANKI_PIXEL_SHADER
+#endif // ANKI_TECHNIQUE_RenderableBoxes
+
+// ===========================================================================
+// BilboardsRenderMain & BilboardsRenderPicking                              =
+// ===========================================================================
+// Draws a single camera facing quad. Everything that is object specific comes from the constants
+#if ANKI_TECHNIQUE_BilboardsRenderMain || ANKI_TECHNIQUE_BilboardsRenderPicking
+
+struct Constants
+{
+	Mat4 m_viewProjMat;
+	Mat3x4 m_camTrf;
+
+	Vec3 m_worldPosition;
+	U32 m_sceneNodeUuid;
+
+	Vec3 m_colorScale;
+	U32 m_depthFailureVisualization;
+};
+
+ANKI_FAST_CONSTANTS(Constants, g_consts)
+
+#	if ANKI_TECHNIQUE_BilboardsRenderMain
+Texture2D g_depthRt : register(t0);
+#	endif
+Texture2D<Vec4> g_tex : register(t1);
+
+SamplerState g_trilinearRepeatSampler : register(s0);
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+	Vec2 m_uv : TEXCOORD;
+};
+
+#	if ANKI_VERTEX_SHADER
+VertOut main(U32 svVertexId : SV_VERTEXID)
+{
+	VertOut output;
+
+	output.m_uv = Vec2(svVertexId & 1u, ((svVertexId + 1u) / 3u) & 1u);
+
+	// Rotate towards the camera and apply the translation
+	const Vec3 worldPos = mul(g_consts.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + g_consts.m_worldPosition;
+
+	output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(worldPos, 1.0));
+
+	return output;
+}
+#	endif // ANKI_VERTEX_SHADER
+
+#	if ANKI_PIXEL_SHADER
+#		if ANKI_TECHNIQUE_BilboardsRenderMain
+Vec4
+#		else
+U32
+#		endif
+main(VertOut input) : SV_TARGET0
+{
+	Vec4 color = g_tex.Sample(g_trilinearRepeatSampler, input.m_uv);
+
+#		if ANKI_TECHNIQUE_BilboardsRenderMain
+	color.xyz *= g_consts.m_colorScale;
+
+	if(g_consts.m_depthFailureVisualization)
+	{
+		UVec2 texSize;
+		g_depthRt.GetDimensions(texSize.x, texSize.y);
+
+		const F32 depthRef = TEX(g_depthRt, min(UVec2(input.m_svPosition.xy), texSize - 1u)).r;
+		const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+		if(depthTestFailed)
+		{
+			color.xyz *= 0.5;
+		}
+	}
+
+	return color;
+#		else
+	if(color.a <= 0.1)
+	{
+		discard;
+	}
+
+	return g_consts.m_sceneNodeUuid;
+#		endif
+}
+#	endif // ANKI_PIXEL_SHADER
+
+#endif
+
+// ===========================================================================
+// GizmosRenderMain & GizmosRenderPicking                                    =
+// ===========================================================================
+#if ANKI_TECHNIQUE_GizmosRenderMain || ANKI_TECHNIQUE_GizmosRenderPicking
+
+struct Consts
+{
+	Mat4 m_mvp;
+#	if ANKI_TECHNIQUE_GizmosRenderMain
+	Vec4 m_color;
+#	else
+	UVec3 m_padding;
+	U32 m_id;
+#	endif
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+#	if ANKI_VERTEX_SHADER
+Vec4 main(Vec3 positions : POSITION) : SV_POSITION
+{
+	return mul(g_consts.m_mvp, Vec4(positions, 1.0));
+}
+#	endif
+
+#	if ANKI_PIXEL_SHADER
+#		if ANKI_TECHNIQUE_GizmosRenderMain
+Vec4
+#		else
+U32
+#		endif
+main() : SV_TARGET0
+{
+#		if ANKI_TECHNIQUE_GizmosRenderMain
+	return g_consts.m_color;
+#		else
+	return g_consts.m_id;
+#		endif
+}
+#	endif
+#endif
+
+// ===========================================================================
+// Lines                                                                     =
+// ===========================================================================
+#if ANKI_TECHNIQUE_Lines
+
+struct VertIn
+{
+	Vec3 m_position : POSITION;
+	Vec4 m_color : COLOR;
+};
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+	Vec4 m_color : COLOR;
+};
+
+struct Constants
+{
+	Mat4 m_viewProjMatrix;
+};
+ANKI_FAST_CONSTANTS(Constants, g_consts);
+
+#	if ANKI_VERTEX_SHADER
+VertOut main(VertIn input)
+{
+	VertOut output;
+	output.m_svPosition = mul(g_consts.m_viewProjMatrix, Vec4(input.m_position, 1.0));
+	output.m_color = input.m_color;
+	return output;
+}
+#	endif // ANKI_VERTEX_SHADER
+
+#	if ANKI_PIXEL_SHADER
+Vec4 main(VertOut input) : SV_TARGET0
+{
+	return input.m_color;
+}
+#	endif // ANKI_PIXEL_SHADER
+#endif // ANKI_TECHNIQUE_Lines
+
+// ===========================================================================
+// RenderablesPreparePicking                                                 =
+// ===========================================================================
+#if ANKI_TECHNIQUE_RenderablesPreparePicking
+
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<LodAndGpuSceneRenderableBoundingVolumeIndex> g_visibleRenderableBoundingVolumeIndices : register(t3);
+
+RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawArgs : register(u0);
+RWStructuredBuffer<U32> g_drawArgCount : register(u1);
+
+RWStructuredBuffer<U32> g_lodAndRenderableIndices : register(u2);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	if(svDispatchThreadId.x >= SBUFF(g_visibleRenderableBoundingVolumeIndices, 0))
+	{
+		return;
+	}
+
+	const LodAndGpuSceneRenderableBoundingVolumeIndex packed = SBUFF(g_visibleRenderableBoundingVolumeIndices, svDispatchThreadId.x + 1);
+	const U32 lod = packed >> 29u;
+	const U32 bvolIdx = packed & ((1u << 29u) - 1u);
+
+	const GpuSceneRenderableBoundingVolume bvol = SBUFF(g_renderableBoundingVolumes, bvolIdx);
+	const GpuSceneRenderable renderable = SBUFF(g_renderables, bvol.m_renderableIndex);
+
+	const Bool isParticleEmitter = renderable.m_particleEmitterIndex2 < kMaxU32;
+	if(isParticleEmitter)
+	{
+		// Can't draw particle emitters as is
+		return;
+	}
+
+	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);
+
+	DrawIndexedIndirectArgs indirect;
+	indirect.m_indexCount = meshLod.m_indexCount;
+	indirect.m_instanceCount = 1;
+	indirect.m_firstIndex = meshLod.m_firstIndex;
+	indirect.m_vertexOffset = 0;
+	indirect.m_firstInstance = 0;
+
+	U32 index;
+	InterlockedAdd(SBUFF(g_drawArgCount, 0), 1, index);
+
+	SBUFF(g_drawArgs, index) = indirect;
+
+	U32 packed2 = lod << 29u;
+	packed2 |= bvol.m_renderableIndex;
+	SBUFF(g_lodAndRenderableIndices, index) = packed2;
+}
+#endif
+
+// ===========================================================================
+// RenderablesRenderPicking                                                  =
+// ===========================================================================
+#if ANKI_TECHNIQUE_RenderablesRenderPicking
+
+StructuredBuffer<U32> g_lodAndRenderableIndices : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
+
+Buffer<Vec4> g_unifiedGeom_R16G16B16A16_Unorm : register(t4);
+Buffer<UVec4> g_unifiedGeom_R8G8B8A8_Uint : register(t5);
+Buffer<Vec4> g_unifiedGeom_R8G8B8A8_Snorm : register(t6);
+ByteAddressBuffer g_gpuScene : register(t7);
+
+ANKI_FAST_CONSTANTS(Mat4, g_mvp);
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+	U32 m_sceneNodeUuid : SCENE_NODE_UUID;
+};
+
+#	if ANKI_VERTEX_SHADER
+struct Mat3x4_2
+{
+	Mat3x4 m_a;
+	Mat3x4 m_b;
+};
+
+VertOut main(U32 svVertexId : SV_VERTEXID)
+{
+	const U32 packed = SBUFF(g_lodAndRenderableIndices, gl_DrawID);
+	const U32 lod = packed >> 29u;
+	ANKI_ASSERT(lod < kMaxLodCount);
+	const U32 renderableIdx = packed & ((1u << 29u) - 1u);
+
+	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
+
+	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);
+
+	Vec3 position = g_unifiedGeom_R16G16B16A16_Unorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kPosition] + svVertexId];
+	position = position * meshLod.m_positionScale + meshLod.m_positionTranslation;
+
+	if(renderable.m_boneTransformsOffset)
+	{
+		const UVec4 boneIndices = g_unifiedGeom_R8G8B8A8_Uint[meshLod.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + svVertexId];
+		const Vec4 boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + svVertexId];
+
+		Mat3x4 skinMat = (Mat3x4)0.0;
+		for(U32 i = 0; i < 4; ++i)
+		{
+			U32 byteOffset = renderable.m_boneTransformsOffset;
+			byteOffset += boneIndices[i] * sizeof(Mat3x4_2);
+
+			const Mat3x4_2 mats = g_gpuScene.Load<Mat3x4_2>(byteOffset);
+			skinMat = skinMat + mats.m_a * boneWeights[i];
+		}
+
+		position = mul(skinMat, Vec4(position, 1.0)).xyz;
+	}
+
+	const Mat3x4 trf = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
+	position = mul(trf, Vec4(position, 1.0));
+
+	VertOut output;
+	output.m_svPosition = mul(g_mvp, Vec4(position, 1.0));
+	output.m_sceneNodeUuid = renderable.m_sceneNodeUuid;
+	return output;
+}
+#	endif
+
+#	if ANKI_PIXEL_SHADER
+U32 main(VertOut input) : SV_TARGET0
+{
+	return input.m_sceneNodeUuid;
+}
+#	endif
+
+#endif
+
+// ===========================================================================
+// ReadPickingBuffer                                                         =
+// ===========================================================================
+#if ANKI_TECHNIQUE_ReadPickingBuffer
+
+Texture2D<UVec4> g_uuidsTex : register(t0);
+
+RWStructuredBuffer<U32> g_outUuid : register(u0);
+
+struct Consts
+{
+	UVec2 m_mousePos;
+	UVec2 m_padding;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts);
+
+[numthreads(1, 1, 1)] void main()
+{
+	const U32 uuid = TEX(g_uuidsTex, g_consts.m_mousePos).x;
+	SBUFF(g_outUuid, 0) = uuid;
+}
+#endif

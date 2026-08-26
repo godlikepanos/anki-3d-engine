@@ -27,7 +27,6 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/AsyncLoader.h>
@@ -340,8 +339,6 @@ Error App::init()
 	if(g_cvarCoreShowEditor)
 	{
 		SceneGraph::getSingleton().setCheckForResourceUpdates(true);
-		Renderer::getSingleton().getDbg().getOptions().m_sceneGraphIcons = true;
-		Renderer::getSingleton().getDbg().getOptions().m_objectPicking = true;
 	}
 #endif
 

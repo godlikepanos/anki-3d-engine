@@ -308,6 +308,13 @@ public:
 		return m_gpuSceneLight;
 	}
 
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+#endif
+
 private:
 	Vec3 m_color = Vec3(1.0f);
 	Transform m_worldTransform = Transform::getIdentity();
@@ -353,6 +360,10 @@ private:
 	U8 m_shapeDirty : 1 = true;
 	U8 m_otherDirty : 1 = true;
 	U8 m_shadowAtlasUvViewportCount : 3 = 0;
+
+#if ANKI_WITH_EDITOR
+	SceneNode* m_node = nullptr;
+#endif
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

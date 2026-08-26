@@ -16,11 +16,6 @@
 
 namespace anki {
 
-// Forward
-class SceneNode;
-#define ANKI_DEFINE_SCENE_COMPONENT(class_, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) class class_##Component;
-#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
-
 // A class that builds the editor UI and manipulates the scene directly.
 class EditorUi : public EditorUiBase
 {

@@ -53,14 +53,19 @@ public:
 	}
 
 #if ANKI_WITH_EDITOR
-	Bool getPlayOnEditor() const
+	ANKI_INTERNAL Bool getPlayOnEditor() const
 	{
 		return m_playOnEditor;
 	}
 
-	void setPlayOnEditor(Bool play)
+	ANKI_INTERNAL void setPlayOnEditor(Bool play)
 	{
 		m_playOnEditor = play;
+	}
+
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
 	}
 #endif
 
@@ -74,6 +79,7 @@ private:
 
 #if ANKI_WITH_EDITOR
 	Bool m_playOnEditor = false;
+	SceneNode* m_node = nullptr;
 #endif
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;

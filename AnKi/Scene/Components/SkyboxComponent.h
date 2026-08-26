@@ -34,6 +34,9 @@ public:
 	SkyboxComponent(const SceneComponentInitInfo& init)
 		: SceneComponent(kClassType, init)
 	{
+#if ANKI_WITH_EDITOR
+		m_node = init.m_node;
+#endif
 	}
 
 	~SkyboxComponent()
@@ -188,6 +191,13 @@ public:
 		return m_sky.m_image->getTexture();
 	}
 
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+#endif
+
 private:
 	SkyboxComponentType m_type = SkyboxComponentType::kSolidColor;
 
@@ -211,6 +221,10 @@ private:
 		F32 m_absorptionCoeff = 0.02f;
 		Vec3 m_diffuseColor = Vec3(1.0f);
 	} m_fog;
+
+#if ANKI_WITH_EDITOR
+	SceneNode* m_node = nullptr;
+#endif
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

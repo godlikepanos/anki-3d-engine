@@ -24,6 +24,10 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(const SceneCo
 	{
 		ANKI_LOGF("Failed to load shader");
 	}
+
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()

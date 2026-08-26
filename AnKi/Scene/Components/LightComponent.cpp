@@ -71,6 +71,10 @@ LightComponent::LightComponent(const SceneComponentInitInfo& init)
 {
 	setLightComponentType(LightComponentType::kPoint);
 	m_worldTransform = init.m_node->getWorldTransform();
+
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 LightComponent::~LightComponent()

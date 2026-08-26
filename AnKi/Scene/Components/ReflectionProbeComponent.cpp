@@ -30,6 +30,10 @@ ReflectionProbeComponent::ReflectionProbeComponent(const SceneComponentInitInfo&
 	m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
 
 	m_reflectionTexBindlessIndex = m_reflectionTex->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()

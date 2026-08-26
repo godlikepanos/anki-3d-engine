@@ -3,25 +3,32 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/Dbg.h>
+#include <AnKi/Renderer/Editor.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/LightShading.h>
-#include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/ForwardShading.h>
-#include <AnKi/Renderer/ClusterBinning.h>
-#include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
-#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
-#include <AnKi/Scene.h>
-#include <AnKi/Util/Logger.h>
-#include <AnKi/Util/Enum.h>
+#include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Util/CVarSet.h>
-#include <AnKi/Collision/ConvexHullShape.h>
+#include <AnKi/Scene/SceneGraph.h>
+#include <AnKi/Scene/Components/LightComponent.h>
+#include <AnKi/Scene/Components/DecalComponent.h>
+#include <AnKi/Scene/Components/ParticleEmitter2Component.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <AnKi/Scene/Components/ReflectionProbeComponent.h>
+#include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/Components/FogDensityComponent.h>
+#include <AnKi/Scene/Components/ScriptComponent.h>
+#include <AnKi/Scene/Components/TriggerComponent.h>
+#include <AnKi/Collision/Functions.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Window/Input.h>
+
+#if ANKI_WITH_EDITOR
 
 namespace anki {
 
@@ -374,53 +381,21 @@ static const U16 g_gizmoRingIndices[512][3] = {
 	{173, 172, 245}, {174, 173, 247}, {175, 174, 226}, {176, 175, 225}, {129, 176, 227}, {128, 129, 229}, {132, 128, 228}, {131, 132, 235},
 	{130, 131, 231}, {138, 130, 230}, {134, 138, 234}, {133, 134, 232}, {137, 133, 233}, {135, 137, 255}, {136, 135, 250}, {181, 136, 251}};
 
-static constexpr F32 kCubePositions[] = {
-	// Front face
-	-0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
-
-	// Back face
-	0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,
-
-	// Left face
-	-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, -0.5f,
-
-	// Right face
-	0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f,
-
-	// Top face
-	-0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f,
-
-	// Bottom face
-	-0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f};
-
-class Dbg::InternalCtx
-{
-public:
-	class
-	{
-	public:
-		BufferView m_renderableIndices;
-		BufferView m_drawIndirectArgs;
-		BufferHandle m_handle;
-	} m_particleEmitter;
-};
-
-Dbg::Dbg()
-{
-	registerDebugRenderTarget("ObjectPicking");
-}
-
-Dbg::~Dbg()
+Editor::Editor()
 {
 }
 
-Error Dbg::init()
+Editor::~Editor()
 {
-	// RT descr
+}
+
+Error Editor::init()
+{
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
-															  Format::kR8G8B8A8_Unorm, "Dbg");
+															  Format::kR8G8B8A8_Unorm, "Editor");
 	m_rtDescr.bake();
 
+	// The object picking runs in half resolution
 	m_objectPickingRtDescr = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2, Format::kR32_Uint, "ObjectPicking");
 	m_objectPickingRtDescr.bake();
@@ -438,88 +413,20 @@ Error Dbg::init()
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Particles.png", m_particlesImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Clouds.png", m_cloudImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Sun.png", m_sunImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Camera.png", m_cameraImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Skybox.png", m_skyboxImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Script.png", m_scriptImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Editor/Trigger.png", m_triggerImage));
 
-	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/Dbg.ankiprogbin", m_dbgProg));
-
-	{
-		BufferInitInfo buffInit("Dbg cube verts");
-		buffInit.m_size = sizeof(Vec3) * 8;
-		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
-		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		m_boxLines.m_positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
-
-		Vec3* verts = static_cast<Vec3*>(m_boxLines.m_positionsBuff->map(0, kMaxPtrSize));
-
-		constexpr F32 kSize = 1.0f;
-		verts[0] = Vec3(kSize, kSize, kSize); // front top right
-		verts[1] = Vec3(-kSize, kSize, kSize); // front top left
-		verts[2] = Vec3(-kSize, -kSize, kSize); // front bottom left
-		verts[3] = Vec3(kSize, -kSize, kSize); // front bottom right
-		verts[4] = Vec3(kSize, kSize, -kSize); // back top right
-		verts[5] = Vec3(-kSize, kSize, -kSize); // back top left
-		verts[6] = Vec3(-kSize, -kSize, -kSize); // back bottom left
-		verts[7] = Vec3(kSize, -kSize, -kSize); // back bottom right
-
-		m_boxLines.m_positionsBuff->unmap();
-
-		constexpr U kIndexCount = 12 * 2;
-		buffInit.setName("Dbg cube indices");
-		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
-		buffInit.m_size = kIndexCount * sizeof(U16);
-		m_boxLines.m_indexBuff = GrManager::getSingleton().newBuffer(buffInit);
-		U16* indices = static_cast<U16*>(m_boxLines.m_indexBuff->map(0, kMaxPtrSize));
-
-		U c = 0;
-		indices[c++] = 0;
-		indices[c++] = 1;
-		indices[c++] = 1;
-		indices[c++] = 2;
-		indices[c++] = 2;
-		indices[c++] = 3;
-		indices[c++] = 3;
-		indices[c++] = 0;
-
-		indices[c++] = 4;
-		indices[c++] = 5;
-		indices[c++] = 5;
-		indices[c++] = 6;
-		indices[c++] = 6;
-		indices[c++] = 7;
-		indices[c++] = 7;
-		indices[c++] = 4;
-
-		indices[c++] = 0;
-		indices[c++] = 4;
-		indices[c++] = 1;
-		indices[c++] = 5;
-		indices[c++] = 2;
-		indices[c++] = 6;
-		indices[c++] = 3;
-		indices[c++] = 7;
-
-		m_boxLines.m_indexBuff->unmap();
-
-		ANKI_ASSERT(c == kIndexCount);
-	}
+	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/Editor.ankiprogbin", m_prog));
 
 	initGizmos();
-
-	{
-		BufferInitInfo buffInit("Debug cube");
-		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		buffInit.m_size = sizeof(kCubePositions);
-		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
-		m_debugPoint.m_positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
-
-		void* mapped = m_debugPoint.m_positionsBuff->map(0, kMaxPtrSize);
-		memcpy(mapped, kCubePositions, sizeof(kCubePositions));
-		m_debugPoint.m_positionsBuff->unmap();
-	}
+	initBoxLines();
 
 	return Error::kNone;
 }
 
-void Dbg::initGizmos()
+void Editor::initGizmos()
 {
 	auto createPair = [](CString name, ConstWeakArray<F32> positionsArray, ConstWeakArray<U16> indicesArray, BufferPtr& positionsBuff,
 						 BufferPtr& indicesBuff) {
@@ -554,687 +461,73 @@ void Dbg::initGizmos()
 			   m_gizmos.m_ringIndices);
 }
 
-void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const ImageResource& image, Bool objectPicking,
-							RenderPassWorkContext& rgraphCtx)
+void Editor::initBoxLines()
 {
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	BufferInitInfo buffInit("Dbg cube verts");
+	buffInit.m_size = sizeof(Vec3) * 8;
+	buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
+	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+	m_boxLines.m_positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-	variantInitInfo.addMutation("OBJECT_TYPE", U32(type));
-	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
-											 (objectPicking) ? "BilboardsRenderPicking" : "BilboardsRenderMain");
-	const ShaderProgramResourceVariant* variant;
-	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-	cmdb.bindShaderProgram(&variant->getProgram());
+	Vec3* verts = static_cast<Vec3*>(m_boxLines.m_positionsBuff->map(0, kMaxPtrSize));
 
-	class Constants
-	{
-	public:
-		Mat4 m_viewProjMat;
-		Mat3x4 m_camTrf;
+	constexpr F32 kSize = 1.0f;
+	verts[0] = Vec3(kSize, kSize, kSize); // front top right
+	verts[1] = Vec3(-kSize, kSize, kSize); // front top left
+	verts[2] = Vec3(-kSize, -kSize, kSize); // front bottom left
+	verts[3] = Vec3(kSize, -kSize, kSize); // front bottom right
+	verts[4] = Vec3(kSize, kSize, -kSize); // back top right
+	verts[5] = Vec3(-kSize, kSize, -kSize); // back top left
+	verts[6] = Vec3(-kSize, -kSize, -kSize); // back bottom left
+	verts[7] = Vec3(kSize, -kSize, -kSize); // back bottom right
 
-		UVec3 m_padding;
-		U32 m_depthFailureVisualization;
-	} consts;
-	consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
-	consts.m_camTrf = getRenderingContext().m_matrices.m_cameraTransform;
-	consts.m_depthFailureVisualization = !m_options.m_depthTest;
-	cmdb.setFastConstants(&consts, sizeof(consts));
+	m_boxLines.m_positionsBuff->unmap();
 
-	if(!objectPicking)
-	{
-		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
-	}
-	cmdb.bindSrv(1, 0, getClusterBinning().getPackedObjectsBuffer(type));
-	cmdb.bindSrv(2, 0, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
-	cmdb.bindSrv(3, 0, TextureView(&image.getTexture(), TextureSubresourceDesc::all()));
-	cmdb.bindSrv(4, 0, TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDesc::all()));
+	constexpr U kIndexCount = 12 * 2;
+	buffInit.setName("Dbg cube indices");
+	buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
+	buffInit.m_size = kIndexCount * sizeof(U16);
+	m_boxLines.m_indexBuff = GrManager::getSingleton().newBuffer(buffInit);
+	U16* indices = static_cast<U16*>(m_boxLines.m_indexBuff->map(0, kMaxPtrSize));
 
-	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+	U c = 0;
+	indices[c++] = 0;
+	indices[c++] = 1;
+	indices[c++] = 1;
+	indices[c++] = 2;
+	indices[c++] = 2;
+	indices[c++] = 3;
+	indices[c++] = 3;
+	indices[c++] = 0;
 
-	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
+	indices[c++] = 4;
+	indices[c++] = 5;
+	indices[c++] = 5;
+	indices[c++] = 6;
+	indices[c++] = 6;
+	indices[c++] = 7;
+	indices[c++] = 7;
+	indices[c++] = 4;
+
+	indices[c++] = 0;
+	indices[c++] = 4;
+	indices[c++] = 1;
+	indices[c++] = 5;
+	indices[c++] = 2;
+	indices[c++] = 6;
+	indices[c++] = 3;
+	indices[c++] = 7;
+
+	m_boxLines.m_indexBuff->unmap();
+
+	ANKI_ASSERT(c == kIndexCount);
 }
 
-void Dbg::drawParticleEmitters(const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx)
+void Editor::drawGizmos(Bool objectPicking, CommandBuffer& cmdb) const
 {
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	ANKI_ASSERT(m_gizmos.m_enabled);
+	const Mat3x4& worldTransform = m_gizmos.m_trf;
 
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-	variantInitInfo.addMutation("OBJECT_TYPE", 0);
-	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
-											 (objectPicking) ? "ParticleEmittersRenderPicking" : "ParticleEmittersRenderMain");
-	const ShaderProgramResourceVariant* variant;
-	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-	cmdb.bindShaderProgram(&variant->getProgram());
-
-	struct Constants
-	{
-		Mat4 m_viewProjMat;
-		Mat3x4 m_camTrf;
-
-		UVec3 m_padding;
-		U32 m_depthFailureVisualization;
-	} consts;
-	consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
-	consts.m_camTrf = getRenderingContext().m_matrices.m_cameraTransform;
-	consts.m_depthFailureVisualization = !m_options.m_depthTest;
-	cmdb.setFastConstants(&consts, sizeof(consts));
-
-	if(!objectPicking)
-	{
-		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
-	}
-
-	cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-	cmdb.bindSrv(2, 0, ictx.m_particleEmitter.m_renderableIndices);
-	cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
-	cmdb.bindSrv(4, 0, TextureView(&m_particlesImage->getTexture(), TextureSubresourceDesc::all()));
-
-	cmdb.bindSampler(1, 1, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
-
-	cmdb.drawIndirect(PrimitiveTopology::kTriangles, ictx.m_particleEmitter.m_drawIndirectArgs);
-}
-
-void Dbg::drawNonGpuSceneObjects(Bool objectPicking, RenderPassWorkContext& rgraphCtx)
-{
-	auto drawNode = [&](const SceneNode& node, const ImageResource& iconImage) {
-		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-		variantInitInfo.addMutation("OBJECT_TYPE", 0);
-		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
-												 (objectPicking) ? "IconRenderPicking" : "IconRenderMain");
-		const ShaderProgramResourceVariant* variant;
-		m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-		cmdb.bindShaderProgram(&variant->getProgram());
-
-		struct Constants
-		{
-			Mat4 m_viewProjMat;
-			Mat3x4 m_camTrf;
-
-			U32 m_depthFailureVisualization;
-			U32 m_sceneNodeUuid;
-			U32 m_padding1;
-			U32 m_padding2;
-
-			Vec3 m_objectPosition;
-			U32 m_padding3;
-		} consts;
-		consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
-		consts.m_camTrf = getRenderingContext().m_matrices.m_cameraTransform;
-		consts.m_depthFailureVisualization = !m_options.m_depthTest;
-		consts.m_sceneNodeUuid = node.getUuid();
-		consts.m_objectPosition = node.getWorldTransform().getOrigin().xyz;
-
-		cmdb.setFastConstants(&consts, sizeof(consts));
-
-		if(!objectPicking)
-		{
-			rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
-		}
-		cmdb.bindSrv(1, 0, TextureView(&iconImage.getTexture(), TextureSubresourceDesc::all()));
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-
-		cmdb.draw(PrimitiveTopology::kTriangles, 6);
-	};
-
-	SceneGraph::getSingleton().visitNodes([&](const SceneNode& node) {
-		if(node.hasComponent<SkyboxComponent>())
-		{
-			drawNode(node, *m_cloudImage);
-		}
-
-		if(node.hasComponent<LightComponent>()
-		   && node.getFirstComponentOfType<LightComponent>().getLightComponentType() == LightComponentType::kDirectional)
-		{
-			drawNode(node, *m_sunImage);
-		}
-
-		return FunctorContinue::kContinue;
-	});
-}
-
-void Dbg::drawIcons(const InternalCtx& ictx, Bool objectPicking, RenderPassWorkContext& rgraphCtx)
-{
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), *m_pointLightImage,
-					  objectPicking, rgraphCtx);
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), *m_decalImage, objectPicking,
-					  rgraphCtx);
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
-					  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), *m_giProbeImage, objectPicking, rgraphCtx);
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe, GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(),
-					  *m_reflectionImage, objectPicking, rgraphCtx);
-
-	drawParticleEmitters(ictx, objectPicking, rgraphCtx);
-
-	drawNonGpuSceneObjects(objectPicking, rgraphCtx);
-}
-
-void Dbg::populateRenderGraph()
-{
-	ANKI_TRACE_SCOPED_EVENT(Dbg);
-
-	m_runCtx.m_objectPickingRt = {};
-
-	if(!isEnabled())
-	{
-		return;
-	}
-
-	InternalCtx ictx;
-
-	// Common stuff for the particle emitters
-	populateRenderGraphParticleEmitters(ictx);
-
-	// Debug visualization
-	if(m_options.mainDbgPass())
-	{
-		populateRenderGraphMain(ictx);
-	}
-
-	// Object picking
-	if(m_options.m_objectPicking)
-	{
-		populateRenderGraphObjectPicking(ictx);
-	}
-}
-
-void Dbg::populateRenderGraphParticleEmitters(InternalCtx& ictx)
-{
-	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
-
-	const U32 particleEmitterCount = GpuSceneArrays::ParticleEmitter2::getSingleton().getElementCount();
-	const BufferView renderableIndices = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(particleEmitterCount + 1);
-
-	const BufferView drawIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DrawIndirectArgs>(1);
-	const BufferHandle handle = rgraph.importBuffer(drawIndirectArgs, BufferUsageBit::kNone);
-
-	ictx.m_particleEmitter.m_drawIndirectArgs = drawIndirectArgs;
-	ictx.m_particleEmitter.m_renderableIndices = renderableIndices;
-	ictx.m_particleEmitter.m_handle = handle;
-
-	// Prepare the prepare
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Dbg: Zero particle emitter stuff");
-
-		pass.newBufferDependency(handle, BufferUsageBit::kCopyDestination);
-
-		pass.setWork([drawIndirectArgs](RenderPassWorkContext& rgraphCtx) {
-			rgraphCtx.m_commandBuffer->zeroBuffer(drawIndirectArgs);
-		});
-	}
-
-	// Prepare
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Dbg: Prepare particle emitters");
-
-		pass.newBufferDependency(handle, BufferUsageBit::kUavCompute);
-
-		const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
-		if(visOut.m_dependency.isValid())
-		{
-			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kSrvCompute);
-		}
-
-		const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
-		if(fvisOut.m_dependency.isValid())
-		{
-			pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvCompute);
-		}
-
-		pass.setWork([drawIndirectArgs, renderableIndices, this](RenderPassWorkContext& rgraphCtx) {
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "ParticleEmittersPrepare");
-			const ShaderProgramResourceVariant* variant;
-			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-			cmdb.bindShaderProgram(&variant->getProgram());
-
-			cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-
-			cmdb.bindUav(0, 0, drawIndirectArgs);
-			cmdb.bindUav(1, 0, renderableIndices);
-
-			const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
-			if(visOut.m_dependency.isValid())
-			{
-				cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
-				cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
-
-				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
-				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
-			}
-
-			const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
-			if(fvisOut.m_dependency.isValid())
-			{
-				cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
-				cmdb.bindSrv(2, 0, fvisOut.m_visibleAaabbIndicesBuffer);
-
-				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
-				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
-			}
-		});
-	}
-}
-
-void Dbg::populateRenderGraphMain(InternalCtx& ictx)
-{
-	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
-
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
-
-	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Debug");
-
-	GraphicsRenderPassTargetDesc colorRti(m_runCtx.m_rt);
-	colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-	GraphicsRenderPassTargetDesc depthRti(getGBuffer().getDepthRt());
-	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
-	depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
-	pass.setRenderpassInfo({colorRti}, &depthRti);
-
-	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
-	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
-
-	pass.newBufferDependency(ictx.m_particleEmitter.m_handle, BufferUsageBit::kIndirectDraw);
-
-	const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
-	if(visOut.m_dependency.isValid())
-	{
-		pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kSrvGeometry);
-	}
-
-	const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
-	if(fvisOut.m_dependency.isValid())
-	{
-		pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvGeometry);
-	}
-
-	if(m_options.m_indirectDiffuseProbes && isIndirectDiffuseClipmapsEnabled())
-	{
-		getIndirectDiffuseClipmaps().setDependenciesForDrawDebugProbes(pass);
-	}
-
-	pass.setWork([this, ictx](RenderPassWorkContext& rgraphCtx) {
-		ANKI_TRACE_SCOPED_EVENT(Dbg);
-		ANKI_ASSERT(m_options.mainDbgPass());
-
-		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-		// Set common state
-		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
-		cmdb.setDepthWrite(false);
-
-		cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
-		cmdb.setDepthCompareOperation(m_options.m_depthTest ? CompareOperation::kLess : CompareOperation::kAlways);
-		cmdb.setLineWidth(2.0f);
-
-		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
-
-		// Common code for boxes stuff
-		{
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderableBoxes");
-			const ShaderProgramResourceVariant* variant;
-			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-			cmdb.bindShaderProgram(&variant->getProgram());
-
-			class Constants
-			{
-			public:
-				Vec4 m_color;
-				Mat4 m_viewProjMat;
-
-				UVec3 m_padding;
-				U32 m_depthFailureVisualization;
-			} consts;
-			consts.m_color = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
-			consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
-			consts.m_depthFailureVisualization = !m_options.m_depthTest;
-
-			cmdb.setFastConstants(&consts, sizeof(consts));
-			cmdb.bindVertexBuffer(0, BufferView(m_boxLines.m_positionsBuff.get()), sizeof(Vec3));
-			cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
-			cmdb.bindIndexBuffer(BufferView(m_boxLines.m_indexBuff.get()), IndexType::kU16);
-		}
-
-		// GBuffer AABBs
-		const U32 gbufferAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
-		if(m_options.m_renderableBoundingBoxes && gbufferAllAabbCount)
-		{
-			cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
-
-			const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
-			cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
-
-			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, gbufferAllAabbCount);
-		}
-
-		// Forward shading renderables
-		const U32 forwardAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
-		if(m_options.m_renderableBoundingBoxes && forwardAllAabbCount)
-		{
-			cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
-
-			const GpuVisibilityOutput& visOut = getForwardShading().getGpuVisibilityOutput();
-			cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
-
-			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, forwardAllAabbCount);
-		}
-
-		// Icons
-		if(m_options.m_sceneGraphIcons)
-		{
-			drawIcons(ictx, false, rgraphCtx);
-		}
-
-		// Physics
-		if(m_options.m_physics)
-		{
-			class MyPhysicsDebugDrawerInterface final : public PhysicsDebugDrawerInterface
-			{
-			public:
-				RendererDynamicArray<HVec4> m_positions;
-				RendererDynamicArray<Array<U8, 4>> m_colors;
-
-				void drawLines(ConstWeakArray<Vec3> lines, Array<U8, 4> color) override
-				{
-					static constexpr U32 kMaxVerts = 1024 * 100;
-
-					for(const Vec3& pos : lines)
-					{
-						if(m_positions.getSize() >= kMaxVerts)
-						{
-							break;
-						}
-
-						m_positions.emplaceBack(HVec4(Vec4(pos.xyz0)));
-						m_colors.emplaceBack(color);
-					}
-				}
-			} drawerInterface;
-
-			PhysicsWorld::getSingleton().debugDraw(drawerInterface);
-
-			const U32 vertCount = drawerInterface.m_positions.getSize();
-			if(vertCount)
-			{
-				HVec4* positions;
-				const BufferView positionBuff =
-					RebarTransientMemoryPool::getSingleton().allocate(drawerInterface.m_positions.getSizeInBytes(), sizeof(HVec4), positions);
-				memcpy(positions, drawerInterface.m_positions.getBegin(), drawerInterface.m_positions.getSizeInBytes());
-
-				U8* colors;
-				const BufferView colorBuff =
-					RebarTransientMemoryPool::getSingleton().allocate(drawerInterface.m_colors.getSizeInBytes(), sizeof(U8) * 4, colors);
-				memcpy(colors, drawerInterface.m_colors.getBegin(), drawerInterface.m_colors.getSizeInBytes());
-
-				ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-				variantInitInfo.addMutation("OBJECT_TYPE", 0);
-				variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Lines");
-				const ShaderProgramResourceVariant* variant;
-				m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-				cmdb.bindShaderProgram(&variant->getProgram());
-
-				cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR16G16B16A16_Sfloat, 0);
-				cmdb.setVertexAttribute(VertexAttributeSemantic::kColor, 1, Format::kR8G8B8A8_Unorm, 0);
-				cmdb.bindVertexBuffer(0, positionBuff, sizeof(HVec4));
-				cmdb.bindVertexBuffer(1, colorBuff, sizeof(U8) * 4);
-
-				cmdb.setFastConstants(&getRenderingContext().m_matrices.m_viewProjection, sizeof(getRenderingContext().m_matrices.m_viewProjection));
-
-				cmdb.draw(PrimitiveTopology::kLines, vertCount);
-			}
-		}
-
-		if(m_options.m_indirectDiffuseProbes && isIndirectDiffuseClipmapsEnabled())
-		{
-			getIndirectDiffuseClipmaps().drawDebugProbes(rgraphCtx, m_options.m_indirectDiffuseProbesClipmap,
-														 m_options.m_indirectDiffuseProbesClipmapType,
-														 m_options.m_indirectDiffuseProbesClipmapColorScale);
-		}
-
-		if(m_gizmos.m_enabled)
-		{
-			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-			drawGizmos(m_gizmos.m_trf, false, cmdb);
-		}
-
-		// Restore state
-		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-		cmdb.setDepthCompareOperation(CompareOperation::kLess);
-		cmdb.setDepthWrite(true);
-	});
-}
-
-void Dbg::populateRenderGraphObjectPicking(InternalCtx& ictx)
-{
-	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
-
-	const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
-	const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
-
-	U32 maxVisibleCount = 0;
-	if(visOut.containsDrawcalls())
-	{
-		maxVisibleCount += U32(visOut.m_visibleAaabbIndicesBuffer.getRange() / sizeof(LodAndGpuSceneRenderableBoundingVolumeIndex));
-	}
-	if(fvisOut.containsDrawcalls())
-	{
-		maxVisibleCount += U32(fvisOut.m_visibleAaabbIndicesBuffer.getRange() / sizeof(LodAndGpuSceneRenderableBoundingVolumeIndex));
-	}
-	const BufferView drawIndirectArgsBuff =
-		GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DrawIndexedIndirectArgs>(maxVisibleCount);
-
-	const BufferView drawCountBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(1);
-	const BufferHandle bufferHandle = rgraph.importBuffer(drawCountBuff, BufferUsageBit::kNone);
-
-	const BufferView lodAndRenderableIndicesBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(maxVisibleCount);
-
-	// Zero draw count
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Object Picking: Zero");
-
-		pass.newBufferDependency(bufferHandle, BufferUsageBit::kCopyDestination);
-
-		pass.setWork([drawCountBuff, lodAndRenderableIndicesBuff, drawIndirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-			cmdb.zeroBuffer(drawCountBuff);
-			cmdb.zeroBuffer(lodAndRenderableIndicesBuff);
-			cmdb.zeroBuffer(drawIndirectArgsBuff);
-		});
-	}
-
-	// Prepare pass
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Object Picking: Prepare");
-
-		if(visOut.m_dependency.isValid())
-		{
-			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kSrvCompute);
-		}
-
-		if(fvisOut.m_dependency.isValid())
-		{
-			pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvCompute);
-		}
-
-		pass.newBufferDependency(bufferHandle, BufferUsageBit::kUavCompute);
-
-		pass.setWork([this, drawIndirectArgsBuff, drawCountBuff, lodAndRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "RenderablesPreparePicking");
-			const ShaderProgramResourceVariant* variant;
-			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-			cmdb.bindShaderProgram(&variant->getProgram());
-
-			cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-			cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-
-			cmdb.bindUav(0, 0, drawIndirectArgsBuff);
-			cmdb.bindUav(1, 0, drawCountBuff);
-			cmdb.bindUav(2, 0, lodAndRenderableIndicesBuff);
-
-			// Do GBuffer
-			const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
-			if(visOut.containsDrawcalls())
-			{
-				cmdb.bindSrv(0, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
-				cmdb.bindSrv(3, 0, visOut.m_visibleAaabbIndicesBuffer);
-
-				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
-				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
-			}
-
-			// Do ForwardShading
-			const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
-			if(fvisOut.containsDrawcalls())
-			{
-				cmdb.bindSrv(0, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
-				cmdb.bindSrv(3, 0, fvisOut.m_visibleAaabbIndicesBuffer);
-
-				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
-				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
-			}
-		});
-	}
-
-	// The render pass that draws the UUIDs to a buffer
-	const RenderTargetHandle objectPickingRt = rgraph.newRenderTarget(m_objectPickingRtDescr);
-	m_runCtx.m_objectPickingRt = objectPickingRt;
-	const RenderTargetHandle objectPickingDepthRt = rgraph.newRenderTarget(m_objectPickingDepthRtDescr);
-	{
-		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Object Picking: Draw UUIDs");
-
-		pass.newBufferDependency(bufferHandle, BufferUsageBit::kIndirectDraw);
-		pass.newTextureDependency(objectPickingRt, TextureUsageBit::kRtvDsvWrite);
-		pass.newTextureDependency(objectPickingDepthRt, TextureUsageBit::kRtvDsvWrite);
-		pass.newBufferDependency(ictx.m_particleEmitter.m_handle, BufferUsageBit::kIndirectDraw);
-
-		GraphicsRenderPassTargetDesc colorRti(objectPickingRt);
-		colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-		GraphicsRenderPassTargetDesc depthRti(objectPickingDepthRt);
-		depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-		depthRti.m_clearValue.m_depthStencil.m_depth = 1.0;
-		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
-		pass.setRenderpassInfo({colorRti}, &depthRti);
-
-		pass.setWork(
-			[this, lodAndRenderableIndicesBuff, drawIndirectArgsBuff, drawCountBuff, maxVisibleCount, ictx](RenderPassWorkContext& rgraphCtx) {
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-				// Set common state
-				cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
-				cmdb.setDepthCompareOperation(CompareOperation::kLess);
-
-				ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-				variantInitInfo.addMutation("OBJECT_TYPE", 0);
-				variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderablesRenderPicking");
-				const ShaderProgramResourceVariant* variant;
-				m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-				cmdb.bindShaderProgram(&variant->getProgram());
-
-				cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);
-
-				cmdb.bindSrv(0, 0, lodAndRenderableIndicesBuff);
-				cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-				cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-				cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
-				cmdb.bindSrv(4, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR16G16B16A16_Unorm);
-				cmdb.bindSrv(5, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Uint);
-				cmdb.bindSrv(6, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Snorm);
-				cmdb.bindSrv(7, 0, GpuSceneBuffer::getSingleton().getBufferView());
-
-				cmdb.setFastConstants(&getRenderingContext().m_matrices.m_viewProjection, sizeof(getRenderingContext().m_matrices.m_viewProjection));
-
-				cmdb.drawIndexedIndirectCount(PrimitiveTopology::kTriangles, drawIndirectArgsBuff, sizeof(DrawIndexedIndirectArgs), drawCountBuff,
-											  maxVisibleCount);
-
-				drawIcons(ictx, true, rgraphCtx);
-
-				// Draw gizmos
-				if(m_gizmos.m_enabled)
-				{
-					cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-					drawGizmos(m_gizmos.m_trf, true, cmdb);
-					cmdb.setDepthCompareOperation(CompareOperation::kLess);
-				}
-			});
-	}
-
-	// Read the UUID RT to get the UUID that is over the mouse
-	{
-		U32 uuid;
-		PtrSize dataOut;
-		getRenderer().getReadbackManager().readMostRecentData(m_readback, &uuid, sizeof(uuid), dataOut);
-		m_runCtx.m_objPickingRes = {};
-		if(dataOut)
-		{
-			if(uuid & (1u << 31u))
-			{
-				// It's a gizmo
-				uuid &= ~(1u << 31u);
-				if(uuid < 3)
-				{
-					m_runCtx.m_objPickingRes.m_translationAxis = uuid;
-				}
-				else if(uuid < 6)
-				{
-					m_runCtx.m_objPickingRes.m_scaleAxis = uuid - 3;
-				}
-				else
-				{
-					ANKI_ASSERT(uuid - 6 < 3);
-					m_runCtx.m_objPickingRes.m_rotationAxis = uuid - 6;
-				}
-			}
-			else
-			{
-				m_runCtx.m_objPickingRes.m_sceneNodeUuid = uuid;
-			}
-		}
-
-		const BufferView readbackBuff = getRenderer().getReadbackManager().allocateStructuredBuffer<U32>(m_readback, 1);
-
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Object Picking: Picking");
-
-		pass.newTextureDependency(objectPickingRt, TextureUsageBit::kSrvCompute);
-
-		pass.setWork([this, readbackBuff, objectPickingRt](RenderPassWorkContext& rgraphCtx) {
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-			variantInitInfo.addMutation("OBJECT_TYPE", 0);
-			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "ReadPickingBuffer");
-			const ShaderProgramResourceVariant* variant;
-			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
-			cmdb.bindShaderProgram(&variant->getProgram());
-
-			rgraphCtx.bindSrv(0, 0, objectPickingRt);
-			cmdb.bindUav(0, 0, readbackBuff);
-
-			Vec2 mousePos = Input::getSingleton().getMousePositionNdc();
-			mousePos.y = -mousePos.y;
-			mousePos = mousePos / 2.0f + 0.5f;
-			mousePos *= Vec2(getRenderer().getInternalResolution() / 2);
-
-			const UVec4 consts(UVec2(mousePos), 0u, 0u);
-			cmdb.setFastConstants(&consts, sizeof(consts));
-
-			cmdb.dispatchCompute(1, 1, 1);
-		});
-	}
-}
-
-void Dbg::drawGizmos(const Mat3x4& worldTransform, Bool objectPicking, CommandBuffer& cmdb) const
-{
 	// Draw a gizmo
 	auto draw = [&](Vec4 color, U32 id, Euler rotation, Vec3 scale, Buffer& positionsBuff, Buffer& indexBuff) {
 		struct Consts
@@ -1281,12 +574,11 @@ void Dbg::drawGizmos(const Mat3x4& worldTransform, Bool objectPicking, CommandBu
 		draw(Vec4(color, alpha), id + 6, rot, Vec3(0.4f), *m_gizmos.m_ringPositions, *m_gizmos.m_ringIndices);
 	};
 
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
-	variantInitInfo.addMutation("OBJECT_TYPE", 0);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
 											 (objectPicking) ? "GizmosRenderPicking" : "GizmosRenderMain");
 	const ShaderProgramResourceVariant* variant;
-	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());
 
 	const Array<Vec3, 3> axis = {worldTransform.getXAxis().normalize(), worldTransform.getYAxis().normalize(), worldTransform.getZAxis().normalize()};
@@ -1320,4 +612,650 @@ void Dbg::drawGizmos(const Mat3x4& worldTransform, Bool objectPicking, CommandBu
 	}
 }
 
+void Editor::drawBillboard(Vec3 worldPosition, Vec3 colorScale, const ImageResource& image, U32 sceneNodeUuid, Bool objectPicking,
+						   RenderPassWorkContext& rgraphCtx) const
+{
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel,
+											 (objectPicking) ? "BilboardsRenderPicking" : "BilboardsRenderMain");
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
+	cmdb.bindShaderProgram(&variant->getProgram());
+
+	struct Constants
+	{
+		Mat4 m_viewProjMat;
+		Mat3x4 m_camTrf;
+
+		Vec3 m_worldPosition;
+		U32 m_sceneNodeUuid;
+
+		Vec3 m_colorScale;
+		U32 m_depthFailureVisualization;
+	} consts;
+	consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
+	consts.m_camTrf = getRenderingContext().m_matrices.m_cameraTransform;
+	consts.m_worldPosition = worldPosition;
+	consts.m_sceneNodeUuid = sceneNodeUuid;
+	consts.m_colorScale = colorScale;
+	consts.m_depthFailureVisualization = !m_options.m_depthTest;
+	cmdb.setFastConstants(&consts, sizeof(consts));
+
+	if(!objectPicking)
+	{
+		rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+	}
+	cmdb.bindSrv(1, 0, TextureView(&image.getTexture(), TextureSubresourceDesc::all()));
+
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+
+	cmdb.draw(PrimitiveTopology::kTriangles, 6);
+}
+
+void Editor::drawSceneComponentIcons(Bool objectPicking, RenderPassWorkContext& rgraphCtx) const
+{
+	const Frustum& frustum = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>().getFrustum();
+	Array<Plane, 6> frustumPlanes;
+	extractClipPlanes(frustum.getViewProjectionMatrix(), frustumPlanes);
+
+	auto insideFrustum = [&](Vec3 point) -> Bool {
+		for(const Plane& plane : frustumPlanes)
+		{
+			if(testPlane(plane, point.xyz0) < 0.0f)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	};
+
+	// Lights
+	if(m_options.m_lights)
+	{
+		for(const LightComponent& lightc : SceneGraph::getSingleton().getComponentArray<LightComponent>())
+		{
+			const Vec3 worldPosition = lightc.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				const ImageResource* image;
+				if(lightc.getLightComponentType() == LightComponentType::kDirectional)
+				{
+					image = m_sunImage.get();
+				}
+				else if(lightc.getLightComponentType() == LightComponentType::kSpot)
+				{
+					image = m_spotLightImage.get();
+				}
+				else
+				{
+					image = m_pointLightImage.get();
+				}
+
+				drawBillboard(worldPosition, lightc.getColor(), *image, lightc.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Decals
+	if(m_options.m_decals)
+	{
+		for(const DecalComponent& decalc : SceneGraph::getSingleton().getComponentArray<DecalComponent>())
+		{
+			const Vec3 worldPosition = decalc.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_decalImage, decalc.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Particle emitters
+	if(m_options.m_particleEmitters)
+	{
+		for(const ParticleEmitter2Component& particlec : SceneGraph::getSingleton().getComponentArray<ParticleEmitter2Component>())
+		{
+			const Vec3 worldPosition = particlec.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_particlesImage, particlec.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Cameras
+	if(m_options.m_cameras)
+	{
+		const CameraComponent& activeCamera = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
+
+		for(const CameraComponent& camerac : SceneGraph::getSingleton().getComponentArray<CameraComponent>())
+		{
+			if(&camerac == &activeCamera)
+			{
+				// Don't draw the camera we are looking from
+				continue;
+			}
+
+			const Vec3 worldPosition = camerac.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_cameraImage, camerac.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Skyboxes
+	if(m_options.m_skyboxes)
+	{
+		for(const SkyboxComponent& skyboxc : SceneGraph::getSingleton().getComponentArray<SkyboxComponent>())
+		{
+			const Vec3 worldPosition = skyboxc.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_skyboxImage, skyboxc.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Reflection probes
+	if(m_options.m_reflectionProbes)
+	{
+		for(const ReflectionProbeComponent& probec : SceneGraph::getSingleton().getComponentArray<ReflectionProbeComponent>())
+		{
+			const Vec3 worldPosition = probec.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_reflectionImage, probec.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// GI probes
+	if(m_options.m_giProbes)
+	{
+		for(const GlobalIlluminationProbeComponent& probec : SceneGraph::getSingleton().getComponentArray<GlobalIlluminationProbeComponent>())
+		{
+			const Vec3 worldPosition = probec.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_giProbeImage, probec.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Fog density volumes
+	if(m_options.m_fogDensityVolumes)
+	{
+		for(const FogDensityComponent& fogc : SceneGraph::getSingleton().getComponentArray<FogDensityComponent>())
+		{
+			const Vec3 worldPosition = fogc.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_cloudImage, fogc.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Scripts
+	if(m_options.m_scripts)
+	{
+		for(const ScriptComponent& scriptc : SceneGraph::getSingleton().getComponentArray<ScriptComponent>())
+		{
+			const Vec3 worldPosition = scriptc.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_scriptImage, scriptc.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+
+	// Triggers
+	if(m_options.m_triggers)
+	{
+		for(const TriggerComponent& triggerc : SceneGraph::getSingleton().getComponentArray<TriggerComponent>())
+		{
+			const Vec3 worldPosition = triggerc.getSceneNode().getWorldTransform().getOrigin().xyz;
+			if(insideFrustum(worldPosition))
+			{
+				drawBillboard(worldPosition, Vec3(1.0f), *m_triggerImage, triggerc.getSceneNode().getUuid(), objectPicking, rgraphCtx);
+			}
+		}
+	}
+}
+
+void Editor::drawPhysics(CommandBuffer& cmdb) const
+{
+	class MyPhysicsDebugDrawerInterface final : public PhysicsDebugDrawerInterface
+	{
+	public:
+		RendererDynamicArray<HVec4> m_positions;
+		RendererDynamicArray<Array<U8, 4>> m_colors;
+
+		void drawLines(ConstWeakArray<Vec3> lines, Array<U8, 4> color) override
+		{
+			static constexpr U32 kMaxVerts = 1024 * 100;
+
+			for(const Vec3& pos : lines)
+			{
+				if(m_positions.getSize() >= kMaxVerts)
+				{
+					break;
+				}
+
+				m_positions.emplaceBack(HVec4(Vec4(pos.xyz0)));
+				m_colors.emplaceBack(color);
+			}
+		}
+	} drawerInterface;
+
+	PhysicsWorld::getSingleton().debugDraw(drawerInterface);
+
+	const U32 vertCount = drawerInterface.m_positions.getSize();
+	if(vertCount == 0)
+	{
+		return;
+	}
+
+	HVec4* positions;
+	const BufferView positionBuff =
+		RebarTransientMemoryPool::getSingleton().allocate(drawerInterface.m_positions.getSizeInBytes(), sizeof(HVec4), positions);
+	memcpy(positions, drawerInterface.m_positions.getBegin(), drawerInterface.m_positions.getSizeInBytes());
+
+	U8* colors;
+	const BufferView colorBuff = RebarTransientMemoryPool::getSingleton().allocate(drawerInterface.m_colors.getSizeInBytes(), sizeof(U8) * 4, colors);
+	memcpy(colors, drawerInterface.m_colors.getBegin(), drawerInterface.m_colors.getSizeInBytes());
+
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Lines");
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
+	cmdb.bindShaderProgram(&variant->getProgram());
+
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR16G16B16A16_Sfloat, 0);
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kColor, 1, Format::kR8G8B8A8_Unorm, 0);
+	cmdb.bindVertexBuffer(0, positionBuff, sizeof(HVec4));
+	cmdb.bindVertexBuffer(1, colorBuff, sizeof(U8) * 4);
+
+	cmdb.setFastConstants(&getRenderingContext().m_matrices.m_viewProjection, sizeof(getRenderingContext().m_matrices.m_viewProjection));
+
+	cmdb.draw(PrimitiveTopology::kLines, vertCount);
+}
+
+void Editor::drawRenderableBoxes(RenderPassWorkContext& rgraphCtx) const
+{
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+	// Common code for boxes stuff
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderableBoxes");
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
+	cmdb.bindShaderProgram(&variant->getProgram());
+
+	class Constants
+	{
+	public:
+		Vec4 m_color;
+		Mat4 m_viewProjMat;
+
+		UVec3 m_padding;
+		U32 m_depthFailureVisualization;
+	} consts;
+	consts.m_color = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
+	consts.m_viewProjMat = getRenderingContext().m_matrices.m_viewProjection;
+	consts.m_depthFailureVisualization = !m_options.m_depthTest;
+
+	cmdb.setFastConstants(&consts, sizeof(consts));
+	cmdb.bindVertexBuffer(0, BufferView(m_boxLines.m_positionsBuff.get()), sizeof(Vec3));
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
+	cmdb.bindIndexBuffer(BufferView(m_boxLines.m_indexBuff.get()), IndexType::kU16);
+
+	rgraphCtx.bindSrv(0, 0, getGBuffer().getDepthRt());
+
+	// GBuffer AABBs
+	const U32 gbufferAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
+	if(gbufferAllAabbCount)
+	{
+		cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
+
+		const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+		cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
+
+		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, gbufferAllAabbCount);
+	}
+
+	// Forward shading renderables
+	const U32 forwardAllAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
+	if(forwardAllAabbCount)
+	{
+		cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
+
+		const GpuVisibilityOutput& visOut = getForwardShading().getGpuVisibilityOutput();
+		cmdb.bindSrv(2, 0, visOut.m_visibleAaabbIndicesBuffer);
+
+		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, forwardAllAabbCount);
+	}
+}
+
+void Editor::populateRenderGraph()
+{
+	ANKI_TRACE_SCOPED_EVENT(Editor);
+
+	m_runCtx.m_rt = {};
+	m_runCtx.m_objectPickingRt = {};
+
+	populateRenderGraphMain();
+
+	populateRenderObjectPicking();
+}
+
+void Editor::populateRenderGraphMain()
+{
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
+
+	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Editor");
+
+	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+
+	GraphicsRenderPassTargetDesc colorRti(m_runCtx.m_rt);
+	colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+	GraphicsRenderPassTargetDesc depthRti(getGBuffer().getDepthRt());
+	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
+	depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
+	pass.setRenderpassInfo({colorRti}, &depthRti);
+
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
+	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
+
+	if(m_options.m_indirectDiffuseProbes && isIndirectDiffuseClipmapsEnabled())
+	{
+		getIndirectDiffuseClipmaps().setDependenciesForDrawDebugProbes(pass);
+	}
+
+	if(m_options.m_visibleRenderableBoundingVolumes)
+	{
+		// drawRenderableBoxes() reads the visible AABB indices in the vertex shader
+		const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+		if(visOut.m_dependency.isValid())
+		{
+			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kSrvGeometry);
+		}
+
+		const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
+		if(fvisOut.m_dependency.isValid())
+		{
+			pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvGeometry);
+		}
+	}
+
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(Editor);
+
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+		// Set common state
+		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
+		cmdb.setDepthWrite(false);
+
+		cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
+		cmdb.setDepthCompareOperation(m_options.m_depthTest ? CompareOperation::kLess : CompareOperation::kAlways);
+		cmdb.setLineWidth(2.0f);
+
+		// Draw stuff
+		drawSceneComponentIcons(false, rgraphCtx);
+
+		if(m_gizmos.m_enabled)
+		{
+			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+			drawGizmos(false, cmdb);
+			cmdb.setDepthCompareOperation(m_options.m_depthTest ? CompareOperation::kLess : CompareOperation::kAlways);
+		}
+
+		if(m_options.m_physics)
+		{
+			drawPhysics(cmdb);
+		}
+
+		if(m_options.m_visibleRenderableBoundingVolumes)
+		{
+			drawRenderableBoxes(rgraphCtx);
+		}
+
+		if(m_options.m_indirectDiffuseProbes && isIndirectDiffuseClipmapsEnabled())
+		{
+			getIndirectDiffuseClipmaps().drawDebugProbes(rgraphCtx, m_options.m_indirectDiffuseProbesClipmap,
+														 m_options.m_indirectDiffuseProbesClipmapType,
+														 m_options.m_indirectDiffuseProbesClipmapColorScale);
+		}
+
+		// Restore state
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+		cmdb.setDepthCompareOperation(CompareOperation::kLess);
+		cmdb.setDepthWrite(true);
+	});
+}
+
+void Editor::populateRenderObjectPicking()
+{
+	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
+
+	const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+	const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
+
+	U32 maxVisibleCount = 0;
+	if(visOut.containsDrawcalls())
+	{
+		maxVisibleCount += U32(visOut.m_visibleAaabbIndicesBuffer.getRange() / sizeof(LodAndGpuSceneRenderableBoundingVolumeIndex));
+	}
+	if(fvisOut.containsDrawcalls())
+	{
+		maxVisibleCount += U32(fvisOut.m_visibleAaabbIndicesBuffer.getRange() / sizeof(LodAndGpuSceneRenderableBoundingVolumeIndex));
+	}
+
+	const BufferView drawIndirectArgsBuff =
+		GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DrawIndexedIndirectArgs>(maxVisibleCount);
+	const BufferView drawCountBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(1);
+	const BufferHandle bufferHandle = rgraph.importBuffer(drawCountBuff, BufferUsageBit::kNone);
+	const BufferView lodAndRenderableIndicesBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(maxVisibleCount);
+
+	// Zero the draw count
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Object Picking: Zero");
+
+		pass.newBufferDependency(bufferHandle, BufferUsageBit::kCopyDestination);
+
+		pass.setWork([drawCountBuff, lodAndRenderableIndicesBuff, drawIndirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			cmdb.zeroBuffer(drawCountBuff);
+			cmdb.zeroBuffer(lodAndRenderableIndicesBuff);
+			cmdb.zeroBuffer(drawIndirectArgsBuff);
+		});
+	}
+
+	// Build the drawcalls of the renderables
+	{
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Object Picking: Prepare");
+
+		if(visOut.m_dependency.isValid())
+		{
+			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kSrvCompute);
+		}
+
+		if(fvisOut.m_dependency.isValid())
+		{
+			pass.newBufferDependency(fvisOut.m_dependency, BufferUsageBit::kSrvCompute);
+		}
+
+		pass.newBufferDependency(bufferHandle, BufferUsageBit::kUavCompute);
+
+		pass.setWork([this, drawIndirectArgsBuff, drawCountBuff, lodAndRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "RenderablesPreparePicking");
+			const ShaderProgramResourceVariant* variant;
+			m_prog->getOrCreateVariant(variantInitInfo, variant);
+			cmdb.bindShaderProgram(&variant->getProgram());
+
+			cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+			cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+
+			cmdb.bindUav(0, 0, drawIndirectArgsBuff);
+			cmdb.bindUav(1, 0, drawCountBuff);
+			cmdb.bindUav(2, 0, lodAndRenderableIndicesBuff);
+
+			// Do GBuffer
+			const GpuVisibilityOutput& visOut = getGBuffer().getVisibilityOutput();
+			if(visOut.containsDrawcalls())
+			{
+				cmdb.bindSrv(0, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
+				cmdb.bindSrv(3, 0, visOut.m_visibleAaabbIndicesBuffer);
+
+				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
+				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
+			}
+
+			// Do ForwardShading
+			const GpuVisibilityOutput& fvisOut = getForwardShading().getGpuVisibilityOutput();
+			if(fvisOut.containsDrawcalls())
+			{
+				cmdb.bindSrv(0, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
+				cmdb.bindSrv(3, 0, fvisOut.m_visibleAaabbIndicesBuffer);
+
+				const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
+				cmdb.dispatchCompute((allAabbCount + 63) / 64, 1, 1);
+			}
+		});
+	}
+
+	// The render pass that draws the UUIDs to a render target
+	const RenderTargetHandle objectPickingRt = rgraph.newRenderTarget(m_objectPickingRtDescr);
+	m_runCtx.m_objectPickingRt = objectPickingRt;
+	const RenderTargetHandle objectPickingDepthRt = rgraph.newRenderTarget(m_objectPickingDepthRtDescr);
+	{
+		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Object Picking: Draw UUIDs");
+
+		pass.newBufferDependency(bufferHandle, BufferUsageBit::kIndirectDraw);
+		pass.newTextureDependency(objectPickingRt, TextureUsageBit::kRtvDsvWrite);
+		pass.newTextureDependency(objectPickingDepthRt, TextureUsageBit::kRtvDsvWrite);
+
+		GraphicsRenderPassTargetDesc colorRti(objectPickingRt);
+		colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+		GraphicsRenderPassTargetDesc depthRti(objectPickingDepthRt);
+		depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+		depthRti.m_clearValue.m_depthStencil.m_depth = 1.0;
+		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
+		pass.setRenderpassInfo({colorRti}, &depthRti);
+
+		pass.setWork([this, lodAndRenderableIndicesBuff, drawIndirectArgsBuff, drawCountBuff, maxVisibleCount](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			// Set common state
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x / 2, getRenderer().getInternalResolution().y / 2);
+			cmdb.setDepthCompareOperation(CompareOperation::kLess);
+
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "RenderablesRenderPicking");
+			const ShaderProgramResourceVariant* variant;
+			m_prog->getOrCreateVariant(variantInitInfo, variant);
+			cmdb.bindShaderProgram(&variant->getProgram());
+
+			cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);
+
+			cmdb.bindSrv(0, 0, lodAndRenderableIndicesBuff);
+			cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+			cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+			cmdb.bindSrv(4, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR16G16B16A16_Unorm);
+			cmdb.bindSrv(5, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Uint);
+			cmdb.bindSrv(6, 0, UnifiedGeometryBuffer::getSingleton().getBufferView(), Format::kR8G8B8A8_Snorm);
+			cmdb.bindSrv(7, 0, GpuSceneBuffer::getSingleton().getBufferView());
+
+			cmdb.setFastConstants(&getRenderingContext().m_matrices.m_viewProjection, sizeof(getRenderingContext().m_matrices.m_viewProjection));
+
+			cmdb.drawIndexedIndirectCount(PrimitiveTopology::kTriangles, drawIndirectArgsBuff, sizeof(DrawIndexedIndirectArgs), drawCountBuff,
+										  maxVisibleCount);
+
+			drawSceneComponentIcons(true, rgraphCtx);
+
+			if(m_gizmos.m_enabled)
+			{
+				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+				drawGizmos(true, cmdb);
+				cmdb.setDepthCompareOperation(CompareOperation::kLess);
+			}
+		});
+	}
+
+	// Read the UUID RT to get the UUID that is under the mouse
+	{
+		U32 uuid;
+		PtrSize dataOut;
+		getRenderer().getReadbackManager().readMostRecentData(m_readback, &uuid, sizeof(uuid), dataOut);
+		m_runCtx.m_objPickingRes = {};
+		if(dataOut)
+		{
+			if(uuid & (1u << 31u))
+			{
+				// It's a gizmo
+				uuid &= ~(1u << 31u);
+				if(uuid < 3)
+				{
+					m_runCtx.m_objPickingRes.m_translationAxis = U8(uuid);
+				}
+				else if(uuid < 6)
+				{
+					m_runCtx.m_objPickingRes.m_scaleAxis = U8(uuid - 3);
+				}
+				else
+				{
+					ANKI_ASSERT(uuid - 6 < 3);
+					m_runCtx.m_objPickingRes.m_rotationAxis = U8(uuid - 6);
+				}
+			}
+			else
+			{
+				m_runCtx.m_objPickingRes.m_sceneNodeUuid = uuid;
+			}
+		}
+
+		const BufferView readbackBuff = getRenderer().getReadbackManager().allocateStructuredBuffer<U32>(m_readback, 1);
+
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Object Picking: Picking");
+
+		pass.newTextureDependency(objectPickingRt, TextureUsageBit::kSrvCompute);
+
+		pass.setWork([this, readbackBuff, objectPickingRt](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kCompute, "ReadPickingBuffer");
+			const ShaderProgramResourceVariant* variant;
+			m_prog->getOrCreateVariant(variantInitInfo, variant);
+			cmdb.bindShaderProgram(&variant->getProgram());
+
+			rgraphCtx.bindSrv(0, 0, objectPickingRt);
+			cmdb.bindUav(0, 0, readbackBuff);
+
+			const UVec2 pickingRtSize = getRenderer().getInternalResolution() / 2;
+
+			Vec2 mousePos = Input::getSingleton().getMousePositionNdc();
+			mousePos.y = -mousePos.y;
+			mousePos = mousePos / 2.0f + 0.5f;
+			mousePos *= Vec2(pickingRtSize);
+
+			mousePos = mousePos.clamp(Vec2(0.0f), Vec2(pickingRtSize) - 1.0f);
+
+			const UVec4 consts(UVec2(mousePos), 0u, 0u);
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			cmdb.dispatchCompute(1, 1, 1);
+		});
+	}
+}
+
 } // end namespace anki
+
+#endif // ANKI_WITH_EDITOR

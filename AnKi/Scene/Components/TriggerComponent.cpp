@@ -79,6 +79,9 @@ TriggerComponent::MyPhysicsTriggerCallbacks TriggerComponent::m_callbacks;
 TriggerComponent::TriggerComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 {
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 TriggerComponent::~TriggerComponent()

@@ -15,6 +15,9 @@ namespace anki {
 ScriptComponent::ScriptComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 {
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 ScriptComponent::~ScriptComponent()

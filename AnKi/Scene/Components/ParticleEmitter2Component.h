@@ -102,6 +102,13 @@ public:
 		return *m_resource;
 	}
 
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+#endif
+
 private:
 	class ParticleEmitterQuadGeometry;
 
@@ -119,6 +126,10 @@ private:
 	} m_gpuScene;
 
 	Array<Vec3, 2> m_boundingVolume = {Vec3(-0.5f), Vec3(0.5f)};
+
+#if ANKI_WITH_EDITOR
+	SceneNode* m_node = nullptr;
+#endif
 
 	ParticleGeometryType m_geomType = ParticleGeometryType::kQuad;
 	Bool m_anyDirty = true;

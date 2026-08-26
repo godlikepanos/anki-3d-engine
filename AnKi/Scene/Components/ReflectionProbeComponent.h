@@ -61,6 +61,13 @@ public:
 		return m_gpuSceneProbe;
 	}
 
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+#endif
+
 private:
 	Vec3 m_worldPos = Vec3(kMaxF32);
 	Vec3 m_halfSize = Vec3(1.0f);
@@ -72,6 +79,10 @@ private:
 
 	Bool m_dirty = true;
 	Bool m_reflectionNeedsRefresh = true;
+
+#if ANKI_WITH_EDITOR
+	SceneNode* m_node = nullptr;
+#endif
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

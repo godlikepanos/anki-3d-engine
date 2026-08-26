@@ -9,7 +9,7 @@
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/Dbg.h>
+#include <AnKi/Renderer/Editor.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/MotionBlur.h>
 #include <AnKi/Util/Logger.h>
@@ -107,9 +107,9 @@ void FinalComposite::populateRenderGraph()
 
 	pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
-	if(getDbg().getOptions().mainDbgPass())
+	if(isEditorEnabled())
 	{
-		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
+		pass.newTextureDependency(getEditor().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
 	pass.newTextureDependency((g_cvarRenderMotionBlurSampleCount != 0) ? getRenderer().getMotionBlur().getRt()
@@ -137,7 +137,7 @@ void FinalComposite::populateRenderGraph()
 		ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-		const Bool dbgEnabled = getDbg().getOptions().mainDbgPass();
+		const Bool dbgEnabled = isEditorEnabled();
 
 		Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)> dbgRts;
 		DebugRenderTargetDrawStyle drawStyle;
@@ -165,7 +165,7 @@ void FinalComposite::populateRenderGraph()
 
 			if(dbgEnabled)
 			{
-				rgraphCtx.bindSrv(2, 0, getRenderer().getDbg().getRt());
+				rgraphCtx.bindSrv(2, 0, getEditor().getRt());
 			}
 
 			struct Constants

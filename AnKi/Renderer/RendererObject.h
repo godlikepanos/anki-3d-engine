@@ -131,6 +131,10 @@ protected:
 	{ \
 		return getRenderer().get##type(); \
 	} \
+	ANKI_FORCE_INLINE const type& get##type() const \
+	{ \
+		return getRenderer().get##type(); \
+	} \
 	ANKI_FORCE_INLINE Bool is##type##Enabled() const \
 	{ \
 		return getRenderer().is##type##Enabled(); \

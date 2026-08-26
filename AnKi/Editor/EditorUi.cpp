@@ -12,7 +12,7 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/Dbg.h>
+#include <AnKi/Renderer/Editor.h>
 #include <AnKi/Renderer/ScreenshotPass.h>
 #include <AnKi/Collision.h>
 #include <ThirdParty/ImGui/Extra/IconsMaterialDesignIcons.h> // See all icons in https://pictogrammers.com/library/mdi/
@@ -381,17 +381,59 @@ void EditorUi::mainMenu()
 					m_showDebugRtsWindow = true;
 				}
 
+				// Toggle the scene component icons
+				ImGui::SeparatorText("Component Icons");
+
+				EditorOptions& options = Renderer::getSingleton().getEditor().getEditorOptions();
+
+				// Draws an icon only toggle button that's highlighted when the option is on
+				auto iconToggle = [](SceneComponentType componentType, const Char* tooltip, Bool enabled) -> Bool {
+					const Bool wasEnabled = enabled;
+					if(wasEnabled)
+					{
+						ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+					}
+
+					if(ImGui::Button(kSceneComponentIcons[componentType]))
+					{
+						enabled = !enabled;
+					}
+
+					if(wasEnabled)
+					{
+						ImGui::PopStyleColor();
+					}
+
+					ImGui::SetItemTooltip("%s", tooltip);
+					ImGui::SameLine();
+
+					return enabled;
+				};
+
+				options.m_lights = iconToggle(SceneComponentType::kLight, "Lights", options.m_lights);
+				options.m_decals = iconToggle(SceneComponentType::kDecal, "Decals", options.m_decals);
+				options.m_particleEmitters = iconToggle(SceneComponentType::kParticleEmitter2, "Particle emitters", options.m_particleEmitters);
+				options.m_cameras = iconToggle(SceneComponentType::kCamera, "Cameras", options.m_cameras);
+				options.m_skyboxes = iconToggle(SceneComponentType::kSkybox, "Skyboxes", options.m_skyboxes);
+				options.m_reflectionProbes = iconToggle(SceneComponentType::kReflectionProbe, "Reflection probes", options.m_reflectionProbes);
+				options.m_giProbes = iconToggle(SceneComponentType::kGlobalIlluminationProbe, "Global illumination probes", options.m_giProbes);
+				options.m_fogDensityVolumes = iconToggle(SceneComponentType::kFogDensity, "Fog density volumes", options.m_fogDensityVolumes);
+				options.m_scripts = iconToggle(SceneComponentType::kScript, "Scripts", options.m_scripts);
+				options.m_triggers = iconToggle(SceneComponentType::kTrigger, "Triggers", options.m_triggers);
+
+				ImGui::NewLine();
+				ImGui::SeparatorText("Misc");
+
 				Bool wireframe = Renderer::getSingleton().getGBuffer().getWireframeMode();
 				if(ImGui::Checkbox("GBuffer Wireframe", &wireframe))
 				{
 					Renderer::getSingleton().getGBuffer().setWireframeMode(wireframe);
 				}
 
-				DbgOptions& options = Renderer::getSingleton().getDbg().getOptions();
-				Bool bBoundingBoxes = options.m_renderableBoundingBoxes;
+				Bool bBoundingBoxes = options.m_visibleRenderableBoundingVolumes;
 				if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))
 				{
-					options.m_renderableBoundingBoxes = bBoundingBoxes;
+					options.m_visibleRenderableBoundingVolumes = bBoundingBoxes;
 				}
 
 				Bool bPhysics = options.m_physics;
@@ -452,7 +494,7 @@ void EditorUi::mainMenu()
 				ImGui::EndDisabled();
 
 				ImGui::EndMenu();
-			}
+			} // Debug menu
 
 			if(ImGui::BeginMenu(ICON_MDI_PLUS_BOX " New"))
 			{
@@ -862,7 +904,7 @@ void EditorUi::objectPicking()
 {
 	if(!m_mouseOverAnyWindow && Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
 	{
-		const DbgObjectPickingResult& res = Renderer::getSingleton().getDbg().getObjectPickingResultAtMousePosition();
+		const EditorObjectPickingResult& res = Renderer::getSingleton().getEditor().getObjectPickingResultAtMousePosition();
 
 		if(res.m_sceneNodeUuid != 0)
 		{
@@ -1081,11 +1123,11 @@ void EditorUi::objectPicking()
 
 	if(m_selectedNode)
 	{
-		Renderer::getSingleton().getDbg().enableGizmos(m_selectedNode->getWorldTransform(), true);
+		Renderer::getSingleton().getEditor().enableGizmos(m_selectedNode->getWorldTransform(), true);
 	}
 	else
 	{
-		Renderer::getSingleton().getDbg().enableGizmos(Transform::getIdentity(), false);
+		Renderer::getSingleton().getEditor().enableGizmos(Transform::getIdentity(), false);
 	}
 }
 

@@ -18,6 +18,10 @@ DecalComponent::DecalComponent(const SceneComponentInitInfo& init)
 	setDiffuseBlendFactor(0.9f);
 
 	m_defaultDecalImage = m_layers[LayerType::kDiffuse].m_image;
+
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 DecalComponent::~DecalComponent()

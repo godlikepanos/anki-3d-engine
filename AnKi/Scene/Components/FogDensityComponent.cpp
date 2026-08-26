@@ -14,6 +14,10 @@ FogDensityComponent::FogDensityComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 {
 	m_gpuSceneVolume.allocate();
+
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 FogDensityComponent ::~FogDensityComponent()

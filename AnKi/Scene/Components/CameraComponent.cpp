@@ -19,6 +19,10 @@ CameraComponent::CameraComponent(const SceneComponentInitInfo& init)
 	m_frustum.init(FrustumType::kPerspective);
 	m_frustum.setWorldTransform(init.m_node->getWorldTransform());
 	m_frustum.update();
+
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 CameraComponent::~CameraComponent()

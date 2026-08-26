@@ -155,6 +155,10 @@ ParticleEmitter2Component::ParticleEmitter2Component(const SceneComponentInitInf
 	: SceneComponent(kClassType, init)
 {
 	ParticleEmitterQuadGeometry::getSingleton().addUser();
+
+#if ANKI_WITH_EDITOR
+	m_node = init.m_node;
+#endif
 }
 
 ParticleEmitter2Component::~ParticleEmitter2Component()

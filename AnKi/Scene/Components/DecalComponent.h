@@ -82,6 +82,13 @@ public:
 		return m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
 	}
 
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+#endif
+
 private:
 	enum class LayerType : U8
 	{
@@ -105,6 +112,10 @@ private:
 	GpuSceneArrays::Decal::Allocation m_gpuSceneDecal;
 
 	Bool m_dirty = true;
+
+#if ANKI_WITH_EDITOR
+	SceneNode* m_node = nullptr;
+#endif
 
 	void setImage(LayerType type, CString fname);
 

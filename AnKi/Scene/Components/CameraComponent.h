@@ -89,8 +89,19 @@ public:
 		return m_frustum;
 	}
 
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+#endif
+
 private:
 	Frustum m_frustum;
+
+#if ANKI_WITH_EDITOR
+	SceneNode* m_node = nullptr;
+#endif
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

@@ -102,6 +102,11 @@ public:
 		ANKI_ASSERT(m_##name != nullptr && m_##name != numberToPtr<type*>(kMaxPtrSize)); \
 		return *m_##name; \
 	} \
+	const type& get##type() const \
+	{ \
+		ANKI_ASSERT(m_##name != nullptr && m_##name != numberToPtr<type*>(kMaxPtrSize)); \
+		return *m_##name; \
+	} \
 	Bool is##type##Enabled() const \
 	{ \
 		ANKI_ASSERT(m_##name != numberToPtr<type*>(kMaxPtrSize) && "Calling this before the renderer had a chance to decide if to initialize it"); \

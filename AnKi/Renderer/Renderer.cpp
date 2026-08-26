@@ -28,7 +28,7 @@
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/LensFlare.h>
-#include <AnKi/Renderer/Dbg.h>
+#include <AnKi/Renderer/Editor.h>
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/TemporalAA.h>
@@ -395,7 +395,10 @@ Error Renderer::populateRenderGraph()
 	m_tonemapping->populateRenderGraph();
 	m_motionBlur->populateRenderGraph();
 	m_bloom2->populateRenderGraph();
-	m_dbg->populateRenderGraph();
+	if(m_editor)
+	{
+		m_editor->populateRenderGraph();
+	}
 	m_uiStage->populateRenderGraph();
 
 	m_finalComposite->populateRenderGraph();

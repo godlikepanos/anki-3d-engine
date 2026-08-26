@@ -6,7 +6,6 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
-#include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Util/Logger.h>
@@ -96,7 +95,7 @@ void GBuffer::populateRenderGraph()
 		visIn.m_lodDistances = lodDistances;
 		visIn.m_rgraph = &rgraph;
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
-		visIn.m_gatherAabbIndices = getDbg().getOptions().visibilityShouldGatherAabbs();
+		visIn.m_gatherAabbIndices = isEditorEnabled();
 		visIn.m_viewportSize = getRenderer().getInternalResolution();
 		visIn.m_twoPhaseOcclusionCulling = getRenderer().getMeshletRenderingType() != MeshletRenderingType::kNone;
 
