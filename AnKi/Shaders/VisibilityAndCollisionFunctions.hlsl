@@ -7,7 +7,7 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-/// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u, out F32 v)
 {
 	const Vec3 v0v1 = v1 - v0;
@@ -51,7 +51,7 @@ Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Boo
 	return true;
 }
 
-/// Return true if to AABBs overlap.
+// Return true if to AABBs overlap.
 Bool aabbAabbOverlap(Vec3 aMin, Vec3 aMax, Vec3 bMin, Vec3 bMax)
 {
 	return all(aMin < bMax) && all(bMin < aMax);
@@ -65,9 +65,9 @@ Bool testSphereSphereCollision(Vec3 sphereCenterA, F32 sphereRadiusA, Vec3 spher
 	return (distSquared < maxDist * maxDist);
 }
 
-/// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
-/// intersection point is rayOrigin + rayDir * a
-/// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
+// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
+// intersection point is rayOrigin + rayDir * a
+// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
 F32 testRayAabbInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
 {
 	const Vec3 intersectMaxPointPlanes = (aabbMax - rayOrigin) / rayDir;
@@ -77,7 +77,7 @@ F32 testRayAabbInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
 	return distToIntersect;
 }
 
-/// Ray box intersection by Simon Green
+// Ray box intersection by Simon Green
 Bool testRayAabb(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax, out F32 t0, out F32 t1)
 {
 	const Vec3 invR = 1.0 / rayDir;
@@ -103,7 +103,7 @@ Bool testRayObb(Vec3 rayOrigin, Vec3 rayDir, Vec3 obbExtend, Mat4 obbTransformIn
 	return testRayAabb(rayOriginS, rayDirS, -obbExtend, obbExtend, t0, t1);
 }
 
-/// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRadius, out F32 t0, out F32 t1)
 {
 	t0 = 0.0f;
@@ -137,6 +137,86 @@ Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRad
 	}
 
 	t0 = max(0.0, t0);
+	return true;
+}
+
+// Solid finite cone that has its tip at coneApex and expands along coneDir (unit vector) for coneHeight units. coneCosHalfAngle is the cosine of
+// the angle between coneDir and the cone's side. The base cap is part of the cone so rays entering from behind get a correct t0.
+// https://www.geometrictools.com/Documentation/IntersectionLineCone.pdf
+Bool testRayCone(Vec3 rayOrigin, Vec3 rayDir, Vec3 coneApex, Vec3 coneDir, F32 coneCosHalfAngle, F32 coneHeight, out F32 t0, out F32 t1)
+{
+	t0 = 0.0f;
+	t1 = 0.0f;
+
+	const Vec3 co = rayOrigin - coneApex;
+	const F32 cosSquare = coneCosHalfAngle * coneCosHalfAngle;
+	const F32 dirDotAxis = dot(rayDir, coneDir);
+	const F32 coDotAxis = dot(co, coneDir);
+
+	// Points on the infinite double cone satisfy dot(p, coneDir)^2 == dot(p, p) * cosSquare. Substituting p = co + t * rayDir gives a quadratic
+	const F32 a = dirDotAxis * dirDotAxis - cosSquare;
+	const F32 b = 2.0f * (dirDotAxis * coDotAxis - dot(rayDir, co) * cosSquare);
+	const F32 c = coDotAxis * coDotAxis - dot(co, co) * cosSquare;
+
+	F32 roots[2] = {0.0f, 0.0f};
+	U32 rootCount = 0;
+	if(abs(a) < kEpsilonF32)
+	{
+		// Ray is parallel to the cone's side so it can only touch the surface once
+		if(abs(b) > kEpsilonF32)
+		{
+			roots[0] = -c / b;
+			rootCount = 1;
+		}
+	}
+	else
+	{
+		const F32 discriminant = b * b - 4.0f * a * c;
+		if(discriminant < 0.0f)
+		{
+			return false;
+		}
+
+		const F32 sqrtDiscriminant = sqrt(discriminant);
+		roots[0] = (-b - sqrtDiscriminant) / (2.0f * a);
+		roots[1] = (-b + sqrtDiscriminant) / (2.0f * a);
+		rootCount = 2;
+	}
+
+	// Reject the hits that are on the mirrored cone or past the base cap
+	F32 tMin = kMaxF32;
+	F32 tMax = -kMaxF32;
+	for(U32 i = 0; i < rootCount; ++i)
+	{
+		const F32 t = roots[i];
+		const F32 height = coDotAxis + t * dirDotAxis;
+		if(height >= 0.0f && height <= coneHeight)
+		{
+			tMin = min(tMin, t);
+			tMax = max(tMax, t);
+		}
+	}
+
+	// The base cap
+	if(abs(dirDotAxis) > kEpsilonF32)
+	{
+		const F32 t = (coneHeight - coDotAxis) / dirDotAxis;
+		const Vec3 p = co + t * rayDir;
+		const F32 capRadius = coneHeight * sqrt(max(0.0f, 1.0f - cosSquare)) / coneCosHalfAngle;
+		if(dot(p, p) - coneHeight * coneHeight <= capRadius * capRadius)
+		{
+			tMin = min(tMin, t);
+			tMax = max(tMax, t);
+		}
+	}
+
+	if(tMin > tMax || tMax < 0.0f)
+	{
+		return false;
+	}
+
+	t0 = max(0.0f, tMin);
+	t1 = tMax;
 	return true;
 }
 
@@ -199,6 +279,28 @@ Bool aabbSphereOverlap(Vec3 aabbMin, Vec3 aabbMax, Vec3 sphereCenter, F32 sphere
 	return dot(sub, sub) <= square(sphereRadius);
 }
 
+// Conservative overlap test of an AABB against a solid finite cone. See testRayCone for what the cone params mean. It actually tests the AABB's
+// bounding sphere so it may return true for boxes that miss the cone but it never returns false for boxes that hit it.
+// https://bartwronski.com/2017/04/13/cull-that-cone/
+Bool aabbConeOverlap(Vec3 aabbMin, Vec3 aabbMax, Vec3 coneApex, Vec3 coneDir, F32 coneCosHalfAngle, F32 coneHeight)
+{
+	const Vec3 sphereCenter = (aabbMin + aabbMax) * 0.5f;
+	const F32 sphereRadius = length(aabbMax - sphereCenter);
+	const F32 coneSinHalfAngle = sqrt(max(0.0f, 1.0f - square(coneCosHalfAngle)));
+
+	const Vec3 apexToSphere = sphereCenter - coneApex;
+	const F32 distAlongAxis = dot(apexToSphere, coneDir);
+	const F32 distFromAxis = sqrt(max(0.0f, dot(apexToSphere, apexToSphere) - square(distAlongAxis)));
+
+	// Distance of the sphere's center from the cone's side. It's negative when the center is inside the infinite cone
+	const F32 distFromSide = coneCosHalfAngle * distFromAxis - distAlongAxis * coneSinHalfAngle;
+
+	const Bool angleCull = distFromSide > sphereRadius;
+	const Bool frontCull = distAlongAxis > sphereRadius + coneHeight;
+	const Bool backCull = distAlongAxis < -sphereRadius;
+	return !(angleCull || frontCull || backCull);
+}
+
 Bool frustumTest(Vec4 frustumPlanes[6], Vec3 sphereCenter, F32 sphereRadius)
 {
 	F32 minPlaneDistance = testPlanePoint(frustumPlanes[0].xyz, frustumPlanes[0].w, sphereCenter);
@@ -211,7 +313,7 @@ Bool frustumTest(Vec4 frustumPlanes[6], Vec3 sphereCenter, F32 sphereRadius)
 	return minPlaneDistance > -sphereRadius;
 }
 
-/// Modified version found in https://zeux.io/2023/01/12/approximate-projected-bounds
+// Modified version found in https://zeux.io/2023/01/12/approximate-projected-bounds
 void projectAabb(Vec3 aabbMin, Vec3 aabbMax, Mat4 viewProjMat, out Vec2 minNdc, out Vec2 maxNdc, out F32 aabbMinDepth)
 {
 	const Vec4 SX = mul(viewProjMat, Vec4(aabbMax.x - aabbMin.x, 0.0, 0.0, 0.0));
@@ -295,7 +397,7 @@ Bool cullHzb(Vec2 aabbMinNdc, Vec2 aabbMaxNdc, F32 aabbMinDepth, Texture2D<Vec4>
 	return (aabbMinDepth > maxDepth);
 }
 
-/// All cone values in local space.
+// All cone values in local space.
 Bool cullBackfaceMeshlet(Vec3 coneDirection, F32 coneCosHalfAngle, Vec3 coneApex, Mat3x4 worldTransform, Vec3 cameraWorldPos)
 {
 	const Vec3 apexWSpace = mul(worldTransform, Vec4(coneApex, 1.0f));

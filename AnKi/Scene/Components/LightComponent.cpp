@@ -208,18 +208,10 @@ void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_componentArrayIndex = getArrayIndex();
 		gpuLight.m_componentUuid = getUuid();
 		gpuLight.m_sceneNodeUuid = info.m_node->getUuid();
-		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
+		gpuLight.m_innerCosHalfAngle = cos(m_spot.m_innerAngle / 2.0f);
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
-		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
+		gpuLight.m_outerCosHalfAngle = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_gpuSceneArrayIndex = m_gpuSceneLight.getIndex();
-
-		Array<Vec3, 4> points;
-		computeEdgesOfFrustum(m_pointAndSpot.m_influenceRadius, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
-		for(U32 i = 0; i < 4; ++i)
-		{
-			points[i] = m_worldTransform.transform(points[i]);
-			gpuLight.m_edgePoints[i] = points[i].xyz0;
-		}
 
 		if(reallyShadow)
 		{

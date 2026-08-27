@@ -130,8 +130,8 @@ struct GpuSceneLight
 	U32 m_cpuFeedback : 1; // If true the GPU visibility will inform the CPU about it
 	U32 m_padding0 : 28;
 	F32 m_influenceRadius ANKI_CPP_CODE(= 0.0f); // Radius
-	F32 m_innerCos; // Only for spot light.
-	F32 m_outerCos; // Only for spot light.
+	F32 m_innerCosHalfAngle; // Only for spot light.
+	F32 m_outerCosHalfAngle; // Only for spot light.
 
 	Vec3 m_position ANKI_CPP_CODE(= Vec3(kSomeFarDistance)); // Position in world space.
 	F32 m_sourceRadius ANKI_CPP_CODE(= 0.0f); // Physical size of the emitter
@@ -149,8 +149,6 @@ struct GpuSceneLight
 
 	// If it's a spot light the 4 first rows are the texture matrix. If it's point light it's the UV viewports in the shadow atlas
 	Vec4 m_spotLightMatrixOrPointLightUvViewports[6u];
-
-	Vec4 m_edgePoints[4u]; // Edge points in world space. Only for spot light.
 };
 static_assert(sizeof(GpuSceneLight) % sizeof(Vec4) == 0);
 

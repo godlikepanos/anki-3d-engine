@@ -269,7 +269,7 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 			F32 attenuation = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 			if(light.m_isSpotLight)
 			{
-				attenuation *= computeSpotFactor(nFrag2Light, light.m_outerCos, light.m_innerCos, light.m_direction);
+				attenuation *= computeSpotFactor(nFrag2Light, light.m_outerCosHalfAngle, light.m_innerCosHalfAngle, light.m_direction);
 			}
 
 			if(attenuation > kEpsilonF32 && lambert > kEpsilonF32 && doLocalLightShadow)

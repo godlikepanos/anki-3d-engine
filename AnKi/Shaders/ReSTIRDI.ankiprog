@@ -133,7 +133,7 @@ F32 computePHat(GpuSceneLight light, GbufferInfo<F32> gbuffer, Vec3 surfacePosW,
 	const F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 	const F32 geom = att * lambert;
 
-	const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+	const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCosHalfAngle, light.m_innerCosHalfAngle, light.m_direction) : 1.0;
 	const Vec3 I = light.m_luminousIntensity * spot;
 
 	const Vec3 LoNoVis = brdf * I * geom * kPreExposure;
@@ -176,7 +176,7 @@ F32 computePHat(DIReservoir reservoir, GbufferInfo<F32> gbuffer, Vec3 surfacePos
 		l = normalize(frag2Light);
 
 		const F32 att = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, light.m_position - surfacePosW);
-		const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+		const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCosHalfAngle, light.m_innerCosHalfAngle, light.m_direction) : 1.0;
 		attenuationAndSpot = att * spot;
 
 		lightEmission = light.m_luminousIntensity;
@@ -310,7 +310,8 @@ Vec3 directLighting(UVec2 coord)
 				continue;
 			}
 
-			const F32 spot = (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+			const F32 spot =
+				(light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCosHalfAngle, light.m_innerCosHalfAngle, light.m_direction) : 1.0;
 			if(spot <= kEpsilonF32)
 			{
 				continue;
@@ -577,7 +578,7 @@ Vec3 computeSample(GbufferInfo<F32> gbuffer, Vec3 surfacePosW, DIReservoir reser
 		l = surfToLight / rayT;
 		emission = light.m_luminousIntensity;
 		atten = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, light.m_position - surfacePosW);
-		atten *= (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+		atten *= (light.m_isSpotLight) ? computeSpotFactor(l, light.m_outerCosHalfAngle, light.m_innerCosHalfAngle, light.m_direction) : 1.0;
 	}
 
 	const F32 geom = dot(l, gbuffer.m_normal);

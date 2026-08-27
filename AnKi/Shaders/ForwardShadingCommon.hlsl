@@ -53,7 +53,9 @@ Vec3 computeLightColorHigh(Vec3 albedo, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 att = computeAttenuationFactor<F32>(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
 
-		att *= (light.m_isSpotLight) ? computeSpotFactor<F32>(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+		att *= (light.m_isSpotLight)
+				   ? computeSpotFactor<F32>(normalize(frag2Light), light.m_outerCosHalfAngle, light.m_innerCosHalfAngle, light.m_direction)
+				   : 1.0;
 
 		F32 shadow = 1.0;
 		if(light.m_shadow)

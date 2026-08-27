@@ -277,7 +277,9 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 fullCoord, F32 depth)
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 attenuation = computeAttenuationFactor(light.m_influenceRadius, light.m_sourceRadius, frag2Light);
-		attenuation *= (light.m_isSpotLight) ? computeSpotFactor(normalize(frag2Light), light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0;
+		attenuation *= (light.m_isSpotLight)
+						   ? computeSpotFactor(normalize(frag2Light), light.m_outerCosHalfAngle, light.m_innerCosHalfAngle, light.m_direction)
+						   : 1.0;
 		const F32 lambert = max(0.0, dot(normalize(frag2Light), gbuffer.m_normal));
 
 		outColor += diffC * light.m_luminousIntensity * kPreExposure * (attenuation * lambert);

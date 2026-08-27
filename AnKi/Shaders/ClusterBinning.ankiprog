@@ -169,40 +169,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	else
 	{
 		// Spot light
-
-		t0 = 10000.0;
-		t1 = -10000.0;
-
-		// Iterate all triangles
-		const U32 indices[6u * 3u] = {0u, 1u, 2u, 0u, 2u, 3u, 0u, 3u, 4u, 0u, 1u, 4u, 1u, 2u, 3u, 3u, 4u, 1u};
-		const Vec3 edgePoints[5u] = {obj.m_position, obj.m_edgePoints[0].xyz, obj.m_edgePoints[1].xyz, obj.m_edgePoints[2].xyz,
-									 obj.m_edgePoints[3].xyz};
-		U32 hits = 0u;
-		U32 idx = 0u;
-		do
-		{
-			const Vec3 v0 = edgePoints[indices[idx + 0u]];
-			const Vec3 v1 = edgePoints[indices[idx + 1u]];
-			const Vec3 v2 = edgePoints[indices[idx + 2u]];
-
-			F32 t, u, v;
-			const Bool localCollides = testRayTriangle(rayOrigin, rayDir, v0, v1, v2, false, t, u, v);
-
-			if(localCollides)
-			{
-				t0 = min(t0, t);
-				t1 = max(t1, t);
-				++hits;
-			}
-			idx += 3u;
-		} while(hits < 2u && idx < 6u * 3u);
-
-		if(hits == 1u)
-		{
-			t0 = 0.0;
-		}
-
-		collides = (hits != 0u);
+		collides = testRayCone(rayOrigin, rayDir, obj.m_position, obj.m_direction, obj.m_outerCosHalfAngle, obj.m_influenceRadius, t0, t1);
 	}
 #	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 	collides = testRaySphere(rayOrigin, rayDir, obj.m_sphereCenter, obj.m_sphereRadius, t0, t1);
