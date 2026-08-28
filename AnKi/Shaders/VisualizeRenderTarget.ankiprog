@@ -8,7 +8,7 @@
 #include <AnKi/Shaders/QuadVert.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D<Vec4> g_inTex : register(t0);

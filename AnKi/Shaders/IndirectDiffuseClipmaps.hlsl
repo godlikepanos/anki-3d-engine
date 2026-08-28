@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Common.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 
 /// Flags to fine tune the probe selection in sampleClipmapCommon
 enum SampleClipmapFlag : U32

@@ -445,7 +445,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 																 : m_rtMaterialFetchProg[RtMaterialFetchType::kProbe].get());
 
 				// More globals
-#include <AnKi/Shaders/Include/MaterialBindings.def.h>
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 				bindRgenSpace2Resources(rgraphCtx);
 
@@ -669,7 +669,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			// Space 0 globals
-#include <AnKi/Shaders/Include/MaterialBindings.def.h>
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 			bindRgenSpace2Resources(rgraphCtx);
 			rgraphCtx.bindSrv(6, 2, getSsao().getRt());

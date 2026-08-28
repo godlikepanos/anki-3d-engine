@@ -20,7 +20,7 @@
 // SSAO                                                                      =
 // ===========================================================================
 #if ANKI_TECHNIQUE_Ssao && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
-#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 #	include <AnKi/Shaders/FastMathFunctions.hlsl>
@@ -261,7 +261,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 // ===========================================================================
 #if ANKI_TECHNIQUE_TemporalDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/Functions.hlsl>
-#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/MiscRendererTypes.h>
 
 SamplerState g_linearAnyClampSampler : register(s0);
 
@@ -330,7 +330,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 // ===========================================================================
 #if ANKI_TECHNIQUE_SpatialDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/BilateralFilter.hlsl>
-#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_linearAnyClampSampler : register(s0);
@@ -424,7 +424,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 // ===========================================================================
 #if ANKI_TECHNIQUE_Upscale && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/BilateralFilter.hlsl>
-#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 

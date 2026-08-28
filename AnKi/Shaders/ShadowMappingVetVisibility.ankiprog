@@ -8,8 +8,8 @@
 #pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
-#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
 
 StructuredBuffer<GpuVisibilityHash> g_hash : register(t0);
 RWStructuredBuffer<U32> g_mdiDrawCounts : register(u0);

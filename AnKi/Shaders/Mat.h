@@ -172,7 +172,7 @@ typedef TMat4<F32> Mat4;
 typedef TMat3x4<F32> Mat3x4;
 
 #define SCALAR F32
-#include <AnKi/Shaders/Include/Mat.def.h>
+#include <AnKi/Shaders/Mat.def.h>
 
 #define SCALAR F16
-#include <AnKi/Shaders/Include/Mat.def.h>
+#include <AnKi/Shaders/Mat.def.h>

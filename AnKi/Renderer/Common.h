@@ -8,8 +8,8 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/CVarSet.h>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
+#include <AnKi/Shaders/ClusteredShadingTypes.h>
 #include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/GpuMemory/SegregatedListsGpuMemoryPool.h>
 

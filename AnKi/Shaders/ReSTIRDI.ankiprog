@@ -8,7 +8,7 @@
 // - less complex p_hat
 
 #include <AnKi/Shaders/ReSTIR.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>

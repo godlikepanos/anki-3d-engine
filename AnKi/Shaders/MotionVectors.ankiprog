@@ -11,7 +11,7 @@
 
 #include <AnKi/Shaders/QuadVert.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 
 #if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
 

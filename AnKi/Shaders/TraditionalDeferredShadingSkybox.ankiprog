@@ -13,8 +13,8 @@
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/Sky.hlsl>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
-#	include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
-#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/TraditionalDeferredShadingTypes.h>
+#	include <AnKi/Shaders/MiscRendererTypes.h>
 
 ANKI_FAST_CONSTANTS(TraditionalDeferredSkyboxConstants, g_consts)
 

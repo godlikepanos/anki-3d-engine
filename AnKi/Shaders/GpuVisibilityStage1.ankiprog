@@ -16,8 +16,8 @@
 #pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
+#include <AnKi/Shaders/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 #define NUMTHREADS 64

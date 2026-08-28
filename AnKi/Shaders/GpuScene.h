@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/MeshTypes.h>
-#include <AnKi/Shaders/Include/ParticleTypes.h>
+#include <AnKi/Shaders/MeshTypes.h>
+#include <AnKi/Shaders/ParticleTypes.h>
 
 ANKI_BEGIN_NAMESPACE
 
@@ -55,6 +55,16 @@ struct GpuSceneMeshletInstance
 };
 static_assert(kMaxPrimitivesPerMeshlet < ((1u << 7u) - 1));
 
+inline GpuSceneMeshletInstance unpackGpuSceneMeshletInstance(UVec4 x)
+{
+	GpuSceneMeshletInstance o;
+	o.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = x[0];
+	o.m_constantsOffset = x[1];
+	o.m_meshletGeometryDescriptorIndex = x[2];
+	o.m_boneTransformsOffsetOrParticleEmitterIndex = x[3];
+	return o;
+}
+
 // Used in visibility testing.
 struct GpuSceneRenderableBoundingVolume
 {
@@ -66,6 +76,28 @@ struct GpuSceneRenderableBoundingVolume
 	U32 m_renderStateBucket : 12;
 };
 static_assert(sizeof(GpuSceneRenderableBoundingVolume) == sizeof(Vec4) * 2);
+
+inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex, U32 renderStateBucket)
+{
+	GpuSceneRenderableBoundingVolume gpuVolume;
+	gpuVolume.m_aabbMin = aabbMin;
+	gpuVolume.m_aabbMax = aabbMax;
+
+	const Vec3 sphereCenter = (aabbMin + aabbMax) * 0.5f;
+	const Vec3 aabbExtend = aabbMax - sphereCenter;
+#if defined(__cplusplus)
+	gpuVolume.m_sphereRadius = aabbExtend.length();
+#else
+	gpuVolume.m_sphereRadius = length(aabbExtend);
+#endif
+
+	ANKI_ASSERT(renderableIndex <= (1u << 20u) - 1u);
+	gpuVolume.m_renderableIndex = renderableIndex;
+
+	ANKI_ASSERT(renderStateBucket <= (1u << 12u) - 1u);
+	gpuVolume.m_renderStateBucket = renderStateBucket;
+	return gpuVolume;
+}
 
 // Represents the geometry data of a single LOD of an indexed mesh.
 struct GpuSceneMeshLod
@@ -269,5 +301,25 @@ enum class GpuSceneNonRenderableObjectTypeWithFeedback : U32
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectTypeWithFeedback)
+
+inline GpuSceneNonRenderableObjectTypeWithFeedback toGpuSceneNonRenderableObjectTypeWithFeedback(GpuSceneNonRenderableObjectType type)
+{
+	GpuSceneNonRenderableObjectTypeWithFeedback ret;
+	switch(type)
+	{
+	case GpuSceneNonRenderableObjectType::kLight:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kLight;
+		break;
+	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kGlobalIlluminationProbe;
+		break;
+	case GpuSceneNonRenderableObjectType::kReflectionProbe:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kReflectionProbe;
+		break;
+	default:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kCount;
+	}
+	return ret;
+}
 
 ANKI_END_NAMESPACE

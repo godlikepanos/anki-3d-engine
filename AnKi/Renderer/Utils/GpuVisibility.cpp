@@ -11,7 +11,7 @@
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
-#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/GpuVisibilityTypes.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/CVarSet.h>

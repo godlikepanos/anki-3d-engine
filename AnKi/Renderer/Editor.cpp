@@ -25,7 +25,7 @@
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/GpuMemory/GpuSceneBuffer.h>
-#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/GpuVisibilityTypes.h>
 #include <AnKi/Window/Input.h>
 
 #if ANKI_WITH_EDITOR

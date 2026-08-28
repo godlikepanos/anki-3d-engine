@@ -9,7 +9,7 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Shaders/Include/Common.h>
+#include <AnKi/Shaders/Common.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/StringList.h>
 

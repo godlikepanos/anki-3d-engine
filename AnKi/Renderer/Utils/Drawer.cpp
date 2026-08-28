@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/GpuScene.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/GpuMemory/GpuSceneBuffer.h>
@@ -54,7 +54,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, RenderPas
 	// Space 0 globals
 	const Bool bForwardShading = args.m_renderingTechinuqe == RenderingTechnique::kForward;
 #define ANKI_RASTER_PATH 1
-#include <AnKi/Shaders/Include/MaterialBindings.def.h>
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 	// Misc
 	cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);

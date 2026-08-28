@@ -9,7 +9,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Collision/Aabb.h>
-#include <AnKi/Shaders/Include/MeshTypes.h>
+#include <AnKi/Shaders/MeshTypes.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 

@@ -12,7 +12,7 @@
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Core/App.h>
-#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/GpuScene.h>
 
 namespace anki {
 

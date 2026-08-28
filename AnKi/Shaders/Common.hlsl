@@ -10,7 +10,7 @@
 #if defined(__INTELLISENSE__)
 #	include <AnKi/Shaders/Intellisense.hlsl>
 #else
-#	include <AnKi/Shaders/Include/Common.h>
+#	include <AnKi/Shaders/Common.h>
 #endif
 
 #define _ANKI_CONCATENATE(a, b) a##b

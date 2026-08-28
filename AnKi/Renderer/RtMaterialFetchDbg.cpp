@@ -65,7 +65,7 @@ void RtMaterialFetchDbg::populateRenderGraph()
 			cmdb.bindShaderProgram(m_libraryProg.get());
 
 			// Space 0 globals
-#include <AnKi/Shaders/Include/MaterialBindings.def.h>
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 			bindRgenSpace2Resources(rgraphCtx);
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);

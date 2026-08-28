@@ -9,7 +9,7 @@
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Collision/Sphere.h>
 #include <AnKi/Resource/MeshBinary.h>
-#include <AnKi/Shaders/Include/MeshTypes.h>
+#include <AnKi/Shaders/MeshTypes.h>
 #include <MeshOptimizer/meshoptimizer.h>
 
 namespace anki {

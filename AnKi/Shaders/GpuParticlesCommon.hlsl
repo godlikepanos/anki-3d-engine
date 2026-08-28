@@ -6,8 +6,8 @@
 #pragma once
 
 #include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/Include/ParticleTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/ParticleTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
 
 Texture2D<Vec4> g_depthTex : register(ANKI_CONCATENATE(t, ANKI_PARTICLE_SIM_DEPTH_BUFFER));
 Texture2D<Vec4> g_gbufferRt2Tex : register(ANKI_CONCATENATE(t, ANKI_PARTICLE_SIM_NORMAL_BUFFER));

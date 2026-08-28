@@ -21,7 +21,7 @@
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/GpuMemory/CopyEngine.h>
-#include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
+#include <AnKi/Shaders/TraditionalDeferredShadingTypes.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Scene/SceneGraph.h>

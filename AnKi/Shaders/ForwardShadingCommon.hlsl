@@ -8,8 +8,8 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
-#include <AnKi/Shaders/Include/MeshTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/MeshTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
 
 #define FORWARD_SHADING 1
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Common.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 
 // These are per megameter
 constexpr F32 kGroundRadiusMM = 6.360f;

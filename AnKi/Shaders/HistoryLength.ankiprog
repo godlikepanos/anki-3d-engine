@@ -8,7 +8,7 @@
 #pragma anki technique comp vert pixel
 
 #include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 #include <AnKi/Shaders/QuadVert.hlsl>
 
 Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t0);

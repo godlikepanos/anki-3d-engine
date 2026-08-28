@@ -6,7 +6,7 @@
 #pragma anki technique vert pixel
 
 #include <AnKi/Shaders/Common.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 
 struct VertOut
 {

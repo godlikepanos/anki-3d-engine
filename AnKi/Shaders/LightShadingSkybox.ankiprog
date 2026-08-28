@@ -11,7 +11,7 @@
 #include <AnKi/Shaders/QuadVert.hlsl>
 
 #if ANKI_PIXEL_SHADER
-#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #	include <AnKi/Shaders/Sky.hlsl>

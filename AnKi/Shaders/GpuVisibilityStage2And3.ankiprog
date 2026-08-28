@@ -13,8 +13,8 @@
 
 #pragma anki technique Meshlets comp mutators HZB_TEST PASSTHROUGH MESH_SHADERS STORE_MESHLETS_FAILED_HZB
 
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
+#include <AnKi/Shaders/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>

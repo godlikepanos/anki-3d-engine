@@ -288,7 +288,7 @@ void Reflections::populateRenderGraph()
 			cmdb.bindShaderProgram((g_cvarRenderReflectionsInlineRt) ? m_rtMaterialFetchInlineRtProg.get() : m_libraryProg.get());
 
 			// Space 0 globals
-#include <AnKi/Shaders/Include/MaterialBindings.def.h>
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 			bindRgenSpace2Resources(rgraphCtx);
 			if(bQuarterRez)

@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/MeshTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MeshTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
+#include <AnKi/Shaders/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 
@@ -18,7 +18,7 @@
 #if ANKI_MESH_SHADER || ANKI_VERTEX_SHADER || ANKI_PIXEL_SHADER
 #	define ANKI_RASTER_PATH 1
 #endif
-#include <AnKi/Shaders/Include/MaterialBindings.def.h>
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 #if ANKI_MESH_SHADER || ANKI_VERTEX_SHADER
 struct Consts

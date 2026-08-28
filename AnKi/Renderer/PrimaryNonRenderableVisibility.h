@@ -7,7 +7,7 @@
 
 #include <AnKi/Gr.h>
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
 #include <AnKi/Renderer/Utils/Readback.h>
 
 namespace anki {

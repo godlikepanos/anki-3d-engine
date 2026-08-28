@@ -10,8 +10,8 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 
 constexpr Vec2 kPoissonDisk4[4u] = {Vec2(-0.15, 0.06), Vec2(0.14, -0.48), Vec2(-0.05, 0.97), Vec2(0.58, -0.18)};
 

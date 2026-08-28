@@ -14,8 +14,8 @@
 #pragma anki technique Fill comp
 
 #include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
+#include <AnKi/Shaders/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 constexpr U32 kPrefixSumThreadCount = 1024; // Common for most GPUs

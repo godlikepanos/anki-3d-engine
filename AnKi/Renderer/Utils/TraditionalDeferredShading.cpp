@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
+#include <AnKi/Shaders/TraditionalDeferredShadingTypes.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>

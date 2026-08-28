@@ -11,7 +11,7 @@
 #pragma anki technique Accumulate comp
 #pragma anki technique Debug comp
 
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
 #include <AnKi/Shaders/ImportanceSampling.hlsl>

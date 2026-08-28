@@ -15,7 +15,7 @@
 
 #pragma anki technique RtMaterialFetch chit mutators ALPHA_TEST TRIPLANAR_UV_MAPPING
 
-#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/GpuScene.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>

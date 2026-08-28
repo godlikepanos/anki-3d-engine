@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
 
 ANKI_BEGIN_NAMESPACE
 

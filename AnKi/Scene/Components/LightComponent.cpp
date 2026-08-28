@@ -11,7 +11,7 @@
 #include <AnKi/Collision.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/ClusteredShadingTypes.h>
 
 namespace anki {
 

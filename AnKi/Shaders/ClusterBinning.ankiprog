@@ -11,7 +11,7 @@
 #pragma anki technique Binning comp
 #pragma anki technique PackVisibles comp
 
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 #if ANKI_TECHNIQUE_Binning || ANKI_TECHNIQUE_PackVisibles

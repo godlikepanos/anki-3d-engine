@@ -81,7 +81,7 @@ void ForwardShading::setDependencies(GraphicsRenderPass& pass)
 	const Bool bForwardShading = true;
 #define ANKI_DEPENDENCIES 1
 #define ANKI_RASTER_PATH 1
-#include <AnKi/Shaders/Include/MaterialBindings.def.h>
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 	if(getRenderer().getLensFlare().getIndirectDrawBuffer().isValid())
 	{

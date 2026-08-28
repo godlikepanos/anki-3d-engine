@@ -34,7 +34,7 @@
 
 #pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX EMISSIVE_TEX ROUGHNESS_METALNESS_TEX ALPHA_TEST
 
-#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/GpuScene.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>

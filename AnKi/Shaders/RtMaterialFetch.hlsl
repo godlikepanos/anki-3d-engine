@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/MiscRendererTypes.h>
+#include <AnKi/Shaders/GpuScene.h>
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/Sky.hlsl>
