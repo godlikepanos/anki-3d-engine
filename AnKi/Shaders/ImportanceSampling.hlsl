@@ -169,3 +169,22 @@ F32 sampleCosWeightedPdf(Vec3 sampleDir, Vec3 normal)
 {
 	return dot(sampleDir, normal) / kPi;
 }
+
+struct RandomGenerator
+{
+	U32 m_state;
+};
+
+RandomGenerator createRandomGenerator(UVec2 pixelCoords, U32 frame)
+{
+	RandomGenerator r;
+	r.m_state = hashPcg(pixelCoords.x + hashPcg(pixelCoords.y + hashPcg(frame)));
+	return r;
+}
+
+// Returns a value in [0, 1). Uses 24 bits so the result can never round up to exactly 1.0
+F32 rand(inout RandomGenerator r)
+{
+	r.m_state = hashPcg(r.m_state);
+	return F32(r.m_state >> 8u) / 16777216.0;
+}

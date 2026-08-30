@@ -21,6 +21,7 @@
 #include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Resource/SkeletonResource.h>
+#include <AnKi/Resource/StreamingImageResource.h>
 
 namespace anki {
 

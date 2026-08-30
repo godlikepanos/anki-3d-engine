@@ -89,6 +89,35 @@ public:
 		return count;
 	}
 
+	// Get the most significant bit that is enabled. Or kMaxU32 if all is zero.
+	U32 getMostSignificantBit() const
+	{
+		for(I32 i = I32(m_storage.getSize()) - 1; i >= 0; --i)
+		{
+			if(m_storage[i] != 0)
+			{
+				const U32 msb = kElementBitCount - 1u - U32(std::countl_zero(m_storage[i]));
+				return msb + U32(i) * kElementBitCount;
+			}
+		}
+
+		return kMaxU32;
+	}
+
+	// Get the least significant bit that is enabled. Or kMaxU32 if all is zero.
+	U32 getLeastSignificantBit() const
+	{
+		for(U32 i = 0; i < m_storage.getSize(); ++i)
+		{
+			if(m_storage[i] != 0)
+			{
+				return U32(std::countr_zero(m_storage[i])) + i * kElementBitCount;
+			}
+		}
+
+		return kMaxU32;
+	}
+
 	template<typename TFunc>
 	FunctorContinue iterateSetBitsFromLeastSignificant(TFunc func) const
 	{
