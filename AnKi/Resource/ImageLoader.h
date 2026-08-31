@@ -11,44 +11,13 @@
 
 namespace anki {
 
-/// An image surface
-/// @memberof ImageLoader
-class ImageLoaderSurface
-{
-public:
-	U32 m_width;
-	U32 m_height;
-	DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize> m_data;
-
-	ImageLoaderSurface(MemoryPoolPtrWrapper<BaseMemoryPool> pool)
-		: m_data(pool)
-	{
-	}
-};
-
-/// An image volume
-/// @memberof ImageLoader
-class ImageLoaderVolume
-{
-public:
-	U32 m_width;
-	U32 m_height;
-	U32 m_depth;
-	DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize> m_data;
-
-	ImageLoaderVolume(MemoryPoolPtrWrapper<BaseMemoryPool> pool)
-		: m_data(pool)
-	{
-	}
-};
-
-/// Loads bitmaps from regular system files or resource files. Supported formats are .tga and .ankitex.
+// Loads bitmaps from regular system files or resource files. Supported formats are .tga, .png, .jpg, .hdr and .ankitex.
 class ImageLoader
 {
 public:
 	ImageLoader(BaseMemoryPool* pool)
-		: m_surfaces(pool)
-		, m_volumes(pool)
+		: m_stbImageData(pool)
+		, m_surfaceOrVolumeFileOffsets(pool)
 	{
 		ANKI_ASSERT(pool);
 	}
@@ -75,23 +44,25 @@ public:
 
 	U32 getWidth() const
 	{
+		ANKI_ASSERT(m_width > 0);
 		return m_width;
 	}
 
 	U32 getHeight() const
 	{
+		ANKI_ASSERT(m_height > 0);
 		return m_height;
 	}
 
 	U32 getDepth() const
 	{
-		ANKI_ASSERT(m_imageType == ImageBinaryType::k3D);
+		ANKI_ASSERT(m_imageType == ImageBinaryType::k3D && m_depth > 0);
 		return m_depth;
 	}
 
 	U32 getLayerCount() const
 	{
-		ANKI_ASSERT(m_imageType == ImageBinaryType::k2DArray);
+		ANKI_ASSERT(m_imageType == ImageBinaryType::k2DArray && m_layerCount > 0);
 		return m_layerCount;
 	}
 
@@ -113,26 +84,29 @@ public:
 		return m_avgColor;
 	}
 
-	const ImageLoaderSurface& getSurface(U32 level, U32 face, U32 layer) const;
+	// Step 1: Just load the header of the image file and use the ResourceFilesystem to do so
+	// Not thread-safe
+	Error loadHeaderFromResourceFile(CString filename, U32 maxSurfaceOrVolumeDimension = kMaxU32);
 
-	const ImageLoaderVolume& getVolume(U32 level) const;
+	// Step 1: See loadHeaderFromResourceFile(), same thing but opens a system file
+	// Not thread-safe
+	Error loadHeaderFromSystemFile(CString filename, U32 maxSurfaceOrVolumeDimension = kMaxU32);
 
-	/// Load a resource image file.
-	Error load(ResourceFilePtr file, const CString& filename, U32 maxImageSize = kMaxU32);
-
-	/// Load a system image file.
-	Error load(const CString& filename, U32 maxImageSize = kMaxU32);
+	// Step 2: Fetch a surface or a volume from the file
+	// Not thread-safe
+	Error loadSurfaceOrVolume(U32 level, U32 face, U32 layer, WeakArray<U8> data);
 
 private:
 	class FileInterface;
 	class RsrcFile;
 	class SystemFile;
 
-	/// [mip][depth or face or layer]. Loader doesn't support cube arrays ATM so face and layer won't be used at the
-	/// same time.
-	DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>> m_surfaces;
-
-	DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>> m_volumes;
+	class FileOffsetAndSize
+	{
+	public:
+		PtrSize m_offset;
+		PtrSize m_dataSize;
+	};
 
 	Vec4 m_avgColor = Vec4(0.0f);
 
@@ -146,18 +120,27 @@ private:
 	ImageBinaryColorFormat m_colorFormat = ImageBinaryColorFormat::kNone;
 	ImageBinaryType m_imageType = ImageBinaryType::kNone;
 
-	void destroy();
+	ImageBinaryHeader m_ankiHeader;
+
+	DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize> m_stbImageData; // Populated when loading goes through STB
+
+	// File offsets in the ankitex binary. It's [mip][depth or face or layer]. Loader doesn't support cube arrays ATM so face and layer won't be
+	// used at the same time.
+	DynamicArray<FileOffsetAndSize, MemoryPoolPtrWrapper<BaseMemoryPool>> m_surfaceOrVolumeFileOffsets;
+
+	ResourceFilePtr m_rsrcFile;
+	File m_systemFile;
+
+	U32 m_maxSurfaceOrVolumeDimension = kMaxU32;
 
 	static Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height,
 						 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
-	static Error loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
-							   DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>>& surfaces,
-							   DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes, U32& width, U32& height, U32& depth,
-							   U32& layerCount, U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize,
-							   Vec4& avgColor);
+	Error loadHeaderInternal(FileInterface& file, const CString& filename);
 
-	Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
+	Error loadAnkiImageHeader(FileInterface& file);
+
+	void createSurfaceOrVolumeFileOffsets();
 };
 
 } // end namespace anki

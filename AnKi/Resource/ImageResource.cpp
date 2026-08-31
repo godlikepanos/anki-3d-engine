@@ -66,10 +66,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	TextureInitInfo init(filenameExt);
 	init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kCopyDestination;
 
-	ResourceFilePtr file;
-	ANKI_CHECK(openFile(filename, file));
-
-	ANKI_CHECK(loader.load(file, filename, g_cvarRsrcMaxImageSize));
+	ANKI_CHECK(loader.loadHeaderFromResourceFile(filename, g_cvarRsrcMaxImageSize));
 
 	m_avgColor = loader.getAverageColor();
 
@@ -269,6 +266,10 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 	const U32 faceCount = textureTypeIsCube(m_tex->getTextureType()) ? 6 : 1;
 	const U32 copyCount = m_tex->getLayerCount() * faceCount * ctx.m_loader.getMipmapCount();
 
+	// With GFXR enabled we can't do fwrite directly to mapped VkBuffer. So we need to first fwrite to a CPU buffer and copy that to the mapped
+	// VkBuffer
+	const Bool bGfxreconstruct = GrManager::getSingleton().getDeviceCapabilities().m_gfxReconstruct;
+
 	for(U32 b = 0; b < copyCount; b += kMaxCopiesBeforeFlush)
 	{
 		const U32 begin = b;
@@ -293,34 +294,38 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(m_tex->getLayerCount(), faceCount, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			PtrSize surfOrVolSize;
-			const void* surfOrVolData;
 			PtrSize allocationSize;
-
 			if(m_tex->getTextureType() == TextureType::k3D)
 			{
-				const auto& vol = ctx.m_loader.getVolume(mip);
-				surfOrVolSize = vol.m_data.getSize();
-				surfOrVolData = &vol.m_data[0];
-
 				allocationSize = computeVolumeSize(m_tex->getWidth() >> mip, m_tex->getHeight() >> mip, m_tex->getDepth() >> mip, m_tex->getFormat());
 			}
 			else
 			{
-				const auto& surf = ctx.m_loader.getSurface(mip, face, layer);
-				surfOrVolSize = surf.m_data.getSize();
-				surfOrVolData = &surf.m_data[0];
-
 				allocationSize = computeSurfaceSize(m_tex->getWidth() >> mip, m_tex->getHeight() >> mip, m_tex->getFormat());
 			}
-
-			ANKI_ASSERT(allocationSize >= surfOrVolSize);
 
 			WeakArray<U8> mappedMem;
 			const CopyEngineLockGuard lock = CopyEngine::getSingleton().copyBufferToTexture(
 				U32(allocationSize), mappedMem, TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)));
 
-			memcpy(mappedMem.getBegin(), surfOrVolData, surfOrVolSize);
+			ResourceDynamicArray<U8> tmpData;
+			WeakArray<U8> copyDest;
+			if(bGfxreconstruct)
+			{
+				tmpData.resize(mappedMem.getSize());
+				copyDest = tmpData;
+			}
+			else
+			{
+				copyDest = mappedMem;
+			}
+
+			ANKI_CHECK(ctx.m_loader.loadSurfaceOrVolume(mip, face, layer, copyDest));
+
+			if(bGfxreconstruct)
+			{
+				memcpy(mappedMem.getBegin(), copyDest.getBegin(), copyDest.getSizeInBytes());
+			}
 		}
 
 		// Set the barriers of the batch

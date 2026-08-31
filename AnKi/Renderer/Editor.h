@@ -107,7 +107,7 @@ public:
 		return m_options;
 #else
 		ANKI_ASSERT(0);
-		return *reinterpret_cast<EditorOptions*>(nullptr);
+		return *reinterpret_cast<EditorOptions*>(0);
 #endif
 	}
 
@@ -117,7 +117,7 @@ public:
 		return m_options;
 #else
 		ANKI_ASSERT(0);
-		return *reinterpret_cast<EditorOptions*>(nullptr);
+		return *reinterpret_cast<EditorOptions*>(0);
 #endif
 	}
 
@@ -137,7 +137,7 @@ public:
 		return m_runCtx.m_objPickingRes;
 #else
 		ANKI_ASSERT(0);
-		return *reinterpret_cast<EditorObjectPickingResult*>(nullptr);
+		return *reinterpret_cast<EditorObjectPickingResult*>(0);
 #endif
 	}
 

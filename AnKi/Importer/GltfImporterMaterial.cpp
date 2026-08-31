@@ -50,11 +50,15 @@ static ImporterString getTextureUri(const cgltf_texture_view& view)
 static Error findConstantColorsInImage(CString fname, Vec4& constantColor)
 {
 	ImageLoader iloader(&ImporterMemoryPool::getSingleton());
-	ANKI_CHECK(iloader.load(fname));
+	ANKI_CHECK(iloader.loadHeaderFromSystemFile(fname));
 	ANKI_ASSERT(iloader.getColorFormat() == ImageBinaryColorFormat::kRgba8);
 	ANKI_ASSERT(iloader.getCompression() == ImageBinaryDataCompression::kRaw);
 
-	const U8Vec4* data = reinterpret_cast<const U8Vec4*>(&iloader.getSurface(0, 0, 0).m_data[0]);
+	ImporterDynamicArray<U8> surfaceData;
+	surfaceData.resize(iloader.getWidth() * iloader.getHeight() * sizeof(U8Vec4));
+	ANKI_CHECK(iloader.loadSurfaceOrVolume(0, 0, 0, WeakArray(surfaceData)));
+
+	const U8Vec4* data = reinterpret_cast<const U8Vec4*>(surfaceData.getBegin());
 	ConstWeakArray<U8Vec4> pixels(data, iloader.getWidth() * iloader.getHeight());
 
 	const F32 epsilon = 1.0f / 255.0f;
