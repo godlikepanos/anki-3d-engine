@@ -7,7 +7,6 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/ImageStreaming.h>
-#include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 // Standard LOD calculation as described in the GL spec
 F32 computeLodAnisoGL(Vec2 uv, Vec2 texSize, F32 lodBias, F32 maxAniso)
@@ -90,29 +89,17 @@ F32 computeLodIsotropic(Vec2 uv, Vec2 texDim, F32 lodBias)
 }
 
 // Stochastic texture sampling
-template<typename TRandGenerator>
-Vec4 sampleTexture2D(ImageDescriptor desc, SamplerState sampl, Vec2 uv, F32 lodBias, F32 anisotropy, inout TRandGenerator randg)
+Vec4 sampleTexture2D(ImageDescriptor desc, SamplerState sampl, Vec2 uv, F32 lodBias, F32 anisotropy, F32 randFactor)
 {
 	F32 lod = computeLodAnisoGL(uv, Vec2(desc.m_width, desc.m_height), lodBias, anisotropy);
+	lod = (frac(lod) < randFactor) ? floor(lod) : ceil(lod);
 
-	lod = (frac(lod) < rand(randg)) ? floor(lod) : ceil(lod);
-	lod = max(0.0, lod);
+	const I32 lodi = clamp(I32(lod), I32(desc.m_firstMipmap), I32(desc.m_lastMipmap));
 
-	U32 arrIdx;
-	const U32 lodu = lod;
-	F32 texLod;
-	if(lodu < desc.m_firstMipmapOfTailChain)
-	{
-		arrIdx = max(desc.m_firstMipmap, lodu);
-		texLod = 0.0;
-	}
-	else
-	{
-		arrIdx = desc.m_firstMipmapOfTailChain;
-		texLod = lodu - desc.m_firstMipmapOfTailChain;
-	}
+	const U32 packedBindlessIndexAndLod = desc.m_bindlessTextureIndexAndLod[lodi];
+	const U32 bindlessIndex = packedBindlessIndexAndLod >> 8u;
+	const U32 texLod = packedBindlessIndexAndLod & 0xFFu;
 
-	const U32 bindlessIndex = desc.m_mipmapTextureIndices[arrIdx];
 	const Vec4 final = getBindlessTextureNonUniformIndex2DVec4(bindlessIndex).SampleLevel(sampl, uv, texLod);
 
 	return final;

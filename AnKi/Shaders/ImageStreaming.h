@@ -14,22 +14,25 @@ ANKI_BEGIN_NAMESPACE
 // memory and descriptors.
 
 constexpr U32 kImageDescriptorMaxTextureSize = 16 * 1024;
+constexpr U32 kImageDescriptorSmallestMipmapSize = 8; // The chain stops here. There's no 4xN or Nx4 or smaller
 constexpr U32 kImageDescriptorTailChainMipmapSize = 256; // The size of the 1st mipmap of the tail chain. 256 down to kSmallestMipmapSize is 6 mipmaps
-constexpr U32 kImageDescriptorSmallestMipmapSize = 8; // The chain stops here. There's no 4x4 or smaller so LODs need clamping
-constexpr U32 kImageDescriptorMaxBindlessTextures = 7 + 6; // 16K image needs this amount of textures
+constexpr U32 kImageDescriptorTailChainMipmapCount = 6;
+constexpr U32 kImageDescriptorMaxMipmaps = 12; // Mips from kImageDescriptorMaxTextureSize to kImageDescriptorSmallestMipmapSize
+constexpr U32 kImageDescriptorMaxBindlessTextures = 6 + 1; // Textures from to fit kImageDescriptorMaxTextureSize and the tail chain texture
+
 
 struct ImageDescriptor
 {
 	U32 m_width : 16; // Size of mipmap 0 of the full image, even if that mipmap isn't resident. LOD calculations need this
 	U32 m_height : 16;
-	U32 m_firstMipmap : 16; // Finest resident mipmap. Sampling clamps the LOD up to this. 0 means the whole image is in memory
-	U32 m_firstMipmapOfTailChain : 16; // Absolute index of the 1st mipmap that lives in the tail chain texture
+	U32 m_depthOrLayerCount : 16;
+	U32 m_firstMipmap : 8; // Finest resident mipmap. Points to m_bindlessTextureIndexAndLod. 0 means the whole image is in memory
+	U32 m_lastMipmap : 8; // Last mipmap. Points to m_bindlessTextureIndexAndLod
 
-	// Bindless texture index per mipmap, indexed by absolute mipmap index. Entries below m_firstMipmap are not resident. Entries from
-	// m_firstMipmapOfTailChain onwards all name the same tail chain texture, so sample it with (mipmap - m_firstMipmapOfTailChain) as the LOD.
-	U32 m_mipmapTextureIndices[kImageDescriptorMaxBindlessTextures];
+	// Every U32 packs the index to the bindless texture (24bit) and the mipmap to that texture (8bit). Used as m_bindlessTextureIndexAndLod[mipmap]
+	U32 m_bindlessTextureIndexAndLod[kImageDescriptorMaxMipmaps];
 
-	U32 m_padding0;
+	U32 m_padding[2];
 };
 static_assert(sizeof(ImageDescriptor) % 16 == 0, "Needs to be 16 byte aligned since it's read from a structured buffer");
 

@@ -7,7 +7,6 @@
 
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/GpuMemory/TextureMemoryPool.h>
-#include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Shaders/ImageStreaming.h>
 #include <AnKi/Util/DynamicBitSet.h>
 
@@ -17,22 +16,37 @@ ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageSize2, kImageDescriptorMaxTextureSize,
 		  "Max image size to load")
 ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageDescriptors, 5 * 1024, 32, kMaxU32, "The size of the ImageDescriptor structured buffer")
 
-// XXX
+using ImageDescriptorHandle = U32;
+
+// A system that handles some GPU memory required for streaming images
 class StreamingImageResourceManager : public MakeSingleton<StreamingImageResourceManager>
 {
 public:
 	Error init();
 
-	U32 newImageDescriptor();
+	ImageDescriptorHandle newImageDescriptor();
 
-	void freeImageDescriptor(U32 index);
+	void freeImageDescriptor(ImageDescriptorHandle index);
 
-	void uploadImageDescriptor(U32 index, const ImageDescriptor& desc);
+	void uploadImageDescriptor(ImageDescriptorHandle index, const ImageDescriptor& desc) const;
+
+	void endFrame(Fence* fence);
 
 private:
-	GpuSceneBufferAllocation m_imageDescriptorsBuff; // Use the GPU scene for it's conventient upload functionality
+	class Garbage
+	{
+	public:
+		ResourceDynamicBitSet<U32> m_freedDecriptorMask;
+		FencePtr m_fence;
+	};
 
-	ResourceDynamicBitSet<U32> m_freeDecriptorMask;
+	TextureMemoryPoolAllocation m_imageDescriptorsBuff;
+
+	ResourceDynamicBitSet<U32> m_freeDescriptorMask;
+
+	ResourceDynamicArray<Garbage> m_garbage;
+
+	mutable Mutex m_mtx;
 };
 
 // Image resource class. It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs, PNGs, JPEG and
@@ -54,6 +68,11 @@ public:
 		return m_avgColor;
 	}
 
+	Bool isLoaded() const
+	{
+		return m_isLoaded.load() == 1;
+	}
+
 private:
 	class LoadingContext;
 	class TexUploadTask;
@@ -61,9 +80,11 @@ private:
 	Array<TextureMemoryPoolAllocation, kImageDescriptorMaxBindlessTextures> m_texAllocations;
 	Array<TexturePtr, kImageDescriptorMaxBindlessTextures> m_textures;
 
-	U32 m_imageDescriptorIdx = kMaxU32;
+	ImageDescriptorHandle m_imageDescHandle = kMaxU32;
 
 	Vec4 m_avgColor = Vec4(0.0f);
+
+	mutable Atomic<U32> m_isLoaded = {0};
 
 	Error loadAsync(LoadingContext& ctx) const;
 };
