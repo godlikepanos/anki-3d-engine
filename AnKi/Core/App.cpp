@@ -469,6 +469,7 @@ Error App::mainLoop()
 		GpuVisibleTransientMemoryPool::getSingleton().endFrame();
 		GpuReadbackMemoryPool::getSingleton().endFrame(renderFence.get());
 		TextureMemoryPool::getSingleton().endFrame(renderFence.get());
+		ResourceManager::getSingleton().endFrame(renderFence.get());
 
 		// Sleep
 		const Second endTime = HighRezTimer::getCurrentTime();

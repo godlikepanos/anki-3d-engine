@@ -182,7 +182,7 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 		m_sliceFrameIndices[m_crntActiveSlice] = m_frameIndex;
 		m_sliceFences[m_crntActiveSlice].reset(fence);
 
-		if(m_activeSliceMask.getSetBitCount() == kSliceCount)
+		if(m_activeSliceMask.countSetBits() == kSliceCount)
 		{
 			// We are out of slices, wait for the oldest slice to become available
 			ANKI_GPUMEM_LOGW("Out of slices. Need to wait for something to complete");
@@ -208,7 +208,7 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 		m_sliceFences[m_crntActiveSlice].reset(fence);
 	}
 
-	if(m_activeSliceMask.getSetBitCount() == kSliceCount)
+	if(m_activeSliceMask.countSetBits() == kSliceCount)
 	{
 		// Out of slices, need to wait for the oldest slice to become available
 		ANKI_GPUMEM_LOGW("Out of slices. Need to wait for something to complete");

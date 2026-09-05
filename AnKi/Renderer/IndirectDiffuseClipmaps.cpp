@@ -16,6 +16,7 @@
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Resource/StreamingImageResource.h>
 
 namespace anki {
 

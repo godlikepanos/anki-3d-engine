@@ -303,6 +303,11 @@ struct MaterialGlobalConstants
 	Mat3x4 m_cameraTransform;
 
 	Vec4 m_viewport;
+
+	F32 m_textureBias;
+	F32 m_textureAnisotropy;
+	F32 m_padding1;
+	F32 m_padding2;
 };
 static_assert(sizeof(MaterialGlobalConstants) % sizeof(Vec4) == 0);
 

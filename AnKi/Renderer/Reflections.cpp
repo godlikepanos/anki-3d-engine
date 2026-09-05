@@ -20,6 +20,7 @@
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/ImageAtlasResource.h>
+#include <AnKi/Resource/StreamingImageResource.h>
 
 namespace anki {
 

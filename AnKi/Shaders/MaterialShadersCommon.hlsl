@@ -13,6 +13,7 @@
 #include <AnKi/Shaders/MiscRendererTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/ImageStreaming.hlsl>
 
 // Write the bindings
 #if ANKI_MESH_SHADER || ANKI_VERTEX_SHADER || ANKI_PIXEL_SHADER

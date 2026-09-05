@@ -147,7 +147,7 @@ void GpuSceneArray<TGpuSceneObject, kId>::validate() const
 	U32 maskGroupCount = 0;
 	for(const SubMask& mask : m_inUseIndicesMask)
 	{
-		count += mask.getSetBitCount();
+		count += mask.countSetBits();
 		maxIdx = max(maxIdx, (mask.getMostSignificantBit() != kMaxU32) ? (mask.getMostSignificantBit() + maskGroupCount * 64) : 0);
 		++maskGroupCount;
 	}

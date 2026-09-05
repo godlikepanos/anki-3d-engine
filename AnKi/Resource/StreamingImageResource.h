@@ -22,7 +22,17 @@ using ImageDescriptorHandle = U32;
 class StreamingImageResourceManager : public MakeSingleton<StreamingImageResourceManager>
 {
 public:
-	Error init();
+	StreamingImageResourceManager()
+	{
+		init();
+	}
+
+	~StreamingImageResourceManager();
+
+	BufferView getBuffer() const
+	{
+		return m_imageDescriptorsBuff;
+	}
 
 	ImageDescriptorHandle newImageDescriptor();
 
@@ -47,6 +57,10 @@ private:
 	ResourceDynamicArray<Garbage> m_garbage;
 
 	mutable Mutex m_mtx;
+
+	void init();
+
+	void collectGarbage(Bool waitForFences);
 };
 
 // Image resource class. It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs, PNGs, JPEG and
@@ -73,18 +87,28 @@ public:
 		return m_isLoaded.load() == 1;
 	}
 
+	U32 getImageDescriptorIndex() const
+	{
+		ANKI_ASSERT(m_imageDescHandle < kMaxU32);
+		return m_imageDescHandle;
+	}
+
+	Texture& getTexture(U32 mipmap) const;
+
 private:
 	class LoadingContext;
 	class TexUploadTask;
+
+	Vec4 m_avgColor = Vec4(0.0f);
 
 	Array<TextureMemoryPoolAllocation, kImageDescriptorMaxBindlessTextures> m_texAllocations;
 	Array<TexturePtr, kImageDescriptorMaxBindlessTextures> m_textures;
 
 	ImageDescriptorHandle m_imageDescHandle = kMaxU32;
 
-	Vec4 m_avgColor = Vec4(0.0f);
-
 	mutable Atomic<U32> m_isLoaded = {0};
+
+	U32 m_textureCount = 0;
 
 	Error loadAsync(LoadingContext& ctx) const;
 };

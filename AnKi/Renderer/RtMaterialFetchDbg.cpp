@@ -10,6 +10,7 @@
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Resource/StreamingImageResource.h>
 
 namespace anki {
 

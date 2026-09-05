@@ -39,6 +39,7 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
+#include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 // Define a few things to avoid compilation errors
 #if !defined(ALPHA_TEST)
@@ -435,17 +436,8 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 // ===========================================================================
 #if ANKI_PIXEL_SHADER
 
-#	if SW_MESHLETS || MESH_SHADING
-#		define BINDLESS(x) getBindlessTextureNonUniformIndex2DVec4(x)
-#	else
-#		define BINDLESS(x) getBindlessTexture2DVec4(x)
-#	endif
-
-#	if SHADOWS
-#		define SAMPLER g_trilinearRepeatSampler
-#	else
-#		define SAMPLER g_trilinearRepeatAnisoResolutionScalingBiasSampler
-#	endif
+#	define SAMPLE_TEX(descrIdx) \
+		sampleTexture2DAniso(SBUFF(g_imageDescriptors, descrIdx), g_trilinearRepeatSampler, uv, texAniso, randFactor, texBias)
 
 #	if SHADOWS && !REALLY_ALPHA_TEST // Shadows without alpha
 
@@ -470,7 +462,11 @@ void main(
 #		endif
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
-	const HVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(SAMPLER, vertInput.m_uv);
+
+	RandomGenerator randg = createRandomGenerator(vertInput.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	// Use cheap isotropic for shadows
+	const HVec4 diffColorA =
+		sampleTexture2D(SBUFF(g_imageDescriptors, localConstants.m_diffuseTex), g_trilinearRepeatSampler, vertInput.m_uv, rand(randg));
 	if(diffColorA.a * F16(localConstants.m_diffuseScale.a) < 0.5f)
 	{
 		discard;
@@ -497,9 +493,15 @@ GBufferPixelOut main(
 
 	const Vec2 uv = vertInput.m_uv;
 	ANKI_MAYBE_UNUSED(uv);
+	const F32 texBias = g_globalConstants.m_textureBias;
+	const F32 texAniso = g_globalConstants.m_textureAnisotropy;
+
+	RandomGenerator randg = createRandomGenerator(vertInput.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	const F32 randFactor = rand(randg);
 
 #		if DIFFUSE_TEX
-	const HVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(SAMPLER, uv) * HVec4(localConstants.m_diffuseScale);
+	HVec4 diffColorA = SAMPLE_TEX(localConstants.m_diffuseTex);
+	diffColorA *= HVec4(localConstants.m_diffuseScale);
 	const HVec3 diffColor = diffColorA.rgb;
 #			if REALLY_ALPHA_TEST
 	if(diffColorA.a < 0.5)
@@ -512,13 +514,14 @@ GBufferPixelOut main(
 #		endif
 
 #		if SPECULAR_TEX
-	const HVec3 specColor = BINDLESS(localConstants.m_specularTex).Sample(SAMPLER, uv).rgb * HVec3(localConstants.m_specularScale);
+	HVec3 specColor = SAMPLE_TEX(localConstants.m_specularTex).xyz;
+	specColor *= HVec3(localConstants.m_specularScale);
 #		else
 	const HVec3 specColor = localConstants.m_specularScale;
 #		endif
 
 #		if ROUGHNESS_METALNESS_TEX
-	const HVec3 comp = BINDLESS(localConstants.m_roughnessMetalnessTex).Sample(SAMPLER, uv).rgb;
+	const HVec3 comp = SAMPLE_TEX(localConstants.m_roughnessMetalnessTex).xyz;
 	const F16 roughness = comp.g * F16(localConstants.m_roughnessScale);
 	const F16 metallic = comp.b * F16(localConstants.m_metalnessScale);
 #		else
@@ -527,7 +530,8 @@ GBufferPixelOut main(
 #		endif
 
 #		if NORMAL_TEX
-	const HVec3 nAtTangentspace = normalize((BINDLESS(localConstants.m_normalTex).Sample(SAMPLER, uv).rgb - 0.5) * 2.0);
+	const HVec3 ntex = SAMPLE_TEX(localConstants.m_normalTex).xyz;
+	const HVec3 nAtTangentspace = normalize((ntex - 0.5) * 2.0);
 	const Vec3 viewDir = -normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
 	const HVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertInput.m_normal));
 #		else
@@ -535,7 +539,8 @@ GBufferPixelOut main(
 #		endif
 
 #		if EMISSIVE_TEX
-	const HVec3 emission = BINDLESS(localConstants.m_emissiveTex).Sample(SAMPLER, uv).rgb * HVec3(localConstants.m_emissionScale);
+	HVec3 emission = SAMPLE_TEX(localConstants.m_emissiveTex).xyz;
+	emission *= HVec3(localConstants.m_emissionScale);
 #		else
 	const HVec3 emission = localConstants.m_emissionScale;
 #		endif
@@ -649,9 +654,8 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 
 	// Metallness
 #		if ROUGHNESS_METALNESS_TEX
-	const HVec3 comp = getBindlessTextureNonUniformIndex2DVec4(localConstants.m_roughnessMetalnessTex)
-						   .SampleLevel(g_trilinearRepeatSampler, uv, payload.m_textureLod)
-						   .xyz;
+	const HVec3 comp =
+		sampleTexture2DLod(SBUFF(g_imageDescriptors, localConstants.m_roughnessMetalnessTex), g_trilinearRepeatSampler, uv, payload.m_textureLod).xyz;
 	const F16 metallic = comp.b * F16(localConstants.m_metalnessScale);
 #		else
 	const F16 metallic = localConstants.m_metalnessScale;
@@ -660,7 +664,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 	// Diffuse
 #		if DIFFUSE_TEX
 	HVec3 diffColor =
-		getBindlessTextureNonUniformIndex2DVec4(localConstants.m_diffuseTex).SampleLevel(g_trilinearRepeatSampler, uv, payload.m_textureLod).xyz;
+		sampleTexture2DLod(SBUFF(g_imageDescriptors, localConstants.m_diffuseTex), g_trilinearRepeatSampler, uv, payload.m_textureLod).xyz;
 #		else
 	HVec3 diffColor = 1.0;
 #		endif
@@ -670,7 +674,7 @@ ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 	// Emissive
 #		if EMISSIVE_TEX
 	HVec3 emission =
-		getBindlessTextureNonUniformIndex2DVec4(localConstants.m_emissiveTex).SampleLevel(g_trilinearRepeatSampler, uv, payload.m_textureLod).rgb;
+		sampleTexture2DLod(SBUFF(g_imageDescriptors, localConstants.m_emissiveTex), g_trilinearRepeatSampler, uv, payload.m_textureLod).rgb;
 #		else
 	HVec3 emission = 1.0;
 #		endif

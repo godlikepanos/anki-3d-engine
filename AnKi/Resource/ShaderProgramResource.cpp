@@ -48,7 +48,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	ShaderProgramResourceVariantInitInfo info = info_;
 
 	// Sanity checks
-	ANKI_ASSERT(info.m_setMutators.getSetBitCount() == m_binary->m_mutators.getSize());
+	ANKI_ASSERT(info.m_setMutators.countSetBits() == m_binary->m_mutators.getSize());
 
 	// User didn't provided Try to guess some defaults
 	if(!info.m_shaderTypes)

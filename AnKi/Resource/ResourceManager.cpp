@@ -42,6 +42,8 @@ ResourceManager::~ResourceManager()
 	static_cast<TypeData<className>&>(m_allTypes).m_map.destroy();
 #include <AnKi/Resource/Resources.def.h>
 
+	StreamingImageResourceManager::freeSingleton();
+
 	ResourceMemoryPool::freeSingleton();
 }
 
@@ -60,6 +62,8 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 	// Init the programs
 	ShaderProgramResourceSystem::allocateSingleton();
 	ANKI_CHECK(ShaderProgramResourceSystem::getSingleton().init());
+
+	StreamingImageResourceManager::allocateSingleton();
 
 #if ANKI_WITH_EDITOR
 	m_trackFileUpdateTimes = g_cvarRsrcTrackFileUpdates;
@@ -206,6 +210,11 @@ void ResourceManager::freeResource(U32 uuid, U32 versionedResourceIdx)
 
 	// Now you can delete outside any locks
 	deleteInstance(ResourceMemoryPool::getSingleton(), toDelete);
+}
+
+void ResourceManager::endFrame(Fence* fence)
+{
+	StreamingImageResourceManager::getSingleton().endFrame(fence);
 }
 
 // Instansiate

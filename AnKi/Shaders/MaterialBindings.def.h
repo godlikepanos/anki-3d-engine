@@ -64,11 +64,9 @@ if(bForwardShading)
 #endif
 
 // Samplers
-ANKI_SAMPLER(SamplerState, g_trilinearRepeatAnisoResolutionScalingBiasSampler, 0, cmdb,
-			 getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get(), true)
-ANKI_SAMPLER(SamplerState, g_trilinearRepeatSampler, 1, cmdb, getRenderer().getSamplers().m_trilinearRepeat.get(), true)
-ANKI_SAMPLER(SamplerState, g_trilinearClampSampler, 2, cmdb, getRenderer().getSamplers().m_trilinearClamp.get(), true)
-ANKI_SAMPLER(SamplerComparisonState, g_trilinearClampShadowSampler, 3, cmdb, getRenderer().getSamplers().m_trilinearClampShadow.get(), true)
+ANKI_SAMPLER(SamplerState, g_trilinearRepeatSampler, 0, cmdb, getRenderer().getSamplers().m_trilinearRepeat.get(), true)
+ANKI_SAMPLER(SamplerState, g_trilinearClampSampler, 1, cmdb, getRenderer().getSamplers().m_trilinearClamp.get(), true)
+ANKI_SAMPLER(SamplerComparisonState, g_trilinearClampShadowSampler, 2, cmdb, getRenderer().getSamplers().m_trilinearClampShadow.get(), true)
 
 // SRVs
 ANKI_SRV(ByteAddressBuffer, g_gpuScene, 0, cmdb, GpuSceneBuffer::getSingleton().getBufferView(), true)
@@ -91,25 +89,26 @@ ANKI_TYPED_SRV(Buffer<Vec4>, g_unifiedGeom_R8G8B8A8_Snorm, 10, cmdb, UnifiedGeom
 			   Format::kR8G8B8A8_Snorm)
 ANKI_TYPED_SRV(Buffer<UVec4>, g_unifiedGeom_R8G8B8A8_Uint, 11, cmdb, UnifiedGeometryBuffer::getSingleton().getBufferView(), true,
 			   Format::kR8G8B8A8_Uint)
+ANKI_SRV(StructuredBuffer<ImageDescriptor>, g_imageDescriptors, 12, cmdb, StreamingImageResourceManager::getSingleton().getBuffer(), true)
 
 #if defined(ANKI_RASTER_PATH)
-ANKI_SRV(StructuredBuffer<U32>, g_firstMeshlet, 12, cmdb, args.m_mesh.m_firstMeshletBuffer, args.m_mesh.m_firstMeshletBuffer)
-ANKI_SRV(StructuredBuffer<GpuScenePerDraw>, g_perDraw, 13, cmdb, args.m_legacy.m_perDrawBuffer, args.m_legacy.m_perDrawBuffer)
-ANKI_SRV(StructuredBuffer<U32>, g_firstPerDraw, 14, cmdb, args.m_legacy.m_firstPerDrawBuffer, args.m_legacy.m_firstPerDrawBuffer)
-ANKI_SRV(StructuredBuffer<GpuSceneMeshletInstance>, g_meshletInstances, 15, cmdb, args.m_mesh.m_meshletInstancesBuffer,
+ANKI_SRV(StructuredBuffer<U32>, g_firstMeshlet, 13, cmdb, args.m_mesh.m_firstMeshletBuffer, args.m_mesh.m_firstMeshletBuffer)
+ANKI_SRV(StructuredBuffer<GpuScenePerDraw>, g_perDraw, 14, cmdb, args.m_legacy.m_perDrawBuffer, args.m_legacy.m_perDrawBuffer)
+ANKI_SRV(StructuredBuffer<U32>, g_firstPerDraw, 15, cmdb, args.m_legacy.m_firstPerDrawBuffer, args.m_legacy.m_firstPerDrawBuffer)
+ANKI_SRV(StructuredBuffer<GpuSceneMeshletInstance>, g_meshletInstances, 16, cmdb, args.m_mesh.m_meshletInstancesBuffer,
 		 args.m_mesh.m_meshletInstancesBuffer)
 
-ANKI_SRV(StructuredBuffer<MeshletBoundingVolume>, g_meshletBoundingVolumes, 16, cmdb, UnifiedGeometryBuffer::getSingleton().getBufferView(), true)
-ANKI_SRV(StructuredBuffer<MeshletGeometryDescriptor>, g_meshletGeometryDescriptors, 17, cmdb, UnifiedGeometryBuffer::getSingleton().getBufferView(),
+ANKI_SRV(StructuredBuffer<MeshletBoundingVolume>, g_meshletBoundingVolumes, 17, cmdb, UnifiedGeometryBuffer::getSingleton().getBufferView(), true)
+ANKI_SRV(StructuredBuffer<MeshletGeometryDescriptor>, g_meshletGeometryDescriptors, 18, cmdb, UnifiedGeometryBuffer::getSingleton().getBufferView(),
 		 true)
 
 // Only for forward:
-ANKI_SRV(Texture2D<Vec4>, g_gbufferDepthTex, 18, rgraphCtx, getDepthDownscale().getDepthRt(), bForwardShading)
-ANKI_SRV(Texture3D<Vec4>, g_lightVol, 19, rgraphCtx, getVolumetricLightingAccumulation().getLightRt(), bForwardShading)
-ANKI_SRV(StructuredBuffer<GpuSceneLight>, g_lights, 20, cmdb, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight),
+ANKI_SRV(Texture2D<Vec4>, g_gbufferDepthTex, 19, rgraphCtx, getDepthDownscale().getDepthRt(), bForwardShading)
+ANKI_SRV(Texture3D<Vec4>, g_lightVol, 20, rgraphCtx, getVolumetricLightingAccumulation().getLightRt(), bForwardShading)
+ANKI_SRV(StructuredBuffer<GpuSceneLight>, g_lights, 21, cmdb, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight),
 		 bForwardShading)
-ANKI_SRV(Texture2D<Vec4>, g_shadowAtlasTex, 21, rgraphCtx, getShadowMapping().getShadowmapRt(), bForwardShading)
-ANKI_SRV(StructuredBuffer<Cluster>, g_clusters, 22, cmdb, getClusterBinning().getClustersBuffer(), bForwardShading)
+ANKI_SRV(Texture2D<Vec4>, g_shadowAtlasTex, 22, rgraphCtx, getShadowMapping().getShadowmapRt(), bForwardShading)
+ANKI_SRV(StructuredBuffer<Cluster>, g_clusters, 23, cmdb, getClusterBinning().getClustersBuffer(), bForwardShading)
 #endif
 
 // CBVs

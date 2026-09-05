@@ -585,7 +585,7 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 	{
 		// First batch, check if passIdx depends on any pass
 
-		depends = ctx.m_passes[passIdx].m_dependsOnPassMask.getSetBitCount() != 0;
+		depends = ctx.m_passes[passIdx].m_dependsOnPassMask.countSetBits() != 0;
 	}
 
 	return depends;

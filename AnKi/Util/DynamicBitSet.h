@@ -79,7 +79,7 @@ public:
 		return (m_storage[index] & mask) != 0;
 	}
 
-	U32 getSetBitCount() const
+	U32 countSetBits() const
 	{
 		U32 count = 0;
 		for(TElementType el : m_storage)

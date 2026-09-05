@@ -167,7 +167,7 @@ void MaterialEditorUi::drawContent(Bool& cacheDirty, String& resourceToLocate)
 			const Bool selected = comboWithFilter("##Filenames", textureFilepaths, currentFilepath, newSelectedFilepath, m_tempFilter);
 			if(selected && currentFilepath != textureFilepaths[newSelectedFilepath])
 			{
-				ImageResourcePtr newImg;
+				StreamingImageResourcePtr newImg;
 				if(!ResourceManager::getSingleton().loadResource(textureFilepaths[newSelectedFilepath], newImg))
 				{
 					inp.m_image = newImg;
@@ -182,7 +182,7 @@ void MaterialEditorUi::drawContent(Bool& cacheDirty, String& resourceToLocate)
 					ANKI_ASSERT(pl->Data && pl->DataSize > 0);
 					const CString droppedName(static_cast<const char*>(pl->Data));
 
-					ImageResourcePtr newImg;
+					StreamingImageResourcePtr newImg;
 					if(!ResourceManager::getSingleton().loadResource(droppedName, newImg))
 					{
 						inp.m_image = newImg;
@@ -199,7 +199,7 @@ void MaterialEditorUi::drawContent(Bool& cacheDirty, String& resourceToLocate)
 			if(inp.m_image)
 			{
 				ImTextureID id;
-				id.m_texture = &inp.m_image->getTexture();
+				id.m_texture = &inp.m_image->getTexture(kMaxU32); // Load a blury texture
 				ImGui::Image(id, Vec2(128.0f));
 			}
 		}

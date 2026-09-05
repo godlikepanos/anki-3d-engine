@@ -240,19 +240,22 @@ VertOut main(VertIn input)
 // ===========================================================================
 #if ANKI_PIXEL_SHADER
 
-#	define BINDLESS(x) getBindlessTexture2DVec4(x)
-
 #	if SHADOWS
-#		define SAMPLER g_trilinearRepeatSampler
+#		if TRIPLANAR_UV_MAPPING
+#			define SAMPLE_TEX(descIdx) \
+				sampleTexture2DGrad(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, ddx, ddy, randFactor, texBias)
+#		else
+#			define SAMPLE_TEX(descIdx) sampleTexture2D(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, randFactor, texBias)
+#		endif
 #	else
-#		define SAMPLER g_trilinearRepeatAnisoResolutionScalingBiasSampler
-#	endif
-
-#	if TRIPLANAR_UV_MAPPING
-#		define SAMPLE_TEX(bindlessIdx) BINDLESS(bindlessIdx).SampleGrad(SAMPLER, uv, ddx, ddy)
-#	else
-#		define SAMPLE_TEX(bindlessIdx) BINDLESS(bindlessIdx).Sample(SAMPLER, uv)
-#	endif
+#		if TRIPLANAR_UV_MAPPING
+#			define SAMPLE_TEX(descIdx) \
+				sampleTexture2DAnisoGrad(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, ddx, ddy, texAniso, randFactor, texBias)
+#		else
+#			define SAMPLE_TEX(descIdx) \
+				sampleTexture2DAniso(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, texAniso, randFactor, texBias)
+#		endif
+#	endif // SHADOWS
 
 #	if SHADOWS
 void main(VertOut vertOut)
@@ -307,6 +310,12 @@ GBufferPixelOut main(VertOut vertOut)
 	uv = vertOut.m_uv;
 #		endif
 #	endif // GBUFFER || ALPHA_TEST
+
+	const F32 texBias = g_globalConstants.m_textureBias;
+	const F32 texAniso = g_globalConstants.m_textureAnisotropy;
+
+	RandomGenerator randg = createRandomGenerator(vertOut.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	const F32 randFactor = rand(randg);
 
 	// Diffuse
 #	if GBUFFER || ALPHA_TEST
@@ -388,8 +397,7 @@ GBufferPixelOut main(VertOut vertOut)
 
 ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 
-#	define SAMPLE_TEX(bindlessIdx) \
-		getBindlessTextureNonUniformIndex2DVec4(bindlessIdx).SampleLevel(g_trilinearRepeatSampler, uv, payload.m_textureLod)
+#	define SAMPLE_TEX(bindlessIdx) sampleTexture2DLod(SBUFF(g_imageDescriptors, bindlessIdx), g_trilinearRepeatSampler, uv, payload.m_textureLod)
 
 [shader("closesthit")] void main(inout RtMaterialFetchRayPayload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
 {

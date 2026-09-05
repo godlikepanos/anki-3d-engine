@@ -227,7 +227,7 @@ void ScriptVariables::rebuildVarsFromLua(ScriptEnvironment& env)
 
 void ScriptVariables::flushDirtyVarsToLua(ScriptEnvironment& env)
 {
-	if(m_dirty.getSetBitCount() == 0)
+	if(m_dirty.countSetBits() == 0)
 	{
 		return;
 	}

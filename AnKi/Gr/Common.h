@@ -1003,7 +1003,7 @@ public:
 						|| m_vertex.m_vkVertexAttributeLocations[semantic] != kMaxU8);
 		}
 
-		const U32 attachmentCount = m_pixel.m_colorRenderTargetWritemask.getSetBitCount();
+		const U32 attachmentCount = m_pixel.m_colorRenderTargetWritemask.countSetBits();
 		for(U32 i = 0; i < attachmentCount; ++i)
 		{
 			ANKI_ASSERT(m_pixel.m_colorRenderTargetWritemask.get(i) && "Should write to all attachments");

@@ -50,7 +50,6 @@ public:
 	SamplerPtr m_trilinearClamp;
 	SamplerPtr m_trilinearRepeat;
 	SamplerPtr m_trilinearRepeatAniso;
-	SamplerPtr m_trilinearRepeatAnisoResolutionScalingBias;
 	SamplerPtr m_trilinearClampShadow;
 };
 
@@ -225,6 +224,11 @@ public:
 		return *m_runCtx.m_currentCtx;
 	}
 
+	ANKI_INTERNAL F32 getMainViewTextureBias() const
+	{
+		return m_mainViewTextureBias;
+	}
+
 private:
 	class Cleanup
 	{
@@ -277,6 +281,8 @@ private:
 	ShaderProgramPtr m_fillBufferGrProg;
 
 	RenderGraphPtr m_rgraph;
+
+	F32 m_mainViewTextureBias = 0.0;
 
 	class
 	{

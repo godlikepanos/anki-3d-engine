@@ -189,7 +189,25 @@ static void fillTextureInitInfo(const ImageLoader& loader, TextureInitInfo& init
 	}
 }
 
-Error StreamingImageResourceManager::init()
+StreamingImageResourceManager::~StreamingImageResourceManager()
+{
+	freeImageDescriptor(0);
+
+	for(Garbage& g : m_garbage)
+	{
+		if(g.m_fence)
+		{
+			g.m_fence->clientWaitForever();
+		}
+	}
+
+	collectGarbage(false);
+
+	ANKI_ASSERT(m_garbage.getSize() == 0);
+	ANKI_ASSERT(m_freeDescriptorMask.countSetBits() == g_cvarRsrcMaxImageDescriptors && "Forgot to free image desciptor");
+}
+
+void StreamingImageResourceManager::init()
 {
 	m_imageDescriptorsBuff = TextureMemoryPool::getSingleton().allocateStructuredBuffer<ImageDescriptor>(g_cvarRsrcMaxImageDescriptors);
 
@@ -198,7 +216,10 @@ Error StreamingImageResourceManager::init()
 		m_freeDescriptorMask.setBit(i);
 	}
 
-	return Error::kNone;
+	// The 0 descriptor is reserved so that materials can use that to indicate that there is no texture bound
+	U32 first = newImageDescriptor();
+	ANKI_ASSERT(first == 0);
+	uploadImageDescriptor(first, ImageDescriptor{});
 }
 
 ImageDescriptorHandle StreamingImageResourceManager::newImageDescriptor()
@@ -260,8 +281,18 @@ void StreamingImageResourceManager::endFrame(Fence* fence)
 
 	LockGuard lock(m_mtx);
 
-	// Collect garbage
-	while(m_garbage.getSize() && m_garbage.getFront().m_fence && m_garbage.getFront().m_fence->signaled())
+	// Set the new fence
+	if(m_garbage.getSize() && !m_garbage.getBack().m_fence)
+	{
+		m_garbage.getBack().m_fence.reset(fence);
+	}
+
+	collectGarbage(true);
+}
+
+void StreamingImageResourceManager::collectGarbage(Bool waitForFences)
+{
+	while(m_garbage.getSize() && (!waitForFences || (m_garbage.getFront().m_fence && m_garbage.getFront().m_fence->signaled())))
 	{
 		// Fence is signaled, collect the garbage
 
@@ -273,12 +304,6 @@ void StreamingImageResourceManager::endFrame(Fence* fence)
 
 		m_garbage.erase(m_garbage.getBegin());
 	}
-
-	// Set the new fence
-	if(m_garbage.getSize() && !m_garbage.getBack().m_fence)
-	{
-		m_garbage.getBack().m_fence.reset(fence);
-	}
 }
 
 class StreamingImageResource::LoadingContext
@@ -287,7 +312,6 @@ public:
 	ImageLoader m_loader{&ResourceMemoryPool::getSingleton()};
 	StreamingImageResourcePtr m_image;
 	U32 m_mipCount = 0;
-	U32 m_texCount = 0;
 };
 
 // Image upload async task.
@@ -361,7 +385,7 @@ Error StreamingImageResource::load(const ResourceFilename& filename, Bool async)
 	const String filenameExt = anki::getFilename(filename);
 
 	const U32 textureCount = U32(max(I32(mipCount) - I32(kImageDescriptorTailChainMipmapCount) + 1, 1));
-	ctx->m_texCount = textureCount;
+	m_textureCount = textureCount;
 	for(U32 i = 0; i < textureCount; ++i)
 	{
 		texInit.setName(ResourceString().sprintf("%s #%u", filenameExt.cstr(), i));
@@ -454,7 +478,7 @@ Error StreamingImageResource::loadAsync(LoadingContext& ctx) const
 	const U32 layerCount = m_textures[0]->getLayerCount();
 	const U32 mipCount = ctx.m_mipCount;
 	const U32 copyCount = layerCount * faceCount * mipCount;
-	const U32 texCount = ctx.m_texCount;
+	const U32 texCount = m_textureCount;
 	const U32 firstMipmapOfTailChain = texCount - 1;
 
 	// With GFXR enabled we can't do fwrite directly to mapped VkBuffer. So we need to first fwrite to a CPU buffer and copy that to the mapped
@@ -547,6 +571,12 @@ Error StreamingImageResource::loadAsync(LoadingContext& ctx) const
 
 	m_isLoaded.fetchAdd(1);
 	return Error::kNone;
+}
+
+Texture& StreamingImageResource::getTexture(U32 mipmap) const
+{
+	mipmap = min(mipmap, m_textureCount - 1);
+	return *m_textures[mipmap];
 }
 
 } // end namespace anki

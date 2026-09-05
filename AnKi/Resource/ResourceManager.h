@@ -50,6 +50,8 @@ public:
 	void refreshFileUpdateTimes();
 #endif
 
+	void endFrame(Fence* fence);
+
 private:
 	template<typename Type>
 	class TypeData

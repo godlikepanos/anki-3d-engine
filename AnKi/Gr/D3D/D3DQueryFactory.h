@@ -111,7 +111,7 @@ private:
 
 		U32 getAllocationCount() const
 		{
-			return m_allocationMask.getSetBitCount();
+			return m_allocationMask.countSetBits();
 		}
 	};
 

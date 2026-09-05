@@ -291,7 +291,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 	colCi.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	if(staticState.m_misc.m_colorRtMask.getAnySet())
 	{
-		colCi.attachmentCount = staticState.m_misc.m_colorRtMask.getSetBitCount();
+		colCi.attachmentCount = staticState.m_misc.m_colorRtMask.countSetBits();
 		colCi.pAttachments = &colAttachments[0];
 
 		for(U i = 0; i < colCi.attachmentCount; ++i)
@@ -317,7 +317,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 	Array<VkFormat, kMaxColorRenderTargets> dynamicRenderingAttachmentFormats = {};
 	VkPipelineRenderingCreateInfoKHR dynRendering = {};
 	dynRendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-	dynRendering.colorAttachmentCount = staticState.m_misc.m_colorRtMask.getSetBitCount();
+	dynRendering.colorAttachmentCount = staticState.m_misc.m_colorRtMask.countSetBits();
 	dynRendering.pColorAttachmentFormats = dynamicRenderingAttachmentFormats.getBegin();
 	for(U i = 0; i < kMaxColorRenderTargets; ++i)
 	{

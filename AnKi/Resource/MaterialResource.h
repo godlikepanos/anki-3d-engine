@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/Resource/RenderingKey.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
-#include <AnKi/Resource/ImageResource.h>
+#include <AnKi/Resource/StreamingImageResource.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/Enum.h>
 
@@ -80,7 +80,7 @@ public:
 		return m_offsetInLocalConstants;
 	}
 
-	ImageResource* tryGetImageResource() const
+	StreamingImageResource* tryGetImageResource() const
 	{
 		return m_image.tryGet();
 	}
@@ -98,7 +98,7 @@ protected:
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
 	};
 
-	ImageResourcePtr m_image;
+	StreamingImageResourcePtr m_image;
 };
 
 // Specialize the MaterialVariable::getValue
@@ -114,7 +114,7 @@ protected:
 #undef ANKI_SPECIALIZE_GET_VALUE
 
 template<>
-inline const ImageResourcePtr& MaterialVariable::getValue() const
+inline const StreamingImageResourcePtr& MaterialVariable::getValue() const
 {
 	ANKI_ASSERT(m_image.get());
 	return m_image;

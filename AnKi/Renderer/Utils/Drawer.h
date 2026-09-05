@@ -22,6 +22,9 @@ public:
 
 	UVec4 m_viewport;
 
+	F32 m_textureBias = 0.0;
+	U32 m_textureAnisotropy = 1;
+
 	RenderingTechnique m_renderingTechinuqe = RenderingTechnique::kCount;
 
 	class

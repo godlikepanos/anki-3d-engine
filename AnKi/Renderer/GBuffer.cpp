@@ -170,6 +170,8 @@ void GBuffer::populateRenderGraph()
 			args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
 			args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 			args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
+			args.m_textureBias = getRenderer().getMainViewTextureBias();
+			args.m_textureAnisotropy = g_cvarRenderTextureAnisotropy;
 			args.fill(visOut);
 
 			cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);

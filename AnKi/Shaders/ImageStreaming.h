@@ -20,7 +20,6 @@ constexpr U32 kImageDescriptorTailChainMipmapCount = 6;
 constexpr U32 kImageDescriptorMaxMipmaps = 12; // Mips from kImageDescriptorMaxTextureSize to kImageDescriptorSmallestMipmapSize
 constexpr U32 kImageDescriptorMaxBindlessTextures = 6 + 1; // Textures from to fit kImageDescriptorMaxTextureSize and the tail chain texture
 
-
 struct ImageDescriptor
 {
 	U32 m_width : 16; // Size of mipmap 0 of the full image, even if that mipmap isn't resident. LOD calculations need this
@@ -34,6 +33,6 @@ struct ImageDescriptor
 
 	U32 m_padding[2];
 };
-static_assert(sizeof(ImageDescriptor) % 16 == 0, "Needs to be 16 byte aligned since it's read from a structured buffer");
+static_assert(sizeof(ImageDescriptor) % 16 == 0);
 
 ANKI_END_NAMESPACE

@@ -260,6 +260,13 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
 
+	m_mainViewTextureBias = log2(F32(m_internalResolution.x) / F32(m_postProcessResolution.x));
+	if(getTemporalUpscaler().getEnabled())
+	{
+		// DLSS wants more bias
+		m_mainViewTextureBias -= 1.0f;
+	}
+
 	// Init samplers
 	{
 		SamplerInitInfo sinit("NearestNearestClamp");
@@ -294,17 +301,6 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 			sinit.m_anisotropyLevel = g_cvarRenderTextureAnisotropy;
 			m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 		}
-
-		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
-		F32 scalingMipBias = log2(F32(m_internalResolution.x) / F32(m_postProcessResolution.x));
-		if(getTemporalUpscaler().getEnabled())
-		{
-			// DLSS wants more bias
-			scalingMipBias -= 1.0f;
-		}
-
-		sinit.m_lodBias = scalingMipBias;
-		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = GrManager::getSingleton().newSampler(sinit);
 
 		sinit = {};
 		sinit.setName("TrilinearClampShadow");

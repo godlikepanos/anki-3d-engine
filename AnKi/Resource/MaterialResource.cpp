@@ -84,9 +84,9 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 		} while(inputEl);
 	}
 
-	if(varsSet.getSetBitCount() != m_vars.getSize())
+	if(varsSet.countSetBits() != m_vars.getSize())
 	{
-		ANKI_RESOURCE_LOGV("Material doesn't contain default value for %u input variables", U32(m_vars.getSize() - varsSet.getSetBitCount()));
+		ANKI_RESOURCE_LOGV("Material doesn't contain default value for %u input variables", U32(m_vars.getSize() - varsSet.countSetBits()));
 
 		// Remove unreferenced variables
 		ResourceDynamicArray<MaterialVariable> newVars;
@@ -397,7 +397,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		ANKI_CHECK(inputEl.getAttributeText("value", value));
 
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
-		foundVar->m_U32 = foundVar->m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+		foundVar->m_U32 = foundVar->m_image->getImageDescriptorIndex();
 	}
 	else
 	{

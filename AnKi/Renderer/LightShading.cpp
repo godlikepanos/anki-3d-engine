@@ -156,7 +156,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
 			cmdb.bindSrv(0, 0, TextureView(&sky->getSkyTexture(), TextureSubresourceDesc::all()));
 		}
 		else

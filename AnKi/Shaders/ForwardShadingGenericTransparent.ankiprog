@@ -162,7 +162,10 @@ PixelOut main(VertOut input)
 	output.m_color = Vec4(1.0, 1.0, 1.0, 1.0);
 
 #	if TEXTURE == 1
-	output.m_color = getBindlessTexture2DVec4(localConstants.m_texture).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, input.m_uv);
+	const F32 texBias = g_globalConstants.m_textureBias;
+	RandomGenerator randg = createRandomGenerator(input.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	const F32 randFactor = rand(randg);
+	output.m_color = sampleTexture2D(SBUFF(g_imageDescriptors, localConstants.m_texture), g_trilinearRepeatSampler, input.m_uv, randFactor, texBias);
 #	endif
 
 #	if LIGHT == 1

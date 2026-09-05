@@ -8,6 +8,7 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/MeshTypes.h>
 #include <AnKi/Shaders/GpuScene.h>
 
@@ -23,15 +24,11 @@ struct PixelOut
 	Vec4 m_color : SV_TARGET0;
 };
 
-Vec4 readAnimatedTextureRgba(Texture2DArray<Vec4> tex, SamplerState sampl, F32 period, Vec2 uv, F32 time)
+Vec4 readAnimatedTextureRgba(ImageDescriptor desc, SamplerState sampl, F32 period, Vec2 uv, F32 time, F32 randFactor, F32 lodBias)
 {
-	Vec2 texSize;
-	F32 layerCount;
-	F32 mipCount;
-	tex.GetDimensions(0, texSize.x, texSize.y, layerCount, mipCount);
-
+	const F32 layerCount = desc.m_depthOrLayerCount;
 	const F32 layer = fmod(time * layerCount / period, layerCount);
-	return tex.Sample(sampl, Vec3(uv, layer));
+	return sampleTexture2DArray(desc, sampl, Vec3(uv, layer), randFactor, lodBias);
 }
 
 // Iterate the clusters to compute the light color. Assume a fully lambertian surface
