@@ -80,10 +80,24 @@ public:
 		m_pool.getStats(allocatedSize, memoryCapacity);
 		g_svarTextureMemoryPoolCapacity.set(memoryCapacity);
 		g_svarTextureMemoryPoolUsedMemory.set(allocatedSize);
+		m_allocatedSize = allocatedSize;
+		m_totalCapacity = memoryCapacity;
+	}
+
+	PtrSize getAllocatedSize() const
+	{
+		return m_allocatedSize;
+	}
+
+	PtrSize getTotalCapacity() const
+	{
+		return m_totalCapacity;
 	}
 
 private:
 	SegregatedListsGpuMemoryPool m_pool;
+	PtrSize m_allocatedSize = 0;
+	PtrSize m_totalCapacity = 0;
 };
 
 } // end namespace anki

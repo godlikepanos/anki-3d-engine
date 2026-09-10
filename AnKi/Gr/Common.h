@@ -41,7 +41,7 @@ ANKI_CVAR(NumericCVar<U8>, Gr, Device, 0, 0, 16, "Choose an available device. De
 ANKI_CVAR(BoolCVar, Gr, RayTracing, false, "Try enabling ray tracing")
 ANKI_CVAR(BoolCVar, Gr, Vrs, false, "Enable or not VRS")
 ANKI_CVAR(BoolCVar, Gr, WorkGraphcs, false, "Enable or not WorkGraphs")
-ANKI_CVAR(NumericCVar<U32>, Gr, MaxBindlessSampledTextureCount, 512, 16, kMaxU16)
+ANKI_CVAR(NumericCVar<U32>, Gr, MaxBindlessSampledTextureCount, 4 * 1024, 16, kMaxU16)
 ANKI_CVAR(NumericCVar<Second>, Gr, GpuTimeout, 120.0, 0.0, 24.0 * 60.0,
 		  "Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout")
 ANKI_CVAR(NumericCVar<U8>, Gr, AsyncCompute, 0, 0, 2,

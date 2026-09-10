@@ -191,8 +191,6 @@ static void fillTextureInitInfo(const ImageLoader& loader, TextureInitInfo& init
 
 StreamingImageResourceManager::~StreamingImageResourceManager()
 {
-	freeImageDescriptor(0);
-
 	for(Garbage& g : m_garbage)
 	{
 		if(g.m_fence)
@@ -204,7 +202,7 @@ StreamingImageResourceManager::~StreamingImageResourceManager()
 	collectGarbage(false);
 
 	ANKI_ASSERT(m_garbage.getSize() == 0);
-	ANKI_ASSERT(m_freeDescriptorMask.countSetBits() == g_cvarRsrcMaxImageDescriptors && "Forgot to free image desciptor");
+	ANKI_ASSERT(m_freeDescriptorMask.countSetBits() == g_cvarRsrcMaxImageDescriptors - 1 && "Forgot to free image desciptor");
 }
 
 void StreamingImageResourceManager::init()
@@ -217,13 +215,14 @@ void StreamingImageResourceManager::init()
 	}
 
 	// The 0 descriptor is reserved so that materials can use that to indicate that there is no texture bound
-	U32 first = newImageDescriptor();
-	ANKI_ASSERT(first == 0);
-	uploadImageDescriptor(first, ImageDescriptor{});
+	m_freeDescriptorMask.unsetBit(0);
+	m_resources.resize(1);
+	uploadImageDescriptor(0, ImageDescriptor{});
 }
 
-ImageDescriptorHandle StreamingImageResourceManager::newImageDescriptor()
+ImageDescriptorHandle StreamingImageResourceManager::newImageDescriptor(StreamingImageResource* image, U8 tailChainMip)
 {
+	ANKI_ASSERT(image);
 	LockGuard lock(m_mtx);
 
 	const U32 index = m_freeDescriptorMask.getLeastSignificantBit();
@@ -233,6 +232,18 @@ ImageDescriptorHandle StreamingImageResourceManager::newImageDescriptor()
 	}
 
 	m_freeDescriptorMask.unsetBit(index);
+
+	if(index >= m_resources.getSize())
+	{
+		m_resources.resize(index + 1);
+	}
+
+	ANKI_ASSERT(m_resources[index].m_image == nullptr);
+	m_resources[index].m_image = image;
+	m_resources[index].m_resourceUuid = image->getUuid();
+	m_resources[index].m_lastSeenDetailedMip = tailChainMip;
+	m_resources[index].m_detailedLoadedMip = tailChainMip;
+	m_resources[index].m_tailChainMip = tailChainMip;
 
 	return index;
 }
@@ -254,6 +265,12 @@ void StreamingImageResourceManager::freeImageDescriptor(ImageDescriptorHandle in
 
 	ANKI_ASSERT(!garbage.m_freedDecriptorMask.getBit(index));
 	garbage.m_freedDecriptorMask.setBit(index);
+
+	// Invalidate the bookkeeping now to avoid doing streaming requests
+	ANKI_ASSERT(m_resources[index].m_image != nullptr);
+	m_resources[index] = ResourceBookkeeping();
+
+	m_uploadDescriptorMask.unsetBit(index);
 }
 
 void StreamingImageResourceManager::uploadImageDescriptor(ImageDescriptorHandle index, const ImageDescriptor& desc) const
@@ -288,6 +305,10 @@ void StreamingImageResourceManager::endFrame(Fence* fence)
 	}
 
 	collectGarbage(true);
+
+	performStreaming();
+
+	++m_frame;
 }
 
 void StreamingImageResourceManager::collectGarbage(Bool waitForFences)
@@ -299,6 +320,7 @@ void StreamingImageResourceManager::collectGarbage(Bool waitForFences)
 		m_garbage.getFront().m_freedDecriptorMask.iterateSetBitsFromLeastSignificant([this](U32 bit) {
 			ANKI_ASSERT(!m_freeDescriptorMask.getBit(bit));
 			m_freeDescriptorMask.setBit(bit);
+
 			return FunctorContinue::kContinue;
 		});
 
@@ -306,25 +328,169 @@ void StreamingImageResourceManager::collectGarbage(Bool waitForFences)
 	}
 }
 
-class StreamingImageResource::LoadingContext
+void StreamingImageResourceManager::appendStreamingRequests(ConstWeakArray<StreamingImageRequest> requests)
 {
-public:
-	ImageLoader m_loader{&ResourceMemoryPool::getSingleton()};
-	StreamingImageResourcePtr m_image;
-	U32 m_mipCount = 0;
-};
-
-// Image upload async task.
-class StreamingImageResource::TexUploadTask : public AsyncLoaderTask
-{
-public:
-	StreamingImageResource::LoadingContext m_ctx;
-
-	Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
+	if(requests.getSize() == 0)
 	{
-		return m_ctx.m_image->loadAsync(m_ctx);
+		return;
 	}
-};
+
+	for(U32 i = 0; i < requests.getSize(); ++i)
+	{
+		ANKI_ASSERT(requests[i].m_descriptorIndex != 0);
+
+		for(U32 j = 0; j < requests.getSize(); ++j)
+		{
+			if(i == j)
+			{
+				continue;
+			}
+
+			ANKI_ASSERT(requests[i].m_descriptorIndex != requests[j].m_descriptorIndex && "Can't have duplicates");
+		}
+	}
+
+	LockGuard lock(m_mtx);
+
+	for(const StreamingImageRequest& req : requests)
+	{
+		const Bool isFree = m_freeDescriptorMask.getBit(req.m_descriptorIndex);
+		if(isFree)
+		{
+			// It got freed, skip
+			continue;
+		}
+
+		if(m_resources[req.m_descriptorIndex].m_image == nullptr)
+		{
+			// Pending deletion, skip
+			continue;
+		}
+
+		if(req.m_resourceUuid != m_resources[req.m_descriptorIndex].m_resourceUuid)
+		{
+			// Something got deleted and the slot got recycled, skip
+			continue;
+		}
+
+		ResourceBookkeeping& resource = m_resources[req.m_descriptorIndex];
+
+		if(resource.m_lastSeenFrame != m_frame)
+		{
+			resource.m_lastSeenFrame = m_frame;
+			resource.m_lastSeenDetailedMip = req.m_mipmap;
+		}
+		else
+		{
+			// Already a pending request for this image this frame, merge the requests
+			resource.m_lastSeenDetailedMip = min(resource.m_lastSeenDetailedMip, U8(req.m_mipmap));
+		}
+
+		if(req.m_mipmap < resource.m_detailedLoadedMip)
+		{
+			// Asks for more detailed mip than what it has, remember it
+			m_uploadDescriptorMask.setBit(req.m_descriptorIndex);
+		}
+	}
+}
+
+void StreamingImageResourceManager::performStreaming()
+{
+	const PtrSize originalTexMemPoolEstimatedSize = TextureMemoryPool::getSingleton().getAllocatedSize();
+
+	auto isUnderMemPressure = [](PtrSize size) -> Bool {
+		return F64(size) / F64(g_cvarRsrcMaxTextureMemoryPoolSize) >= g_cvarRsrcMaxTextureMemoryLoadFactor;
+	};
+
+	// Do the uploads
+	PtrSize intendedUploadSize = 0;
+	U32 mipmapsToUploadCount = g_cvarRsrcMaxMipmapUploadsPerFrame;
+	m_uploadDescriptorMask.iterateSetBitsFromLeastSignificant([&](U32 descIdx) {
+		ResourceBookkeeping& resource = m_resources[descIdx];
+
+		ANKI_ASSERT(resource.m_lastSeenDetailedMip < resource.m_detailedLoadedMip);
+
+		const U32 mipCount = 1;
+		const U32 mip = resource.m_detailedLoadedMip - 1;
+
+		const PtrSize crntUploadSize = resource.m_image->estimateSurfaceMemoryConsumption(mip, mipCount);
+		intendedUploadSize += crntUploadSize;
+		if(mipmapsToUploadCount == 0 || isUnderMemPressure(originalTexMemPoolEstimatedSize + intendedUploadSize))
+		{
+			return FunctorContinue::kContinue;
+		}
+
+		resource.m_image->submitLoadsOfNonTailMips(mip, mipCount);
+		resource.m_detailedLoadedMip = U8(mip);
+
+		--mipmapsToUploadCount;
+
+		return FunctorContinue::kContinue;
+	});
+
+	// Evict mips to reduce mem pressure
+	if(isUnderMemPressure(originalTexMemPoolEstimatedSize + intendedUploadSize))
+	{
+		// Gather the candidates
+		ResourceDynamicArray<ResourceBookkeeping*> resourcesToReduceMips;
+		for(auto it = m_resources.getBegin() + 1; it < m_resources.getEnd(); ++it)
+		{
+			if(it->m_image == nullptr)
+			{
+				continue;
+			}
+
+			if(it->m_detailedLoadedMip == it->m_tailChainMip)
+			{
+				// Image at its mip limit, can't evict more
+				continue;
+			}
+
+			if(it->m_lastSeenDetailedMip <= it->m_detailedLoadedMip)
+			{
+				// Image wants more detail mips, can't evict that one
+				continue;
+			}
+
+			if(it->m_lastSeenFrame + g_cvarRsrcFramesUntilEviction >= m_frame)
+			{
+				// Image has been seen somewhat recently, can't evict it just yet
+				continue;
+			}
+
+			resourcesToReduceMips.emplaceBack(&(*it));
+		}
+
+		// Sort candidates from previously seen to newly seen
+		std::sort(resourcesToReduceMips.getBegin(), resourcesToReduceMips.getEnd(), [](ResourceBookkeeping* a, ResourceBookkeeping* b) {
+			return a->m_lastSeenFrame < b->m_lastSeenFrame;
+		});
+
+		// Execute mem frees until we are no longer under mem pressure
+		PtrSize memSize = originalTexMemPoolEstimatedSize + intendedUploadSize;
+		for(ResourceBookkeeping* rsrc : resourcesToReduceMips)
+		{
+			const U32 firstMip = rsrc->m_detailedLoadedMip;
+			const U32 mipCount = 1;
+
+			const PtrSize crntMemToFree = rsrc->m_image->estimateSurfaceMemoryConsumption(firstMip, mipCount);
+
+			rsrc->m_image->submitUnloadsOfNonTailMips(firstMip, mipCount);
+
+			rsrc->m_detailedLoadedMip = U8(firstMip + mipCount);
+
+			ANKI_ASSERT(memSize >= crntMemToFree);
+			memSize -= crntMemToFree;
+			if(!isUnderMemPressure(memSize))
+			{
+				break;
+			}
+		}
+	}
+
+	// Done
+	m_uploadDescriptorMask.destroy();
+}
 
 StreamingImageResource::~StreamingImageResource()
 {
@@ -336,31 +502,41 @@ StreamingImageResource::~StreamingImageResource()
 
 Error StreamingImageResource::load(const ResourceFilename& filename, Bool async)
 {
+	class TexUploadTask : public AsyncLoaderTask
+	{
+	public:
+		ImageLoader m_loader{&ResourceMemoryPool::getSingleton()};
+		StreamingImageResourcePtr m_image;
+
+		Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
+		{
+			return m_image->loadTailMipChainAsync(m_loader);
+		}
+	};
+
 	TexUploadTask* task = nullptr;
 	ANKI_DEFER(deleteInstance(ResourceMemoryPool::getSingleton(), task));
 
-	LoadingContext* ctx;
-	LoadingContext localCtx;
+	ImageLoader localLoader{&ResourceMemoryPool::getSingleton()};
+	ImageLoader* loader = nullptr;
 
 	if(async)
 	{
 		task = AsyncLoader::getSingleton().newTask<TexUploadTask>();
-		ctx = &task->m_ctx;
-		ctx->m_image.reset(this);
+		loader = &task->m_loader;
+		task->m_image.reset(this);
 	}
 	else
 	{
-		ctx = &localCtx;
+		loader = &localLoader;
 	}
 
-	ImageLoader& loader = ctx->m_loader;
+	ANKI_CHECK(loader->loadHeaderFromResourceFile(filename, g_cvarRsrcMaxImageSize2));
 
-	ANKI_CHECK(loader.loadHeaderFromResourceFile(filename, g_cvarRsrcMaxImageSize2));
-
-	U32 minDimension = min(loader.getWidth(), loader.getHeight());
-	if(loader.getImageType() == ImageBinaryType::k3D)
+	U32 minDimension = min(loader->getWidth(), loader->getHeight());
+	if(loader->getImageType() == ImageBinaryType::k3D)
 	{
-		minDimension = min(minDimension, loader.getDepth());
+		minDimension = min(minDimension, loader->getDepth());
 	}
 	if(minDimension < kImageDescriptorSmallestMipmapSize)
 	{
@@ -368,215 +544,447 @@ Error StreamingImageResource::load(const ResourceFilename& filename, Bool async)
 		return Error::kUserData;
 	}
 
-	m_avgColor = loader.getAverageColor();
+	m_avgColor = loader->getAverageColor();
 
-	// Create the textures
-	//
-	U32 mipCount = (loader.getImageType() != ImageBinaryType::k3D)
-					   ? computeMaxMipmapCount2d(loader.getWidth(), loader.getHeight(), kImageDescriptorSmallestMipmapSize)
-					   : computeMaxMipmapCount3d(loader.getWidth(), loader.getHeight(), loader.getDepth(), kImageDescriptorSmallestMipmapSize);
-	mipCount = min(mipCount, loader.getMipmapCount());
-	ctx->m_mipCount = mipCount;
+	m_mipCount = (loader->getImageType() != ImageBinaryType::k3D)
+					 ? computeMaxMipmapCount2d(loader->getWidth(), loader->getHeight(), kImageDescriptorSmallestMipmapSize)
+					 : computeMaxMipmapCount3d(loader->getWidth(), loader->getHeight(), loader->getDepth(), kImageDescriptorSmallestMipmapSize);
+	m_mipCount = min(m_mipCount, U8(loader->getMipmapCount()));
 
-	TextureInitInfo texInit;
-	fillTextureInitInfo(loader, texInit);
-	texInit.m_mipmapCount = 1;
+	m_textureCount = U8(max(I32(m_mipCount) - I32(kImageDescriptorTailChainMipmapCount) + 1, 1));
 
-	const String filenameExt = anki::getFilename(filename);
+	const U8 tailChainTexIdx = m_textureCount - 1;
 
-	const U32 textureCount = U32(max(I32(mipCount) - I32(kImageDescriptorTailChainMipmapCount) + 1, 1));
-	m_textureCount = textureCount;
-	for(U32 i = 0; i < textureCount; ++i)
+	// Create the tail chain texture
 	{
-		texInit.setName(ResourceString().sprintf("%s #%u", filenameExt.cstr(), i));
-		if(i == textureCount - 1)
-		{
-			texInit.m_mipmapCount = U8(min(kImageDescriptorTailChainMipmapCount, mipCount));
-		}
-
-		const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(texInit);
-		m_texAllocations[i] = TextureMemoryPool::getSingleton().allocate(memReq);
-
-		texInit.m_memoryBuffer = m_texAllocations[i];
-		m_textures[i] = GrManager::getSingleton().newTexture(texInit);
-
-		texInit.m_width /= 2;
-		texInit.m_height /= 2;
+		TextureInitInfo texInit;
+		fillTextureInitInfo(*loader, texInit);
+		texInit.m_mipmapCount = min(U8(kImageDescriptorTailChainMipmapCount), m_mipCount);
+		texInit.m_width = loader->getWidth() >> tailChainTexIdx;
+		texInit.m_height = loader->getHeight() >> tailChainTexIdx;
 		if(texInit.m_type == TextureType::k3D)
 		{
-			texInit.m_depth /= 2;
+			texInit.m_depth = loader->getDepth() >> tailChainTexIdx;
 		}
+
+		const String filenameExt = anki::getFilename(filename);
+		texInit.setName(ResourceString().sprintf("%s tail", filenameExt.cstr()));
+
+		const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(texInit);
+		m_texAllocations[tailChainTexIdx] = TextureMemoryPool::getSingleton().allocate(memReq);
+
+		texInit.m_memoryBuffer = m_texAllocations[tailChainTexIdx];
+		m_textures[tailChainTexIdx] = GrManager::getSingleton().newTexture(texInit);
+
+		m_format = m_textures[tailChainTexIdx]->getFormat();
+		m_texType = m_textures[tailChainTexIdx]->getTextureType();
 	}
 
 	// Create the image descriptor
 	{
-		ImageDescriptor desc = {};
-		desc.m_width = loader.getWidth();
-		desc.m_height = loader.getHeight();
-		if(loader.getImageType() == ImageBinaryType::k3D)
+		m_imageDesc.m_width = loader->getWidth();
+		m_imageDesc.m_height = loader->getHeight();
+		if(loader->getImageType() == ImageBinaryType::k3D)
 		{
-			desc.m_depthOrLayerCount = loader.getDepth();
+			m_imageDesc.m_depthOrLayerCount = loader->getDepth();
 		}
-		else if(loader.getImageType() == ImageBinaryType::k2DArray)
+		else if(loader->getImageType() == ImageBinaryType::k2DArray)
 		{
-			desc.m_depthOrLayerCount = loader.getLayerCount();
+			m_imageDesc.m_depthOrLayerCount = loader->getLayerCount();
 		}
 		else
 		{
-			desc.m_depthOrLayerCount = 1;
+			m_imageDesc.m_depthOrLayerCount = 1;
 		}
 
-		desc.m_firstMipmap = 0;
-		desc.m_lastMipmap = mipCount - 1;
+		m_imageDesc.m_firstMipmap = tailChainTexIdx;
+		m_imageDesc.m_lastMipmap = m_mipCount - 1;
 
-		for(U32 i = 0; i < mipCount; ++i)
+		m_imageDesc.m_resourceUuid = getUuid();
+
+		const U32 tailChainTexBindlessIdx = m_textures[tailChainTexIdx]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+
+		for(U32 i = tailChainTexIdx; i < m_mipCount; ++i)
 		{
-			U32 packedBindlessIndexAndLod = 0;
+			U32 packedBindlessIndexAndLod = tailChainTexBindlessIdx << 8u;
+			packedBindlessIndexAndLod |= U8(i - tailChainTexIdx);
+			ANKI_ASSERT(packedBindlessIndexAndLod >> 8u == tailChainTexBindlessIdx);
 
-			const U32 firstMipmapOfTailChain = textureCount - 1;
-			if(i < firstMipmapOfTailChain)
-			{
-				// Not tail chain
-				const U32 bindlessIndex = m_textures[i]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
-				packedBindlessIndexAndLod = bindlessIndex << 8u;
-				ANKI_ASSERT(packedBindlessIndexAndLod >> 8u == bindlessIndex);
-				packedBindlessIndexAndLod |= 0;
-			}
-			else
-			{
-				// Tail chain
-				const U32 bindlessIndex = m_textures[firstMipmapOfTailChain]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
-				packedBindlessIndexAndLod = bindlessIndex << 8u;
-				ANKI_ASSERT(packedBindlessIndexAndLod >> 8u == bindlessIndex);
-				packedBindlessIndexAndLod |= U8(i - firstMipmapOfTailChain);
-			}
-
-			desc.m_bindlessTextureIndexAndLod[i] = packedBindlessIndexAndLod;
+			m_imageDesc.m_bindlessTextureIndexAndLod[i] = packedBindlessIndexAndLod;
 		}
 
-		m_imageDescHandle = StreamingImageResourceManager::getSingleton().newImageDescriptor();
-		StreamingImageResourceManager::getSingleton().uploadImageDescriptor(m_imageDescHandle, desc);
+		m_imageDescHandle = StreamingImageResourceManager::getSingleton().newImageDescriptor(this, m_textureCount - 1);
+		StreamingImageResourceManager::getSingleton().uploadImageDescriptor(m_imageDescHandle, m_imageDesc);
 	}
 
 	// Upload the data
 	if(async)
 	{
-		AsyncLoader::getSingleton().submitTask(task, AsyncLoaderPriority::kMedium);
+		AsyncLoader::getSingleton().submitTask(task, AsyncLoaderPriority::kHigh);
 		task = nullptr;
 	}
 	else
 	{
-		ANKI_CHECK(loadAsync(*ctx));
+		ANKI_CHECK(loadTailMipChainAsync(*loader));
 	}
 
 	return Error::kNone;
 }
 
-Error StreamingImageResource::loadAsync(LoadingContext& ctx) const
+Error StreamingImageResource::loadTailMipChainAsync(ImageLoader& loader) const
 {
-	const U32 faceCount = textureTypeIsCube(m_textures[0]->getTextureType()) ? 6 : 1;
-	const U32 layerCount = m_textures[0]->getLayerCount();
-	const U32 mipCount = ctx.m_mipCount;
-	const U32 copyCount = layerCount * faceCount * mipCount;
-	const U32 texCount = m_textureCount;
-	const U32 firstMipmapOfTailChain = texCount - 1;
+	const U32 firstMipmapOfTailChain = m_textureCount - 1;
+	Texture& chainTex = *m_textures[firstMipmapOfTailChain];
+	const U32 faceCount = textureTypeIsCube(chainTex.getTextureType()) ? 6 : 1;
+	const U32 layerCount = chainTex.getLayerCount();
 
 	// With GFXR enabled we can't do fwrite directly to mapped VkBuffer. So we need to first fwrite to a CPU buffer and copy that to the mapped
 	// VkBuffer
 	const Bool bGfxreconstruct = GrManager::getSingleton().getDeviceCapabilities().m_gfxReconstruct;
 
-	static constexpr U32 kMaxCopiesBeforeFlush = 4;
-
-	for(U32 b = 0; b < copyCount; b += kMaxCopiesBeforeFlush)
+	// Set barriers
+	Array<TextureBarrierInfo, kImageDescriptorTailChainMipmapCount> barriers;
+	U32 barrierCount = 0;
+	for(U32 l = 0; l < layerCount; ++l)
 	{
-		const U32 begin = b;
-		const U32 end = min(copyCount, b + kMaxCopiesBeforeFlush);
-
-		// Set the barriers of the batch
-		Array<TextureBarrierInfo, kMaxCopiesBeforeFlush> barriers;
-		U32 barrierCount = 0;
-		for(U32 i = begin; i < end; ++i)
+		for(U32 f = 0; f < faceCount; ++f)
 		{
-			U32 mip, layer, face;
-			unflatten3dArrayIndex(layerCount, faceCount, mipCount, i, layer, face, mip);
+			barrierCount = 0;
 
-			const U32 texIdx = min(mip, texCount - 1);
-			const U32 actualMip = (mip < firstMipmapOfTailChain) ? 0 : mip - firstMipmapOfTailChain;
+			for(U32 mip = firstMipmapOfTailChain; mip < m_mipCount; ++mip)
+			{
+				const U32 tailChainMip = mip - firstMipmapOfTailChain;
 
-			barriers[barrierCount++] = {TextureView(m_textures[texIdx].get(), TextureSubresourceDesc::surface(actualMip, face, layer)),
-										TextureUsageBit::kNone, TextureUsageBit::kCopyDestination};
+				barriers[barrierCount++] = {TextureView(&chainTex, TextureSubresourceDesc::surface(tailChainMip, f, l)), TextureUsageBit::kNone,
+											TextureUsageBit::kCopyDestination};
+			}
+
+			CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 		}
-		CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
-
-		// Do the copies
-		for(U32 i = begin; i < end; ++i)
-		{
-			U32 mip, layer, face;
-			unflatten3dArrayIndex(layerCount, faceCount, mipCount, i, layer, face, mip);
-
-			const U32 texIdx = min(mip, texCount - 1);
-			const U32 actualMip = (mip < firstMipmapOfTailChain) ? 0 : mip - firstMipmapOfTailChain;
-
-			const Texture& firstTex = *m_textures[0];
-			PtrSize allocationSize;
-			if(m_textures[0]->getTextureType() == TextureType::k3D)
-			{
-				allocationSize =
-					computeVolumeSize(firstTex.getWidth() >> mip, firstTex.getHeight() >> mip, firstTex.getDepth() >> mip, firstTex.getFormat());
-			}
-			else
-			{
-				allocationSize = computeSurfaceSize(firstTex.getWidth() >> mip, firstTex.getHeight() >> mip, firstTex.getFormat());
-			}
-
-			WeakArray<U8> mappedMem;
-			const CopyEngineLockGuard lock = CopyEngine::getSingleton().copyBufferToTexture(
-				U32(allocationSize), mappedMem, TextureView(m_textures[texIdx].get(), TextureSubresourceDesc::surface(actualMip, face, layer)));
-
-			ResourceDynamicArray<U8> tmpData;
-			WeakArray<U8> copyDest;
-			if(bGfxreconstruct)
-			{
-				tmpData.resize(mappedMem.getSize());
-				copyDest = tmpData;
-			}
-			else
-			{
-				copyDest = mappedMem;
-			}
-
-			ANKI_CHECK(ctx.m_loader.loadSurfaceOrVolume(mip, face, layer, copyDest));
-
-			if(bGfxreconstruct)
-			{
-				memcpy(mappedMem.getBegin(), copyDest.getBegin(), copyDest.getSizeInBytes());
-			}
-		}
-
-		// Set the barriers of the batch
-		barrierCount = 0;
-		for(U32 i = begin; i < end; ++i)
-		{
-			U32 mip, layer, face;
-			unflatten3dArrayIndex(layerCount, faceCount, mipCount, i, layer, face, mip);
-
-			const U32 texIdx = min(mip, texCount - 1);
-			const U32 actualMip = (mip < firstMipmapOfTailChain) ? 0 : mip - firstMipmapOfTailChain;
-
-			barriers[barrierCount++] = {TextureView(m_textures[texIdx].get(), TextureSubresourceDesc::surface(actualMip, face, layer)),
-										TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
-		}
-		CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 	}
 
-	m_isLoaded.fetchAdd(1);
+	// Do the copies
+	for(U32 l = 0; l < layerCount; ++l)
+	{
+		for(U32 f = 0; f < faceCount; ++f)
+		{
+			for(U32 mip = firstMipmapOfTailChain; mip < m_mipCount; ++mip)
+			{
+				const U32 tailChainMip = mip - firstMipmapOfTailChain;
+
+				PtrSize allocationSize;
+				if(chainTex.getTextureType() == TextureType::k3D)
+				{
+					allocationSize = computeVolumeSize(chainTex.getWidth() >> tailChainMip, chainTex.getHeight() >> tailChainMip,
+													   chainTex.getDepth() >> tailChainMip, chainTex.getFormat());
+				}
+				else
+				{
+					allocationSize =
+						computeSurfaceSize(chainTex.getWidth() >> tailChainMip, chainTex.getHeight() >> tailChainMip, chainTex.getFormat());
+				}
+
+				WeakArray<U8> mappedMem;
+				const CopyEngineLockGuard lock = CopyEngine::getSingleton().copyBufferToTexture(
+					U32(allocationSize), mappedMem, TextureView(&chainTex, TextureSubresourceDesc::surface(tailChainMip, f, l)));
+
+				ResourceDynamicArray<U8> tmpData;
+				WeakArray<U8> copyDest;
+				if(bGfxreconstruct)
+				{
+					tmpData.resize(mappedMem.getSize());
+					copyDest = tmpData;
+				}
+				else
+				{
+					copyDest = mappedMem;
+				}
+
+				ANKI_CHECK(loader.loadSurfaceOrVolume(mip, f, l, copyDest));
+
+				if(bGfxreconstruct)
+				{
+					memcpy(mappedMem.getBegin(), copyDest.getBegin(), copyDest.getSizeInBytes());
+				}
+			}
+		}
+	}
+
+	// Final barriers
+	for(U32 l = 0; l < layerCount; ++l)
+	{
+		for(U32 f = 0; f < faceCount; ++f)
+		{
+			barrierCount = 0;
+
+			for(U32 mip = firstMipmapOfTailChain; mip < m_mipCount; ++mip)
+			{
+				const U32 tailChainMip = mip - firstMipmapOfTailChain;
+
+				barriers[barrierCount++] = {TextureView(&chainTex, TextureSubresourceDesc::surface(tailChainMip, f, l)),
+											TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
+			}
+
+			CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
+		}
+	}
+
+	m_isLoaded.exchange(true);
 	return Error::kNone;
 }
 
-Texture& StreamingImageResource::getTexture(U32 mipmap) const
+Error StreamingImageResource::loadNonTailMipsAsync(U32 firstMip, U32 mipCount)
 {
-	mipmap = min(mipmap, m_textureCount - 1);
-	return *m_textures[mipmap];
+	const U32 firstMipmapOfTailChain = m_textureCount - 1;
+	ANKI_ASSERT(firstMip + mipCount <= firstMipmapOfTailChain);
+
+	ImageLoader loader{&ResourceMemoryPool::getSingleton()};
+	ANKI_CHECK(loader.loadHeaderFromResourceFile(getFilename(), g_cvarRsrcMaxImageSize2));
+
+	const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+	const U32 layerCount = (m_texType == TextureType::k3D) ? 1 : m_imageDesc.m_depthOrLayerCount;
+
+	// With GFXR enabled we can't do fwrite directly to mapped VkBuffer. So we need to first fwrite to a CPU buffer and copy that to the mapped
+	// VkBuffer
+	const Bool bGfxreconstruct = GrManager::getSingleton().getDeviceCapabilities().m_gfxReconstruct;
+
+	// Create the textures
+	const String filenameExt = anki::getFilename(getFilename());
+	for(U32 mip = firstMip; mip < firstMip + mipCount; ++mip)
+	{
+		TextureInitInfo texInit;
+		fillTextureInitInfo(loader, texInit);
+		texInit.setName(ResourceString().sprintf("%s #%u", filenameExt.cstr(), mip));
+
+		texInit.m_mipmapCount = 1;
+
+		texInit.m_width = loader.getWidth() >> mip;
+		texInit.m_height = loader.getHeight() >> mip;
+		if(texInit.m_type == TextureType::k3D)
+		{
+			texInit.m_depth = loader.getDepth() >> mip;
+		}
+
+		const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(texInit);
+		ANKI_ASSERT(!m_texAllocations[mip]);
+		m_texAllocations[mip] = TextureMemoryPool::getSingleton().allocate(memReq);
+
+		texInit.m_memoryBuffer = m_texAllocations[mip];
+		ANKI_ASSERT(!m_textures[mip]);
+		m_textures[mip] = GrManager::getSingleton().newTexture(texInit);
+	}
+
+	// Set barriers
+	Array<TextureBarrierInfo, kImageDescriptorMaxMipmaps - kImageDescriptorTailChainMipmapCount> barriers;
+	U32 barrierCount = 0;
+	for(U32 l = 0; l < layerCount; ++l)
+	{
+		for(U32 f = 0; f < faceCount; ++f)
+		{
+			barrierCount = 0;
+
+			for(U32 mip = firstMip; mip < firstMip + mipCount; ++mip)
+			{
+				barriers[barrierCount++] = {TextureView(m_textures[mip].get(), TextureSubresourceDesc::surface(0, f, l)), TextureUsageBit::kNone,
+											TextureUsageBit::kCopyDestination};
+			}
+
+			CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
+		}
+	}
+
+	// Do the copies
+	for(U32 l = 0; l < layerCount; ++l)
+	{
+		for(U32 f = 0; f < faceCount; ++f)
+		{
+			for(U32 mip = firstMip; mip < firstMip + mipCount; ++mip)
+			{
+				Texture& tex = *m_textures[mip];
+
+				PtrSize allocationSize;
+				if(tex.getTextureType() == TextureType::k3D)
+				{
+					allocationSize = computeVolumeSize(tex.getWidth(), tex.getHeight(), tex.getDepth(), tex.getFormat());
+				}
+				else
+				{
+					allocationSize = computeSurfaceSize(tex.getWidth(), tex.getHeight(), tex.getFormat());
+				}
+
+				WeakArray<U8> mappedMem;
+				const CopyEngineLockGuard lock = CopyEngine::getSingleton().copyBufferToTexture(
+					U32(allocationSize), mappedMem, TextureView(&tex, TextureSubresourceDesc::surface(0, f, l)));
+
+				ResourceDynamicArray<U8> tmpData;
+				WeakArray<U8> copyDest;
+				if(bGfxreconstruct)
+				{
+					tmpData.resize(mappedMem.getSize());
+					copyDest = tmpData;
+				}
+				else
+				{
+					copyDest = mappedMem;
+				}
+
+				ANKI_CHECK(loader.loadSurfaceOrVolume(mip, f, l, copyDest));
+
+				if(bGfxreconstruct)
+				{
+					memcpy(mappedMem.getBegin(), copyDest.getBegin(), copyDest.getSizeInBytes());
+				}
+			}
+		}
+	}
+
+	// Set the post copy barriers
+	for(U32 l = 0; l < layerCount; ++l)
+	{
+		for(U32 f = 0; f < faceCount; ++f)
+		{
+			barrierCount = 0;
+
+			for(U32 mip = firstMip; mip < firstMip + mipCount; ++mip)
+			{
+				barriers[barrierCount++] = {TextureView(m_textures[mip].get(), TextureSubresourceDesc::surface(0, f, l)),
+											TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
+			}
+
+			CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
+		}
+	}
+
+	// Update the descriptor
+	// WARNING. Two problems with this:
+	// - The update of the descriptor might happen in the async queue while the renderer is accessing it
+	// - The barrier is not ideal but it's enough to block the desc update until the texture copies above have completed
+	{
+		const BufferBarrierInfo buffBarr = {StreamingImageResourceManager::getSingleton().getBuffer(), BufferUsageBit::kAll,
+											BufferUsageBit::kCopyDestination};
+		CopyEngine::getSingleton().setPipelineBarrier({}, {&buffBarr, 1}, {});
+
+		m_imageDesc.m_firstMipmap = firstMip;
+
+		for(U32 mip = firstMip; mip < firstMip + mipCount; ++mip)
+		{
+			ANKI_ASSERT(m_imageDesc.m_bindlessTextureIndexAndLod[mip] == 0);
+			m_imageDesc.m_bindlessTextureIndexAndLod[mip] = m_textures[mip]->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all()) << 8u;
+		}
+
+		StreamingImageResourceManager::getSingleton().uploadImageDescriptor(m_imageDescHandle, m_imageDesc);
+	}
+
+	return Error::kNone;
+}
+
+void StreamingImageResource::unloadNonTailMipsAsync(U32 firstMip, U32 mipCount)
+{
+	const U32 firstMipmapOfTailChain = m_textureCount - 1;
+	ANKI_ASSERT(firstMip + mipCount <= firstMipmapOfTailChain);
+
+	const U8 minLoadedMip = U8(firstMip + mipCount);
+
+	m_imageDesc.m_firstMipmap = minLoadedMip;
+	for(U32 mip = firstMip; mip < firstMip + mipCount; ++mip)
+	{
+		ANKI_ASSERT(m_imageDesc.m_bindlessTextureIndexAndLod[mip] != 0);
+		m_imageDesc.m_bindlessTextureIndexAndLod[mip] = 0;
+
+		ANKI_ASSERT(!!m_textures[mip]);
+		m_textures[mip].reset(nullptr);
+		ANKI_ASSERT(!!m_texAllocations[mip]);
+		m_texAllocations[mip].free();
+	}
+
+	const BufferBarrierInfo buffBarr = {StreamingImageResourceManager::getSingleton().getBuffer(), BufferUsageBit::kAll,
+										BufferUsageBit::kCopyDestination};
+	CopyEngine::getSingleton().setPipelineBarrier({}, {&buffBarr, 1}, {});
+
+	StreamingImageResourceManager::getSingleton().uploadImageDescriptor(m_imageDescHandle, m_imageDesc);
+}
+
+void StreamingImageResource::submitLoadsOfNonTailMips(U32 firstMip, U32 mipCount)
+{
+	const U32 firstMipmapOfTailChain = m_textureCount - 1;
+	ANKI_ASSERT(firstMip + mipCount <= firstMipmapOfTailChain);
+
+	class MyTask : public AsyncLoaderTask
+	{
+	public:
+		StreamingImageResourcePtr m_image;
+		U32 m_firstMipToLoad;
+		U32 m_mipCountToLoad;
+
+		Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
+		{
+			return m_image->loadNonTailMipsAsync(m_firstMipToLoad, m_mipCountToLoad);
+		}
+	};
+
+	MyTask* task = AsyncLoader::getSingleton().newTask<MyTask>();
+	task->m_image.reset(this);
+	task->m_firstMipToLoad = firstMip;
+	task->m_mipCountToLoad = mipCount;
+
+	AsyncLoader::getSingleton().submitTask(task, AsyncLoaderPriority::kMedium);
+}
+
+void StreamingImageResource::submitUnloadsOfNonTailMips(U32 firstMip, U32 mipCount)
+{
+	const U32 firstMipmapOfTailChain = m_textureCount - 1;
+	ANKI_ASSERT(firstMip + mipCount <= firstMipmapOfTailChain);
+
+	class MyTask : public AsyncLoaderTask
+	{
+	public:
+		StreamingImageResourcePtr m_image;
+		U32 m_firstMipToUnload;
+		U32 m_mipCountToUnload;
+
+		Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
+		{
+			m_image->unloadNonTailMipsAsync(m_firstMipToUnload, m_mipCountToUnload);
+			return Error::kNone;
+		}
+	};
+
+	MyTask* task = AsyncLoader::getSingleton().newTask<MyTask>();
+	task->m_image.reset(this);
+	task->m_firstMipToUnload = firstMip;
+	task->m_mipCountToUnload = mipCount;
+
+	AsyncLoader::getSingleton().submitTask(task, AsyncLoaderPriority::kMedium);
+}
+
+Texture& StreamingImageResource::getTailChainTexture() const
+{
+	return *m_textures[m_textureCount - 1];
+}
+
+PtrSize StreamingImageResource::estimateSurfaceMemoryConsumption(U32 firstMip, U32 mipCount) const
+{
+	ANKI_ASSERT(firstMip + mipCount <= m_textureCount - 1);
+
+	PtrSize size = 0;
+	for(U32 mip = firstMip; mip < firstMip + mipCount; ++mip)
+	{
+		const U32 width = m_imageDesc.m_width >> mip;
+		const U32 height = m_imageDesc.m_height >> mip;
+
+		if(m_texType == TextureType::k3D)
+		{
+			size += computeVolumeSize(width, height, m_imageDesc.m_depthOrLayerCount >> mip, m_format);
+		}
+		else
+		{
+			const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+
+			size += computeSurfaceSize(width, height, m_format) * faceCount * m_imageDesc.m_depthOrLayerCount;
+		}
+	}
+
+	return size;
 }
 
 } // end namespace anki

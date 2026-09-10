@@ -24,15 +24,27 @@ struct ImageDescriptor
 {
 	U32 m_width : 16; // Size of mipmap 0 of the full image, even if that mipmap isn't resident. LOD calculations need this
 	U32 m_height : 16;
+
 	U32 m_depthOrLayerCount : 16;
 	U32 m_firstMipmap : 8; // Finest resident mipmap. Points to m_bindlessTextureIndexAndLod. 0 means the whole image is in memory
 	U32 m_lastMipmap : 8; // Last mipmap. Points to m_bindlessTextureIndexAndLod
 
+	U32 m_resourceUuid;
+
 	// Every U32 packs the index to the bindless texture (24bit) and the mipmap to that texture (8bit). Used as m_bindlessTextureIndexAndLod[mipmap]
 	U32 m_bindlessTextureIndexAndLod[kImageDescriptorMaxMipmaps];
 
-	U32 m_padding[2];
+	U32 m_padding[1];
 };
 static_assert(sizeof(ImageDescriptor) % 16 == 0);
+
+// Request to stream in or out mipmaps
+struct StreamingImageRequest
+{
+	U32 m_descriptorIndex : 24;
+	U32 m_mipmap : 8;
+
+	U32 m_resourceUuid;
+};
 
 ANKI_END_NAMESPACE

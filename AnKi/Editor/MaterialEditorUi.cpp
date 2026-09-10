@@ -199,7 +199,7 @@ void MaterialEditorUi::drawContent(Bool& cacheDirty, String& resourceToLocate)
 			if(inp.m_image)
 			{
 				ImTextureID id;
-				id.m_texture = &inp.m_image->getTexture(kMaxU32); // Load a blury texture
+				id.m_texture = &inp.m_image->getTailChainTexture(); // Load a blury texture
 				ImGui::Image(id, Vec2(128.0f));
 			}
 		}
