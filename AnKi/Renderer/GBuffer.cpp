@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/HzbGenerator.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/CVarSet.h>
@@ -134,6 +135,11 @@ void GBuffer::populateRenderGraph()
 			// Weird, make a check
 			ANKI_ASSERT(GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount() == 0);
 		}
+
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 		const RenderTargetLoadOperation loadOp = (firstPass) ? RenderTargetLoadOperation::kClear : RenderTargetLoadOperation::kLoad;
 		Array<GraphicsRenderPassTargetDesc, kGBufferColorRenderTargetCount> colorRti;

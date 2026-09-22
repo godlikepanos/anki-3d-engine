@@ -161,6 +161,12 @@ struct GlobalRendererConstants
 	IndirectDiffuseClipmapConstants m_indirectDiffuseClipmaps;
 
 	LocalLightsGridConstants m_localLightsGrid;
+
+	U32 m_imageStreamingFeedbackPixelX : 16;
+	U32 m_imageStreamingFeedbackPixelY : 16;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
 };
 
 struct SbtBuildConstants

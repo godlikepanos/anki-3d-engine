@@ -88,7 +88,7 @@ VertOut main(VertIn input)
 #if ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 
-PixelOut main(VertOut input)
+[earlydepthstencil] PixelOut main(VertOut input)
 {
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
 

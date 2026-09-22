@@ -13,10 +13,11 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/DepthDownscale.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
-#include <AnKi/Resource/StreamingImageResource.h>
+#include <AnKi/Resource/StreamingImageResourceManager.h>
 
 namespace anki {
 

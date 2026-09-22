@@ -74,9 +74,11 @@ VertOut main(VertIn input)
 #endif // ANKI_VERTEX_SHADER
 
 #if ANKI_PIXEL_SHADER
-PixelOut main(VertOut input)
+[earlydepthstencil] PixelOut main(VertOut input)
 {
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
+
+	initImageStreaming(input.m_svPosition);
 
 	const F32 texBias = g_globalConstants.m_textureBias;
 
@@ -84,10 +86,10 @@ PixelOut main(VertOut input)
 	const F32 randFactor = rand(randg);
 
 #	if ANIMATED_TEXTURE == 1
-	Vec4 texCol = readAnimatedTextureRgba(SBUFF(g_imageDescriptors, localConstants.m_diffuseTex), g_trilinearRepeatSampler,
-										  localConstants.m_textureAnimationPeriod, input.m_uv, g_globalRendererConstants.m_time, randFactor, texBias);
+	Vec4 texCol = readAnimatedTextureRgba(localConstants.m_diffuseTex, g_trilinearRepeatSampler, localConstants.m_textureAnimationPeriod, input.m_uv,
+										  g_globalRendererConstants.m_time, randFactor, texBias);
 #	else
-	Vec4 texCol = sampleTexture2D(SBUFF(g_imageDescriptors, localConstants.m_diffuseTex), g_trilinearRepeatSampler, input.m_uv, randFactor, texBias);
+	Vec4 texCol = sampleTexture2D(localConstants.m_diffuseTex, g_trilinearRepeatSampler, input.m_uv, randFactor, texBias);
 #	endif
 
 	const Vec3 albedo = texCol.xyz * localConstants.m_albedoScale + localConstants.m_albedoBias;

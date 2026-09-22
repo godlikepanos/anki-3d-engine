@@ -21,6 +21,7 @@ public:
 	{
 		kCopyBufferToTexture,
 		kCopyBufferToBuffer,
+		kZeroBuffer,
 		kSetPipelineBarrier,
 		kBuildAs,
 
@@ -48,6 +49,14 @@ public:
 		PtrSize m_dstRange = kMaxPtrSize;
 	};
 
+	class ZeroBufferCommand
+	{
+	public:
+		BufferPtr m_buff;
+		PtrSize m_offset = kMaxPtrSize;
+		PtrSize m_range = kMaxPtrSize;
+	};
+
 	class SetPipelineBarrierCommand
 	{
 	public:
@@ -72,6 +81,7 @@ public:
 		U32 m_dummy = 0;
 		CopyBufferToTextureCommand m_copyBufferToTexture;
 		CopyBufferToBufferCommand m_copyBufferToBuffer;
+		ZeroBufferCommand m_zeroBuffer;
 		SetPipelineBarrierCommand m_setPipelineBarrier;
 		BuildAsCommand m_buildAs;
 	};
@@ -105,6 +115,9 @@ public:
 		case CommandType::kCopyBufferToBuffer:
 			m_copyBufferToBuffer = std::move(b.m_copyBufferToBuffer);
 			break;
+		case CommandType::kZeroBuffer:
+			m_zeroBuffer = std::move(b.m_zeroBuffer);
+			break;
 		case CommandType::kSetPipelineBarrier:
 			m_setPipelineBarrier = std::move(b.m_setPipelineBarrier);
 			break;
@@ -137,6 +150,9 @@ public:
 			break;
 		case CommandType::kCopyBufferToBuffer:
 			callDestructor(m_copyBufferToBuffer);
+			break;
+		case CommandType::kZeroBuffer:
+			callDestructor(m_zeroBuffer);
 			break;
 		case CommandType::kSetPipelineBarrier:
 			callDestructor(m_setPipelineBarrier);
@@ -247,28 +263,18 @@ CopyEngine::CopyEngine()
 
 CopyEngine::~CopyEngine()
 {
+	flushAndWaitForAllWork();
+	cleanupCompletedBatches();
+	ANKI_ASSERT(m_batches.getSize() == 0);
+
 	if(m_ringBufferMappedMem)
 	{
 		m_ringBuffer->unmap();
 	}
-
-	for(Batch& batch : m_batches)
-	{
-		if(batch.m_fence)
-		{
-			const Bool signaled = batch.m_fence->clientWait(kMaxSecond);
-			if(!signaled)
-			{
-				ANKI_GPUMEM_LOGF("GPU timeout detected");
-			}
-		}
-	}
 }
 
-void CopyEngine::flushInternal(FencePtr& fence)
+void CopyEngine::flushInternal()
 {
-	fence.reset(nullptr);
-
 	if(m_batches.isEmpty())
 	{
 		return;
@@ -307,6 +313,9 @@ void CopyEngine::flushInternal(FencePtr& fence)
 				BufferView(m_ringBuffer.get(), cmd.m_copyBufferToBuffer.m_ringBufferOffset, cmd.m_copyBufferToBuffer.m_ringBufferRange),
 				BufferView(cmd.m_copyBufferToBuffer.m_dst.get(), cmd.m_copyBufferToBuffer.m_dstOffset, cmd.m_copyBufferToBuffer.m_dstRange));
 			break;
+		case Command::CommandType::kZeroBuffer:
+			cmdb->zeroBuffer(BufferView(cmd.m_zeroBuffer.m_buff.get(), cmd.m_zeroBuffer.m_offset, cmd.m_zeroBuffer.m_range));
+			break;
 		case Command::CommandType::kSetPipelineBarrier:
 			cmdb->setPipelineBarrier(cmd.m_setPipelineBarrier.m_textures, cmd.m_setPipelineBarrier.m_buffers,
 									 cmd.m_setPipelineBarrier.m_accelerationStructures);
@@ -322,11 +331,18 @@ void CopyEngine::flushInternal(FencePtr& fence)
 
 	cmdb->popDebugMarker();
 	cmdb->endRecording();
-	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+	m_lastFence.reset(nullptr);
+	GrManager::getSingleton().submit(cmdb.get(), {}, &m_lastFence);
+
+	for(auto& callback : m_postFlushCallbacks)
+	{
+		callback(m_lastFence.get());
+	}
 
 	// Update the current batch
-	crntBatch.m_fence = fence;
+	crntBatch.m_fence = m_lastFence;
 	crntBatch.m_commands.destroy(); // Free memory
+	m_postFlushCallbacks.destroy(); // Free memory
 }
 
 void CopyEngine::cleanupCompletedBatches()
@@ -389,8 +405,7 @@ U32 CopyEngine::allocate(U32 origSize)
 
 		ANKI_ASSERT(batch->m_commands.getSize() > 0 && "Oversized batch without commands shouldn't happen");
 
-		FencePtr fence;
-		flushInternal(fence);
+		flushInternal();
 
 		batch = createBatch();
 	}
@@ -517,6 +532,22 @@ CopyEngineLockGuard CopyEngine::copyBufferToBuffer(U32 srcBufferSize, WeakArray<
 	return guard;
 }
 
+void CopyEngine::zeroBuffer(const BufferView& dst)
+{
+	ANKI_TRACE_SCOPED_EVENT(CopyEngineLock);
+
+	LockGuard lock(m_mtx);
+
+	WeakArray<U8> unused1;
+	U32 unused2 = kMaxU32;
+	Command& cmd = newCommand(0, unused1, unused2);
+
+	cmd.m_type = Command::CommandType::kZeroBuffer;
+	cmd.m_zeroBuffer.m_buff.reset(&dst.getBuffer());
+	cmd.m_zeroBuffer.m_offset = dst.getOffset();
+	cmd.m_zeroBuffer.m_range = dst.getRange();
+}
+
 void CopyEngine::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 									ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
 {
@@ -576,14 +607,35 @@ void CopyEngine::buildAccelerationStructure(AccelerationStructure* as)
 	m_asScratchBufferOffset += scratchBufferSize;
 }
 
+void CopyEngine::addPostFlushCallback(const Function<void(Fence* fence)>& callback)
+{
+	ANKI_TRACE_SCOPED_EVENT(CopyEngineLock);
+
+	LockGuard lock(m_mtx);
+
+	if(m_batches.getSize() == 0 || m_batches.getBack().isClosed())
+	{
+		// No batches or last batch is already closed, call the callback now
+
+		ANKI_ASSERT(!!m_lastFence && "Adding a post flush callback without any commands being submited");
+		callback(m_lastFence.get());
+	}
+	else
+	{
+		m_postFlushCallbacks.emplaceBack(callback);
+	}
+}
+
 void CopyEngine::flush(FencePtr& fence)
 {
 	ANKI_TRACE_SCOPED_EVENT(CopyEngineFlush);
 	LockGuard lock(m_mtx);
 
 	cleanupCompletedBatches();
-	flushInternal(fence);
+	flushInternal();
 	validate();
+
+	fence = m_lastFence;
 }
 
 void CopyEngine::validate() const

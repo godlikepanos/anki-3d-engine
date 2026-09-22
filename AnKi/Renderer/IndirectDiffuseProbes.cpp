@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Sky.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
@@ -240,6 +241,11 @@ void IndirectDiffuseProbes::populateRenderGraph()
 
 				pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
+
 				pass.setWork([this, visOut, viewProjMat = frustum.getViewProjectionMatrix(),
 							  viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseGBuffer);
@@ -305,6 +311,11 @@ void IndirectDiffuseProbes::populateRenderGraph()
 				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllRtvDsv,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 				pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
+
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 				pass.setWork([this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseShadows);

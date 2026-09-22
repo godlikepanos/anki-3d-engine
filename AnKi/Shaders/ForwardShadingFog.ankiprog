@@ -49,7 +49,7 @@ VertOut main(VertIn input)
 #endif // ANKI_VERTEX_SHADER
 
 #if ANKI_PIXEL_SHADER
-PixelOut main(VertOut input)
+[earlydepthstencil] PixelOut main(VertOut input)
 {
 	PixelOut output = (PixelOut)0;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);

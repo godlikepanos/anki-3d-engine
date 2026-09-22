@@ -14,10 +14,6 @@ namespace anki {
 // Forward
 class AsyncLoader;
 
-/// @addtogroup resource
-/// @{
-
-/// @memberof AsyncLoader
 enum class AsyncLoaderPriority : U8
 {
 	kHigh,
@@ -29,16 +25,14 @@ enum class AsyncLoaderPriority : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AsyncLoaderPriority)
 
-/// @memberof AsyncLoader
 class AsyncLoaderTaskContext
 {
 public:
-	Bool m_resubmitTask = false; ///< Resubmit the same task at the end of the queue.
+	Bool m_resubmitTask = false; // Resubmit the same task at the end of the queue.
 	AsyncLoaderPriority m_priority = AsyncLoaderPriority::kCount;
 };
 
-/// Interface for tasks for the AsyncLoader.
-/// @memberof AsyncLoader
+// Interface for tasks for the AsyncLoader.
 class AsyncLoaderTask : public IntrusiveListEnabled<AsyncLoaderTask>
 {
 public:
@@ -49,7 +43,7 @@ public:
 	virtual Error operator()(AsyncLoaderTaskContext& ctx) = 0;
 };
 
-/// Asynchronous resource loader.
+// Asynchronous resource loader.
 class AsyncLoader : public MakeSingleton<AsyncLoader>
 {
 public:
@@ -57,17 +51,18 @@ public:
 
 	~AsyncLoader();
 
-	/// Create a new asynchronous loading task.
+	// Create a new asynchronous loading task.
 	template<typename TTask, typename... TArgs>
 	TTask* newTask(TArgs&&... args)
 	{
 		return newInstance<TTask>(ResourceMemoryPool::getSingleton(), std::forward<TArgs>(args)...);
 	}
 
-	/// Submit a task.
+	// Submit a task.
+	// It's thread-safe and can be called from insude the task as well
 	void submitTask(AsyncLoaderTask* task, AsyncLoaderPriority priority);
 
-	/// Get the total number of completed tasks.
+	// Get the total number of completed tasks.
 	U32 getTasksInFlightCount() const
 	{
 		return m_tasksInFlightCount.load();
@@ -83,13 +78,12 @@ private:
 
 	Atomic<U32> m_tasksInFlightCount = {0};
 
-	/// Thread callback
+	// Thread callback
 	static Error threadCallback(ThreadCallbackInfo& info);
 
 	Error threadWorker();
 
 	void stop();
 };
-/// @}
 
 } // end namespace anki

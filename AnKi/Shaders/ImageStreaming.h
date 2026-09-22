@@ -20,6 +20,8 @@ constexpr U32 kImageDescriptorTailChainMipmapCount = 6;
 constexpr U32 kImageDescriptorMaxMipmaps = 12; // Mips from kImageDescriptorMaxTextureSize to kImageDescriptorSmallestMipmapSize
 constexpr U32 kImageDescriptorMaxBindlessTextures = 6 + 1; // Textures from to fit kImageDescriptorMaxTextureSize and the tail chain texture
 
+constexpr U32 kImageStreamingTileSize = 64; // Only one pixel in this tile size will send feedback of accessed textures
+
 struct ImageDescriptor
 {
 	U32 m_width : 16; // Size of mipmap 0 of the full image, even if that mipmap isn't resident. LOD calculations need this
@@ -39,7 +41,7 @@ struct ImageDescriptor
 static_assert(sizeof(ImageDescriptor) % 16 == 0);
 
 // Request to stream in or out mipmaps
-struct StreamingImageRequest
+struct ImageStreamingRequest
 {
 	U32 m_descriptorIndex : 24;
 	U32 m_mipmap : 8;

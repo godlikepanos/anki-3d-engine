@@ -15,6 +15,7 @@
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
@@ -293,6 +294,11 @@ void ProbeReflections::populateRenderGraph()
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllRtvDsv, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
+
 			pass.setWork(
 				[this, visOut, viewProjMat = frustum.getViewProjectionMatrix(), viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
@@ -356,6 +362,11 @@ void ProbeReflections::populateRenderGraph()
 
 			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllRtvDsv, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
+
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 			pass.setWork([this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);

@@ -230,6 +230,36 @@ public:
 		return &m_data[m_size - 1];
 	}
 
+	// Append another dynamic array. Copies from an lvalue, moves from an rvalue (b ends up empty)
+	template<typename TArray>
+	Iterator emplaceDynamicArrayBack(TArray&& b)
+	{
+		static_assert(std::is_same_v<std::decay_t<TArray>, DynamicArray>);
+		ANKI_ASSERT(&b != this);
+
+		const Size oldSize = m_size;
+		resizeStorage(m_size + b.m_size);
+		for(Size i = 0; i < b.m_size; ++i)
+		{
+			if constexpr(std::is_rvalue_reference_v<TArray&&>)
+			{
+				::new(&m_data[m_size]) T(std::move(b.m_data[i]));
+			}
+			else
+			{
+				::new(&m_data[m_size]) T(b.m_data[i]);
+			}
+			++m_size;
+		}
+
+		if constexpr(std::is_rvalue_reference_v<TArray&&>)
+		{
+			b.destroy();
+		}
+
+		return (oldSize < m_size) ? &m_data[oldSize] : getEnd();
+	}
+
 	/// Remove the last value.
 	void popBack()
 	{

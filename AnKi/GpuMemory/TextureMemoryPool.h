@@ -32,7 +32,7 @@ public:
 		const Array<PtrSize, 8> memoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 256_MB};
 		m_pool.init(g_cvarGpuMemTextureMemoryPoolChunkSize, g_cvarGpuMemTextureMemoryPoolMaxChunks, "TexPool", memoryClasses,
 					BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy | BufferUsageBit::kVertexOrIndex
-						| BufferUsageBit::kAllIndirect | BufferUsageBit::kAllUav);
+						| BufferUsageBit::kAllIndirect | BufferUsageBit::kAllUav | BufferUsageBit::kCopyDestination);
 	}
 
 	~TextureMemoryPool() = default;

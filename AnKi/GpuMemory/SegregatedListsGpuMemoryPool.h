@@ -29,7 +29,7 @@ public:
 
 	~SegregatedListsGpuMemoryPoolAllocation()
 	{
-		free();
+		deferredFree();
 	}
 
 	SegregatedListsGpuMemoryPoolAllocation& operator=(const SegregatedListsGpuMemoryPoolAllocation&) = delete;
@@ -53,7 +53,7 @@ public:
 
 	void* getMappedMemory() const;
 
-	void free();
+	void deferredFree();
 
 private:
 	PtrSize m_offset = kMaxPtrSize;

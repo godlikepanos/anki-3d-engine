@@ -115,7 +115,7 @@ public:
 	~RendererTexture()
 	{
 		m_texture.reset(nullptr);
-		m_allocation.free();
+		m_allocation.deferredFree();
 	}
 
 	RendererTexture& operator=(RendererTexture&& b)

@@ -49,4 +49,6 @@ ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Resource, ResourceMemoryPool)
 // An alias that denotes a ResourceFilesystem path.
 using ResourceFilename = CString;
 
+ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageSize, 1024u * 1024u, 4u, kMaxU32, "Max image size to load")
+
 } // end namespace anki

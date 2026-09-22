@@ -9,7 +9,9 @@
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Gr/Fence.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Util/Function.h>
 
 namespace anki {
 
@@ -98,6 +100,10 @@ public:
 	// It's thread-safe
 	CopyEngineLockGuard copyBufferToBuffer(U32 srcBufferSize, WeakArray<U8>& srcBufferMappedMem, const BufferView& dst);
 
+	// It's a copy command. Fills the buffer with zeros without consuming any staging memory.
+	// It's thread-safe
+	void zeroBuffer(const BufferView& dst);
+
 	// It's a barrier command
 	// It's thread-safe
 	void setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
@@ -107,11 +113,30 @@ public:
 	// It's thread-safe
 	void buildAccelerationStructure(AccelerationStructure* as);
 
+	// Append a callback to a list of callbacks. Those callbacks will be called when the previously set commands get flushed. If a flush happened
+	// right before, the callback will be triggered immediately
+	// WARNING: Don't access the CopyEngine in the callback. It will deadlock.
+	// WARNING: The callback may trigger right away or in some other random thread.
+	// It's thread-safe
+	void addPostFlushCallback(const Function<void(Fence* fence)>& callback);
+
 	// End commands //
 
-	// Flush the pending commands and get a fence back. If nothing happened the fence will be empty.
+	// Flush the pending commands and get a fence back. It always returns the last known fence except if there were no commands ever.
+	// the same as the last one.
 	// It's thread-safe
 	void flush(FencePtr& fence);
+
+	// Wait for all work to complete. It will flush pending work
+	void flushAndWaitForAllWork()
+	{
+		FencePtr fence;
+		flush(fence);
+		if(fence)
+		{
+			fence->clientWaitForever();
+		}
+	}
 
 private:
 	static constexpr U32 kSplitBatchPercentage = 50; // If a batch grows bigger than this, flush it
@@ -129,14 +154,18 @@ private:
 
 	BufferPtr m_asScratchBuffer;
 
+	FencePtr m_lastFence;
+
 	DynamicArray<Batch> m_batches;
+
+	DynamicArray<Function<void(Fence*)>> m_postFlushCallbacks;
 
 	U32 m_asScratchBufferOffset = 0;
 
 	U32 m_ringBufferSize = kMaxU32; // Cache it
 	U32 m_asScratchBufferSize = kMaxU32;
 
-	void flushInternal(FencePtr& fence);
+	void flushInternal();
 
 	Command& newCommand(U32 ringBufferAllocSize, WeakArray<U8>& ringBufferMappedMem, U32& ringBufferOffset);
 

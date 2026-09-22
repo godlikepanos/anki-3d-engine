@@ -7,10 +7,11 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Resource/StreamingImageResource.h>
+#include <AnKi/Resource/StreamingImageResourceManager.h>
 
 namespace anki {
 

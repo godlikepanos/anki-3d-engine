@@ -257,7 +257,7 @@ void* SegregatedListsGpuMemoryPoolAllocation::getMappedMemory() const
 	return static_cast<U8*>(chunk.m_mappedMemory) + m_offset;
 }
 
-void SegregatedListsGpuMemoryPoolAllocation::free()
+void SegregatedListsGpuMemoryPoolAllocation::deferredFree()
 {
 	if(*this)
 	{

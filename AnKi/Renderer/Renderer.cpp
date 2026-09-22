@@ -17,6 +17,7 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/GpuMemory/CopyEngine.h>
+#include <AnKi/Shaders/ImageStreaming.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -52,6 +53,7 @@
 #include <AnKi/Renderer/GpuParticles.h>
 #include <AnKi/Renderer/ScreenshotPass.h>
 #include <AnKi/Renderer/ReSTIRDI.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -345,6 +347,7 @@ Error Renderer::populateRenderGraph()
 	{
 		m_accelerationStructureBuilder->populateRenderGraph();
 	}
+	m_imageStreaming->populateRenderGraphPreRendering();
 	m_gbuffer->populateRenderGraph();
 	m_gpuParticles->populateRenderGraph();
 	m_motionVectors->populateRenderGraph();
@@ -379,6 +382,7 @@ Error Renderer::populateRenderGraph()
 		m_reSTIRDI->populateRenderGraph();
 	}
 	m_lightShading->populateRenderGraph();
+	m_imageStreaming->populateRenderGraphPostRendering();
 	if(getTemporalUpscaler().getEnabled())
 	{
 		m_temporalUpscaler->populateRenderGraph();
@@ -489,6 +493,15 @@ void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 	if(m_accelerationStructureBuilder)
 	{
 		memcpy(&consts.m_localLightsGrid, &m_accelerationStructureBuilder->getLocalLightsGridConstants(), sizeof(consts.m_localLightsGrid));
+	}
+
+	// Image streaming feedback
+	{
+		Vec2 jitter = generateJitter(m_frameCount % 128);
+		jitter += 0.5; // To [0, 1]
+		jitter *= F32(kImageStreamingTileSize - 1);
+		consts.m_imageStreamingFeedbackPixelX = U32(jitter.x);
+		consts.m_imageStreamingFeedbackPixelY = U32(jitter.y);
 	}
 
 	outConsts = consts;

@@ -24,11 +24,11 @@ struct PixelOut
 	Vec4 m_color : SV_TARGET0;
 };
 
-Vec4 readAnimatedTextureRgba(ImageDescriptor desc, SamplerState sampl, F32 period, Vec2 uv, F32 time, F32 randFactor, F32 lodBias)
+Vec4 readAnimatedTextureRgba(U32 imgDescIdx, SamplerState sampl, F32 period, Vec2 uv, F32 time, F32 randFactor, F32 lodBias)
 {
-	const F32 layerCount = desc.m_depthOrLayerCount;
+	const F32 layerCount = SBUFF(g_imageDescriptors, imgDescIdx).m_depthOrLayerCount;
 	const F32 layer = fmod(time * layerCount / period, layerCount);
-	return sampleTexture2DArray(desc, sampl, Vec3(uv, layer), randFactor, lodBias);
+	return sampleTexture2DArray(imgDescIdx, sampl, Vec3(uv, layer), randFactor, lodBias);
 }
 
 // Iterate the clusters to compute the light color. Assume a fully lambertian surface

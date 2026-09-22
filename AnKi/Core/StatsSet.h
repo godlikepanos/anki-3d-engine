@@ -41,13 +41,14 @@ enum class StatCategory : U8
 	kRenderer,
 	kGr,
 	kScene,
+	kStreaming,
 	kMisc,
 
 	kCount,
 };
 
-inline constexpr Array<CString, U32(StatCategory::kCount)> kStatCategoryTexts = {"Time",     "CPU memory", "GPU memory", "GPU misc",
-																				 "Renderer", "GFX API",    "Scene",      "Misc"};
+inline constexpr Array<CString, U32(StatCategory::kCount)> kStatCategoryTexts = {"Time",    "CPU memory", "GPU memory", "GPU misc", "Renderer",
+																				 "GFX API", "Scene",      "Streaming",  "Misc"};
 
 // A stats counter.
 class StatCounter

@@ -1,0 +1,73 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki technique ClearFeedbackBuffer comp
+#pragma anki technique StoreRequests comp
+
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/ImageStreaming.hlsl>
+
+// ===========================================================================
+// ClearFeedbackBuffer                                                       =
+// ===========================================================================
+#if ANKI_TECHNIQUE_ClearFeedbackBuffer
+
+RWStructuredBuffer<I32> g_feedbackBuffer : register(u0);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const U32 imageDescIdx = svDispatchThreadId.x;
+	const U32 imageDescCount = getStructuredBufferElementCount(g_feedbackBuffer);
+
+	if(imageDescIdx < imageDescCount)
+	{
+		SBUFF(g_feedbackBuffer, imageDescIdx) = kMaxI32;
+	}
+}
+#endif
+
+// ===========================================================================
+// StoreRequests                                                             =
+// ===========================================================================
+#if ANKI_TECHNIQUE_StoreRequests
+
+StructuredBuffer<I32> g_feedbackBuffer : register(t0);
+StructuredBuffer<ImageDescriptor> g_imageDescriptors : register(t1);
+
+RWStructuredBuffer<ImageStreamingRequest> g_requests : register(u0);
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const U32 imageDescIdx = svDispatchThreadId.x;
+	const U32 imageDescCount = getStructuredBufferElementCount(g_feedbackBuffer);
+
+	if(imageDescIdx >= imageDescCount)
+	{
+		return;
+	}
+
+	const I32 lod = SBUFF(g_feedbackBuffer, imageDescIdx);
+
+	ImageStreamingRequest req;
+	const Bool accessedThisFrame = lod != kMaxI32;
+
+	if(accessedThisFrame)
+	{
+		const ImageDescriptor desc = SBUFF(g_imageDescriptors, imageDescIdx);
+		req.m_descriptorIndex = imageDescIdx;
+		req.m_mipmap = min(U32(max(lod, 0)), desc.m_lastMipmap);
+		req.m_resourceUuid = desc.m_resourceUuid;
+	}
+	else
+	{
+		req.m_descriptorIndex = 0;
+		req.m_mipmap = 0;
+		req.m_resourceUuid = 0;
+	}
+
+	SBUFF(g_requests, imageDescIdx) = req;
+}
+
+#endif

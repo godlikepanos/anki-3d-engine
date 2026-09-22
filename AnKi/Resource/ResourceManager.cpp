@@ -6,6 +6,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Resource/ShaderProgramResourceSystem.h>
+#include <AnKi/Resource/StreamingImageResourceManager.h>
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/CVarSet.h>

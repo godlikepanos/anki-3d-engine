@@ -11,8 +11,6 @@
 
 namespace anki {
 
-ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageSize, 1024u * 1024u, 4u, kMaxU32, "Max image size to load")
-
 // Image resource class. It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs, PNGs, JPEG and
 // AnKi's image format.
 class ImageResource : public ResourceObject

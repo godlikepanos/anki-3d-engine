@@ -29,6 +29,12 @@
 #define GBUFFER (ANKI_TECHNIQUE_GBufferLegacy)
 #define SHADOWS (ANKI_TECHNIQUE_ShadowsLegacy)
 
+#if ALPHA_TEST
+#	define EARLYZ
+#else
+#	define EARLYZ [earlydepthstencil]
+#endif
+
 #pragma anki struct AnKiLocalConstants
 
 #pragma anki member tex U32 m_diffuseTex 0
@@ -242,30 +248,29 @@ VertOut main(VertIn input)
 
 #	if SHADOWS
 #		if TRIPLANAR_UV_MAPPING
-#			define SAMPLE_TEX(descIdx) \
-				sampleTexture2DGrad(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, ddx, ddy, randFactor, texBias)
+#			define SAMPLE_TEX(descIdx) sampleTexture2DGrad(descIdx, g_trilinearRepeatSampler, uv, ddx, ddy, randFactor, texBias)
 #		else
-#			define SAMPLE_TEX(descIdx) sampleTexture2D(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, randFactor, texBias)
+#			define SAMPLE_TEX(descIdx) sampleTexture2D(descIdx, g_trilinearRepeatSampler, uv, randFactor, texBias)
 #		endif
 #	else
 #		if TRIPLANAR_UV_MAPPING
-#			define SAMPLE_TEX(descIdx) \
-				sampleTexture2DAnisoGrad(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, ddx, ddy, texAniso, randFactor, texBias)
+#			define SAMPLE_TEX(descIdx) sampleTexture2DAnisoGrad(descIdx, g_trilinearRepeatSampler, uv, ddx, ddy, texAniso, randFactor, texBias)
 #		else
-#			define SAMPLE_TEX(descIdx) \
-				sampleTexture2DAniso(SBUFF(g_imageDescriptors, descIdx), g_trilinearRepeatSampler, uv, texAniso, randFactor, texBias)
+#			define SAMPLE_TEX(descIdx) sampleTexture2DAniso(descIdx, g_trilinearRepeatSampler, uv, texAniso, randFactor, texBias)
 #		endif
 #	endif // SHADOWS
 
 #	if SHADOWS
-void main(VertOut vertOut)
+EARLYZ void main(VertOut vertOut)
 #	else
-GBufferPixelOut main(VertOut vertOut)
+EARLYZ GBufferPixelOut main(VertOut vertOut)
 #	endif
 {
 #	if CONST_OFFSET_DEF
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, vertOut.m_constantsOffset);
 #	endif
+
+	initImageStreaming(vertOut.m_svPosition);
 
 #	if GBUFFER || ALPHA_TEST
 	Vec2 uv;

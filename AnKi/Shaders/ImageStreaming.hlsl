@@ -8,6 +8,8 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/ImageStreaming.h>
 
+static I32 g_detailedImageLodFeedback = 0;
+
 // Standard LOD calculation as described in the GL spec
 F32 computeTextureLodAnisoGL(Vec2 texSize, Vec2 dUdx, Vec2 dUdy, F32 lodBias, F32 maxAniso)
 {
@@ -83,6 +85,8 @@ F32 computeTextureLodIsotropic(Vec2 texDim, Vec2 ddx, Vec2 ddy, F32 lodBias)
 // Something like Texture2D::SampleLevel() but the lod is not a float
 Vec4 sampleTexture2DLod(ImageDescriptor desc, SamplerState sampl, Vec2 uv, I32 lod)
 {
+	g_detailedImageLodFeedback = lod;
+
 	const I32 lodi = clamp(lod, I32(desc.m_firstMipmap), I32(desc.m_lastMipmap));
 
 	const U32 packedBindlessIndexAndLod = desc.m_bindlessTextureIndexAndLod[lodi];
@@ -131,6 +135,8 @@ Vec4 sampleTexture2D(ImageDescriptor desc, SamplerState sampl, Vec2 uv, F32 rand
 // See sampleTexture2DLod()
 Vec4 sampleTexture2DArrayLod(ImageDescriptor desc, SamplerState sampl, Vec3 uvw, I32 lod)
 {
+	g_detailedImageLodFeedback = lod;
+
 	const I32 lodi = clamp(lod, I32(desc.m_firstMipmap), I32(desc.m_lastMipmap));
 
 	const U32 packedBindlessIndexAndLod = desc.m_bindlessTextureIndexAndLod[lodi];

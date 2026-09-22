@@ -73,6 +73,12 @@
 #define PRIMITIVE_NO_SAMPLING_POINTS_CULLING 1
 #define PRIMITIVE_ANY_CULLING (PRIMITIVE_BACKFACE_CULLING || PRIMITIVE_NO_SAMPLING_POINTS_CULLING)
 
+#if ALPHA_TEST
+#	define EARLYZ
+#else
+#	define EARLYZ [earlydepthstencil]
+#endif
+
 #pragma anki struct AnKiLocalConstants
 
 #pragma anki member tex U32 m_diffuseTex 0
@@ -436,8 +442,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 // ===========================================================================
 #if ANKI_PIXEL_SHADER
 
-#	define SAMPLE_TEX(descrIdx) \
-		sampleTexture2DAniso(SBUFF(g_imageDescriptors, descrIdx), g_trilinearRepeatSampler, uv, texAniso, randFactor, texBias)
+#	define SAMPLE_TEX(descrIdx) sampleTexture2DAniso(descrIdx, g_trilinearRepeatSampler, uv, texAniso, randFactor, texBias)
 
 #	if SHADOWS && !REALLY_ALPHA_TEST // Shadows without alpha
 
@@ -447,7 +452,7 @@ void main()
 
 #	elif SHADOWS && REALLY_ALPHA_TEST // Shadows WITH alpha
 
-void main(
+EARLYZ void main(
 #		if ANKI_TECHNIQUE_ShadowsMeshShaders
 	MeshPerVertOut vertInput, ANKI_PER_PRIMITIVE_VAR MeshPerPrimitiveOut primInput
 #		else
@@ -463,10 +468,13 @@ void main(
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
 
+	initImageStreaming(vertInput.m_svPosition);
+
 	RandomGenerator randg = createRandomGenerator(vertInput.m_svPosition.xy, g_globalRendererConstants.m_frame);
 	// Use cheap isotropic for shadows
 	const HVec4 diffColorA =
 		sampleTexture2D(SBUFF(g_imageDescriptors, localConstants.m_diffuseTex), g_trilinearRepeatSampler, vertInput.m_uv, rand(randg));
+	updateImageStreaming(localConstants.m_diffuseTex);
 	if(diffColorA.a * F16(localConstants.m_diffuseScale.a) < 0.5f)
 	{
 		discard;
@@ -475,7 +483,7 @@ void main(
 
 #	else // GBUFFER
 
-GBufferPixelOut main(
+EARLYZ GBufferPixelOut main(
 #		if ANKI_TECHNIQUE_GBufferMeshShaders
 	MeshPerVertOut vertInput, ANKI_PER_PRIMITIVE_VAR MeshPerPrimitiveOut primInput
 #		else
@@ -490,6 +498,8 @@ GBufferPixelOut main(
 #		endif
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
+
+	initImageStreaming(vertInput.m_svPosition);
 
 	const Vec2 uv = vertInput.m_uv;
 	ANKI_MAYBE_UNUSED(uv);
