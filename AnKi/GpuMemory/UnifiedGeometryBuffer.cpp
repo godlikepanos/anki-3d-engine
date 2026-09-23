@@ -9,9 +9,9 @@
 
 namespace anki {
 
-ANKI_SVAR(UnifiedGeomBufferAllocatedSize, StatCategory::kGpuMem, "UGB allocated", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(UnifiedGeomBufferTotal, StatCategory::kGpuMem, "UGB total", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(UnifiedGeomBufferFragmentation, StatCategory::kGpuMem, "UGB fragmentation", StatFlag::kFloat | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, UnifiedGeomBufferAllocatedSize, StatCategory::kGpuMem, "UGB allocated", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, UnifiedGeomBufferTotal, StatCategory::kGpuMem, "UGB total", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, UnifiedGeomBufferFragmentation, StatCategory::kGpuMem, "UGB fragmentation", StatFlag::kFloat | StatFlag::kMainThreadUpdates)
 
 void UnifiedGeometryBuffer::init()
 {
@@ -39,9 +39,9 @@ void UnifiedGeometryBuffer::updateStats() const
 	PtrSize userAllocatedSize, totalSize;
 	m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
 
-	g_svarUnifiedGeomBufferAllocatedSize.set(userAllocatedSize);
-	g_svarUnifiedGeomBufferTotal.set(totalSize);
-	g_svarUnifiedGeomBufferFragmentation.set(externalFragmentation);
+	g_svarGpuMemUnifiedGeomBufferAllocatedSize.set(userAllocatedSize);
+	g_svarGpuMemUnifiedGeomBufferTotal.set(totalSize);
+	g_svarGpuMemUnifiedGeomBufferFragmentation.set(externalFragmentation);
 }
 
 } // end namespace anki

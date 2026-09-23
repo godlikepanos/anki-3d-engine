@@ -14,9 +14,9 @@
 
 namespace anki {
 
-ANKI_SVAR(PhysicsBodiesCreated, StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(PhysicsJointsCreated, StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(PhysicsUpdateTime, StatCategory::kTime, "Phys update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Physics, BodiesCreated, StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Physics, JointsCreated, StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Physics, UpdateTime, StatCategory::kTime, "Phys update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 class BroadphaseLayer
 {

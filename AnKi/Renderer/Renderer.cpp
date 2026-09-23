@@ -62,12 +62,12 @@
 
 namespace anki {
 
-ANKI_SVAR(PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
-ANKI_SVAR(RendererCpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RenderGraphMemoryPoolCapacity, StatCategory::kGpuMem, "RenderGraph mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RenderGraphMemoryPoolUsedMemory, StatCategory::kGpuMem, "RenderGraph mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RendererMemoryPoolCapacity, StatCategory::kGpuMem, "Renderer mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RendererMemoryPoolUsedMemory, StatCategory::kGpuMem, "Renderer mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Render, CpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GraphMemoryPoolCapacity, StatCategory::kGpuMem, "RenderGraph mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GraphMemoryPoolUsedMemory, StatCategory::kGpuMem, "RenderGraph mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, MemoryPoolCapacity, StatCategory::kGpuMem, "Renderer mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, MemoryPoolUsedMemory, StatCategory::kGpuMem, "Renderer mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 constexpr Array<PtrSize, 7> kGpuMemoryPoolClasses = {1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 288_MB};
 
@@ -861,7 +861,7 @@ void Renderer::updatePipelineStats()
 
 		if(queriesCompleted)
 		{
-			g_svarPrimitivesDrawn.set(sum);
+			g_svarRenderPrimitivesDrawn.set(sum);
 			m_pipelineQueries.erase(m_pipelineQueries.getBegin());
 		}
 	}
@@ -1020,11 +1020,11 @@ Error Renderer::render(FencePtr& fence, Second prevTime, Second crntTime)
 	// Stats
 	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
 	{
-		g_svarRendererCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+		g_svarRenderCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
-		g_svarRendererGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
+		g_svarRenderGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
 		g_svarRenderGraphMemoryPoolCapacity.set(rgraphStats.m_gpuMemoryPoolCapacity);
 		g_svarRenderGraphMemoryPoolUsedMemory.set(rgraphStats.m_gpuMemoryUsed);
 
@@ -1037,8 +1037,8 @@ Error Renderer::render(FencePtr& fence, Second prevTime, Second crntTime)
 		PtrSize allocatedSize;
 		PtrSize memoryCapacity;
 		m_gpuMemPool.getStats(allocatedSize, memoryCapacity);
-		g_svarRendererMemoryPoolCapacity.set(memoryCapacity + m_dedicatedAllocationSize);
-		g_svarRendererMemoryPoolUsedMemory.set(allocatedSize + m_dedicatedAllocationSize);
+		g_svarRenderMemoryPoolCapacity.set(memoryCapacity + m_dedicatedAllocationSize);
+		g_svarRenderMemoryPoolUsedMemory.set(allocatedSize + m_dedicatedAllocationSize);
 	}
 
 	return Error::kNone;

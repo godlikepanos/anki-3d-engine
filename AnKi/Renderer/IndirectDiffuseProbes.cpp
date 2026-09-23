@@ -21,8 +21,8 @@
 
 namespace anki {
 
-ANKI_SVAR(GiProbeRenderCount, StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(GiProbeCellsRenderCount, StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GiProbeRenderCount, StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GiProbeCellsRenderCount, StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates)
 
 static Vec3 computeCellCenter(U32 cellIdx, const GlobalIlluminationProbeComponent& probe)
 {
@@ -162,7 +162,7 @@ void IndirectDiffuseProbes::populateRenderGraph()
 	const Bool probeTouchedFirstTime = probeToRefresh->getNextCellForRefresh() == 0;
 	if(probeTouchedFirstTime)
 	{
-		g_svarGiProbeRenderCount.increment(1);
+		g_svarRenderGiProbeRenderCount.increment(1);
 	}
 
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
@@ -485,7 +485,7 @@ void IndirectDiffuseProbes::populateRenderGraph()
 		}
 
 		probeToRefresh->incrementRefreshedCells(1);
-		g_svarGiProbeCellsRenderCount.increment(1);
+		g_svarRenderGiProbeCellsRenderCount.increment(1);
 	}
 }
 

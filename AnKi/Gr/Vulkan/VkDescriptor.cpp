@@ -10,8 +10,8 @@
 
 namespace anki {
 
-ANKI_SVAR(DescriptorSetsAllocated, StatCategory::kGr, "DescriptorSets allocated this frame", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(DescriptorSetsWritten, StatCategory::kGr, "DescriptorSets written this frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Gr, DescriptorSetsAllocated, StatCategory::kGr, "DescriptorSets allocated this frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Gr, DescriptorSetsWritten, StatCategory::kGr, "DescriptorSets written this frame", StatFlag::kZeroEveryFrame)
 
 /// Contains some constants. It's a class to avoid bugs initializing arrays (m_descriptorCount).
 class DSAllocatorConstants
@@ -85,7 +85,7 @@ void DescriptorAllocator::createNewBlock()
 	block.m_pool = handle;
 	block.m_maxDsets = inf.maxSets;
 
-	g_svarDescriptorSetsAllocated.increment(1);
+	g_svarGrDescriptorSetsAllocated.increment(1);
 }
 
 void DescriptorAllocator::allocate(VkDescriptorSetLayout layout, VkDescriptorSet& set)
@@ -586,7 +586,7 @@ void DescriptorState::flush(VkCommandBuffer cmdb, DescriptorAllocator& dalloc)
 			if(writeInfoCount > 0)
 			{
 				vkUpdateDescriptorSets(getVkDevice(), writeInfoCount, set.m_writeInfos.getBegin(), 0, nullptr);
-				g_svarDescriptorSetsWritten.increment(1);
+				g_svarGrDescriptorSetsWritten.increment(1);
 			}
 		}
 		else

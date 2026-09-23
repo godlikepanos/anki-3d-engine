@@ -53,6 +53,11 @@ public:
 
 	virtual void toString(WeakArray<Char> str) = 0;
 
+	CString getDescription() const
+	{
+		return m_descr;
+	}
+
 protected:
 	CString m_name;
 	CString m_descr;
@@ -138,6 +143,16 @@ public:
 	operator TNumber() const
 	{
 		return m_value;
+	}
+
+	TNumber getMin() const
+	{
+		return m_min;
+	}
+
+	TNumber getMax() const
+	{
+		return m_max;
 	}
 
 private:

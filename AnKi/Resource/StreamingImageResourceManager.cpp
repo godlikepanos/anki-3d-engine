@@ -9,15 +9,8 @@
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/GpuMemory/CopyEngine.h>
-#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
-
-ANKI_SVAR(StreamingRequestCount, StatCategory::kStreaming, "Streaming requests this frame", StatFlag::kZeroEveryFrame);
-ANKI_SVAR(StreamingMipsUploaded, StatCategory::kStreaming, "Mips uploaded this frame", StatFlag::kZeroEveryFrame);
-ANKI_SVAR(TotalStreamingMipsUploaded, StatCategory::kStreaming, "Total mips uploaded", StatFlag::kNone);
-ANKI_SVAR(StreamingMipsEvicted, StatCategory::kStreaming, "Mips evicted this frame", StatFlag::kZeroEveryFrame);
-ANKI_SVAR(TotalStreamingMipsEvicted, StatCategory::kStreaming, "Total mips evicted", StatFlag::kNone);
 
 static Format computeFormat(const ImageLoader& loader)
 {
@@ -756,8 +749,8 @@ Error StreamingImageResourceManager::loadOtherMipsAsync(ConstWeakArray<LoadMipsR
 			img.m_textures[mip] = GrManager::getSingleton().newTexture(texInit);
 		}
 
-		g_svarStreamingMipsUploaded.increment(req.m_mipCount);
-		g_svarTotalStreamingMipsUploaded.increment(req.m_mipCount);
+		g_svarRsrcStreamingMipsUploaded.increment(req.m_mipCount);
+		g_svarRsrcTotalStreamingMipsUploaded.increment(req.m_mipCount);
 	}
 
 	// Set the barriers
@@ -914,7 +907,7 @@ Error StreamingImageResourceManager::unloadOtherMipsAsync(ConstWeakArray<LoadMip
 		StreamingImage& img = *req.m_img;
 
 		// Update the image descriptor
-		const U32 firstMipmapOfTailChain = img.m_textureCount - 1;
+		[[maybe_unused]] const U32 firstMipmapOfTailChain = img.m_textureCount - 1;
 		ANKI_ASSERT(req.m_firstMip + req.m_mipCount <= firstMipmapOfTailChain);
 		ANKI_ASSERT(req.m_firstMip == img.m_imageDesc.m_firstMipmap && "Can only evict the finest resident mips");
 		const U8 minLoadedMip = U8(req.m_firstMip + req.m_mipCount);
@@ -942,8 +935,8 @@ Error StreamingImageResourceManager::unloadOtherMipsAsync(ConstWeakArray<LoadMip
 			callbackData->m_allocsToFree.emplaceBack(std::move(img.m_texAllocations[mip]));
 		}
 
-		g_svarStreamingMipsEvicted.increment(req.m_mipCount);
-		g_svarTotalStreamingMipsEvicted.increment(req.m_mipCount);
+		g_svarRsrcStreamingMipsEvicted.increment(req.m_mipCount);
+		g_svarRsrcTotalStreamingMipsEvicted.increment(req.m_mipCount);
 	}
 
 	// When the above changes are submitted the copy engine will trigger the Function bellow which will then send the textures to the manager
@@ -999,7 +992,7 @@ void StreamingImageResourceManager::release(U32 arrayIndex)
 
 void StreamingImageResourceManager::appendStreamingRequests(ConstWeakArray<ImageStreamingRequest> requests)
 {
-	g_svarStreamingRequestCount.increment(requests.getSize());
+	g_svarRsrcStreamingRequestCount.increment(requests.getSize());
 
 	if(requests.getSize() == 0)
 	{
@@ -1139,7 +1132,9 @@ void StreamingImageResourceManager::performStreaming(ResourceDynamicArray<Intrus
 
 	// Evict mips to reduce mem pressure
 	const Bool underMemPressure = isUnderMemPressure(originalTexMemPoolEstimatedSize + intendedUploadSize);
-	if(underMemPressure && (originalTexMemPoolEstimatedSize < m_texPoolAllocatedSizeOnPrevEviction || m_framesSinceLastEviction >= 4))
+
+	if((underMemPressure && (originalTexMemPoolEstimatedSize < m_texPoolAllocatedSizeOnPrevEviction || m_framesSinceLastEviction >= 4))
+	   || m_forceEvictAll)
 	{
 		// We are under pressure and there was some memory freed from previous evictions
 
@@ -1164,7 +1159,7 @@ void StreamingImageResourceManager::performStreaming(ResourceDynamicArray<Intrus
 				continue;
 			}
 
-			if(it->m_lastSeenFrame + g_cvarRsrcFramesUntilEviction >= m_frame)
+			if(!m_forceEvictAll && it->m_lastSeenFrame + g_cvarRsrcFramesUntilEviction >= m_frame)
 			{
 				// Image has been seen somewhat recently, can't evict it just yet
 				continue;
@@ -1198,20 +1193,24 @@ void StreamingImageResourceManager::performStreaming(ResourceDynamicArray<Intrus
 			StreamingImage& img = m_imageData[streamingPair.second];
 
 			const U32 firstMip = streaming.m_detailedLoadedMip;
-			const U32 mipCount = 1;
+			ANKI_ASSERT(streaming.m_detailedLoadedMip < streaming.m_tailChainMip);
+			const U32 mipCount = (m_forceEvictAll) ? (streaming.m_tailChainMip - streaming.m_detailedLoadedMip) : 1;
 
 			const PtrSize crntMemToFree = img.estimateSurfaceMemoryConsumption(firstMip, mipCount);
 
 			requests.emplaceBack(
-				LoadMipsRequest{.m_img{&img}, .m_arrayIndex = streamingPair.second, .m_firstMip = U8(firstMip), .m_mipCount = mipCount});
+				LoadMipsRequest{.m_img{&img}, .m_arrayIndex = streamingPair.second, .m_firstMip = U8(firstMip), .m_mipCount = U8(mipCount)});
 
 			streaming.m_detailedLoadedMip = U8(firstMip + mipCount);
 
-			ANKI_ASSERT(memSize >= crntMemToFree);
-			memSize -= crntMemToFree;
-			if(!isUnderMemPressure(memSize))
+			if(!m_forceEvictAll)
 			{
-				break;
+				ANKI_ASSERT(memSize >= crntMemToFree);
+				memSize -= crntMemToFree;
+				if(!isUnderMemPressure(memSize))
+				{
+					break;
+				}
 			}
 		}
 
@@ -1234,6 +1233,8 @@ void StreamingImageResourceManager::performStreaming(ResourceDynamicArray<Intrus
 	{
 		m_texPoolAllocatedSizeOnPrevEviction = kMaxPtrSize;
 	}
+
+	m_forceEvictAll = false;
 }
 
 void StreamingImageResourceManager::endFrame(Fence* fence)

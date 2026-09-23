@@ -21,8 +21,9 @@
 
 namespace anki {
 
-ANKI_SVAR(TilesAllocated, StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(ShadowLightsProcessed, StatCategory::kRenderer, "Lights processed by shadows", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Render, TilesAllocated, StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, ShadowLightsProcessed, StatCategory::kRenderer, "Lights processed by shadows",
+		  StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
 
 class LightHash
 {
@@ -225,7 +226,7 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 		if(!(result & TileAllocatorResult2::kTileCached))
 		{
-			g_svarTilesAllocated.increment(1);
+			g_svarRenderTilesAllocated.increment(1);
 		}
 
 		goodResult &= result;
@@ -274,7 +275,7 @@ void ShadowMapping::processLights()
 
 	// Process the point lights first
 	WeakArray<LightComponent*> lights = getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_shadowLights;
-	g_svarShadowLightsProcessed.increment(lights.getSize() + (dirLight != 0));
+	g_svarRenderShadowLightsProcessed.increment(lights.getSize() + (dirLight != 0));
 	for(LightComponent* lightc : lights)
 	{
 		if(lightc->getLightComponentType() != LightComponentType::kPoint || !lightc->getShadowEnabled())

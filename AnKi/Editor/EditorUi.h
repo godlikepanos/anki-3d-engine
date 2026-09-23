@@ -10,6 +10,7 @@
 #include <AnKi/Editor/SceneNodePropertiesUi.h>
 #include <AnKi/Editor/SceneHierarchyUi.h>
 #include <AnKi/Editor/AssetBrowserUi.h>
+#include <AnKi/Editor/StreamingControlsUi.h>
 #include <AnKi/Util/Function.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/StatsUiNode.h>
@@ -53,6 +54,7 @@ private:
 	SceneHierarchyUi m_sceneHierarchyWindow;
 	AssetBrowserUi m_assetBrowserWindow;
 	StatsUi m_statsWindow;
+	StreamingControlsUi m_streamingWindow;
 
 	SceneGraphView m_sceneGraphView;
 

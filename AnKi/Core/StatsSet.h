@@ -14,7 +14,7 @@
 namespace anki {
 
 // Define a global stat variable.
-#define ANKI_SVAR(name, category, descr, ...) inline StatCounter g_svar##name(category, descr, StatFlag::kNone | __VA_ARGS__);
+#define ANKI_SVAR(namespace, name, category, descr, ...) inline StatCounter g_svar##namespace##name(category, descr, StatFlag::kNone | __VA_ARGS__);
 
 enum class StatFlag : U16
 {
@@ -57,8 +57,8 @@ class StatCounter
 
 public:
 	// Construct.
-	// name: Name of the counter. The object will share ownership of the pointer.
-	StatCounter(StatCategory category, const Char* name, StatFlag flags = StatFlag::kNone);
+	// descr: Description of the counter. The object will share ownership of the pointer.
+	StatCounter(StatCategory category, const Char* descr, StatFlag flags = StatFlag::kNone);
 
 	template<std::integral T>
 	U64 increment(T value)
@@ -247,6 +247,37 @@ public:
 #endif
 	}
 
+	template<std::integral T>
+	U64 getPreviousValue() const
+	{
+#if ANKI_STATS_ENABLED
+		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
+		return m_prevValueu;
+#else
+		return 0;
+#endif
+	}
+
+	template<std::floating_point T>
+	F64 getPreviousValue() const
+	{
+#if ANKI_STATS_ENABLED
+		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
+		return m_prevValuef;
+#else
+		return -1.0;
+#endif
+	}
+
+	CString getDescription() const
+	{
+#if ANKI_STATS_ENABLED
+		return m_descr;
+#else
+		return "*Error*";
+#endif
+	}
+
 private:
 #if ANKI_STATS_ENABLED
 	union
@@ -262,7 +293,7 @@ private:
 		F64 m_prevValuef;
 	};
 
-	const Char* m_name = nullptr;
+	const Char* m_descr = nullptr;
 
 	mutable SpinLock m_floatLock;
 
@@ -300,11 +331,11 @@ public:
 			const StatCounter& counter = *m_statCounterArr[i];
 			if(!!(counter.m_flags & StatFlag::kFloat))
 			{
-				funcFloat(counter.m_category, counter.m_name, counter.m_prevValuef, counter.m_flags);
+				funcFloat(counter.m_category, counter.m_descr, counter.m_prevValuef, counter.m_flags);
 			}
 			else
 			{
-				funcUint(counter.m_category, counter.m_name, counter.m_prevValueu, counter.m_flags);
+				funcUint(counter.m_category, counter.m_descr, counter.m_prevValueu, counter.m_flags);
 			}
 		}
 #else
@@ -349,13 +380,13 @@ private:
 #endif
 };
 
-inline StatCounter::StatCounter(StatCategory category, const Char* name, StatFlag flags)
+inline StatCounter::StatCounter(StatCategory category, const Char* descr, StatFlag flags)
 #if ANKI_STATS_ENABLED
-	: m_name(name)
+	: m_descr(descr)
 	, m_flags(flags)
 	, m_category(category)
 {
-	ANKI_ASSERT(name);
+	ANKI_ASSERT(descr);
 	ANKI_ASSERT(m_category < StatCategory::kCount);
 	StatsSet::getSingleton().registerCounter(this);
 }

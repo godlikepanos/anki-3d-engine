@@ -233,6 +233,15 @@ void EditorUi::draw(UiCanvas& canvas)
 		m_statsWindow.drawWindow(initialPos, initialSize, 0);
 	}
 
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+		const Vec2 initialSize = Vec2(1000.0f, 500.0f);
+		const Vec2 initialPos = Vec2((viewportSize.x - initialSize.x) / 2.0f, viewportPos.y + 200.0f);
+
+		m_streamingWindow.drawWindow(initialPos, initialSize, 0);
+	}
+
 	deleteSelectedNodeDialog(m_showDeleteSceneNodeDialog);
 
 	ImGui::End();
@@ -369,6 +378,11 @@ void EditorUi::mainMenu()
 				if(ImGui::MenuItem(ICON_MDI_CHART_BAR_STACKED " Stats"))
 				{
 					m_statsWindow.m_open = true;
+				}
+
+				if(ImGui::MenuItem(ICON_MDI_TRANSFER " Streaming"))
+				{
+					m_streamingWindow.m_open = true;
 				}
 
 				ImGui::EndMenu();

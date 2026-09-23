@@ -36,8 +36,8 @@ namespace anki {
 // Forward
 class GrManagerImpl;
 
-ANKI_SVAR(GpuDeviceMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (VRAM)", StatFlag::kBytes)
-ANKI_SVAR(GpuHostMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (CPU)", StatFlag::kBytes)
+ANKI_SVAR(Gr, GpuDeviceMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (VRAM)", StatFlag::kBytes)
+ANKI_SVAR(Gr, GpuHostMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (CPU)", StatFlag::kBytes)
 
 #define ANKI_VK_LOGI(...) ANKI_LOG("VK", kNormal, __VA_ARGS__)
 #define ANKI_VK_LOGE(...) ANKI_LOG("VK", kError, __VA_ARGS__)

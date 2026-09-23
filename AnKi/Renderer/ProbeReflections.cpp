@@ -29,7 +29,7 @@
 
 namespace anki {
 
-ANKI_SVAR(ProbeReflectionCount, StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, ProbeReflectionCount, StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates)
 
 // 32-bit radical inverse (Van der Corput), matching Unreal's ReverseBits.
 static U32 reverseBits32(U32 b)
@@ -221,7 +221,7 @@ void ProbeReflections::populateRenderGraph()
 		return;
 	}
 
-	g_svarProbeReflectionCount.increment(1);
+	g_svarRenderProbeReflectionCount.increment(1);
 	probeToRefresh->setEnvironmentTextureAsRefreshed();
 
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;

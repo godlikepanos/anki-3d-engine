@@ -25,8 +25,10 @@ constexpr U32 kMaxVisibleObjects = 30 * 1024;
 constexpr U32 kMaxVisiblePrimitives = 40'000'000;
 constexpr U32 kMaxVisibleMeshlets = kMaxVisiblePrimitives / kMaxPrimitivesPerMeshlet;
 
-ANKI_SVAR(GpuVisMemoryAllocated, StatCategory::kRenderer, "GPU vis mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
-ANKI_SVAR(MaxGpuVisMemoryAllocated, StatCategory::kRenderer, "GPU vis mem: max ever used/frame", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GpuVisMemoryAllocated, StatCategory::kRenderer, "GPU vis mem",
+		  StatFlag::kBytes | StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Render, MaxGpuVisMemoryAllocated, StatCategory::kRenderer, "GPU vis mem: max ever used/frame",
+		  StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 class GpuVisLimits
 {
@@ -66,7 +68,7 @@ public:
 
 			m_maxMemUsedInFrame = max(m_maxMemUsedInFrame, m_memUsedThisFrame);
 			m_memUsedThisFrame = 0;
-			g_svarMaxGpuVisMemoryAllocated.set(m_maxMemUsedInFrame);
+			g_svarRenderMaxGpuVisMemoryAllocated.set(m_maxMemUsedInFrame);
 		}
 
 		m_memUsedThisFrame += size;
@@ -85,7 +87,7 @@ static BufferView allocateStructuredBuffer(U32 count)
 
 	if(count > 0)
 	{
-		g_svarGpuVisMemoryAllocated.increment(sizeof(T) * count);
+		g_svarRenderGpuVisMemoryAllocated.increment(sizeof(T) * count);
 		out = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<T>(count);
 
 		GpuVisMemoryStats::getSingleton().informAboutAllocation(sizeof(T) * count);

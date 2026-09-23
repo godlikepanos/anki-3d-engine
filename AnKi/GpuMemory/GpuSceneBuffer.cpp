@@ -11,9 +11,9 @@
 
 namespace anki {
 
-ANKI_SVAR(GpuSceneBufferAllocatedSize, StatCategory::kGpuMem, "GPU scene allocated", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(GpuSceneBufferTotal, StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(GpuSceneBufferFragmentation, StatCategory::kGpuMem, "GPU scene fragmentation", StatFlag::kFloat | StatFlag::kMainThreadUpdates);
+ANKI_SVAR(GpuMem, GpuSceneBufferAllocatedSize, StatCategory::kGpuMem, "GPU scene allocated", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, GpuSceneBufferTotal, StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, GpuSceneBufferFragmentation, StatCategory::kGpuMem, "GPU scene fragmentation", StatFlag::kFloat | StatFlag::kMainThreadUpdates)
 
 void GpuSceneBuffer::init()
 {
@@ -36,9 +36,9 @@ void GpuSceneBuffer::updateStats() const
 	PtrSize userAllocatedSize, totalSize;
 	m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
 
-	g_svarGpuSceneBufferAllocatedSize.set(userAllocatedSize);
-	g_svarGpuSceneBufferTotal.set(totalSize);
-	g_svarGpuSceneBufferFragmentation.set(externalFragmentation);
+	g_svarGpuMemGpuSceneBufferAllocatedSize.set(userAllocatedSize);
+	g_svarGpuMemGpuSceneBufferTotal.set(totalSize);
+	g_svarGpuMemGpuSceneBufferFragmentation.set(externalFragmentation);
 }
 
 // It packs the source and destination offsets as well as the size of the patch itself. Needs to match the HLSL structure

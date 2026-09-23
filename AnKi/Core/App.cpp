@@ -46,14 +46,14 @@ namespace anki {
 android_app* g_androidApp = nullptr;
 #endif
 
-ANKI_SVAR(CpuAllocatedMem, StatCategory::kCpuMem, "Total", StatFlag::kBytes)
-ANKI_SVAR(CpuAllocationCount, StatCategory::kCpuMem, "Allocations/frame", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(CpuFreesCount, StatCategory::kCpuMem, "Frees/frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Core, CpuAllocatedMem, StatCategory::kCpuMem, "Total", StatFlag::kBytes)
+ANKI_SVAR(Core, CpuAllocationCount, StatCategory::kCpuMem, "Allocations/frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Core, CpuFreesCount, StatCategory::kCpuMem, "Frees/frame", StatFlag::kZeroEveryFrame)
 
 #if ANKI_PLATFORM_MOBILE
-ANKI_SVAR(MaliGpuActive, StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(MaliGpuReadBandwidth, StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(MaliGpuWriteBandwidth, StatCategory::kGpuMisc, "Mali write bandwidth", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, MaliGpuActive, StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, MaliGpuReadBandwidth, StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, MaliGpuWriteBandwidth, StatCategory::kGpuMisc, "Mali write bandwidth", StatFlag::kMainThreadUpdates)
 #endif
 
 void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_unused]] PtrSize alignment)
@@ -89,8 +89,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		out = static_cast<void*>(allocation);
 
 		// Update stats
-		g_svarCpuAllocatedMem.increment(size);
-		g_svarCpuAllocationCount.increment(1);
+		g_svarCoreCpuAllocatedMem.increment(size);
+		g_svarCoreCpuAllocationCount.increment(1);
 	}
 	else
 	{
@@ -103,8 +103,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		ANKI_ASSERT(allocation->m_allocatedSize > 0);
 
 		// Update stats
-		g_svarCpuAllocatedMem.decrement(allocation->m_allocatedSize);
-		g_svarCpuFreesCount.increment(1);
+		g_svarCoreCpuAllocatedMem.decrement(allocation->m_allocatedSize);
+		g_svarCoreCpuFreesCount.increment(1);
 
 		// Free
 		self->m_originalAllocCallback(self->m_originalAllocUserData, allocation, 0, 0);
@@ -474,7 +474,7 @@ Error App::mainLoop()
 		// Sleep
 		const Second endTime = HighRezTimer::getCurrentTime();
 		const Second frameTime = endTime - crntTime;
-		g_svarCpuTotalTime.set((frameTime - grTime) * 1000.0);
+		g_svarCoreCpuTotalTime.set((frameTime - grTime) * 1000.0);
 
 		const Second timerTick = 1.0_sec / Second(g_cvarCoreTargetFps);
 		if(frameTime < timerTick)
@@ -489,9 +489,9 @@ Error App::mainLoop()
 		{
 			MaliHwCountersOut out;
 			MaliHwCounters::getSingleton().sample(out);
-			g_svarMaliGpuActive.set(out.m_gpuActive);
-			g_svarMaliGpuReadBandwidth.set(out.m_readBandwidth);
-			g_svarMaliGpuWriteBandwidth.set(out.m_writeBandwidth);
+			g_svarCoreMaliGpuActive.set(out.m_gpuActive);
+			g_svarCoreMaliGpuReadBandwidth.set(out.m_readBandwidth);
+			g_svarCoreMaliGpuWriteBandwidth.set(out.m_writeBandwidth);
 		}
 #endif
 

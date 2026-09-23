@@ -29,7 +29,7 @@ ANKI_CVAR(BoolCVar, Core, ShowEditor, false, "Show the editor")
 ANKI_CVAR(BoolCVar, Core, MaliHwCounters, false, "Enable Mali counters")
 #endif
 
-ANKI_SVAR(CpuTotalTime, StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, CpuTotalTime, StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 // The core class of the engine.
 class App

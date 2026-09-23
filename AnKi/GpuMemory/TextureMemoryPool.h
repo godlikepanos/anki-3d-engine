@@ -18,8 +18,8 @@ namespace anki {
 ANKI_CVAR2(NumericCVar<PtrSize>, GpuMem, TextureMemoryPool, ChunkSize, 256_MB, 16_MB, 1_GB, "Texture memory pool is allocated in chunks of this size")
 ANKI_CVAR2(NumericCVar<U32>, GpuMem, TextureMemoryPool, MaxChunks, 4, 1, 32, "Max number of chunks")
 
-ANKI_SVAR(TextureMemoryPoolCapacity, StatCategory::kGpuMem, "Texture mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(TextureMemoryPoolUsedMemory, StatCategory::kGpuMem, "Texture mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, TextureMemoryPoolCapacity, StatCategory::kGpuMem, "Texture mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, TextureMemoryPoolUsedMemory, StatCategory::kGpuMem, "Texture mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 using TextureMemoryPoolAllocation = SegregatedListsGpuMemoryPoolAllocation;
 
@@ -78,8 +78,8 @@ public:
 		PtrSize allocatedSize;
 		PtrSize memoryCapacity;
 		m_pool.getStats(allocatedSize, memoryCapacity);
-		g_svarTextureMemoryPoolCapacity.set(memoryCapacity);
-		g_svarTextureMemoryPoolUsedMemory.set(allocatedSize);
+		g_svarGpuMemTextureMemoryPoolCapacity.set(memoryCapacity);
+		g_svarGpuMemTextureMemoryPoolUsedMemory.set(allocatedSize);
 		m_allocatedSize = allocatedSize;
 		m_totalCapacity = memoryCapacity;
 	}

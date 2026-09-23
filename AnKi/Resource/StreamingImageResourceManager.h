@@ -10,19 +10,25 @@
 #include <AnKi/Shaders/ImageStreaming.h>
 #include <AnKi/Util/BlockArray.h>
 #include <AnKi/Util/DynamicBitSet.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
 // Forward
 class ImageLoader;
+class StreamingImage; // An opaque type
 
-ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageDescriptors, 1024, 32, kMaxU32, "The size of the ImageDescriptor structured buffer")
-ANKI_CVAR(NumericCVar<F32>, Rsrc, MaxTextureMemoryLoadFactor, 0.7f, 0.1f, 1.0f,
+ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxImageDescriptors, 1024, 32, 128 * 1024, "The size of the ImageDescriptor structured buffer")
+ANKI_CVAR(NumericCVar<F32>, Rsrc, MaxTextureMemoryLoadFactor, 0.7f, 0.01f, 1.0f,
 		  "If the texture memory pool load is above this the streaming manager stops loading mipmaps and starts freeing them")
-ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxMipmapUploadsPerFrame, 32, 1, kMaxU32, "How many mips to upload per frame")
+ANKI_CVAR(NumericCVar<U32>, Rsrc, MaxMipmapUploadsPerFrame, 32, 1, 1024, "How many mips to upload per frame")
 ANKI_CVAR(NumericCVar<U32>, Rsrc, FramesUntilEviction, 1 * 60, 1, 100 * 60, "An image will be evicted if not seen that many frames")
 
-class StreamingImage; // An opaque type
+ANKI_SVAR(Rsrc, StreamingRequestCount, StatCategory::kStreaming, "Streaming requests this frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Rsrc, StreamingMipsUploaded, StatCategory::kStreaming, "Mips uploaded this frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Rsrc, TotalStreamingMipsUploaded, StatCategory::kStreaming, "Total mips uploaded", StatFlag::kNone)
+ANKI_SVAR(Rsrc, StreamingMipsEvicted, StatCategory::kStreaming, "Mips evicted this frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Rsrc, TotalStreamingMipsEvicted, StatCategory::kStreaming, "Total mips evicted", StatFlag::kNone)
 
 // A system that handles some GPU memory required for streaming images
 class StreamingImageResourceManager : public MakeSingleton<StreamingImageResourceManager>
@@ -49,6 +55,13 @@ public:
 	[[nodiscard]] U32 getMaxDescriptorIndex() const
 	{
 		return m_maxDescriptorIndex;
+	}
+
+	// Evict all the non-tail-chain mips once. Mostly for debugging
+	// NOT thread-safe
+	void forceEvictAll()
+	{
+		m_forceEvictAll = true;
 	}
 
 	// Create a new streaming image
@@ -104,15 +117,17 @@ private:
 
 	ResourceDynamicBitSet<U64> m_uploadDescriptorMask;
 
+	mutable Mutex m_mtx;
+
 	PtrSize m_texPoolAllocatedSizeOnPrevEviction = kMaxPtrSize;
+
+	U64 m_frame = 1;
 
 	U32 m_framesSinceLastEviction = 0;
 
 	U32 m_maxDescriptorIndex = 0;
 
-	mutable Mutex m_mtx;
-
-	U64 m_frame = 1;
+	Bool m_forceEvictAll = false;
 
 	Bool isArrayIndexFree(U32 idx) const
 	{

@@ -119,11 +119,11 @@ BufferImpl::~BufferImpl()
 
 		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			g_svarGpuDeviceMemoryAllocated.increment(m_actualSize);
+			g_svarGrGpuDeviceMemoryAllocated.increment(m_actualSize);
 		}
 		else
 		{
-			g_svarGpuHostMemoryAllocated.increment(m_actualSize);
+			g_svarGrGpuHostMemoryAllocated.increment(m_actualSize);
 		}
 	}
 }
@@ -284,11 +284,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	if(getGrManagerImpl().getMemoryProperties().memoryTypes[memIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
-		g_svarGpuDeviceMemoryAllocated.increment(size);
+		g_svarGrGpuDeviceMemoryAllocated.increment(size);
 	}
 	else
 	{
-		g_svarGpuHostMemoryAllocated.increment(size);
+		g_svarGrGpuHostMemoryAllocated.increment(size);
 	}
 
 	// Bind mem to buffer

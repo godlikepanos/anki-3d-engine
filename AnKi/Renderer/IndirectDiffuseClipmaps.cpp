@@ -21,7 +21,7 @@
 
 namespace anki {
 
-ANKI_SVAR(IdcRays, StatCategory::kRenderer, "IDC ray count", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Render, IdcRays, StatCategory::kRenderer, "IDC ray count", StatFlag::kZeroEveryFrame)
 
 class ProbeRange
 {
@@ -401,7 +401,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 		U32 partialUpdateProbeCount = remainingRayCount / square<U32>(g_cvarRenderIdcRadianceOctMapSize);
 		partialUpdateProbeCount = min(partialUpdateProbeCount, partialUpdateProbeCounts.x * partialUpdateProbeCounts.y * partialUpdateProbeCounts.z);
 
-		g_svarIdcRays.increment(fullUpdateRayCount + partialUpdateProbeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize));
+		g_svarRenderIdcRays.increment(fullUpdateRayCount + partialUpdateProbeCount * square<U32>(g_cvarRenderIdcRadianceOctMapSize));
 
 		struct ClipmapRegion
 		{
@@ -704,7 +704,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph()
 								  rez.y, 1);
 			}
 
-			g_svarIdcRays.increment(rez.x * rez.y);
+			g_svarRenderIdcRays.increment(rez.x * rez.y);
 		});
 	}
 	else

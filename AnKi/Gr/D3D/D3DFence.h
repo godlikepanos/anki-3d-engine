@@ -12,8 +12,8 @@
 
 namespace anki {
 
-ANKI_SVAR(AliveFenceCount, StatCategory::kGr, "Current fence count", StatFlag::kNone)
-ANKI_SVAR(FencesCreatedCount, StatCategory::kGr, "Total fences created", StatFlag::kNone)
+ANKI_SVAR(Gr, AliveFenceCount, StatCategory::kGr, "Current fence count", StatFlag::kNone)
+ANKI_SVAR(Gr, FencesCreatedCount, StatCategory::kGr, "Total fences created", StatFlag::kNone)
 
 // Fence wrapper over D3D fence.
 class MicroFence
@@ -27,8 +27,8 @@ public:
 		{
 			ANKI_D3D_LOGF("CreateEvent() failed");
 		}
-		g_svarAliveFenceCount.increment(1u);
-		g_svarFencesCreatedCount.increment(1u);
+		g_svarGrAliveFenceCount.increment(1u);
+		g_svarGrFencesCreatedCount.increment(1u);
 	}
 
 	~MicroFence()
@@ -41,7 +41,7 @@ public:
 		m_fence = nullptr;
 		m_event = 0;
 
-		g_svarAliveFenceCount.decrement(1u);
+		g_svarGrAliveFenceCount.decrement(1u);
 	}
 
 	Bool clientWait(Second seconds)

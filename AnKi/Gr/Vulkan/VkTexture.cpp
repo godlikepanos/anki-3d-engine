@@ -111,11 +111,11 @@ TextureImpl::~TextureImpl()
 
 		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			g_svarGpuDeviceMemoryAllocated.decrement(m_deviceMemSize);
+			g_svarGrGpuDeviceMemoryAllocated.decrement(m_deviceMemSize);
 		}
 		else
 		{
-			g_svarGpuHostMemoryAllocated.decrement(m_deviceMemSize);
+			g_svarGrGpuHostMemoryAllocated.decrement(m_deviceMemSize);
 		}
 	}
 }
@@ -346,11 +346,11 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			g_svarGpuDeviceMemoryAllocated.increment(m_deviceMemSize);
+			g_svarGrGpuDeviceMemoryAllocated.increment(m_deviceMemSize);
 		}
 		else
 		{
-			g_svarGpuHostMemoryAllocated.increment(m_deviceMemSize);
+			g_svarGrGpuHostMemoryAllocated.increment(m_deviceMemSize);
 		}
 
 		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, m_deviceMem, 0));

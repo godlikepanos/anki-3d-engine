@@ -43,9 +43,9 @@
 
 namespace anki {
 
-ANKI_SVAR(SceneUpdateTime, StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(SceneComponentsUpdated, StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(SceneNodesUpdated, StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Scene, UpdateTime, StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Scene, ComponentsUpdated, StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Scene, NodesUpdated, StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame)
 
 class SceneGraph::UpdateSceneNodesCtx
 {

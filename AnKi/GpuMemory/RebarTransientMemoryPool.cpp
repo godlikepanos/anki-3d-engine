@@ -12,7 +12,7 @@
 
 namespace anki {
 
-ANKI_SVAR(RebarUserMemory, StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, RebarUsedMemory, StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 RebarTransientMemoryPool::~RebarTransientMemoryPool()
 {
@@ -229,7 +229,7 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 	// Stats
 	const PtrSize usedMemory = range;
 	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);
-	g_svarRebarUserMemory.set(usedMemory);
+	g_svarGpuMemRebarUsedMemory.set(usedMemory);
 }
 
 void RebarTransientMemoryPool::validateSlices() const
