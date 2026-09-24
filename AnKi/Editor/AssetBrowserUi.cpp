@@ -511,6 +511,7 @@ void AssetBrowserUi::drawDirPath()
 	if(ImGui::Button(ICON_MDI_FOLDER " /"))
 	{
 		m_rightClickSelectedFilepath.destroy();
+		m_selectedDirPath.destroy();
 	}
 
 	// Draw the buttons
@@ -578,7 +579,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					if(isDir)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_FOLDER, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_FOLDER))
 						{
 							m_selectedDirPath = dir.m_diskFilepath;
 						}
@@ -623,7 +624,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kParticleEmitter)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_CREATION, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_CREATION))
 						{
 							ParticleEmitterResource2Ptr rsrc;
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
@@ -636,7 +637,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kScene)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_CURTAINS, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_CURTAINS))
 						{
 							Scene* scene = nullptr;
 							if(SceneGraph::getSingleton().loadScene(file.m_resourceFilepath, scene))
@@ -653,7 +654,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kLua)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA))
 						{
 							ScriptResourcePtr rsrc;
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
@@ -668,7 +669,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kAnimation)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_ANIMATION, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_ANIMATION))
 						{
 							ANKI_LOGE("TODO");
 						}
