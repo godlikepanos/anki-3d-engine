@@ -312,7 +312,7 @@ StreamingImageResourceManager::StreamingImageResourceManager()
 	// Zero the descriptor buffer
 	CopyEngine::getSingleton().zeroBuffer(m_imageDescriptorsBuff);
 	const BufferBarrierInfo imgDescBarrier = {m_imageDescriptorsBuff, BufferUsageBit::kCopyDestination,
-											  BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage()};
+											  BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage() & BufferUsageBit::kAllAsyncCompute};
 	CopyEngine::getSingleton().setPipelineBarrier({}, {&imgDescBarrier, 1}, {});
 
 	// The 0 descriptor is reserved so that materials can use that to indicate that there is no texture bound
@@ -618,7 +618,7 @@ Error StreamingImageResourceManager::loadTailMipChainAsync(StreamingImage& img, 
 					const U32 tailChainMip = mip - firstMipOfTailChain;
 
 					barriers[barrierCount++] = {TextureView(&chainTex, TextureSubresourceDesc::surface(tailChainMip, f, l)),
-												TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
+												TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv & TextureUsageBit::kAllAsyncCompute};
 				}
 
 				CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
@@ -649,7 +649,7 @@ Error StreamingImageResourceManager::loadTailMipChainAsync(StreamingImage& img, 
 		lock.unlock();
 
 		// Barrier
-		const BufferUsageBit allUsage = BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage();
+		const BufferUsageBit allUsage = BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage() & BufferUsageBit::kAllAsyncCompute;
 		const BufferBarrierInfo imgDescBarrier = {m_imageDescriptorsBuff, BufferUsageBit::kCopyDestination, allUsage};
 		CopyEngine::getSingleton().setPipelineBarrier({}, {&imgDescBarrier, 1}, {});
 	}
@@ -844,7 +844,7 @@ Error StreamingImageResourceManager::loadOtherMipsAsync(ConstWeakArray<LoadMipsR
 				for(U32 mip = req.m_firstMip; mip < req.m_firstMip + req.m_mipCount; ++mip)
 				{
 					barriers[barrierCount++] = {TextureView(img.m_textures[mip].get(), TextureSubresourceDesc::surface(0, f, l)),
-												TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
+												TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv & TextureUsageBit::kAllAsyncCompute};
 				}
 
 				CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
@@ -854,7 +854,7 @@ Error StreamingImageResourceManager::loadOtherMipsAsync(ConstWeakArray<LoadMipsR
 
 	// Also barrier for the descriptor update that follow
 	// WARNING: The barrier is not ideal but it's enough to block the desc update until the texture copies above have completed
-	const BufferUsageBit allUsage = BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage();
+	const BufferUsageBit allUsage = BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage() & BufferUsageBit::kAllAsyncCompute;
 	const BufferBarrierInfo buffBarr = {m_imageDescriptorsBuff, allUsage, BufferUsageBit::kCopyDestination};
 	CopyEngine::getSingleton().setPipelineBarrier({}, {&buffBarr, 1}, {});
 
@@ -889,7 +889,7 @@ Error StreamingImageResourceManager::unloadOtherMipsAsync(ConstWeakArray<LoadMip
 	ANKI_ASSERT(requests.getSize());
 
 	// Block all prev operations before our new copies
-	const BufferUsageBit allUsage = BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage();
+	const BufferUsageBit allUsage = BufferView(m_imageDescriptorsBuff).getBuffer().getBufferUsage() & BufferUsageBit::kAllAsyncCompute;
 	const BufferBarrierInfo buffBarr = {m_imageDescriptorsBuff, allUsage, BufferUsageBit::kCopyDestination};
 	CopyEngine::getSingleton().setPipelineBarrier({}, {&buffBarr, 1}, {});
 

@@ -57,7 +57,7 @@ Error ProbeReflections::initIntegrationLut()
 	texInit.m_width = kWidth;
 	texInit.m_height = kHeight;
 	texInit.m_format = Format::kR16G16_Unorm;
-	texInit.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kCopyDestination;
+	texInit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kCopyDestination;
 	const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(texInit);
 	m_integrationLut.m_allocation = getRenderer().getRendedererGpuMemoryPool().allocate(memReq, 1);
 	texInit.m_memoryBuffer = m_integrationLut.m_allocation;
@@ -131,7 +131,8 @@ Error ProbeReflections::initIntegrationLut()
 		memcpy(mappedMem.getBegin(), data.getBegin(), data.getSizeInBytes());
 	}
 
-	const TextureBarrierInfo toSrv = {view, TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvPixel};
+	const TextureBarrierInfo toSrv = {view, TextureUsageBit::kCopyDestination,
+									  m_integrationLut->getTextureUsage() & TextureUsageBit::kAllAsyncCompute & TextureUsageBit::kAllSrv};
 	CopyEngine::getSingleton().setPipelineBarrier({&toSrv, 1}, {}, {});
 
 	FencePtr fence;

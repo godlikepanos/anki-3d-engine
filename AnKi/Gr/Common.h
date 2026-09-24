@@ -484,6 +484,7 @@ enum class TextureUsageBit : U32
 	kAllWrite = kAllUav | kRtvDsvWrite | kCopyDestination,
 	kAll = kAllRead | kAllWrite,
 	kAllShaderResource = kAllSrv | kAllUav,
+	kAllAsyncCompute = kSrvCompute | kUavCompute | kCopyDestination | kPresent
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
@@ -699,6 +700,9 @@ enum class BufferUsageBit : U64
 
 	kAllShaderResource = kAllConstant | kAllSrv | kAllUav,
 
+	kAllAsyncCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute | kCopySource | kCopyDestination | kAccelerationStructureBuild
+					   | kAccelerationStructureBuildScratch,
+
 	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
@@ -749,7 +753,8 @@ enum class AccelerationStructureUsageBit : U8
 	kAllGraphics = kSrvGeometry | kSrvPixel,
 	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
 	kAllRead = kAttach | kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
-	kAllWrite = kBuild
+	kAllWrite = kBuild,
+	kAllAsyncCompute = kBuild | kSrvCompute
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
 

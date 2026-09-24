@@ -368,7 +368,8 @@ public:
 
 			// Set the barriers
 			const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
-				UnifiedGeometryBuffer::getSingleton().getBuffer().getBufferUsage() ^ BufferUsageBit::kCopyDestination;
+				(UnifiedGeometryBuffer::getSingleton().getBuffer().getBufferUsage() ^ BufferUsageBit::kCopyDestination)
+				& BufferUsageBit::kAllAsyncCompute;
 
 			BufferBarrierInfo bufferBarrier;
 			bufferBarrier.m_bufferView = UnifiedGeometryBuffer::getSingleton().getBufferView();

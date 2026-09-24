@@ -916,6 +916,11 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_ray_tracing_position_fetch;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_compute_shader_derivatives;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -1176,6 +1181,26 @@ Error GrManagerImpl::initDevice()
 		appendPNextList(ci, &baryFeatures);
 
 		m_capabilities.m_barycentrics = true;
+	}
+
+	VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR computeDerivativesFeatures = {};
+	if(!(m_extensions & VulkanExtensions::kKHR_compute_shader_derivatives))
+	{
+		ANKI_VK_LOGE(VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME " is not supported");
+		return Error::kFunctionFailed;
+	}
+	else
+	{
+		computeDerivativesFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(computeDerivativesFeatures);
+
+		if(!computeDerivativesFeatures.computeDerivativeGroupLinear)
+		{
+			ANKI_VK_LOGE("VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR::computeDerivativeGroupLinear not supported");
+			return Error::kFunctionFailed;
+		}
+
+		appendPNextList(ci, &computeDerivativesFeatures);
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));

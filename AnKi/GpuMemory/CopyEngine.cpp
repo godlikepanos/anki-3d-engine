@@ -553,6 +553,24 @@ void CopyEngine::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures,
 {
 	ANKI_TRACE_SCOPED_EVENT(CopyEngineLock);
 
+	for([[maybe_unused]] const TextureBarrierInfo& tex : textures)
+	{
+		ANKI_ASSERT((tex.m_nextUsage & ~TextureUsageBit::kAllAsyncCompute) == TextureUsageBit::kNone);
+		ANKI_ASSERT((tex.m_previousUsage & ~TextureUsageBit::kAllAsyncCompute) == TextureUsageBit::kNone);
+	}
+
+	for([[maybe_unused]] const BufferBarrierInfo& buff : buffers)
+	{
+		ANKI_ASSERT((buff.m_nextUsage & ~BufferUsageBit::kAllAsyncCompute) == BufferUsageBit::kNone);
+		ANKI_ASSERT((buff.m_previousUsage & ~BufferUsageBit::kAllAsyncCompute) == BufferUsageBit::kNone);
+	}
+
+	for([[maybe_unused]] const AccelerationStructureBarrierInfo& as : accelerationStructures)
+	{
+		ANKI_ASSERT((as.m_nextUsage & ~AccelerationStructureUsageBit::kAllAsyncCompute) == AccelerationStructureUsageBit::kNone);
+		ANKI_ASSERT((as.m_previousUsage & ~AccelerationStructureUsageBit::kAllAsyncCompute) == AccelerationStructureUsageBit::kNone);
+	}
+
 	LockGuard lock(m_mtx);
 
 	WeakArray<U8> unused1;
