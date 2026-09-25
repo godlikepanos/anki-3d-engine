@@ -795,9 +795,13 @@ void EditorUi::debugRtsWindow()
 
 	if(ImGui::Begin("Debug Render Targets", &m_showDebugRtsWindow, 0))
 	{
-		const Bool refresh = ImGui::Checkbox("Disable tonemapping", &m_debugRtsWindow.m_disableTonemapping);
-		ImGui::TextUnformatted("");
-		ImGui::Separator();
+		Bool refresh = ImGui::Checkbox("Disable Tonemapping", &m_debugRtsWindow.m_disableTonemapping);
+		if(ImGui::SliderFloat("Scale", &m_debugRtsWindow.m_colorScale, 0.0f, 100.0f))
+		{
+			refresh = true;
+		}
+
+		ImGui::SeparatorText("Render Targets");
 
 		if(ImGui::BeginChild("Content", Vec2(-1.0f, -1.0f)))
 		{
@@ -810,12 +814,19 @@ void EditorUi::debugRtsWindow()
 
 			std::sort(rtNames.getBegin(), rtNames.getEnd());
 
+			const Bool noneActive = Renderer::getSingleton().getCurrentDebugRenderTarget().isEmpty();
+			if(ImGui::RadioButton("None", noneActive) && !noneActive)
+			{
+				Renderer::getSingleton().setCurrentDebugRenderTarget("", m_debugRtsWindow.m_disableTonemapping, Vec4(m_debugRtsWindow.m_colorScale));
+			}
+
 			for(const String& name : rtNames)
 			{
-				Bool isActive = (name == Renderer::getSingleton().getCurrentDebugRenderTarget());
-				if(ImGui::Checkbox(name.cstr(), &isActive) || (isActive && refresh))
+				const Bool isActive = (name == Renderer::getSingleton().getCurrentDebugRenderTarget());
+				if((ImGui::RadioButton(name.cstr(), isActive) && !isActive) || (isActive && refresh))
 				{
-					Renderer::getSingleton().setCurrentDebugRenderTarget(isActive ? name : "", m_debugRtsWindow.m_disableTonemapping);
+					Renderer::getSingleton().setCurrentDebugRenderTarget(name, m_debugRtsWindow.m_disableTonemapping,
+																		 Vec4(m_debugRtsWindow.m_colorScale));
 				}
 			}
 		}

@@ -88,6 +88,7 @@ private:
 	{
 	public:
 		Bool m_disableTonemapping = false;
+		F32 m_colorScale = 1.0f;
 	} m_debugRtsWindow;
 
 	class

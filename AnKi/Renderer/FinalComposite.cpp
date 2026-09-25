@@ -119,7 +119,8 @@ void FinalComposite::populateRenderGraph()
 
 	Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)> dbgRts;
 	DebugRenderTargetDrawStyle drawStyle = {};
-	const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyle);
+	Vec4 colorScale;
+	const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyle, colorScale);
 	if(hasDebugRt)
 	{
 		for(const RenderTargetHandle& handle : dbgRts)
@@ -141,7 +142,8 @@ void FinalComposite::populateRenderGraph()
 
 		Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)> dbgRts;
 		DebugRenderTargetDrawStyle drawStyle;
-		const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyle);
+		Vec4 colorScale;
+		const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, drawStyle, colorScale);
 
 		// Bind program
 		if(hasDebugRt)
@@ -193,7 +195,18 @@ void FinalComposite::populateRenderGraph()
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 			DebugRenderTargetRegister reg = DebugRenderTargetRegister::kFirst;
-			const UVec4 consts((U32)drawStyle);
+
+			struct Consts
+			{
+				Vec4 m_colorScale;
+
+				U32 m_drawStyle;
+				U32 m_padding0;
+				U32 m_padding1;
+				U32 m_padding2;
+			} consts;
+			consts.m_colorScale = colorScale;
+			consts.m_drawStyle = U32(drawStyle);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			for(const RenderTargetHandle& handle : dbgRts)

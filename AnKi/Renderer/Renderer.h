@@ -174,7 +174,7 @@ public:
 	void registerDebugRenderTarget(RendererObject* obj, CString rtName);
 
 	// Set the render target you want to show.
-	void setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping = false);
+	void setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping = false, Vec4 colorScale = Vec4(1.0f));
 
 	// Get the render target currently showing.
 	CString getCurrentDebugRenderTarget() const
@@ -184,7 +184,7 @@ public:
 
 	// Need to call it after the handle is set by the RenderGraph.
 	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
-									 DebugRenderTargetDrawStyle& drawStyle);
+									 DebugRenderTargetDrawStyle& drawStyle, Vec4& colorStalce);
 
 	StackMemoryPool& getFrameMemoryPool()
 	{
@@ -273,6 +273,7 @@ private:
 	RendererDynamicArray<DebugRtInfo> m_debugRts;
 	RendererString m_currentDebugRtName;
 	Bool m_disableDebugRtTonemapping = false;
+	Vec4 m_debugRtColorScale = Vec4(1.0f);
 
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;

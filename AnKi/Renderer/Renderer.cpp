@@ -725,7 +725,7 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 }
 
 Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
-										   DebugRenderTargetDrawStyle& drawStyle)
+										   DebugRenderTargetDrawStyle& drawStyle, Vec4& colorScale)
 {
 	handles = {};
 	drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
@@ -767,6 +767,8 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRe
 			drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
 		}
 
+		colorScale = m_debugRtColorScale;
+
 		return true;
 	}
 	else
@@ -777,7 +779,7 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRe
 	}
 }
 
-void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping)
+void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping, Vec4 colorScale)
 {
 	m_currentDebugRtName.destroy();
 
@@ -787,6 +789,7 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemappi
 	}
 
 	m_disableDebugRtTonemapping = disableTonemapping;
+	m_debugRtColorScale = colorScale;
 }
 
 Format Renderer::getHdrFormat() const

@@ -72,9 +72,9 @@ static Bool isAstcSrgbFormat(const VkFormat format)
 TextureImpl::~TextureImpl()
 {
 #if ANKI_ASSERTIONS_ENABLED
-	if(m_usage != m_usedFor)
+	if(!!(m_usage & TextureUsageBit::kAllUav) && !(m_usedFor & TextureUsageBit::kAllUav))
 	{
-		ANKI_VK_LOGW("Texture %s hasn't been used in all types of usages", getName().cstr());
+		ANKI_VK_LOGW("Texture has created as UAV but it was never used as one: %s", getName().cstr());
 	}
 #endif
 
