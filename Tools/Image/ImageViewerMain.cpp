@@ -10,7 +10,7 @@ using namespace anki;
 class TextureViewerUiNode : public SceneNode
 {
 public:
-	ImageViewerUi m_ui;
+	TextureViewerUi m_ui;
 
 	TextureViewerUiNode(const SceneNodeInitInfo& inf)
 		: SceneNode(inf)
@@ -21,8 +21,6 @@ public:
 				static_cast<TextureViewerUiNode*>(ud)->draw(canvas);
 			},
 			this);
-
-		m_ui.m_open = true;
 	}
 
 private:
@@ -84,7 +82,7 @@ public:
 
 		// Create the node
 		TextureViewerUiNode* node = SceneGraph::getSingleton().newSceneNode<TextureViewerUiNode>("TextureViewer");
-		node->m_ui.m_image = std::move(image);
+		node->m_ui.open(image.get());
 
 		return Error::kNone;
 	}

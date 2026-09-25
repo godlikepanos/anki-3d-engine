@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Editor/ImageViewerUi.h>
+#include <AnKi/Editor/TextureViewerUi.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Window/Input.h>
@@ -11,7 +11,7 @@
 
 namespace anki {
 
-ImageViewerUi::ImageViewerUi()
+TextureViewerUi::TextureViewerUi()
 {
 	ANKI_CHECKF(ResourceManager::getSingleton().loadResource("ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 
@@ -26,15 +26,31 @@ ImageViewerUi::ImageViewerUi()
 	}
 }
 
-void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
+void TextureViewerUi::open(Texture* tex)
+{
+	ANKI_ASSERT(tex);
+	m_tex.reset(tex);
+	m_img.reset(nullptr);
+	m_open = true;
+}
+
+void TextureViewerUi::open(ImageResource* img)
+{
+	ANKI_ASSERT(img);
+	m_img.reset(img);
+	m_tex.reset(&img->getTexture());
+	m_open = true;
+}
+
+void TextureViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags)
 {
 	if(!m_open)
 	{
 		return;
 	}
 
-	const Bool imageChanged = !!m_image && (m_imageUuid != m_image->getUuid());
-	if(imageChanged)
+	const Bool texChanged = !!m_tex && (m_texUuid != m_tex->getUuid());
+	if(texChanged)
 	{
 		m_crntMip = 0;
 		m_zoom = 1.0f;
@@ -43,7 +59,7 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 		m_colorChannel = {true, true, true, true};
 		m_maxColorValue = 1.0f;
 
-		m_imageUuid = m_image->getUuid();
+		m_texUuid = m_tex->getUuid();
 	}
 
 	if(ImGui::GetFrameCount() > 1)
@@ -52,7 +68,7 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
 	}
 
-	if(ImGui::Begin("Image Viewer", &m_open, windowFlags))
+	if(ImGui::Begin("Texture Viewer", &m_open, windowFlags))
 	{
 		if(ImGui::BeginChild("Toolbox", Vec2(0.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY,
 							 ImGuiWindowFlags_None))
@@ -60,11 +76,10 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 			// Texture info
 			{
 				ImGui::TextUnformatted(ICON_MDI_INFORMATION_SLAB_BOX);
-				if(m_image)
+				if(m_tex)
 				{
-					const Texture& tex = m_image->getTexture();
-					ImGui::SetItemTooltip("%u x %u x %u\nMips %u\nFormat %s", tex.getWidth(), tex.getHeight(), tex.getDepth(), tex.getMipmapCount(),
-										  getFormatInfo(tex.getFormat()).m_name);
+					ImGui::SetItemTooltip("%u x %u x %u\nMips %u\nFormat %s", m_tex->getWidth(), m_tex->getHeight(), m_tex->getDepth(),
+										  m_tex->getMipmapCount(), getFormatInfo(m_tex->getFormat()).m_name);
 				}
 				ImGui::SameLine();
 			}
@@ -103,7 +118,7 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 				ImGui::SameLine();
 				ImGui::Checkbox("Blue", &m_colorChannel[2]);
 				ImGui::SameLine();
-				const U32 colorComponentCount = (!!m_image) ? getFormatInfo(m_image->getTexture().getFormat()).m_componentCount : 4;
+				const U32 colorComponentCount = (!!m_tex) ? getFormatInfo(m_tex->getFormat()).m_componentCount : 4;
 				if(colorComponentCount == 4)
 				{
 					ImGui::Checkbox("Alpha", &m_colorChannel[3]);
@@ -113,14 +128,13 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 			}
 
 			// Mips combo
-			if(m_image)
+			if(m_tex)
 			{
-				const U32 mipCount = m_image->getTexture().getMipmapCount();
+				const U32 mipCount = m_tex->getMipmapCount();
 				UiStringList mipLabels;
 				for(U32 mip = 0; mip < mipCount; ++mip)
 				{
-					mipLabels.pushBackSprintf("Mip %u (%u x %u)", mip, m_image->getTexture().getWidth() >> mip,
-											  m_image->getTexture().getHeight() >> mip);
+					mipLabels.pushBackSprintf("Mip %u (%u x %u)", mip, m_tex->getWidth() >> mip, m_tex->getHeight() >> mip);
 				}
 
 				if(ImGui::BeginCombo("##Mipmap", (mipLabels.getBegin() + m_crntMip)->cstr(), ImGuiComboFlags_HeightLarge))
@@ -145,17 +159,17 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 			}
 
 			// Depth
-			if(m_image && m_image->getTexture().getTextureType() == TextureType::k3D)
+			if(m_tex && m_tex->getTextureType() == TextureType::k3D)
 			{
 				UiStringList labels;
-				for(U32 d = 0; d < m_image->getTexture().getDepth(); ++d)
+				for(U32 d = 0; d < m_tex->getDepth(); ++d)
 				{
 					labels.pushBackSprintf("Depth %u", d);
 				}
 
 				if(ImGui::BeginCombo("##Depth", (labels.getBegin() + U32(m_depth))->cstr(), ImGuiComboFlags_HeightLarge))
 				{
-					for(U32 d = 0; d < m_image->getTexture().getDepth(); ++d)
+					for(U32 d = 0; d < m_tex->getDepth(); ++d)
 					{
 						const Bool isSelected = (m_depth == F32(d));
 						if(ImGui::Selectable((labels.getBegin() + d)->cstr(), isSelected))
@@ -175,8 +189,9 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 			}
 
 			// Avg color
+			if(m_img)
 			{
-				const Vec4 avgColor = (m_image) ? m_image->getAverageColor() : Vec4(0.0f);
+				const Vec4 avgColor = m_img->getAverageColor();
 
 				ImGui::Text("Average Color %.2f %.2f %.2f %.2f", avgColor.x, avgColor.y, avgColor.z, avgColor.w);
 				ImGui::SameLine();
@@ -198,12 +213,10 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 
 		if(ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX, windowFlags))
 		{
-			if(m_image)
+			if(m_tex)
 			{
-				Texture& tex = m_image->getTexture();
-
 				// Center image
-				const Vec2 imageSize = Vec2(F32(tex.getWidth()), F32(tex.getHeight())) * m_zoom;
+				const Vec2 imageSize = Vec2(F32(m_tex->getWidth()), F32(m_tex->getHeight())) * m_zoom;
 
 				class ExtraPushConstants
 				{
@@ -216,12 +229,12 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 				pc.m_colorScale.z = F32(m_colorChannel[2]) / m_maxColorValue;
 				pc.m_colorScale.w = F32(m_colorChannel[3]);
 
-				pc.m_depth = Vec4((m_depth + 0.5f) / F32(tex.getDepth()));
+				pc.m_depth = Vec4((m_depth + 0.5f) / F32(m_tex->getDepth()));
 
 				ImTextureID texid;
-				texid.m_texture = &tex;
+				texid.m_texture = m_tex.get();
 				texid.m_textureSubresource = TextureSubresourceDesc::surface(m_crntMip, 0, 0, DepthStencilAspectBit::kNone);
-				texid.m_customProgram = m_imageGrPrograms[tex.getTextureType() != TextureType::k2D].get();
+				texid.m_customProgram = m_imageGrPrograms[m_tex->getTextureType() != TextureType::k2D].get();
 				texid.m_extraFastConstantsSize = U8(sizeof(pc));
 				texid.setExtraFastConstants(&pc, sizeof(pc));
 				texid.m_pointSampling = m_pointSampling;
@@ -280,7 +293,8 @@ void ImageViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFla
 	if(!m_open)
 	{
 		// It was closed
-		m_image.reset(nullptr);
+		m_tex.reset(nullptr);
+		m_img.reset(nullptr);
 	}
 }
 

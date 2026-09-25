@@ -9,17 +9,21 @@
 
 namespace anki {
 
-class ImageViewerUi : public EditorUiBase
+class TextureViewerUi : public EditorUiBase
 {
 public:
-	ImageResourcePtr m_image;
-	Bool m_open = false;
+	TextureViewerUi();
 
-	ImageViewerUi();
+	void open(Texture* tex);
+
+	void open(ImageResource* img);
 
 	void drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowFlags windowFlags = 0);
 
 private:
+	TexturePtr m_tex;
+	ImageResourcePtr m_img;
+
 	ShaderProgramResourcePtr m_imageProgram;
 	Array<ShaderProgramPtr, 2> m_imageGrPrograms;
 
@@ -30,7 +34,9 @@ private:
 	Array<Bool, 4> m_colorChannel = {true, true, true, true};
 	F32 m_maxColorValue = 1.0f;
 
-	U32 m_imageUuid = 0;
+	U32 m_texUuid = 0;
+
+	Bool m_open = false;
 };
 
 } // end namespace anki

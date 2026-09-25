@@ -374,7 +374,7 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
 		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
 
-		m_imageViewerWindow.drawWindow(initialPos, initialSize, 0);
+		m_texViewerWindow.drawWindow(initialPos, initialSize, 0);
 	}
 
 	{
@@ -615,8 +615,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						id.m_textureSubresource = TextureSubresourceDesc::all();
 						if(ImGui::ImageButton("##", id, calcIconButtonSize()))
 						{
-							m_imageViewerWindow.m_image = img;
-							m_imageViewerWindow.m_open = true;
+							m_texViewerWindow.open(img.get());
 						}
 
 						dragDropSource(file, kTextureAssetDragDropPayload);
