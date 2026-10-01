@@ -20,6 +20,7 @@ public:
 	CString m_outFilename;
 	ImageBinaryType m_type = ImageBinaryType::k2D;
 	ImageBinaryDataCompression m_compressions = ImageBinaryDataCompression::kS3tc;
+	U32 m_maxImageDimension = kMaxU32; // The max width or height of the image. Not depth
 	U32 m_minMipmapDimension = 4;
 	U8 m_mipmapCount = kMaxU8;
 	Bool m_noAlpha = true;

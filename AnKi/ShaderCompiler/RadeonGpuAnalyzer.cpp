@@ -6,7 +6,7 @@
 #include <AnKi/ShaderCompiler/RadeonGpuAnalyzer.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Util/Process.h>
+#include <AnKi/Util/System.h>
 #include <AnKi/Util/StringList.h>
 
 namespace anki {
@@ -98,7 +98,7 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 	}
 	ANKI_SHADER_COMPILER_LOGV("Calling RGA: %s %s", rgaExecutable.cstr(), argsStr.cstr());
 
-	ANKI_CHECK(Process::callProcess(rgaExecutable, args, nullptr, nullptr, exitCode));
+	ANKI_CHECK(invokeProcess(rgaExecutable, args, nullptr, nullptr, exitCode));
 
 	if(exitCode != 0)
 	{

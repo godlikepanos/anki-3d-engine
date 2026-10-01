@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/ShaderCompiler/Dxc.h>
-#include <AnKi/Util/Process.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/HighRezTimer.h>

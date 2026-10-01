@@ -90,7 +90,7 @@ static Error findConstantColorsInImage(CString fname, Vec4& constantColor)
 	return Error::kNone;
 }
 
-static Error importImage(CString in, CString out, Bool alpha)
+static Error importImage(CString in, CString out, Bool alpha, U32 maxImageDimension)
 {
 	ImageImporterConfig config;
 
@@ -101,6 +101,7 @@ static Error importImage(CString in, CString out, Bool alpha)
 	config.m_compressions = ImageBinaryDataCompression::kS3tc | ImageBinaryDataCompression::kAstc;
 	config.m_minMipmapDimension = 8;
 	config.m_noAlpha = !alpha;
+	config.m_maxImageDimension = maxImageDimension;
 
 	String tmp;
 	if(getTempDirectory(tmp))
@@ -197,7 +198,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			ImporterString out = m_outDir;
 			out += fname;
 			fixImageUri(out);
-			ANKI_CHECK(importImage(fname, out, !constantAlpha));
+			ANKI_CHECK(importImage(fname, out, !constantAlpha, m_maxImageDimension));
 		}
 	}
 	else
@@ -300,7 +301,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			ImporterString out = m_outDir;
 			out += in;
 			fixImageUri(out);
-			ANKI_CHECK(importImage(in, out, false));
+			ANKI_CHECK(importImage(in, out, false, m_maxImageDimension));
 		}
 	}
 	else
@@ -339,7 +340,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 				ImporterString out = m_outDir;
 				out += in;
 				fixImageUri(out);
-				ANKI_CHECK(importImage(in, out, false));
+				ANKI_CHECK(importImage(in, out, false, m_maxImageDimension));
 			}
 		}
 		else
@@ -373,7 +374,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			ImporterString out = m_outDir;
 			out += in;
 			fixImageUri(out);
-			ANKI_CHECK(importImage(in, out, false));
+			ANKI_CHECK(importImage(in, out, false, m_maxImageDimension));
 		}
 	}
 	else

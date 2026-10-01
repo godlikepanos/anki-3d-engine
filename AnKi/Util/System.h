@@ -8,20 +8,18 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Function.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/WeakArray.h>
 #include <ctime>
 
 namespace anki {
 
-/// @addtogroup util_system
-/// @{
-
-/// Get the number of CPU cores
+// Get the number of CPU cores
 ANKI_PURE U32 getCpuCoresCount();
 
-/// @internal
+// WARNING: Internal
 void backtraceInternal(const Function<void(CString)>& lambda);
 
-/// Get a backtrace.
+// Get a backtrace.
 template<typename TFunc>
 void backtrace(TFunc func)
 {
@@ -29,33 +27,38 @@ void backtrace(TFunc func)
 	backtraceInternal(f);
 }
 
-/// Return true if the engine is running from a terminal emulator.
+// Return true if the engine is running from a terminal emulator.
 Bool runningFromATerminal();
 
-/// Return the local time in a thread safe way.
+// Return the local time in a thread safe way.
 std::tm getLocalTime();
 
 #if ANKI_OS_ANDROID
-/// This function reads what is passed to "am" and interprets them as command line arguments. Should be called by
-/// android_main(). It's not thread safe. Don't call it more than once.
-/// Executing an apk using:
-/// @code
-/// adb shell am start XXX -e cmd "arg0 arg1 arg2"
-/// @endcode
-/// Whatever follows "cmd" will be a command line argument.
+// This function reads what is passed to "am" and interprets them as command line arguments. Should be called by
+// android_main(). It's not thread safe. Don't call it more than once.
+// Executing an apk using:
+// @code
+// adb shell am start XXX -e cmd "arg0 arg1 arg2"
+// @endcode
+// Whatever follows "cmd" will be a command line argument.
 [[nodiscard]] void* getAndroidCommandLineArguments(int& argc, char**& argv);
 
-/// Takes the return value of getAndroidCommandLineArguments() for cleanup.
+// Takes the return value of getAndroidCommandLineArguments() for cleanup.
 void cleanupGetAndroidCommandLineArguments(void* ptr);
 #endif
 
-/// Some common code to be called before main.
+// Some common code to be called before main.
 void preMainInit();
 
 #if ANKI_OS_WINDOWS
-/// Convert windows errors (from GetLastError) to strings.
+// Convert windows errors (from GetLastError) to strings.
 String errorMessageToString(DWORD errorMessageID);
 #endif
-/// @}
+
+// Run an executable (searched in PATH) and wait for it to finish. Optionally capture its stdout and stderr. stdin is the null device
+Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr, I32& exitCode);
+
+// Get the current process ID.
+ANKI_PURE U32 getCurrentProcessId();
 
 } // end namespace anki

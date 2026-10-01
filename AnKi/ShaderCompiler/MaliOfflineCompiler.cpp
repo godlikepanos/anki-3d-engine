@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
-#include <AnKi/Util/Process.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/System.h>
 #include <regex>
 
 namespace anki {
@@ -159,7 +159,7 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 	CString maliocExecutable = "nothing";
 	ANKI_ASSERT(0);
 #endif
-	ANKI_CHECK(Process::callProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
+	ANKI_CHECK(invokeProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
 	if(exitCode != 0)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);

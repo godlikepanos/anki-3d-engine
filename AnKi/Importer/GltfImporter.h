@@ -29,7 +29,10 @@ public:
 	U32 m_lodCount = 1;
 	U32 m_threadCount = kMaxU32;
 	CString m_comment;
+
+	// Image specific
 	Bool m_importTextures = false;
+	U32 m_maxImageDimension = kMaxU32; // The max width or height of the image. Not depth
 };
 
 // Import GLTF and spit AnKi scenes.
@@ -74,6 +77,7 @@ private:
 	U32 m_skipLodVertexCountThreshold = 256;
 
 	Bool m_importTextures = false;
+	U32 m_maxImageDimension = kMaxU32;
 
 	template<typename T>
 	class ImportRequest

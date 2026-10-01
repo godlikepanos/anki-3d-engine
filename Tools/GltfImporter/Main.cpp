@@ -17,6 +17,7 @@ Options:
 -lod-count <1|2|3>         : The number of geometry LODs to generate. Default is 1
 -lod-factor <float>        : The decimate factor for each LOD. Default 0.25
 -import-textures <0|1>     : Import textures. Default is 0
+-max-image-dimension <num> : Max image dimension. Default is max U32
 -v                         : Enable verbose log
 )";
 
@@ -33,6 +34,7 @@ public:
 	U32 m_threadCount = kMaxU32;
 	U32 m_lodCount = 1;
 	F32 m_lodFactor = 0.25f;
+	U32 m_maxImageDimension = kMaxU32;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -183,6 +185,19 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::kUserData;
 			}
 		}
+		else if(strcmp(argv[i], "-max-image-dimension") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				ANKI_CHECK(CString(argv[i]).toNumber(info.m_maxImageDimension));
+			}
+			else
+			{
+				return Error::kUserData;
+			}
+		}
 		else
 		{
 			return Error::kUserData;
@@ -255,6 +270,7 @@ int myMain(int argc, char** argv)
 	initInfo.m_threadCount = cmdArgs.m_threadCount;
 	initInfo.m_comment = comment;
 	initInfo.m_importTextures = cmdArgs.m_importTextures;
+	initInfo.m_maxImageDimension = cmdArgs.m_maxImageDimension;
 
 	GltfImporter importer;
 	if(importer.init(initInfo))

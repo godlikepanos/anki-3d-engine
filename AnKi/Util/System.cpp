@@ -29,6 +29,18 @@
 #	include <fcntl.h>
 #endif
 
+#if ANKI_OS_LINUX
+#	include <spawn.h>
+#	include <poll.h>
+#	include <fcntl.h>
+#	include <sys/wait.h>
+#	include <cerrno>
+#	include <cstring>
+
+// The process' environment. POSIX requires the application to declare it
+extern char** environ;
+#endif
+
 namespace anki {
 
 U32 getCpuCoresCount()
@@ -245,6 +257,452 @@ String errorMessageToString(DWORD errorMessageID)
 
 	return message;
 }
+
+// Append an argument to a command line quoted the way CommandLineToArgvW and the CRT will parse it back
+static void appendCommandLineArgument(String& cmdLine, CString arg)
+{
+	if(!cmdLine.isEmpty())
+	{
+		cmdLine += " ";
+	}
+
+	const Bool needsQuotes = arg.isEmpty() || strpbrk(arg.cstr(), " \t\n\v\"") != nullptr;
+	if(!needsQuotes)
+	{
+		cmdLine += arg;
+		return;
+	}
+
+	// Backslashes are literal unless they precede a quote, in which case they are escapes
+	cmdLine += "\"";
+	U32 backslashCount = 0;
+	for(const Char* c = arg.cstr(); *c != '\0'; ++c)
+	{
+		if(*c == '\\')
+		{
+			++backslashCount;
+			continue;
+		}
+
+		const U32 escapedBackslashCount = (*c == '"') ? backslashCount * 2 + 1 : backslashCount;
+		for(U32 i = 0; i < escapedBackslashCount; ++i)
+		{
+			cmdLine += "\\";
+		}
+		cmdLine.append(c, c + 1);
+		backslashCount = 0;
+	}
+
+	// Double the trailing backslashes so they don't escape the closing quote
+	for(U32 i = 0; i < backslashCount * 2; ++i)
+	{
+		cmdLine += "\\";
+	}
+	cmdLine += "\"";
+}
+
+static Error readPipeUntilEof(HANDLE pipe, String& out)
+{
+	while(true)
+	{
+		Array<Char, 16 * 1024> buff;
+		DWORD bytesRead = 0;
+		if(!ReadFile(pipe, buff.getBegin(), DWORD(buff.getSize()), &bytesRead, nullptr))
+		{
+			const DWORD err = GetLastError();
+			if(err == ERROR_BROKEN_PIPE)
+			{
+				// The child closed its end, that's the EOF
+				return Error::kNone;
+			}
+
+			ANKI_UTIL_LOGE("ReadFile() failed: %s", errorMessageToString(err).cstr());
+			return Error::kFunctionFailed;
+		}
+
+		if(bytesRead > 0)
+		{
+			out.append(buff.getBegin(), buff.getBegin() + bytesRead);
+		}
+	}
+}
 #endif
+
+Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr, I32& exitCode)
+{
+	exitCode = -1;
+
+#if ANKI_OS_LINUX
+	constexpr U32 kStreamCount = 2;
+	const Array<String*, kStreamCount> outStrings = {stdOut, stdErr};
+	const Array<int, kStreamCount> childFds = {STDOUT_FILENO, STDERR_FILENO};
+
+	// Read and write ends of the pipes. -1 if the stream is not captured
+	Array2d<int, kStreamCount, 2> pipes;
+	for(U32 i = 0; i < kStreamCount; ++i)
+	{
+		pipes[i][0] = pipes[i][1] = -1;
+	}
+
+	auto closeFd = [](int& fd) {
+		if(fd >= 0)
+		{
+			close(fd);
+			fd = -1;
+		}
+	};
+
+	auto closeAllPipes = [&]() {
+		for(U32 i = 0; i < kStreamCount; ++i)
+		{
+			closeFd(pipes[i][0]);
+			closeFd(pipes[i][1]);
+		}
+	};
+
+	for(U32 i = 0; i < kStreamCount; ++i)
+	{
+		if(outStrings[i])
+		{
+			outStrings[i]->destroy();
+
+			// O_CLOEXEC so the child doesn't inherit the pipe ends, only the dup2'ed copies
+			if(pipe2(&pipes[i][0], O_CLOEXEC) != 0)
+			{
+				ANKI_UTIL_LOGE("pipe2() failed: %s", strerror(errno));
+				closeAllPipes();
+				return Error::kFunctionFailed;
+			}
+		}
+	}
+
+	// Setup the child's standard streams. Non-captured ones go to /dev/null
+	posix_spawn_file_actions_t actions;
+	posix_spawn_file_actions_init(&actions);
+	posix_spawn_file_actions_addopen(&actions, STDIN_FILENO, "/dev/null", O_RDONLY, 0);
+	for(U32 i = 0; i < kStreamCount; ++i)
+	{
+		if(pipes[i][1] >= 0)
+		{
+			posix_spawn_file_actions_adddup2(&actions, pipes[i][1], childFds[i]);
+		}
+		else
+		{
+			posix_spawn_file_actions_addopen(&actions, childFds[i], "/dev/null", O_WRONLY, 0);
+		}
+	}
+
+	DynamicArray<Char*> argv;
+	argv.resize(arguments.getSize() + 2);
+	argv[0] = const_cast<Char*>(executable.cstr());
+	for(U32 i = 0; i < arguments.getSize(); ++i)
+	{
+		argv[i + 1] = const_cast<Char*>(arguments[i].cstr());
+	}
+	argv.getBack() = nullptr;
+
+	pid_t pid;
+	const int spawnErr = posix_spawnp(&pid, executable.cstr(), &actions, nullptr, argv.getBegin(), environ);
+	posix_spawn_file_actions_destroy(&actions);
+
+	// Close the write ends in the parent or the reads below will never see EOF
+	for(U32 i = 0; i < kStreamCount; ++i)
+	{
+		closeFd(pipes[i][1]);
+	}
+
+	if(spawnErr != 0)
+	{
+		ANKI_UTIL_LOGE("posix_spawnp() failed for %s: %s", executable.cstr(), strerror(spawnErr));
+		closeAllPipes();
+		return Error::kFunctionFailed;
+	}
+
+	// Drain both pipes at the same time. Reading them one after the other can deadlock if the child fills the other one
+	Error err = Error::kNone;
+	while(!err)
+	{
+		Array<pollfd, kStreamCount> pollFds;
+		Array<U32, kStreamCount> pollFdStreams;
+		U32 pollFdCount = 0;
+		for(U32 i = 0; i < kStreamCount; ++i)
+		{
+			if(pipes[i][0] >= 0)
+			{
+				pollFds[pollFdCount] = {pipes[i][0], POLLIN, 0};
+				pollFdStreams[pollFdCount] = i;
+				++pollFdCount;
+			}
+		}
+
+		if(pollFdCount == 0)
+		{
+			break;
+		}
+
+		if(poll(pollFds.getBegin(), pollFdCount, -1) < 0)
+		{
+			if(errno != EINTR)
+			{
+				ANKI_UTIL_LOGE("poll() failed: %s", strerror(errno));
+				err = Error::kFunctionFailed;
+			}
+			continue;
+		}
+
+		for(U32 p = 0; p < pollFdCount; ++p)
+		{
+			if(pollFds[p].revents == 0)
+			{
+				continue;
+			}
+
+			const U32 stream = pollFdStreams[p];
+			Array<Char, 16 * 1024> buff;
+			const ssize_t bytesRead = read(pipes[stream][0], buff.getBegin(), buff.getSize());
+			if(bytesRead > 0)
+			{
+				outStrings[stream]->append(buff.getBegin(), buff.getBegin() + bytesRead);
+			}
+			else if(bytesRead == 0)
+			{
+				closeFd(pipes[stream][0]);
+			}
+			else if(errno != EINTR)
+			{
+				ANKI_UTIL_LOGE("read() failed: %s", strerror(errno));
+				err = Error::kFunctionFailed;
+			}
+		}
+	}
+
+	// Always reap the child, even on error, to avoid zombies. If we bailed early closing the pipes will make its writes fail
+	closeAllPipes();
+
+	int status;
+	while(waitpid(pid, &status, 0) < 0)
+	{
+		if(errno != EINTR)
+		{
+			ANKI_UTIL_LOGE("waitpid() failed: %s", strerror(errno));
+			return Error::kFunctionFailed;
+		}
+	}
+
+	if(WIFEXITED(status))
+	{
+		exitCode = WEXITSTATUS(status);
+	}
+	else
+	{
+		// Same convention as the shells
+		exitCode = 128 + WTERMSIG(status);
+		ANKI_UTIL_LOGW("Process %s was terminated by signal %d", executable.cstr(), WTERMSIG(status));
+	}
+
+	// A read error means the captured output is incomplete but the exit code is still valid
+	return err;
+#elif ANKI_OS_WINDOWS
+	constexpr U32 kStreamCount = 2;
+	const Array<String*, kStreamCount> outStrings = {stdOut, stdErr};
+
+	// Read and write ends of the pipes. nullptr if the stream is not captured
+	Array2d<HANDLE, kStreamCount, 2> pipes = {};
+
+	// Feeds stdin and the non-captured streams
+	HANDLE nullDevice = nullptr;
+
+	auto closeHandle = [](HANDLE& h) {
+		if(h)
+		{
+			CloseHandle(h);
+			h = nullptr;
+		}
+	};
+
+	auto closeAllHandles = [&]() {
+		for(U32 i = 0; i < kStreamCount; ++i)
+		{
+			closeHandle(pipes[i][0]);
+			closeHandle(pipes[i][1]);
+		}
+		closeHandle(nullDevice);
+	};
+
+	// All handles are created non-inheritable and only the ones the child needs become inheritable. Combined with the handle list below it
+	// stops concurrent invokeProcess() calls from leaking pipe ends to each other's children, which would stall the EOF
+	nullDevice = CreateFileA("NUL", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+	if(nullDevice == INVALID_HANDLE_VALUE)
+	{
+		nullDevice = nullptr;
+		ANKI_UTIL_LOGE("CreateFileA(NUL) failed: %s", errorMessageToString(GetLastError()).cstr());
+		return Error::kFunctionFailed;
+	}
+
+	Array<HANDLE, kStreamCount + 1> inheritedHandles;
+	U32 inheritedHandleCount = 0;
+	inheritedHandles[inheritedHandleCount++] = nullDevice;
+
+	for(U32 i = 0; i < kStreamCount; ++i)
+	{
+		if(outStrings[i])
+		{
+			outStrings[i]->destroy();
+
+			if(!CreatePipe(&pipes[i][0], &pipes[i][1], nullptr, 0))
+			{
+				ANKI_UTIL_LOGE("CreatePipe() failed: %s", errorMessageToString(GetLastError()).cstr());
+				closeAllHandles();
+				return Error::kFunctionFailed;
+			}
+
+			inheritedHandles[inheritedHandleCount++] = pipes[i][1];
+		}
+	}
+
+	for(U32 i = 0; i < inheritedHandleCount; ++i)
+	{
+		if(!SetHandleInformation(inheritedHandles[i], HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT))
+		{
+			ANKI_UTIL_LOGE("SetHandleInformation() failed: %s", errorMessageToString(GetLastError()).cstr());
+			closeAllHandles();
+			return Error::kFunctionFailed;
+		}
+	}
+
+	// Restrict inheritance to exactly these handles
+	SIZE_T attribListSize = 0;
+	InitializeProcThreadAttributeList(nullptr, 1, 0, &attribListSize); // Fails by design, it only returns the size
+	DynamicArray<U64> attribListStorage;
+	attribListStorage.resize(U32((attribListSize + sizeof(U64) - 1) / sizeof(U64)));
+	const LPPROC_THREAD_ATTRIBUTE_LIST attribList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attribListStorage.getBegin());
+	if(!InitializeProcThreadAttributeList(attribList, 1, 0, &attribListSize))
+	{
+		ANKI_UTIL_LOGE("InitializeProcThreadAttributeList() failed: %s", errorMessageToString(GetLastError()).cstr());
+		closeAllHandles();
+		return Error::kFunctionFailed;
+	}
+
+	if(!UpdateProcThreadAttribute(attribList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inheritedHandles.getBegin(),
+								  inheritedHandleCount * sizeof(HANDLE), nullptr, nullptr))
+	{
+		ANKI_UTIL_LOGE("UpdateProcThreadAttribute() failed: %s", errorMessageToString(GetLastError()).cstr());
+		DeleteProcThreadAttributeList(attribList);
+		closeAllHandles();
+		return Error::kFunctionFailed;
+	}
+
+	String cmdLine;
+	appendCommandLineArgument(cmdLine, executable);
+	for(CString arg : arguments)
+	{
+		appendCommandLineArgument(cmdLine, arg);
+	}
+
+	STARTUPINFOEXA startupInfo = {};
+	startupInfo.StartupInfo.cb = sizeof(startupInfo);
+	startupInfo.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+	startupInfo.StartupInfo.hStdInput = nullDevice;
+	startupInfo.StartupInfo.hStdOutput = (pipes[0][1]) ? pipes[0][1] : nullDevice;
+	startupInfo.StartupInfo.hStdError = (pipes[1][1]) ? pipes[1][1] : nullDevice;
+	startupInfo.lpAttributeList = attribList;
+
+	// A null application name makes CreateProcess search for the executable, like posix_spawnp does
+	PROCESS_INFORMATION procInfo = {};
+	const BOOL created = CreateProcessA(nullptr, &cmdLine[0], nullptr, nullptr, true, CREATE_NO_WINDOW | EXTENDED_STARTUPINFO_PRESENT, nullptr,
+										nullptr, &startupInfo.StartupInfo, &procInfo);
+	const DWORD createErr = GetLastError();
+	DeleteProcThreadAttributeList(attribList);
+
+	// Close the child's ends in the parent or the reads below will never see EOF
+	for(U32 i = 0; i < kStreamCount; ++i)
+	{
+		closeHandle(pipes[i][1]);
+	}
+	closeHandle(nullDevice);
+
+	if(!created)
+	{
+		ANKI_UTIL_LOGE("CreateProcessA() failed for %s: %s", executable.cstr(), errorMessageToString(createErr).cstr());
+		closeAllHandles();
+		return Error::kFunctionFailed;
+	}
+
+	CloseHandle(procInfo.hThread);
+
+	// Anonymous pipes can't be waited on together so if both are captured drain stdout in another thread. Reading them one after the other can
+	// deadlock if the child fills the other one
+	Error err = Error::kNone;
+	if(pipes[0][0] && pipes[1][0])
+	{
+		class StdoutReadInfo
+		{
+		public:
+			HANDLE m_pipe;
+			String* m_out;
+		} stdoutReadInfo = {pipes[0][0], stdOut};
+
+		Thread stdoutThread("AnKiProcStdout");
+		stdoutThread.start(&stdoutReadInfo, [](ThreadCallbackInfo& info) -> Error {
+			StdoutReadInfo& readInfo = *static_cast<StdoutReadInfo*>(info.m_userData);
+			return readPipeUntilEof(readInfo.m_pipe, *readInfo.m_out);
+		});
+
+		err = readPipeUntilEof(pipes[1][0], *stdErr);
+
+		// If stderr failed early close it so the child's writes to it fail instead of blocking and stdout eventually reaches EOF
+		closeHandle(pipes[1][0]);
+
+		const Error stdoutErr = stdoutThread.join();
+		if(!err)
+		{
+			err = stdoutErr;
+		}
+	}
+	else
+	{
+		for(U32 i = 0; i < kStreamCount; ++i)
+		{
+			if(pipes[i][0])
+			{
+				err = readPipeUntilEof(pipes[i][0], *outStrings[i]);
+			}
+		}
+	}
+
+	closeAllHandles();
+
+	// Always wait for the child, even on error
+	DWORD childExitCode;
+	if(WaitForSingleObject(procInfo.hProcess, INFINITE) != WAIT_OBJECT_0 || !GetExitCodeProcess(procInfo.hProcess, &childExitCode))
+	{
+		ANKI_UTIL_LOGE("Waiting for process %s failed: %s", executable.cstr(), errorMessageToString(GetLastError()).cstr());
+		CloseHandle(procInfo.hProcess);
+		return Error::kFunctionFailed;
+	}
+
+	CloseHandle(procInfo.hProcess);
+	exitCode = I32(childExitCode);
+
+	// A read error means the captured output is incomplete but the exit code is still valid
+	return err;
+#else
+	(void)executable;
+	(void)arguments;
+	(void)stdOut;
+	(void)stdErr;
+	ANKI_ASSERT(!"TODO");
+	return Error::kFunctionFailed;
+#endif
+}
+
+U32 getCurrentProcessId()
+{
+#if ANKI_OS_WINDOWS
+	return GetCurrentProcessId();
+#elif ANKI_POSIX
+	return getpid();
+#endif
+}
 
 } // end namespace anki

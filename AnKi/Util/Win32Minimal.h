@@ -74,6 +74,11 @@ typedef struct _CONSOLE_SCREEN_BUFFER_INFO CONSOLE_SCREEN_BUFFER_INFO, *PCONSOLE
 
 typedef struct _SYSTEM_INFO SYSTEM_INFO, *LPSYSTEM_INFO;
 
+typedef struct _OVERLAPPED OVERLAPPED, *LPOVERLAPPED;
+typedef struct _STARTUPINFOA STARTUPINFOA, *LPSTARTUPINFOA;
+typedef struct _PROCESS_INFORMATION PROCESS_INFORMATION, *LPPROCESS_INFORMATION;
+typedef struct _PROC_THREAD_ATTRIBUTE_LIST *PPROC_THREAD_ATTRIBUTE_LIST, *LPPROC_THREAD_ATTRIBUTE_LIST;
+
 // Thread & locks
 ANKI_WINBASEAPI HANDLE ANKI_WINAPI CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
 												LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
@@ -81,6 +86,7 @@ ANKI_WINBASEAPI DWORD_PTR ANKI_WINAPI SetThreadAffinityMask(HANDLE hThread, DWOR
 ANKI_WINBASEAPI DWORD ANKI_WINAPI WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI CloseHandle(HANDLE hObject);
 ANKI_WINBASEAPI DWORD ANKI_WINAPI GetCurrentThreadId(VOID);
+ANKI_WINBASEAPI DWORD ANKI_WINAPI GetCurrentProcessId(VOID);
 ANKI_WINBASEAPI HRESULT ANKI_WINAPI SetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription);
 ANKI_WINBASEAPI HRESULT ANKI_WINAPI GetThreadDescription(HANDLE hThread, PWSTR* ppszThreadDescription);
 ANKI_WINBASEAPI HANDLE ANKI_WINAPI GetCurrentThread();
@@ -114,6 +120,25 @@ ANKI_WINBASEAPI HANDLE ANKI_WINAPI FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIN
 ANKI_WINBASEAPI BOOL ANKI_WINAPI FindClose(HANDLE hFindFile);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
 ANKI_WINBASEAPI DWORD ANKI_WINAPI GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer);
+ANKI_WINBASEAPI HANDLE ANKI_WINAPI CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+											   LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
+											   HANDLE hTemplateFile);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead,
+										  LPOVERLAPPED lpOverlapped);
+
+// Process
+ANKI_WINBASEAPI BOOL ANKI_WINAPI CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+												LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+												LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+												LPPROCESS_INFORMATION lpProcessInformation);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI CreatePipe(HANDLE* hReadPipe, HANDLE* hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI InitializeProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList, DWORD dwAttributeCount,
+																   DWORD dwFlags, SIZE_T* lpSize);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI UpdateProcThreadAttribute(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList, DWORD dwFlags, DWORD_PTR Attribute,
+														   PVOID lpValue, SIZE_T cbSize, PVOID lpPreviousValue, SIZE_T* lpReturnSize);
+ANKI_WINBASEAPI VOID ANKI_WINAPI DeleteProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList);
 
 // Other
 ANKI_WINBASEAPI DWORD ANKI_WINAPI GetLastError(VOID);
@@ -178,6 +203,19 @@ constexpr DWORD FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000;
 constexpr DWORD FORMAT_MESSAGE_MAX_WIDTH_MASK = 0x000000FF;
 constexpr DWORD LANG_NEUTRAL = 0x00;
 constexpr DWORD SUBLANG_DEFAULT = 0x01;
+
+constexpr DWORD GENERIC_READ = 0x80000000L;
+constexpr DWORD GENERIC_WRITE = 0x40000000L;
+constexpr DWORD FILE_SHARE_READ = 0x00000001;
+constexpr DWORD FILE_SHARE_WRITE = 0x00000002;
+constexpr DWORD OPEN_EXISTING = 3;
+constexpr DWORD HANDLE_FLAG_INHERIT = 0x00000001;
+constexpr DWORD ERROR_BROKEN_PIPE = 109L;
+constexpr DWORD WAIT_OBJECT_0 = 0;
+constexpr DWORD STARTF_USESTDHANDLES = 0x00000100;
+constexpr DWORD CREATE_NO_WINDOW = 0x08000000;
+constexpr DWORD EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
+constexpr DWORD_PTR PROC_THREAD_ATTRIBUTE_HANDLE_LIST = 0x00020002;
 
 // Types
 typedef union _LARGE_INTEGER
@@ -322,6 +360,42 @@ typedef struct _SYSTEM_INFO
 	WORD wProcessorRevision;
 } SYSTEM_INFO, *LPSYSTEM_INFO;
 
+typedef struct _STARTUPINFOA
+{
+	DWORD cb;
+	LPSTR lpReserved;
+	LPSTR lpDesktop;
+	LPSTR lpTitle;
+	DWORD dwX;
+	DWORD dwY;
+	DWORD dwXSize;
+	DWORD dwYSize;
+	DWORD dwXCountChars;
+	DWORD dwYCountChars;
+	DWORD dwFillAttribute;
+	DWORD dwFlags;
+	WORD wShowWindow;
+	WORD cbReserved2;
+	BYTE* lpReserved2;
+	HANDLE hStdInput;
+	HANDLE hStdOutput;
+	HANDLE hStdError;
+} STARTUPINFOA, *LPSTARTUPINFOA;
+
+typedef struct _STARTUPINFOEXA
+{
+	STARTUPINFOA StartupInfo;
+	::LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList;
+} STARTUPINFOEXA, *LPSTARTUPINFOEXA;
+
+typedef struct _PROCESS_INFORMATION
+{
+	HANDLE hProcess;
+	HANDLE hThread;
+	DWORD dwProcessId;
+	DWORD dwThreadId;
+} PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
+
 // Critical section
 inline void InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
@@ -445,6 +519,29 @@ inline BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 inline DWORD GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer)
 {
 	return ::GetTempPathA(nBufferLength, lpBuffer);
+}
+
+inline HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+						  DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+	return ::CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, reinterpret_cast<::LPSECURITY_ATTRIBUTES>(lpSecurityAttributes),
+						 dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+// Process
+inline BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+						   LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+						   LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	return ::CreateProcessA(lpApplicationName, lpCommandLine, reinterpret_cast<::LPSECURITY_ATTRIBUTES>(lpProcessAttributes),
+							reinterpret_cast<::LPSECURITY_ATTRIBUTES>(lpThreadAttributes), bInheritHandles, dwCreationFlags, lpEnvironment,
+							lpCurrentDirectory, reinterpret_cast<::LPSTARTUPINFOA>(lpStartupInfo),
+							reinterpret_cast<::LPPROCESS_INFORMATION>(lpProcessInformation));
+}
+
+inline BOOL CreatePipe(HANDLE* hReadPipe, HANDLE* hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize)
+{
+	return ::CreatePipe(hReadPipe, hWritePipe, reinterpret_cast<::LPSECURITY_ATTRIBUTES>(lpPipeAttributes), nSize);
 }
 
 // Other

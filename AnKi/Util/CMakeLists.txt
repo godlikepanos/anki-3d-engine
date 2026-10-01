@@ -15,7 +15,6 @@ set(sources
 	Serializer.cpp
 	Xml.cpp
 	F16.cpp
-	Process.cpp
 	Thread.cpp
 	Singleton.cpp
 	ThreadJobManager.cpp
@@ -46,9 +45,6 @@ add_library(AnKiUtil ${sources} ${headers})
 target_compile_definitions(AnKiUtil PRIVATE -DANKI_SOURCE_FILE)
 
 set(libs AnKiTinyXml2)
-if(LINUX OR WINDOWS)
-	set(libs ${libs} reproc)
-endif()
 
 if(ANDROID)
 	set(libs ${libs} AnKiStreamlineAnnotate)

@@ -1079,7 +1079,7 @@ Vec2 computeHistoryUv(UVec2 quarterCoord, UVec2 fullCoord, Vec2 uv)
 
 	const U16 tileClass = TEX(g_classTileMap, quarterCoord / kTileSize);
 
-	if(kDisableDenoising || tileClass != kClassNormal)
+	if(kDisableDenoising || tileClass == kClassSky || tileClass == kClassVeryRough)
 	{
 		TEX(g_colorAndDepthUav, quarterCoord) = TEX(g_colorAndDepthTex, quarterCoord);
 		TEX(g_momentsUav, quarterCoord) = 0.0;
@@ -1087,7 +1087,7 @@ Vec2 computeHistoryUv(UVec2 quarterCoord, UVec2 fullCoord, Vec2 uv)
 	}
 
 	const F32 roughness = unpackRoughnessFromGBuffer<F32>(TEX(g_gbufferRt1, fullCoord), 0.0);
-	if(isMirror(roughness) || roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
+	if(roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
 	{
 		TEX(g_colorAndDepthUav, quarterCoord) = TEX(g_colorAndDepthTex, quarterCoord);
 		TEX(g_momentsUav, quarterCoord) = 0.0;

@@ -320,10 +320,12 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	if(initInfo.m_threadCount > 0)
 	{
 		const U32 threadCount = min(getCpuCoresCount(), initInfo.m_threadCount);
-		m_jobManager = newInstance<ThreadJobManager>(ImporterMemoryPool::getSingleton(), threadCount, true);
+		const Bool pinToCores = false; // NEVER EVER pin. The executables the importer invokes will also be pinned
+		m_jobManager = newInstance<ThreadJobManager>(ImporterMemoryPool::getSingleton(), threadCount, pinToCores);
 	}
 
 	m_importTextures = initInfo.m_importTextures;
+	m_maxImageDimension = initInfo.m_maxImageDimension;
 
 	return Error::kNone;
 }

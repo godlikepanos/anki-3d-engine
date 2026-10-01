@@ -340,13 +340,6 @@ message("++ Configuring SPIRV-tools")
 add_subdirectory(ThirdParty/SpirvTools)
 message("++ End configuring SPIRV-tools")
 
-if(LINUX OR WINDOWS)
-	message("++ Configuring reproc")
-	set(REPROC++ OFF)
-	add_subdirectory(ThirdParty/Reproc)
-	message("++ End configuring reproc")
-endif()
-
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(ThirdParty/${TMP})
 endforeach()

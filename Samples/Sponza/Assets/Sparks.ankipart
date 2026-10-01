@@ -11,7 +11,6 @@
 		<input name="m_size" value="0.150000 0.040000 "/>
 		<input name="m_minStartingPosition" value="0.000000 0.000000 0.000000 "/>
 		<input name="m_maxStartingPosition" value="0.100000 0.000000 0.000000 "/>
-		<input name="m_forceDir" value="0.000000 1.000000 0.000000 "/>
 		<input name="m_forceAngle" value="1.000000"/>
 		<input name="m_minForce" value="150.000000"/>
 		<input name="m_maxForce" value="250.000000"/>

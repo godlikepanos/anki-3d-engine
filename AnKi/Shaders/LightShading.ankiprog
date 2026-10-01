@@ -74,6 +74,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
 	unpackGBufferNoVelocity<F32>(g_gbuffer0Tex[coord], g_gbuffer1Tex[coord], g_gbuffer2Tex[coord], gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
+	gbuffer.m_roughness = geometricSpecularAa(gbuffer.m_roughness, gbuffer.m_normal);
 
 	// Apply SSAO
 	const Vec4 ssaoAndBentNormals = g_ssaoTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);

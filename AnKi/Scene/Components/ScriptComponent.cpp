@@ -139,11 +139,11 @@ CString ScriptComponent::getScriptText() const
 void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
-	if(!isValid() || info.m_paused
 #if ANKI_WITH_EDITOR
-	   || !m_playOnEditor
+	if(!isValid() || (info.m_paused && !m_playOnEditor))
+#else
+	if(!isValid() || info.m_paused)
 #endif
-	)
 	{
 		return;
 	}

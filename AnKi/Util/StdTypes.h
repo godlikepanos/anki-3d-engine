@@ -270,7 +270,7 @@ inline constexpr PtrSize operator""_GB(unsigned long long int x)
 // Time user literals
 inline constexpr Second operator""_hour(long double x)
 {
-	return Second(x) * 60.0;
+	return Second(x) * 60.0 * 60.0;
 }
 
 inline constexpr Second operator""_sec(long double x)
