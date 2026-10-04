@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator QUALITY 0 1 2 // No filtering, PCF, PCSS
-#pragma anki mutator PACKED_NORMALS 0 1
 
 #pragma anki technique vert pixel comp
 
@@ -14,20 +13,22 @@
 #	include <AnKi/Shaders/ImportanceSampling.hlsl>
 #	include <AnKi/Shaders/ShadowmapsResolve.hlsl>
 
-#	define DEBUG_CASCADES 0
-
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
-StructuredBuffer<GpuSceneLight> g_lights : register(t0);
-Texture2D<Vec4> g_shadowAtlasTex : register(t1);
-StructuredBuffer<Cluster> g_clusters : register(t2);
 
 SamplerState g_linearAnyClampSampler : register(s0);
 SamplerComparisonState g_linearAnyClampShadowSampler : register(s1);
-Texture2D<Vec4> g_depthRt : register(t3);
+
+StructuredBuffer<GpuSceneLight> g_lights : register(t0);
+Texture2D<Vec4> g_shadowAtlasTex : register(t1);
+StructuredBuffer<Cluster> g_clusters : register(t2);
+Texture2D<Vec4> g_depthTex : register(t3);
 Texture2D<Vec4> g_normalsTex : register(t4);
 Texture2D<Vec4> g_noiseTex : register(t5);
+Texture2D<F32> g_dirLightShadowHistoryTex : register(t6);
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t7);
 
-RWTexture2D<Vec4> g_uav : register(u0);
+RWTexture2D<Vec4> g_punctualLightsUav : register(u0);
+RWTexture2D<F32> g_dirLightShadowUav : register(u1);
 
 Vec3 computeDebugShadowCascadeColor(U32 cascade)
 {
@@ -58,15 +59,20 @@ void appendShadow(F32 shadow, inout U32 index, inout F32 shadows[kMaxShadowCaste
 #	if ANKI_COMPUTE_SHADER
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 #	else
-Vec4 main(VertOut input) : SV_TARGET0
+void main(VertOut input, out Vec4 punctualLightsRt : SV_TARGET0, out F32 dirLightShadowRt : SV_TARGET1)
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	const UVec2 viewportSize = getDimensions(g_uav);
-	const UVec2 coord = min(getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy), viewportSize - 1);
+	const UVec2 viewportSize = getDimensions(g_dirLightShadowUav);
+	const UVec2 coord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	if(any(coord >= viewportSize))
+	{
+		return;
+	}
 
 	const Vec2 uv = (coord + 0.5) / viewportSize;
 #	else
+	const UVec2 viewportSize = getDimensions(g_depthTex);
 	const Vec2 uv = input.m_uv;
 	const UVec2 coord = input.m_svPosition;
 #	endif
@@ -79,28 +85,17 @@ Vec4 main(VertOut input) : SV_TARGET0
 	const F32 randFactor = noise2.x;
 #	endif
 
-#	if PACKED_NORMALS
 	const Vec3 worldNormal = unpackNormalFromGBuffer(TEX(g_normalsTex, coord));
-#	else
-	const Vec3 worldNormal = normalize(TEX(g_normalsTex, coord).xyz * 2.0 - 1.0);
-#	endif
 
 	// World position
+	const F32 depth = TEX(g_depthTex, coord).r;
 	const Vec2 ndc = uvToNdc(uv);
-	const F32 depth = g_depthRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
 	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	worldPos += worldNormal * 0.025; // Push it a bit away from the surface
 
-	// Cluster
-	const Vec2 fragCoord = uv * g_globalConstants.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants.m_clusterer, fragCoord, depth);
-
-	// Layers
-	U32 shadowLayer = 0u;
-	F32 shadowLayers[kMaxShadowCastersPerFragment] = (F32[kMaxShadowCastersPerFragment])0.0;
-
 	// Dir light
+	F32 dirLightShadowFactor = 0.0;
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
 	if(dirLight.m_active && dirLight.m_shadowCascadeCount)
 	{
@@ -110,24 +105,11 @@ Vec4 main(VertOut input) : SV_TARGET0
 									   + g_globalConstants.m_matrices.m_near;
 
 		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[shadowCascadeCount - 1u];
-		F32 shadowFactor;
 		if(positiveZViewSpace < lastCascadeDistance)
 		{
 			F32 cascadeBlendFactor;
 			const UVec2 cascadeIndices =
 				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount, cascadeBlendFactor);
-
-#	if DEBUG_CASCADES
-			const Vec3 debugColorA = computeDebugShadowCascadeColor(cascadeIndices[0]);
-			const Vec3 debugColorB = computeDebugShadowCascadeColor(cascadeIndices[1]);
-			const Vec3 debugColor = lerp(debugColorA, debugColorB, cascadeBlendFactor);
-#		if ANKI_COMPUTE_SHADER
-			g_uav[svDispatchThreadId.xy] = debugColor;
-			return;
-#		else
-			return debugColor;
-#		endif
-#	endif
 
 #	if QUALITY == 2
 			const F32 shadowFactorCascadeA = computeShadowFactorDirLightPcss<F32>(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex,
@@ -143,7 +125,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 			if(cascadeBlendFactor < 0.01 || cascadeIndices.x == cascadeIndices.y)
 			{
 				// Don't blend cascades
-				shadowFactor = shadowFactorCascadeA;
+				dirLightShadowFactor = shadowFactorCascadeA;
 			}
 			else
 			{
@@ -160,22 +142,47 @@ Vec4 main(VertOut input) : SV_TARGET0
 				const F32 shadowFactorCascadeB =
 					computeShadowFactorDirLight<F32>(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 #	endif
-				shadowFactor = lerp(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
+				dirLightShadowFactor = lerp(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
 			}
 
 			F32 distanceFadeFactor = saturate(positiveZViewSpace / lastCascadeDistance);
 			distanceFadeFactor = pow(distanceFadeFactor, 8.0);
-			shadowFactor += distanceFadeFactor;
+			dirLightShadowFactor += distanceFadeFactor;
 		}
 		else
 		{
-			shadowFactor = 1.0;
+			dirLightShadowFactor = 1.0;
 		}
 
-		appendShadow(saturate(shadowFactor), shadowLayer, shadowLayers);
+		dirLightShadowFactor = saturate(dirLightShadowFactor);
+
+		// Blend with history
+#	if QUALITY > 0
+		const Vec2 mv = TEX(g_adjustedMotionVectorsTex, coord);
+		const Bool disocclusion = all(mv == 1.0);
+		if(!disocclusion)
+		{
+			const Vec2 historyUv = uv + mv;
+
+			const F32 history = g_dirLightShadowHistoryTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
+
+			constexpr F32 kDirLightShadowHistoryBlendFactor = 0.2;
+			dirLightShadowFactor = lerp(history, dirLightShadowFactor, kDirLightShadowHistoryBlendFactor);
+		}
+#	endif
 	}
 
-	// Lights
+#	if ANKI_COMPUTE_SHADER
+	TEX(g_dirLightShadowUav, coord) = dirLightShadowFactor;
+#	else
+	dirLightShadowRt = dirLightShadowFactor;
+#	endif
+
+	// Punctual lights
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants.m_clusterer, coord, depth);
+
+	U32 shadowLayer = 0u;
+	F32 shadowLayers[kMaxShadowCastersPerFragment] = (F32[kMaxShadowCastersPerFragment])0.0;
 	U32 idx = 0;
 	[loop] while((idx = iterateLights(cluster)) != kMaxU32)
 	{
@@ -210,16 +217,10 @@ Vec4 main(VertOut input) : SV_TARGET0
 		}
 	}
 
-	// Store
-	const Vec4 output = packShadowLayers(shadowLayers);
 #	if ANKI_COMPUTE_SHADER
-	const UVec2 unclampedCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	if(all(unclampedCoord < viewportSize))
-	{
-		TEX(g_uav, coord) = output;
-	}
+	TEX(g_punctualLightsUav, coord) = packShadowLayers(shadowLayers);
 #	else
-	return output;
+	punctualLightsRt = packShadowLayers(shadowLayers);
 #	endif
 }
 #endif // ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER

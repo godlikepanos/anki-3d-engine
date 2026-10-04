@@ -100,13 +100,14 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindSrv(4, 0, getGBuffer().getColorRt(1));
 		rgraphCtx.bindSrv(5, 0, getGBuffer().getColorRt(2));
 		rgraphCtx.bindSrv(6, 0, getGBuffer().getDepthRt());
-		rgraphCtx.bindSrv(7, 0, getShadowmapsResolve().getRt());
-		rgraphCtx.bindSrv(8, 0, getSsao().getRt());
-		rgraphCtx.bindSrv(9, 0, getReflections().getRt());
-		cmdb.bindSrv(10, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
+		rgraphCtx.bindSrv(7, 0, getShadowmapsResolve().getPunctualLightsRt());
+		rgraphCtx.bindSrv(8, 0, getShadowmapsResolve().getDirLightRt());
+		rgraphCtx.bindSrv(9, 0, getSsao().getRt());
+		rgraphCtx.bindSrv(10, 0, getReflections().getRt());
+		cmdb.bindSrv(11, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 		if(isReSTIRDIEnabled())
 		{
-			rgraphCtx.bindSrv(11, 0, getReSTIRDI().getRt());
+			rgraphCtx.bindSrv(12, 0, getReSTIRDI().getRt());
 		}
 
 		// Draw
@@ -266,7 +267,8 @@ void LightShading::populateRenderGraph()
 	pass.newTextureDependency(getGBuffer().getColorRt(1), readUsage);
 	pass.newTextureDependency(getGBuffer().getColorRt(2), readUsage);
 	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
-	pass.newTextureDependency(getShadowmapsResolve().getRt(), readUsage);
+	pass.newTextureDependency(getShadowmapsResolve().getPunctualLightsRt(), readUsage);
+	pass.newTextureDependency(getShadowmapsResolve().getDirLightRt(), readUsage);
 	pass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 	pass.newTextureDependency(getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getReflections().getRt(), readUsage);

@@ -32,11 +32,12 @@ Texture2D<Vec4> g_gbuffer0Tex : register(t3);
 Texture2D<Vec4> g_gbuffer1Tex : register(t4);
 Texture2D<Vec4> g_gbuffer2Tex : register(t5);
 Texture2D g_depthTex : register(t6);
-Texture2D<Vec4> g_resolvedShadowsTex : register(t7);
-Texture2D<Vec4> g_ssaoTex : register(t8);
-Texture2D<Vec4> g_reflectionsTex : register(t9);
-Texture2D<Vec4> g_integrationLut : register(t10);
-Texture2D<Vec4> g_directLightingTex : register(t11);
+Texture2D<Vec4> g_punctualLightsResolvedShadowsTex : register(t7);
+Texture2D<F32> g_dirLightResolvedShadowsTex : register(t8);
+Texture2D<Vec4> g_ssaoTex : register(t9);
+Texture2D<Vec4> g_reflectionsTex : register(t10);
+Texture2D<Vec4> g_integrationLut : register(t11);
+Texture2D<Vec4> g_directLightingTex : register(t12);
 
 // Common code for lighting
 #	define LIGHTING_COMMON_BRDF() \
@@ -113,9 +114,6 @@ Vec4 main(VertOut input) : SV_TARGET0
 #	if DIRECT_LIGHTING_TEX
 	outColor += g_directLightingTex[coord];
 #	else
-	// SM
-	const Vec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
-	U32 resolvedShadowsLayer = 0u;
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
@@ -124,7 +122,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 		F32 shadowFactor;
 		if(dirLight.m_shadowCascadeCount)
 		{
-			shadowFactor = getNextResolvedShadow(resolvedSm, resolvedShadowsLayer);
+			shadowFactor = TEX(g_dirLightResolvedShadowsTex, coord);
 		}
 		else
 		{
@@ -142,6 +140,9 @@ Vec4 main(VertOut input) : SV_TARGET0
 	}
 
 	// Lights
+	const Vec4 resolvedSm = g_punctualLightsResolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
+	U32 resolvedShadowsLayer = 0u;
+
 	U32 idx;
 	[loop] while((idx = iterateLights(cluster)) != kMaxU32)
 	{
