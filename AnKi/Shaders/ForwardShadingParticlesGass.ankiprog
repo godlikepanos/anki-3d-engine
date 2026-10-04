@@ -82,7 +82,7 @@ VertOut main(VertIn input)
 
 	const F32 texBias = g_globalConstants.m_textureBias;
 
-	RandomGenerator randg = createRandomGenerator(input.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(input.m_svPosition.xy, g_globalRendererConstants.m_frame);
 	const F32 randFactor = rand(randg);
 
 #	if ANIMATED_TEXTURE == 1

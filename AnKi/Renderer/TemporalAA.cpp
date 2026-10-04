@@ -16,7 +16,7 @@ namespace anki {
 
 Error TemporalAA::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/TemporalAA.ankiprogbin", {{"VARIANCE_CLIPPING", 1}, {"YCBCR", 0}}, m_prog, m_grProg));
+	ANKI_CHECK(m_prog.load("ShaderBinaries/TemporalAA.ankiprogbin", {{"VARIANCE_CLIPPING", 1}, {"YCBCR", 0}}));
 
 	for(U32 i = 0; i < 2; ++i)
 	{
@@ -82,7 +82,7 @@ void TemporalAA::populateRenderGraph()
 		ANKI_TRACE_SCOPED_EVENT(TemporalAA);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		cmdb.bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_prog.get());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());

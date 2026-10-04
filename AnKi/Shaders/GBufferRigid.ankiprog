@@ -319,7 +319,7 @@ EARLYZ GBufferPixelOut main(VertOut vertOut)
 	const F32 texBias = g_globalConstants.m_textureBias;
 	const F32 texAniso = g_globalConstants.m_textureAnisotropy;
 
-	RandomGenerator randg = createRandomGenerator(vertOut.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(vertOut.m_svPosition.xy, g_globalRendererConstants.m_frame);
 	const F32 randFactor = rand(randg);
 
 	// Diffuse

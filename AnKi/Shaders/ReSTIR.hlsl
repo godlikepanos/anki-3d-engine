@@ -15,8 +15,8 @@ struct Reservoir
 };
 
 // Algorithm 2, lines 5 to 9
-template<typename T>
-Bool updateReservoir(inout Reservoir<T> r, T sample, F32 risWeight, inout RandomGenerator randg)
+template<typename T, typename TRandGenerator>
+Bool updateReservoir(inout Reservoir<T> r, T sample, F32 risWeight, inout TRandGenerator randg)
 {
 	r.m_weightSum += risWeight;
 	r.m_sampleCount += 1.0;
@@ -50,8 +50,8 @@ void finalizeReservoirBiased(inout Reservoir<T> r, F32 pHatq)
 // pHatqr1: It's the p_hat of the 1st reservoir's sample
 // pHatqr2: It's the p_hat of the 2nd reservoir's sample
 // pHatqs: This is the pHat of the selected candidate
-template<typename T>
-Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F32 pHatqr2, out F32 pHatqs, inout RandomGenerator randg)
+template<typename T, typename TRandGenerator>
+Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F32 pHatqr2, out F32 pHatqs, inout TRandGenerator randg)
 {
 	Reservoir<T> s = (Reservoir<T>)0;
 	pHatqs = 0.0; // The p^q(s.y)

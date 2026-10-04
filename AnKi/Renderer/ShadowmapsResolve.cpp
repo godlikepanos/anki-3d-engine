@@ -26,11 +26,11 @@ Error ShadowmapsResolve::init()
 	// Prog
 	for(MutatorValue quality = 0; quality < 3; ++quality)
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowmapsResolve.ankiprogbin", {{"QUALITY", quality}, {"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", 0}},
-									 m_prog, m_grProgs[quality]));
+		const Array<SubMutation, 2> mutation = {{{"QUALITY", quality}, {"PACKED_NORMALS", !m_quarterRez}}};
+		ANKI_CHECK(m_progs[U32(quality)].load("ShaderBinaries/ShadowmapsResolve.ankiprogbin", mutation));
 	}
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/STBN_Vec1_2Dx1D_128x128x64.png", m_noiseImage));
 
 	return Error::kNone;
 }
@@ -52,6 +52,7 @@ void ShadowmapsResolve::populateRenderGraph()
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getNormalsRt() : getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
@@ -68,6 +69,7 @@ void ShadowmapsResolve::populateRenderGraph()
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
+		rpass.newTextureDependency((m_quarterRez) ? getDepthDownscale().getNormalsRt() : getGBuffer().getColorRt(2), TextureUsageBit::kSrvPixel);
 		rpass.newTextureDependency(getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvPixel);
 
 		rpass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
@@ -92,7 +94,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	{
 		quality = 0;
 	}
-	cmdb.bindShaderProgram(m_grProgs[quality].get());
+	cmdb.bindShaderProgram(m_progs[quality].get());
 
 	cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 	cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
@@ -105,12 +107,14 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	if(m_quarterRez)
 	{
 		rgraphCtx.bindSrv(3, 0, getDepthDownscale().getDepthRt(), DepthDownscale::kQuarterInternalResolution);
+		rgraphCtx.bindSrv(4, 0, getDepthDownscale().getNormalsRt());
 	}
 	else
 	{
 		rgraphCtx.bindSrv(3, 0, getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(4, 0, getGBuffer().getColorRt(2));
 	}
-	cmdb.bindSrv(4, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
+	cmdb.bindSrv(5, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 
 	if(g_cvarRenderPreferCompute)
 	{

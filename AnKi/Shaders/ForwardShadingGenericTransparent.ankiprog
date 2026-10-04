@@ -165,7 +165,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 
 #	if TEXTURE == 1
 	const F32 texBias = g_globalConstants.m_textureBias;
-	RandomGenerator randg = createRandomGenerator(input.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(input.m_svPosition.xy, g_globalRendererConstants.m_frame);
 	const F32 randFactor = rand(randg);
 	output.m_color = sampleTexture2D(localConstants.m_texture, g_trilinearRepeatSampler, input.m_uv, randFactor, texBias);
 #	endif

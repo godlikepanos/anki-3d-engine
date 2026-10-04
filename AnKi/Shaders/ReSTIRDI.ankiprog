@@ -35,6 +35,8 @@ Texture2D<Vec4> g_gbuffer1Tex : register(t5);
 Texture2D<Vec4> g_gbuffer2Tex : register(t6);
 Texture2D g_depthTex : register(t7);
 
+Texture2D g_noiseTex : register(t8);
+
 struct DISample
 {
 	U32 m_gpuSceneArrayIndex; // Index in the GPU scene or kMaxU32 if it's the sun
@@ -218,7 +220,7 @@ Vec3 directLighting(UVec2 coord)
 
 	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - worldPos);
 
-	RandomGenerator randGen = createRandomGenerator(coord, g_globalConsts.m_frame);
+	WhiteNoiseRandomGenerator randGen = createWhiteNoiseRandomGenerator(coord, g_globalConsts.m_frame);
 
 	// Decode GBuffer
 	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
@@ -352,17 +354,20 @@ Vec3 directLighting(UVec2 coord)
 // ===========================================================================
 #if ANKI_TECHNIQUE_Phase1
 
-Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t8);
-Texture2D<UVec4> g_prevReservoirsTex : register(t9);
+Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t9);
+Texture2D<UVec4> g_prevReservoirsTex : register(t10);
 
 RWTexture2D<UVec4> g_reservoirsUav : register(u0);
 
 // Implements algorithm 3 lines 3 - 9. One candidate per light, so no selection probability. The cone jitter only softens the shadow ray, so a
 // light's contribution is the average over its cone and that average's 1/solidAngle cancels the direction pdf's. Leaves a candidate density of 1
-DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, inout RandomGenerator randg, out F32 selectedSamplePHat)
+DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, UVec2 coords, inout WhiteNoiseRandomGenerator randg,
+				out F32 selectedSamplePHat)
 {
 	DIReservoir reservoir = (DIReservoir)0;
 	selectedSamplePHat = 0.0;
+	BlueNoiseRandomGenerator randg2 = createBlueNoiseRandomGenerator(g_noiseTex, coords, g_globalConsts.m_frame);
+	const Vec2 noise = rand(randg2);
 
 	// Do the sun
 	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
@@ -373,9 +378,9 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 
 		const Mat3 coneToWorld = rotationFromDirection(-dirLight.m_direction);
 
-		const F32 cosTheta = lerp(cosThetaMax, 1.0, rand(randg));
+		const F32 cosTheta = lerp(cosThetaMax, 1.0, noise.x);
 		const F32 sinTheta = sqrt(max(0.0, 1.0 - square(cosTheta)));
-		const F32 phi = k2Pi * rand(randg);
+		const F32 phi = k2Pi * noise.y;
 
 		const Vec3 l = mul(coneToWorld, Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta));
 
@@ -405,9 +410,9 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 
 		const Mat3 coneToWorld = rotationFromDirection(dirToCenter);
 
-		const F32 cosTheta = lerp(cosThetaMax, 1.0, rand(randg));
+		const F32 cosTheta = lerp(cosThetaMax, 1.0, noise.x);
 		const F32 sinTheta = sqrt(max(0.0, 1.0 - square(cosTheta)));
-		const F32 phi = k2Pi * rand(randg);
+		const F32 phi = k2Pi * noise.y;
 		const Vec3 l = mul(coneToWorld, Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta));
 
 		// Compute a tMax that pushes the ray on the edge of the sphere of light
@@ -447,7 +452,7 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 
 	F32 phat = 0.0;
 	DIReservoir r;
-	RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(coord, g_globalConsts.m_frame);
 
 	// Lines 4 - 5
 	const F32 depth = TEX(g_depthTex, coord);
@@ -469,7 +474,7 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 		unpackGBufferNoVelocity<F32>(TEX(g_gbuffer0Tex, coord), TEX(g_gbuffer1Tex, coord), TEX(g_gbuffer2Tex, coord), gbuffer);
 		gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
-		r = RIS(cluster, surfacePosW, gbuffer, randg, phat);
+		r = RIS(cluster, surfacePosW, gbuffer, coord, randg, phat);
 	}
 
 	// Visibility of initial candidates. Lines 7 - 9
@@ -533,7 +538,7 @@ DIReservoir RIS(Cluster cluster, Vec3 surfacePosW, GbufferInfo<F32> gbuffer, ino
 // ===========================================================================
 #if ANKI_TECHNIQUE_Phase2
 
-Texture2D<UVec4> g_inReservoirsTex : register(t8);
+Texture2D<UVec4> g_inReservoirsTex : register(t9);
 
 RWTexture2D<UVec4> g_outReservoirsUav : register(u0);
 RWTexture2D<Vec4> g_samplesUav : register(u1);
@@ -632,7 +637,8 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir r)
 	const Vec3 viewDir = normalize(g_globalConsts.m_cameraPosition - worldPos);
 	const Vec3 biasedSurfacePosW = worldPos + viewDir * kRayBias;
 
-	RandomGenerator randg = createRandomGenerator(coord, g_globalConsts.m_frame);
+	BlueNoiseRandomGenerator randgb = createBlueNoiseRandomGenerator(g_noiseTex, coord, g_globalConsts.m_frame);
+	WhiteNoiseRandomGenerator randgw = createWhiteNoiseRandomGenerator(coord, g_globalConsts.m_frame);
 
 	// Read reservoir so far
 	const UVec4 packedReservoirAndPhat = TEX(g_inReservoirsTex, coord);
@@ -659,8 +665,9 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir r)
 		for(U32 i = 0; i < g_consts.m_spatialSampleCount; ++i)
 		{
 			// Uniform point in a disk. The sqrt is what keeps it uniform instead of clustered in the middle
-			const F32 theta = k2Pi * rand(randg);
-			const F32 radius = g_consts.m_spatialRadius * sqrt(rand(randg));
+			const Vec2 noise = rand(randgb);
+			const F32 theta = k2Pi * noise.x;
+			const F32 radius = g_consts.m_spatialRadius * sqrt(noise.y);
 			const IVec2 offset = IVec2(round(Vec2(cos(theta), sin(theta)) * radius));
 			const UVec2 neighbourCoord = clamp(IVec2(coord) + offset, 0, IVec2(viewportSize) - 1);
 
@@ -685,7 +692,8 @@ Vec3 resampleAndShade(UVec2 coord, UVec2 viewportSize, out DIReservoir r)
 			DIReservoir neighbourReservoir = unpackReservoir(TEX(g_inReservoirsTex, neighbourCoord));
 			const F32 neighbourPHat = computePHat(neighbourReservoir, gbuffer, worldPos);
 
-			if(updateReservoir(r, neighbourReservoir.m_sample, neighbourPHat * neighbourReservoir.m_weight * neighbourReservoir.m_sampleCount, randg))
+			if(updateReservoir(r, neighbourReservoir.m_sample, neighbourPHat * neighbourReservoir.m_weight * neighbourReservoir.m_sampleCount,
+							   randgw))
 			{
 				pHat = neighbourPHat;
 			}

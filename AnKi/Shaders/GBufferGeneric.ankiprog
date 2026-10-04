@@ -470,7 +470,7 @@ EARLYZ void main(
 
 	initImageStreaming(vertInput.m_svPosition);
 
-	RandomGenerator randg = createRandomGenerator(vertInput.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(vertInput.m_svPosition.xy, g_globalRendererConstants.m_frame);
 	// Use cheap isotropic for shadows
 	const HVec4 diffColorA =
 		sampleTexture2D(SBUFF(g_imageDescriptors, localConstants.m_diffuseTex), g_trilinearRepeatSampler, vertInput.m_uv, rand(randg));
@@ -506,7 +506,7 @@ EARLYZ GBufferPixelOut main(
 	const F32 texBias = g_globalConstants.m_textureBias;
 	const F32 texAniso = g_globalConstants.m_textureAnisotropy;
 
-	RandomGenerator randg = createRandomGenerator(vertInput.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(vertInput.m_svPosition.xy, g_globalRendererConstants.m_frame);
 	const F32 randFactor = rand(randg);
 
 #		if DIFFUSE_TEX

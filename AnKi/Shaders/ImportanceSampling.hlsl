@@ -8,6 +8,7 @@
 #pragma once
 
 #include <AnKi/Shaders/FastMathFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 // http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 // Using reversebits instead of bitwise ops
@@ -170,21 +171,47 @@ F32 sampleCosWeightedPdf(Vec3 sampleDir, Vec3 normal)
 	return dot(sampleDir, normal) / kPi;
 }
 
-struct RandomGenerator
+struct WhiteNoiseRandomGenerator
 {
 	U32 m_state;
 };
 
-RandomGenerator createRandomGenerator(UVec2 pixelCoords, U32 frame)
+WhiteNoiseRandomGenerator createWhiteNoiseRandomGenerator(UVec2 pixelCoords, U32 frame)
 {
-	RandomGenerator r;
+	WhiteNoiseRandomGenerator r;
 	r.m_state = hashPcg(pixelCoords.x + hashPcg(pixelCoords.y + hashPcg(frame)));
 	return r;
 }
 
 // Returns a value in [0, 1). Uses 24 bits so the result can never round up to exactly 1.0
-F32 rand(inout RandomGenerator r)
+F32 rand(inout WhiteNoiseRandomGenerator r)
 {
 	r.m_state = hashPcg(r.m_state);
 	return F32(r.m_state >> 8u) / 16777216.0;
+}
+
+struct BlueNoiseRandomGenerator
+{
+	UVec2 m_coord;
+	U32 m_counter;
+	Texture2D m_texture;
+};
+
+// tex: It's one of the STBN textures in EngineAssets, 128x128x64
+BlueNoiseRandomGenerator createBlueNoiseRandomGenerator(Texture2D tex, UVec2 pixelCoords, U32 frame)
+{
+	BlueNoiseRandomGenerator g;
+	g.m_coord.x = (frame % 64u) * 128u + pixelCoords.x % 128u;
+	g.m_coord.y = pixelCoords.y % 128u;
+	g.m_texture = tex;
+	g.m_counter = frame;
+	return g;
+}
+
+Vec3 rand(inout BlueNoiseRandomGenerator g)
+{
+	const Vec3 noise = TEX(g.m_texture, g.m_coord);
+	++g.m_counter;
+	g.m_coord.x = (g.m_counter % 64u) * 128u + g.m_coord.x % 128u;
+	return noise;
 }
