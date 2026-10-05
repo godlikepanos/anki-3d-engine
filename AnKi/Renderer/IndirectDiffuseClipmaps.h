@@ -6,8 +6,6 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/Utils/TraditionalDeferredShading.h>
-#include <AnKi/Collision/Forward.h>
 
 namespace anki {
 
@@ -53,25 +51,11 @@ ANKI_CVAR2(
 	"Size of the octahedral for the light cache")
 ANKI_CVAR2(NumericCVar<U32>, Render, Idc, IrradianceOctMapSize, 5, 4, 20, "Size of the octahedral for the irradiance")
 
-ANKI_CVAR2(NumericCVar<F32>, Render, Idc, FirstBounceRayDistance, (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, 10000.0f,
-		   "For the 1st bounce shoot rays instead of sampling the clipmaps")
-ANKI_CVAR2(BoolCVar, Render, Idc, QuarterRez, true, "Quarter or full resolution")
 ANKI_CVAR2(NumericCVar<U8>, Render, Idc, RayCountPerTexelOfNewProbe, kDefaultRayCountPerTexelOfNewProbe, 1, 16,
 		   "The number of rays for a single texel of the oct map that will be cast for probes that are seen for the 1st time")
 
 ANKI_CVAR2(NumericCVar<U32>, Render, Idc, ProbeRayBudget, kDefaultProbeRayBudget, 1024, 100 * 1024 * 1024,
 		   "The number of rays for a single texel of the oct map that will be cast for probes that are seen for the 1st time")
-
-class IndirectDiffuseClipmapsRenderTargetHandles
-{
-public:
-	RenderTargetHandle m_appliedIrradiance;
-	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_radianceVolumes;
-	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
-	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
-	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
-	Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
-};
 
 enum class IndirectDiffuseClipmapsProbeType : U8
 {
@@ -91,20 +75,9 @@ inline constexpr Array<const Char*, U32(IndirectDiffuseClipmapsProbeType::kCount
 class IndirectDiffuseClipmaps : public RtMaterialFetchRendererObject
 {
 public:
-	IndirectDiffuseClipmaps();
-
-	~IndirectDiffuseClipmaps();
-
 	Error init();
 
 	void populateRenderGraph();
-
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
-							  [[maybe_unused]] DebugRenderTargetDrawStyle& drawStyle) const override
-	{
-		handles[0] = m_runCtx.m_handles.m_appliedIrradiance;
-		drawStyle = DebugRenderTargetDrawStyle::kTonemap;
-	}
 
 	const IndirectDiffuseClipmapConstants& getClipmapConsts() const
 	{
@@ -116,17 +89,16 @@ public:
 	// Set the dependencies before calling drawDebugProbes()
 	void setDependenciesForDrawDebugProbes(RenderPassBase& pass);
 
-	const IndirectDiffuseClipmapsRenderTargetHandles& getRts() const
-	{
-		return m_runCtx.m_handles;
-	}
-
 	// Output of IndirectDiffuseClipmaps is hidden and bindless so have this function to set dependencies
 	void setDependencies(RenderPassBase& pass, TextureUsageBit usage) const
 	{
 		ANKI_ASSERT(!(usage & ~TextureUsageBit::kAllSrv) && "Only SRV allowed");
-		// Cheat and only wait for the final RT. The rest will have been waited anyway
-		pass.newTextureDependency(m_runCtx.m_handles.m_appliedIrradiance, usage);
+		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+		{
+			pass.newTextureDependency(m_runCtx.m_irradianceVolumes[clipmap], usage);
+			pass.newTextureDependency(m_runCtx.m_probeValidityVolumes[clipmap], usage);
+			pass.newTextureDependency(m_runCtx.m_distanceMomentsVolumes[clipmap], usage);
+		}
 	}
 
 private:
@@ -137,36 +109,15 @@ private:
 	Array<RendererTexture, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 
 	RenderTargetDesc m_probeRtResultRtDesc;
-	RenderTargetDesc m_colorAndDepthRtDesc1;
-	RenderTargetDesc m_colorAndDepthRtDesc2;
-
-	RendererTexture m_finalTex;
 
 	IndirectDiffuseClipmapConstants m_consts;
 
-	// Matches the RT_MATERIAL_FETCH_TYPE mutator
-	enum class RtMaterialFetchType
-	{
-		kApply, // The RtMaterialFetch that applies the screen-space RT (1st bounce)
-		kProbe, // The RtMaterialFetch that populates the probes (2nd bounce)
-		kCount
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(RtMaterialFetchType)
-
-	Array<RendererRtShaderProgram, U32(RtMaterialFetchType::kCount)> m_rtMaterialFetchProg;
+	RendererRtShaderProgram m_rtMaterialFetchProg;
 	RendererRtShaderProgram m_missProg;
 	RendererShaderProgram m_probeInlineRtProg;
 	RendererShaderProgram m_populateCachesProg;
 	RendererShaderProgram m_probeIrradianceProg;
-	RendererShaderProgram m_applyProbeIrradianceProg;
-	RendererShaderProgram m_applyGiUsingInlineRtProg;
 	RendererShaderProgram m_visProbesProg;
-	RendererShaderProgram m_temporalDenoiseProg;
-	RendererShaderProgram m_antiFireflyProg;
-	RendererShaderProgram m_bilateralDenoiseProg;
-	RendererShaderProgram m_upscaleProg;
-
-	ImageResourcePtr m_blueNoiseImg;
 
 	U32 m_sbtRecordSize = 0;
 
@@ -175,7 +126,11 @@ private:
 	class
 	{
 	public:
-		IndirectDiffuseClipmapsRenderTargetHandles m_handles;
+		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_radianceVolumes;
+		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_irradianceVolumes;
+		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_distanceMomentsVolumes;
+		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_probeValidityVolumes;
+		Array<RenderTargetHandle, kIndirectDiffuseClipmapCount> m_avgIrradianceVolumes;
 	} m_runCtx;
 };
 

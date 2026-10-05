@@ -25,6 +25,8 @@ ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseProbes, indirectDiffuseProbes,
 						 !(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderIdc))
 ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseClipmaps, indirectDiffuseClipmaps,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracing&& g_cvarRenderIdc)
+ANKI_RENDERER_OBJECT_DEF(IndirectDiffuse, indirectDiffuse,
+						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracing&& g_cvarRenderIndirectDiffuse&& g_cvarRenderIdc)
 ANKI_RENDERER_OBJECT_DEF(VolumetricLightingAccumulation, volumetricLightingAccumulation, 1)
 ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,

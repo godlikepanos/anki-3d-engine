@@ -57,7 +57,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmaps") ? "" : "IndirectDiffuseClipmaps");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
 		// g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
 	}
 

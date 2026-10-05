@@ -49,6 +49,7 @@
 #include <AnKi/Renderer/RtMaterialFetchDbg.h>
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/GpuParticles.h>
 #include <AnKi/Renderer/ScreenshotPass.h>
@@ -364,6 +365,10 @@ Error Renderer::populateRenderGraph()
 	if(m_indirectDiffuseClipmaps)
 	{
 		m_indirectDiffuseClipmaps->populateRenderGraph();
+	}
+	if(m_indirectDiffuse)
+	{
+		m_indirectDiffuse->populateRenderGraph();
 	}
 	m_probeReflections->populateRenderGraph();
 	m_volumetricLightingAccumulation->populateRenderGraph();

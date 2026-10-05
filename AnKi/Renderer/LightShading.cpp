@@ -17,7 +17,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Reflections.h>
-#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/ReSTIRDI.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
@@ -32,7 +32,7 @@ Error LightShading::init()
 		// Load shaders and programs
 		ANKI_CHECK(loadShaderProgram(
 			"ShaderBinaries/LightShading.ankiprogbin",
-			{{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseClipmapsEnabled()}, {"DIRECT_LIGHTING_TEX", getRenderer().isReSTIRDIEnabled()}},
+			{{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseEnabled()}, {"DIRECT_LIGHTING_TEX", getRenderer().isReSTIRDIEnabled()}},
 			m_lightShading.m_prog, m_lightShading.m_grProg));
 
 		// Create RT descr
@@ -84,9 +84,9 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		// Bind all
 		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		if(getRenderer().isIndirectDiffuseClipmapsEnabled())
+		if(getRenderer().isIndirectDiffuseEnabled())
 		{
-			rgraphCtx.bindSrv(1, 0, getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance);
+			rgraphCtx.bindSrv(1, 0, getIndirectDiffuse().getRt());
 		}
 		else
 		{
@@ -273,9 +273,9 @@ void LightShading::populateRenderGraph()
 	pass.newTextureDependency(getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getReflections().getRt(), readUsage);
 
-	if(getRenderer().isIndirectDiffuseClipmapsEnabled())
+	if(getRenderer().isIndirectDiffuseEnabled())
 	{
-		pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance, TextureUsageBit::kSrvPixel);
+		pass.newTextureDependency(getIndirectDiffuse().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
 	if(getRenderer().isReSTIRDIEnabled())
