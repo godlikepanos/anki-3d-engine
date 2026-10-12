@@ -27,7 +27,8 @@ Error ShadowmapsResolve::init()
 		TextureUsageBit texUsage = TextureUsageBit::kAllSrv;
 		texUsage |= (g_cvarRenderPreferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
-		const TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(rez.x, rez.y, Format::kR8_Unorm, texUsage,
+		// Use 16bit else we get some weird artifacts
+		const TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(rez.x, rez.y, Format::kR16_Unorm, texUsage,
 																				generateTempPassName("Resolve Shadows: Dir light #%d", i));
 
 		m_dirLightShadowTextures[i] = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);

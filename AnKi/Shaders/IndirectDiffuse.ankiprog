@@ -9,8 +9,7 @@
 #pragma anki technique RtMaterialFetch rgen
 #pragma anki technique ApplyInlineRt comp
 #pragma anki technique TemporalDenoise comp
-#pragma anki technique AntiFirefly comp mutators
-#pragma anki technique BilateralDenoise comp
+#pragma anki technique ATrous comp
 #pragma anki technique Upscale comp mutators
 
 #include <AnKi/Shaders/IndirectDiffuseClipmaps.hlsl>
@@ -19,9 +18,15 @@
 
 constexpr F32 kRayTMax = 1000.0;
 constexpr Bool kLocalLightShadow = false;
+
 constexpr F32 kTemporalDenoiseBlendFactor = 0.025 * 2.0;
-constexpr U32 kMaxBilateralSamplesPerDirection = 12;
-constexpr U32 kMinBilateralSamplesPerDirection = 1;
+constexpr F32 kMomentsTemporalDenoiseBlendFactor = 0.2; // Same as the SVGF paper
+
+constexpr F32 kTemporalThreshold = 3.0; // AnKi history length, equals N=4 in SVGF paper
+constexpr I32 kSpatialEstimateRadius = 3; // 7x7 window (SVGF paper, Falcor)
+constexpr F32 kSigmaL = 4.0; // Luminance sigma (SVGF paper: 4, Falcor default 10)
+constexpr F32 kSigmaZ = 1.0; // Depth sigma
+constexpr F32 kDepthEpsilon = 1e-4; // Depth tolerance when the depth gradient is ~0. Tuned for reverse NDC depth in FP16
 
 // ===========================================================================
 // ApplyProbeIrradiance                                                      =
@@ -221,13 +226,30 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 // ===========================================================================
 #if ANKI_TECHNIQUE_TemporalDenoise
 Texture2D<Vec4> g_currentTex : register(t0); // In quarter or full rez
-Texture2D<Vec4> g_historyTex : register(t1); // In full rez
+Texture2D<Vec4> g_historyTex : register(t1); // In quarter or full rez
 Texture2D<Vec2> g_adjustedMotionVectorsTex : register(t2); // In quarter or full rez
-Texture2D<F32> g_depthTex : register(t3); // In quarter or full rez
+Texture2D<Vec2> g_historyMomentsTex : register(t3); // In quarter or full rez
+Texture2D<F32> g_historyLengthTex : register(t4); // In full rez
 
 RWTexture2D<Vec4> g_uav : register(u0); // In quarter or full rez
+RWTexture2D<Vec2> g_momentsUav : register(u1); // In quarter or full rez
+RWTexture2D<Vec2> g_depthGradientUav : register(u2); // In quarter or full rez
 
 SamplerState g_linearAnyClampSampler : register(s0);
+
+// Screen-space gradient of the reverse NDC depth. It's affine in screen space for planes so the gradient predicts the depth at any offset. Use
+// the smallest one-sided difference to avoid picking a depth edge
+Vec2 computeDepthGradient(IVec2 quarterCoord, IVec2 quarterViewportSize, F32 centerDepth)
+{
+	const F32 depthLeft = TEX(g_currentTex, max(quarterCoord - IVec2(1, 0), 0)).w;
+	const F32 depthRight = TEX(g_currentTex, min(quarterCoord + IVec2(1, 0), quarterViewportSize - 1)).w;
+	const F32 depthTop = TEX(g_currentTex, max(quarterCoord - IVec2(0, 1), 0)).w;
+	const F32 depthBottom = TEX(g_currentTex, min(quarterCoord + IVec2(0, 1), quarterViewportSize - 1)).w;
+
+	const F32 dx = (abs(depthRight - centerDepth) < abs(centerDepth - depthLeft)) ? depthRight - centerDepth : centerDepth - depthLeft;
+	const F32 dy = (abs(depthBottom - centerDepth) < abs(centerDepth - depthTop)) ? depthBottom - centerDepth : centerDepth - depthTop;
+	return Vec2(dx, dy);
+}
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
@@ -249,153 +271,242 @@ SamplerState g_linearAnyClampSampler : register(s0);
 	const Vec2 mv = TEX(g_adjustedMotionVectorsTex, quarterCoord);
 	const Bool disocclusion = all(mv == 1.0);
 
-	Vec3 outColor = TEX(g_currentTex, quarterCoord);
+	const F32 historyLen = TEX(g_historyLengthTex, fullCoord) * kMaxHistoryLength;
+
+	const Vec4 rgba = TEX(g_currentTex, quarterCoord);
+	Vec3 outColor = rgba.xyz;
+	const F32 depth = rgba.w;
+	const F32 l = computeLuminance(outColor);
 	if(disocclusion)
 	{
 		// Don't accumulate
 	}
 	else
 	{
-		const Vec2 uv = (fullCoord + 0.5) / fullViewport;
+		const Vec2 uv = (quarterCoord + 0.5) / quarterViewportSize;
 		const Vec2 historyUv = uv + mv;
 
 		const Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
 
-		outColor = lerp(history, outColor, kTemporalDenoiseBlendFactor);
+		const F32 blendFactor = max(kTemporalDenoiseBlendFactor, 1.0 / (historyLen + 1.0)); // Boost the fresh pixels
+		outColor = lerp(history, outColor, blendFactor);
 	}
 
-	const F32 depth = TEX(g_depthTex, quarterCoord);
-	TEX(g_uav, quarterCoord) = Vec4(outColor, 1.0 - depth); // Store reverse depth for better precision
+	// Compute moments
+	Vec2 moments;
+	if(disocclusion)
+	{
+		moments.x = l;
+		moments.y = l * l;
+	}
+	else
+	{
+		const Vec2 uv = (quarterCoord + 0.5) / quarterViewportSize;
+		const Vec2 historyUv = uv + mv;
+
+		const Vec2 historyMoments = g_historyMomentsTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
+
+		const F32 blendFactor = max(kMomentsTemporalDenoiseBlendFactor, 1.0 / (historyLen + 1.0));
+
+		moments.x = lerp(historyMoments.x, l, blendFactor);
+		moments.y = lerp(historyMoments.y, l * l, blendFactor);
+	}
+
+	TEX(g_uav, quarterCoord) = Vec4(outColor, depth);
+	TEX(g_momentsUav, quarterCoord) = moments;
+	TEX(g_depthGradientUav, quarterCoord) = computeDepthGradient(quarterCoord, quarterViewportSize, depth);
 }
 #endif
 
 // ===========================================================================
-// AntiFirefly                                                               =
+// A-Trous                                                                   =
 // ===========================================================================
-#if ANKI_TECHNIQUE_AntiFirefly
-Texture2D<Vec4> g_inTex : register(t0); // In quarter or full rez
+#if ANKI_TECHNIQUE_ATrous
+Texture2D<Vec4> g_colorAndDepthTex : register(t0); // In quarter or full rez
+Texture2D<Vec2> g_momentsOrVarianceTex : register(t1); // In quarter or full rez
+Texture2D<F32> g_historyLenTex : register(t2); // In full rez
+Texture2D<Vec2> g_depthGradientTex : register(t3); // In quarter or full rez. Computed by the temporal pass
 
-RWTexture2D<Vec4> g_uav : register(u0); // In quarter or full rez
+RWTexture2D<Vec4> g_colorAndDepthUav : register(u0);
+RWTexture2D<F32> g_varianceUav : register(u1);
 
-[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+struct Consts
 {
-	const IVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	const IVec2 quarterViewportSize = getDimensions(g_uav);
+	U32 m_passIdx;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
 
-	if(any(quarterCoord >= quarterViewportSize))
-	{
-		return;
-	}
-
-	Vec4 center = TEX(g_inTex, quarterCoord);
-
-	F32 maxNeighbourLum = 0.0;
-
-	Vec3 m1 = 0.0;
-	Vec3 m2 = 0.0;
-
-	constexpr I32 sampleCount = 1;
-	for(I32 x = -sampleCount; x <= sampleCount; ++x)
-	{
-		for(I32 y = -sampleCount; y <= sampleCount; ++y)
-		{
-			if(x == 0 && y == 0)
-			{
-				continue;
-			}
-
-			IVec2 newCoord = quarterCoord + IVec2(x, y);
-			newCoord = clamp(newCoord, 0, quarterViewportSize - 1);
-
-			const Vec4 rgba = TEX(g_inTex, newCoord);
-
-			maxNeighbourLum = max(maxNeighbourLum, computeLuminance(rgba.xyz));
-
-			m1 += rgba.xyz;
-			m2 += square(rgba.xyz);
-		}
-	}
-
-#	if 0
-	const F32 tolerance = 1.0;
-	center.xyz = center.xyz * min(1.0, (maxNeighbourLum * tolerance) / computeLuminance(center.xyz));
-#	else
-	const F32 totalSampleCount = square(sampleCount * 2 + 1) - 1; // Minus one because the loop skips the center
-	const Vec3 mu = m1 / totalSampleCount;
-	const Vec3 sigma = sqrt(abs((m2 / totalSampleCount) - (mu * mu)));
-	const F32 gamma = 1.0; // 1 aggressive, 3 barely registers
-	center.xyz = clamp(center.xyz, mu - gamma * sigma, mu + gamma * sigma);
-#	endif
-
-	TEX(g_uav, quarterCoord) = center;
+// Depth edge-stopping weight of the SVGF paper (eq. 3)
+F32 computeDepthWeight(F32 centerDepth, F32 sampleDepth, Vec2 depthGradient, Vec2 offset)
+{
+	return exp(-abs(centerDepth - sampleDepth) / (kSigmaZ * abs(dot(depthGradient, offset)) + kDepthEpsilon));
 }
-#endif
 
-// ===========================================================================
-// BilateralDenoise                                                          =
-// ===========================================================================
-#if ANKI_TECHNIQUE_BilateralDenoise
-Texture2D<Vec4> g_inTex : register(t0); // In quarter or full rez
-Texture2D<F32> g_historyLengthTex : register(t1); // In full rez
-
-RWTexture2D<Vec4> g_uav : register(u0); // In quarter or full rez
-
-[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+F32 computeVarianceFirstPass(IVec2 quarterCoord, IVec2 quarterViewportSize, Vec2 depthGradient, inout Vec3 centerColor, F32 centerDepth)
 {
-	const IVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
-	const IVec2 quarterViewportSize = getDimensions(g_uav);
+	F32 variance = 0.0;
 
 #	if QUARTER_REZ
 	const IVec2 fullCoord = quarterCoord * 2;
-	const IVec2 fullViewportSize = quarterViewportSize * 2;
 #	else
 	const IVec2 fullCoord = quarterCoord;
-	const IVec2 fullViewportSize = quarterViewportSize;
 #	endif
+	const F32 historyLen = TEX(g_historyLenTex, fullCoord).x * kMaxHistoryLength;
+
+	if(historyLen >= kTemporalThreshold)
+	{
+		// Enough history, calculate the variance using just the temporal moments
+		const Vec2 moments = TEX(g_momentsOrVarianceTex, quarterCoord);
+		variance = max(0.0, moments.y - moments.x * moments.x);
+	}
+	else
+	{
+		// Not enough history, do a spatial filter
+
+		const F32 l = computeLuminance(centerColor);
+		F32 weightSum = 1.0;
+		Vec2 momentsSum = TEX(g_momentsOrVarianceTex, quarterCoord);
+		Vec3 colorSum = centerColor;
+		for(I32 x = -kSpatialEstimateRadius; x <= kSpatialEstimateRadius; ++x)
+		{
+			for(I32 y = -kSpatialEstimateRadius; y <= kSpatialEstimateRadius; ++y)
+			{
+				const IVec2 coord = quarterCoord + IVec2(x, y);
+				if(any(coord < 0) || any(coord >= quarterViewportSize) || (x == 0 && y == 0))
+				{
+					continue;
+				}
+
+				const Vec4 rgba = TEX(g_colorAndDepthTex, coord);
+
+				const Vec3 sampleColor = rgba.xyz;
+				const F32 sampleDepth = rgba.w;
+
+				const F32 depthWeight = computeDepthWeight(centerDepth, sampleDepth, depthGradient, Vec2(x, y));
+				const F32 weight = depthWeight;
+
+				const Vec2 moments = TEX(g_momentsOrVarianceTex, coord);
+
+				colorSum += sampleColor * weight;
+				momentsSum += moments * weight;
+				weightSum += weight;
+			}
+		}
+
+		const Vec2 moments = momentsSum / weightSum;
+		variance = max(0, moments.y - moments.x * moments.x);
+		variance *= (kTemporalThreshold + 1.0) / (historyLen + 1.0); // Boost young pixels
+
+		centerColor = colorSum / weightSum;
+	}
+
+	return variance;
+}
+
+F32 computeVarianceOtherPasses(IVec2 quarterCoord, IVec2 quarterViewportSize)
+{
+	const F32 gauss1D[2] = {0.5, 0.25};
+	F32 variance = TEX(g_momentsOrVarianceTex, quarterCoord).x * square(gauss1D[0]);
+	for(I32 x = -1; x <= 1; ++x)
+	{
+		for(I32 y = -1; y <= 1; ++y)
+		{
+			const IVec2 coord = quarterCoord + IVec2(x, y);
+			if(any(coord < 0) || any(coord >= quarterViewportSize) || (x == 0 && y == 0))
+			{
+				continue;
+			}
+
+			variance += TEX(g_momentsOrVarianceTex, coord).x * gauss1D[abs(x)] * gauss1D[abs(y)];
+		}
+	}
+
+	return variance;
+}
+
+[numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
+{
+	const IVec2 quarterCoord = getOptimalDispatchThreadId8x8Amd(svGroupIndex, svGroupId.xy);
+	const IVec2 quarterViewportSize = getDimensions(g_colorAndDepthUav);
 
 	if(any(quarterCoord >= quarterViewportSize))
 	{
 		return;
 	}
 
-	const Vec4 rgba = TEX(g_inTex, quarterCoord);
-	const F32 refDepth = rgba.w;
-
-	F32 weightSum = calculateBilateralWeightDepth<F32>(0.0, 0.0, 1.0); // Highest weight that this function can give
-	Vec3 colorSum = rgba.xyz * weightSum;
-
-	const F32 historyLen = TEX(g_historyLengthTex, fullCoord) * kMaxHistoryLength;
-
-	const F32 sampleCountf = lerp(F32(kMaxBilateralSamplesPerDirection), F32(kMinBilateralSamplesPerDirection), historyLen / kMaxHistoryLength);
-	const I32 sampleCount = sampleCountf;
-
-	for(I32 x = -sampleCount; x <= sampleCount; ++x)
+	const Vec4 rgba = TEX(g_colorAndDepthTex, quarterCoord);
+	Vec3 centerColor = rgba.xyz;
+	F32 centerDepth = rgba.w;
+	if(centerDepth == 0.0)
 	{
-		for(I32 y = -sampleCount; y <= sampleCount; ++y)
+		// Sky
+		TEX(g_colorAndDepthUav, quarterCoord) = rgba;
+		TEX(g_varianceUav, quarterCoord) = 0.0;
+		return;
+	}
+
+	const Vec2 depthGradient = TEX(g_depthGradientTex, quarterCoord);
+
+	// Compute the variance
+	F32 variance;
+	if(g_consts.m_passIdx == 0)
+	{
+		variance = computeVarianceFirstPass(quarterCoord, quarterViewportSize, depthGradient, centerColor, centerDepth);
+	}
+	else
+	{
+		variance = computeVarianceOtherPasses(quarterCoord, quarterViewportSize);
+	}
+	const F32 phiL = kSigmaL * sqrt(max(variance, 0.0)) + kEpsilonF32;
+
+	// Do the filter
+	const F32 kernel1D[2] = {1.0, 0.5}; // 3x3 B-spline-like à-trous kernel
+	const I32 step = (1u << g_consts.m_passIdx);
+	const F32 centerLum = computeLuminance(centerColor);
+	F32 weightSum = kernel1D[0];
+	Vec3 colorSum = centerColor * weightSum;
+	F32 varianceSum = variance * square(weightSum);
+	for(I32 x = -1; x <= 1; ++x)
+	{
+		for(I32 y = -1; y <= 1; ++y)
 		{
-			if(x == 0 && y == 0)
+			const IVec2 coord = quarterCoord + IVec2(x, y) * step;
+			if((x == 0 && y == 0) || any(coord < 0) || any(coord >= quarterViewportSize))
 			{
 				continue;
 			}
 
-			IVec2 newCoord = quarterCoord + IVec2(x, y);
-			newCoord = clamp(newCoord, 0, quarterViewportSize - 1);
-
-			const Vec4 rgba = TEX(g_inTex, newCoord);
+			const Vec4 rgba = TEX(g_colorAndDepthTex, coord);
 			const Vec3 sampleColor = rgba.xyz;
 			const F32 sampleDepth = rgba.w;
 
-			const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
-			const F32 weight = depthWeight;
+			const Vec2 momentsOrVariance = TEX(g_momentsOrVarianceTex, coord);
+			F32 sampleVariance;
+			if(g_consts.m_passIdx == 0)
+			{
+				sampleVariance = max(0.0, momentsOrVariance.y - momentsOrVariance.x * momentsOrVariance.x);
+			}
+			else
+			{
+				sampleVariance = momentsOrVariance.x;
+			}
 
-			colorSum += sampleColor * weight;
-			weightSum += weight;
+			const F32 edgeStopWeight = computeDepthWeight(centerDepth, sampleDepth, depthGradient, Vec2(IVec2(x, y) * step));
+			const F32 lWeight = exp(-abs(centerLum - computeLuminance(sampleColor)) / phiL);
+
+			const F32 w = edgeStopWeight * lWeight * kernel1D[abs(x)] * kernel1D[abs(y)];
+
+			colorSum += sampleColor * w;
+			varianceSum += sampleVariance * square(w);
+			weightSum += w;
 		}
 	}
 
-	colorSum /= weightSum;
-
-	TEX(g_uav, quarterCoord) = Vec4(colorSum, refDepth);
+	TEX(g_colorAndDepthUav, quarterCoord) = Vec4(colorSum / weightSum, centerDepth);
+	TEX(g_varianceUav, quarterCoord) = varianceSum / square(weightSum);
 }
 #endif
 

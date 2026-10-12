@@ -30,10 +30,9 @@ Error LightShading::init()
 {
 	{
 		// Load shaders and programs
-		ANKI_CHECK(loadShaderProgram(
-			"ShaderBinaries/LightShading.ankiprogbin",
-			{{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseEnabled()}, {"DIRECT_LIGHTING_TEX", getRenderer().isReSTIRDIEnabled()}},
-			m_lightShading.m_prog, m_lightShading.m_grProg));
+		ANKI_CHECK(
+			m_lightShading.m_prog.load("ShaderBinaries/LightShading.ankiprogbin", {{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseEnabled()},
+																				   {"DIRECT_LIGHTING_TEX", getRenderer().isReSTIRDIEnabled()}}));
 
 		// Create RT descr
 		const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -43,17 +42,14 @@ Error LightShading::init()
 	}
 
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
-
 		for(MutatorValue method = 0; method < 3; ++method)
 		{
-			ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}, m_skybox.m_prog,
-										 m_skybox.m_grProgs[method]));
+			ANKI_CHECK(m_skybox.m_progs[method].load("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}));
 		}
 	}
 
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog, m_applyFog.m_grProg));
+		ANKI_CHECK(m_applyFog.m_prog.load("ShaderBinaries/LightShadingApplyFog.ankiprogbin"));
 	}
 
 	return Error::kNone;
@@ -78,7 +74,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb.pushDebugMarker("LightShading", Vec3(0.0f, 1.0f, 1.0f));
 
-		cmdb.bindShaderProgram(m_lightShading.m_grProg.get());
+		cmdb.bindShaderProgram(m_lightShading.m_prog.get());
 		cmdb.setDepthWrite(false);
 
 		// Bind all
@@ -125,7 +121,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 		if(getGeneratedSky().isEnabled())
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
+			cmdb.bindShaderProgram(m_skybox.m_progs[2].get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGeneratedSky().getSkyLutRt());
@@ -133,7 +129,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		}
 		else if(sky && sky->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[1].get());
+			cmdb.bindShaderProgram(m_skybox.m_progs[1].get());
 
 			class
 			{
@@ -162,7 +158,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		}
 		else
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[0].get());
+			cmdb.bindShaderProgram(m_skybox.m_progs[0].get());
 
 			const Vec4 color((sky) ? sky->getSkySolidColor() : Vec3(0.0f), 0.0);
 			cmdb.setFastConstants(&color, sizeof(color));
@@ -180,7 +176,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb.pushDebugMarker("LightApplyFog", Vec3(0.0f, 1.0f, 1.0f));
 
-		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
+		cmdb.bindShaderProgram(m_applyFog.m_prog.get());
 
 		// Bind all
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());

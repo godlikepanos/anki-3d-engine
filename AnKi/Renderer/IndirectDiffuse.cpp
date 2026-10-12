@@ -28,18 +28,39 @@ Error IndirectDiffuse::init()
 		operatingRez /= 2;
 	}
 
-	m_tmpRtDesc1 =
-		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat, "IndirectDiffuse: Irradiance #1");
-	m_tmpRtDesc1.bake();
+	m_colorAndDepthRtDesc1 = getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat,
+																		   "IndirectDiffuse: Color+depth #1");
+	m_colorAndDepthRtDesc1.bake();
 
-	m_tmpRtDesc2 =
-		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat, "IndirectDiffuse: Irradiance #2");
-	m_tmpRtDesc2.bake();
+	m_colorAndDepthRtDesc2 = getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat,
+																		   "IndirectDiffuse: Color+depth #2");
+	m_colorAndDepthRtDesc2.bake();
 
-	const TextureInitInfo init = getRenderer().create2DRenderTargetInitInfo(
-		getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y, Format::kR16G16B16A16_Sfloat,
-		TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuse: Final"));
-	m_finalTex = getRenderer().createAndClearRenderTarget(init, TextureUsageBit::kSrvCompute);
+	m_varianceRtDesc1 =
+		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR32_Sfloat, "IndirectDiffuse: Variance #1");
+	m_varianceRtDesc1.bake();
+
+	m_varianceRtDesc2 =
+		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR32_Sfloat, "IndirectDiffuse: Variance #2");
+	m_varianceRtDesc2.bake();
+
+	m_depthGradientRtDesc =
+		getRenderer().create2DRenderTargetDescription(operatingRez.x, operatingRez.y, Format::kR16G16_Sfloat, "IndirectDiffuse: Depth gradient");
+	m_depthGradientRtDesc.bake();
+
+	m_finalRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
+																  getRenderer().getHdrFormat(), "IndirectDiffuse: Final");
+	m_finalRtDesc.bake();
+
+	TextureInitInfo texInit = getRenderer().create2DRenderTargetInitInfo(operatingRez.x, operatingRez.y, Format::kR32G32_Sfloat,
+																		 TextureUsageBit::kAllShaderResource, "IndirectDiffuse: Moments #1");
+	m_momentsTex[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
+	texInit.setName("IndirectDiffuse: Moments #2");
+	m_momentsTex[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
+
+	texInit = getRenderer().create2DRenderTargetInitInfo(operatingRez.x, operatingRez.y, Format::kR16G16B16A16_Sfloat,
+														 TextureUsageBit::kAllShaderResource, "IndirectDiffuse: History");
+	m_historyTex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
 	const Array<SubMutation, 1> mutation = {{{"QUARTER_REZ", g_cvarRenderIndirectDiffuseQuarterRez}}};
 
@@ -49,9 +70,8 @@ Error IndirectDiffuse::init()
 
 	ANKI_CHECK(m_applyProbeIrradianceProg.load(kProgFname, mutation, "ApplyProbeIrradiance"));
 	ANKI_CHECK(m_applyGiUsingInlineRtProg.load(kProgFname, mutation, "ApplyInlineRt"));
-	ANKI_CHECK(m_temporalDenoiseProg.load(kProgFname, mutation, "TemporalDenoise"));
-	ANKI_CHECK(m_antiFireflyProg.load(kProgFname, mutation, "AntiFirefly"));
-	ANKI_CHECK(m_bilateralDenoiseProg.load(kProgFname, mutation, "BilateralDenoise"));
+	ANKI_CHECK(m_temporalFilterProg.load(kProgFname, mutation, "TemporalDenoise"));
+	ANKI_CHECK(m_aTrousFilterProg.load(kProgFname, mutation, "ATrous"));
 	ANKI_CHECK(m_upscaleProg.load(kProgFname, mutation, "Upscale"));
 	ANKI_CHECK(m_rtMaterialFetchProg.load(kProgFname, mutation, "RtMaterialFetch", ShaderTypeBit::kRayGen));
 
@@ -74,14 +94,19 @@ void IndirectDiffuse::populateRenderGraph()
 
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
 
-	const RenderTargetHandle tmpRt1 = rgraph.newRenderTarget(m_tmpRtDesc1);
-	RenderTargetHandle tmpRt2;
+	const RenderTargetHandle colorAndDepthRt1 = rgraph.newRenderTarget(m_colorAndDepthRtDesc1);
+	RenderTargetHandle colorAndDepthRt2, momentsReadRt, momentsWriteRt, historyColorDepthRt, depthGradientRt;
 	if(firstBounceUsesRt)
 	{
-		tmpRt2 = rgraph.newRenderTarget(m_tmpRtDesc2);
+		colorAndDepthRt2 = rgraph.newRenderTarget(m_colorAndDepthRtDesc2);
+		depthGradientRt = rgraph.newRenderTarget(m_depthGradientRtDesc);
+		const U64 frame = getRenderer().getFrameCount();
+		momentsReadRt = rgraph.importRenderTarget(m_momentsTex[frame & 1].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+		momentsWriteRt = rgraph.importRenderTarget(m_momentsTex[(frame + 1) & 1].get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+		historyColorDepthRt = rgraph.importRenderTarget(m_historyTex.get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
 	}
 
-	const RenderTargetHandle finalRt = rgraph.importRenderTarget(m_finalTex.get(), !m_texturesImportedOnce, TextureUsageBit::kSrvCompute);
+	const RenderTargetHandle finalRt = rgraph.newRenderTarget(m_finalRtDesc);
 
 	m_texturesImportedOnce = true;
 
@@ -115,10 +140,10 @@ void IndirectDiffuse::populateRenderGraph()
 			pass.newTextureDependency(getDepthDownscale().getDepthRt(), readUsage);
 		}
 
-		pass.newTextureDependency(tmpRt1, writeUsage);
+		pass.newTextureDependency(colorAndDepthRt1, writeUsage);
 		setRgenSpace2Dependencies(pass, g_cvarRenderIndirectDiffuseInlineRt);
 
-		pass.setWork([this, sbtBuffer, tmpRt1, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, sbtBuffer, colorAndDepthRt1, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseApplyRtIrradiance);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -127,7 +152,7 @@ void IndirectDiffuse::populateRenderGraph()
 
 			bindRgenSpace2Resources(rgraphCtx);
 			rgraphCtx.bindSrv(6, 2, getSsao().getRt());
-			rgraphCtx.bindUav(0, 2, tmpRt1);
+			rgraphCtx.bindUav(0, 2, colorAndDepthRt1);
 			if(bQuarterRez)
 			{
 				rgraphCtx.bindSrv(4, 2, getDepthDownscale().getDepthRt());
@@ -163,10 +188,10 @@ void IndirectDiffuse::populateRenderGraph()
 
 		pass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(getSsao().getRt(), TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency((bQuarterRez) ? tmpRt1 : finalRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency((bQuarterRez) ? colorAndDepthRt1 : finalRt, TextureUsageBit::kUavCompute);
 		getIndirectDiffuseClipmaps().setDependencies(pass, TextureUsageBit::kSrvCompute);
 
-		pass.setWork([this, tmpRt1, bQuarterRez, finalRt](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, colorAndDepthRt1, bQuarterRez, finalRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseApplyProbeIrradiance);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -176,7 +201,7 @@ void IndirectDiffuse::populateRenderGraph()
 			rgraphCtx.bindSrv(1, 0, getSsao().getRt());
 			cmdb.bindSrv(2, 0, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::firstSurface()));
 
-			rgraphCtx.bindUav(0, 0, (bQuarterRez) ? tmpRt1 : finalRt);
+			rgraphCtx.bindUav(0, 0, (bQuarterRez) ? colorAndDepthRt1 : finalRt);
 
 			cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 
@@ -197,26 +222,34 @@ void IndirectDiffuse::populateRenderGraph()
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuse: Temporal denoise");
 
-		pass.newTextureDependency(tmpRt1, TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(finalRt, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(colorAndDepthRt1, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(getHistoryLength().getRt(), TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(historyColorDepthRt, TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getAdjustedMotionVectorsRt() : getMotionVectors().getAdjustedMotionVectorsRt(),
 								  TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency((bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(tmpRt2, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(momentsReadRt, TextureUsageBit::kSrvCompute);
 
-		pass.setWork([this, tmpRt1, tmpRt2, finalRt, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
+		pass.newTextureDependency(colorAndDepthRt2, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(momentsWriteRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(depthGradientRt, TextureUsageBit::kUavCompute);
+
+		pass.setWork([this, colorAndDepthRt1, colorAndDepthRt2, momentsReadRt, momentsWriteRt, historyColorDepthRt, depthGradientRt,
+					  bQuarterRez](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseTemporalDenoise);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_temporalDenoiseProg.get());
+			cmdb.bindShaderProgram(m_temporalFilterProg.get());
 
-			rgraphCtx.bindSrv(0, 0, tmpRt1);
-			rgraphCtx.bindSrv(1, 0, finalRt);
+			rgraphCtx.bindSrv(0, 0, colorAndDepthRt1);
+			rgraphCtx.bindSrv(1, 0, historyColorDepthRt);
 			rgraphCtx.bindSrv(2, 0,
 							  (bQuarterRez) ? getDepthDownscale().getAdjustedMotionVectorsRt() : getMotionVectors().getAdjustedMotionVectorsRt());
-			rgraphCtx.bindSrv(3, 0, (bQuarterRez) ? getDepthDownscale().getDepthRt() : getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(3, 0, momentsReadRt);
+			rgraphCtx.bindSrv(4, 0, getHistoryLength().getRt());
 
-			rgraphCtx.bindUav(0, 0, tmpRt2);
+			rgraphCtx.bindUav(0, 0, colorAndDepthRt2);
+			rgraphCtx.bindUav(1, 0, momentsWriteRt);
+			rgraphCtx.bindUav(2, 0, depthGradientRt);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
@@ -230,60 +263,85 @@ void IndirectDiffuse::populateRenderGraph()
 		});
 	}
 
-	// Anti-firefly
+	// A-Trous
+	RenderTargetHandle aTrousOutRt;
 	if(firstBounceUsesRt)
 	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuse: Anti-firefly");
+		// Ping-pong the color and the variance. The 1st pass reads the moments and the temporal output
+		const Array<RenderTargetHandle, 2> colorAndDepthRts = {colorAndDepthRt2, colorAndDepthRt1};
+		const Array<RenderTargetHandle, 2> varianceRts = {rgraph.newRenderTarget(m_varianceRtDesc1), rgraph.newRenderTarget(m_varianceRtDesc2)};
+		const U32 passCount = g_cvarRenderIndirectDiffuseATrousPassCount;
+		ANKI_ASSERT(passCount >= 2 && "The 1st pass writes the history, a later pass needs to write the output");
 
-		pass.newTextureDependency(tmpRt2, TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(tmpRt1, TextureUsageBit::kUavCompute);
+		for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
+		{
+			const Bool firstPass = passIdx == 0;
+			const Bool lastPass = passIdx == passCount - 1;
 
-		pass.setWork([this, tmpRt1, tmpRt2, bQuarterRez](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseAntiFirefly);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_antiFireflyProg.get());
-
-			rgraphCtx.bindSrv(0, 0, tmpRt2);
-			rgraphCtx.bindUav(0, 0, tmpRt1);
-
-			UVec2 rez = getRenderer().getInternalResolution();
-			if(bQuarterRez)
+			RenderTargetHandle colorAndDepthInRt;
+			if(passIdx == 1)
 			{
-				rez /= 2;
+				colorAndDepthInRt = historyColorDepthRt;
+			}
+			else
+			{
+				colorAndDepthInRt = colorAndDepthRts[passIdx & 1];
 			}
 
-			dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
-		});
-	}
-
-	// Bilateral denoise
-	if(firstBounceUsesRt)
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuse: Bilateral denoise");
-
-		pass.newTextureDependency(tmpRt1, TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency(getHistoryLength().getRt(), TextureUsageBit::kSrvCompute);
-		pass.newTextureDependency((bQuarterRez) ? tmpRt2 : finalRt, TextureUsageBit::kUavCompute);
-
-		pass.setWork([this, tmpRt1, tmpRt2, bQuarterRez, finalRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseBilateralDenoise);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_bilateralDenoiseProg.get());
-
-			rgraphCtx.bindSrv(0, 0, tmpRt1);
-			rgraphCtx.bindSrv(1, 0, getHistoryLength().getRt());
-			rgraphCtx.bindUav(0, 0, (bQuarterRez) ? tmpRt2 : finalRt);
-
-			UVec2 rez = getRenderer().getInternalResolution();
-			if(bQuarterRez)
+			RenderTargetHandle colorAndDepthOutRt;
+			if(firstPass)
 			{
-				rez /= 2;
+				colorAndDepthOutRt = historyColorDepthRt;
 			}
+			else if(lastPass && !bQuarterRez)
+			{
+				colorAndDepthOutRt = finalRt;
+			}
+			else
+			{
+				colorAndDepthOutRt = colorAndDepthRts[(passIdx + 1) & 1];
+			}
+			const RenderTargetHandle momentsOrVarianceInRt = (firstPass) ? momentsWriteRt : varianceRts[(passIdx + 1) & 1];
+			const RenderTargetHandle varianceOutRt = varianceRts[passIdx & 1];
 
-			dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
-		});
+			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("IndirectDiffuse: A-Trous #%u", passIdx));
+
+			pass.newTextureDependency(colorAndDepthInRt, TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(momentsOrVarianceInRt, TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(getHistoryLength().getRt(), TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(depthGradientRt, TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(colorAndDepthOutRt, TextureUsageBit::kUavCompute);
+			pass.newTextureDependency(varianceOutRt, TextureUsageBit::kUavCompute);
+
+			pass.setWork([this, colorAndDepthInRt, colorAndDepthOutRt, momentsOrVarianceInRt, varianceOutRt, depthGradientRt, passIdx,
+						  bQuarterRez](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseATrous);
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+				cmdb.bindShaderProgram(m_aTrousFilterProg.get());
+
+				rgraphCtx.bindSrv(0, 0, colorAndDepthInRt);
+				rgraphCtx.bindSrv(1, 0, momentsOrVarianceInRt);
+				rgraphCtx.bindSrv(2, 0, getHistoryLength().getRt());
+				rgraphCtx.bindSrv(3, 0, depthGradientRt);
+
+				rgraphCtx.bindUav(0, 0, colorAndDepthOutRt);
+				rgraphCtx.bindUav(1, 0, varianceOutRt);
+
+				const UVec4 consts(passIdx, 0, 0, 0);
+				cmdb.setFastConstants(&consts, sizeof(consts));
+
+				UVec2 rez = getRenderer().getInternalResolution();
+				if(bQuarterRez)
+				{
+					rez /= 2;
+				}
+
+				dispatchPPCompute(cmdb, 8, 8, rez.x, rez.y);
+			});
+
+			aTrousOutRt = colorAndDepthOutRt;
+		}
 	}
 
 	// Upscale
@@ -291,7 +349,7 @@ void IndirectDiffuse::populateRenderGraph()
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("IndirectDiffuse: Upscale");
 
-		const RenderTargetHandle srcRt = (firstBounceUsesRt) ? tmpRt2 : tmpRt1;
+		const RenderTargetHandle srcRt = (firstBounceUsesRt) ? aTrousOutRt : colorAndDepthRt1;
 
 		rpass.newTextureDependency(srcRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);

@@ -15,6 +15,7 @@ ANKI_CVAR2(BoolCVar, Render, IndirectDiffuse, InlineRt, true, "Use a cheap and l
 ANKI_CVAR2(BoolCVar, Render, IndirectDiffuse, QuarterRez, true, "Quarter or full resolution")
 ANKI_CVAR2(NumericCVar<F32>, Render, IndirectDiffuse, FirstBounceRayDistance, (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, 10000.0f,
 		   "For the 1st bounce shoot rays instead of sampling the clipmaps")
+ANKI_CVAR2(NumericCVar<U32>, Render, IndirectDiffuse, ATrousPassCount, 4, 2, 6, "Number of A-Trous passes used in denoising")
 
 // A pass that computes the indirect diffuse of the screen-space visible pixels.
 class IndirectDiffuse : public RtMaterialFetchRendererObject
@@ -46,15 +47,19 @@ private:
 	RendererRtShaderProgram m_missProg;
 	RendererShaderProgram m_applyProbeIrradianceProg;
 	RendererShaderProgram m_applyGiUsingInlineRtProg;
-	RendererShaderProgram m_temporalDenoiseProg;
-	RendererShaderProgram m_antiFireflyProg;
-	RendererShaderProgram m_bilateralDenoiseProg;
+	RendererShaderProgram m_temporalFilterProg;
+	RendererShaderProgram m_aTrousFilterProg;
 	RendererShaderProgram m_upscaleProg;
 
-	RenderTargetDesc m_tmpRtDesc1;
-	RenderTargetDesc m_tmpRtDesc2;
+	RenderTargetDesc m_colorAndDepthRtDesc1;
+	RenderTargetDesc m_colorAndDepthRtDesc2;
+	RenderTargetDesc m_varianceRtDesc1;
+	RenderTargetDesc m_varianceRtDesc2;
+	RenderTargetDesc m_depthGradientRtDesc;
+	RenderTargetDesc m_finalRtDesc;
 
-	RendererTexture m_finalTex;
+	Array<RendererTexture, 2> m_momentsTex;
+	RendererTexture m_historyTex;
 
 	ImageResourcePtr m_blueNoiseImg;
 

@@ -70,7 +70,7 @@ constexpr F32 k2Pi = 2.0 * kPi;
 constexpr F32 kHalfPi = kPi / 2.0;
 constexpr F32 kNaN = 0.0 / 0.0;
 
-constexpr F32 kMaxHistoryLength = 16.0;
+constexpr F32 kMaxHistoryLength = 32.0;
 
 // All emitters' luminous power/illuminance is multiplied by this constant. It helps to fit physically based light values to 16bit or lower precision
 // textures. In tonemapping the pre-exposure is reversed
