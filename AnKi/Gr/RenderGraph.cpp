@@ -21,7 +21,7 @@ namespace anki {
 
 #define ANKI_DBG_RENDER_GRAPH 0
 
-static inline U32 getTextureSurfOrVolCount(const TextureInternalPtr& tex)
+static inline U32 getTextureSurfOrVolCount(const TexturePtr& tex)
 {
 	return tex->getMipmapCount() * tex->getLayerCount() * (textureTypeIsCube(tex->getTextureType()) ? 6 : 1);
 }
@@ -229,7 +229,7 @@ public:
 	DynamicArray<TextureUsageBit, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependencyUsages;
 	DynamicArray<TextureSubresourceDesc, MemoryPoolPtrWrapper<StackMemoryPool>> m_dependencySubresources;
 
-	TextureInternalPtr m_texture; // Hold a reference.
+	TexturePtr m_texture; // Hold a reference.
 	Bool m_imported;
 
 	RT(StackMemoryPool* pool)
@@ -246,7 +246,7 @@ class RenderGraph::BufferRange
 {
 public:
 	BufferUsageBit m_usage;
-	BufferInternalPtr m_buffer; // Hold a reference.
+	BufferPtr m_buffer; // Hold a reference.
 	PtrSize m_offset;
 	PtrSize m_range;
 
@@ -351,7 +351,7 @@ public:
 		U8 m_vrsTexelSizeY = 0;
 		Bool m_hasRenderpass = false;
 
-		Array<TextureInternalPtr, kMaxColorRenderTargets + 2> m_refs;
+		Array<TexturePtr, kMaxColorRenderTargets + 2> m_refs;
 	} m_beginRenderpassInfo;
 
 	BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> m_name;
@@ -504,7 +504,7 @@ void RenderGraph::reset()
 
 	for(Pass& p : m_ctx->m_passes)
 	{
-		p.m_beginRenderpassInfo.m_refs.fill(TextureInternalPtr(nullptr));
+		p.m_beginRenderpassInfo.m_refs.fill(TexturePtr(nullptr));
 		p.m_callback.destroy();
 		p.m_name.destroy();
 	}
@@ -513,7 +513,7 @@ void RenderGraph::reset()
 	++m_version;
 }
 
-TextureInternalPtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash)
+TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash)
 {
 	ANKI_ASSERT(hash);
 
@@ -534,7 +534,7 @@ TextureInternalPtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& i
 	ANKI_ASSERT(entry);
 
 	// Create or pop one tex from the cache
-	TextureInternalPtr tex;
+	TexturePtr tex;
 	const Bool createNewTex = entry->m_textures.getSize() == entry->m_texturesInUse;
 	if(!createNewTex)
 	{
@@ -1347,7 +1347,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(Fence* waitFence, FencePtr* sign
 				// Write timestamp
 				const Bool setPreQuery = m_ctx->m_gatherStatistics && group == 0;
 				const Bool setPostQuery = m_ctx->m_gatherStatistics && group == batchGroupCount - 1;
-				TimestampQueryInternalPtr preQuery, postQuery;
+				TimestampQueryPtr preQuery, postQuery;
 				if(setPreQuery)
 				{
 					preQuery = GrManager::getSingleton().newTimestampQuery();
@@ -1535,7 +1535,7 @@ void RenderGraph::periodicCleanup()
 			rtsCleanedCount += entry.m_textures.getSize() - entry.m_texturesInUse;
 
 			// New array
-			GrDynamicArray<TextureInternalPtr> newArray;
+			GrDynamicArray<TexturePtr> newArray;
 			GrDynamicArray<SegregatedListsGpuMemoryPoolAllocation> newAllocations;
 			if(entry.m_texturesInUse > 0)
 			{

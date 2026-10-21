@@ -1744,6 +1744,8 @@ Error GrManagerImpl::initSurface()
 void GrManagerImpl::releaseObjectDeleteLoop(GrObject* object)
 {
 	ANKI_ASSERT(object);
+	ANKI_ASSERT(object->getType() != GrObjectType::kRenderGraph && "RenderGraph should bypass deferred deletion");
+
 	CleanupGroup* group;
 	if(m_activeCleanupGroup == kMaxU32)
 	{
