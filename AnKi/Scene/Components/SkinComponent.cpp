@@ -16,6 +16,7 @@ namespace anki {
 SkinComponent::SkinComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 {
+	m_node = init.m_node;
 }
 
 SkinComponent::~SkinComponent()
@@ -38,32 +39,86 @@ SkinComponent& SkinComponent::setSkeletonFilename(CString fname)
 	return *this;
 }
 
-CString SkinComponent::getSkeletonFilename() const
+void SkinComponent::registerAnimationInternal(U32 animId, CString animationFilepath)
 {
-	return (m_resource) ? m_resource->getFilename() : "*Error*";
-}
-
-void SkinComponent::playAnimation(U32 trackIdx, AnimationResourcePtr anim, const AnimationPlayInfo& info)
-{
-	const Second animDuration = anim->getDuration();
-
-	Track& track = m_tracks[trackIdx];
-
-	track.m_anim = anim;
-	track.m_absoluteStartTime = m_absoluteTime + info.m_startTime;
-	track.m_relativeTimePassed = 0.0;
-	if(info.m_repeatTimes > 0.0)
+	AnimationResourcePtr rsrc;
+	if(ResourceManager::getSingleton().loadResource(animationFilepath, rsrc))
 	{
-		track.m_blendInTime = min(animDuration * info.m_repeatTimes, info.m_blendInTime);
-		track.m_blendOutTime = min(animDuration * info.m_repeatTimes, info.m_blendOutTime);
+		ANKI_SCENE_LOGE("Failed to load animation: %s", animationFilepath.cstr());
 	}
 	else
 	{
-		track.m_blendInTime = info.m_blendInTime;
-		track.m_blendOutTime = 0.0; // Irrelevant
+		m_idToAnimationResource.emplace(animId, std::make_pair(rsrc, animId));
 	}
-	track.m_repeatTimes = info.m_repeatTimes;
-	track.m_animationSpeedScale = max(0.1f, info.m_animationSpeedScale);
+}
+
+void SkinComponent::unregisterAnimationInternal(U32 animId)
+{
+	auto it = m_idToAnimationResource.find(animId);
+	if(it == m_idToAnimationResource.getEnd())
+	{
+		ANKI_SCENE_LOGE("Failed to unregister animation: %u", animId);
+	}
+	else
+	{
+		m_idToAnimationResource.erase(it);
+	}
+}
+
+CString SkinComponent::getSkeletonFilename() const
+{
+	return (ANKI_EXPECT(!!m_resource)) ? m_resource->getFilename() : "*Error*";
+}
+
+SkinComponentAnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, Second blendInTime, AnimationStart animStart)
+{
+	auto rsrcIt = m_idToAnimationResource.find(animId);
+	if(rsrcIt == m_idToAnimationResource.getEnd())
+	{
+		ANKI_SCENE_LOGE("Animation ID not found: %u", animId);
+		return m_dummyState;
+	}
+
+	if(!ANKI_EXPECT(trackIdx < kMaxAnimationTracks))
+	{
+		trackIdx = 0;
+	}
+
+	Track& track = m_tracks[trackIdx];
+
+	if(animStart == AnimationStart::kNow)
+	{
+		// Discard the queued animations so the new one follows the current immediately
+		while(track.m_lastAnimationIdx > track.m_crntAnimationIdx)
+		{
+			track.m_anims[track.m_lastAnimationIdx % kMaxAnimationsPerTrack] = {};
+			--track.m_lastAnimationIdx;
+		}
+	}
+
+	Animation& anim = track.m_anims[(track.m_lastAnimationIdx + 1) % kMaxAnimationsPerTrack];
+	if(anim.m_resource)
+	{
+		ANKI_SCENE_LOGE("Can't queue more than %u animations", kMaxAnimationsPerTrack);
+		return m_dummyState;
+	}
+
+	anim.m_resource = rsrcIt->first;
+	anim.m_blendInTime = blendInTime;
+	anim.m_start = animStart;
+	anim.m_state = {};
+	anim.m_animId = animId;
+
+	++track.m_lastAnimationIdx;
+
+	if(!track.m_anims[track.m_crntAnimationIdx % kMaxAnimationsPerTrack].m_resource)
+	{
+		// There isn't a current animation, last should be equal to current
+		++track.m_crntAnimationIdx;
+		ANKI_ASSERT(track.m_lastAnimationIdx == track.m_crntAnimationIdx);
+	}
+
+	return anim.m_state;
 }
 
 void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -105,7 +160,13 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_boneTransformsReallocatedThisFrame = true;
 	}
 
-	const Second dt = info.m_dt;
+#if ANKI_WITH_EDITOR
+	const Bool paused = info.m_paused && !m_playOnEditor;
+#else
+	const Bool paused = info.m_paused;
+#endif
+
+	const Second dt = (paused) ? 0.0 : info.m_dt;
 
 	Vec4 minExtend(kMaxF32, kMaxF32, kMaxF32, 0.0f);
 	Vec4 maxExtend(kMinF32, kMinF32, kMinF32, 0.0f);
@@ -114,87 +175,156 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	for(Track& track : m_tracks)
 	{
-		if(!track.m_anim.isCreated())
+		ANKI_ASSERT(track.m_crntAnimationIdx <= track.m_lastAnimationIdx);
+		BitSet<128> trackBonesAnimated(false);
+
+		// Gather the animations to use and blend between
+		Animation* firstAnim = nullptr;
+		Animation* secondAnim = nullptr;
+		F32 blendInFactor = 1.0f;
+		Bool clampFirstAnimAtTheEnd = false;
+		for(U32 i = track.m_crntAnimationIdx; i <= track.m_lastAnimationIdx; ++i)
 		{
-			continue;
-		}
+			Animation& crntAnim = track.m_anims[i % kMaxAnimationsPerTrack];
+			Animation* nextAnim = (i + 1 <= track.m_lastAnimationIdx) ? &track.m_anims[(i + 1) % kMaxAnimationsPerTrack] : nullptr;
 
-		if(track.m_absoluteStartTime > m_absoluteTime)
-		{
-			// Hasn't started yet
-			continue;
-		}
-
-		const Second clipDuration = track.m_anim->getDuration();
-		const Second animationDuration = track.m_repeatTimes * clipDuration;
-
-		if(track.m_repeatTimes > 0.0 && track.m_relativeTimePassed > animationDuration)
-		{
-			// Animation finished
-			continue;
-		}
-
-		animationRun = true;
-
-		const Second animTime = track.m_relativeTimePassed;
-		track.m_relativeTimePassed += dt * Second(track.m_animationSpeedScale);
-
-		// Iterate the animation channels and interpolate
-		for(U32 i = 0; i < track.m_anim->getChannels().getSize(); ++i)
-		{
-			const AnimationChannel& channel = track.m_anim->getChannels()[i];
-			const Bone* bone = m_resource->tryFindBone(channel.m_name.toCString());
-			if(!bone)
+			if(!crntAnim.m_resource)
 			{
-				ANKI_SCENE_LOGW("Animation is referencing unknown bone \"%s\"", &channel.m_name[0]);
+				// No animations, break the loop
+				ANKI_ASSERT(nextAnim == nullptr);
+				break;
+			}
+
+			if(nextAnim)
+			{
+				ANKI_ASSERT(nextAnim->m_resource);
+			}
+
+			const Second crntClipDuration = crntAnim.m_resource->getDuration();
+
+			if(nextAnim && crntAnim.m_state.m_repeatTimes < 0.0f)
+			{
+				// If there is a next animation queued we can't have the current animation run forever
+
+				crntAnim.m_state.m_repeatTimes = max(1.0f, std::ceil(F32(crntAnim.m_state.m_animationTime / crntClipDuration)));
+
+				const Second timeRemaining = crntClipDuration * crntAnim.m_state.m_repeatTimes - crntAnim.m_state.m_animationTime;
+				if(timeRemaining < nextAnim->m_blendInTime)
+				{
+					// Not enough time to blend the next animation, we need more repeat cycles
+
+					const Second diff = nextAnim->m_blendInTime - timeRemaining;
+					const F32 extraTimes = std::ceil(F32(diff / crntClipDuration));
+					ANKI_ASSERT(extraTimes >= 1.0f);
+					crntAnim.m_state.m_repeatTimes += extraTimes;
+				}
+			}
+
+			const Second crntAnimationDuration = crntAnim.m_state.m_repeatTimes * crntClipDuration;
+
+			const Bool crntAnimFinished = crntAnim.m_state.m_repeatTimes > 0.0 && crntAnim.m_state.m_animationTime > crntAnimationDuration;
+			if(crntAnimFinished && (!nextAnim || nextAnim->m_state.m_animationTime > nextAnim->m_blendInTime))
+			{
+				// Current anim
+				// - doesn't repeat to infinity
+				// - its time exceeds the duration of the animation
+				// - and the next animation has finish blending
+				// then finish it
+
+				crntAnim.m_resource.reset(nullptr);
+				if(nextAnim)
+				{
+					++track.m_crntAnimationIdx;
+				}
 				continue;
 			}
-			const U32 boneIdx = bone->getIndex();
 
-			// Interpolate
-			Vec3 position;
-			Quat rotation;
-			F32 scale;
-			track.m_anim->interpolate(i, animTime, position, rotation, scale);
-
-			// Blend with previous track
-			if(bonesAnimated.get(boneIdx) && (track.m_blendInTime > 0.0 || track.m_blendOutTime > 0.0))
+			const Second crntTimeRemaining = crntAnimationDuration - crntAnim.m_state.m_animationTime;
+			if(nextAnim && nextAnim->m_start == AnimationStart::kQueued && crntTimeRemaining > nextAnim->m_blendInTime)
 			{
-				F32 blendInFactor;
-				if(track.m_blendInTime > 0.0)
-				{
-					blendInFactor = min(1.0f, F32(animTime / track.m_blendInTime));
-				}
-				else
-				{
-					blendInFactor = 1.0f;
-				}
+				// The next animation is not scheduled yet, stop considering it
+				nextAnim = nullptr;
+			}
 
-				F32 blendOutFactor;
-				if(track.m_blendOutTime > 0.0)
-				{
-					blendOutFactor = min(1.0f, F32((animationDuration - animTime) / track.m_blendOutTime));
-				}
-				else
-				{
-					blendOutFactor = 1.0f;
-				}
+			if(nextAnim && nextAnim->m_state.m_animationTime >= nextAnim->m_blendInTime)
+			{
+				// Next animation can fully overtake the current one, forget the current
+				crntAnim.m_resource.reset(nullptr);
+				++track.m_crntAnimationIdx;
+				continue;
+			}
 
-				const F32 factor = blendInFactor * blendOutFactor;
+			if(nextAnim)
+			{
+				blendInFactor = min(1.0f, F32(nextAnim->m_state.m_animationTime / nextAnim->m_blendInTime));
+			}
 
-				if(factor < 1.0f)
+			firstAnim = &crntAnim;
+			secondAnim = nextAnim;
+			clampFirstAnimAtTheEnd = crntAnimFinished;
+
+			break;
+		}
+		ANKI_ASSERT(track.m_crntAnimationIdx <= track.m_lastAnimationIdx);
+
+		// Interpolate and blend
+		Array<Animation*, 2> anims = {firstAnim, secondAnim};
+		for(Animation* panim : anims)
+		{
+			if(!panim)
+			{
+				continue;
+			}
+			Animation& anim = *panim;
+
+			Second animTime = anim.m_resource->getStartingTime();
+			if(panim == firstAnim && clampFirstAnimAtTheEnd)
+			{
+				// We are keeping it alive just for blending, clamp the pose to the end
+				animTime += anim.m_resource->getDuration();
+			}
+			else
+			{
+				animTime += anim.m_state.m_animationTime + max(0.0, anim.m_state.m_animationTimeBias);
+			}
+
+			anim.m_state.m_animationTime += dt * Second(anim.m_state.m_animationSpeedScale);
+
+			// Iterate the animation channels and interpolate
+			for(U32 i = 0; i < anim.m_resource->getChannels().getSize(); ++i)
+			{
+				const AnimationChannel& channel = anim.m_resource->getChannels()[i];
+				const Bone* bone = m_resource->tryFindBone(channel.m_name.toCString());
+				if(!bone)
+				{
+					ANKI_SCENE_LOGW("Animation is referencing unknown bone \"%s\"", &channel.m_name[0]);
+					continue;
+				}
+				const U32 boneIdx = bone->getIndex();
+
+				// Interpolate
+				Vec3 position;
+				Quat rotation;
+				F32 scale;
+				anim.m_resource->interpolate(i, animTime, position, rotation, scale);
+
+				// Blend with next animation
+				if(blendInFactor < 1.0f && panim == secondAnim && trackBonesAnimated.get(boneIdx))
 				{
 					const Trf& prevTrf = m_animationTrfs[boneIdx];
 
-					position = linearInterpolate(prevTrf.m_translation, position, factor);
-					rotation = prevTrf.m_rotation.slerp(rotation, factor);
-					scale = linearInterpolate(prevTrf.m_scale, scale, factor);
+					position = linearInterpolate(prevTrf.m_translation, position, blendInFactor);
+					rotation = prevTrf.m_rotation.slerp(rotation, blendInFactor);
+					scale = linearInterpolate(prevTrf.m_scale, scale, blendInFactor);
 				}
+
+				// Store
+				trackBonesAnimated.set(boneIdx);
+				bonesAnimated.set(boneIdx);
+				m_animationTrfs[boneIdx] = {position, rotation, scale};
 			}
 
-			// Store
-			bonesAnimated.set(boneIdx);
-			m_animationTrfs[boneIdx] = {position, rotation, scale};
+			animationRun = true;
 		}
 	}
 
@@ -226,7 +356,6 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_prevBoneTrfs = m_crntBoneTrfs;
 	}
 
-	m_absoluteTime += dt;
 	updated = updatedLastFrame || resourceDirty || animationRun;
 	m_updatedLastFrame = resourceDirty || animationRun;
 }
@@ -262,18 +391,78 @@ Error SkinComponent::serialize(SceneSerializer& serializer)
 {
 	ANKI_SERIALIZE(m_resource, 1);
 
+	U32 idCount = U32(m_idToAnimationResource.getSize());
+	ANKI_SERIALIZE(idCount, 1);
+	if(serializer.isInReadMode())
+	{
+		for(U32 i = 0; i < idCount; ++i)
+		{
+			AnimationResourcePtr rsrc;
+			ANKI_SERIALIZE(rsrc, 1);
+			U32 id;
+			ANKI_SERIALIZE(id, 1);
+			m_idToAnimationResource.emplace(id, std::make_pair(rsrc, id));
+		}
+	}
+	else
+	{
+		auto it = m_idToAnimationResource.getBegin();
+		for(; it != m_idToAnimationResource.getEnd(); ++it)
+		{
+			AnimationResourcePtr rsrc = it->first;
+			ANKI_SERIALIZE(rsrc, 1);
+			U32 id = it->second;
+			ANKI_SERIALIZE(id, 1);
+		}
+	}
+
 	for(Track& track : m_tracks)
 	{
-		ANKI_SERIALIZE(track.m_anim, 1);
-		ANKI_SERIALIZE(track.m_absoluteStartTime, 1);
-		ANKI_SERIALIZE(track.m_relativeTimePassed, 1);
-		ANKI_SERIALIZE(track.m_blendInTime, 1);
-		ANKI_SERIALIZE(track.m_blendOutTime, 1);
-		ANKI_SERIALIZE(track.m_repeatTimes, 1);
-		ANKI_SERIALIZE(track.m_animationSpeedScale, 1);
+		ANKI_SERIALIZE(track.m_crntAnimationIdx, 1);
+		ANKI_SERIALIZE(track.m_lastAnimationIdx, 1);
+
+		for(Animation& anim : track.m_anims)
+		{
+			ANKI_SERIALIZE(anim.m_resource, 1);
+			ANKI_SERIALIZE(anim.m_blendInTime, 1);
+			ANKI_SERIALIZE(anim.m_start, 1);
+			ANKI_SERIALIZE(anim.m_animId, 1);
+			ANKI_SERIALIZE(anim.m_state.m_repeatTimes, 1);
+			ANKI_SERIALIZE(anim.m_state.m_animationSpeedScale, 1);
+			ANKI_SERIALIZE(anim.m_state.m_animationTime, 1);
+			ANKI_SERIALIZE(anim.m_state.m_animationTimeBias, 1);
+		}
 	}
 
 	return Error::kNone;
+}
+
+SkinComponentAnimationState& SkinComponent::getAnimationStateInternal(U32 trackIdx, U32 animId)
+{
+	if(!ANKI_EXPECT(trackIdx < kMaxAnimationTracks))
+	{
+		trackIdx = 0;
+	}
+
+	Track& track = m_tracks[trackIdx];
+	SkinComponentAnimationState* state = nullptr;
+	for(U32 i = track.m_crntAnimationIdx; i <= track.m_lastAnimationIdx; ++i)
+	{
+		Animation& anim = track.m_anims[i % kMaxAnimationsPerTrack];
+		if(anim.m_resource && anim.m_animId == animId)
+		{
+			state = &anim.m_state;
+			break;
+		}
+	}
+
+	if(!state)
+	{
+		ANKI_SCENE_LOGE("Couldn't find animation with ID: %u", animId);
+		state = &m_dummyState;
+	}
+
+	return *state;
 }
 
 } // end namespace anki

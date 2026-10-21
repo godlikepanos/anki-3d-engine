@@ -555,13 +555,14 @@ def static_method(class_name : str, meth_el, overload_idx):
     wglue("")
 
 
-def constructor(constr_el, class_name, constructor_idx):
+def constructor(constr_el, class_name, constructor_idx, is_overloaded):
     """ Handle constructor """
 
     args_el = constr_el.find("args")
 
     wglue("// Wrap constructor for %s" % (class_name))
-    args_signature(args_el, "k%sCtor%dArgsSignature" % (class_name, constructor_idx), None) # Pass None, it's essentially a static function
+    if is_overloaded:
+        args_signature(args_el, "k%sCtor%dArgsSignature" % (class_name, constructor_idx), None) # Pass None, it's essentially a static function
     wglue("static inline int wrap%sCtor%d(lua_State* l)" % (class_name, constructor_idx))
     wglue("{")
     ident(1)
@@ -594,15 +595,17 @@ def constructor(constr_el, class_name, constructor_idx):
 def constructors(constructors_el, class_name):
     """ Wrap all constructors """
 
-    ctor_count = 0
-
-    # Create the pre-wrap C functions
-    for constructor_el in constructors_el.iter("constructor"):
-        constructor(constructor_el, class_name, ctor_count)
-        ctor_count += 1
-
+    constructor_els = constructors_el.findall("constructor")
+    ctor_count = len(constructor_els)
     if ctor_count == 0:
         raise Exception("Found no <constructor>")
+    is_overloaded = ctor_count > 1
+
+    # Create the pre-wrap C functions
+    ctor_count = 0
+    for constructor_el in constructors_el.iter("constructor"):
+        constructor(constructor_el, class_name, ctor_count, is_overloaded)
+        ctor_count += 1
 
     # Create the landing function. If there are signature collisions the C++ compiler will fail
     wglue("// Wrap constructors for %s." % class_name)

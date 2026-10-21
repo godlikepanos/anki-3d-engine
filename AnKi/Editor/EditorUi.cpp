@@ -434,6 +434,7 @@ void EditorUi::mainMenu()
 				options.m_fogDensityVolumes = iconToggle(SceneComponentType::kFogDensity, "Fog density volumes", options.m_fogDensityVolumes);
 				options.m_scripts = iconToggle(SceneComponentType::kScript, "Scripts", options.m_scripts);
 				options.m_triggers = iconToggle(SceneComponentType::kTrigger, "Triggers", options.m_triggers);
+				options.m_skeletons = iconToggle(SceneComponentType::kSkin, "Skeletons", options.m_skeletons);
 
 				ImGui::NewLine();
 				ImGui::SeparatorText("Misc");

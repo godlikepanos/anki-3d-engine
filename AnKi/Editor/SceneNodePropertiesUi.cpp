@@ -658,6 +658,18 @@ void SceneNodePropertiesUi::skinComponent(SkinComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
+	// Play or stop button
+	{
+		const Bool playing = comp.getPlayOnEditor();
+
+		ImGui::SameLine();
+		if(ImGui::Button((playing) ? ICON_MDI_STOP : ICON_MDI_PLAY))
+		{
+			comp.setPlayOnEditor(!playing);
+		}
+		ImGui::SetItemTooltip("Play/Stop animations");
+	}
+
 	drawLocateResourceButton((comp.hasSkeletonResource()) ? comp.getSkeletonFilename() : "");
 
 	// Filename

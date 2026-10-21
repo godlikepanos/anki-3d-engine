@@ -88,6 +88,11 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kBox"/>
 			<enumerant name="kCount"/>
 		</enum>
+
+		<enum name="AnimationStart">
+			<enumerant name="kNow"/>
+			<enumerant name="kQueued"/>
+		</enum>
 		<enum name="AnimationWrapMode">
 			<enumerant name="kOnce"/>
 			<enumerant name="kLoop"/>
@@ -119,6 +124,15 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<return>SceneNode*</return>
 				</method>
 			</methods>
+		</class>
+
+		<class name="SkinComponentAnimationState">
+			<vars>
+				<var name="m_animationTime">F64</var>
+				<var name="m_animationTimeBias">F64</var>
+				<var name="m_animationSpeedScale">F32</var>
+				<var name="m_repeatTimes">F32</var>
+			</vars>
 		</class>
 
 		<!-- Components -->
@@ -536,6 +550,33 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>CString</arg>
 					</args>
 					<return>SkinComponent&amp;</return>
+				</method>
+				<method name="registerAnimation">
+					<args>
+						<arg>U32</arg>
+						<arg>CString</arg>
+					</args>
+				</method>
+				<method name="unregisterAnimation">
+					<args>
+						<arg>U32</arg>
+					</args>
+				</method>
+				<method name="playAnimation">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+						<arg>F64</arg>
+						<arg>AnimationStart</arg>
+					</args>
+					<return>SkinComponentAnimationState&amp;</return>
+				</method>
+				<method name="getAnimationState">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+					</args>
+					<return>SkinComponentAnimationState&amp;</return>
 				</method>
 			</methods>
 		</class>
