@@ -1286,21 +1286,21 @@ void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
 		{
 			if(ImGui::Button(ICON_MDI_PLAY))
 			{
-				comp.setEditorAnimationState(i, AnimationState::kPlaying);
+				comp.setEditorAnimationPlayState(i, AnimationPlayState::kPlaying);
 			}
 			ImGui::SetItemTooltip("Play");
 			ImGui::SameLine();
 
 			if(ImGui::Button(ICON_MDI_PAUSE))
 			{
-				comp.setEditorAnimationState(i, AnimationState::kPaused);
+				comp.setEditorAnimationPlayState(i, AnimationPlayState::kPaused);
 			}
 			ImGui::SetItemTooltip("Pause");
 			ImGui::SameLine();
 
 			if(ImGui::Button(ICON_MDI_STOP))
 			{
-				comp.setEditorAnimationState(i, AnimationState::kStopped);
+				comp.setEditorAnimationPlayState(i, AnimationPlayState::kStopped);
 			}
 			ImGui::SetItemTooltip("Stop");
 			ImGui::SameLine();
@@ -1429,14 +1429,14 @@ void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
 		}
 
 		// State
-		if(ImGui::BeginCombo("State", kAnimationStateNames[comp.getAnimationState(i)]))
+		if(ImGui::BeginCombo("State", kAnimationPlayStateNames[comp.getAnimationPlayState(i)]))
 		{
-			for(AnimationState state : EnumIterable<AnimationState>())
+			for(AnimationPlayState state : EnumIterable<AnimationPlayState>())
 			{
-				const Bool selected = state == comp.getAnimationState(i);
-				if(ImGui::Selectable(kAnimationStateNames[state], selected))
+				const Bool selected = state == comp.getAnimationPlayState(i);
+				if(ImGui::Selectable(kAnimationPlayStateNames[state], selected))
 				{
-					comp.setAnimationState(i, state);
+					comp.setAnimationPlayState(i, state);
 				}
 
 				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)

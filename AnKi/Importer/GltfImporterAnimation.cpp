@@ -370,7 +370,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		ANKI_CHECK(m_sceneFile.writeText("if node ~= nil then\n"));
 		ANKI_CHECK(m_sceneFile.writeText("\tcomp = node:newAnimationComponent()\n"));
 		ANKI_CHECK(m_sceneFile.writeTextf("\tcomp:setAnimationFilename(0, \"%s%s\")\n", m_rpath.cstr(), animFname.cstr()));
-		ANKI_CHECK(m_sceneFile.writeText("\tcomp:setAnimationState(0, AnimationState.kPlaying)\n"));
+		ANKI_CHECK(m_sceneFile.writeText("\tcomp:setAnimationPlayState(0, AnimationPlayState.kPlaying)\n"));
 		ANKI_CHECK(m_sceneFile.writeText("end\n"));
 	}
 

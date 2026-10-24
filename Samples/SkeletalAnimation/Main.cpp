@@ -18,12 +18,15 @@ class MyApp : public SampleApp
 public:
 	using SampleApp::SampleApp;
 
+	Error userPreInit() final
+	{
+		ANKI_CHECK(SampleApp::userPreInit());
+		g_cvarCoreStartupScene = "Assets/Scene.lua";
+		return Error::kNone;
+	}
+
 	Error userPostInit() override
 	{
-		ScriptResourcePtr script;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
-		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
-
 		SkinComponent& skinc = SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>();
 		skinc.registerAnimation(DroidAnimation::kFloat, "Assets/float.001_ccb9eb33e30c8fa4.ankianim");
 		skinc.registerAnimation(DroidAnimation::kWave, "Assets/wave_6cf284ed471bff3b.ankianim");
@@ -39,7 +42,9 @@ public:
 		if(Input::getSingleton().getKey(KeyCode::kZ) == 1)
 		{
 			SkinComponent& skinc = SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>();
-			skinc.playAnimation(1, DroidAnimation::kWave, 0.5, AnimationStart::kNow).m_repeatTimes = 3.0f;
+			AnimationState& state = skinc.playAnimation(1, DroidAnimation::kWave, 0.5, AnimationStart::kNow);
+			skinc.getAnimationTrackState(1).m_blendInTime = skinc.getAnimationTrackState(1).m_blendOutTime = 0.6;
+			state.m_repeatTimes = 3.0f;
 		}
 
 		return SampleApp::userMainLoop(quit, elapsedTime);

@@ -144,28 +144,28 @@ void AnimationComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	Bool first = true;
 	for(Track& t : m_tracks)
 	{
-		AnimationState* pState = &t.m_state;
+		AnimationPlayState* pState = &t.m_state;
 #if ANKI_WITH_EDITOR
 		if(info.m_paused)
 		{
 			pState = &t.m_editorState;
 		}
 #endif
-		AnimationState& state = *pState;
+		AnimationPlayState& state = *pState;
 
-		if(!t.m_anim || state == AnimationState::kStopped)
+		if(!t.m_anim || state == AnimationPlayState::kStopped)
 		{
 			continue;
 		}
 
 		const Second animTime = t.m_anim->getStartingTime() + t.m_relativeTimePassed;
-		if(state == AnimationState::kPlaying)
+		if(state == AnimationPlayState::kPlaying)
 		{
 			t.m_relativeTimePassed += info.m_dt * Second(t.m_animationSpeedScale);
 
 			if(t.m_wrapMode == AnimationWrapMode::kOnce && t.m_relativeTimePassed >= t.m_anim->getDuration())
 			{
-				state = AnimationState::kStopped;
+				state = AnimationPlayState::kStopped;
 				t.m_relativeTimePassed = 0.0;
 			}
 		}
@@ -175,7 +175,7 @@ void AnimationComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		F32 scale = 1.0;
 		t.m_anim->interpolate(t.m_channel, animTime, pos, rot, scale);
 
-		if(t.m_blendMode == AnimationBlendMode::kBlend)
+		if(t.m_blendMode == AnimationBlendMode::kOverride)
 		{
 			// This is an online (incremental) weighted mean
 

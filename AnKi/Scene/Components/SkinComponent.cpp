@@ -70,7 +70,7 @@ CString SkinComponent::getSkeletonFilename() const
 	return (ANKI_EXPECT(!!m_resource)) ? m_resource->getFilename() : "*Error*";
 }
 
-SkinComponentAnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, Second blendInTime, AnimationStart animStart)
+AnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, Second blendInTime, AnimationStart animStart)
 {
 	auto rsrcIt = m_idToAnimationResource.find(animId);
 	if(rsrcIt == m_idToAnimationResource.getEnd())
@@ -130,7 +130,8 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Cleanup
 		m_boneTrfs[0].destroy();
 		m_boneTrfs[1].destroy();
-		m_animationTrfs.destroy();
+		m_poseTrfs.destroy();
+		m_trackPoseTrfs.destroy();
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneBoneTransforms);
 
 		m_boneTransformsReallocatedThisFrame = true;
@@ -153,7 +154,8 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const U32 boneCount = m_resource->getBones().getSize();
 		m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
 		m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
-		m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
+		m_poseTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
+		m_trackPoseTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
 		m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
 
@@ -171,10 +173,17 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	Vec4 minExtend(kMaxF32, kMaxF32, kMaxF32, 0.0f);
 	Vec4 maxExtend(kMinF32, kMinF32, kMinF32, 0.0f);
 
-	BitSet<128> bonesAnimated(false);
-
-	for(Track& track : m_tracks)
+	for(U32 boneIdx = 0; boneIdx < m_poseTrfs.getSize(); ++boneIdx)
 	{
+		m_poseTrfs[boneIdx].m_translation = m_resource->getBones()[boneIdx].getTransform().getTranslationPart();
+		m_poseTrfs[boneIdx].m_rotation = Quat(m_resource->getBones()[boneIdx].getTransform().getRotationPart());
+		const Vec3 scale = m_resource->getBones()[boneIdx].getTransform().getRotationPart().extractScale();
+		m_poseTrfs[boneIdx].m_scale = max(max(scale.x, scale.y), scale.z); // Not ideal but we don't support non-uniform scale in skeletons
+	}
+
+	for(U32 trackIdx = 0; trackIdx < kMaxAnimationTracks; ++trackIdx)
+	{
+		Track& track = m_tracks[trackIdx];
 		ANKI_ASSERT(track.m_crntAnimationIdx <= track.m_lastAnimationIdx);
 		BitSet<128> trackBonesAnimated(false);
 
@@ -183,6 +192,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		Animation* secondAnim = nullptr;
 		F32 blendInFactor = 1.0f;
 		Bool clampFirstAnimAtTheEnd = false;
+		F32 trackBlendFactor = 0.0f;
 		for(U32 i = track.m_crntAnimationIdx; i <= track.m_lastAnimationIdx; ++i)
 		{
 			Animation& crntAnim = track.m_anims[i % kMaxAnimationsPerTrack];
@@ -191,7 +201,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(!crntAnim.m_resource)
 			{
 				// No animations, break the loop
-				ANKI_ASSERT(nextAnim == nullptr);
+				ANKI_ASSERT(nextAnim == nullptr && track.m_crntAnimationIdx == track.m_lastAnimationIdx);
 				break;
 			}
 
@@ -263,11 +273,23 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			secondAnim = nextAnim;
 			clampFirstAnimAtTheEnd = crntAnimFinished;
 
+			// Compute the track blend weight
+			trackBlendFactor =
+				(track.m_state.m_blendInTime > 0.0) ? min(1.0f, F32(crntAnim.m_state.m_animationTime / track.m_state.m_blendInTime)) : 1.0f;
+
+			const Animation& fadeAnim = (nextAnim) ? *nextAnim : crntAnim;
+			const Second clipDuration = fadeAnim.m_resource->getDuration();
+			const Second animDuration = (fadeAnim.m_state.m_repeatTimes < 0.0) ? kMaxSecond : fadeAnim.m_state.m_repeatTimes * clipDuration;
+			const Second remainingTime = animDuration - fadeAnim.m_state.m_animationTime;
+			const F32 blendOutFactor = min(1.0f, F32(remainingTime / track.m_state.m_blendOutTime));
+
+			trackBlendFactor *= blendOutFactor;
+
 			break;
 		}
 		ANKI_ASSERT(track.m_crntAnimationIdx <= track.m_lastAnimationIdx);
 
-		// Interpolate and blend
+		// Interpolate and blend animations
 		Array<Animation*, 2> anims = {firstAnim, secondAnim};
 		for(Animation* panim : anims)
 		{
@@ -311,7 +333,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				// Blend with next animation
 				if(blendInFactor < 1.0f && panim == secondAnim && trackBonesAnimated.get(boneIdx))
 				{
-					const Trf& prevTrf = m_animationTrfs[boneIdx];
+					const Trf& prevTrf = m_trackPoseTrfs[boneIdx];
 
 					position = linearInterpolate(prevTrf.m_translation, position, blendInFactor);
 					rotation = prevTrf.m_rotation.slerp(rotation, blendInFactor);
@@ -320,13 +342,72 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 				// Store
 				trackBonesAnimated.set(boneIdx);
-				bonesAnimated.set(boneIdx);
-				m_animationTrfs[boneIdx] = {position, rotation, scale};
+				m_trackPoseTrfs[boneIdx] = {position, rotation, scale};
 			}
 
 			animationRun = true;
 		}
-	}
+
+		// Now blend with the previous track
+		if(trackBlendFactor == 0.0f)
+		{
+			// Nothing to do
+		}
+		else if(trackBlendFactor >= 1.0f && track.m_state.m_blendMode == AnimationBlendMode::kOverride)
+		{
+			// No need to blend
+			for(U32 i = 0; i < m_poseTrfs.getSize(); ++i)
+			{
+				if(trackBonesAnimated.get(i))
+				{
+					m_poseTrfs[i] = m_trackPoseTrfs[i];
+				}
+			}
+		}
+		else
+		{
+			if(track.m_state.m_blendMode == AnimationBlendMode::kOverride)
+			{
+				for(U32 i = 0; i < m_poseTrfs.getSize(); ++i)
+				{
+					if(!trackBonesAnimated.get(i))
+					{
+						continue;
+					}
+
+					Trf& crnt = m_trackPoseTrfs[i];
+					Trf& prev = m_poseTrfs[i];
+
+					prev.m_translation = linearInterpolate(prev.m_translation, crnt.m_translation, trackBlendFactor);
+					prev.m_rotation = prev.m_rotation.slerp(crnt.m_rotation, trackBlendFactor);
+					prev.m_scale = linearInterpolate(prev.m_scale, crnt.m_scale, trackBlendFactor);
+				}
+			}
+			else
+			{
+				for(U32 i = 0; i < m_poseTrfs.getSize(); ++i)
+				{
+					if(!trackBonesAnimated.get(i))
+					{
+						continue;
+					}
+
+					Trf& crnt = m_trackPoseTrfs[i];
+					Trf& prev = m_poseTrfs[i];
+
+					// The additive animation is a delta from the rest pose
+					const Mat3x4& restTrf = m_resource->getBones()[i].getTransform();
+					const Quat restRotation(restTrf.getRotationPart());
+					const Vec3 restScale3 = restTrf.getRotationPart().extractScale();
+					const F32 restScale = max(max(restScale3.x, restScale3.y), restScale3.z);
+
+					prev.m_translation += (crnt.m_translation - restTrf.getTranslationPart()) * trackBlendFactor;
+					prev.m_rotation = prev.m_rotation * Quat::getIdentity().slerp(restRotation.invert() * crnt.m_rotation, trackBlendFactor);
+					prev.m_scale *= linearInterpolate(1.0f, crnt.m_scale / restScale, trackBlendFactor);
+				}
+			}
+		}
+	} // For all tracks
 
 	if(updatedLastFrame || resourceDirty || animationRun)
 	{
@@ -334,7 +415,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_crntBoneTrfs = m_crntBoneTrfs ^ 1;
 
 		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_resource->getRootBone(), Mat3x4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+		visitBones(m_resource->getRootBone(), Mat3x4::getIdentity(), minExtend, maxExtend);
 
 		const Vec4 e(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - e);
@@ -360,19 +441,12 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_updatedLastFrame = resourceDirty || animationRun;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)
+void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, Vec4& minExtend, Vec4& maxExtend)
 {
 	Mat3x4 outMat;
 
-	if(bonesAnimated.get(bone.getIndex()))
-	{
-		const Trf& t = m_animationTrfs[bone.getIndex()];
-		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz, Mat3(t.m_rotation), Vec3(t.m_scale)));
-	}
-	else
-	{
-		outMat = parentTrf.combineTransformations(bone.getTransform());
-	}
+	const Trf& t = m_poseTrfs[bone.getIndex()];
+	outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz, Mat3(t.m_rotation), Vec3(t.m_scale)));
 
 	m_boneTrfs[m_crntBoneTrfs][bone.getIndex()] = outMat.combineTransformations(bone.getVertexTransform());
 
@@ -383,7 +457,7 @@ void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const 
 
 	for(const Bone* child : bone.getChildren())
 	{
-		visitBones(*child, outMat, bonesAnimated, minExtend, maxExtend);
+		visitBones(*child, outMat, minExtend, maxExtend);
 	}
 }
 
@@ -420,6 +494,9 @@ Error SkinComponent::serialize(SceneSerializer& serializer)
 	{
 		ANKI_SERIALIZE(track.m_crntAnimationIdx, 1);
 		ANKI_SERIALIZE(track.m_lastAnimationIdx, 1);
+		ANKI_SERIALIZE(track.m_state.m_blendMode, 1);
+		ANKI_SERIALIZE(track.m_state.m_blendInTime, 1);
+		ANKI_SERIALIZE(track.m_state.m_blendOutTime, 1);
 
 		for(Animation& anim : track.m_anims)
 		{
@@ -437,7 +514,7 @@ Error SkinComponent::serialize(SceneSerializer& serializer)
 	return Error::kNone;
 }
 
-SkinComponentAnimationState& SkinComponent::getAnimationStateInternal(U32 trackIdx, U32 animId)
+AnimationState& SkinComponent::getAnimationStateInternal(U32 trackIdx, U32 animId)
 {
 	if(!ANKI_EXPECT(trackIdx < kMaxAnimationTracks))
 	{
@@ -445,7 +522,7 @@ SkinComponentAnimationState& SkinComponent::getAnimationStateInternal(U32 trackI
 	}
 
 	Track& track = m_tracks[trackIdx];
-	SkinComponentAnimationState* state = nullptr;
+	AnimationState* state = nullptr;
 	for(U32 i = track.m_crntAnimationIdx; i <= track.m_lastAnimationIdx; ++i)
 	{
 		Animation& anim = track.m_anims[i % kMaxAnimationsPerTrack];

@@ -15,33 +15,6 @@
 
 namespace anki {
 
-enum class AnimationStart
-{
-	kNow, // Discard the queued animations of the track and blend from the current one
-	kQueued, // Play after the queued animations of the track
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AnimationStart)
-
-class SkinComponentAnimationState
-{
-public:
-	// The time that has passed since the animation started. Try not to write to it. It starts at 0 and ends at
-	// m_repeatTimes*animationResourceDuration
-	Second m_animationTime = 0.0;
-
-	// Time added to the time of the animation interpolation
-	Second m_animationTimeBias = 0.0;
-
-	// For example a value of 2.0 will play the animation in double speed
-	F32 m_animationSpeedScale = 1.0f;
-
-	// Negative means infinite
-	F32 m_repeatTimes = 1.0f;
-};
-
 template<typename T>
 concept IsAnimationId = (std::is_integral_v<T> || std::is_enum_v<T>)&&sizeof(T) <= sizeof(U32);
 
@@ -85,22 +58,36 @@ public:
 	// blendInTime: The time from when the animation starts until it fully replaces the previous animation in the track
 	// Returns the state of the new animation. Don't keep it around: when the animation finishes its slot gets reused by other animations
 	template<typename T>
-	SkinComponentAnimationState& playAnimation(U32 track, T animId, Second blendInTime, AnimationStart animStart) requires(IsAnimationId<T>)
+	AnimationState& playAnimation(U32 track, T animId, Second blendInTime, AnimationStart animStart) requires(IsAnimationId<T>)
 	{
 		return playAnimationInternal(track, U32(animId), blendInTime, animStart);
 	}
 
 	// Get the animation state of the first queued animation with the given ID
 	template<typename T>
-	SkinComponentAnimationState& getAnimationState(U32 track, T animId) requires(IsAnimationId<T>)
+	AnimationState& getAnimationState(U32 track, T animId) requires(IsAnimationId<T>)
 	{
 		return getAnimationStateInternal(track, U32(animId));
 	}
 
 	template<typename T>
-	const SkinComponentAnimationState& getAnimationState(U32 track, T animId) const requires(IsAnimationId<T>)
+	const AnimationState& getAnimationState(U32 track, T animId) const requires(IsAnimationId<T>)
 	{
 		return const_cast<SkinComponent*>(this)->getAnimationState(track, animId);
+	}
+
+	AnimationTrackState& getAnimationTrackState(U32 track)
+	{
+		if(!ANKI_EXPECT(track < kMaxAnimationTracks))
+		{
+			track = kMaxAnimationTracks - 1;
+		}
+		return m_tracks[track].m_state;
+	}
+
+	const AnimationTrackState& getAnimationTrackState(U32 track) const
+	{
+		return const_cast<SkinComponent*>(this)->getAnimationTrackState(track);
 	}
 
 	Bool isValid() const
@@ -170,13 +157,16 @@ private:
 		AnimationStart m_start = AnimationStart::kNow;
 		U32 m_animId = kMaxU32;
 
-		SkinComponentAnimationState m_state;
+		AnimationState m_state;
 	};
 
 	class Track
 	{
 	public:
 		Array<Animation, kMaxAnimationsPerTrack> m_anims;
+
+		AnimationTrackState m_state;
+
 		U32 m_crntAnimationIdx = 0; // The animation that plays now
 		U32 m_lastAnimationIdx = 0; // The last queued animation
 	};
@@ -192,13 +182,14 @@ private:
 	SceneNode* m_node = nullptr;
 	SkeletonResourcePtr m_resource;
 	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
-	SceneDynamicArray<Trf> m_animationTrfs;
+	SceneDynamicArray<Trf> m_trackPoseTrfs; // Scratch pose of a single track
+	SceneDynamicArray<Trf> m_poseTrfs; // The final pose after all tracks are combined
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Array<Track, kMaxAnimationTracks> m_tracks;
 
 	SceneHashMap<U32, std::pair<AnimationResourcePtr, U32>> m_idToAnimationResource;
 
-	SkinComponentAnimationState m_dummyState;
+	AnimationState m_dummyState;
 
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
@@ -216,15 +207,15 @@ private:
 
 	Error serialize(SceneSerializer& serializer) override;
 
-	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend);
+	void visitBones(const Bone& bone, const Mat3x4& parentTrf, Vec4& minExtend, Vec4& maxExtend);
 
 	void registerAnimationInternal(U32 animId, CString animationFilepath);
 
 	void unregisterAnimationInternal(U32 animId);
 
-	SkinComponentAnimationState& playAnimationInternal(U32 track, U32 animId, Second blendInTime, AnimationStart animStart);
+	AnimationState& playAnimationInternal(U32 track, U32 animId, Second blendInTime, AnimationStart animStart);
 
-	SkinComponentAnimationState& getAnimationStateInternal(U32 trackIdx, U32 animId);
+	AnimationState& getAnimationStateInternal(U32 trackIdx, U32 animId);
 };
 
 } // end namespace anki

@@ -21,29 +21,6 @@ enum class AnimationWrapMode : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AnimationWrapMode)
 inline constexpr Array<const Char*, U32(AnimationWrapMode::kCount)> kAnimationWrapModeNames = {"Once", "Loop"};
 
-enum class AnimationBlendMode : U8
-{
-	kBlend,
-	kAdditive,
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AnimationBlendMode)
-inline constexpr Array<const Char*, U32(AnimationBlendMode::kCount)> kAnimationBlendModeNames = {"Blend", "Additive"};
-
-enum class AnimationState : U8
-{
-	kStopped, // The track is like it doesn't exist
-	kPaused, // The track's animation is frozen but it's used
-	kPlaying, // Self explanatory
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AnimationState)
-inline constexpr Array<const Char*, U32(AnimationState::kCount)> kAnimationStateNames = {"Stopped", "Paused", "Playing"};
-
 // Animation component. Plays animations that affect the attached node.
 class AnimationComponent final : public SceneComponent
 {
@@ -129,12 +106,12 @@ public:
 
 	void resetTrack(U32 track);
 
-	AnimationComponent& setAnimationState(U32 track, AnimationState state)
+	AnimationComponent& setAnimationPlayState(U32 track, AnimationPlayState state)
 	{
 		if(ANKI_EXPECT(track < kMaxAnimationTracks) && m_tracks[track].m_state != state)
 		{
 			m_tracks[track].m_state = state;
-			if(state == AnimationState::kStopped)
+			if(state == AnimationPlayState::kStopped)
 			{
 				m_tracks[track].m_relativeTimePassed = 0.0;
 			}
@@ -142,18 +119,18 @@ public:
 		return *this;
 	}
 
-	AnimationState getAnimationState(U32 track) const
+	AnimationPlayState getAnimationPlayState(U32 track) const
 	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_state : AnimationState::kFirst;
+		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_state : AnimationPlayState::kFirst;
 	}
 
 #if ANKI_WITH_EDITOR
-	AnimationComponent& setEditorAnimationState(U32 track, AnimationState state)
+	AnimationComponent& setEditorAnimationPlayState(U32 track, AnimationPlayState state)
 	{
 		if(ANKI_EXPECT(track < kMaxAnimationTracks) && m_tracks[track].m_editorState != state)
 		{
 			m_tracks[track].m_editorState = state;
-			if(state == AnimationState::kStopped)
+			if(state == AnimationPlayState::kStopped)
 			{
 				m_tracks[track].m_relativeTimePassed = 0.0;
 			}
@@ -161,9 +138,9 @@ public:
 		return *this;
 	}
 
-	AnimationState getEditorAnimationState(U32 track) const
+	AnimationPlayState getEditorAnimationPlayState(U32 track) const
 	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_editorState : AnimationState::kFirst;
+		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_editorState : AnimationPlayState::kFirst;
 	}
 #endif
 
@@ -181,12 +158,12 @@ private:
 		U32 m_channel = 0;
 		F32 m_animationSpeedScale = 1.0f;
 		F32 m_blendWeight = 1.0f;
-		AnimationState m_state = AnimationState::kStopped;
+		AnimationPlayState m_state = AnimationPlayState::kStopped;
 #if ANKI_WITH_EDITOR
-		AnimationState m_editorState = AnimationState::kStopped;
+		AnimationPlayState m_editorState = AnimationPlayState::kStopped;
 #endif
 		AnimationWrapMode m_wrapMode = AnimationWrapMode::kLoop;
-		AnimationBlendMode m_blendMode = AnimationBlendMode::kBlend;
+		AnimationBlendMode m_blendMode = AnimationBlendMode::kOverride;
 	};
 
 	Array<Track, kMaxAnimationTracks> m_tracks;

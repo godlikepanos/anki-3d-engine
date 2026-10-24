@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Scene/Common.h>
+#include <AnKi/Scene/Components/Common.h>
 #include <AnKi/Scene/SceneSerializer.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/BitMask.h>

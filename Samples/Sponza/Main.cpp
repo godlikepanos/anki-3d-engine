@@ -31,7 +31,7 @@ public:
 			SceneNode& knight = SceneGraph::getSingleton().findSceneNode("MESH_kinght.001");
 			SkinComponent& skinc = knight.getFirstComponentOfType<SkinComponent>();
 			skinc.registerAnimation(0, "Assets/Armature_mixamo.com_Layer0_2ff0b9b4a30af3d0.ankianim");
-			SkinComponentAnimationState& state = skinc.playAnimation(0, 0, 0.0, AnimationStart::kNow);
+			AnimationState& state = skinc.playAnimation(0, 0, 0.0, AnimationStart::kNow);
 			state.m_repeatTimes = -1.0f;
 			state.m_animationSpeedScale = 2.1f;
 		}

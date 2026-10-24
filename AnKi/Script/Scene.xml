@@ -99,11 +99,11 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kCount"/>
 		</enum>
 		<enum name="AnimationBlendMode">
-			<enumerant name="kBlend"/>
+			<enumerant name="kOverride"/>
 			<enumerant name="kAdditive"/>
 			<enumerant name="kCount"/>
 		</enum>
-		<enum name="AnimationState">
+		<enum name="AnimationPlayState">
 			<enumerant name="kStopped"/>
 			<enumerant name="kPaused"/>
 			<enumerant name="kPlaying"/>
@@ -126,12 +126,20 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 
-		<class name="SkinComponentAnimationState">
+		<class name="AnimationState">
 			<vars>
 				<var name="m_animationTime">F64</var>
 				<var name="m_animationTimeBias">F64</var>
 				<var name="m_animationSpeedScale">F32</var>
 				<var name="m_repeatTimes">F32</var>
+			</vars>
+		</class>
+
+		<class name="AnimationTrackState">
+			<vars>
+				<var name="m_blendMode">AnimationBlendMode</var>
+				<var name="m_blendInTime">F64</var>
+				<var name="m_blendOutTime">F64</var>
 			</vars>
 		</class>
 
@@ -569,14 +577,20 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>F64</arg>
 						<arg>AnimationStart</arg>
 					</args>
-					<return>SkinComponentAnimationState&amp;</return>
+					<return>AnimationState&amp;</return>
 				</method>
 				<method name="getAnimationState">
 					<args>
 						<arg>U32</arg>
 						<arg>U32</arg>
 					</args>
-					<return>SkinComponentAnimationState&amp;</return>
+					<return>AnimationState&amp;</return>
+				</method>
+				<method name="getAnimationTrackState">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationTrackState&amp;</return>
 				</method>
 			</methods>
 		</class>
@@ -672,18 +686,18 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>U32</arg>
 					</args>
 				</method>
-				<method name="setAnimationState">
+				<method name="setAnimationPlayState">
 					<args>
 						<arg>U32</arg>
-						<arg>AnimationState</arg>
+						<arg>AnimationPlayState</arg>
 					</args>
 					<return>AnimationComponent&amp;</return>
 				</method>
-				<method name="getAnimationState">
+				<method name="getAnimationPlayState">
 					<args>
 						<arg>U32</arg>
 					</args>
-					<return>AnimationState</return>
+					<return>AnimationPlayState</return>
 				</method>
 				<method name="isValid">
 					<return>Bool</return>

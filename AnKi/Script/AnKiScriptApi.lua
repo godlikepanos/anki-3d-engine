@@ -67,17 +67,17 @@ AnimationStart = {}
 AnimationWrapMode = {}
 
 ---@class AnimationBlendMode
----@field kBlend integer
+---@field kOverride integer
 ---@field kAdditive integer
 ---@field kCount integer
 AnimationBlendMode = {}
 
----@class AnimationState
+---@class AnimationPlayState
 ---@field kStopped integer
 ---@field kPaused integer
 ---@field kPlaying integer
 ---@field kCount integer
-AnimationState = {}
+AnimationPlayState = {}
 
 ---@class WeakArraySceneNodePtr
 WeakArraySceneNodePtr = {}
@@ -89,12 +89,18 @@ function WeakArraySceneNodePtr:getSize() end
 ---@return SceneNode
 function WeakArraySceneNodePtr:getAt(num) end
 
----@class SkinComponentAnimationState
+---@class AnimationState
 ---@field m_animationTime number
 ---@field m_animationTimeBias number
 ---@field m_animationSpeedScale number
 ---@field m_repeatTimes number
-SkinComponentAnimationState = {}
+AnimationState = {}
+
+---@class AnimationTrackState
+---@field m_blendMode integer
+---@field m_blendInTime number
+---@field m_blendOutTime number
+AnimationTrackState = {}
 
 ---@class SceneComponentUpdateInfo
 SceneComponentUpdateInfo = {}
@@ -416,13 +422,17 @@ function SkinComponent:unregisterAnimation(num) end
 ---@param num2 number
 ---@param num3 number
 ---@param animationStart integer
----@return SkinComponentAnimationState
+---@return AnimationState
 function SkinComponent:playAnimation(num, num2, num3, animationStart) end
 
 ---@param num number
 ---@param num2 number
----@return SkinComponentAnimationState
+---@return AnimationState
 function SkinComponent:getAnimationState(num, num2) end
+
+---@param num number
+---@return AnimationTrackState
+function SkinComponent:getAnimationTrackState(num) end
 
 ---@class AnimationComponent
 AnimationComponent = {}
@@ -489,13 +499,13 @@ function AnimationComponent:getAnimationSpeed(num) end
 function AnimationComponent:resetTrack(num) end
 
 ---@param num number
----@param animationState integer
+---@param animationPlayState integer
 ---@return AnimationComponent
-function AnimationComponent:setAnimationState(num, animationState) end
+function AnimationComponent:setAnimationPlayState(num, animationPlayState) end
 
 ---@param num number
 ---@return integer
-function AnimationComponent:getAnimationState(num) end
+function AnimationComponent:getAnimationPlayState(num) end
 
 ---@return boolean
 function AnimationComponent:isValid() end
