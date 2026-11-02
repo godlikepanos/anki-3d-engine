@@ -100,68 +100,68 @@ node = scene:tryFindSceneNode("ArmL2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("Body")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("ArmL1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("ArmR2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("Flap1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("PinceL")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("Flap2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("ArmR1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/float.001_ccb9eb33e30c8fa4.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("ArmR2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/wave_6cf284ed471bff3b.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end
 
 node = scene:tryFindSceneNode("ArmR1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
 	comp:setAnimationFilename(0, "Assets/wave_6cf284ed471bff3b.ankianim")
-	comp:setAnimationState(0, AnimationState.kPlaying)
+	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
 end

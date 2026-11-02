@@ -686,6 +686,15 @@ void SceneNodePropertiesUi::skinComponent(SkinComponent& comp)
 		{
 			comp.setSkeletonFilename(filenames[newSelectedFilename]);
 		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kSkeletonAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setSkeletonFilename(droppedFilename);
+			}
+		}
 	}
 }
 

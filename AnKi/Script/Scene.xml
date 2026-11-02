@@ -103,6 +103,13 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kAdditive"/>
 			<enumerant name="kCount"/>
 		</enum>
+		<enum name="RootMotionMode">
+			<enumerant name="kDisabled"/>
+			<enumerant name="kHorizontal"/>
+			<enumerant name="kHorizontalAndYaw"/>
+			<enumerant name="kLockRoot"/>
+			<enumerant name="kCount"/>
+		</enum>
 		<enum name="AnimationPlayState">
 			<enumerant name="kStopped"/>
 			<enumerant name="kPaused"/>
@@ -591,6 +598,20 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>U32</arg>
 					</args>
 					<return>AnimationTrackState&amp;</return>
+				</method>
+				<method name="getRootMotionDelta">
+					<return>Vec3</return>
+				</method>
+				<method name="getRootYawDelta">
+					<return>Mat3</return>
+				</method>
+				<method name="setRootMotionMode">
+					<args>
+						<arg>RootMotionMode</arg>
+					</args>
+				</method>
+				<method name="getRootMotionMode">
+					<return>RootMotionMode</return>
 				</method>
 			</methods>
 		</class>

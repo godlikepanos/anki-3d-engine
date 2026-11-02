@@ -438,6 +438,50 @@ static inline void wrapAnimationBlendMode(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo g_luaUserDataTypeInfoRootMotionMode = {1818930588880852474, "RootMotionMode", 0, nullptr, nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<RootMotionMode>()
+{
+	return g_luaUserDataTypeInfoRootMotionMode;
+}
+
+// Wrap enum RootMotionMode.
+static inline void wrapRootMotionMode(lua_State* l)
+{
+	lua_newtable(l);
+	lua_setglobal(l, g_luaUserDataTypeInfoRootMotionMode.m_typeName);
+	lua_getglobal(l, g_luaUserDataTypeInfoRootMotionMode.m_typeName);
+
+	lua_pushstring(l, "kDisabled");
+	ANKI_ASSERT(RootMotionMode(lua_Number(RootMotionMode::kDisabled)) == RootMotionMode::kDisabled && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(RootMotionMode::kDisabled));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kHorizontal");
+	ANKI_ASSERT(RootMotionMode(lua_Number(RootMotionMode::kHorizontal)) == RootMotionMode::kHorizontal && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(RootMotionMode::kHorizontal));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kHorizontalAndYaw");
+	ANKI_ASSERT(RootMotionMode(lua_Number(RootMotionMode::kHorizontalAndYaw)) == RootMotionMode::kHorizontalAndYaw
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(RootMotionMode::kHorizontalAndYaw));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kLockRoot");
+	ANKI_ASSERT(RootMotionMode(lua_Number(RootMotionMode::kLockRoot)) == RootMotionMode::kLockRoot && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(RootMotionMode::kLockRoot));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kCount");
+	ANKI_ASSERT(RootMotionMode(lua_Number(RootMotionMode::kCount)) == RootMotionMode::kCount && "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(RootMotionMode::kCount));
+	lua_settable(l, -3);
+
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo g_luaUserDataTypeInfoAnimationPlayState = {177416106068121601, "AnimationPlayState", 0, nullptr, nullptr};
 
 template<>
@@ -4170,6 +4214,145 @@ static inline int wrapSkinComponentgetAnimationTrackState(lua_State* l)
 	return 1;
 }
 
+// Wrap method SkinComponent::getRootMotionDelta
+static inline int wrapSkinComponentgetRootMotionDelta(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSkinComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SkinComponent* self = ud->getData<SkinComponent>();
+
+	// Call the method
+	Vec3 ret = self->getRootMotionDelta();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method SkinComponent::getRootYawDelta
+static inline int wrapSkinComponentgetRootYawDelta(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSkinComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SkinComponent* self = ud->getData<SkinComponent>();
+
+	// Call the method
+	Mat3 ret = self->getRootYawDelta();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method SkinComponent::setRootMotionMode
+static inline int wrapSkinComponentsetRootMotionMode(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSkinComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SkinComponent* self = ud->getData<SkinComponent>();
+
+	// Pop arguments
+	lua_Number arg0Tmp;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0Tmp)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+	const RootMotionMode arg0 = RootMotionMode(arg0Tmp);
+
+	// Call the method
+	self->setRootMotionMode(arg0);
+
+	return 0;
+}
+
+// Wrap method SkinComponent::getRootMotionMode
+static inline int wrapSkinComponentgetRootMotionMode(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSkinComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SkinComponent* self = ud->getData<SkinComponent>();
+
+	// Call the method
+	RootMotionMode ret = self->getRootMotionMode();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<RootMotionMode>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "RootMotionMode");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoRootMotionMode;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoRootMotionMode);
+	::new(ud->getData<RootMotionMode>()) RootMotionMode(std::move(ret));
+
+	return 1;
+}
+
 // Wrap class SkinComponent.
 static inline void wrapSkinComponent(lua_State* l)
 {
@@ -4180,6 +4363,10 @@ static inline void wrapSkinComponent(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "playAnimation", wrapSkinComponentplayAnimation);
 	LuaBinder::pushLuaCFuncMethod(l, "getAnimationState", wrapSkinComponentgetAnimationState);
 	LuaBinder::pushLuaCFuncMethod(l, "getAnimationTrackState", wrapSkinComponentgetAnimationTrackState);
+	LuaBinder::pushLuaCFuncMethod(l, "getRootMotionDelta", wrapSkinComponentgetRootMotionDelta);
+	LuaBinder::pushLuaCFuncMethod(l, "getRootYawDelta", wrapSkinComponentgetRootYawDelta);
+	LuaBinder::pushLuaCFuncMethod(l, "setRootMotionMode", wrapSkinComponentsetRootMotionMode);
+	LuaBinder::pushLuaCFuncMethod(l, "getRootMotionMode", wrapSkinComponentgetRootMotionMode);
 	lua_settop(l, 0);
 }
 
@@ -7383,6 +7570,7 @@ void wrapModuleScene(lua_State* l)
 	wrapAnimationStart(l);
 	wrapAnimationWrapMode(l);
 	wrapAnimationBlendMode(l);
+	wrapRootMotionMode(l);
 	wrapAnimationPlayState(l);
 }
 

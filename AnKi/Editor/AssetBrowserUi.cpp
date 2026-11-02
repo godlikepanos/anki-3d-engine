@@ -78,6 +78,7 @@ enum class AssetFileType : U32
 	kParticleEmitter,
 	kScene,
 	kAnimation,
+	kSkeleton,
 };
 
 class AssetBrowserUi::AssetFile
@@ -252,6 +253,10 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			else if(extension == "ankianim")
 			{
 				filetype = AssetFileType::kAnimation;
+			}
+			else if(extension == "ankiskel")
+			{
+				filetype = AssetFileType::kSkeleton;
 			}
 
 			if(filetype != AssetFileType::kNone)
@@ -675,6 +680,13 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 
 						ImGui::PopFont();
 						dragDropSource(file, kAnimationAssetDragDropPayload);
+					}
+					else if(file.m_type == AssetFileType::kSkeleton)
+					{
+						pushFontSize();
+						ImGui::Button(ICON_MDI_BONE);
+						ImGui::PopFont();
+						dragDropSource(file, kSkeletonAssetDragDropPayload);
 					}
 
 					ImGui::PopID();

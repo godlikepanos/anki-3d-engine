@@ -108,6 +108,9 @@ AnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, S
 	anim.m_start = animStart;
 	anim.m_state = {};
 	anim.m_animId = animId;
+	anim.m_interpolationAnimTime = kMaxSecond;
+	anim.m_rootPosition = Vec3(0.0f);
+	anim.m_rootRotation = Quat::getIdentity();
 
 	++track.m_lastAnimationIdx;
 
@@ -125,7 +128,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	m_boneTransformsReallocatedThisFrame = false;
 
-	if(m_resourceDirty || !isValid()) [[unlikely]]
+	if(m_resourceDirty || !m_resource) [[unlikely]]
 	{
 		// Cleanup
 		m_boneTrfs[0].destroy();
@@ -137,7 +140,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_boneTransformsReallocatedThisFrame = true;
 	}
 
-	if(!isValid()) [[unlikely]]
+	if(!m_resource) [[unlikely]]
 	{
 		return;
 	}
@@ -160,6 +163,17 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
 
 		m_boneTransformsReallocatedThisFrame = true;
+
+		// Cache some root bone info for root motion
+		const Bone& rootBone = m_resource->getRootBone();
+		m_rootBoneIdx = rootBone.getIndex();
+		m_rootRestPosition = rootBone.getTransform().getTranslationPart();
+		m_rootRestRot = Quat(rootBone.getTransform().getRotationPart());
+
+		// The mesh is Y-up and restTrf * vertexTrf maps mesh space to skeleton space
+		const Mat3 meshToSkeleton = rootBone.getTransform().combineTransformations(rootBone.getVertexTransform()).getRotationPart();
+		m_skeletonUp = (meshToSkeleton * Vec3(0.0f, 1.0f, 0.0f)).normalize();
+		m_skeletonForward = (meshToSkeleton * Vec3(0.0f, 0.0f, 1.0f)).normalize();
 	}
 
 #if ANKI_WITH_EDITOR
@@ -180,6 +194,9 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Vec3 scale = m_resource->getBones()[boneIdx].getTransform().getRotationPart().extractScale();
 		m_poseTrfs[boneIdx].m_scale = max(max(scale.x, scale.y), scale.z); // Not ideal but we don't support non-uniform scale in skeletons
 	}
+
+	m_rootMotionDelta = Vec3(0.0f);
+	m_rootYawDeltaAngle = 0.0f;
 
 	for(U32 trackIdx = 0; trackIdx < kMaxAnimationTracks; ++trackIdx)
 	{
@@ -291,6 +308,8 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Interpolate and blend animations
 		Array<Animation*, 2> anims = {firstAnim, secondAnim};
+		Array<Vec3, 2> rootMotionDeltas = {Vec3(0.0f), Vec3(0.0f)};
+		Array<Quat, 2> rootRotDeltas = {Quat::getIdentity(), Quat::getIdentity()};
 		for(Animation* panim : anims)
 		{
 			if(!panim)
@@ -313,6 +332,9 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			anim.m_state.m_animationTime += dt * Second(anim.m_state.m_animationSpeedScale);
 
 			// Iterate the animation channels and interpolate
+			Vec3 rootPosBeforeBlend = Vec3(0.0f);
+			Quat rootRotBeforeBlend = Quat::getIdentity();
+			U32 rootBoneChannel = kMaxU32;
 			for(U32 i = 0; i < anim.m_resource->getChannels().getSize(); ++i)
 			{
 				const AnimationChannel& channel = anim.m_resource->getChannels()[i];
@@ -330,6 +352,13 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				F32 scale;
 				anim.m_resource->interpolate(i, animTime, position, rotation, scale);
 
+				if(boneIdx == m_rootBoneIdx)
+				{
+					rootPosBeforeBlend = position;
+					rootRotBeforeBlend = rotation;
+					rootBoneChannel = i;
+				}
+
 				// Blend with next animation
 				if(blendInFactor < 1.0f && panim == secondAnim && trackBonesAnimated.get(boneIdx))
 				{
@@ -346,7 +375,81 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 
 			animationRun = true;
+
+			// Compute root motion
+			const Second prevInterpolationAnimTime = (anim.m_interpolationAnimTime != kMaxSecond) ? anim.m_interpolationAnimTime : animTime;
+			const Second clipDuration = anim.m_resource->getDuration();
+			const Second clipStart = anim.m_resource->getStartingTime();
+			const Vec3 rootPos = rootPosBeforeBlend;
+			const Quat rootRot = rootRotBeforeBlend;
+			const Vec3 prevRootPos = (anim.m_interpolationAnimTime != kMaxSecond) ? anim.m_rootPosition : rootPos;
+			const Quat prevRootRot = (anim.m_interpolationAnimTime != kMaxSecond) ? anim.m_rootRotation : rootRot;
+			anim.m_interpolationAnimTime = animTime;
+			anim.m_rootPosition = rootPos;
+			anim.m_rootRotation = rootRot;
+			Vec3 rootDelta = Vec3(0.0f);
+			Quat rootRotDelta = Quat::getIdentity();
+			if(rootBoneChannel != kMaxU32)
+			{
+				const Bool clamped = panim == firstAnim && clampFirstAnimAtTheEnd;
+
+				if(clamped || floor((animTime - clipStart) / clipDuration) == floor((prevInterpolationAnimTime - clipStart) / clipDuration))
+				{
+					// Clip hasn't looped, our job is easy
+					rootDelta = rootPos - prevRootPos;
+					rootRotDelta = rootRot * prevRootRot.conjugated(); // In skeleton space, not in the root bone's space
+				}
+				else
+				{
+					// Clip looped, we need to do more work
+
+					F32 scale;
+
+					Vec3 posInEndOfClip;
+					Quat rotInEndOfClip;
+					anim.m_resource->interpolate(rootBoneChannel, clipStart + clipDuration, posInEndOfClip, rotInEndOfClip, scale);
+
+					Vec3 posBeginningOfClip;
+					Quat rotBeginningOfClip;
+					anim.m_resource->interpolate(rootBoneChannel, anim.m_resource->getStartingTime(), posBeginningOfClip, rotBeginningOfClip, scale);
+
+					rootDelta = posInEndOfClip - prevRootPos;
+					rootDelta += rootPos - posBeginningOfClip;
+
+					// From prev to the end of the clip and then from the beginning of the clip to crnt
+					rootRotDelta = (rootRot * rotBeginningOfClip.conjugated()) * (rotInEndOfClip * prevRootRot.conjugated());
+				}
+
+				if(m_rootMotionMode == RootMotionMode::kHorizontalAndYaw)
+				{
+					// The yaw is removed from the pose and the node rotates instead so move the delta from the clip's space to the root's prev facing
+					Vec3 prevForward = Mat3(prevRootRot * m_rootRestRot.conjugated()) * m_skeletonForward;
+					prevForward -= m_skeletonUp * prevForward.dot(m_skeletonUp);
+					const F32 prevYaw = atan2(m_skeletonForward.cross(prevForward).dot(m_skeletonUp), m_skeletonForward.dot(prevForward));
+					rootDelta = Mat3(Axisang(-prevYaw, m_skeletonUp)) * rootDelta;
+				}
+			}
+			rootMotionDeltas[(panim == firstAnim) ? 0 : 1] = rootDelta;
+			rootRotDeltas[(panim == firstAnim) ? 0 : 1] = rootRotDelta;
+		} // for(Animation* panim : anims)
+
+		// Compute root motion deltas
+		if(secondAnim == nullptr)
+		{
+			rootMotionDeltas[1] = rootMotionDeltas[0];
+			rootRotDeltas[1] = rootRotDeltas[0];
 		}
+		Vec3 trackRootMotionDelta = linearInterpolate(rootMotionDeltas[0], rootMotionDeltas[1], blendInFactor);
+		// Project trackRootMotionDelta to the plane defined by m_skeletonUp
+		trackRootMotionDelta -= m_skeletonUp * trackRootMotionDelta.dot(m_skeletonUp);
+
+		Quat trackRootRotDelta = rootRotDeltas[0].slerp(rootRotDeltas[1], blendInFactor);
+		const Mat3 trackRootRotDeltaRot(trackRootRotDelta);
+		Vec3 trackRootForwardDir = trackRootRotDeltaRot * m_skeletonForward;
+		// Project trackRootForwardDir to the plane defined by m_skeletonUp
+		trackRootForwardDir -= m_skeletonUp * trackRootForwardDir.dot(m_skeletonUp);
+		trackRootForwardDir = trackRootForwardDir.normalize();
+		const F32 trackYawAngle = atan2(m_skeletonForward.cross(trackRootForwardDir).dot(m_skeletonUp), m_skeletonForward.dot(trackRootForwardDir));
 
 		// Now blend with the previous track
 		if(trackBlendFactor == 0.0f)
@@ -363,6 +466,12 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					m_poseTrfs[i] = m_trackPoseTrfs[i];
 				}
 			}
+
+			if(trackBonesAnimated.get(m_rootBoneIdx))
+			{
+				m_rootMotionDelta = trackRootMotionDelta;
+				m_rootYawDeltaAngle = trackYawAngle;
+			}
 		}
 		else
 		{
@@ -375,16 +484,24 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 						continue;
 					}
 
-					Trf& crnt = m_trackPoseTrfs[i];
+					const Trf& crnt = m_trackPoseTrfs[i];
 					Trf& prev = m_poseTrfs[i];
 
 					prev.m_translation = linearInterpolate(prev.m_translation, crnt.m_translation, trackBlendFactor);
 					prev.m_rotation = prev.m_rotation.slerp(crnt.m_rotation, trackBlendFactor);
 					prev.m_scale = linearInterpolate(prev.m_scale, crnt.m_scale, trackBlendFactor);
 				}
+
+				if(trackBonesAnimated.get(m_rootBoneIdx))
+				{
+					m_rootMotionDelta = m_rootMotionDelta.lerp(trackRootMotionDelta, trackBlendFactor);
+					m_rootYawDeltaAngle = linearInterpolate(m_rootYawDeltaAngle, trackYawAngle, trackBlendFactor);
+				}
 			}
 			else
 			{
+				ANKI_ASSERT(track.m_state.m_blendMode == AnimationBlendMode::kAdditive);
+
 				for(U32 i = 0; i < m_poseTrfs.getSize(); ++i)
 				{
 					if(!trackBonesAnimated.get(i))
@@ -392,7 +509,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 						continue;
 					}
 
-					Trf& crnt = m_trackPoseTrfs[i];
+					const Trf& crnt = m_trackPoseTrfs[i];
 					Trf& prev = m_poseTrfs[i];
 
 					// The additive animation is a delta from the rest pose
@@ -405,9 +522,45 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					prev.m_rotation = prev.m_rotation * Quat::getIdentity().slerp(restRotation.invert() * crnt.m_rotation, trackBlendFactor);
 					prev.m_scale *= linearInterpolate(1.0f, crnt.m_scale / restScale, trackBlendFactor);
 				}
+
+				if(trackBonesAnimated.get(m_rootBoneIdx))
+				{
+					m_rootMotionDelta += trackRootMotionDelta * trackBlendFactor;
+					m_rootYawDeltaAngle += trackYawAngle * trackBlendFactor;
+				}
 			}
 		}
 	} // For all tracks
+
+	// Adjust the pose if needed
+	if(animationRun)
+	{
+		if(m_rootMotionMode == RootMotionMode::kHorizontal)
+		{
+			// The horizontal motion of the root moves the node, keep only the vertical motion
+			m_poseTrfs[m_rootBoneIdx].m_translation =
+				m_rootRestPosition + m_skeletonUp * (m_poseTrfs[m_rootBoneIdx].m_translation - m_rootRestPosition).dot(m_skeletonUp);
+		}
+		else if(m_rootMotionMode == RootMotionMode::kHorizontalAndYaw)
+		{
+			// The horizontal motion of the root moves the node, keep only the vertical motion
+			m_poseTrfs[m_rootBoneIdx].m_translation =
+				m_rootRestPosition + m_skeletonUp * (m_poseTrfs[m_rootBoneIdx].m_translation - m_rootRestPosition).dot(m_skeletonUp);
+
+			// The node rotates with the yaw, remove only the yaw (relative to the rest pose) and keep the rest of the root's rotation
+			const Quat poseRot = m_poseTrfs[m_rootBoneIdx].m_rotation;
+			Vec3 poseForward = Mat3(poseRot * m_rootRestRot.conjugated()) * m_skeletonForward;
+			poseForward -= m_skeletonUp * poseForward.dot(m_skeletonUp);
+			const F32 poseYaw = atan2(m_skeletonForward.cross(poseForward).dot(m_skeletonUp), m_skeletonForward.dot(poseForward));
+			m_poseTrfs[m_rootBoneIdx].m_rotation = Quat(Axisang(-poseYaw, m_skeletonUp)) * poseRot;
+		}
+		else if(m_rootMotionMode == RootMotionMode::kLockRoot)
+		{
+			ANKI_ASSERT(m_rootMotionMode == RootMotionMode::kLockRoot);
+			m_poseTrfs[m_rootBoneIdx].m_translation = m_rootRestPosition;
+			m_poseTrfs[m_rootBoneIdx].m_rotation = m_rootRestRot;
+		}
+	}
 
 	if(updatedLastFrame || resourceDirty || animationRun)
 	{
@@ -510,6 +663,8 @@ Error SkinComponent::serialize(SceneSerializer& serializer)
 			ANKI_SERIALIZE(anim.m_state.m_animationTimeBias, 1);
 		}
 	}
+
+	ANKI_SERIALIZE(m_rootMotionMode, 1);
 
 	return Error::kNone;
 }

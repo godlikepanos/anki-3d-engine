@@ -15,6 +15,27 @@
 
 namespace anki {
 
+enum class RootMotionMode : U8
+{
+	// Pose untouched and root motion delta will be 0
+	kDisabled,
+
+	// Horizontal root bone motion removed and returned as root motion delta. Vertical works as kDisabled. Used in locomotion where we want the root
+	// motion delta to not consider Y axis
+	kHorizontal,
+
+	// Same as kHorizontal plus it computes the root rotation. Useful in locomotion that contains turns
+	kHorizontalAndYaw,
+
+	// Root motion stays locked in pose. Useful in animations that have root motion that we want to cancel. For example, a jump animation moves the
+	// character up. But we want the physics to drive the motion upwards, not the animation. In this case we can disable root motion
+	kLockRoot,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RootMotionMode)
+
 template<typename T>
 concept IsAnimationId = (std::is_integral_v<T> || std::is_enum_v<T>)&&sizeof(T) <= sizeof(U32);
 
@@ -90,9 +111,42 @@ public:
 		return const_cast<SkinComponent*>(this)->getAnimationTrackState(track);
 	}
 
+	// Returns the translation delta of the root bone since the last update
+	Vec3 getRootMotionDelta() const
+	{
+		return (m_rootMotionMode == RootMotionMode::kHorizontal || m_rootMotionMode == RootMotionMode::kHorizontalAndYaw) ? m_rootMotionDelta
+																														  : Vec3(0.0f);
+	}
+
+	// Returns the angle of the root bone
+	Mat3 getRootYawDelta() const
+	{
+		if(m_rootMotionMode == RootMotionMode::kHorizontalAndYaw)
+		{
+			return Mat3(Axisang(m_rootYawDeltaAngle, m_skeletonUp));
+		}
+		else
+		{
+			return Mat3::getIdentity();
+		}
+	}
+
+	void setRootMotionMode(RootMotionMode mode)
+	{
+		if(ANKI_EXPECT(mode < RootMotionMode::kCount))
+		{
+			m_rootMotionMode = mode;
+		}
+	}
+
+	RootMotionMode getRootMotionMode() const
+	{
+		return m_rootMotionMode;
+	}
+
 	Bool isValid() const
 	{
-		return m_resource.isCreated();
+		return m_resource.isCreated() && m_boneTrfs[0].getSize() > 0;
 	}
 
 	ANKI_INTERNAL ConstWeakArray<Mat3x4> getBoneTransforms() const
@@ -158,6 +212,10 @@ private:
 		U32 m_animId = kMaxU32;
 
 		AnimationState m_state;
+
+		Second m_interpolationAnimTime = kMaxSecond; // Tracking the time passed to AnimationResource::interpolate()
+		Vec3 m_rootPosition = Vec3(0.0f); // The position of the root bone
+		Quat m_rootRotation = Quat::getIdentity();
 	};
 
 	class Track
@@ -190,6 +248,16 @@ private:
 	SceneHashMap<U32, std::pair<AnimationResourcePtr, U32>> m_idToAnimationResource;
 
 	AnimationState m_dummyState;
+
+	// For root motion calculation:
+	U32 m_rootBoneIdx = kMaxU32; // Cache it
+	Vec3 m_skeletonUp = Vec3(0.0f, 1.0f, 0.0f); // The up direction in skeleton space
+	Vec3 m_skeletonForward = Vec3(0.0f, 0.0f, 1.0f);
+	Vec3 m_rootRestPosition = Vec3(0.0f); // Rest translation of the root bone in skeleton space
+	Quat m_rootRestRot = Quat::getIdentity();
+	Vec3 m_rootMotionDelta = Vec3(0.0f);
+	F32 m_rootYawDeltaAngle = 0.0f;
+	RootMotionMode m_rootMotionMode = RootMotionMode::kDisabled;
 
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;

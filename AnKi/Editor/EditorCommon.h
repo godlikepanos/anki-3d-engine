@@ -24,6 +24,7 @@ protected:
 	static constexpr const Char* kScriptAssetDragDropPayload = "AnKiScriptRsrcFilename";
 	static constexpr const Char* kParticleEmitterAssetDragDropPayload = "AnKiPartEmitterRsrcFilename";
 	static constexpr const Char* kAnimationAssetDragDropPayload = "AnKiAnimRsrcFilename";
+	static constexpr const Char* kSkeletonAssetDragDropPayload = "AnKiSkelRsrcFilename";
 
 	static constexpr Array<const Char*, U32(SceneComponentType::kCount)> kSceneComponentIcons = {
 #define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) ICON_MDI_##icon,

@@ -906,7 +906,7 @@ public:
 
 	ColumnVec getDiagonal() const
 	{
-		TMat& m = *this;
+		const TMat& m = *this;
 		ColumnVec diag;
 		for(U32 r = 0; r < kRowCount; ++r)
 		{

@@ -72,6 +72,14 @@ AnimationWrapMode = {}
 ---@field kCount integer
 AnimationBlendMode = {}
 
+---@class RootMotionMode
+---@field kDisabled integer
+---@field kHorizontal integer
+---@field kHorizontalAndYaw integer
+---@field kLockRoot integer
+---@field kCount integer
+RootMotionMode = {}
+
 ---@class AnimationPlayState
 ---@field kStopped integer
 ---@field kPaused integer
@@ -433,6 +441,18 @@ function SkinComponent:getAnimationState(num, num2) end
 ---@param num number
 ---@return AnimationTrackState
 function SkinComponent:getAnimationTrackState(num) end
+
+---@return Vec3
+function SkinComponent:getRootMotionDelta() end
+
+---@return Mat3
+function SkinComponent:getRootYawDelta() end
+
+---@param rootMotionMode integer
+function SkinComponent:setRootMotionMode(rootMotionMode) end
+
+---@return integer
+function SkinComponent:getRootMotionMode() end
 
 ---@class AnimationComponent
 AnimationComponent = {}
@@ -850,6 +870,8 @@ function Vec4:normalize() end
 function Vec4:dot(vec4) end
 
 ---@class Mat3
+---@operator mul(Mat3): Mat3
+---@operator mul(Vec3): Vec3
 Mat3 = {}
 
 ---@overload fun(num: number): Mat3
@@ -878,6 +900,85 @@ function Mat3:getAt(num, num2) end
 ---@param num2 number
 ---@param num3 number
 function Mat3:setAt(num, num2, num3) end
+
+---@param num number
+---@return Vec3
+function Mat3:getRow(num) end
+
+---@param num number
+---@param vec3 Vec3
+function Mat3:setRow(num, vec3) end
+
+---@param num number
+---@return Vec3
+function Mat3:getColumn(num) end
+
+---@param num number
+---@param vec3 Vec3
+function Mat3:setColumn(num, vec3) end
+
+---@return Vec3
+function Mat3:getDiagonal() end
+
+---@param vec3 Vec3
+function Mat3:setDiagonal(vec3) end
+
+---@return Vec3
+function Mat3:getXAxis() end
+
+---@return Vec3
+function Mat3:getYAxis() end
+
+---@return Vec3
+function Mat3:getZAxis() end
+
+---@param vec3 Vec3
+function Mat3:setXAxis(vec3) end
+
+---@param vec3 Vec3
+function Mat3:setYAxis(vec3) end
+
+---@param vec3 Vec3
+function Mat3:setZAxis(vec3) end
+
+---@param num number
+function Mat3:setRotationX(num) end
+
+---@param num number
+function Mat3:setRotationY(num) end
+
+---@param num number
+function Mat3:setRotationZ(num) end
+
+---@param num number
+function Mat3:rotateXAxis(num) end
+
+---@param num number
+function Mat3:rotateYAxis(num) end
+
+---@param num number
+function Mat3:rotateZAxis(num) end
+
+---@return Mat3
+function Mat3:reorthogonalize() end
+
+---@return Mat3
+function Mat3:transpose() end
+
+---@return Mat3
+function Mat3:invert() end
+
+---@return number
+function Mat3:getDet() end
+
+function Mat3:setIdentity() end
+
+---@return Mat3
+function Mat3.getIdentity() end
+
+---@param vec3 Vec3
+---@return Mat3
+function Mat3.rotationFromDirection(vec3) end
 
 ---@class Mat3x4
 Mat3x4 = {}
@@ -942,6 +1043,10 @@ function Transform:getScale() end
 
 ---@param vec3 Vec3
 function Transform:setScale(vec3) end
+
+---@param vec3 Vec3
+---@return Vec3
+function Transform:transform(vec3) end
 
 ---@class Renderer
 Renderer = {}

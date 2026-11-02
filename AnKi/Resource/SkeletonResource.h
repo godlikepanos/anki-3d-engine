@@ -118,6 +118,11 @@ public:
 		return m_bones[m_rootBoneIdx];
 	}
 
+	U32 getRootBoneIndex() const
+	{
+		return m_rootBoneIdx;
+	}
+
 private:
 	ResourceDynamicArray<Bone> m_bones;
 	U32 m_rootBoneIdx = kMaxU32;
