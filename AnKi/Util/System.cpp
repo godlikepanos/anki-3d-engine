@@ -21,6 +21,7 @@
 // For print backtrace
 #if ANKI_POSIX && !ANKI_OS_ANDROID
 #	include <execinfo.h>
+#	include <dlfcn.h>
 #	include <cstdlib>
 #endif
 
@@ -58,7 +59,90 @@ U32 getCpuCoresCount()
 
 void backtraceInternal(const Function<void(CString)>& lambda)
 {
-#if ANKI_POSIX && !ANKI_OS_ANDROID
+#if ANKI_OS_LINUX
+	constexpr U32 kMaxFrameCount = 64;
+	Array<void*, kMaxFrameCount> frames;
+	const U32 frameCount = U32(::backtrace(frames.getBegin(), I32(kMaxFrameCount)));
+
+	// backtrace_symbols() only sees the dynamic symbol table and -fvisibility=hidden keeps AnKi's symbols out of it, so use addr2line too
+	char** rawSymbols = backtrace_symbols(frames.getBegin(), I32(frameCount));
+
+	Array<CString, kMaxFrameCount> moduleFilepaths;
+	Array<String, kMaxFrameCount> moduleOffsets;
+	for(U32 i = 0; i < frameCount; ++i)
+	{
+		Dl_info info = {};
+		if(dladdr(frames[i], &info) && info.dli_fname)
+		{
+			moduleFilepaths[i] = info.dli_fname;
+
+			// Return addresses point after the call. Step back 1 byte to land inside the call instruction or the line might be wrong
+			const PtrSize address = ptrToNumber(frames[i]) - ((i > 0) ? 1 : 0);
+			moduleOffsets[i].sprintf("0x%zx", address - ptrToNumber(info.dli_fbase));
+		}
+	}
+
+	// Run addr2line once per module since it takes seconds to load the debug info of a big binary
+	Array<String, kMaxFrameCount> symbols;
+	Array<Bool, kMaxFrameCount> frameProcessed;
+	frameProcessed.fill(false);
+	for(U32 i = 0; i < frameCount; ++i)
+	{
+		if(frameProcessed[i] || moduleFilepaths[i].isEmpty())
+		{
+			continue;
+		}
+
+		Array<CString, kMaxFrameCount + 2> args;
+		U32 argCount = 0;
+		args[argCount++] = "-Cfpe";
+		args[argCount++] = moduleFilepaths[i];
+
+		Array<U32, kMaxFrameCount> moduleFrames;
+		U32 moduleFrameCount = 0;
+		for(U32 j = i; j < frameCount; ++j)
+		{
+			if(moduleFilepaths[j] == moduleFilepaths[i])
+			{
+				args[argCount++] = moduleOffsets[j];
+				moduleFrames[moduleFrameCount++] = j;
+				frameProcessed[j] = true;
+			}
+		}
+
+		String stdOut;
+		I32 exitCode;
+		if(!invokeProcess("addr2line", ConstWeakArray<CString>(args.getBegin(), argCount), &stdOut, nullptr, exitCode) && exitCode == 0)
+		{
+			// One line per address since there is no -i
+			StringList lines;
+			lines.splitString(stdOut, '\n');
+			U32 line = 0;
+			for(const String& s : lines)
+			{
+				if(line < moduleFrameCount)
+				{
+					symbols[moduleFrames[line++]] = s;
+				}
+			}
+		}
+	}
+
+	for(U32 i = 0; i < frameCount; ++i)
+	{
+		// addr2line prints ?? for modules without debug info (eg libc). Fallback to backtrace_symbols() there
+		if(!symbols[i].isEmpty() && symbols[i].find("??") != 0)
+		{
+			lambda(symbols[i]);
+		}
+		else if(rawSymbols)
+		{
+			lambda(rawSymbols[i]);
+		}
+	}
+
+	free(rawSymbols);
+#elif ANKI_POSIX && !ANKI_OS_ANDROID
 	// Get addresses's for all entries on the stack
 	const U32 maxStackSize = 64;
 	void** array = static_cast<void**>(malloc(maxStackSize * sizeof(void*)));
