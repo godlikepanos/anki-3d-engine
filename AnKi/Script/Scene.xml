@@ -605,6 +605,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getRootYawDelta">
 					<return>Mat3</return>
 				</method>
+				<method name="getRootYawDeltaAngle">
+					<return>F32</return>
+				</method>
 				<method name="setRootMotionMode">
 					<args>
 						<arg>RootMotionMode</arg>

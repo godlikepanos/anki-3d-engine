@@ -4284,6 +4284,35 @@ static inline int wrapSkinComponentgetRootYawDelta(lua_State* l)
 	return 1;
 }
 
+// Wrap method SkinComponent::getRootYawDeltaAngle
+static inline int wrapSkinComponentgetRootYawDeltaAngle(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoSkinComponent, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	SkinComponent* self = ud->getData<SkinComponent>();
+
+	// Call the method
+	F32 ret = self->getRootYawDeltaAngle();
+
+	// Push return value
+	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
 // Wrap method SkinComponent::setRootMotionMode
 static inline int wrapSkinComponentsetRootMotionMode(lua_State* l)
 {
@@ -4365,6 +4394,7 @@ static inline void wrapSkinComponent(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getAnimationTrackState", wrapSkinComponentgetAnimationTrackState);
 	LuaBinder::pushLuaCFuncMethod(l, "getRootMotionDelta", wrapSkinComponentgetRootMotionDelta);
 	LuaBinder::pushLuaCFuncMethod(l, "getRootYawDelta", wrapSkinComponentgetRootYawDelta);
+	LuaBinder::pushLuaCFuncMethod(l, "getRootYawDeltaAngle", wrapSkinComponentgetRootYawDeltaAngle);
 	LuaBinder::pushLuaCFuncMethod(l, "setRootMotionMode", wrapSkinComponentsetRootMotionMode);
 	LuaBinder::pushLuaCFuncMethod(l, "getRootMotionMode", wrapSkinComponentgetRootMotionMode);
 	lua_settop(l, 0);

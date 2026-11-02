@@ -206,6 +206,16 @@ public:
 	{
 	}
 
+	// It's called when an animation starts.
+	virtual void onAnimationStarted([[maybe_unused]] U32 trackIndex, [[maybe_unused]] U32 animId)
+	{
+	}
+
+	// It's called when an animation ends.
+	virtual void onAnimationEnded([[maybe_unused]] U32 trackIndex, [[maybe_unused]] U32 animId)
+	{
+	}
+
 	// Extra serialization for the derived classes
 	virtual Error serialize([[maybe_unused]] SceneSerializer& serializer)
 	{

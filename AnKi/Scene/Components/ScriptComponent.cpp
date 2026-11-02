@@ -8,6 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Script/ScriptEnvironment.h>
+#include <AnKi/Scene/Components/SkinComponent.h>
 #include <AnKi/Scene/Components/TriggerComponent.h>
 
 namespace anki {
@@ -244,6 +245,71 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				if(lua_pcall(lua, 1, 0, 0) != 0)
 				{
 					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onTriggerExit\": %s", lua_tostring(lua, -1));
+					return;
+				}
+
+				updated = true;
+			}
+		}
+	}
+
+	// Call onAnimationStarted
+	SkinComponent* skinc = info.m_node->tryGetFirstComponentOfType<SkinComponent>();
+	if(skinc)
+	{
+		for(auto pair : skinc->getAnimationsStarted())
+		{
+			// Push function name
+			lua_getglobal(lua, "onAnimationStarted");
+			if(!lua_isfunction(lua, -1))
+			{
+				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
+				lua_pop(lua, 1);
+				break;
+			}
+			else
+			{
+				// Push args
+				LuaBinder::pushVariableToTheStack(lua, info.m_node);
+				lua_pushnumber(lua, pair.first);
+				lua_pushnumber(lua, pair.second);
+
+				// Do the call (3 arguments, no result)
+				if(lua_pcall(lua, 3, 0, 0) != 0)
+				{
+					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationStarted\": %s", lua_tostring(lua, -1));
+					return;
+				}
+
+				updated = true;
+			}
+		}
+	}
+
+	// Call onAnimationEnded
+	if(skinc)
+	{
+		for(auto pair : skinc->getAnimationsEnded())
+		{
+			// Push function name
+			lua_getglobal(lua, "onAnimationEnded");
+			if(!lua_isfunction(lua, -1))
+			{
+				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
+				lua_pop(lua, 1);
+				break;
+			}
+			else
+			{
+				// Push args
+				LuaBinder::pushVariableToTheStack(lua, info.m_node);
+				lua_pushnumber(lua, pair.first);
+				lua_pushnumber(lua, pair.second);
+
+				// Do the call (3 arguments, no result)
+				if(lua_pcall(lua, 3, 0, 0) != 0)
+				{
+					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationEnded\": %s", lua_tostring(lua, -1));
 					return;
 				}
 

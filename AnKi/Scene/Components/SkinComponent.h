@@ -118,7 +118,7 @@ public:
 																														  : Vec3(0.0f);
 	}
 
-	// Returns the angle of the root bone
+	// Returns the yaw rotation of the root bone since the last update
 	Mat3 getRootYawDelta() const
 	{
 		if(m_rootMotionMode == RootMotionMode::kHorizontalAndYaw)
@@ -129,6 +129,12 @@ public:
 		{
 			return Mat3::getIdentity();
 		}
+	}
+
+	// Returns the yaw angle (around the skeleton's up) of the root bone since the last update. Similar to getRootYawDelta
+	F32 getRootYawDeltaAngle() const
+	{
+		return (m_rootMotionMode == RootMotionMode::kHorizontalAndYaw) ? m_rootYawDeltaAngle : 0.0f;
 	}
 
 	void setRootMotionMode(RootMotionMode mode)
@@ -190,6 +196,16 @@ public:
 		return *m_node;
 	}
 
+	ANKI_INTERNAL ConstWeakArray<std::pair<U32, U32>> getAnimationsStarted() const
+	{
+		return m_animationsStarted;
+	}
+
+	ANKI_INTERNAL ConstWeakArray<std::pair<U32, U32>> getAnimationsEnded() const
+	{
+		return m_animationsEnded;
+	}
+
 #if ANKI_WITH_EDITOR
 	ANKI_INTERNAL Bool getPlayOnEditor() const
 	{
@@ -215,7 +231,9 @@ private:
 
 		Second m_interpolationAnimTime = kMaxSecond; // Tracking the time passed to AnimationResource::interpolate()
 		Vec3 m_rootPosition = Vec3(0.0f); // The position of the root bone
-		Quat m_rootRotation = Quat::getIdentity();
+		Quat m_rootRotation = Quat::getIdentity(); // The rotation of the root bone
+
+		Bool m_started = false;
 	};
 
 	class Track
@@ -249,10 +267,18 @@ private:
 
 	AnimationState m_dummyState;
 
+	// The events of the last update. Read by the callbacks
+	SceneDynamicArray<std::pair<U32, U32>> m_animationsStarted;
+	SceneDynamicArray<std::pair<U32, U32>> m_animationsEnded;
+
+	// The events gathered until the end of the update. Separate from the above so callbacks that call playAnimation() don't modify what they iterate
+	SceneDynamicArray<std::pair<U32, U32>> m_pendingAnimationsStarted;
+	SceneDynamicArray<std::pair<U32, U32>> m_pendingAnimationsEnded;
+
 	// For root motion calculation:
 	U32 m_rootBoneIdx = kMaxU32; // Cache it
 	Vec3 m_skeletonUp = Vec3(0.0f, 1.0f, 0.0f); // The up direction in skeleton space
-	Vec3 m_skeletonForward = Vec3(0.0f, 0.0f, 1.0f);
+	Vec3 m_skeletonForward = Vec3(0.0f, 0.0f, 1.0f); // The forward direction in skeleton space
 	Vec3 m_rootRestPosition = Vec3(0.0f); // Rest translation of the root bone in skeleton space
 	Quat m_rootRestRot = Quat::getIdentity();
 	Vec3 m_rootMotionDelta = Vec3(0.0f);

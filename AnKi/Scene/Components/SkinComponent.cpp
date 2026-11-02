@@ -91,7 +91,13 @@ AnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, S
 		// Discard the queued animations so the new one follows the current immediately
 		while(track.m_lastAnimationIdx > track.m_crntAnimationIdx)
 		{
-			track.m_anims[track.m_lastAnimationIdx % kMaxAnimationsPerTrack] = {};
+			Animation& discarded = track.m_anims[track.m_lastAnimationIdx % kMaxAnimationsPerTrack];
+			if(discarded.m_started)
+			{
+				m_pendingAnimationsEnded.emplaceBack(std::make_pair(trackIdx, discarded.m_animId));
+			}
+
+			discarded = {};
 			--track.m_lastAnimationIdx;
 		}
 	}
@@ -111,6 +117,7 @@ AnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, S
 	anim.m_interpolationAnimTime = kMaxSecond;
 	anim.m_rootPosition = Vec3(0.0f);
 	anim.m_rootRotation = Quat::getIdentity();
+	anim.m_started = false;
 
 	++track.m_lastAnimationIdx;
 
@@ -127,6 +134,17 @@ AnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, S
 void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	m_boneTransformsReallocatedThisFrame = false;
+
+	for(auto pair : m_animationsStarted)
+	{
+		info.m_node->onAnimationStarted(pair.first, pair.second);
+	}
+	for(auto pair : m_animationsEnded)
+	{
+		info.m_node->onAnimationEnded(pair.first, pair.second);
+	}
+	m_animationsStarted.destroy();
+	m_animationsEnded.destroy();
 
 	if(m_resourceDirty || !m_resource) [[unlikely]]
 	{
@@ -263,6 +281,10 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				{
 					++track.m_crntAnimationIdx;
 				}
+				if(crntAnim.m_started)
+				{
+					m_pendingAnimationsEnded.emplaceBack(std::make_pair(trackIdx, crntAnim.m_animId));
+				}
 				continue;
 			}
 
@@ -278,6 +300,10 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				// Next animation can fully overtake the current one, forget the current
 				crntAnim.m_resource.reset(nullptr);
 				++track.m_crntAnimationIdx;
+				if(crntAnim.m_started)
+				{
+					m_pendingAnimationsEnded.emplaceBack(std::make_pair(trackIdx, crntAnim.m_animId));
+				}
 				continue;
 			}
 
@@ -317,6 +343,12 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				continue;
 			}
 			Animation& anim = *panim;
+
+			if(!anim.m_started)
+			{
+				anim.m_started = true;
+				m_pendingAnimationsStarted.emplaceBack(std::make_pair(trackIdx, anim.m_animId));
+			}
 
 			Second animTime = anim.m_resource->getStartingTime();
 			if(panim == firstAnim && clampFirstAnimAtTheEnd)
@@ -592,6 +624,27 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	updated = updatedLastFrame || resourceDirty || animationRun;
 	m_updatedLastFrame = resourceDirty || animationRun;
+
+	// Publish the events of this update and of the playAnimation() calls since the last update
+	m_animationsStarted = std::move(m_pendingAnimationsStarted);
+	m_animationsEnded = std::move(m_pendingAnimationsEnded);
+
+#if ANKI_ASSERTIONS_ENABLED
+	auto hasDuplicates = [](ConstWeakArray<std::pair<U32, U32>> events) {
+		for(U32 i = 0; i < events.getSize(); ++i)
+		{
+			for(U32 j = i + 1; j < events.getSize(); ++j)
+			{
+				if(events[i] == events[j])
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	ANKI_ASSERT(!hasDuplicates(m_animationsStarted) && !hasDuplicates(m_animationsEnded));
+#endif
 }
 
 void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, Vec4& minExtend, Vec4& maxExtend)

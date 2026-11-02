@@ -448,6 +448,9 @@ function SkinComponent:getRootMotionDelta() end
 ---@return Mat3
 function SkinComponent:getRootYawDelta() end
 
+---@return number
+function SkinComponent:getRootYawDeltaAngle() end
+
 ---@param rootMotionMode integer
 function SkinComponent:setRootMotionMode(rootMotionMode) end
 

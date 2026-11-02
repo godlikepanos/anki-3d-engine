@@ -52,6 +52,24 @@ function onTriggerExit(node)
     -- Your code here
 end
 ]]
+
+--[[
+--- @param node SceneNode
+--- @param trackIndex integer
+--- @param animId integer
+function onAnimationStarted(node, trackIndex, animId)
+    -- Your code here
+end
+]]
+
+--[[
+--- @param node SceneNode
+--- @param trackIndex integer
+--- @param animId integer
+function onAnimationEnded(node, trackIndex, animId)
+    -- Your code here
+end
+]]
 )";
 
 	class SceneGraphViewScene
