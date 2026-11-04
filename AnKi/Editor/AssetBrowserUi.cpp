@@ -7,7 +7,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Script/ScriptEnvironment.h>
+#include <AnKi/Script/ScriptManager.h>
 
 namespace anki {
 
@@ -807,8 +807,8 @@ void AssetBrowserUi::rightClickMenuDialog()
 					String text;
 					if(!file.readAllText(text))
 					{
-						ScriptEnvironment env;
-						[[maybe_unused]] const Error err = env.evalString(text);
+						ScriptEnvironmentPtr env = ScriptManager::getSingleton().newScriptEnvironment();
+						[[maybe_unused]] const Error err = env->evalString(text);
 					}
 				}
 			}

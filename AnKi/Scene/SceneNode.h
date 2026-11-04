@@ -196,13 +196,14 @@ public:
 	{
 	}
 
-	// It's called when a node enters a trigger. "this" is the trigger. It's safe to touch the enteringNode
-	virtual void onTriggerEnter([[maybe_unused]] SceneNode* enteringNode)
+	// It's called when a node enters a trigger. This callback will be called for the trigger as well as the entering node. So the "otherNode" is
+	// the trigger or the entering node. This is executed in a thread-safe environment where it's safe to write to "this" as well as "otherNode"
+	virtual void onTriggerEnter([[maybe_unused]] SceneNode* otherNode)
 	{
 	}
 
 	// See onTriggerEnter
-	virtual void onTriggerExit([[maybe_unused]] SceneNode* exitingNode)
+	virtual void onTriggerExit([[maybe_unused]] SceneNode* otherNode)
 	{
 	}
 

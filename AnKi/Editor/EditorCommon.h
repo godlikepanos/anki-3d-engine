@@ -32,6 +32,7 @@ protected:
 	};
 
 	static constexpr const Char* kScriptComponentTemplateScript = R"(-- Add your global vars here. Eg: speed = Vec3.new(0, 0, 0)
+-- Globals that start with _ won't be exposed and will stay internal
 
 -- Component main update
 --- @param info SceneComponentUpdateInfo
@@ -40,15 +41,17 @@ function update(info)
 end
 
 --[[
---- @param node SceneNode
-function onTriggerEnter(node)
+--- @param selfNode SceneNode The node of this script. It can be the trigger or the node that entered it
+--- @param otherNode SceneNode
+function onTriggerEnter(selfNode, otherNode)
     -- Your code here
 end
 ]]
 
 --[[
---- @param node SceneNode
-function onTriggerExit(node)
+--- @param selfNode SceneNode The node of this script. It can be the trigger or the node that exited it
+--- @param otherNode SceneNode
+function onTriggerExit(selfNode, otherNode)
     -- Your code here
 end
 ]]

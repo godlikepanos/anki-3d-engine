@@ -5,6 +5,7 @@
 
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
 #include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Ui.h>
 
 namespace anki {
@@ -19,6 +20,8 @@ DeveloperConsoleUiNode::DeveloperConsoleUiNode(const SceneNodeInitInfo& inf)
 		},
 		this);
 	uic->setEnabled(false);
+
+	m_scriptEnv = ScriptManager::getSingleton().newScriptEnvironment();
 
 	setSerialization(false);
 	setUpdateOnPause(true);
@@ -155,7 +158,7 @@ void DeveloperConsoleUiNode::draw(UiCanvas& canvas)
 	ImGui::PushItemWidth(-1.0f); // Use the whole size
 	if(ImGui::InputText("##noname", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue, nullptr, nullptr))
 	{
-		const Error err = m_scriptEnv.evalString(&m_inputText[0]);
+		const Error err = m_scriptEnv->evalString(&m_inputText[0]);
 		if(!err)
 		{
 			ANKI_SCENE_LOGI("Script ran without errors");

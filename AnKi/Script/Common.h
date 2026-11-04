@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/MemoryPool.h>
+#include <AnKi/Util/Ptr.h>
 
 namespace anki {
 
@@ -35,5 +36,7 @@ private:
 };
 
 ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Script, ScriptMemoryPool)
+
+using ScriptEnvironmentPtr = IntrusiveNoDelPtr<ScriptEnvironment>;
 
 } // end namespace anki

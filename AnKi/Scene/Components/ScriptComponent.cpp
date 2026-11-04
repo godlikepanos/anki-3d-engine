@@ -7,9 +7,8 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ScriptResource.h>
-#include <AnKi/Script/ScriptEnvironment.h>
+#include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Scene/Components/SkinComponent.h>
-#include <AnKi/Scene/Components/TriggerComponent.h>
 
 namespace anki {
 
@@ -23,7 +22,6 @@ ScriptComponent::ScriptComponent(const SceneComponentInitInfo& init)
 
 ScriptComponent::~ScriptComponent()
 {
-	deleteInstance(SceneMemoryPool::getSingleton(), m_env);
 }
 
 ScriptComponent& ScriptComponent::setScriptResourceFilename(CString fname)
@@ -37,33 +35,33 @@ ScriptComponent& ScriptComponent::setScriptResourceFilename(CString fname)
 	}
 
 	// Init the env
-	ScriptEnvironment* env = nullptr;
+	ScriptEnvironmentPtr env;
 	if(fname && !err)
 	{
-		env = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
+		env = ScriptManager::getSingleton().newScriptEnvironment();
 		err = env->evalString(rsrc->getSource());
 	}
 
 	if(err)
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), env);
 		ANKI_SCENE_LOGE("Failed to load the script resource");
 	}
 	else if(!fname)
 	{
 		m_text.destroy();
 		m_resource.reset(nullptr);
-		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
-		m_env = nullptr;
+		m_env.reset(nullptr);
 		m_vars.destroy();
+		m_definedFuncsMask = ScriptComponentFunctionMask::kNone;
 	}
 	else
 	{
 		m_text.destroy();
 		m_resource = std::move(rsrc);
-		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
-		m_env = env;
+		m_env.reset(nullptr);
+		m_env = std::move(env);
 		m_vars.rebuildVarsFromLua(*m_env);
+		rebuildDefinedFunctionsMask();
 	}
 
 #if ANKI_WITH_EDITOR
@@ -88,34 +86,34 @@ CString ScriptComponent::getScriptResourceFilename() const
 ScriptComponent& ScriptComponent::setScriptText(CString text)
 {
 	// Init the env
-	ScriptEnvironment* env = nullptr;
+	ScriptEnvironmentPtr env;
 	Error err = Error::kNone;
 	if(text)
 	{
-		env = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
+		env = ScriptManager::getSingleton().newScriptEnvironment();
 		err = env->evalString(text);
 	}
 
 	if(err)
 	{
-		deleteInstance(SceneMemoryPool::getSingleton(), env);
 		ANKI_SCENE_LOGE("Failed to init the script");
 	}
 	else if(!text)
 	{
 		m_text.destroy();
 		m_resource.reset(nullptr);
-		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
-		m_env = nullptr;
+		m_env.reset(nullptr);
 		m_vars.destroy();
+		m_definedFuncsMask = ScriptComponentFunctionMask::kNone;
 	}
 	else
 	{
 		m_resource.reset(nullptr);
 		m_text = text;
-		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
-		m_env = env;
+		m_env.reset(nullptr);
+		m_env = std::move(env);
 		m_vars.rebuildVarsFromLua(*m_env);
+		rebuildDefinedFunctionsMask();
 	}
 
 #if ANKI_WITH_EDITOR
@@ -165,154 +163,76 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_vars.flushDirtyVarsToLua(*m_env);
 
 	// Call update()
+	if(!!(m_definedFuncsMask & ScriptComponentFunctionMask::kUpdate))
 	{
 		// Push function name
 		lua_getglobal(lua, "update");
 
-		if(!lua_isfunction(lua, -1))
+		// Push args
+		LuaBinder::pushVariableToTheStack(lua, &info);
+
+		// Do the call (1 argument, no result)
+		if(lua_pcall(lua, 1, 0, 0) != 0)
 		{
-			// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
-			lua_pop(lua, 1);
+			ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": %s", lua_tostring(lua, -1));
+			m_definedFuncsMask &= ~ScriptComponentFunctionMask::kUpdate;
 		}
 		else
 		{
-			// Push args
-			LuaBinder::pushVariableToTheStack(lua, &info);
-
-			// Do the call (1 argument, no result)
-			if(lua_pcall(lua, 1, 0, 0) != 0)
-			{
-				ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": %s", lua_tostring(lua, -1));
-				return;
-			}
-
 			updated = true;
-		}
-	}
-
-	// Call onTriggerEnter
-	TriggerComponent* comp = info.m_node->tryGetFirstComponentOfType<TriggerComponent>();
-	if(comp)
-	{
-		for(SceneNode* node : comp->getSceneNodesEnter())
-		{
-			// Push function name
-			lua_getglobal(lua, "onTriggerEnter");
-
-			if(!lua_isfunction(lua, -1))
-			{
-				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
-				lua_pop(lua, 1);
-				break;
-			}
-			else
-			{
-				// Push args
-				LuaBinder::pushVariableToTheStack(lua, node);
-
-				// Do the call (1 argument, no result)
-				if(lua_pcall(lua, 1, 0, 0) != 0)
-				{
-					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onTriggerEnter\": %s", lua_tostring(lua, -1));
-					return;
-				}
-
-				updated = true;
-			}
-		}
-	}
-
-	// Call onTriggerExit
-	if(comp)
-	{
-		for(SceneNode* node : comp->getSceneNodesExit())
-		{
-			// Push function name
-			lua_getglobal(lua, "onTriggerExit");
-
-			if(!lua_isfunction(lua, -1))
-			{
-				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
-				lua_pop(lua, 1);
-				break;
-			}
-			else
-			{
-				// Push args
-				LuaBinder::pushVariableToTheStack(lua, node);
-
-				// Do the call (1 argument, no result)
-				if(lua_pcall(lua, 1, 0, 0) != 0)
-				{
-					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onTriggerExit\": %s", lua_tostring(lua, -1));
-					return;
-				}
-
-				updated = true;
-			}
 		}
 	}
 
 	// Call onAnimationStarted
 	SkinComponent* skinc = info.m_node->tryGetFirstComponentOfType<SkinComponent>();
-	if(skinc)
+	if(skinc && !!(m_definedFuncsMask & ScriptComponentFunctionMask::kOnAnimationStarted))
 	{
 		for(auto pair : skinc->getAnimationsStarted())
 		{
 			// Push function name
 			lua_getglobal(lua, "onAnimationStarted");
-			if(!lua_isfunction(lua, -1))
+
+			// Push args
+			LuaBinder::pushVariableToTheStack(lua, info.m_node);
+			lua_pushnumber(lua, pair.first);
+			lua_pushnumber(lua, pair.second);
+
+			// Do the call (3 arguments, no result)
+			if(lua_pcall(lua, 3, 0, 0) != 0)
 			{
-				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
-				lua_pop(lua, 1);
+				ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationStarted\": %s", lua_tostring(lua, -1));
+				m_definedFuncsMask &= ~ScriptComponentFunctionMask::kOnAnimationStarted;
 				break;
 			}
 			else
 			{
-				// Push args
-				LuaBinder::pushVariableToTheStack(lua, info.m_node);
-				lua_pushnumber(lua, pair.first);
-				lua_pushnumber(lua, pair.second);
-
-				// Do the call (3 arguments, no result)
-				if(lua_pcall(lua, 3, 0, 0) != 0)
-				{
-					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationStarted\": %s", lua_tostring(lua, -1));
-					return;
-				}
-
 				updated = true;
 			}
 		}
 	}
 
 	// Call onAnimationEnded
-	if(skinc)
+	if(skinc && !!(m_definedFuncsMask & ScriptComponentFunctionMask::kOnAnimationEnded))
 	{
 		for(auto pair : skinc->getAnimationsEnded())
 		{
 			// Push function name
 			lua_getglobal(lua, "onAnimationEnded");
-			if(!lua_isfunction(lua, -1))
+
+			// Push args
+			LuaBinder::pushVariableToTheStack(lua, info.m_node);
+			lua_pushnumber(lua, pair.first);
+			lua_pushnumber(lua, pair.second);
+
+			// Do the call (3 arguments, no result)
+			if(lua_pcall(lua, 3, 0, 0) != 0)
 			{
-				// Not defined (lua_isnil) or defined as a non-function, pop whatever lua_getglobal pushed
-				lua_pop(lua, 1);
+				ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationEnded\": %s", lua_tostring(lua, -1));
+				m_definedFuncsMask &= ~ScriptComponentFunctionMask::kOnAnimationEnded;
 				break;
 			}
 			else
 			{
-				// Push args
-				LuaBinder::pushVariableToTheStack(lua, info.m_node);
-				lua_pushnumber(lua, pair.first);
-				lua_pushnumber(lua, pair.second);
-
-				// Do the call (3 arguments, no result)
-				if(lua_pcall(lua, 3, 0, 0) != 0)
-				{
-					ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationEnded\": %s", lua_tostring(lua, -1));
-					return;
-				}
-
 				updated = true;
 			}
 		}
@@ -361,6 +281,72 @@ Error ScriptComponent::serialize(SceneSerializer& serializer)
 	}
 
 	return Error::kNone;
+}
+
+void ScriptComponent::rebuildDefinedFunctionsMask()
+{
+	auto funcExists = [this](CString funcName) {
+		lua_getglobal(&m_env->getLuaState(), funcName.cstr());
+		const Bool exists = lua_isfunction(&m_env->getLuaState(), -1);
+		lua_pop(&m_env->getLuaState(), 1);
+		return exists;
+	};
+
+	m_definedFuncsMask = ScriptComponentFunctionMask::kNone;
+	if(funcExists("update"))
+	{
+		m_definedFuncsMask |= ScriptComponentFunctionMask::kUpdate;
+	}
+
+	if(funcExists("onAnimationStarted"))
+	{
+		m_definedFuncsMask |= ScriptComponentFunctionMask::kOnAnimationStarted;
+	}
+
+	if(funcExists("onAnimationEnded"))
+	{
+		m_definedFuncsMask |= ScriptComponentFunctionMask::kOnAnimationEnded;
+	}
+
+	if(funcExists("onTriggerEnter"))
+	{
+		m_definedFuncsMask |= ScriptComponentFunctionMask::kOnTriggerEnter;
+	}
+
+	if(funcExists("onTriggerExit"))
+	{
+		m_definedFuncsMask |= ScriptComponentFunctionMask::kOnTriggerExit;
+	}
+}
+
+void ScriptComponent::callOnTrigger(Bool onEnter, SceneNode& selfNode, SceneNode& otherNode)
+{
+	const ScriptComponentFunctionMask mask = (onEnter) ? ScriptComponentFunctionMask::kOnTriggerEnter : ScriptComponentFunctionMask::kOnTriggerExit;
+	if(isValid() && !!(m_definedFuncsMask & mask))
+	{
+		m_vars.flushDirtyVarsToLua(*m_env);
+
+		lua_State* lua = &m_env->getLuaState();
+		CString funcName = (onEnter) ? "onTriggerEnter" : "onTriggerExit";
+
+		// Push function name
+		lua_getglobal(lua, funcName.cstr());
+
+		// Push args
+		LuaBinder::pushVariableToTheStack(lua, &selfNode);
+		LuaBinder::pushVariableToTheStack(lua, &otherNode);
+
+		// Do the call (2 argument, no result)
+		if(lua_pcall(lua, 2, 0, 0) != 0)
+		{
+			ANKI_SCENE_LOGE("Error running ScriptComponent's \"%s\": %s", funcName.cstr(), lua_tostring(lua, -1));
+			m_definedFuncsMask &= ~mask;
+		}
+		else
+		{
+			m_vars.updateVarsFromLua(*m_env);
+		}
+	}
 }
 
 } // end namespace anki
