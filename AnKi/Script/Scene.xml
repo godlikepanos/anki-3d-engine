@@ -93,11 +93,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kNow"/>
 			<enumerant name="kQueued"/>
 		</enum>
-		<enum name="AnimationWrapMode">
-			<enumerant name="kOnce"/>
-			<enumerant name="kLoop"/>
-			<enumerant name="kCount"/>
-		</enum>
 		<enum name="AnimationBlendMode">
 			<enumerant name="kOverride"/>
 			<enumerant name="kAdditive"/>
@@ -108,6 +103,11 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kHorizontal"/>
 			<enumerant name="kHorizontalAndYaw"/>
 			<enumerant name="kLockRoot"/>
+			<enumerant name="kCount"/>
+		</enum>
+		<enum name="NodeMotionMode">
+			<enumerant name="kApplyToNode"/>
+			<enumerant name="kExtract"/>
 			<enumerant name="kCount"/>
 		</enum>
 		<enum name="AnimationPlayState">
@@ -621,107 +621,61 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="AnimationComponent">
 			<methods>
-				<method name="setAnimationFilename">
+				<method name="registerAnimation">
 					<args>
 						<arg>U32</arg>
 						<arg>CString</arg>
 					</args>
-					<return>AnimationComponent&amp;</return>
 				</method>
-				<method name="getAnimationFilename">
+				<method name="unregisterAnimation">
 					<args>
 						<arg>U32</arg>
 					</args>
-					<return>CString</return>
 				</method>
-				<method name="hasAnimationFilename">
+				<method name="playAnimation">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+						<arg>CString</arg>
+						<arg>F64</arg>
+						<arg>AnimationStart</arg>
+					</args>
+					<return>AnimationState&amp;</return>
+				</method>
+				<method name="getAnimationState">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationState&amp;</return>
+				</method>
+				<method name="getAnimationTrackState">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationTrackState&amp;</return>
+				</method>
+				<method name="getTrackHasAnimations">
 					<args>
 						<arg>U32</arg>
 					</args>
 					<return>Bool</return>
-				</method>
-				<method name="setAnimationChannel">
-					<args>
-						<arg>U32</arg>
-						<arg>CString</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationChannel">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>CString</return>
-				</method>
-				<method name="setAnimationBlendWeight">
-					<args>
-						<arg>U32</arg>
-						<arg>F32</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationBlendWeight">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>F32</return>
-				</method>
-				<method name="setAnimationWrapMode">
-					<args>
-						<arg>U32</arg>
-						<arg>AnimationWrapMode</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationWrapMode">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>AnimationWrapMode</return>
-				</method>
-				<method name="setAnimationBlendMode">
-					<args>
-						<arg>U32</arg>
-						<arg>AnimationBlendMode</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationBlendMode">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>AnimationBlendMode</return>
-				</method>
-				<method name="setAnimationSpeed">
-					<args>
-						<arg>U32</arg>
-						<arg>F32</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationSpeed">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>F32</return>
 				</method>
 				<method name="resetTrack">
 					<args>
 						<arg>U32</arg>
 					</args>
 				</method>
-				<method name="setAnimationPlayState">
-					<args>
-						<arg>U32</arg>
-						<arg>AnimationPlayState</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
+				<method name="getNodeTransformDelta">
+					<return>Transform</return>
 				</method>
-				<method name="getAnimationPlayState">
+				<method name="setNodeMotionMode">
 					<args>
-						<arg>U32</arg>
+						<arg>NodeMotionMode</arg>
 					</args>
-					<return>AnimationPlayState</return>
+				</method>
+				<method name="getNodeMotionMode">
+					<return>NodeMotionMode</return>
 				</method>
 				<method name="isValid">
 					<return>Bool</return>

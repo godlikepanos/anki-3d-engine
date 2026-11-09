@@ -71,4 +71,7 @@ public:
 	Second m_blendOutTime = 0.3;
 };
 
+template<typename T>
+concept IsAnimationId = (std::is_integral_v<T> || std::is_enum_v<T>)&&sizeof(T) <= sizeof(U32);
+
 } // end namespace anki

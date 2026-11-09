@@ -18,9 +18,6 @@
 
 namespace anki {
 
-/// @addtogroup util_private
-/// @{
-
 namespace detail {
 
 template<typename TNumber>
@@ -51,12 +48,7 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 
 } // end namespace detail
 
-/// @}
-
-/// @addtogroup util_containers
-/// @{
-
-/// A wrapper on top of C strings. Used mainly for safety.
+// A wrapper on top of C strings. Used mainly for safety.
 class CString
 {
 public:
@@ -71,35 +63,35 @@ public:
 	{
 	}
 
-	/// Copy constructor.
+	// Copy constructor.
 	constexpr CString(const CString& b)
 		: m_ptr(b.m_ptr)
 	{
 	}
 
-	/// Copy.
+	// Copy.
 	constexpr CString& operator=(const CString& b)
 	{
 		m_ptr = b.m_ptr;
 		return *this;
 	}
 
-	/// Return true if the string is initialized.
-	explicit operator Bool() const
+	// Return true if the string is not empty.
+	constexpr explicit operator Bool() const
 	{
 		return !isEmpty();
 	}
 
-	/// Return char at the specified position.
+	// Return char at the specified position.
 	template<typename T>
-	const Char& operator[](T pos) const
+	[[nodiscard]] const Char& operator[](T pos) const
 	{
 		checkInit();
 		ANKI_ASSERT(pos >= 0 && U32(pos) <= getLength());
 		return m_ptr[pos];
 	}
 
-	Bool operator==(const CString& b) const
+	[[nodiscard]] Bool operator==(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -111,12 +103,12 @@ public:
 		}
 	}
 
-	Bool operator!=(const CString& b) const
+	[[nodiscard]] Bool operator!=(const CString& b) const
 	{
 		return !((*this) == b);
 	}
 
-	Bool operator<(const CString& b) const
+	[[nodiscard]] Bool operator<(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -128,7 +120,7 @@ public:
 		}
 	}
 
-	Bool operator<=(const CString& b) const
+	[[nodiscard]] Bool operator<=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -140,7 +132,7 @@ public:
 		}
 	}
 
-	Bool operator>(const CString& b) const
+	[[nodiscard]] Bool operator>(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -152,7 +144,7 @@ public:
 		}
 	}
 
-	Bool operator>=(const CString& b) const
+	[[nodiscard]] Bool operator>=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -164,51 +156,51 @@ public:
 		}
 	}
 
-	/// Get C-string.
-	const Char* cstr() const
+	// Get C-string.
+	[[nodiscard]] const Char* cstr() const
 	{
 		return (m_ptr) ? m_ptr : "";
 	}
 
-	const Char* getBegin() const
+	[[nodiscard]] const Char* getBegin() const
 	{
 		checkInit();
 		return &m_ptr[0];
 	}
 
-	const Char* getEnd() const
+	[[nodiscard]] const Char* getEnd() const
 	{
 		checkInit();
 		return &m_ptr[getLength()];
 	}
 
-	const Char* begin() const
+	[[nodiscard]] const Char* begin() const
 	{
 		return getBegin();
 	}
 
-	const Char* end() const
+	[[nodiscard]] const Char* end() const
 	{
 		return getEnd();
 	}
 
-	/// Return true if the string is not initialized.
-	Bool isEmpty() const
+	// Return true if the string is null or "".
+	[[nodiscard]] constexpr Bool isEmpty() const
 	{
-		return m_ptr == nullptr || getLength() == 0;
+		return m_ptr == nullptr || m_ptr[0] == '\0';
 	}
 
-	/// Get the string length.
-	U32 getLength() const
+	// Get the string length.
+	[[nodiscard]] U32 getLength() const
 	{
-		return (m_ptr == nullptr) ? 0 : U32(std::strlen(m_ptr));
+		return (isEmpty()) ? 0 : U32(std::strlen(m_ptr));
 	}
 
-	/// Find a substring of this string.
-	/// @param[in] cstr The substring to search.
-	/// @param position Position of the first character in the string to be considered in the search.
-	/// @return A valid position if the string is found or kNpos if not found.
-	PtrSize find(const CString& cstr, PtrSize position = 0) const
+	// Find a substring of this string.
+	// cstr: The substring to search.
+	// position: Position of the first character in the string to be considered in the search.
+	// Returns a valid position if the string is found or kNpos if not found.
+	[[nodiscard]] PtrSize find(const CString& cstr, PtrSize position = 0) const
 	{
 		checkInit();
 		ANKI_ASSERT(position < getLength());
@@ -216,44 +208,44 @@ public:
 		return (out == nullptr) ? kNpos : PtrSize(out - m_ptr);
 	}
 
-	/// Convert to F16.
+	// Convert to F16.
 	Error toNumber(F16& out) const;
 
-	/// Convert to F32.
+	// Convert to F32.
 	Error toNumber(F32& out) const;
 
-	/// Convert to F64.
+	// Convert to F64.
 	Error toNumber(F64& out) const;
 
-	/// Convert to I8.
+	// Convert to I8.
 	Error toNumber(I8& out) const;
 
-	/// Convert to U8.
+	// Convert to U8.
 	Error toNumber(U8& out) const;
 
-	/// Convert to I16.
+	// Convert to I16.
 	Error toNumber(I16& out) const;
 
-	/// Convert to U16.
+	// Convert to U16.
 	Error toNumber(U16& out) const;
 
-	/// Convert to I32.
+	// Convert to I32.
 	Error toNumber(I32& out) const;
 
-	/// Convert to U32.
+	// Convert to U32.
 	Error toNumber(U32& out) const;
 
-	/// Convert to I64.
+	// Convert to I64.
 	Error toNumber(I64& out) const;
 
-	/// Convert to U64.
+	// Convert to U64.
 	Error toNumber(U64& out) const;
 
-	/// Convert to Bool.
+	// Convert to Bool.
 	Error toNumber(Bool& out) const;
 
-	/// Compute the hash.
-	U64 computeHash() const
+	// Compute the hash.
+	[[nodiscard]] U64 computeHash() const
 	{
 		checkInit();
 		return anki::computeHash(m_ptr, getLength());
@@ -285,17 +277,17 @@ private:
 	}
 };
 
-/// Compare function for CStrings. Can be used in HashMap.
+// Compare function for CStrings. Can be used in HashMap.
 class CStringCompare
 {
 public:
-	Bool operator()(CString a, CString b)
+	[[nodiscard]] Bool operator()(CString a, CString b)
 	{
 		return a == b;
 	}
 };
 
-/// The base class for strings.
+// The base class for strings.
 template<typename TMemoryPool>
 class BaseString
 {
@@ -303,45 +295,45 @@ class BaseString
 	friend class BaseStringList;
 
 public:
-	using Char = char; ///< Character type
+	using Char = char; // Character type
 	using Iterator = Char*;
 	using ConstIterator = const Char*;
 	using MemoryPool = TMemoryPool;
 
 	static constexpr PtrSize kNpos = kMaxPtrSize;
 
-	/// Default ctor.
+	// Default ctor.
 	BaseString(const MemoryPool& pool = MemoryPool())
 		: m_data(pool)
 	{
 	}
 
-	/// Copy ctor.
+	// Copy ctor.
 	BaseString(const BaseString& b)
 	{
 		*this = b;
 	}
 
-	/// Copy ctor.
+	// Copy ctor.
 	BaseString(CString str, const MemoryPool& pool = MemoryPool())
 		: m_data(pool)
 	{
 		*this = str;
 	}
 
-	/// Copy ctor.
+	// Copy ctor.
 	BaseString(const Char* str, const MemoryPool& pool = MemoryPool())
 		: BaseString(CString(str), pool)
 	{
 	}
 
-	/// Move ctor.
+	// Move ctor.
 	BaseString(BaseString&& b)
 		: m_data(std::move(b.m_data))
 	{
 	}
 
-	/// Initialize using a range. Copies the range of [first, last)
+	// Initialize using a range. Copies the range of [first, last)
 	BaseString(ConstIterator first, ConstIterator last, const MemoryPool& pool = MemoryPool())
 		: m_data(pool)
 	{
@@ -358,7 +350,7 @@ public:
 		m_data[length] = '\0';
 	}
 
-	/// Initialize using a character.
+	// Initialize using a character.
 	BaseString(Char c, PtrSize length, const MemoryPool& pool = MemoryPool())
 		: m_data(pool)
 	{
@@ -370,28 +362,28 @@ public:
 
 	~BaseString() = default;
 
-	/// Move.
+	// Move.
 	BaseString& operator=(BaseString&& b)
 	{
 		m_data = std::move(b.m_data);
 		return *this;
 	}
 
-	/// Copy.
+	// Copy.
 	BaseString& operator=(const BaseString& b)
 	{
 		m_data = b.m_data;
 		return *this;
 	}
 
-	/// Copy.
+	// Copy.
 	BaseString& operator=(const Char* b)
 	{
 		*this = CString(b);
 		return *this;
 	}
 
-	/// Copy.
+	// Copy.
 	BaseString& operator=(CString str)
 	{
 		const U32 len = str.getLength();
@@ -407,16 +399,16 @@ public:
 		return *this;
 	}
 
-	/// Return char at the specified position.
+	// Return char at the specified position.
 	template<typename TInt>
-	const Char& operator[](TInt pos) const
+	[[nodiscard]] const Char& operator[](TInt pos) const
 	{
 		return m_data[pos];
 	}
 
-	/// Return char at the specified position as a modifiable reference.
+	// Return char at the specified position as a modifiable reference.
 	template<typename TInt>
-	Char& operator[](TInt pos)
+	[[nodiscard]] Char& operator[](TInt pos)
 	{
 		return m_data[pos];
 	}
@@ -426,37 +418,37 @@ public:
 		return !isEmpty();
 	}
 
-	Bool operator==(CString b) const
+	[[nodiscard]] Bool operator==(CString b) const
 	{
 		return toCString() == b;
 	}
 
-	Bool operator!=(CString b) const
+	[[nodiscard]] Bool operator!=(CString b) const
 	{
 		return !(*this == b);
 	}
 
-	Bool operator<(CString b) const
+	[[nodiscard]] Bool operator<(CString b) const
 	{
 		return toCString() < b;
 	}
 
-	Bool operator<=(CString b) const
+	[[nodiscard]] Bool operator<=(CString b) const
 	{
-		return toCString() < b;
+		return toCString() <= b;
 	}
 
-	Bool operator>(CString b) const
+	[[nodiscard]] Bool operator>(CString b) const
 	{
 		return toCString() > b;
 	}
 
-	Bool operator>=(CString b) const
+	[[nodiscard]] Bool operator>=(CString b) const
 	{
 		return toCString() >= b;
 	}
 
-	/// Append another string to this one.
+	// Append another string to this one.
 	BaseString& operator+=(CString b)
 	{
 		if(!b.isEmpty())
@@ -466,7 +458,7 @@ public:
 		return *this;
 	}
 
-	BaseString operator+(CString b) const
+	[[nodiscard]] BaseString operator+(CString b) const
 	{
 		BaseString out = *this;
 		if(!b.isEmpty())
@@ -481,13 +473,13 @@ public:
 		return toCString();
 	}
 
-	/// Get a C string.
-	const Char* cstr() const
+	// Get a C string.
+	[[nodiscard]] const Char* cstr() const
 	{
 		return toCString().cstr();
 	}
 
-	/// Append using a range. Copies the range of [first, oneAfterLast)
+	// Append using a range. Copies the range of [first, oneAfterLast)
 	BaseString& append(ConstIterator first, ConstIterator oneAfterLast)
 	{
 		ANKI_ASSERT(oneAfterLast >= first);
@@ -496,7 +488,7 @@ public:
 		return *this;
 	}
 
-	/// Create formated string.
+	// Create formated string.
 	ANKI_CHECK_FORMAT(1, 2)
 	BaseString& sprintf(const Char* fmt, ...)
 	{
@@ -508,95 +500,95 @@ public:
 		return *this;
 	}
 
-	/// Destroy the string.
+	// Destroy the string.
 	void destroy()
 	{
 		m_data.destroy();
 	}
 
-	Iterator getBegin()
+	[[nodiscard]] Iterator getBegin()
 	{
 		ANKI_ASSERT(!isEmpty());
 		return &m_data[0];
 	}
 
-	ConstIterator getBegin() const
+	[[nodiscard]] ConstIterator getBegin() const
 	{
 		ANKI_ASSERT(!isEmpty());
 		return &m_data[0];
 	}
 
-	Iterator getEnd()
+	[[nodiscard]] Iterator getEnd()
 	{
 		ANKI_ASSERT(!isEmpty());
 		return &m_data[m_data.getSize() - 1];
 	}
 
-	ConstIterator getEnd() const
+	[[nodiscard]] ConstIterator getEnd() const
 	{
 		ANKI_ASSERT(!isEmpty());
 		return &m_data[m_data.getSize() - 1];
 	}
 
-	Iterator begin()
+	[[nodiscard]] Iterator begin()
 	{
 		return getBegin();
 	}
 
-	ConstIterator begin() const
+	[[nodiscard]] ConstIterator begin() const
 	{
 		return getBegin();
 	}
 
-	Iterator end()
+	[[nodiscard]] Iterator end()
 	{
 		return getEnd();
 	}
 
-	ConstIterator end() const
+	[[nodiscard]] ConstIterator end() const
 	{
 		return getEnd();
 	}
 
-	/// Return the string's length. It doesn't count the terminating character.
-	U32 getLength() const
+	// Return the string's length. It doesn't count the terminating character.
+	[[nodiscard]] U32 getLength() const
 	{
 		return (m_data.getSize() == 0) ? 0 : U32(std::strlen(&m_data[0]));
 	}
 
-	/// Return the CString.
-	CString toCString() const
+	// Return the CString.
+	[[nodiscard]] CString toCString() const
 	{
 		return (!isEmpty()) ? CString(&m_data[0]) : CString();
 	}
 
-	/// Return true if it's empty.
-	Bool isEmpty() const
+	// Return true if it's empty.
+	[[nodiscard]] Bool isEmpty() const
 	{
 		return m_data.isEmpty();
 	}
 
-	/// Find a substring of this string.
-	/// @param[in] cstr The substring to search.
-	/// @param position Position of the first character in the string to be considered in the search.
-	/// @return A valid position if the string is found or kNpos if not found.
-	PtrSize find(const CString& cstr, PtrSize position = 0) const
+	// Find a substring of this string.
+	// cstr: The substring to search.
+	// position: Position of the first character in the string to be considered in the search.
+	// Returns a valid position if the string is found or kNpos if not found.
+	[[nodiscard]] PtrSize find(const CString& cstr, PtrSize position = 0) const
 	{
 		ANKI_ASSERT(!isEmpty());
 		return toCString().find(cstr, position);
 	}
 
-	/// Find a substring of this string.
-	/// @param[in] str The substring to search.
-	/// @param position Position of the first character in the string to be considered in the search.
-	/// @return A valid position if the string is found or kNpos if not found.
-	PtrSize find(const BaseString& str, PtrSize position) const
+	// Find a substring of this string.
+	// str: The substring to search.
+	// position: Position of the first character in the string to be considered in the search.
+	// Returns a valid position if the string is found or kNpos if not found.
+	[[nodiscard]] PtrSize find(const BaseString& str, PtrSize position) const
 	{
 		ANKI_ASSERT(!isEmpty());
 		return find(str.toCString(), position);
 	}
 
-	/// Convert a number to a string.
+	// Convert a number to a string.
 	template<typename TNumber>
 	void toString(TNumber number)
 	{
@@ -615,86 +607,86 @@ public:
 		}
 	}
 
-	/// Convert to F16.
+	// Convert to F16.
 	Error toNumber(F16& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to F32.
+	// Convert to F32.
 	Error toNumber(F32& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to F64.
+	// Convert to F64.
 	Error toNumber(F64& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to I8.
+	// Convert to I8.
 	Error toNumber(I8& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to U8.
+	// Convert to U8.
 	Error toNumber(U8& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to I16.
+	// Convert to I16.
 	Error toNumber(I16& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to U16.
+	// Convert to U16.
 	Error toNumber(U16& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to I32.
+	// Convert to I32.
 	Error toNumber(I32& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to U32.
+	// Convert to U32.
 	Error toNumber(U32& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to I64.
+	// Convert to I64.
 	Error toNumber(I64& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to U64.
+	// Convert to U64.
 	Error toNumber(U64& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to Bool.
+	// Convert to Bool.
 	Error toNumber(Bool& out) const
 	{
 		return toCString().toNumber(out);
 	}
 
-	/// Compute the hash.
-	U64 computeHash() const
+	// Compute the hash.
+	[[nodiscard]] U64 computeHash() const
 	{
 		ANKI_ASSERT(!isEmpty());
 		return toCString().computeHash();
 	}
 
-	/// Replace all occurrences of "from" with "to".
+	// Replace all occurrences of "from" with "to".
 	BaseString& replaceAll(CString from, CString to)
 	{
 		if(isEmpty()) [[unlikely]]
@@ -734,7 +726,7 @@ public:
 		return *this;
 	}
 
-	/// @brief  Execute a functor for all characters of the string.
+	// Execute a functor for all characters of the string.
 	template<typename TFunc>
 	BaseString& transform(TFunc func)
 	{
@@ -754,7 +746,7 @@ public:
 		});
 	}
 
-	TMemoryPool& getMemoryPool()
+	[[nodiscard]] TMemoryPool& getMemoryPool()
 	{
 		return m_data.getMemoryPool();
 	}
@@ -762,7 +754,7 @@ public:
 private:
 	DynamicArray<Char, TMemoryPool, PtrSize> m_data;
 
-	/// Append to this string.
+	// Append to this string.
 	void appendInternal(const Char* str, PtrSize strLen)
 	{
 		ANKI_ASSERT(str != nullptr);
@@ -781,7 +773,7 @@ private:
 		m_data[m_data.getSize() - 1] = '\0';
 	}
 
-	/// Internal don't use it.
+	// Internal don't use it.
 	void sprintfInternal(const Char* fmt, va_list& args)
 	{
 		Array<Char, 512> buffer;
@@ -818,7 +810,7 @@ using String = BaseString<SingletonMemoryPoolWrapper<DefaultMemoryPool>>;
 
 #define ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, op, ...) \
 	__VA_ARGS__ \
-	inline Bool operator op(TypeA a, TypeB b) \
+	[[nodiscard]] inline Bool operator op(TypeA a, TypeB b) \
 	{ \
 		return CString(a) op CString(b); \
 	}
@@ -839,6 +831,5 @@ ANKI_STRING_COMPARE_OPS(const BaseString<TMemPool>&, const BaseString<TMemPool>&
 
 #undef ANKI_STRING_COMPARE_OPERATOR
 #undef ANKI_STRING_COMPARE_OPS
-/// @}
 
 } // end namespace anki

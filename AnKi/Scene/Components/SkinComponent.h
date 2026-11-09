@@ -36,9 +36,6 @@ enum class RootMotionMode : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RootMotionMode)
 
-template<typename T>
-concept IsAnimationId = (std::is_integral_v<T> || std::is_enum_v<T>)&&sizeof(T) <= sizeof(U32);
-
 // Skin component
 class SkinComponent : public SceneComponent
 {

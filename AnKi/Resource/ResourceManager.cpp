@@ -76,6 +76,12 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 template<typename T>
 Error ResourceManager::loadResource(CString filename, IntrusiveNoDelPtr<T>& out, Bool async)
 {
+	if(filename.isEmpty()) [[unlikely]]
+	{
+		ANKI_RESOURCE_LOGE("Can't load resource with empty filename");
+		return Error::kUserData;
+	}
+
 	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
 
 	// Try to find the resource

@@ -475,6 +475,17 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 			{
 				var.setString(&buff[0]);
 			}
+
+			// Drag and drop any asset
+			for(const Char* payload :
+				{kMeshAssetDragDropPayload, kTextureAssetDragDropPayload, kMaterialAssetDragDropPayload, kScriptAssetDragDropPayload,
+				 kParticleEmitterAssetDragDropPayload, kAnimationAssetDragDropPayload, kSkeletonAssetDragDropPayload})
+			{
+				if(String droppedFilename = acceptDragDrop(payload))
+				{
+					var.setString(droppedFilename);
+				}
+			}
 			break;
 		}
 		case ScriptVariableType::kVec2:
@@ -1282,180 +1293,32 @@ void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
-	const DynamicArray<CString> filenames = gatherResourceFilenames(".ankianim");
+	// Playback button
+	{
+		ImGui::SameLine();
+		if(ImGui::Button((comp.getPlayOnEditor()) ? ICON_MDI_PAUSE : ICON_MDI_PLAY))
+		{
+			comp.setPlayOnEditor(!comp.getPlayOnEditor());
+		}
+		ImGui::SetItemTooltip("Play/Pause");
+	}
 
 	for(U32 i = 0; i < comp.kMaxAnimationTracks; ++i)
 	{
-		if(!ImGui::TreeNode(String().sprintf("Track #%u", i).cstr()))
+		const Bool hasAnim = comp.getTrackHasAnimations(i);
+
+		if(!ImGui::TreeNode(String().sprintf("Track #%u%s", i, (hasAnim) ? " (*)" : "").cstr()))
 		{
 			continue;
 		}
 
-		// Playback buttons
+		ImGui::TextUnformatted((hasAnim) ? comp.getFilepathOfFirstAnimationPlaying(i).cstr() : "No animation");
+
+		if(ImGui::Button(ICON_MDI_DELETE))
 		{
-			if(ImGui::Button(ICON_MDI_PLAY))
-			{
-				comp.setEditorAnimationPlayState(i, AnimationPlayState::kPlaying);
-			}
-			ImGui::SetItemTooltip("Play");
-			ImGui::SameLine();
-
-			if(ImGui::Button(ICON_MDI_PAUSE))
-			{
-				comp.setEditorAnimationPlayState(i, AnimationPlayState::kPaused);
-			}
-			ImGui::SetItemTooltip("Pause");
-			ImGui::SameLine();
-
-			if(ImGui::Button(ICON_MDI_STOP))
-			{
-				comp.setEditorAnimationPlayState(i, AnimationPlayState::kStopped);
-			}
-			ImGui::SetItemTooltip("Stop");
-			ImGui::SameLine();
-
-			if(ImGui::Button(ICON_MDI_DELETE))
-			{
-				comp.resetTrack(i);
-			}
-			ImGui::SetItemTooltip("Clear track");
+			comp.resetTrack(i);
 		}
-
-		drawLocateResourceButton(comp.hasAnimationFilename(i) ? comp.getAnimationFilename(i) : "");
-
-		// Filename
-		{
-			const String currentFilename = comp.hasAnimationFilename(i) ? comp.getAnimationFilename(i) : "";
-			U32 newSelectedFilename = kMaxU32;
-
-			ImGui::SetNextItemWidth(-1.0f);
-			const Bool selected = comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-			if(selected && currentFilename != filenames[newSelectedFilename])
-			{
-				comp.setAnimationFilename(i, filenames[newSelectedFilename]);
-			}
-
-			// Drag and drop
-			if(String droppedFilename = acceptDragDrop(kAnimationAssetDragDropPayload))
-			{
-				if(droppedFilename != currentFilename)
-				{
-					comp.setAnimationFilename(i, droppedFilename);
-				}
-			}
-		}
-
-		// Channel
-		{
-			ImGui::BeginDisabled(!comp.hasAnimationFilename(i));
-
-			const CString currentChannel = comp.hasAnimationFilename(i) ? comp.getAnimationChannel(i) : "";
-			if(ImGui::BeginCombo("Channel", currentChannel.cstr()))
-			{
-				// Load the (cached) resource only while the dropdown is open, to enumerate its channels
-				AnimationResourcePtr anim;
-				if(!ResourceManager::getSingleton().loadResource(comp.getAnimationFilename(i), anim))
-				{
-					for(const AnimationChannel& channel : anim->getChannels())
-					{
-						const CString channelName = channel.m_name;
-						const Bool isSelected = channelName == currentChannel;
-						if(ImGui::Selectable(channelName.cstr(), isSelected))
-						{
-							comp.setAnimationChannel(i, channelName);
-						}
-
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if(isSelected)
-						{
-							ImGui::SetItemDefaultFocus();
-						}
-					}
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::EndDisabled();
-		}
-
-		// Blend weight
-		{
-			F32 blendWeight = comp.getAnimationBlendWeight(i);
-			if(ImGui::SliderFloat("Blend Weight", &blendWeight, 0.01f, 1.0f))
-			{
-				comp.setAnimationBlendWeight(i, blendWeight);
-			}
-		}
-
-		// Speed
-		{
-			F32 speed = comp.getAnimationSpeed(i);
-			if(ImGui::DragFloat("Speed", &speed, 0.01f, -100.0f, 100.0f, "%.3f"))
-			{
-				comp.setAnimationSpeed(i, speed);
-			}
-		}
-
-		// Wrap mode
-		if(ImGui::BeginCombo("Wrap Mode", kAnimationWrapModeNames[comp.getAnimationWrapMode(i)]))
-		{
-			for(AnimationWrapMode mode : EnumIterable<AnimationWrapMode>())
-			{
-				const Bool selected = mode == comp.getAnimationWrapMode(i);
-				if(ImGui::Selectable(kAnimationWrapModeNames[mode], selected))
-				{
-					comp.setAnimationWrapMode(i, mode);
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(selected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
-
-		// Blend mode
-		if(ImGui::BeginCombo("Blend Mode", kAnimationBlendModeNames[comp.getAnimationBlendMode(i)]))
-		{
-			for(AnimationBlendMode mode : EnumIterable<AnimationBlendMode>())
-			{
-				const Bool selected = mode == comp.getAnimationBlendMode(i);
-				if(ImGui::Selectable(kAnimationBlendModeNames[mode], selected))
-				{
-					comp.setAnimationBlendMode(i, mode);
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(selected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
-
-		// State
-		if(ImGui::BeginCombo("State", kAnimationPlayStateNames[comp.getAnimationPlayState(i)]))
-		{
-			for(AnimationPlayState state : EnumIterable<AnimationPlayState>())
-			{
-				const Bool selected = state == comp.getAnimationPlayState(i);
-				if(ImGui::Selectable(kAnimationPlayStateNames[state], selected))
-				{
-					comp.setAnimationPlayState(i, state);
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(selected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
+		ImGui::SetItemTooltip("Clear track");
 
 		ImGui::TreePop();
 	}

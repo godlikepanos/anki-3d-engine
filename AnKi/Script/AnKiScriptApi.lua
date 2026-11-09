@@ -60,12 +60,6 @@ TriggerComponentShapeType = {}
 ---@field kQueued integer
 AnimationStart = {}
 
----@class AnimationWrapMode
----@field kOnce integer
----@field kLoop integer
----@field kCount integer
-AnimationWrapMode = {}
-
 ---@class AnimationBlendMode
 ---@field kOverride integer
 ---@field kAdditive integer
@@ -79,6 +73,12 @@ AnimationBlendMode = {}
 ---@field kLockRoot integer
 ---@field kCount integer
 RootMotionMode = {}
+
+---@class NodeMotionMode
+---@field kApplyToNode integer
+---@field kExtract integer
+---@field kCount integer
+NodeMotionMode = {}
 
 ---@class AnimationPlayState
 ---@field kStopped integer
@@ -462,73 +462,43 @@ AnimationComponent = {}
 
 ---@param num number
 ---@param str string
----@return AnimationComponent
-function AnimationComponent:setAnimationFilename(num, str) end
+function AnimationComponent:registerAnimation(num, str) end
 
 ---@param num number
----@return string
-function AnimationComponent:getAnimationFilename(num) end
+function AnimationComponent:unregisterAnimation(num) end
+
+---@param num number
+---@param num2 number
+---@param str string
+---@param num3 number
+---@param animationStart integer
+---@return AnimationState
+function AnimationComponent:playAnimation(num, num2, str, num3, animationStart) end
+
+---@param num number
+---@param num2 number
+---@return AnimationState
+function AnimationComponent:getAnimationState(num, num2) end
+
+---@param num number
+---@return AnimationTrackState
+function AnimationComponent:getAnimationTrackState(num) end
 
 ---@param num number
 ---@return boolean
-function AnimationComponent:hasAnimationFilename(num) end
-
----@param num number
----@param str string
----@return AnimationComponent
-function AnimationComponent:setAnimationChannel(num, str) end
-
----@param num number
----@return string
-function AnimationComponent:getAnimationChannel(num) end
-
----@param num number
----@param num2 number
----@return AnimationComponent
-function AnimationComponent:setAnimationBlendWeight(num, num2) end
-
----@param num number
----@return number
-function AnimationComponent:getAnimationBlendWeight(num) end
-
----@param num number
----@param animationWrapMode integer
----@return AnimationComponent
-function AnimationComponent:setAnimationWrapMode(num, animationWrapMode) end
-
----@param num number
----@return integer
-function AnimationComponent:getAnimationWrapMode(num) end
-
----@param num number
----@param animationBlendMode integer
----@return AnimationComponent
-function AnimationComponent:setAnimationBlendMode(num, animationBlendMode) end
-
----@param num number
----@return integer
-function AnimationComponent:getAnimationBlendMode(num) end
-
----@param num number
----@param num2 number
----@return AnimationComponent
-function AnimationComponent:setAnimationSpeed(num, num2) end
-
----@param num number
----@return number
-function AnimationComponent:getAnimationSpeed(num) end
+function AnimationComponent:getTrackHasAnimations(num) end
 
 ---@param num number
 function AnimationComponent:resetTrack(num) end
 
----@param num number
----@param animationPlayState integer
----@return AnimationComponent
-function AnimationComponent:setAnimationPlayState(num, animationPlayState) end
+---@return Transform
+function AnimationComponent:getNodeTransformDelta() end
 
----@param num number
+---@param nodeMotionMode integer
+function AnimationComponent:setNodeMotionMode(nodeMotionMode) end
+
 ---@return integer
-function AnimationComponent:getAnimationPlayState(num) end
+function AnimationComponent:getNodeMotionMode() end
 
 ---@return boolean
 function AnimationComponent:isValid() end

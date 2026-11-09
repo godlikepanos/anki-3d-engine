@@ -3022,461 +3022,527 @@ node:setLocalTransform(trf)
 node = scene:tryFindSceneNode("mixamorig:LeftHandRing2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandRing2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightArm")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightArm", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandRing4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandRing4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandThumb2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandThumb2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightUpLeg")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightUpLeg", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandThumb1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandThumb1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightLeg")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightLeg", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftFoot")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftFoot", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightShoulder")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightShoulder", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandIndex1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandIndex1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandPinky1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandPinky1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandIndex2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandIndex2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandRing4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandRing4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandPinky4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandPinky4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandIndex3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandIndex3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandRing1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandRing1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandThumb3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandThumb3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:Head")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:Head", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHand")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHand", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightForeArm")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightForeArm", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandIndex4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandIndex4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandRing3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandRing3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandMiddle2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandMiddle2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightToe_End")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightToe_End", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandPinky2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandPinky2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandMiddle4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandMiddle4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:Spine1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:Spine1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandPinky3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandPinky3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandThumb3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandThumb3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightFoot")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightFoot", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandPinky2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandPinky2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandMiddle1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandMiddle1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:Neck")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:Neck", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftShoulder")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftShoulder", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandThumb1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandThumb1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandRing3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandRing3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:Spine")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:Spine", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandRing2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandRing2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandMiddle4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandMiddle4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandThumb2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandThumb2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftForeArm")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftForeArm", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightToeBase")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightToeBase", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandIndex4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandIndex4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandPinky3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandPinky3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandThumb4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandThumb4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:HeadTop_End")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:HeadTop_End", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftArm")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftArm", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandMiddle2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandMiddle2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandThumb4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandThumb4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftToe_End")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftToe_End", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandIndex3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandIndex3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandRing1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandRing1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandIndex1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandIndex1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandPinky4")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandPinky4", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftToeBase")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftToeBase", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandMiddle3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandMiddle3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandPinky1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandPinky1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:Hips")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:Hips", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftLeg")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftLeg", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandMiddle3")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandMiddle3", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHandIndex2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHandIndex2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:Spine2")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:Spine2", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:RightHand")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:RightHand", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftUpLeg")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftUpLeg", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("mixamorig:LeftHandMiddle1")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/Armature|mixamo.com|Layer0_2ff0b9b4a30af3d0.ankianim")
+	state = comp:playAnimation(0, 0, "mixamorig:LeftHandMiddle1", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end
 
 node = scene:tryFindSceneNode("Suzanne")
 if node ~= nil then
 	comp = node:newAnimationComponent()
-	comp:setAnimationFilename(0, "Assets/SuzanneAction_a8e545711d9aeca3.ankianim")
-	comp:setAnimationPlayState(0, AnimationPlayState.kPlaying)
+	comp:registerAnimation(0, "Assets/SuzanneAction_a8e545711d9aeca3.ankianim")
+	state = comp:playAnimation(0, 0, "Suzanne", 0.2, AnimationStart.kNow)
+	state.m_repeatTimes = -1
 end

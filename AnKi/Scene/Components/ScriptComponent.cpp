@@ -9,6 +9,7 @@
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Scene/Components/SkinComponent.h>
+#include <AnKi/Scene/Components/AnimationComponent.h>
 
 namespace anki {
 
@@ -183,59 +184,91 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 	}
 
-	// Call onAnimationStarted
-	SkinComponent* skinc = info.m_node->tryGetFirstComponentOfType<SkinComponent>();
-	if(skinc && !!(m_definedFuncsMask & ScriptComponentFunctionMask::kOnAnimationStarted))
-	{
-		for(auto pair : skinc->getAnimationsStarted())
+	auto callLuaFunction = [&](auto pair, ScriptComponentFunctionMask mask) {
+		if(!(m_definedFuncsMask & mask))
 		{
-			// Push function name
-			lua_getglobal(lua, "onAnimationStarted");
+			// A previous call failed
+			return true;
+		}
 
-			// Push args
-			LuaBinder::pushVariableToTheStack(lua, info.m_node);
-			lua_pushnumber(lua, pair.first);
-			lua_pushnumber(lua, pair.second);
+		const CString funcName = (mask == ScriptComponentFunctionMask::kOnAnimationStarted) ? "onAnimationStarted" : "onAnimationEnded";
 
-			// Do the call (3 arguments, no result)
-			if(lua_pcall(lua, 3, 0, 0) != 0)
+		// Push function name
+		lua_getglobal(lua, funcName.cstr());
+
+		// Push args
+		LuaBinder::pushVariableToTheStack(lua, info.m_node);
+		lua_pushnumber(lua, pair.first);
+		lua_pushnumber(lua, pair.second);
+
+		// Do the call (3 arguments, no result)
+		if(lua_pcall(lua, 3, 0, 0) != 0)
+		{
+			ANKI_SCENE_LOGE("Error running ScriptComponent's \"%s\": %s", funcName.cstr(), lua_tostring(lua, -1));
+			m_definedFuncsMask &= ~mask;
+			return true;
+		}
+		else
+		{
+			updated = true;
+			return false;
+		}
+	};
+
+	// Call onAnimationStarted
+	if(!!(m_definedFuncsMask & ScriptComponentFunctionMask::kOnAnimationStarted))
+	{
+		SkinComponent* skinc = info.m_node->tryGetFirstComponentOfType<SkinComponent>();
+		if(skinc)
+		{
+			for(auto pair : skinc->getAnimationsStarted())
 			{
-				ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationStarted\": %s", lua_tostring(lua, -1));
-				m_definedFuncsMask &= ~ScriptComponentFunctionMask::kOnAnimationStarted;
-				break;
-			}
-			else
-			{
-				updated = true;
+				if(callLuaFunction(pair, ScriptComponentFunctionMask::kOnAnimationStarted))
+				{
+					break;
+				}
 			}
 		}
+
+		info.m_node->iterateComponentsOfType<AnimationComponent>([&](const AnimationComponent& animc) {
+			for(auto pair : animc.getAnimationsStarted())
+			{
+				if(callLuaFunction(pair, ScriptComponentFunctionMask::kOnAnimationStarted))
+				{
+					return FunctorContinue::kStop;
+				}
+			}
+
+			return FunctorContinue::kContinue;
+		});
 	}
 
 	// Call onAnimationEnded
-	if(skinc && !!(m_definedFuncsMask & ScriptComponentFunctionMask::kOnAnimationEnded))
+	if(!!(m_definedFuncsMask & ScriptComponentFunctionMask::kOnAnimationEnded))
 	{
-		for(auto pair : skinc->getAnimationsEnded())
+		SkinComponent* skinc = info.m_node->tryGetFirstComponentOfType<SkinComponent>();
+		if(skinc)
 		{
-			// Push function name
-			lua_getglobal(lua, "onAnimationEnded");
-
-			// Push args
-			LuaBinder::pushVariableToTheStack(lua, info.m_node);
-			lua_pushnumber(lua, pair.first);
-			lua_pushnumber(lua, pair.second);
-
-			// Do the call (3 arguments, no result)
-			if(lua_pcall(lua, 3, 0, 0) != 0)
+			for(auto pair : skinc->getAnimationsEnded())
 			{
-				ANKI_SCENE_LOGE("Error running ScriptComponent's \"onAnimationEnded\": %s", lua_tostring(lua, -1));
-				m_definedFuncsMask &= ~ScriptComponentFunctionMask::kOnAnimationEnded;
-				break;
-			}
-			else
-			{
-				updated = true;
+				if(callLuaFunction(pair, ScriptComponentFunctionMask::kOnAnimationEnded))
+				{
+					break;
+				}
 			}
 		}
+
+		info.m_node->iterateComponentsOfType<AnimationComponent>([&](const AnimationComponent& animc) {
+			for(auto pair : animc.getAnimationsEnded())
+			{
+				if(callLuaFunction(pair, ScriptComponentFunctionMask::kOnAnimationEnded))
+				{
+					return FunctorContinue::kStop;
+				}
+			}
+
+			return FunctorContinue::kContinue;
+		});
 	}
 
 	// Update C++ from LUA env if LUA run

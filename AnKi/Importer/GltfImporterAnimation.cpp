@@ -369,8 +369,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
 		ANKI_CHECK(m_sceneFile.writeText("if node ~= nil then\n"));
 		ANKI_CHECK(m_sceneFile.writeText("\tcomp = node:newAnimationComponent()\n"));
-		ANKI_CHECK(m_sceneFile.writeTextf("\tcomp:setAnimationFilename(0, \"%s%s\")\n", m_rpath.cstr(), animFname.cstr()));
-		ANKI_CHECK(m_sceneFile.writeText("\tcomp:setAnimationPlayState(0, AnimationPlayState.kPlaying)\n"));
+		ANKI_CHECK(m_sceneFile.writeTextf("\tcomp:registerAnimation(0, \"%s%s\")\n", m_rpath.cstr(), animFname.cstr()));
+		ANKI_CHECK(m_sceneFile.writeTextf("\tstate = comp:playAnimation(0, 0, \"%s\", 0.2, AnimationStart.kNow)\n", channel.m_name.cstr()));
+		ANKI_CHECK(m_sceneFile.writeText("\tstate.m_repeatTimes = -1\n"));
 		ANKI_CHECK(m_sceneFile.writeText("end\n"));
 	}
 
