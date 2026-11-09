@@ -384,6 +384,14 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 
 	{
 		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_skeletonEditorWindow.drawWindow(initialPos, initialSize, 0);
+	}
+
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
 		const Vec2 initialSize = Vec2(800.0f, 600.0f);
 		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
 
@@ -684,7 +692,12 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kSkeleton)
 					{
 						pushFontSize();
-						ImGui::Button(ICON_MDI_BONE);
+						if(ImGui::Button(ICON_MDI_BONE))
+						{
+							SkeletonResourcePtr rsrc;
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
+							m_skeletonEditorWindow.open(*rsrc);
+						}
 						ImGui::PopFont();
 						dragDropSource(file, kSkeletonAssetDragDropPayload);
 					}
