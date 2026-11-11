@@ -525,6 +525,15 @@ void UiCanvas::handleInput()
 		io.AddMouseButtonEvent(1, false);
 	}
 
+	if(in.getMouseButton(MouseButton::kMiddle) > 0)
+	{
+		io.AddMouseButtonEvent(2, true);
+	}
+	else if(in.getMouseButton(MouseButton::kMiddle) < 0)
+	{
+		io.AddMouseButtonEvent(2, false);
+	}
+
 	if(in.getMouseButton(MouseButton::kScrollUp) > 0)
 	{
 		io.AddMouseWheelEvent(0.0f, 1.0f);

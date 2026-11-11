@@ -71,6 +71,97 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 			m_rootBoneIdx = boneCount;
 		}
 
+		// Capsule
+		F32 capsuleRadius = 0.0f;
+		Bool hasCapsuleRadius;
+		ANKI_CHECK(boneEl.getAttributeNumberOptional("capsuleRadius", capsuleRadius, hasCapsuleRadius));
+		if(hasCapsuleRadius)
+		{
+			if(capsuleRadius < 0.0f)
+			{
+				ANKI_RESOURCE_LOGE("Wrong capsuleRadius: %f", capsuleRadius);
+				return Error::kUserData;
+			}
+
+			bone.m_capsuleRadius = capsuleRadius;
+		}
+
+		F32 capsuleHalfHeight = 0.0f;
+		Bool hasCapsuleHalfHeight;
+		ANKI_CHECK(boneEl.getAttributeNumberOptional("capsuleHalfHeight", capsuleHalfHeight, hasCapsuleHalfHeight));
+		if(hasCapsuleHalfHeight)
+		{
+			if(capsuleHalfHeight < 0.0f)
+			{
+				ANKI_RESOURCE_LOGE("Wrong capsuleHalfHeight: %f", capsuleHalfHeight);
+				return Error::kUserData;
+			}
+
+			bone.m_capsuleHalfHeight = capsuleHalfHeight;
+		}
+
+		Vec3 capsulePosition;
+		Bool hasCapsulePosition;
+		ANKI_CHECK(boneEl.getAttributeNumbersOptional("capsulePosition", capsulePosition, hasCapsulePosition));
+		if(hasCapsulePosition)
+		{
+			bone.m_capsulePosition = capsulePosition;
+		}
+
+		Vec3 capsuleRotation;
+		Bool hasCapsuleRotation;
+		ANKI_CHECK(boneEl.getAttributeNumbersOptional("capsuleRotation", capsuleRotation, hasCapsuleRotation));
+		if(hasCapsuleRotation)
+		{
+			bone.m_capsuleRotation = Euler(toRad(capsuleRotation.x), toRad(capsuleRotation.y), toRad(capsuleRotation.z));
+		}
+
+		// Constraint
+		Vec3 constraintRotation;
+		Bool hasConstraintRotation;
+		ANKI_CHECK(boneEl.getAttributeNumbersOptional("constraintRotation", constraintRotation, hasConstraintRotation));
+		if(hasConstraintRotation)
+		{
+			bone.m_constraintRotation = Euler(toRad(constraintRotation.x), toRad(constraintRotation.y), toRad(constraintRotation.z));
+		}
+
+		Vec3 constraintParentRotation;
+		Bool hasConstraintParentRotation;
+		ANKI_CHECK(boneEl.getAttributeNumbersOptional("constraintParentRotation", constraintParentRotation, hasConstraintParentRotation));
+		if(hasConstraintParentRotation)
+		{
+			bone.m_constraintParentRotation =
+				Euler(toRad(constraintParentRotation.x), toRad(constraintParentRotation.y), toRad(constraintParentRotation.z));
+		}
+
+		auto readAngle = [&](CString attribName, F32 minDegrees, F32 maxDegrees, F32& outRadians) -> Error {
+			F32 degrees;
+			Bool hasAttrib;
+			ANKI_CHECK(boneEl.getAttributeNumberOptional(attribName, degrees, hasAttrib));
+			if(hasAttrib)
+			{
+				if(degrees < minDegrees || degrees > maxDegrees)
+				{
+					ANKI_RESOURCE_LOGE("Wrong %s: %f. Should be in [%f, %f]", attribName.cstr(), degrees, minDegrees, maxDegrees);
+					return Error::kUserData;
+				}
+
+				outRadians = toRad(degrees);
+			}
+			return Error::kNone;
+		};
+
+		ANKI_CHECK(readAngle("twistMinAngle", -180.0f, 180.0f, bone.m_twistMinAngle));
+		ANKI_CHECK(readAngle("twistMaxAngle", -180.0f, 180.0f, bone.m_twistMaxAngle));
+		ANKI_CHECK(readAngle("planeAngle", 0.0f, 180.0f, bone.m_planeAngle));
+		ANKI_CHECK(readAngle("normalAngle", 0.0f, 180.0f, bone.m_normalAngle));
+
+		if(bone.m_twistMinAngle > bone.m_twistMaxAngle)
+		{
+			ANKI_RESOURCE_LOGE("twistMinAngle can't be bigger than twistMaxAngle. Bone: %s", name.cstr());
+			return Error::kUserData;
+		}
+
 		// Advance
 		ANKI_CHECK(boneEl.getNextSiblingElement("bone", boneEl));
 		++boneCount;
