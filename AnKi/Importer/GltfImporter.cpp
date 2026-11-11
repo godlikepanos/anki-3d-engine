@@ -284,6 +284,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	m_texrpath = initInfo.m_texrpath;
 	m_optimizeMeshes = initInfo.m_optimizeMeshes;
 	m_optimizeAnimations = initInfo.m_optimizeAnimations;
+	m_bakeSkinScale = initInfo.m_bakeSkinScale;
 	m_comment = initInfo.m_comment;
 
 	m_lodCount = clamp(initInfo.m_lodCount, 1u, 3u);
@@ -862,7 +863,19 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 				ANKI_CHECK(writeMeshMaterialNode(node, parentExtras));
 
-				ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
+				Transform worldTrf = parentTrf.combineTransformations(localTrf);
+				if(m_bakeSkinScale && node.skin)
+				{
+					const F32 scale = worldTrf.getScale().x; // Assume uniform scale
+					for(U32 i = 0; i < node.skin->joints_count; ++i)
+					{
+						m_bakedScales.emplace(node.skin->joints[i], scale);
+					}
+
+					worldTrf.setScale(Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+				}
+
+				ANKI_CHECK(writeTransform(worldTrf));
 
 				if(selfCollision)
 				{
@@ -946,6 +959,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 	for(U32 i = 0; i < skin.joints_count; ++i)
 	{
 		const cgltf_node& boneNode = *skin.joints[i];
+		const F32 bakedScale = getBakedScale(&boneNode);
 
 		ImporterString parent;
 
@@ -960,7 +974,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 		ANKI_CHECK(file.writeText("boneTransform=\""));
 		Mat4 btrf(&boneMats[i][0]);
 		btrf = btrf.transpose();
-		const Mat3x4 btrf3x4(btrf);
+		const Mat3x4 btrf3x4 = Mat3x4(btrf) * bakedScale; // The vertices stay as they are so the whole matrix gets the scale
 		for(U32 j = 0; j < 12; j++)
 		{
 			ANKI_CHECK(file.writeTextf("%f ", btrf3x4[j]));
@@ -970,6 +984,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 		// Transform
 		Transform trf;
 		ANKI_CHECK(getNodeTransform(boneNode, trf));
+		trf.setOrigin(trf.getOrigin() * bakedScale); // Scaling the space leaves the rotations as they are
 		Mat3x4 mat(trf);
 		ANKI_CHECK(file.writeText("transform=\""));
 		for(U32 j = 0; j < 12; j++)

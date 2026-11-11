@@ -13,6 +13,7 @@ Options:
 -texrpath <string>         : Same as rpath but for textures
 -optimize-meshes <0|1>     : Optimize meshes. Default is 1
 -optimize-animations <0|1> : Optimize animations. Default is 1
+-bake-skin-scale <0|1>     : Move the scale of skinned mesh nodes into their skeleton and animations. Default is 0
 -j <thread_count>          : Number of threads. Defaults to system's max
 -lod-count <1|2|3>         : The number of geometry LODs to generate. Default is 1
 -lod-factor <float>        : The decimate factor for each LOD. Default 0.25
@@ -30,6 +31,7 @@ public:
 	String m_texRpath;
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
+	Bool m_bakeSkinScale = false;
 	Bool m_importTextures = false;
 	U32 m_threadCount = kMaxU32;
 	U32 m_lodCount = 1;
@@ -170,6 +172,21 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::kUserData;
 			}
 		}
+		else if(strcmp(argv[i], "-bake-skin-scale") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				I bake = 0;
+				ANKI_CHECK(CString(argv[i]).toNumber(bake));
+				info.m_bakeSkinScale = bake != 0;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
+		}
 		else if(strcmp(argv[i], "-import-textures") == 0)
 		{
 			++i;
@@ -265,6 +282,7 @@ int myMain(int argc, char** argv)
 	initInfo.m_texrpath = cmdArgs.m_texRpath;
 	initInfo.m_optimizeMeshes = cmdArgs.m_optimizeMeshes;
 	initInfo.m_optimizeAnimations = cmdArgs.m_optimizeAnimations;
+	initInfo.m_bakeSkinScale = cmdArgs.m_bakeSkinScale;
 	initInfo.m_lodFactor = cmdArgs.m_lodFactor;
 	initInfo.m_lodCount = cmdArgs.m_lodCount;
 	initInfo.m_threadCount = cmdArgs.m_threadCount;

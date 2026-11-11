@@ -25,6 +25,7 @@ public:
 	CString m_texrpath;
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
+	Bool m_bakeSkinScale = false; // Move the scale of skinned mesh nodes into their skeleton and animations
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
 	U32 m_threadCount = kMaxU32;
@@ -71,7 +72,11 @@ private:
 	F32 m_lightIntensityScale = 1.0f;
 	Bool m_optimizeMeshes = false;
 	Bool m_optimizeAnimations = false;
+	Bool m_bakeSkinScale = false;
 	ImporterString m_comment;
+
+	// The scale that m_bakeSkinScale moved out of the nodes. The key is the cgltf_node of a bone
+	ImporterHashMap<const void*, F32> m_bakedScales;
 
 	// Don't generate LODs for meshes with less vertices than this number.
 	U32 m_skipLodVertexCountThreshold = 256;
@@ -162,6 +167,12 @@ private:
 	}
 
 	static U32 getMeshTotalVertexCount(const cgltf_mesh& mesh);
+
+	F32 getBakedScale(const void* bone) const
+	{
+		auto it = m_bakedScales.find(bone);
+		return (it != m_bakedScales.getEnd()) ? *it : 1.0f;
+	}
 
 	// Compute filenames for various resources. Use a hash to solve the casing issue and remove unwanted special chars
 	ImporterString computeMeshResourceFilename(const cgltf_mesh& mesh) const;

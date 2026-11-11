@@ -180,11 +180,12 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 				return Error::kUserData;
 			}
 
+			const F32 bakedScale = getBakedScale(channel.target_node);
 			for(U32 i = 0; i < keys.getSize(); ++i)
 			{
 				GltfAnimKey<Vec3> key;
 				key.m_time = keys[i];
-				key.m_value = Vec3(positions[i].x, positions[i].y, positions[i].z);
+				key.m_value = Vec3(positions[i].x, positions[i].y, positions[i].z) * bakedScale;
 
 				tempChannels[channelCount].m_positions.emplaceBack(key);
 			}
