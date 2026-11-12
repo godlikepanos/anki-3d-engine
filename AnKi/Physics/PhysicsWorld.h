@@ -10,6 +10,7 @@
 #include <AnKi/Physics/PhysicsBody.h>
 #include <AnKi/Physics/PhysicsJoint.h>
 #include <AnKi/Physics/PhysicsPlayerController.h>
+#include <AnKi/Physics/PhysicsRagdoll.h>
 #include <AnKi/Util/BlockArray.h>
 
 namespace anki {
@@ -41,6 +42,8 @@ class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 	friend class PhysicsPlayerController;
 	friend class PhysicsPlayerControllerPtrDeleter;
 	friend class PhysicsJointPtrDeleter;
+	friend class PhysicsRagdoll;
+	friend class PhysicsRagdollPtrDeleter;
 
 public:
 	Error init(AllocAlignedCallback allocCb, void* allocCbData);
@@ -63,6 +66,8 @@ public:
 	PhysicsJointPtr newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot1, const Transform& pivot2);
 
 	PhysicsPlayerControllerPtr newPlayerController(const PhysicsPlayerControllerInitInfo& init);
+
+	PhysicsRagdollPtr newRagdoll(const PhysicsRagdollInitInfo& init);
 
 	void update(Second dt);
 
@@ -115,6 +120,7 @@ private:
 	ObjArray<PhysicsBody, 64> m_bodies;
 	ObjArray<PhysicsJoint, 16> m_joints;
 	ObjArray<PhysicsPlayerController, 8> m_characters;
+	ObjArray<PhysicsRagdoll, 8> m_ragdolls;
 
 	DynamicArray<Contact> m_insertedContacts;
 	DynamicArray<Contact> m_deletedContacts;

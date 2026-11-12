@@ -34,13 +34,16 @@
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
 #include <Jolt/Physics/Collision/CastResult.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Constraints/PointConstraint.h>
 #include <Jolt/Physics/Constraints/HingeConstraint.h>
+#include <Jolt/Physics/Constraints/SwingTwistConstraint.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Physics/Ragdoll/Ragdoll.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
@@ -86,6 +89,7 @@ enum class PhysicsObjectType : U8
 	kBody,
 	kPlayerController,
 	kJoint,
+	kRagdoll,
 
 	kCount
 };
@@ -158,6 +162,7 @@ enum class PhysicsLayer : U8
 	kPlayerController,
 	kTrigger,
 	kDebris,
+	kRagdoll,
 
 	kCount,
 	kFirst = 0
@@ -172,18 +177,20 @@ enum class PhysicsLayerBit : U8
 	kPlayerController = 1u << 2u,
 	kTrigger = 1u << 3u,
 	kDebris = 1u << 4u,
+	kRagdoll = 1u << 5u,
 
-	kAll = kStatic | kMoving | kPlayerController | kTrigger | kDebris
+	kAll = kStatic | kMoving | kPlayerController | kTrigger | kDebris | kRagdoll
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsLayerBit)
 
-/// Table that shows which layer collides with whom.
+// Table that shows which layer collides with whom.
 inline constexpr Array<PhysicsLayerBit, U32(PhysicsLayer::kCount)> kPhysicsLayerCollisionTable = {
 	{/* kStatic           */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kStatic | PhysicsLayerBit::kTrigger),
 	 /* kMoving           */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kDebris),
 	 /* kPlayerController */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kDebris),
 	 /* kTrigger          */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kStatic | PhysicsLayerBit::kTrigger),
-	 /* kDebris           */ PhysicsLayerBit::kStatic}};
+	 /* kDebris           */ PhysicsLayerBit::kStatic,
+	 /* kRagdoll          */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kDebris)}};
 
 #define ANKI_PHYSICS_DEFINE_PTRS(className) \
 	class className; \
@@ -198,6 +205,7 @@ ANKI_PHYSICS_DEFINE_PTRS(PhysicsCollisionShape)
 ANKI_PHYSICS_DEFINE_PTRS(PhysicsBody)
 ANKI_PHYSICS_DEFINE_PTRS(PhysicsJoint)
 ANKI_PHYSICS_DEFINE_PTRS(PhysicsPlayerController)
+ANKI_PHYSICS_DEFINE_PTRS(PhysicsRagdoll)
 #undef ANKI_PHYSICS_DEFINE_PTRS
 
 template<U32 kSize>
