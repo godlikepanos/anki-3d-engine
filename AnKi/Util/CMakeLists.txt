@@ -63,7 +63,7 @@ if(DIRECTX AND ANKI_TRACE)
 	find_library(PIX_LIB WinPixEventRuntime HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/${cpu_arch}")
 	set(libs ${libs} ${PIX_LIB})
 
-	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/include/WinPixEventRuntime")
+	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/Include/WinPixEventRuntime")
 endif()
 
 target_link_libraries(AnKiUtil ${libs})

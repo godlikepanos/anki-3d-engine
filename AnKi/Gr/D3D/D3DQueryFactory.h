@@ -115,17 +115,7 @@ private:
 		}
 	};
 
-	template<typename Chunk>
-	class BlockArrayConfig
-	{
-	public:
-		static constexpr U32 getElementCountPerBlock()
-		{
-			return 8;
-		}
-	};
-
-	using BlockArray = GrBlockArray<Chunk, BlockArrayConfig<Chunk>>;
+	using BlockArray = GrBlockArray<Chunk, BlockArrayConfig<8>>;
 
 	BlockArray m_chunkArray;
 	Mutex m_mtx;
