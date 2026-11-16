@@ -1107,7 +1107,10 @@ void StreamingImageResourceManager::performStreaming(ResourceDynamicArray<Intrus
 			return FunctorContinue::kContinue;
 		}
 
-		loadRequests.emplaceBack(LoadMipsRequest{.m_img{&img}, .m_arrayIndex = descIdx, .m_firstMip = U8(mip), .m_mipCount = mipCount});
+		loadRequests.emplaceBack(LoadMipsRequest{.m_img = IntrusiveNoDelPtr<StreamingImage>(&img),
+												 .m_arrayIndex = descIdx,
+												 .m_firstMip = U8(mip),
+												 .m_mipCount = mipCount});
 
 		streamingInf.m_detailedLoadedMip = U8(mip);
 
@@ -1198,8 +1201,10 @@ void StreamingImageResourceManager::performStreaming(ResourceDynamicArray<Intrus
 
 			const PtrSize crntMemToFree = img.estimateSurfaceMemoryConsumption(firstMip, mipCount);
 
-			requests.emplaceBack(
-				LoadMipsRequest{.m_img{&img}, .m_arrayIndex = streamingPair.second, .m_firstMip = U8(firstMip), .m_mipCount = U8(mipCount)});
+			requests.emplaceBack(LoadMipsRequest{.m_img = IntrusiveNoDelPtr<StreamingImage>(&img),
+												 .m_arrayIndex = streamingPair.second,
+												 .m_firstMip = U8(firstMip),
+												 .m_mipCount = U8(mipCount)});
 
 			streaming.m_detailedLoadedMip = U8(firstMip + mipCount);
 
