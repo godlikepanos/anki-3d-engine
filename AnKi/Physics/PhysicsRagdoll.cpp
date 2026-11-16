@@ -26,6 +26,8 @@ void PhysicsRagdoll::init(const PhysicsRagdollInitInfo& init)
 {
 	ANKI_ASSERT(init.m_bones.getSize() > 0);
 	ANKI_ASSERT(init.m_mass > 0.0f);
+	ANKI_ASSERT(init.m_jointFriction >= 0.0f);
+	ANKI_ASSERT(init.m_contactFriction >= 0.0f);
 
 	JPH::Ref<JPH::RagdollSettings> settings = new JPH::RagdollSettings;
 
@@ -101,6 +103,7 @@ void PhysicsRagdoll::init(const PhysicsRagdollInitInfo& init)
 		part.mRotation = toJPH(Quat(modelRot));
 		part.mMotionType = JPH::EMotionType::Dynamic;
 		part.mObjectLayer = JPH::ObjectLayer(PhysicsLayer::kRagdoll);
+		part.mFriction = init.m_contactFriction;
 
 		// Split the mass based on the volume of the capsules
 		part.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
@@ -127,6 +130,7 @@ void PhysicsRagdoll::init(const PhysicsRagdollInitInfo& init)
 		constraint->mTwistMaxAngle = bone.m_twistMaxAngle;
 		constraint->mPlaneHalfConeAngle = bone.m_planeAngle;
 		constraint->mNormalHalfConeAngle = bone.m_normalAngle;
+		constraint->mMaxFrictionTorque = init.m_jointFriction * part.mMassPropertiesOverride.mMass;
 		part.mToParent = constraint;
 	}
 
@@ -180,10 +184,54 @@ void PhysicsRagdoll::setBoneTransforms(ConstWeakArray<Mat3x4> worldTrfs)
 		const Bone& bone = m_bones[i];
 		if(bone.m_part != kMaxU32)
 		{
-			const Mat3 rot = Mat3(worldTrfs[i].getRotationPart());
+			[[maybe_unused]] const Vec3 scale = worldTrfs[i].getRotationPart().extractScale();
+			ANKI_ASSERT(absolute(scale.x - 1.0f) < 0.001f && absolute(scale.y - 1.0f) < 0.001f && absolute(scale.z - 1.0f) < 0.001f
+						&& "Ragdolls can't be scaled");
+
+			const Mat3 rot = Mat3(worldTrfs[i].getRotationPart()).reorthogonalize(); // Jolt wants normalized quats, remove the drift
 			bodyInterface.SetPositionAndRotation(m_ragdoll->GetBodyID(I32(bone.m_part)), toJPH(worldTrfs[i].getTranslationPart()), toJPH(Quat(rot)),
 												 JPH::EActivation::Activate);
 		}
+	}
+
+	// The constraint impulses of the previous pose would kick the bodies
+	m_ragdoll->ResetWarmStart();
+}
+
+void PhysicsRagdoll::setBoneTransforms(ConstWeakArray<Mat3x4> prevWorldTrfs, ConstWeakArray<Mat3x4> crntWorldTrfs, Second dt)
+{
+	ANKI_ASSERT(prevWorldTrfs.getSize() == m_bones.getSize() && crntWorldTrfs.getSize() == m_bones.getSize());
+	ANKI_ASSERT(dt > 0.0);
+
+	JPH::BodyInterface& bodyInterface = PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock();
+
+	for(U32 i = 0; i < m_bones.getSize(); ++i)
+	{
+		const Bone& bone = m_bones[i];
+		if(bone.m_part == kMaxU32)
+		{
+			continue;
+		}
+
+		[[maybe_unused]] const Vec3 prevScale = prevWorldTrfs[i].getRotationPart().extractScale();
+		[[maybe_unused]] const Vec3 crntScale = crntWorldTrfs[i].getRotationPart().extractScale();
+		ANKI_ASSERT(absolute(prevScale.x - 1.0f) < 0.001f && absolute(prevScale.y - 1.0f) < 0.001f && absolute(prevScale.z - 1.0f) < 0.001f
+					&& absolute(crntScale.x - 1.0f) < 0.001f && absolute(crntScale.y - 1.0f) < 0.001f && absolute(crntScale.z - 1.0f) < 0.001f
+					&& "Ragdolls can't be scaled");
+
+		const JPH::BodyID bodyId = m_ragdoll->GetBodyID(I32(bone.m_part));
+		const JPH::Quat prevRot = toJPH(Quat(Mat3(prevWorldTrfs[i].getRotationPart()).reorthogonalize()));
+		const JPH::Quat crntRot = toJPH(Quat(Mat3(crntWorldTrfs[i].getRotationPart()).reorthogonalize()));
+		const JPH::Vec3 prevPos = toJPH(prevWorldTrfs[i].getTranslationPart());
+		const JPH::Vec3 crntPos = toJPH(crntWorldTrfs[i].getTranslationPart());
+
+		// Same math as Body::MoveKinematic(). Jolt's linear velocity is the one of the center of mass and that's not the bone's origin
+		const JPH::Vec3 com = bodyInterface.GetShape(bodyId)->GetCenterOfMass(); // In body space
+		const JPH::Vec3 linearVelocity = ((crntPos + crntRot * com) - (prevPos + prevRot * com)) / F32(dt);
+		const JPH::Vec3 angularVelocity = (crntRot * prevRot.Conjugated()).GetAngularVelocity(F32(dt));
+
+		bodyInterface.SetPositionAndRotation(bodyId, crntPos, crntRot, JPH::EActivation::Activate);
+		bodyInterface.SetLinearAndAngularVelocity(bodyId, linearVelocity, angularVelocity);
 	}
 
 	// The constraint impulses of the previous pose would kick the bodies

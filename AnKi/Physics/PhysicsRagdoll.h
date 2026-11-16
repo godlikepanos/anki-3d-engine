@@ -46,6 +46,12 @@ public:
 	ConstWeakArray<PhysicsRagdollBone> m_bones;
 
 	F32 m_mass = 80.0f;
+
+	// Makes the ragdoll stiffer. Heavier parts get more so the hands don't lock
+	F32 m_jointFriction = 12.0f;
+
+	// Contact friction of the bodies. Usually 0 to 1, can go higher. E.g. ice 0.05, wood 0.4, cloth on stone 0.5, rubber on concrete 0.9
+	F32 m_contactFriction = 0.5f;
 };
 
 class PhysicsRagdoll : public PhysicsObjectBase
@@ -61,6 +67,10 @@ public:
 	// Teleports the ragdoll. One world transform per bone of the skeleton, without scale. Only the bones with a capsule are used. Not thread-safe
 	// with PhysicsWorld::update()
 	void setBoneTransforms(ConstWeakArray<Mat3x4> worldTrfs);
+
+	// Same as setBoneTransforms() but the bodies also get the velocity of moving from prevWorldTrfs to crntWorldTrfs in dt. Use it to carry
+	// the momentum of an animation over to the ragdoll. Not thread-safe with PhysicsWorld::update()
+	void setBoneTransforms(ConstWeakArray<Mat3x4> prevWorldTrfs, ConstWeakArray<Mat3x4> crntWorldTrfs, Second dt);
 
 private:
 	class Bone

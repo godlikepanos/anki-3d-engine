@@ -707,6 +707,22 @@ void SceneNodePropertiesUi::skinComponent(SkinComponent& comp)
 			}
 		}
 	}
+
+	// Ragdoll mass
+	F32 ragdollMass = comp.getRagdollMass();
+	if(ImGui::SliderFloat("Ragdoll Mass", &ragdollMass, 1.0f, 200.0f))
+	{
+		comp.setRagdollMass(ragdollMass);
+	}
+	ImGui::SetItemTooltip("The total mass in kg. Used the next time the ragdoll is created");
+
+	// Ragdoll friction
+	F32 ragdollFriction = comp.getRagdollFriction();
+	if(ImGui::SliderFloat("Ragdoll Friction", &ragdollFriction, 0.0f, 1.0f))
+	{
+		comp.setRagdollFriction(ragdollFriction);
+	}
+	ImGui::SetItemTooltip("Usually 0 to 1. E.g. ice 0.05, wood 0.4, cloth on stone 0.5, rubber on concrete 0.9");
 }
 
 void SceneNodePropertiesUi::particleEmitterComponent(ParticleEmitter2Component& comp)
@@ -1025,6 +1041,14 @@ void SceneNodePropertiesUi::bodyComponent(BodyComponent& comp)
 	{
 		comp.setMass(mass);
 	}
+
+	// Friction
+	F32 friction = comp.getFriction();
+	if(ImGui::SliderFloat("Friction", &friction, 0.0f, 1.0f))
+	{
+		comp.setFriction(friction);
+	}
+	ImGui::SetItemTooltip("Usually 0 to 1. E.g. ice 0.05, wood 0.4, cloth on stone 0.5, rubber on concrete 0.9");
 
 	if(comp.getCollisionShapeType() == BodyComponentCollisionShapeType::kAabb)
 	{

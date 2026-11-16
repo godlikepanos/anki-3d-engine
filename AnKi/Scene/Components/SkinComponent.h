@@ -12,6 +12,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
 #include <AnKi/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Physics/PhysicsRagdoll.h>
 
 namespace anki {
 
@@ -35,6 +36,16 @@ enum class RootMotionMode : U8
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RootMotionMode)
+
+enum class RagdollMode : U8
+{
+	kDisabled, // No physics bodies. The animations drive the pose
+	kDynamic, // The physics drive the pose. The animations keep running (time, events) but their pose is ignored. Needs a skeleton with capsules
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RagdollMode)
 
 // Skin component
 class SkinComponent : public SceneComponent
@@ -108,7 +119,8 @@ public:
 		return const_cast<SkinComponent*>(this)->getAnimationTrackState(track);
 	}
 
-	// Returns the translation delta of the root bone since the last update
+	// Returns the translation delta of the root bone since the last update. With a ragdoll it's the offset of the root bone's body from the node.
+	// Adding it every frame makes the node follow the body
 	Vec3 getRootMotionDelta() const
 	{
 		return (m_rootMotionMode == RootMotionMode::kHorizontal || m_rootMotionMode == RootMotionMode::kHorizontalAndYaw) ? m_rootMotionDelta
@@ -145,6 +157,47 @@ public:
 	RootMotionMode getRootMotionMode() const
 	{
 		return m_rootMotionMode;
+	}
+
+	// The ragdoll exists only while the scene is not paused. Switching to kDynamic carries the momentum of the animation over to the ragdoll
+	void setRagdollMode(RagdollMode mode)
+	{
+		if(ANKI_EXPECT(mode < RagdollMode::kCount))
+		{
+			m_ragdollMode = mode;
+		}
+	}
+
+	RagdollMode getRagdollMode() const
+	{
+		return m_ragdollMode;
+	}
+
+	// The total mass in kg. Used the next time the ragdoll is created
+	void setRagdollMass(F32 mass)
+	{
+		if(ANKI_EXPECT(mass > 0.0f))
+		{
+			m_ragdollMass = mass;
+		}
+	}
+
+	F32 getRagdollMass() const
+	{
+		return m_ragdollMass;
+	}
+
+	void setRagdollFriction(F32 friction)
+	{
+		if(ANKI_EXPECT(friction >= 0.0f))
+		{
+			m_ragdollFriction = friction;
+		}
+	}
+
+	F32 getRagdollFriction() const
+	{
+		return m_ragdollFriction;
 	}
 
 	Bool isValid() const
@@ -256,7 +309,7 @@ private:
 	SkeletonResourcePtr m_resource;
 	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
 	SceneDynamicArray<Trf> m_trackPoseTrfs; // Scratch pose of a single track
-	SceneDynamicArray<Trf> m_poseTrfs; // The final pose after all tracks are combined
+	Array<SceneDynamicArray<Trf>, 2> m_poseTrfs; // The final pose after all tracks are combined. In bone's local space
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Array<Track, kMaxAnimationTracks> m_tracks;
 
@@ -282,8 +335,15 @@ private:
 	F32 m_rootYawDeltaAngle = 0.0f;
 	RootMotionMode m_rootMotionMode = RootMotionMode::kDisabled;
 
-	U8 m_crntBoneTrfs = 0;
-	U8 m_prevBoneTrfs = 1;
+	PhysicsRagdollPtr m_ragdoll; // Exists while the ragdoll mode is kDynamic and the scene is not paused
+	F32 m_ragdollMass = 80.0f;
+	F32 m_ragdollFriction = 0.5f;
+	RagdollMode m_ragdollMode = RagdollMode::kDisabled;
+
+	U8 m_crntBoneTrfs : 1 = 0;
+	U8 m_prevBoneTrfs : 1 = 1;
+	U8 m_crntPoseTrfs : 1 = 0;
+	U8 m_prevPoseTrfs : 1 = 1;
 
 	Bool m_updatedLastFrame : 1 = true;
 	Bool m_resourceDirty : 1 = true;
@@ -295,6 +355,9 @@ private:
 	GpuSceneBufferAllocation m_gpuSceneBoneTransforms;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	// prevPoseValid: m_poseTrfs[m_prevPoseTrfs] is the pose of the previous frame
+	void updateRagdoll(SceneComponentUpdateInfo& info, Bool prevPoseValid);
 
 	Error serialize(SceneSerializer& serializer) override;
 

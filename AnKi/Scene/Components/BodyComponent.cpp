@@ -87,6 +87,7 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
+		init.m_friction = m_friction;
 		// The node ignores its parent so local == world. Use local: it's the fresh value here, because MoveComponent (which recomputes the world
 		// transform via updateTransform()) updates after us.
 		init.m_transform = m_node->getLocalTransform();
@@ -219,6 +220,7 @@ Error BodyComponent::serialize(SceneSerializer& serializer)
 	ANKI_SERIALIZE(m_sphere.m_radius, 1);
 	ANKI_SERIALIZE(m_mass, 1);
 	ANKI_SERIALIZE(m_shapeType, 1);
+	ANKI_SERIALIZE(m_friction, 1);
 	return Error::kNone;
 }
 

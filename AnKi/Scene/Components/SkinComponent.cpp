@@ -9,6 +9,7 @@
 #include <AnKi/Resource/SkeletonResource.h>
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Util/BitSet.h>
 
 namespace anki {
@@ -17,6 +18,14 @@ SkinComponent::SkinComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
 {
 	m_node = init.m_node;
+
+	// Bake the world transform into the local or ignoring the parent will snap the node to its parent-relative transform
+	if(m_node->getParent())
+	{
+		m_node->setLocalTransform(m_node->getWorldTransform());
+	}
+
+	m_node->setIgnoreParentTransform(true);
 }
 
 SkinComponent::~SkinComponent()
@@ -151,9 +160,11 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Cleanup
 		m_boneTrfs[0].destroy();
 		m_boneTrfs[1].destroy();
-		m_poseTrfs.destroy();
+		m_poseTrfs[0].destroy();
+		m_poseTrfs[1].destroy();
 		m_trackPoseTrfs.destroy();
 		GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneBoneTransforms);
+		m_ragdoll.reset(nullptr);
 
 		m_boneTransformsReallocatedThisFrame = true;
 	}
@@ -175,7 +186,8 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const U32 boneCount = m_resource->getBones().getSize();
 		m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
 		m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
-		m_poseTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
+		m_poseTrfs[0].resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
+		m_poseTrfs[1].resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
 		m_trackPoseTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
 		m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
@@ -205,12 +217,17 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	Vec4 minExtend(kMaxF32, kMaxF32, kMaxF32, 0.0f);
 	Vec4 maxExtend(kMinF32, kMinF32, kMinF32, 0.0f);
 
-	for(U32 boneIdx = 0; boneIdx < m_poseTrfs.getSize(); ++boneIdx)
+	// The pose is computed from scratch every frame. Keep the previous one for the ragdoll
+	m_prevPoseTrfs = m_crntPoseTrfs;
+	m_crntPoseTrfs = m_crntPoseTrfs ^ 1;
+
+	for(U32 boneIdx = 0; boneIdx < m_poseTrfs[m_crntPoseTrfs].getSize(); ++boneIdx)
 	{
-		m_poseTrfs[boneIdx].m_translation = m_resource->getBones()[boneIdx].getTransform().getTranslationPart();
-		m_poseTrfs[boneIdx].m_rotation = Quat(m_resource->getBones()[boneIdx].getTransform().getRotationPart());
+		m_poseTrfs[m_crntPoseTrfs][boneIdx].m_translation = m_resource->getBones()[boneIdx].getTransform().getTranslationPart();
+		m_poseTrfs[m_crntPoseTrfs][boneIdx].m_rotation = Quat(m_resource->getBones()[boneIdx].getTransform().getRotationPart());
 		const Vec3 scale = m_resource->getBones()[boneIdx].getTransform().getRotationPart().extractScale();
-		m_poseTrfs[boneIdx].m_scale = max(max(scale.x, scale.y), scale.z); // Not ideal but we don't support non-uniform scale in skeletons
+		m_poseTrfs[m_crntPoseTrfs][boneIdx].m_scale =
+			max(max(scale.x, scale.y), scale.z); // Not ideal but we don't support non-uniform scale in skeletons
 	}
 
 	m_rootMotionDelta = Vec3(0.0f);
@@ -491,11 +508,11 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		else if(trackBlendFactor >= 1.0f && track.m_state.m_blendMode == AnimationBlendMode::kOverride)
 		{
 			// No need to blend
-			for(U32 i = 0; i < m_poseTrfs.getSize(); ++i)
+			for(U32 i = 0; i < m_poseTrfs[m_crntPoseTrfs].getSize(); ++i)
 			{
 				if(trackBonesAnimated.get(i))
 				{
-					m_poseTrfs[i] = m_trackPoseTrfs[i];
+					m_poseTrfs[m_crntPoseTrfs][i] = m_trackPoseTrfs[i];
 				}
 			}
 
@@ -509,7 +526,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		{
 			if(track.m_state.m_blendMode == AnimationBlendMode::kOverride)
 			{
-				for(U32 i = 0; i < m_poseTrfs.getSize(); ++i)
+				for(U32 i = 0; i < m_poseTrfs[m_crntPoseTrfs].getSize(); ++i)
 				{
 					if(!trackBonesAnimated.get(i))
 					{
@@ -517,7 +534,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					}
 
 					const Trf& crnt = m_trackPoseTrfs[i];
-					Trf& prev = m_poseTrfs[i];
+					Trf& prev = m_poseTrfs[m_crntPoseTrfs][i];
 
 					prev.m_translation = linearInterpolate(prev.m_translation, crnt.m_translation, trackBlendFactor);
 					prev.m_rotation = prev.m_rotation.slerp(crnt.m_rotation, trackBlendFactor);
@@ -534,7 +551,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			{
 				ANKI_ASSERT(track.m_state.m_blendMode == AnimationBlendMode::kAdditive);
 
-				for(U32 i = 0; i < m_poseTrfs.getSize(); ++i)
+				for(U32 i = 0; i < m_poseTrfs[m_crntPoseTrfs].getSize(); ++i)
 				{
 					if(!trackBonesAnimated.get(i))
 					{
@@ -542,7 +559,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					}
 
 					const Trf& crnt = m_trackPoseTrfs[i];
-					Trf& prev = m_poseTrfs[i];
+					Trf& prev = m_poseTrfs[m_crntPoseTrfs][i];
 
 					// The additive animation is a delta from the rest pose
 					const Mat3x4& restTrf = m_resource->getBones()[i].getTransform();
@@ -570,28 +587,46 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		if(m_rootMotionMode == RootMotionMode::kHorizontal)
 		{
 			// The horizontal motion of the root moves the node, keep only the vertical motion
-			m_poseTrfs[m_rootBoneIdx].m_translation =
-				m_rootRestPosition + m_skeletonUp * (m_poseTrfs[m_rootBoneIdx].m_translation - m_rootRestPosition).dot(m_skeletonUp);
+			m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_translation =
+				m_rootRestPosition + m_skeletonUp * (m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_translation - m_rootRestPosition).dot(m_skeletonUp);
 		}
 		else if(m_rootMotionMode == RootMotionMode::kHorizontalAndYaw)
 		{
 			// The horizontal motion of the root moves the node, keep only the vertical motion
-			m_poseTrfs[m_rootBoneIdx].m_translation =
-				m_rootRestPosition + m_skeletonUp * (m_poseTrfs[m_rootBoneIdx].m_translation - m_rootRestPosition).dot(m_skeletonUp);
+			m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_translation =
+				m_rootRestPosition + m_skeletonUp * (m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_translation - m_rootRestPosition).dot(m_skeletonUp);
 
 			// The node rotates with the yaw, remove only the yaw (relative to the rest pose) and keep the rest of the root's rotation
-			const Quat poseRot = m_poseTrfs[m_rootBoneIdx].m_rotation;
+			const Quat poseRot = m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_rotation;
 			Vec3 poseForward = Mat3(poseRot * m_rootRestRot.conjugated()) * m_skeletonForward;
 			poseForward -= m_skeletonUp * poseForward.dot(m_skeletonUp);
 			const F32 poseYaw = atan2(m_skeletonForward.cross(poseForward).dot(m_skeletonUp), m_skeletonForward.dot(poseForward));
-			m_poseTrfs[m_rootBoneIdx].m_rotation = Quat(Axisang(-poseYaw, m_skeletonUp)) * poseRot;
+			m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_rotation = Quat(Axisang(-poseYaw, m_skeletonUp)) * poseRot;
 		}
 		else if(m_rootMotionMode == RootMotionMode::kLockRoot)
 		{
 			ANKI_ASSERT(m_rootMotionMode == RootMotionMode::kLockRoot);
-			m_poseTrfs[m_rootBoneIdx].m_translation = m_rootRestPosition;
-			m_poseTrfs[m_rootBoneIdx].m_rotation = m_rootRestRot;
+			m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_translation = m_rootRestPosition;
+			m_poseTrfs[m_crntPoseTrfs][m_rootBoneIdx].m_rotation = m_rootRestRot;
 		}
+	}
+
+	if(m_ragdollMode == RagdollMode::kDynamic && m_resource->getRootBone().getCapsuleRadius() == 0.0f) [[unlikely]]
+	{
+		ANKI_SCENE_LOGE("The skeleton has no capsules, can't create a ragdoll: %s", m_resource->getFilename().cstr());
+		m_ragdollMode = RagdollMode::kDisabled;
+	}
+
+	if(m_ragdollMode == RagdollMode::kDynamic && !info.m_paused)
+	{
+		// The physics move the bones instead of the animations
+		updateRagdoll(info, !resourceDirty);
+		animationRun = true; // So the new pose gets uploaded
+	}
+	else
+	{
+		// Animations move the pose
+		m_ragdoll.reset(nullptr);
 	}
 
 	if(updatedLastFrame || resourceDirty || animationRun)
@@ -647,11 +682,108 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 #endif
 }
 
+void SkinComponent::updateRagdoll(SceneComponentUpdateInfo& info, Bool prevPoseValid)
+{
+	ConstWeakArray<Bone> bones = m_resource->getBones();
+
+	// The MoveComponent runs after us so the world transform of the node is the one of the previous frame. Compute this frame's from the local
+	const Transform prevNodeTrf = m_node->getWorldTransform();
+	ANKI_ASSERT(m_node->getIgnoreParentTransform() && "Set in the constructor. World and local are the same");
+	const Transform nodeTrf = m_node->getLocalTransform();
+
+	const Vec3 nodeScale = nodeTrf.getScale().xyz;
+	ANKI_ASSERT(absolute(nodeScale.x - 1.0f) < 0.001f && absolute(nodeScale.y - 1.0f) < 0.001f && absolute(nodeScale.z - 1.0f) < 0.001f
+				&& "Ragdolls can't be scaled. Set the scale of the node to 1");
+
+	DynamicArray<Mat3x4, MemoryPoolPtrWrapper<StackMemoryPool>> worldTrfs(info.m_framePool);
+	worldTrfs.resize(bones.getSize());
+
+	if(!m_ragdoll)
+	{
+		// Create the ragdoll from the skeleton
+		DynamicArray<PhysicsRagdollBone, MemoryPoolPtrWrapper<StackMemoryPool>> ragdollBones(info.m_framePool);
+		ragdollBones.resize(bones.getSize());
+		for(U32 i = 0; i < bones.getSize(); ++i)
+		{
+			const Bone& bone = bones[i];
+			PhysicsRagdollBone& out = ragdollBones[i];
+
+			out.m_name = bone.getName();
+			out.m_transform = bone.getTransform();
+			out.m_parent = (bone.getParent()) ? bone.getParent()->getIndex() : kMaxU32;
+			out.m_capsuleRadius = bone.getCapsuleRadius();
+			out.m_capsuleHalfHeight = bone.getCapsuleHalfHeight();
+			out.m_capsulePosition = bone.getCapsulePosition();
+			out.m_capsuleRotation = bone.getCapsuleRotation();
+			out.m_constraintRotation = bone.getConstraintRotation();
+			out.m_constraintParentRotation = bone.getConstraintParentRotation();
+			out.m_twistMinAngle = bone.getTwistMinAngle();
+			out.m_twistMaxAngle = bone.getTwistMaxAngle();
+			out.m_planeAngle = bone.getPlaneAngle();
+			out.m_normalAngle = bone.getNormalAngle();
+		}
+
+		PhysicsRagdollInitInfo init;
+		init.m_bones = ragdollBones;
+		init.m_mass = m_ragdollMass;
+		init.m_contactFriction = m_ragdollFriction;
+		m_ragdoll = PhysicsWorld::getSingleton().newRagdoll(init);
+
+		// Move it to the current pose. Parents come first so their world transform is ready
+		for(U32 i = 0; i < bones.getSize(); ++i)
+		{
+			const Trf& t = m_poseTrfs[m_crntPoseTrfs][i];
+			const Mat3x4 localTrf(t.m_translation, Mat3(t.m_rotation), Vec3(t.m_scale));
+			const Mat3x4& parentTrf = (bones[i].getParent()) ? worldTrfs[bones[i].getParent()->getIndex()] : Mat3x4(nodeTrf);
+			worldTrfs[i] = parentTrf.combineTransformations(localTrf);
+		}
+
+		if(prevPoseValid && info.m_dt > 0.0)
+		{
+			// Same for the previous pose so the bodies get the velocity of the animation. Otherwise a running character stops dead and drops
+			DynamicArray<Mat3x4, MemoryPoolPtrWrapper<StackMemoryPool>> prevWorldTrfs(info.m_framePool);
+			prevWorldTrfs.resize(bones.getSize());
+			for(U32 i = 0; i < bones.getSize(); ++i)
+			{
+				const Trf& t = m_poseTrfs[m_prevPoseTrfs][i];
+				const Mat3x4 localTrf(t.m_translation, Mat3(t.m_rotation), Vec3(t.m_scale));
+				const Mat3x4& parentTrf = (bones[i].getParent()) ? prevWorldTrfs[bones[i].getParent()->getIndex()] : Mat3x4(prevNodeTrf);
+				prevWorldTrfs[i] = parentTrf.combineTransformations(localTrf);
+			}
+
+			m_ragdoll->setBoneTransforms(prevWorldTrfs, worldTrfs, info.m_dt);
+		}
+		else
+		{
+			m_ragdoll->setBoneTransforms(worldTrfs);
+		}
+	}
+
+	m_ragdoll->getBoneTransforms(WeakArray<Mat3x4>(worldTrfs));
+
+	// Move the root bone body's position to model space
+	const Vec3 rootPos = Mat3x4(nodeTrf).invertTransformation() * worldTrfs[m_rootBoneIdx].getTranslationPart().xyz1;
+	m_rootMotionDelta = rootPos - m_rootRestPosition;
+	m_rootMotionDelta -= m_skeletonUp * m_rootMotionDelta.dot(m_skeletonUp);
+	m_rootYawDeltaAngle = 0.0f; // A tumbling body has no meaningful yaw
+
+	// Turn the bodies back to transforms relative to the parent bone, that's what the skinning expects
+	for(U32 i = 0; i < bones.getSize(); ++i)
+	{
+		const Mat3x4& parentTrf = (bones[i].getParent()) ? worldTrfs[bones[i].getParent()->getIndex()] : Mat3x4(nodeTrf);
+		const Mat3x4 localTrf = parentTrf.invertTransformation().combineTransformations(worldTrfs[i]);
+
+		m_poseTrfs[m_crntPoseTrfs][i].m_translation = localTrf.getTranslationPart();
+		m_poseTrfs[m_crntPoseTrfs][i].m_rotation = Quat(localTrf.getRotationPart());
+		m_poseTrfs[m_crntPoseTrfs][i].m_scale = 1.0f;
+	}
+}
+
 void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, Vec4& minExtend, Vec4& maxExtend)
 {
 	Mat3x4 outMat;
 
-	const Trf& t = m_poseTrfs[bone.getIndex()];
+	const Trf& t = m_poseTrfs[m_crntPoseTrfs][bone.getIndex()];
 	outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz, Mat3(t.m_rotation), Vec3(t.m_scale)));
 
 	m_boneTrfs[m_crntBoneTrfs][bone.getIndex()] = outMat.combineTransformations(bone.getVertexTransform());
@@ -718,6 +850,9 @@ Error SkinComponent::serialize(SceneSerializer& serializer)
 	}
 
 	ANKI_SERIALIZE(m_rootMotionMode, 1);
+	ANKI_SERIALIZE(m_ragdollMode, 1);
+	ANKI_SERIALIZE(m_ragdollMass, 1);
+	ANKI_SERIALIZE(m_ragdollFriction, 1);
 
 	return Error::kNone;
 }

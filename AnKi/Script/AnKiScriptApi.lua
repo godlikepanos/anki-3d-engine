@@ -74,6 +74,12 @@ AnimationBlendMode = {}
 ---@field kCount integer
 RootMotionMode = {}
 
+---@class RagdollMode
+---@field kDisabled integer
+---@field kDynamic integer
+---@field kCount integer
+RagdollMode = {}
+
 ---@class NodeMotionMode
 ---@field kApplyToNode integer
 ---@field kExtract integer
@@ -275,6 +281,13 @@ function BodyComponent:setMass(num) end
 ---@return number
 function BodyComponent:getMass() end
 
+---@param num number
+---@return BodyComponent
+function BodyComponent:setFriction(num) end
+
+---@return number
+function BodyComponent:getFriction() end
+
 ---@param vec3 Vec3
 ---@param vec32 Vec3
 function BodyComponent:applyForce(vec3, vec32) end
@@ -457,6 +470,24 @@ function SkinComponent:setRootMotionMode(rootMotionMode) end
 ---@return integer
 function SkinComponent:getRootMotionMode() end
 
+---@param ragdollMode integer
+function SkinComponent:setRagdollMode(ragdollMode) end
+
+---@return integer
+function SkinComponent:getRagdollMode() end
+
+---@param num number
+function SkinComponent:setRagdollMass(num) end
+
+---@return number
+function SkinComponent:getRagdollMass() end
+
+---@param num number
+function SkinComponent:setRagdollFriction(num) end
+
+---@return number
+function SkinComponent:getRagdollFriction() end
+
 ---@class AnimationComponent
 AnimationComponent = {}
 
@@ -637,49 +668,49 @@ function SceneNode:newSkyboxComponent() end
 function SceneNode:newJointComponent() end
 
 ---@return LightComponent
-function SceneNode:getFirstLightComponent() end
+function SceneNode:tryGetFirstLightComponent() end
 
 ---@return LensFlareComponent
-function SceneNode:getFirstLensFlareComponent() end
+function SceneNode:tryGetFirstLensFlareComponent() end
 
 ---@return DecalComponent
-function SceneNode:getFirstDecalComponent() end
+function SceneNode:tryGetFirstDecalComponent() end
 
 ---@return TriggerComponent
-function SceneNode:getFirstTriggerComponent() end
+function SceneNode:tryGetFirstTriggerComponent() end
 
 ---@return FogDensityComponent
-function SceneNode:getFirstFogDensityComponent() end
+function SceneNode:tryGetFirstFogDensityComponent() end
 
 ---@return CameraComponent
-function SceneNode:getFirstCameraComponent() end
+function SceneNode:tryGetFirstCameraComponent() end
 
 ---@return GlobalIlluminationProbeComponent
-function SceneNode:getFirstGlobalIlluminationProbeComponent() end
+function SceneNode:tryGetFirstGlobalIlluminationProbeComponent() end
 
 ---@return ReflectionProbeComponent
-function SceneNode:getFirstReflectionProbeComponent() end
+function SceneNode:tryGetFirstReflectionProbeComponent() end
 
 ---@return BodyComponent
-function SceneNode:getFirstBodyComponent() end
+function SceneNode:tryGetFirstBodyComponent() end
 
 ---@return MeshComponent
-function SceneNode:getFirstMeshComponent() end
+function SceneNode:tryGetFirstMeshComponent() end
 
 ---@return MaterialComponent
-function SceneNode:getFirstMaterialComponent() end
+function SceneNode:tryGetFirstMaterialComponent() end
 
 ---@return SkinComponent
-function SceneNode:getFirstSkinComponent() end
+function SceneNode:tryGetFirstSkinComponent() end
 
 ---@return AnimationComponent
-function SceneNode:getFirstAnimationComponent() end
+function SceneNode:tryGetFirstAnimationComponent() end
 
 ---@return SkyboxComponent
-function SceneNode:getFirstSkyboxComponent() end
+function SceneNode:tryGetFirstSkyboxComponent() end
 
 ---@return JointComponent
-function SceneNode:getFirstJointComponent() end
+function SceneNode:tryGetFirstJointComponent() end
 
 ---@class SceneGraph
 SceneGraph = {}

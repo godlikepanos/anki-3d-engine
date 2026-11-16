@@ -11,7 +11,11 @@ _animationStarted = false
 --- @param info SceneComponentUpdateInfo
 function update(info)
 	local node = info:getSceneNode()
-	local comp = node:getFirstAnimationComponent()
+	local comp = node:tryGetFirstAnimationComponent()
+	if comp == nil then
+		loge("Failed to get the AnimationComponent")
+		return
+	end
 
 	if not _animationStarted then
 		_animationStarted = true

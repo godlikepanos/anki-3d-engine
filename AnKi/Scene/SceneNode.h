@@ -479,6 +479,11 @@ public:
 		m_ignoreParentNodeTransform = ignore;
 	}
 
+	Bool getIgnoreParentTransform() const
+	{
+		return m_ignoreParentNodeTransform;
+	}
+
 	const Transform& getLocalTransform() const
 	{
 		return m_ltrf;

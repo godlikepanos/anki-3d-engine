@@ -101,6 +101,22 @@ public:
 		return m_mass;
 	}
 
+	// Usually 0 to 1, can go higher. E.g. ice 0.05, wood 0.4, cloth on stone 0.5, rubber on concrete 0.9
+	BodyComponent& setFriction(F32 friction)
+	{
+		if(ANKI_EXPECT(friction >= 0.0f) && m_friction != friction)
+		{
+			m_friction = friction;
+			cleanup(); // Force recreate
+		}
+		return *this;
+	}
+
+	F32 getFriction() const
+	{
+		return m_friction;
+	}
+
 	void applyForce(Vec3 force, Vec3 relativePosition)
 	{
 		m_force = force;
@@ -146,6 +162,7 @@ private:
 	} m_sphere;
 
 	F32 m_mass = 0.0f;
+	F32 m_friction = 0.5f;
 
 	Vec3 m_force = Vec3(0.0f);
 	Vec3 m_forcePosition = Vec3(0.0f);

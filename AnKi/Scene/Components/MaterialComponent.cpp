@@ -122,11 +122,15 @@ Aabb MaterialComponent::computeAabb(const SceneNode& node) const
 	}
 	else
 	{
-		Aabb aabbLocal = m_meshComponent->getLocalAabb();
+		Aabb aabbLocal;
 
 		if(m_skinComponent && m_skinComponent->isValid())
 		{
-			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
+			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace();
+		}
+		else
+		{
+			aabbLocal = m_meshComponent->getLocalAabb();
 		}
 
 		aabbWorld = aabbLocal.getTransformed(node.getWorldTransform());

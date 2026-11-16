@@ -38,7 +38,11 @@ radius = 3.5
 function update(event, prevTime, crntTime)
 	node = event:getAssociatedSceneNodes():getAt(0)
 	-- logi(string.format("Will fade fog for %s", node:getName()))
-	fogComponent = node:getFirstFogDensityComponent()
+	fogComponent = node:tryGetFirstFogDensityComponent()
+	if fogComponent == nil then
+		loge("Failed to get the FogDensityComponent")
+		return
+	end
 
 	dt = crntTime - prevTime
 	density = density - 4.0 * dt
