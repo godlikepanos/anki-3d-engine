@@ -111,6 +111,35 @@ The `GenerateAndroidProject` scripts will generate a project in the root directo
 
 Then you can open the `AndroidProject_Sponza` project from `Android Studio` and build it, debug it, run it etc.
 
+3.4 For Windows from Linux (cross-compiling)
+--------------------------------------------
+
+AnKi can be built for Windows x64 on Linux using `clang-cl` and the MSVC headers and libraries.
+
+Prerequisites:
+
+- Cmake 3.18 and up
+- Ninja
+- Clang 18.0 and up, including `clang-cl`, `lld-link`, `llvm-lib`, `llvm-rc` and `llvm-mt` (on some distros `lld` is a separate package)
+- Wine. The build runs the Windows `ShaderCompiler.exe` with it to compile the shaders
+- curl
+
+First fetch the MSVC CRT and the Windows SDK. This downloads a few GB from Microsoft and installs them into `ThirdParty/Xwin`. Running it means that you accept Microsoft's license:
+
+	$cd path/to/anki
+	$./Tools/Build/FetchXwin.sh
+
+Then build the debug version:
+
+	$mkdir build
+	$cd build
+	$cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../Tools/Build/CrossCompileWindowsX64.cmake -DCMAKE_BUILD_TYPE=Debug
+	$ninja
+
+The executables in `Binaries` can be run with Wine or Proton. To run `Sponza` with Proton from the build directory (adjust the Steam paths to your installation):
+
+	$mkdir -p ProtonPrefix && STEAM_COMPAT_CLIENT_INSTALL_PATH=$HOME/.local/share/Steam STEAM_COMPAT_DATA_PATH=$PWD/ProtonPrefix "$HOME/.local/share/Steam/steamapps/common/Proton - Experimental/proton" run Binaries/Sponza.exe
+
 4 Next steps
 ============
 

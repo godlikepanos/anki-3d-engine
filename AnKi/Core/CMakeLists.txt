@@ -24,7 +24,7 @@ if(SDL)
 elseif(ANDROID)
 	set(extra_libs log android nativewindow AnKiAndroidNativeGlue AnKiHwcPipe)
 elseif(WINDOWS)
-	set(extra_libs version Imm32 Winmm DbgHelp)
+	set(extra_libs version imm32 winmm dbghelp)
 endif()
 
 target_compile_definitions(AnKiCore PRIVATE -DANKI_SOURCE_FILE)

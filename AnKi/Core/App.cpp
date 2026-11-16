@@ -205,7 +205,8 @@ Error App::init()
 	ANKI_CHECK(initDirs());
 
 // Check SIMD support
-#if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
+#if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE \
+	&& !ANKI_OS_WINDOWS // __builtin_cpu_supports needs compiler-rt's __cpu_model, which isn't available when targeting MSVC
 	if(!__builtin_cpu_supports("sse4.2"))
 	{
 		ANKI_CORE_LOGF("AnKi is built with sse4.2 support but your CPU doesn't support it. Try bulding without SSE support");
