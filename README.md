@@ -140,6 +140,16 @@ The executables in `Binaries` can be run with Wine or Proton. To run `Sponza` wi
 
 	$mkdir -p ProtonPrefix && STEAM_COMPAT_CLIENT_INSTALL_PATH=$HOME/.local/share/Steam STEAM_COMPAT_DATA_PATH=$PWD/ProtonPrefix "$HOME/.local/share/Steam/steamapps/common/Proton - Experimental/proton" run Binaries/Sponza.exe
 
+To debug with [x64dbg](https://x64dbg.com) run it the same way and pass the executable as a Windows path (Proton only converts the path of the program it runs):
+
+	$STEAM_COMPAT_CLIENT_INSTALL_PATH=$HOME/.local/share/Steam STEAM_COMPAT_DATA_PATH=$PWD/ProtonPrefix "$HOME/.local/share/Steam/steamapps/common/Proton - Experimental/proton" run path/to/x64dbg/release/x64/x64dbg.exe "Z:$(echo $PWD/Binaries/Sponza.exe | tr / '\\')"
+
+In x64dbg:
+
+- Type `bp main` in the command bar and press F9 until it stops in `main`
+- To see the source right-click an instruction in the disassembly and choose "Open Source File"
+- To step line by line use "Step Over (source)" and "Step Into (source)" from the "Debug" menu. F7/F8 step instruction by instruction
+
 4 Next steps
 ============
 

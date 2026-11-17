@@ -19,8 +19,9 @@ set(CMAKE_RC_COMPILER ${_LLVM_BIN}/llvm-rc)
 set(CMAKE_MT ${_LLVM_BIN}/llvm-mt)
 
 set(_SYSROOT "${CMAKE_CURRENT_LIST_DIR}/../../ThirdParty/Xwin/sdk")
-set(CMAKE_C_FLAGS_INIT "--target=x86_64-pc-windows-msvc /winsysroot \"${_SYSROOT}\"")
-set(CMAKE_CXX_FLAGS_INIT "--target=x86_64-pc-windows-msvc /winsysroot \"${_SYSROOT}\"")
+# Store the source paths in the PDBs as Wine sees them (Z: is /) so that Windows debuggers can find the sources
+set(CMAKE_C_FLAGS_INIT "--target=x86_64-pc-windows-msvc /winsysroot \"${_SYSROOT}\" /clang:-fdebug-prefix-map=/=Z:/")
+set(CMAKE_CXX_FLAGS_INIT "--target=x86_64-pc-windows-msvc /winsysroot \"${_SYSROOT}\" /clang:-fdebug-prefix-map=/=Z:/")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "\"/winsysroot:${_SYSROOT}\"")
 set(CMAKE_SHARED_LINKER_FLAGS_INIT "\"/winsysroot:${_SYSROOT}\"")
 set(CMAKE_MODULE_LINKER_FLAGS_INIT "\"/winsysroot:${_SYSROOT}\"")
