@@ -99,8 +99,8 @@ public:
 	String toString() const
 	{
 		String str;
-		str.sprintf("Regs %f Spilling %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%", m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu,
-					m_loadStore, m_varying, m_texture, m_fp16ArithmeticPercentage);
+		str.format("Regs {} Spilling {} FMA {} CVT {} SFU {} LS {} VAR {} TEX {} FP16 {}%", m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu,
+				   m_loadStore, m_varying, m_texture, m_fp16ArithmeticPercentage);
 		return str;
 	}
 };
@@ -156,7 +156,7 @@ public:
 
 	String toString() const
 	{
-		return String().sprintf("VGPRs %f SGPRs %f ISA size %f", m_vgprCount, m_sgprCount, m_isaSize);
+		return String().format("VGPRs {} SGPRs {} ISA size {}", m_vgprCount, m_sgprCount, m_isaSize);
 	}
 };
 
@@ -188,7 +188,7 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 {
 	ShaderCompilerStringList lines;
 
-	lines.pushBackSprintf("# BINARIES (%u)\n\n", binary.m_codeBlocks.getSize());
+	lines.pushBackFormat("# BINARIES ({})\n\n", binary.m_codeBlocks.getSize());
 	Array<MaliOfflineCompilerStats, U32(ShaderType::kCount)> maliAverages;
 	Array<MaliOfflineCompilerStats, U32(ShaderType::kCount)> maliMaxes;
 	Array<RgaStats, U32(ShaderType::kCount)> rgaAverages;
@@ -275,7 +275,7 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 		stagesInUse |= ShaderTypeBit(1 << shaderType);
 		++shadersPerStage[shaderType];
 
-		lines.pushBackSprintf("## bin%05u (%s)\n", count, g_shaderTypeNames[shaderType].cstr());
+		lines.pushBackFormat("## bin{:05} ({})\n", count, g_shaderTypeNames[shaderType]);
 
 		if(options.m_maliStats || options.m_amdStats)
 		{
@@ -298,11 +298,11 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 				if(err)
 				{
 					ANKI_LOGE("Mali offline compiler failed");
-					lines.pushBackSprintf("Mali: *malioc failed*  \n");
+					lines.pushBack("Mali: *malioc failed*  \n");
 				}
 				else
 				{
-					lines.pushBackSprintf("Mali: %s  \n", maliocOut.toString().cstr());
+					lines.pushBackFormat("Mali: {}  \n", maliocOut.toString());
 					maliAverages[shaderType] = maliAverages[shaderType] + maliocOut;
 					maliMaxes[shaderType] = maliMaxes[shaderType].max(maliocOut);
 				}
@@ -320,11 +320,11 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 				if(err)
 				{
 					ANKI_LOGE("RGA failed");
-					lines.pushBackSprintf("AMD: *RGA failed*  \n");
+					lines.pushBack("AMD: *RGA failed*  \n");
 				}
 				else
 				{
-					lines.pushBackSprintf("AMD: %s  \n", rgaOut.toString().cstr());
+					lines.pushBackFormat("AMD: {}  \n", rgaOut.toString());
 					rgaAverages[shaderType] = rgaAverages[shaderType] + rgaOut;
 					rgaMaxes[shaderType] = rgaMaxes[shaderType].max(rgaOut);
 
@@ -341,7 +341,7 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 		String reflectionStr;
 		code.m_reflection.toString().join("\n", reflectionStr);
 		lines.pushBack("### Reflection\n");
-		lines.pushBackSprintf("```\n%s\n```\n", reflectionStr.cstr());
+		lines.pushBackFormat("```\n{}\n```\n", reflectionStr);
 
 		if(options.m_writeGlsl)
 		{
@@ -364,7 +364,7 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 			String newGlsl;
 			sourceLines.join("\n", newGlsl);
 
-			lines.pushBackSprintf("```GLSL\n%s\n```\n", newGlsl.cstr());
+			lines.pushBackFormat("```GLSL\n{}\n```\n", newGlsl);
 		}
 
 		if(options.m_writeSpirv)
@@ -389,11 +389,11 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 				String final;
 				spvlines.join("\n", final);
 
-				lines.pushBackSprintf("```\n%s\n```\n", final.cstr());
+				lines.pushBackFormat("```\n{}\n```\n", final);
 			}
 			else
 			{
-				lines.pushBackSprintf("*error in spiv-dis*\n");
+				lines.pushBack("*error in spiv-dis*\n");
 			}
 
 			spvTextDestroy(text);
@@ -402,41 +402,41 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 		if(options.m_writeAmdIsa)
 		{
 			lines.pushBack("### AMD ISA\n");
-			lines.pushBackSprintf("```\n%s\n```\n", amdIsa.cstr());
+			lines.pushBackFormat("```\n{}\n```\n", amdIsa);
 		}
 
 		++count;
 	}
 
 	// Mutators
-	lines.pushBackSprintf("\n# MUTATORS (%u)\n\n", binary.m_mutators.getSize());
+	lines.pushBackFormat("\n# MUTATORS ({})\n\n", binary.m_mutators.getSize());
 	if(binary.m_mutators.getSize() > 0)
 	{
-		lines.pushBackSprintf("| %-32s | %-18s |\n", "Name", "Values");
-		lines.pushBackSprintf("| -------------------------------- | ------------------ |\n");
+		lines.pushBackFormat("| {:<32} | {:<18} |\n", "Name", "Values");
+		lines.pushBack("| -------------------------------- | ------------------ |\n");
 
 		for(const ShaderBinaryMutator& mutator : binary.m_mutators)
 		{
 			ShaderCompilerStringList valuesStrl;
 			for(U32 i = 0; i < mutator.m_values.getSize(); ++i)
 			{
-				valuesStrl.pushBackSprintf("%d", mutator.m_values[i]);
+				valuesStrl.pushBackFormat("{}", mutator.m_values[i]);
 			}
 			ShaderCompilerString valuesStr;
 			valuesStrl.join(", ", valuesStr);
 
-			lines.pushBackSprintf("| %-32s | %-18s |\n", &mutator.m_name[0], valuesStr.cstr());
+			lines.pushBackFormat("| {:<32} | {:<18} |\n", &mutator.m_name[0], valuesStr);
 		}
 	}
 
 	// Techniques
-	lines.pushBackSprintf("\n# TECHNIQUES (%u)\n\n", binary.m_techniques.getSize());
-	lines.pushBackSprintf("| %-32s | %-12s |\n", "Name", "Shader Types");
-	lines.pushBackSprintf("| -------------------------------- | ------------ |\n");
+	lines.pushBackFormat("\n# TECHNIQUES ({})\n\n", binary.m_techniques.getSize());
+	lines.pushBackFormat("| {:<32} | {:<12} |\n", "Name", "Shader Types");
+	lines.pushBack("| -------------------------------- | ------------ |\n");
 	count = 0;
 	for(const ShaderBinaryTechnique& t : binary.m_techniques)
 	{
-		lines.pushBackSprintf("| %-32s | 0x%010x |\n", t.m_name.getBegin(), U32(t.m_shaderTypes));
+		lines.pushBackFormat("| {:<32} | 0x{:010x} |\n", t.m_name.getBegin(), U32(t.m_shaderTypes));
 	}
 
 	// Mutations
@@ -446,24 +446,24 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 		skippedMutations += mutation.m_variantIndex == kMaxU32;
 	}
 
-	lines.pushBackSprintf("\n# MUTATIONS (total %u, skipped %u)\n\n", binary.m_mutations.getSize(), skippedMutations);
-	lines.pushBackSprintf("| %-8s | %-8s | %-18s |", "Mutation", "Variant", "Hash");
+	lines.pushBackFormat("\n# MUTATIONS (total {}, skipped {})\n\n", binary.m_mutations.getSize(), skippedMutations);
+	lines.pushBackFormat("| {:<8} | {:<8} | {:<18} |", "Mutation", "Variant", "Hash");
 
 	if(binary.m_mutators.getSize() > 0)
 	{
 		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
-			lines.pushBackSprintf(" %-32s |", binary.m_mutators[i].m_name.getBegin());
+			lines.pushBackFormat(" {:<32} |", binary.m_mutators[i].m_name.getBegin());
 		}
 	}
 	lines.pushBack("\n");
 
-	lines.pushBackSprintf("| -------- | -------- | ------------------ |");
+	lines.pushBack("| -------- | -------- | ------------------ |");
 	if(binary.m_mutators.getSize() > 0)
 	{
 		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
-			lines.pushBackSprintf(" -------------------------------- |");
+			lines.pushBack(" -------------------------------- |");
 		}
 	}
 	lines.pushBack("\n");
@@ -473,18 +473,18 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 	{
 		if(mutation.m_variantIndex != kMaxU32)
 		{
-			lines.pushBackSprintf("| mut%05u | var%05u | 0x%016" PRIX64 " | ", count++, mutation.m_variantIndex, mutation.m_hash);
+			lines.pushBackFormat("| mut{:05} | var{:05} | 0x{:016X} | ", count++, mutation.m_variantIndex, mutation.m_hash);
 		}
 		else
 		{
-			lines.pushBackSprintf("| mut%05u | -        | 0x%016" PRIX64 " | ", count++, mutation.m_hash);
+			lines.pushBackFormat("| mut{:05} | -        | 0x{:016X} | ", count++, mutation.m_hash);
 		}
 
 		if(mutation.m_values.getSize() > 0)
 		{
 			for(U32 i = 0; i < mutation.m_values.getSize(); ++i)
 			{
-				lines.pushBackSprintf("%-32d | ", I32(mutation.m_values[i]));
+				lines.pushBackFormat("{:<32} | ", I32(mutation.m_values[i]));
 			}
 		}
 
@@ -492,17 +492,17 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 	}
 
 	// Variants
-	lines.pushBackSprintf("\n# SHADER VARIANTS (%u)\n\n", binary.m_variants.getSize());
-	lines.pushBackSprintf("| Variant  | %-32s | ", "Technique");
+	lines.pushBackFormat("\n# SHADER VARIANTS ({})\n\n", binary.m_variants.getSize());
+	lines.pushBackFormat("| Variant  | {:<32} | ", "Technique");
 	for(ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
 	{
-		lines.pushBackSprintf("%-13s | ", g_shaderTypeNames[s].cstr());
+		lines.pushBackFormat("{:<13} | ", g_shaderTypeNames[s]);
 	}
 	lines.pushBack("\n");
-	lines.pushBackSprintf("| -------- | %s |", ShaderCompilerString('-', 32).cstr());
+	lines.pushBackFormat("| -------- | {} |", ShaderCompilerString('-', 32));
 	for([[maybe_unused]] ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
 	{
-		lines.pushBackSprintf(" %s |", ShaderCompilerString('-', 13).cstr());
+		lines.pushBackFormat(" {} |", ShaderCompilerString('-', 13));
 	}
 	lines.pushBack("\n");
 
@@ -514,23 +514,23 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 		{
 			if(t == 0)
 			{
-				lines.pushBackSprintf("| var%05u | ", count);
+				lines.pushBackFormat("| var{:05} | ", count);
 			}
 			else
 			{
 				lines.pushBack("|          | ");
 			}
-			lines.pushBackSprintf("%-32s | ", binary.m_techniques[t].m_name.getBegin());
+			lines.pushBackFormat("{:<32} | ", binary.m_techniques[t].m_name.getBegin());
 
 			for(ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
 			{
 				if(variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[s] < kMaxU32)
 				{
-					lines.pushBackSprintf("bin%05u      | ", variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[s]);
+					lines.pushBackFormat("bin{:05}      | ", variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[s]);
 				}
 				else
 				{
-					lines.pushBackSprintf("-%s | ", ShaderCompilerString(' ', 12).cstr());
+					lines.pushBackFormat("-{} | ", ShaderCompilerString(' ', 12));
 				}
 			}
 
@@ -541,20 +541,20 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 	}
 
 	// Structs
-	lines.pushBackSprintf("\n# STRUCTS (%u)\n\n", binary.m_structs.getSize());
+	lines.pushBackFormat("\n# STRUCTS ({})\n\n", binary.m_structs.getSize());
 	if(binary.m_structs.getSize() > 0)
 	{
 		for(const ShaderBinaryStruct& s : binary.m_structs)
 		{
 			lines.pushBack("```C++\n");
-			lines.pushBackSprintf("struct %s // size: %u\n", s.m_name.getBegin(), s.m_size);
+			lines.pushBackFormat("struct {} // size: {}\n", s.m_name.getBegin(), s.m_size);
 			lines.pushBack("{\n");
 
 			for(const ShaderBinaryStructMember& member : s.m_members)
 			{
 				const CString typeStr = getShaderVariableDataTypeInfo(member.m_type).m_name;
-				lines.pushBackSprintf(ANKI_TAB "%5s %s; // offset: %u%s\n", typeStr.cstr(), member.m_name.getBegin(), member.m_offset,
-									  (member.m_isTexture) ? ", tex" : "");
+				lines.pushBackFormat(ANKI_TAB "{:>5} {}; // offset: {}{}\n", typeStr, member.m_name.getBegin(), member.m_offset,
+									 (member.m_isTexture) ? ", tex" : "");
 			}
 			lines.pushBack("};\n");
 			lines.pushBack("```\n");
@@ -564,24 +564,24 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 	// Stats
 	if(options.m_maliStats || options.m_amdStats)
 	{
-		lines.pushBackSprintf("\n# COMPILER STATS\n\n");
+		lines.pushBack("\n# COMPILER STATS\n\n");
 
 		for(ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stagesInUse))
 		{
-			lines.pushBackSprintf("%s\n```\n", g_shaderTypeNames[s].cstr());
+			lines.pushBackFormat("{}\n```\n", g_shaderTypeNames[s]);
 
 			if(options.m_maliStats)
 			{
 				maliAverages[s] = maliAverages[s] * (1.0 / F64(shadersPerStage[s]));
-				lines.pushBackSprintf("Mali avg: %s  \n", maliAverages[s].toString().cstr());
-				lines.pushBackSprintf("Mali max: %s  \n", maliMaxes[s].toString().cstr());
+				lines.pushBackFormat("Mali avg: {}  \n", maliAverages[s].toString());
+				lines.pushBackFormat("Mali max: {}  \n", maliMaxes[s].toString());
 			}
 
 			if(options.m_amdStats)
 			{
 				rgaAverages[s] = rgaAverages[s] * (1.0 / F64(shadersPerStage[s]));
-				lines.pushBackSprintf("AMD avg: %s  \n", rgaAverages[s].toString().cstr());
-				lines.pushBackSprintf("AMD max: %s  \n", rgaMaxes[s].toString().cstr());
+				lines.pushBackFormat("AMD avg: {}  \n", rgaAverages[s].toString());
+				lines.pushBackFormat("AMD max: {}  \n", rgaMaxes[s].toString());
 			}
 
 			lines.pushBack("```\n");

@@ -30,19 +30,19 @@ static void labelBytes(PtrSize val, CString name)
 	UiString timestamp;
 	if(gb)
 	{
-		timestamp.sprintf("%s: %zu,%04zu,%04zu,%04zu", name.cstr(), gb, mb, kb, b);
+		timestamp.format("{}: {},{:04},{:04},{:04}", name, gb, mb, kb, b);
 	}
 	else if(mb)
 	{
-		timestamp.sprintf("%s: %zu,%04zu,%04zu", name.cstr(), mb, kb, b);
+		timestamp.format("{}: {},{:04},{:04}", name, mb, kb, b);
 	}
 	else if(kb)
 	{
-		timestamp.sprintf("%s: %zu,%04zu", name.cstr(), kb, b);
+		timestamp.format("{}: {},{:04}", name, kb, b);
 	}
 	else
 	{
-		timestamp.sprintf("%s: %zu", name.cstr(), b);
+		timestamp.format("{}: {}", name, b);
 	}
 	ImGui::TextUnformatted(timestamp.cstr());
 }

@@ -353,9 +353,9 @@ Error App::initDirs()
 	String home;
 	ANKI_CHECK(getHomeDirectory(home));
 
-	m_settingsDir.sprintf("%s/.anki", &home[0]);
+	m_settingsDir.format("{}/.anki", home);
 #else
-	m_settingsDir.sprintf("%s/.anki", g_androidApp->activity->internalDataPath);
+	m_settingsDir.format("{}/.anki", g_androidApp->activity->internalDataPath);
 #endif
 
 	if(!directoryExists(m_settingsDir.toCString()))
@@ -369,7 +369,7 @@ Error App::initDirs()
 	}
 
 	// Cache
-	m_cacheDir.sprintf("%s/cache", &m_settingsDir[0]);
+	m_cacheDir.format("{}/cache", m_settingsDir);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
 	if(g_cvarCoreClearCaches && cacheDirExists)

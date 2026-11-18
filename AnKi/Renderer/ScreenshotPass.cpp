@@ -179,7 +179,7 @@ Error ScreenshotPass::saveTexture(U64 frame, void* pixels)
 	ANKI_CHECK(getTempDirectory(tempDir));
 
 	RendererString filename;
-	filename.sprintf("%s/Screenshot%" PRIu64 ".png", tempDir.cstr(), frame);
+	filename.format("{}/Screenshot{}.png", tempDir, frame);
 
 	const I32 ok = stbi_write_png(filename.cstr(), width, height, 4, pixels, 0);
 	if(!ok)

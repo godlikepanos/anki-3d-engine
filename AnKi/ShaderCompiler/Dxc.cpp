@@ -41,7 +41,7 @@ static Mutex g_dxcLibMtx;
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			errorMessage.sprintf("DXC function failed (HRESULT: %d): %s", rez, #x); \
+			errorMessage.format("DXC function failed (HRESULT: {}): {}", rez, #x); \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)
@@ -328,7 +328,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 
 		if(libDesc.FunctionCount == 0)
 		{
-			errorMessage.sprintf("Expecting at least 1 in D3D12_LIBRARY_DESC::FunctionCount");
+			errorMessage = "Expecting at least 1 in D3D12_LIBRARY_DESC::FunctionCount";
 			return Error::kUserData;
 		}
 
@@ -479,7 +479,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			}
 			else
 			{
-				errorMessage.sprintf("Unrecognized type for binding: %s", bindDesc.Name);
+				errorMessage.format("Unrecognized type for binding: {}", bindDesc.Name);
 				return Error::kUserData;
 			}
 
@@ -558,7 +558,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			}
 			else
 			{
-				errorMessage.sprintf("Unexpected attribute name: %s", in.SemanticName);
+				errorMessage.format("Unexpected attribute name: {}", in.SemanticName);
 				return Error::kUserData;
 			}
 #	undef ANKI_ATTRIB_NAME

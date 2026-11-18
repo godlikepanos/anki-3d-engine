@@ -162,7 +162,7 @@ Error ProbeReflections::init()
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			texinit.m_type = TextureType::kCube;
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("CubeRefl GBuff Col #%u", i));
+			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().format("CubeRefl GBuff Col #{}", i));
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 

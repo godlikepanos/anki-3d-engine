@@ -129,8 +129,8 @@ void EditorUi::loggerMessageHandler(void* ud, const LoggerMessageInfo& info)
 {
 	EditorUi& self = *static_cast<EditorUi*>(ud);
 	String logEntry;
-	logEntry.sprintf("[%s][%-4s] %s [%s:%d][%s][%s]\n", kLoggerMessageTypeText[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg,
-					 info.m_file, info.m_line, info.m_func, info.m_threadName);
+	logEntry.format("[{}][{:<4}] {} [{}:{}][{}][{}]\n", kLoggerMessageTypeText[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg,
+					info.m_file, info.m_line, info.m_func, info.m_threadName);
 
 	LockGuard lock(self.m_consoleWindow.m_logMtx);
 	self.m_consoleWindow.m_log.emplaceBack(std::pair(info.m_type, logEntry));
@@ -515,7 +515,7 @@ void EditorUi::mainMenu()
 			{
 				if(ImGui::MenuItem(ICON_MDI_RESISTOR_NODES " SceneNode"))
 				{
-					SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("NewNode.%u", m_newNodeNextIndex++));
+					SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().format("NewNode.{}", m_newNodeNextIndex++));
 					if(node)
 					{
 						node->setLocalTransform(SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform());

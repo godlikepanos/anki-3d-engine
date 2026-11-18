@@ -35,7 +35,7 @@ ThreadJobManager::ThreadJobManager(U32 threadCount, Bool pinToCores, U32 queueSi
 	for(U32 i = 0; i < threadCount; ++i)
 	{
 		String tname;
-		tname.sprintf("AnKiJobManager#%u", i);
+		tname.format("AnKiJobManager#{}", i);
 		callConstructor(m_threads[i], this, i, pinToCores, tname);
 	}
 }

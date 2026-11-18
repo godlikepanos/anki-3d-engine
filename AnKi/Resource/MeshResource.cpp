@@ -168,7 +168,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			{
 				Lod& lod = m_lods[lodIdx];
 
-				AccelerationStructureInitInfo inf(ResourceString().sprintf("%s_%s", "BLAS", basename.cstr()));
+				AccelerationStructureInitInfo inf(ResourceString().format("BLAS_{}", basename));
 				inf.m_type = AccelerationStructureType::kBottomLevel;
 
 				inf.m_bottomLevel.m_indexBuffer = BufferView(lod.m_indexBufferAllocationToken)

@@ -205,7 +205,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 					// Header
 					{
 						String label;
-						label.sprintf(" %s %s (%u)", icon.cstr(), kSceneComponentTypeInfos[comp.getType()].m_name, comp.getUuid());
+						label.format(" {} {} ({})", icon, kSceneComponentTypeInfos[comp.getType()].m_name, comp.getUuid());
 						ImGui::SeparatorText(label.cstr());
 
 						// Delete component
@@ -411,7 +411,7 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 	// Embeded script button
 	{
 		String buttonTxt;
-		buttonTxt.sprintf(ICON_MDI_LANGUAGE_LUA " Embedded Script (%s)", comp.hasScriptText() ? "Set" : "Unset");
+		buttonTxt.format(ICON_MDI_LANGUAGE_LUA " Embedded Script ({})", comp.hasScriptText() ? "Set" : "Unset");
 		const Bool showEditor = ImGui::Button(buttonTxt.cstr(), Vec2(-1.0f, 0.0f));
 		if(showEditor && (m_scriptComponentThatHasTheTextEditorOpen == 0 || m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid()))
 		{
@@ -423,7 +423,7 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 
 	if(m_textEditorOpen && m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid())
 	{
-		if(textEditorWindow(String().sprintf("ScriptComponent %u", comp.getUuid()), &m_textEditorOpen, nullptr, m_textEditorTxt))
+		if(textEditorWindow(String().format("ScriptComponent {}", comp.getUuid()), &m_textEditorOpen, nullptr, m_textEditorTxt))
 		{
 			ANKI_LOGV("Updating ScriptComponent");
 			comp.setScriptText(m_textEditorTxt);
@@ -1331,7 +1331,7 @@ void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
 	{
 		const Bool hasAnim = comp.getTrackHasAnimations(i);
 
-		if(!ImGui::TreeNode(String().sprintf("Track #%u%s", i, (hasAnim) ? " (*)" : "").cstr()))
+		if(!ImGui::TreeNode(String().format("Track #{}{}", i, (hasAnim) ? " (*)" : "").cstr()))
 		{
 			continue;
 		}

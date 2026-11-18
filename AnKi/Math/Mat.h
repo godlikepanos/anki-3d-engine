@@ -1476,20 +1476,20 @@ public:
 		{
 			for(U32 i = 0; i < kTColumnCount; ++i)
 			{
-				CString fmt;
+				CString separator;
 				if(i == kTColumnCount - 1 && j == kTRowCount - 1)
 				{
-					fmt = "%f";
+					separator = "";
 				}
 				else if(i == kTColumnCount - 1)
 				{
-					fmt = "%f\n";
+					separator = "\n";
 				}
 				else
 				{
-					fmt = "%f ";
+					separator = " ";
 				}
-				str += String().sprintf(fmt.cstr(), m_arr2[j][i]);
+				str.appendFormat("{}{}", m_arr2[j][i], separator);
 			}
 		}
 		return str;

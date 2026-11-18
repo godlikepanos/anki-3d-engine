@@ -422,19 +422,19 @@ Error MaterialEditorUi::saveCache()
 		}
 		else if(inp.m_type == ShaderVariableDataType::kF32)
 		{
-			value.sprintf("%f", inp.m_F32);
+			value.format("{}", inp.m_F32);
 		}
 		else if(inp.m_type == ShaderVariableDataType::kVec3)
 		{
-			value.sprintf("%f %f %f", inp.m_Vec3.x, inp.m_Vec3.y, inp.m_Vec3.z);
+			value.format("{} {} {}", inp.m_Vec3.x, inp.m_Vec3.y, inp.m_Vec3.z);
 		}
 		else if(inp.m_type == ShaderVariableDataType::kVec4)
 		{
-			value.sprintf("%f %f %f %f", inp.m_Vec4.x, inp.m_Vec4.y, inp.m_Vec4.z, inp.m_Vec4.w);
+			value.format("{} {} {} {}", inp.m_Vec4.x, inp.m_Vec4.y, inp.m_Vec4.z, inp.m_Vec4.w);
 		}
 		else if(inp.m_type == ShaderVariableDataType::kU32)
 		{
-			value.sprintf("%u", inp.m_U32);
+			value.format("{}", inp.m_U32);
 		}
 		else
 		{

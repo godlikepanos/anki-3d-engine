@@ -15,6 +15,7 @@
 #include <cinttypes> // For PRId8 etc
 #include <cstdarg> // For var args
 #include <cstdlib>
+#include <format>
 
 namespace anki {
 
@@ -488,16 +489,39 @@ public:
 		return *this;
 	}
 
-	// Create formated string.
-	ANKI_CHECK_FORMAT(1, 2)
-	BaseString& sprintf(const Char* fmt, ...)
+	// Append a string formatted with std::format syntax. Eg appendFormat("Mip {} took {:.2f} ms", mip, ms)
+	template<typename... TArgs>
+	BaseString& appendFormat(std::format_string<TArgs...> fmt, TArgs&&... args)
 	{
-		ANKI_ASSERT(fmt);
-		va_list args;
-		va_start(args, fmt);
-		sprintfInternal(fmt, args);
-		va_end(args);
+		// Format into a stack buffer first. format_to_n returns the full length even when it truncates
+		Array<Char, 512> buffer;
+		const PtrSize len = PtrSize(std::format_to_n(&buffer[0], buffer.getSize(), fmt, std::forward<TArgs>(args)...).size);
+
+		if(len <= buffer.getSize())
+		{
+			if(len > 0)
+			{
+				appendInternal(&buffer[0], len);
+			}
+		}
+		else
+		{
+			// Doesn't fit the stack buffer, format again directly into the string
+			const PtrSize oldLen = (m_data.getSize() == 0) ? 0 : m_data.getSize() - 1;
+			m_data.resize(oldLen + len + 1);
+			[[maybe_unused]] const Char* end = std::format_to(&m_data[oldLen], fmt, std::forward<TArgs>(args)...);
+			ANKI_ASSERT(end == &m_data[oldLen + len]);
+			m_data[oldLen + len] = '\0';
+		}
 		return *this;
+	}
+
+	// Replace the string with one formatted with std::format syntax.
+	template<typename... TArgs>
+	BaseString& format(std::format_string<TArgs...> fmt, TArgs&&... args)
+	{
+		destroy();
+		return appendFormat(fmt, std::forward<TArgs>(args)...);
 	}
 
 	// Destroy the string.
@@ -833,3 +857,28 @@ ANKI_STRING_COMPARE_OPS(const BaseString<TMemPool>&, const BaseString<TMemPool>&
 #undef ANKI_STRING_COMPARE_OPS
 
 } // end namespace anki
+
+// Make CString and BaseString usable as std::format arguments. They reuse the string_view formatter so specs like {:>12} work
+namespace std {
+
+template<>
+struct formatter<anki::CString, char> : formatter<string_view, char>
+{
+	template<typename TFormatContext>
+	auto format(anki::CString str, TFormatContext& ctx) const
+	{
+		return formatter<string_view, char>::format(string_view(str.cstr(), str.getLength()), ctx);
+	}
+};
+
+template<typename TMemoryPool>
+struct formatter<anki::BaseString<TMemoryPool>, char> : formatter<anki::CString, char>
+{
+	template<typename TFormatContext>
+	auto format(const anki::BaseString<TMemoryPool>& str, TFormatContext& ctx) const
+	{
+		return formatter<anki::CString, char>::format(str.toCString(), ctx);
+	}
+};
+
+} // end namespace std

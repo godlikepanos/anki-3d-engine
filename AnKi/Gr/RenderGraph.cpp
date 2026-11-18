@@ -1607,7 +1607,7 @@ StringRaii RenderGraph::textureUsageToStr(StackMemoryPool& pool, TextureUsageBit
 #	define ANKI_TEX_USAGE(u) \
 		if(!!(usage & TextureUsageBit::u)) \
 		{ \
-			slist.pushBackSprintf("%s", #u); \
+			slist.pushBack(#u); \
 		}
 
 	ANKI_TEX_USAGE(kSampledGeometry);
@@ -1631,7 +1631,7 @@ StringRaii RenderGraph::textureUsageToStr(StackMemoryPool& pool, TextureUsageBit
 
 	if(!usage)
 	{
-		slist.pushBackSprintf("?");
+		slist.pushBack("?");
 	}
 
 #	undef ANKI_TEX_USAGE
@@ -1649,7 +1649,7 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 #	define ANKI_BUFF_USAGE(u) \
 		if(!!(usage & BufferUsageBit::u)) \
 		{ \
-			slist.pushBackSprintf("%s", #u); \
+			slist.pushBack(#u); \
 		}
 
 	ANKI_BUFF_USAGE(kConstantGeometry);
@@ -1683,7 +1683,7 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 
 	if(!usage)
 	{
-		slist.pushBackSprintf("NONE");
+		slist.pushBack("NONE");
 	}
 
 #	undef ANKI_BUFF_USAGE
@@ -1701,7 +1701,7 @@ StringRaii RenderGraph::asUsageToStr(StackMemoryPool& pool, AccelerationStructur
 #	define ANKI_AS_USAGE(u) \
 		if(!!(usage & AccelerationStructureUsageBit::u)) \
 		{ \
-			slist.pushBackSprintf("%s", #u); \
+			slist.pushBack(#u); \
 		}
 
 	ANKI_AS_USAGE(kBuild);
@@ -1713,7 +1713,7 @@ StringRaii RenderGraph::asUsageToStr(StackMemoryPool& pool, AccelerationStructur
 
 	if(!usage)
 	{
-		slist.pushBackSprintf("NONE");
+		slist.pushBack("NONE");
 	}
 
 #	undef ANKI_AS_USAGE
@@ -1732,52 +1732,51 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphBuilder& descr, const 
 	StackMemoryPool& pool = *ctx.m_pool;
 	StringListRaii slist(&pool);
 
-	slist.pushBackSprintf("digraph {\n");
-	slist.pushBackSprintf("\t//splines = ortho;\nconcentrate = true;\n");
+	slist.pushBack("digraph {\n");
+	slist.pushBack("\t//splines = ortho;\nconcentrate = true;\n");
 
 	for(U32 batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
 	{
 		// Set same rank
-		slist.pushBackSprintf("\t{rank=\"same\";");
+		slist.pushBack("\t{rank=\"same\";");
 		for(U32 passIdx : ctx.m_batches[batchIdx].m_passIndices)
 		{
-			slist.pushBackSprintf("\"%s\";", descr.m_passes[passIdx]->m_name.cstr());
+			slist.pushBackFormat("\"{}\";", descr.m_passes[passIdx]->m_name.cstr());
 		}
-		slist.pushBackSprintf("}\n");
+		slist.pushBack("}\n");
 
 		// Print passes
 		for(U32 passIdx : ctx.m_batches[batchIdx].m_passIndices)
 		{
 			CString passName = descr.m_passes[passIdx]->m_name.toCString();
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=%s,shape=box];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()],
-								  (descr.m_passes[passIdx]->m_type == RenderPassBase::Type::kGraphics) ? "bold" : "dashed");
+			slist.pushBackFormat("\t\"{}\"[color={},style={},shape=box];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()],
+								 (descr.m_passes[passIdx]->m_type == RenderPassBase::Type::kGraphics) ? "bold" : "dashed");
 
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
 			{
-				slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", descr.m_passes[depIdx]->m_name.cstr(), passName.cstr());
+				slist.pushBackFormat("\t\"{}\"->\"{}\";\n", descr.m_passes[depIdx]->m_name.cstr(), passName.cstr());
 			}
 
 			if(ctx.m_passes[passIdx].m_dependsOn.getSize() == 0)
 			{
-				slist.pushBackSprintf("\tNONE->\"%s\";\n", descr.m_passes[passIdx]->m_name.cstr());
+				slist.pushBackFormat("\tNONE->\"{}\";\n", descr.m_passes[passIdx]->m_name.cstr());
 			}
 		}
 	}
 
 #	if 0
 	// Color the resources
-	slist.pushBackSprintf("subgraph cluster_0 {\n");
+	slist.pushBack("subgraph cluster_0 {\n");
 	for(U rtIdx = 0; rtIdx < descr.m_renderTargets.getSize(); ++rtIdx)
 	{
-		slist.pushBackSprintf(
-			"\t\"%s\"[color=%s];\n", &descr.m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % COLORS.getSize()]);
+		slist.pushBackFormat("\t\"{}\"[color={}];\n", &descr.m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % COLORS.getSize()]);
 	}
-	slist.pushBackSprintf("}\n");
+	slist.pushBack("}\n");
 #	endif
 
 	// Barriers
-	// slist.pushBackSprintf("subgraph cluster_1 {\n");
+	// slist.pushBack("subgraph cluster_1 {\n");
 	StringRaii prevBubble(&pool);
 	prevBubble.create("START");
 	for(U32 batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
@@ -1785,23 +1784,23 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphBuilder& descr, const 
 		const Batch& batch = ctx.m_batches[batchIdx];
 
 		StringRaii batchName(&pool);
-		batchName.sprintf("batch%u", batchIdx);
+		batchName.format("batch{}", batchIdx);
 
 		for(U32 barrierIdx = 0; barrierIdx < batch.m_textureBarriersBefore.getSize(); ++barrierIdx)
 		{
 			const TextureBarrier& barrier = batch.m_textureBarriersBefore[barrierIdx];
 
 			StringRaii barrierLabel(&pool);
-			barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>to</b> %s", &descr.m_renderTargets[barrier.m_idx].m_name[0],
-								 barrier.m_surface.m_level, barrier.m_surface.m_depth, barrier.m_surface.m_face, barrier.m_surface.m_layer,
-								 textureUsageToStr(pool, barrier.m_usageBefore).cstr(), textureUsageToStr(pool, barrier.m_usageAfter).cstr());
+			barrierLabel.format("<b>{}</b> (mip,dp,f,l)=({},{},{},{})<br/>{} <b>to</b> {}", &descr.m_renderTargets[barrier.m_idx].m_name[0],
+								barrier.m_surface.m_level, barrier.m_surface.m_depth, barrier.m_surface.m_face, barrier.m_surface.m_layer,
+								textureUsageToStr(pool, barrier.m_usageBefore).cstr(), textureUsageToStr(pool, barrier.m_usageAfter).cstr());
 
 			StringRaii barrierName(&pool);
-			barrierName.sprintf("%s tex barrier%u", batchName.cstr(), barrierIdx);
+			barrierName.format("{} tex barrier{}", batchName.cstr(), barrierIdx);
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(), COLORS[batchIdx % COLORS.getSize()],
-								  barrierLabel.cstr());
-			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
+			slist.pushBackFormat("\t\"{}\"[color={},style=bold,shape=box,label=< {} >];\n", barrierName.cstr(), COLORS[batchIdx % COLORS.getSize()],
+								 barrierLabel.cstr());
+			slist.pushBackFormat("\t\"{}\"->\"{}\";\n", prevBubble.cstr(), barrierName.cstr());
 
 			prevBubble = barrierName;
 		}
@@ -1811,15 +1810,15 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphBuilder& descr, const 
 			const BufferBarrier& barrier = batch.m_bufferBarriersBefore[barrierIdx];
 
 			StringRaii barrierLabel(&pool);
-			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", &descr.m_buffers[barrier.m_idx].m_name[0],
-								 bufferUsageToStr(pool, barrier.m_usageBefore).cstr(), bufferUsageToStr(pool, barrier.m_usageAfter).cstr());
+			barrierLabel.format("<b>{}</b><br/>{} <b>to</b> {}", &descr.m_buffers[barrier.m_idx].m_name[0],
+								bufferUsageToStr(pool, barrier.m_usageBefore).cstr(), bufferUsageToStr(pool, barrier.m_usageAfter).cstr());
 
 			StringRaii barrierName(&pool);
-			barrierName.sprintf("%s buff barrier%u", batchName.cstr(), barrierIdx);
+			barrierName.format("{} buff barrier{}", batchName.cstr(), barrierIdx);
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(), COLORS[batchIdx % COLORS.getSize()],
-								  barrierLabel.cstr());
-			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
+			slist.pushBackFormat("\t\"{}\"[color={},style=bold,shape=box,label=< {} >];\n", barrierName.cstr(), COLORS[batchIdx % COLORS.getSize()],
+								 barrierLabel.cstr());
+			slist.pushBackFormat("\t\"{}\"->\"{}\";\n", prevBubble.cstr(), barrierName.cstr());
 
 			prevBubble = barrierName;
 		}
@@ -1829,15 +1828,15 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphBuilder& descr, const 
 			const ASBarrier& barrier = batch.m_asBarriersBefore[barrierIdx];
 
 			StringRaii barrierLabel(&pool);
-			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", descr.m_as[barrier.m_idx].m_name.getBegin(),
-								 asUsageToStr(pool, barrier.m_usageBefore).cstr(), asUsageToStr(pool, barrier.m_usageAfter).cstr());
+			barrierLabel.format("<b>{}</b><br/>{} <b>to</b> {}", descr.m_as[barrier.m_idx].m_name.getBegin(),
+								asUsageToStr(pool, barrier.m_usageBefore).cstr(), asUsageToStr(pool, barrier.m_usageAfter).cstr());
 
 			StringRaii barrierName(&pool);
-			barrierName.sprintf("%s AS barrier%u", batchName.cstr(), barrierIdx);
+			barrierName.format("{} AS barrier{}", batchName.cstr(), barrierIdx);
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(), COLORS[batchIdx % COLORS.getSize()],
-								  barrierLabel.cstr());
-			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
+			slist.pushBackFormat("\t\"{}\"[color={},style=bold,shape=box,label=< {} >];\n", barrierName.cstr(), COLORS[batchIdx % COLORS.getSize()],
+								 barrierLabel.cstr());
+			slist.pushBackFormat("\t\"{}\"->\"{}\";\n", prevBubble.cstr(), barrierName.cstr());
 
 			prevBubble = barrierName;
 		}
@@ -1846,19 +1845,19 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphBuilder& descr, const 
 		{
 			const RenderPassBase& pass = *descr.m_passes[passIdx];
 			StringRaii passName(&pool);
-			passName.sprintf("%s pass", pass.m_name.cstr());
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()]);
-			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), passName.cstr());
+			passName.format("{} pass", pass.m_name.cstr());
+			slist.pushBackFormat("\t\"{}\"[color={},style=bold];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()]);
+			slist.pushBackFormat("\t\"{}\"->\"{}\";\n", prevBubble.cstr(), passName.cstr());
 
 			prevBubble = passName;
 		}
 	}
-	// slist.pushBackSprintf("}\n");
+	// slist.pushBack("}\n");
 
-	slist.pushBackSprintf("}");
+	slist.pushBack("}");
 
 	File file;
-	ANKI_CHECK(file.open(StringRaii(&pool).sprintf("%s/rgraph_%05u.dot", &path[0], m_version).toCString(), FileOpenFlag::kWrite));
+	ANKI_CHECK(file.open(StringRaii(&pool).format("{}/rgraph_{:05}.dot", &path[0], m_version).toCString(), FileOpenFlag::kWrite));
 	for(const String& s : slist)
 	{
 		ANKI_CHECK(file.writeTextf("%s", &s[0]));

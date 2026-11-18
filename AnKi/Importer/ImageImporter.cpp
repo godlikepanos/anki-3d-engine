@@ -281,7 +281,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 	stbi_image_free(inPixels);
 
 	// Store
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
+	tmpFilename.format("{}/AnKiImageImporter_{}.{}", tempDirectory, g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 
 	I32 ok = 1;
@@ -633,7 +633,7 @@ static Error compressS3tc(CString tempDirectory, CString compressonatorFilename,
 
 	// Create a PNG image to feed to the compressor
 	ImporterString tmpFilename;
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
+	tmpFilename.format("{}/AnKiImageImporter_{}.{}", tempDirectory, g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
 	if(!hdr)
@@ -656,7 +656,7 @@ static Error compressS3tc(CString tempDirectory, CString compressonatorFilename,
 
 	// Invoke the compressor process
 	ImporterString ddsFilename;
-	ddsFilename.sprintf("%s/AnKiImageImporter_%u.dds", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
+	ddsFilename.format("{}/AnKiImageImporter_{}.dds", tempDirectory, g_tempFileIndex.fetchAdd(1));
 	Array<CString, 5> args;
 	U32 argCount = 0;
 	args[argCount++] = "-nomipmap";
@@ -682,7 +682,7 @@ static Error compressS3tc(CString tempDirectory, CString compressonatorFilename,
 
 		if(errStr.isEmpty())
 		{
-			errStr.sprintf("Unknown error. Exit code %d", exitCode);
+			errStr.format("Unknown error. Exit code {}", exitCode);
 		}
 
 		ANKI_IMPORTER_LOGE("Invoking compressor process failed: %s", errStr.cstr());
@@ -740,7 +740,7 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 
 	// Create a BMP image to feed to the astcebc
 	ImporterString tmpFilename;
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
+	tmpFilename.format("{}/AnKiImageImporter_{}.{}", tempDirectory, g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
 	if(!hdr)
@@ -763,9 +763,9 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 
 	// Invoke the compressor process
 	ImporterString astcFilename;
-	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
+	astcFilename.format("{}/AnKiImageImporter_{}.astc", tempDirectory, g_tempFileIndex.fetchAdd(1));
 	ImporterString blockStr;
-	blockStr.sprintf("%ux%u", blockSize.x, blockSize.y);
+	blockStr.format("{}x{}", blockSize.x, blockSize.y);
 	Array<CString, 5> args;
 	U32 argCount = 0;
 	args[argCount++] = (!hdr) ? "-cl" : "-ch";
@@ -791,7 +791,7 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 
 		if(errStr.isEmpty())
 		{
-			errStr.sprintf("Unknown error. Exit code %d", exitCode);
+			errStr.format("Unknown error. Exit code {}", exitCode);
 		}
 
 		ANKI_IMPORTER_LOGE("Invoking astcenc-avx2 process failed: %s", errStr.cstr());

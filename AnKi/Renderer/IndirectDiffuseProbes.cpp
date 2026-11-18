@@ -74,7 +74,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 		{
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("GI GBuff Col #%u", i).toCString());
+			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().format("GI GBuff Col #{}", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 

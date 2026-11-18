@@ -1630,7 +1630,7 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		TextureSubresourceInfo subresource(TextureSurfaceDescriptor(0, faceIdx, 0));
 
-		GraphicsRenderPass& pass = descr.newGraphicsRenderPass(String().sprintf("GI lp%u", faceIdx).toCString());
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass(String().format("GI lp{}", faceIdx).toCString());
 		pass.newTextureDependency(giGiLightRt, TextureUsageBit::kRtvDsvWrite, subresource);
 		pass.newTextureDependency(giGbuffNormRt, TextureUsageBit::kSrvPixel);
 		pass.newTextureDependency(giGbuffDepthRt, TextureUsageBit::kSrvPixel);
@@ -1641,7 +1641,7 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
-			GraphicsRenderPass& pass = descr.newGraphicsRenderPass(String().sprintf("GI mip%u", faceIdx).toCString());
+			GraphicsRenderPass& pass = descr.newGraphicsRenderPass(String().format("GI mip{}", faceIdx).toCString());
 
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
@@ -3309,8 +3309,8 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 			;
 #	undef MAGIC_MACRO
 
-		String commonSrc;
-		commonSrc.sprintf(commonSrcPart.cstr(), rtTypesStr.cstr());
+		String commonSrc = commonSrcPart;
+		commonSrc.replaceAll("%s", rtTypesStr);
 
 		const CString lambertianSrc = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
@@ -3518,18 +3518,17 @@ void main()
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
 })";
 
-		ShaderPtr lambertianShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::kClosestHit, *g_gr);
-		ShaderPtr lambertianRoomShader =
-			createShader(String().sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()), ShaderType::kClosestHit, *g_gr);
-		ShaderPtr emissiveShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr lambertianShader = createShader(String().format("{}\n{}", commonSrc, lambertianSrc), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr lambertianRoomShader = createShader(String().format("{}\n{}", commonSrc, lambertianRoomSrc), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr emissiveShader = createShader(String().format("{}\n{}", commonSrc, emissiveSrc), ShaderType::kClosestHit, *g_gr);
 
-		ShaderPtr shadowAhitShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *g_gr);
-		ShaderPtr shadowChitShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()), ShaderType::kClosestHit, *g_gr);
-		ShaderPtr missShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::kMiss, *g_gr);
+		ShaderPtr shadowAhitShader = createShader(String().format("{}\n{}", commonSrc, shadowAhitSrc), ShaderType::kAnyHit, *g_gr);
+		ShaderPtr shadowChitShader = createShader(String().format("{}\n{}", commonSrc, shadowChitSrc), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr missShader = createShader(String().format("{}\n{}", commonSrc, missSrc), ShaderType::kMiss, *g_gr);
 
-		ShaderPtr shadowMissShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *g_gr);
+		ShaderPtr shadowMissShader = createShader(String().format("{}\n{}", commonSrc, shadowMissSrc), ShaderType::kMiss, *g_gr);
 
-		ShaderPtr rayGenShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()), ShaderType::kRayGen, *g_gr);
+		ShaderPtr rayGenShader = createShader(String().format("{}\n{}", commonSrc, rayGenSrc), ShaderType::kRayGen, *g_gr);
 
 		Array<RayTracingHitGroup, 4> hitGroups;
 		hitGroups[0].m_closestHitShader = lambertianShader.get();
@@ -3914,10 +3913,10 @@ struct U32Struct
 {
 	uint m_data;
 };
-ConstantBuffer<U32Struct> g_drawIdConstant : register(b0, space%u);
+ConstantBuffer<U32Struct> g_drawIdConstant : register(b0, space)" ANKI_STRINGIZE(ANKI_D3D_DRAW_ID_CONSTANT_SPACE) R"();
 #	define gl_DrawID g_drawIdConstant.m_data
 
-ConstantBuffer<Consts> g_consts : register(b0, space%u);
+ConstantBuffer<Consts> g_consts : register(b0, space)" ANKI_STRINGIZE(ANKI_D3D_FAST_CONSTANTS_SPACE) R"();
 #endif
 
 struct VertOut
@@ -3942,7 +3941,7 @@ VertOut main(uint svVertexId : SV_VERTEXID)
 	o.m_svPosition = float4(pos, 0.0, 1.0);
 
 	uint index = gl_DrawID + g_consts.index;
-	index = index %% 6;
+	index = index % 6;
 	o.m_color = float3(index & 1, (index / 2) & 1, (index / 3) & 1);
 
 	return o;
@@ -3960,7 +3959,7 @@ float4 main(VertOut i) : SV_TARGET0
 	return float4(i.m_color, 1.0);
 })";
 
-		ShaderProgramPtr prog = createVertFragProg(String().sprintf(kVert, ANKI_D3D_DRAW_ID_CONSTANT_SPACE, ANKI_D3D_FAST_CONSTANTS_SPACE), kUboFrag);
+		ShaderProgramPtr prog = createVertFragProg(kVert, kUboFrag);
 
 		constexpr U32 maxDraws = 32;
 		Array<DrawIndirectArgs, maxDraws> data = {};

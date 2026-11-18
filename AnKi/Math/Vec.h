@@ -1935,7 +1935,7 @@ public:
 		String str;
 		for(U32 i = 0; i < kTComponentCount; ++i)
 		{
-			str += String().sprintf((i < i - kTComponentCount) ? "%f " : "%f", m_arr[i]);
+			str.appendFormat("{}{}", m_arr[i], (i < kTComponentCount - 1) ? " " : "");
 		}
 		return str;
 	}
@@ -1946,7 +1946,7 @@ public:
 		String str;
 		for(U32 i = 0; i < kTComponentCount; ++i)
 		{
-			str += String().sprintf((i < i - kTComponentCount) ? "%u " : "%u", m_arr[i]);
+			str.appendFormat("{}{}", m_arr[i], (i < kTComponentCount - 1) ? " " : "");
 		}
 		return str;
 	}
@@ -1957,7 +1957,7 @@ public:
 		String str;
 		for(U32 i = 0; i < kTComponentCount; ++i)
 		{
-			str += String().sprintf((i < i - kTComponentCount) ? "%d " : "%d", m_arr[i]);
+			str.appendFormat("{}{}", m_arr[i], (i < kTComponentCount - 1) ? " " : "");
 		}
 		return str;
 	}

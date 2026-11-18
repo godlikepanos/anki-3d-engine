@@ -76,8 +76,8 @@ public:
 
 		// Change window name
 		String title;
-		title.sprintf("%s %u x %u Mips %u Format %s", m_imageFilename, image->getTexture().getWidth(), image->getTexture().getHeight(),
-					  image->getTexture().getMipmapCount(), getFormatInfo(image->getTexture().getFormat()).m_name);
+		title.format("{} {} x {} Mips {} Format {}", m_imageFilename, image->getTexture().getWidth(), image->getTexture().getHeight(),
+					 image->getTexture().getMipmapCount(), getFormatInfo(image->getTexture().getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node

@@ -505,7 +505,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 {
 	const ImporterString meshName = computeMeshResourceFilename(mesh);
 	ImporterString fname;
-	fname.sprintf("%s%s", m_outDir.cstr(), meshName.cstr());
+	fname.format("{}{}", m_outDir, meshName);
 	ANKI_IMPORTER_LOGV("Importing mesh (%s): %s", (m_optimizeMeshes) ? "optimize" : "WON'T optimize", fname.cstr());
 
 	Array<ImporterList<SubMesh>, kMaxLodCount> submeshes;

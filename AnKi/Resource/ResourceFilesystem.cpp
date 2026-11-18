@@ -475,7 +475,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 				ResourceString newFname;
 				if(!p.m_isSpecial)
 				{
-					newFname.sprintf("%s/%s", p.m_path.cstr(), filename.cstr());
+					newFname.format("{}/{}", p.m_path, filename);
 				}
 				else
 				{
@@ -546,7 +546,7 @@ ResourceString ResourceFilesystem::getDiskFilepath(ResourceFilename filename) co
 
 			if(!p.m_isArchive && !p.m_isSpecial)
 			{
-				out.sprintf("%s/%s", p.m_path.cstr(), fsfile.m_filename.cstr());
+				out.format("{}/{}", p.m_path, fsfile.m_filename);
 				found = true;
 				break;
 			}
@@ -599,9 +599,9 @@ Error ResourceFilesystem::refreshAll()
 	{
 		const ResourceString& s = *it;
 		ResourceStringList::Iterator it2 = it + 1;
-		if(s.getLength() == 1 && (s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z') && it2 != paths.getEnd())
+		if(s.getLength() == 1 && ((s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z')) && it2 != paths.getEnd())
 		{
-			paths2.pushBackSprintf("%s:%s", s.cstr(), it2->cstr());
+			paths2.pushBackFormat("{}:{}", s, *it2);
 			++it;
 		}
 		else
@@ -652,7 +652,7 @@ ResourceString ResourceFilesystem::printTree() const
 	iterateAllDataPaths([&, this](CString path) {
 		list.pushBack(path);
 		iterateFilenamesInDataPath(path, [&](CString filename) {
-			list.pushBackSprintf("\t%s", filename.cstr());
+			list.pushBackFormat("\t{}", filename);
 			return FunctorContinue::kContinue;
 		});
 

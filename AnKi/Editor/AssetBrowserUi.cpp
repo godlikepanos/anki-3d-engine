@@ -532,7 +532,7 @@ void AssetBrowserUi::drawDirPath()
 	{
 		ImGui::SameLine();
 
-		if(ImGui::Button(String().sprintf("%s/", dir->m_dirname.cstr()).cstr()))
+		if(ImGui::Button(String().format("{}/", dir->m_dirname).cstr()))
 		{
 			m_selectedDirPath = dir->m_diskFilepath;
 		}
@@ -846,7 +846,7 @@ void AssetBrowserUi::drawMenu()
 		while(index < 10)
 		{
 			String filename;
-			filename.sprintf("%04u.%s", index, suffix.cstr());
+			filename.format("{:04}.{}", index, suffix);
 			String diskFilepath = m_runCtx.m_selectedDir->m_diskFilepath + "/" + filename;
 
 			if(!fileExists(diskFilepath))
@@ -925,13 +925,13 @@ void AssetBrowserUi::drawMenu()
 				while(index < 10)
 				{
 					String filename;
-					filename.sprintf("%04u.NewScene.ankiscene", index);
+					filename.format("{:04}.NewScene.ankiscene", index);
 					const String diskFilepath = m_runCtx.m_selectedDir->m_diskFilepath + "/" + filename;
 
 					if(!fileExists(diskFilepath))
 					{
 						String randomSceneName;
-						randomSceneName.sprintf("%u", U32(getRandom() % kMaxU32));
+						randomSceneName.format("{}", U32(getRandom() % kMaxU32));
 						Scene* tempScene;
 						if(SceneGraph::getSingleton().newEmptyScene(randomSceneName, tempScene))
 						{

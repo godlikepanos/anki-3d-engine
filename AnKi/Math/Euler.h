@@ -155,12 +155,12 @@ public:
 
 	String toString() const requires(std::is_floating_point<T>::value)
 	{
-		return String().sprintf("%f %f %f", x, y, z);
+		return String().format("{} {} {}", x, y, z);
 	}
 
 	String toStringDegrees() const requires(std::is_floating_point<T>::value)
 	{
-		return String().sprintf("%f %f %f", toDegrees(x), toDegrees(y), toDegrees(z));
+		return String().format("{} {} {}", toDegrees(x), toDegrees(y), toDegrees(z));
 	}
 };
 

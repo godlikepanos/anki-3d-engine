@@ -87,7 +87,7 @@ Error ShadowMapping::init()
 	for(U32 i = 0; i < kMaxShadowCascades; ++i)
 	{
 		RendererString name;
-		name.sprintf("DirLight HZB #%d", i);
+		name.format("DirLight HZB #{}", i);
 
 		const U32 cascadeResolution = (m_tileResolution * (1 << (kTileAllocHierarchyCount - 1))) >> chooseDirectionalLightShadowCascadeDetail(i);
 		UVec2 size(min(cascadeResolution, 1024u));

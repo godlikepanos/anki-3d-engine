@@ -134,7 +134,7 @@ void TextureViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowF
 				UiStringList mipLabels;
 				for(U32 mip = 0; mip < mipCount; ++mip)
 				{
-					mipLabels.pushBackSprintf("Mip %u (%u x %u)", mip, m_tex->getWidth() >> mip, m_tex->getHeight() >> mip);
+					mipLabels.pushBackFormat("Mip {} ({} x {})", mip, m_tex->getWidth() >> mip, m_tex->getHeight() >> mip);
 				}
 
 				if(ImGui::BeginCombo("##Mipmap", (mipLabels.getBegin() + m_crntMip)->cstr(), ImGuiComboFlags_HeightLarge))
@@ -164,7 +164,7 @@ void TextureViewerUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindowF
 				UiStringList labels;
 				for(U32 d = 0; d < m_tex->getDepth(); ++d)
 				{
-					labels.pushBackSprintf("Depth %u", d);
+					labels.pushBackFormat("Depth {}", d);
 				}
 
 				if(ImGui::BeginCombo("##Depth", (labels.getBegin() + U32(m_depth))->cstr(), ImGuiComboFlags_HeightLarge))

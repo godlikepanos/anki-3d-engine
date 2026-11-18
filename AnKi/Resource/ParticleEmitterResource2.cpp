@@ -87,7 +87,7 @@ Error ParticleEmitterResource2::parseShaderProgram(XmlElement shaderProgramEl, B
 	ANKI_CHECK(shaderProgramEl.getAttributeText("name", shaderName));
 
 	ResourceString fname;
-	fname.sprintf("ShaderBinaries/%s.ankiprogbin", shaderName.cstr());
+	fname.format("ShaderBinaries/{}.ankiprogbin", shaderName);
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(fname, m_prog, async));
 

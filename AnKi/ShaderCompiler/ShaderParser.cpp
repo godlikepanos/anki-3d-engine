@@ -466,7 +466,7 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 		// We _must_ have an #include
 		ANKI_CHECK(parseInclude(token + 1, end, line, fname, depth));
 
-		m_sourceLines.pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
+		m_sourceLines.pushBackFormat("#line {} \"{}\"", lineNo + 1, sanitizeFilename(fname));
 	}
 	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
 	{
@@ -490,11 +490,11 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 			// Add the guard unique for this file
 			foundPragmaOnce = true;
 			const U64 hash = fname.computeHash();
-			m_sourceLines.pushBackSprintf("#ifndef _ANKI_INCL_GUARD_%" PRIu64 "\n"
-										  "#define _ANKI_INCL_GUARD_%" PRIu64,
-										  hash, hash);
+			m_sourceLines.pushBackFormat("#ifndef _ANKI_INCL_GUARD_{}\n"
+										 "#define _ANKI_INCL_GUARD_{}",
+										 hash, hash);
 
-			m_sourceLines.pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
+			m_sourceLines.pushBackFormat("#line {} \"{}\"", lineNo + 1, sanitizeFilename(fname));
 		}
 		else if(*token == "anki")
 		{
@@ -542,7 +542,7 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 			}
 
 			// For good measure
-			m_sourceLines.pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
+			m_sourceLines.pushBackFormat("#line {} \"{}\"", lineNo + 1, sanitizeFilename(fname));
 		}
 		else
 		{
@@ -570,7 +570,7 @@ Error ShaderParser::parsePragmaStructBegin(const ShaderCompilerString* begin, co
 	GhostStruct& gstruct = *m_ghostStructs.emplaceBack();
 	gstruct.m_name = *begin;
 
-	m_sourceLines.pushBackSprintf("struct %s {", begin->cstr());
+	m_sourceLines.pushBackFormat("struct {} {{", *begin);
 
 	ANKI_ASSERT(!m_insideStruct);
 	m_insideStruct = true;
@@ -686,8 +686,8 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 						  ? structure.m_members.getBack().m_offset + getShaderVariableDataTypeInfo(structure.m_members.getBack().m_type).m_size
 						  : 0;
 
-	m_sourceLines.pushBackSprintf("#define %s_%s_OFFSETOF %u", structure.m_name.cstr(), member.m_name.cstr(), member.m_offset);
-	m_sourceLines.pushBackSprintf("\t%s %s;", typeStr.cstr(), member.m_name.cstr());
+	m_sourceLines.pushBackFormat("#define {}_{}_OFFSETOF {}", structure.m_name, member.m_name, member.m_offset);
+	m_sourceLines.pushBackFormat("\t{} {};", typeStr, member.m_name);
 
 	structure.m_members.emplaceBack(std::move(member));
 
@@ -718,17 +718,17 @@ Error ShaderParser::parsePragmaStructEnd(const ShaderCompilerString* begin, cons
 		const Member& m = gstruct.m_members[i];
 
 		// #	define XXX_LOAD()
-		m_sourceLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) buff.Load<%s>(%s_%s_OFFSETOF + (offset))%s", structName.cstr(),
-									  m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name, structName.cstr(), m.m_name.cstr(),
-									  (i != gstruct.m_members.getSize() - 1) ? "," : "");
+		m_sourceLines.pushBackFormat("#\tdefine {}_{}_LOAD(buff, offset) buff.Load<{}>({}_{}_OFFSETOF + (offset)){}", structName, m.m_name,
+									 getShaderVariableDataTypeInfo(m.m_type).m_name, structName, m.m_name,
+									 (i != gstruct.m_members.getSize() - 1) ? "," : "");
 	}
 
 	// Now define the structure LOAD in HLSL
-	m_sourceLines.pushBackSprintf("#define load%s(buff, offset) { \\", structName.cstr());
+	m_sourceLines.pushBackFormat("#define load{}(buff, offset) {{ \\", structName);
 	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
 		const Member& m = gstruct.m_members[i];
-		m_sourceLines.pushBackSprintf("\t%s_%s_LOAD(buff, offset) \\", structName.cstr(), m.m_name.cstr());
+		m_sourceLines.pushBackFormat("\t{}_{}_LOAD(buff, offset) \\", structName, m.m_name);
 	}
 	m_sourceLines.pushBack("}");
 
@@ -783,7 +783,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 		ANKI_SHADER_COMPILER_LOGE("Source is empty");
 	}
 
-	m_sourceLines.pushBackSprintf("#line 0 \"%s\"", sanitizeFilename(fname).cstr());
+	m_sourceLines.pushBackFormat("#line 0 \"{}\"", sanitizeFilename(fname));
 
 	// Parse lines
 	U32 lineNo = 1;
@@ -864,7 +864,7 @@ void ShaderParser::generateAnkiShaderHeader(ShaderType shaderType, ShaderCompile
 
 	for(ShaderType type : EnumIterable<ShaderType>())
 	{
-		header += ShaderCompilerString().sprintf("#define ANKI_%s_SHADER %u\n", kShaderStageNames[type].cstr(), (shaderType == type) ? 1 : 0);
+		header += ShaderCompilerString().format("#define ANKI_{}_SHADER {}\n", kShaderStageNames[type], (shaderType == type) ? 1 : 0);
 	}
 }
 
@@ -886,20 +886,20 @@ void ShaderParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const 
 
 	for(U32 i = 0; i < m_defineNames.getSize(); ++i)
 	{
-		source += ShaderCompilerString().sprintf("#define %s %d\n", m_defineNames[i].cstr(), m_defineValues[i]);
+		source += ShaderCompilerString().format("#define {} {}\n", m_defineNames[i], m_defineValues[i]);
 	}
 
 	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
 		if(!!(technique.m_activeMutators[shaderType] & (1_U64 << U64(i))))
 		{
-			source += ShaderCompilerString().sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]);
+			source += ShaderCompilerString().format("#define {} {}\n", m_mutators[i].m_name, mutation[i]);
 		}
 	}
 
 	for(U32 i = 0; i < m_techniques.getSize(); ++i)
 	{
-		source += ShaderCompilerString().sprintf("#define ANKI_TECHNIQUE_%s %u\n", m_techniques[i].m_name.cstr(), U32(tIdx == i));
+		source += ShaderCompilerString().format("#define ANKI_TECHNIQUE_{} {}\n", m_techniques[i].m_name, U32(tIdx == i));
 	}
 
 	ShaderCompilerString header;

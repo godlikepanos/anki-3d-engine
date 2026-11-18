@@ -25,7 +25,7 @@ Error TemporalAA::init()
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
-													   getRenderer().getHdrFormat(), usage, String().sprintf("TemporalAA #%u", i).cstr());
+													   getRenderer().getHdrFormat(), usage, String().format("TemporalAA #{}", i).cstr());
 
 		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 	}

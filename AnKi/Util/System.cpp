@@ -78,7 +78,7 @@ void backtraceInternal(const Function<void(CString)>& lambda)
 
 			// Return addresses point after the call. Step back 1 byte to land inside the call instruction or the line might be wrong
 			const PtrSize address = ptrToNumber(frames[i]) - ((i > 0) ? 1 : 0);
-			moduleOffsets[i].sprintf("0x%zx", address - ptrToNumber(info.dli_fbase));
+			moduleOffsets[i].format("0x{:x}", address - ptrToNumber(info.dli_fbase));
 		}
 	}
 
@@ -202,7 +202,7 @@ static Error getAndroidApkName(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>&
 	const pid_t pid = getpid();
 
 	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> path(name.getMemoryPool());
-	path.sprintf("/proc/%d/cmdline", pid);
+	path.format("/proc/{}/cmdline", pid);
 
 	const int fd = open(path.cstr(), O_RDONLY);
 	if(fd < 0)

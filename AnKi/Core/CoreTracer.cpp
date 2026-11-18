@@ -110,10 +110,10 @@ Error CoreTracer::init(CString directory)
 
 	std::tm tm = getLocalTime();
 	CoreString fname;
-	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
+	fname.format("{}/{}{:02}{:02}-{:02}{:02}_", directory, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
 
-	m_traceJsonFilename.sprintf("%strace.json", fname.cstr());
-	m_countersCsvFilename.sprintf("%scounters.csv", fname.cstr());
+	m_traceJsonFilename.format("{}trace.json", fname);
+	m_countersCsvFilename.format("{}counters.csv", fname);
 
 	return Error::kNone;
 }

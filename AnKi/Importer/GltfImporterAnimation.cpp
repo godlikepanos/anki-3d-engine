@@ -110,7 +110,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 {
 	ImporterString fname;
 	ImporterString animFname = computeAnimationResourceFilename(anim);
-	fname.sprintf("%s%s", m_outDir.cstr(), animFname.cstr());
+	fname.format("{}{}", m_outDir, animFname);
 	fname = fixFilename(fname);
 	ANKI_IMPORTER_LOGV("Importing animation %s", fname.cstr());
 

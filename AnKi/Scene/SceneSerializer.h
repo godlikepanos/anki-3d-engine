@@ -208,14 +208,14 @@ public:
 };
 
 #define ANKI_SERIALIZER_LOGE(...) \
-	ANKI_SCENE_LOGE("%s", (SceneString().sprintf(__VA_ARGS__) + SceneString().sprintf(". Line %u: ", m_read.m_lineno)).cstr())
+	ANKI_SCENE_LOGE("%s", (SceneString().format(__VA_ARGS__) + SceneString().format(". Line {}: ", m_read.m_lineno)).cstr())
 #define ANKI_SERIALIZER_CHECK(expr) \
 	do \
 	{ \
 		const Error retError = expr; \
 		if(retError) \
 		{ \
-			ANKI_SERIALIZER_LOGE("Expression failed: " ANKI_STRINGIZE(expr)); \
+			ANKI_SERIALIZER_LOGE("Expression failed: {}", ANKI_STRINGIZE(expr)); \
 			return retError; \
 		} \
 	} while(0)

@@ -51,7 +51,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 	}
 
 	info.m_inputFname = argv[1];
-	info.m_outDir.sprintf("%s/", argv[2]);
+	info.m_outDir.format("{}/", argv[2]);
 
 	for(I i = 3; i < argc; i++)
 	{
@@ -64,7 +64,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				if(std::strlen(argv[i]) > 0)
 				{
-					info.m_texRpath.sprintf("%s/", argv[i]);
+					info.m_texRpath.format("{}/", argv[i]);
 				}
 				else
 				{
@@ -89,7 +89,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				if(std::strlen(argv[i]) > 0)
 				{
-					info.m_rpath.sprintf("%s/", argv[i]);
+					info.m_rpath.format("{}/", argv[i]);
 				}
 				else
 				{

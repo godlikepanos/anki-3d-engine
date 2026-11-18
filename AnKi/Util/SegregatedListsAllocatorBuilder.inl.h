@@ -519,19 +519,19 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pr
 	U32 chunkCount = 0;
 	for(const TChunk* chunk : m_chunks)
 	{
-		strList.pushBackSprintf("Chunk #%u, total size %zu, free size %zu\n", chunkCount, chunk->m_totalSize, chunk->m_freeSize);
+		strList.pushBackFormat("Chunk #{}, total size {}, free size {}\n", chunkCount, chunk->m_totalSize, chunk->m_freeSize);
 
 		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
 		{
 			if(chunk->m_freeLists[c].getSize())
 			{
-				strList.pushBackSprintf("  Class #%u\n    ", c);
+				strList.pushBackFormat("  Class #{}\n    ", c);
 			}
 
 			for(U32 i = 0; i < chunk->m_freeLists[c].getSize(); ++i)
 			{
 				const FreeBlock& blk = chunk->m_freeLists[c][i];
-				strList.pushBackSprintf("| %zu-%zu(%zu) ", blk.m_address, blk.m_address + blk.m_size - 1, blk.m_size);
+				strList.pushBackFormat("| {}-{}({}) ", blk.m_address, blk.m_address + blk.m_size - 1, blk.m_size);
 			}
 
 			if(chunk->m_freeLists[c].getSize())

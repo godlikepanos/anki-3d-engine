@@ -14,7 +14,7 @@ Error SampleApp::userPreInit()
 
 #if !ANKI_OS_ANDROID
 	String assetsDataPath;
-	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, getApplicationName().cstr());
+	assetsDataPath.format("{}/Samples/{}", ANKI_SOURCE_DIRECTORY, getApplicationName());
 
 	if(!directoryExists(assetsDataPath))
 	{
@@ -22,7 +22,7 @@ Error SampleApp::userPreInit()
 	}
 	else
 	{
-		g_cvarRsrcDataPaths = String().sprintf("%s|.anki,lua", assetsDataPath.cstr());
+		g_cvarRsrcDataPaths = String().format("{}|.anki,lua", assetsDataPath);
 	}
 #endif
 

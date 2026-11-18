@@ -519,7 +519,7 @@ Error StreamingImageResourceManager::loadTailMipChainAsync(StreamingImage& img, 
 		}
 
 		const String filenameExt = anki::getFilename(img.m_filename);
-		texInit.setName(ResourceString().sprintf("%s tail", filenameExt.cstr()));
+		texInit.setName(ResourceString().format("{} tail", filenameExt));
 
 		const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(texInit);
 		img.m_texAllocations[tailChainTexIdx] = TextureMemoryPool::getSingleton().allocate(memReq);
@@ -729,7 +729,7 @@ Error StreamingImageResourceManager::loadOtherMipsAsync(ConstWeakArray<LoadMipsR
 
 			TextureInitInfo texInit;
 			fillTextureInitInfo(loader, texInit);
-			texInit.setName(ResourceString().sprintf("%s #%u", filenameExt.cstr(), mip));
+			texInit.setName(ResourceString().format("{} #{}", filenameExt, mip));
 
 			texInit.m_mipmapCount = 1;
 

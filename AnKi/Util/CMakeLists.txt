@@ -44,6 +44,9 @@ file(GLOB_RECURSE headers *.h)
 add_library(AnKiUtil ${sources} ${headers})
 target_compile_definitions(AnKiUtil PRIVATE -DANKI_SOURCE_FILE)
 
+# PUBLIC so every target that links AnKiUtil gets its own PCH. Absolute path because it propagates to other targets
+target_precompile_headers(AnKiUtil PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/PchHeaders.h)
+
 set(libs AnKiTinyXml2)
 
 if(ANDROID)

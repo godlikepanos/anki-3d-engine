@@ -155,7 +155,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		ANKI_IMPORTER_LOGW("Skipping ray tracing is ignored");
 	}
 	ImporterString fname;
-	fname.sprintf("%s%s", m_outDir.cstr(), computeMaterialResourceFilename(mtl).cstr());
+	fname.format("{}{}", m_outDir, computeMaterialResourceFilename(mtl));
 	ANKI_IMPORTER_LOGV("Importing material %s", fname.cstr());
 
 	if(!mtl.has_pbr_metallic_roughness)
@@ -178,13 +178,13 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		const ImporterString fname = getTextureUri(mtl.pbr_metallic_roughness.base_color_texture);
 
 		ImporterString uri;
-		uri.sprintf("%s%s", m_texrpath.cstr(), fname.cstr());
+		uri.format("{}{}", m_texrpath, fname);
 
 		const F32* diffCol = &mtl.pbr_metallic_roughness.base_color_factor[0];
 
-		xml.replaceAll("%diff%", ImporterString().sprintf("<input name=\"m_diffuseTex\" value=\"%s\"/>\n"
-														  "\t\t<input name=\"m_diffuseScale\" value=\"%f %f %f %f\"/>",
-														  uri.cstr(), diffCol[0], diffCol[1], diffCol[2], diffCol[3]));
+		xml.replaceAll("%diff%", ImporterString().format("<input name=\"m_diffuseTex\" value=\"{}\"/>\n"
+														 "\t\t<input name=\"m_diffuseScale\" value=\"{} {} {} {}\"/>",
+														 uri, diffCol[0], diffCol[1], diffCol[2], diffCol[3]));
 		xml.replaceAll("%diffTexMutator%", "1");
 
 		Vec4 constantColor;
@@ -205,8 +205,8 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	{
 		const F32* diffCol = &mtl.pbr_metallic_roughness.base_color_factor[0];
 
-		xml.replaceAll("%diff%", ImporterString().sprintf("<input name=\"m_diffuseScale\" value=\"%f %f %f %f\"/>", diffCol[0], diffCol[1],
-														  diffCol[2], diffCol[3]));
+		xml.replaceAll("%diff%", ImporterString().format("<input name=\"m_diffuseScale\" value=\"{} {} {} {}\"/>", diffCol[0], diffCol[1], diffCol[2],
+														 diffCol[3]));
 
 		xml.replaceAll("%diffTexMutator%", "0");
 		xml.replaceAll("%alphaTestMutator%", "0");
@@ -238,8 +238,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			specular = Vec3(0.04f);
 		}
 
-		xml.replaceAll("%spec%",
-					   ImporterString().sprintf("<input name=\"m_specularScale\" value=\"%f %f %f\"/>", specular.x, specular.y, specular.z));
+		xml.replaceAll("%spec%", ImporterString().format("<input name=\"m_specularScale\" value=\"{} {} {}\"/>", specular.x, specular.y, specular.z));
 
 		xml.replaceAll("%specTexMutator%", "0");
 	}
@@ -285,13 +284,13 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	if(mtl.pbr_metallic_roughness.metallic_roughness_texture.texture && (constantRoughness < 0.0f || constantMetaliness < 0.0f))
 	{
 		ImporterString uri;
-		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
+		uri.format("{}{}", m_texrpath, getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture));
 
 		xml.replaceAll("%roughnessMetalness%",
-					   ImporterString().sprintf("<input name=\"m_roughnessMetalnessTex\" value=\"%s\"/>\n"
-												"\t\t<input name=\"m_roughnessScale\" value=\"%f\"/>\n"
-												"\t\t<input name=\"m_metalnessScale\" value=\"%f\"/>",
-												uri.cstr(), mtl.pbr_metallic_roughness.roughness_factor, mtl.pbr_metallic_roughness.metallic_factor));
+					   ImporterString().format("<input name=\"m_roughnessMetalnessTex\" value=\"{}\"/>\n"
+											   "\t\t<input name=\"m_roughnessScale\" value=\"{}\"/>\n"
+											   "\t\t<input name=\"m_metalnessScale\" value=\"{}\"/>",
+											   uri, mtl.pbr_metallic_roughness.roughness_factor, mtl.pbr_metallic_roughness.metallic_factor));
 
 		xml.replaceAll("%roughnessMetalnessTexMutator%", "1");
 
@@ -313,9 +312,9 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		const F32 metalness = (constantMetaliness >= 0.0f) ? constantMetaliness * mtl.pbr_metallic_roughness.metallic_factor
 														   : mtl.pbr_metallic_roughness.metallic_factor;
 
-		xml.replaceAll("%roughnessMetalness%", ImporterString().sprintf("<input name=\"m_roughnessScale\" value=\"%f\"/>\n"
-																		"\t\t<input name=\"m_metalnessScale\" value=\"%f\"/>",
-																		roughness, metalness));
+		xml.replaceAll("%roughnessMetalness%", ImporterString().format("<input name=\"m_roughnessScale\" value=\"{}\"/>\n"
+																	   "\t\t<input name=\"m_metalnessScale\" value=\"{}\"/>",
+																	   roughness, metalness));
 
 		xml.replaceAll("%roughnessMetalnessTexMutator%", "0");
 	}
@@ -328,9 +327,9 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 		if(constantColor.xyz == -1.0f)
 		{
 			ImporterString uri;
-			uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.normal_texture).cstr());
+			uri.format("{}{}", m_texrpath, getTextureUri(mtl.normal_texture));
 
-			xml.replaceAll("%normal%", ImporterString().sprintf("<input name=\"m_normalTex\" value=\"%s\"/>", uri.cstr()));
+			xml.replaceAll("%normal%", ImporterString().format("<input name=\"m_normalTex\" value=\"{}\"/>", uri));
 
 			xml.replaceAll("%normalTexMutator%", "1");
 
@@ -359,12 +358,12 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	if(mtl.emissive_texture.texture)
 	{
 		ImporterString uri;
-		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.emissive_texture).cstr());
+		uri.format("{}{}", m_texrpath, getTextureUri(mtl.emissive_texture));
 
-		xml.replaceAll("%emission%", ImporterString().sprintf("<input name=\"m_emissiveTex\" value=\"%s\"/>\n"
-															  "\t\t<input name=\"m_emissionScale\" value=\"%f %f %f\"/>",
-															  uri.cstr(), mtl.emissive_strength.emissive_strength,
-															  mtl.emissive_strength.emissive_strength, mtl.emissive_strength.emissive_strength));
+		xml.replaceAll("%emission%", ImporterString().format("<input name=\"m_emissiveTex\" value=\"{}\"/>\n"
+															 "\t\t<input name=\"m_emissionScale\" value=\"{} {} {}\"/>",
+															 uri, mtl.emissive_strength.emissive_strength, mtl.emissive_strength.emissive_strength,
+															 mtl.emissive_strength.emissive_strength));
 
 		xml.replaceAll("%emissiveTexMutator%", "1");
 
@@ -379,10 +378,10 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	}
 	else
 	{
-		xml.replaceAll("%emission%", ImporterString().sprintf("<input name=\"m_emissionScale\" value=\"%f %f %f\"/>",
-															  mtl.emissive_factor[0] * mtl.emissive_strength.emissive_strength,
-															  mtl.emissive_factor[1] * mtl.emissive_strength.emissive_strength,
-															  mtl.emissive_factor[2] * mtl.emissive_strength.emissive_strength));
+		xml.replaceAll("%emission%", ImporterString().format("<input name=\"m_emissionScale\" value=\"{} {} {}\"/>",
+															 mtl.emissive_factor[0] * mtl.emissive_strength.emissive_strength,
+															 mtl.emissive_factor[1] * mtl.emissive_strength.emissive_strength,
+															 mtl.emissive_factor[2] * mtl.emissive_strength.emissive_strength));
 
 		xml.replaceAll("%emissiveTexMutator%", "0");
 	}
@@ -400,7 +399,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			subsurface = 0.0f;
 		}
 
-		xml.replaceAll("%subsurface%", ImporterString().sprintf("<input name=\"m_subsurface\" value=\"%f\"/>", subsurface));
+		xml.replaceAll("%subsurface%", ImporterString().format("<input name=\"m_subsurface\" value=\"{}\"/>", subsurface));
 	}
 
 	// Replace texture extensions with .anki

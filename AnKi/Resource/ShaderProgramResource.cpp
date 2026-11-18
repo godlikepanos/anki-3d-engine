@@ -196,7 +196,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 		const String fname = anki::getFilename(getFilename());
 
 		ResourceString progName;
-		progName.sprintf("%s var%05u", fname.cstr(), binaryVariantIdx);
+		progName.format("{} var{:05}", fname, binaryVariantIdx);
 		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(info.m_shaderTypes))
 		{
 			progName += " ";

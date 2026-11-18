@@ -221,7 +221,7 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, &images[0]));
 		for(U32 i = 0; i < count; ++i)
 		{
-			TextureInitInfo init(GrString().sprintf("SwapchainImage #%u", i));
+			TextureInitInfo init(GrString().format("SwapchainImage #{}", i));
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
 			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
@@ -232,7 +232,7 @@ Error MicroSwapchain::initInternal()
 			m_textures[i].reset(tex);
 			ANKI_CHECK(tex->initExternal(images[i], init));
 
-			m_renderSemaphores[i] = SemaphoreFactory::getSingleton().newInstance(false, GrString().sprintf("Present #%u", i));
+			m_renderSemaphores[i] = SemaphoreFactory::getSingleton().newInstance(false, GrString().format("Present #{}", i));
 		}
 	}
 
