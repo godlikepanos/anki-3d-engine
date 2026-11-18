@@ -10,6 +10,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <cstdarg>
 
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/ShadowMapping.h>

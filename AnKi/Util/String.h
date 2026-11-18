@@ -13,7 +13,6 @@
 #include <cstdio>
 #include <cctype>
 #include <cinttypes> // For PRId8 etc
-#include <cstdarg> // For var args
 #include <cstdlib>
 #include <format>
 
@@ -795,38 +794,6 @@ private:
 		m_data.resize(size + strLen);
 		memcpy(&m_data[size - 1], str, sizeof(Char) * strLen);
 		m_data[m_data.getSize() - 1] = '\0';
-	}
-
-	// Internal don't use it.
-	void sprintfInternal(const Char* fmt, va_list& args)
-	{
-		Array<Char, 512> buffer;
-
-		va_list args2;
-		va_copy(args2, args); // vsnprintf will alter "args". Copy it case we need to call vsnprintf in the else bellow
-
-		I len = std::vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
-
-		if(len < 0)
-		{
-			ANKI_UTIL_LOGF("vsnprintf() failed");
-		}
-		else if(PtrSize(len) >= sizeof(buffer))
-		{
-			I size = len + 1;
-			m_data.resize(size);
-
-			len = std::vsnprintf(&m_data[0], size, fmt, args2);
-
-			ANKI_ASSERT((len + 1) == size);
-		}
-		else
-		{
-			// buffer was enough
-			*this = CString(&buffer[0]);
-		}
-
-		va_end(args2);
 	}
 };
 
