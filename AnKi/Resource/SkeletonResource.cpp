@@ -79,7 +79,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		{
 			if(capsuleRadius < 0.0f)
 			{
-				ANKI_RESOURCE_LOGE("Wrong capsuleRadius: %f", capsuleRadius);
+				ANKI_RESOURCE_LOGE("Wrong capsuleRadius: {}", capsuleRadius);
 				return Error::kUserData;
 			}
 
@@ -93,7 +93,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		{
 			if(capsuleHalfHeight < 0.0f)
 			{
-				ANKI_RESOURCE_LOGE("Wrong capsuleHalfHeight: %f", capsuleHalfHeight);
+				ANKI_RESOURCE_LOGE("Wrong capsuleHalfHeight: {}", capsuleHalfHeight);
 				return Error::kUserData;
 			}
 
@@ -142,7 +142,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 			{
 				if(degrees < minDegrees || degrees > maxDegrees)
 				{
-					ANKI_RESOURCE_LOGE("Wrong %s: %f. Should be in [%f, %f]", attribName.cstr(), degrees, minDegrees, maxDegrees);
+					ANKI_RESOURCE_LOGE("Wrong {}: {}. Should be in [{}, {}]", attribName, degrees, minDegrees, maxDegrees);
 					return Error::kUserData;
 				}
 
@@ -158,7 +158,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 
 		if(bone.m_twistMinAngle > bone.m_twistMaxAngle)
 		{
-			ANKI_RESOURCE_LOGE("twistMinAngle can't be bigger than twistMaxAngle. Bone: %s", name.cstr());
+			ANKI_RESOURCE_LOGE("twistMinAngle can't be bigger than twistMaxAngle. Bone: {}", name);
 			return Error::kUserData;
 		}
 
@@ -186,13 +186,13 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 
 			if(bone.m_parent == nullptr)
 			{
-				ANKI_RESOURCE_LOGE("Bone \"%s\" is referencing an unknown parent \"%s\"", &bone.m_name[0], &it->toCString()[0]);
+				ANKI_RESOURCE_LOGE("Bone \"{}\" is referencing an unknown parent \"{}\"", bone.m_name, *it);
 				return Error::kUserData;
 			}
 
 			if(bone.m_parent->m_childrenCount >= kMaxChildrenPerBone)
 			{
-				ANKI_RESOURCE_LOGE("Bone \"%s\" cannot have more that %u children", &bone.m_parent->m_name[0], kMaxChildrenPerBone);
+				ANKI_RESOURCE_LOGE("Bone \"{}\" cannot have more that {} children", bone.m_parent->m_name, kMaxChildrenPerBone);
 				return Error::kUserData;
 			}
 

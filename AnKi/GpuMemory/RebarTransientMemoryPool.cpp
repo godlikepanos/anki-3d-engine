@@ -87,8 +87,8 @@ BufferView RebarTransientMemoryPool::allocateInternal(PtrSize origSize, U32 alig
 
 		if(overlaps)
 		{
-			ANKI_GPUMEM_LOGW("ReBAR has to wait for a fence. This means that the ReBAR buffer is not big enough. Increase the %s CVAR",
-							 g_cvarGpuMemRebarGpuMemorySize.getName().cstr());
+			ANKI_GPUMEM_LOGW("ReBAR has to wait for a fence. This means that the ReBAR buffer is not big enough. Increase the {} CVAR",
+							 g_cvarGpuMemRebarGpuMemorySize.getName());
 
 			if(!m_sliceFences[sliceIdx]->clientWait(kMaxSecond))
 			{

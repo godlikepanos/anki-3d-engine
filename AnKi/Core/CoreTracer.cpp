@@ -175,7 +175,7 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 	{
 		ANKI_CHECK(m_traceJsonFile.open(m_traceJsonFilename, FileOpenFlag::kWrite));
 		ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
-		ANKI_CORE_LOGI("Trace file created: %s", m_traceJsonFilename.cstr());
+		ANKI_CORE_LOGI("Trace file created: {}", m_traceJsonFilename);
 	}
 
 	// First sort them to fix overlaping in chrome
@@ -351,7 +351,7 @@ Error CoreTracer::writeCountersOnShutdown()
 
 	File countersCsvFile;
 	ANKI_CHECK(countersCsvFile.open(m_countersCsvFilename, FileOpenFlag::kWrite));
-	ANKI_CORE_LOGI("Counter file created: %s", m_countersCsvFilename.cstr());
+	ANKI_CORE_LOGI("Counter file created: {}", m_countersCsvFilename);
 
 	// Write the header
 	ANKI_CHECK(countersCsvFile.writeText("Frame"));

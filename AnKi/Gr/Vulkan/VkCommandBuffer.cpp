@@ -941,7 +941,7 @@ void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, co
 
 	if(NVSDK_NGX_FAILED(result))
 	{
-		ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result, GetNGXResultAsString(result));
+		ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x{:08x}", U32(result));
 	}
 #else
 	ANKI_ASSERT(0 && "Not supported");
@@ -1230,32 +1230,32 @@ void CommandBufferImpl::endRecording()
 	static Atomic<U32> messagePrintCount(0);
 	constexpr U32 MAX_PRINT_COUNT = 10;
 
-	CString message;
+	CString manyOrFew;
 	if(!!(m_flags & CommandBufferFlag::kSmallBatch))
 	{
 		if(m_commandCount > kCommandBufferSmallBatchMaxCommands * 4)
 		{
-			message = "Command buffer has too many commands%s: %u";
+			manyOrFew = "many";
 		}
 	}
 	else
 	{
 		if(m_commandCount <= kCommandBufferSmallBatchMaxCommands / 4)
 		{
-			message = "Command buffer has too few commands%s: %u";
+			manyOrFew = "few";
 		}
 	}
 
-	if(!message.isEmpty())
+	if(!manyOrFew.isEmpty())
 	{
 		const U32 count = messagePrintCount.fetchAdd(1) + 1;
 		if(count < MAX_PRINT_COUNT)
 		{
-			ANKI_VK_LOGW(message.cstr(), "", m_commandCount);
+			ANKI_VK_LOGW("Command buffer has too {} commands: {}", manyOrFew, m_commandCount);
 		}
 		else if(count == MAX_PRINT_COUNT)
 		{
-			ANKI_VK_LOGW(message.cstr(), " (will ignore further warnings)", m_commandCount);
+			ANKI_VK_LOGW("Command buffer has too {} commands (will ignore further warnings): {}", manyOrFew, m_commandCount);
 		}
 	}
 #endif

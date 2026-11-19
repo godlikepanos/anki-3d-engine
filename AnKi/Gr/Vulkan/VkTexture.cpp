@@ -74,7 +74,7 @@ TextureImpl::~TextureImpl()
 #if ANKI_ASSERTIONS_ENABLED
 	if(!!(m_usage & TextureUsageBit::kAllUav) && !(m_usedFor & TextureUsageBit::kAllUav))
 	{
-		ANKI_VK_LOGW("Texture has created as UAV but it was never used as one: %s", getName().cstr());
+		ANKI_VK_LOGW("Texture has created as UAV but it was never used as one: {}", getName());
 	}
 #endif
 
@@ -279,7 +279,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	if(!imageSupported(init))
 	{
 		ANKI_VK_LOGE("TextureInitInfo contains a combination of parameters that it's not supported by the device. "
-					 "Texture format is %s",
+					 "Texture format is {}",
 					 getFormatInfo(init.m_format).m_name);
 		return Error::kFunctionFailed;
 	}

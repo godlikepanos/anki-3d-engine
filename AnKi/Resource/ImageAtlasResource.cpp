@@ -40,7 +40,7 @@ Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(el.getNumber(margin));
 	if(margin >= I(m_image->getTexture().getWidth()) || margin >= I(m_image->getTexture().getHeight()) || margin < 0)
 	{
-		ANKI_RESOURCE_LOGE("Too big margin %d", I32(margin));
+		ANKI_RESOURCE_LOGE("Too big margin {}", I32(margin));
 		return Error::kUserData;
 	}
 	m_margin = U32(margin);
@@ -119,7 +119,7 @@ Error ImageAtlasResource::getSubImageInfo(CString name, F32 uv[4]) const
 		}
 	}
 
-	ANKI_RESOURCE_LOGE("Image atlas %s doesn't have sub image named: %s", &getFilename()[0], &name[0]);
+	ANKI_RESOURCE_LOGE("Image atlas {} doesn't have sub image named: {}", getFilename(), name);
 	return Error::kUserData;
 }
 

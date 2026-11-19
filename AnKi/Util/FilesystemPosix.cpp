@@ -192,7 +192,7 @@ Error createDirectory(const CString& dir)
 	Error err = Error::kNone;
 	if(mkdir(dir.cstr(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		ANKI_UTIL_LOGE("%s : %s", strerror(errno), dir.cstr());
+		ANKI_UTIL_LOGE("{} : {}", strerror(errno), dir);
 		err = Error::kFunctionFailed;
 	}
 

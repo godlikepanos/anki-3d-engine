@@ -50,7 +50,7 @@ void MaterialEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, String& res
 			{
 				if(saveCache())
 				{
-					ANKI_LOGE("Unable to save the material file. Ignoring save");
+					ANKI_EDITOR_LOGE("Unable to save the material file. Ignoring save");
 				}
 				ResourceManager::getSingleton().refreshFileUpdateTimes();
 			}
@@ -243,7 +243,7 @@ void MaterialEditorUi::gatherPrograms()
 			if(ResourceFilesystem::getSingleton().openFile(filename, file)
 			   || deserializeShaderBinaryFromAnyFile(*file, binary, DefaultMemoryPool::getSingleton()))
 			{
-				ANKI_LOGE("Failed to de-serialize file: %s", filename.cstr());
+				ANKI_EDITOR_LOGE("Failed to de-serialize file: {}", filename);
 			}
 			else
 			{
@@ -438,7 +438,7 @@ Error MaterialEditorUi::saveCache()
 		}
 		else
 		{
-			ANKI_LOGW("Unhandled input type, not saving: %s", inp.m_name.cstr());
+			ANKI_EDITOR_LOGW("Unhandled input type, not saving: {}", inp.m_name);
 			continue;
 		}
 

@@ -19,7 +19,7 @@ public:
 
 } // namespace
 
-static const char* kUsage = R"(Usage: %s [options] in_files
+static constexpr const char* kUsage = R"(Usage: {} [options] in_files
 Options:
 -o <filename>          : Output filename. If not provided the file will derive it from the input filenames
 -t <type>              : Image type. One of: 2D, 3D, Cube, 2DArray
@@ -33,8 +33,8 @@ Options:
 -to-linear             : Convert sRGB to linear
 -to-srgb               : Convert linear to sRGB
 -flip-image <0|1>      : Flip the image. Default is 0
--hdr-scale <3 floats>  : Apply some scale to HDR images. Default is {1 1 1}
--hdr-bias <3 floats>   : Apply some bias to HDR images. Default is {0 0 0}
+-hdr-scale <3 floats>  : Apply some scale to HDR images. Default is {{1 1 1}}
+-hdr-bias <3 floats>   : Apply some bias to HDR images. Default is {{0 0 0}}
 )";
 
 static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config, Cleanup& cleanup)
@@ -336,7 +336,7 @@ int myMain(int argc, char** argv)
 #	error "Unupported"
 #endif
 
-	ANKI_IMPORTER_LOGI("Image importing started: %s", config.m_outFilename.cstr());
+	ANKI_IMPORTER_LOGI("Image importing started: {}", config.m_outFilename);
 
 	if(importImage(config))
 	{
@@ -344,7 +344,7 @@ int myMain(int argc, char** argv)
 		return 1;
 	}
 
-	ANKI_IMPORTER_LOGI("Image importing completed: %s", config.m_outFilename.cstr());
+	ANKI_IMPORTER_LOGI("Image importing completed: {}", config.m_outFilename);
 
 	return 0;
 }

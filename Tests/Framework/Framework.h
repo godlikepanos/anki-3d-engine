@@ -29,6 +29,7 @@ class Tester;
 #define ANKI_TEST_LOGE(...) ANKI_LOG("TEST", kError, __VA_ARGS__)
 #define ANKI_TEST_LOGW(...) ANKI_LOG("TEST", kWarning, __VA_ARGS__)
 #define ANKI_TEST_LOGF(...) ANKI_LOG("TEST", kFatal, __VA_ARGS__)
+#define ANKI_TEST_LOGV(...) ANKI_LOG("TEST", kVerbose, __VA_ARGS__)
 
 /// The actual test
 using TestCallback = void (*)(Test&);

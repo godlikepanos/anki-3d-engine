@@ -63,7 +63,7 @@ public:
 		}
 		else
 		{
-			ANKI_D3D_LOGF("WaitForSingleObjectEx() returned %u", result);
+			ANKI_D3D_LOGF("WaitForSingleObjectEx() returned {}", result);
 		}
 
 		return signaled;

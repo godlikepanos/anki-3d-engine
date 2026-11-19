@@ -265,7 +265,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::a
 	const U32 startingClassIdx = findClass(size, alignment);
 	if(startingClassIdx == kMaxU32) [[unlikely]]
 	{
-		ANKI_UTIL_LOGE("Couldn't find class for allocation of size %zu", origSize);
+		ANKI_UTIL_LOGE("Couldn't find class for allocation of size {}", origSize);
 		return Error::kOutOfMemory;
 	}
 
@@ -326,7 +326,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::a
 
 		if(chunkSize < size)
 		{
-			ANKI_UTIL_LOGE("Chunk allocated can't fit the current allocation of %zu", origSize);
+			ANKI_UTIL_LOGE("Chunk allocated can't fit the current allocation of {}", origSize);
 			chunk->m_freeLists.destroy();
 			m_interface.deleteChunk(chunk);
 			return Error::kOutOfMemory;
@@ -424,8 +424,8 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::v
 	U32 chunkIdx = 0;
 	for(const TChunk* chunk : m_chunks)
 	{
-		ANKI_SLAB_ASSERT(chunk->m_totalSize > 0, "Chunk %u: Total size can't be 0", chunkIdx);
-		ANKI_SLAB_ASSERT(chunk->m_freeSize < chunk->m_totalSize, "Chunk %u: Free size (%zu) should be less than total size (%zu)", chunkIdx,
+		ANKI_SLAB_ASSERT(chunk->m_totalSize > 0, "Chunk {}: Total size can't be 0", chunkIdx);
+		ANKI_SLAB_ASSERT(chunk->m_freeSize < chunk->m_totalSize, "Chunk {}: Free size ({}) should be less than total size ({})", chunkIdx,
 						 chunk->m_freeSize, chunk->m_totalSize);
 
 		PtrSize freeSize = 0;
@@ -434,24 +434,24 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::v
 			for(U32 i = 0; i < chunk->m_freeLists[c].getSize(); ++i)
 			{
 				const FreeBlock& crnt = chunk->m_freeLists[c][i];
-				ANKI_SLAB_ASSERT(crnt.m_size > 0, "Chunk %u class %u block %u: Block size can't be 0", chunkIdx, c, i);
+				ANKI_SLAB_ASSERT(crnt.m_size > 0, "Chunk {} class {} block {}: Block size can't be 0", chunkIdx, c, i);
 				freeSize += crnt.m_size;
 
 				const U32 classIdx = findClass(crnt.m_size, 1);
-				ANKI_SLAB_ASSERT(classIdx == c, "Chunk %u class %u block %u: Free block not in the correct class", chunkIdx, c, i);
+				ANKI_SLAB_ASSERT(classIdx == c, "Chunk {} class {} block {}: Free block not in the correct class", chunkIdx, c, i);
 
 				if(i > 0)
 				{
 					const FreeBlock& prev = chunk->m_freeLists[c][i - 1];
-					ANKI_SLAB_ASSERT(prev.m_address < crnt.m_address, "Chunk %u class %u block %u: Previous block should have lower address",
+					ANKI_SLAB_ASSERT(prev.m_address < crnt.m_address, "Chunk {} class {} block {}: Previous block should have lower address",
 									 chunkIdx, c, i);
-					ANKI_SLAB_ASSERT(prev.m_address + prev.m_size < crnt.m_address, "Chunk %u class %u block %u: Block overlaps with previous",
+					ANKI_SLAB_ASSERT(prev.m_address + prev.m_size < crnt.m_address, "Chunk {} class {} block {}: Block overlaps with previous",
 									 chunkIdx, c, i);
 				}
 			}
 		}
 
-		ANKI_SLAB_ASSERT(freeSize == chunk->m_freeSize, "Chunk %u: Free size calculated doesn't match chunk's free size", chunkIdx);
+		ANKI_SLAB_ASSERT(freeSize == chunk->m_freeSize, "Chunk {}: Free size calculated doesn't match chunk's free size", chunkIdx);
 		++chunkIdx;
 	}
 
@@ -481,22 +481,22 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::v
 						if(crnt.m_address < other.m_address)
 						{
 							ANKI_SLAB_ASSERT(crnt.m_address + crnt.m_size < other.m_address,
-											 "Chunk %u class %u block %u: Block overlaps or should have been merged "
-											 "with block: class %u block %u",
+											 "Chunk {} class {} block {}: Block overlaps or should have been merged "
+											 "with block: class {} block {}",
 											 chunkIdx, c, i, c2, j);
 						}
 						else if(crnt.m_address > other.m_address)
 						{
 							ANKI_SLAB_ASSERT(other.m_address + other.m_size < crnt.m_address,
-											 "Chunk %u class %u block %u: Block overlaps or should have been merged "
-											 "with block: class %u block %u",
+											 "Chunk {} class {} block {}: Block overlaps or should have been merged "
+											 "with block: class {} block {}",
 											 chunkIdx, c, i, c2, j);
 						}
 						else
 						{
 							ANKI_SLAB_ASSERT(false,
-											 "Chunk %u class %u block %u: Block shouldn't be having the same address "
-											 "with: class %u block %u",
+											 "Chunk {} class {} block {}: Block shouldn't be having the same address "
+											 "with: class {} block {}",
 											 chunkIdx, c, i, c2, j);
 						}
 					}

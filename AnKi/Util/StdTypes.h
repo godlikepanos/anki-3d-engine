@@ -204,7 +204,7 @@ private:
 #define ANKI_CHECKF(x_) \
 	if(x_) \
 	{ \
-		ANKI_LOGF("Failed and won't recover"); \
+		ANKI_UTIL_LOGF("Failed and won't recover"); \
 	}
 
 // Macro to check if a method/function returned an error.

@@ -95,7 +95,7 @@ void SkeletonEditorUi::drawSkeletonControls()
 	{
 		if(saveCache())
 		{
-			ANKI_LOGE("Unable to save the skeleton file. Ignoring save");
+			ANKI_EDITOR_LOGE("Unable to save the skeleton file. Ignoring save");
 		}
 		ResourceManager::getSingleton().refreshFileUpdateTimes();
 	}

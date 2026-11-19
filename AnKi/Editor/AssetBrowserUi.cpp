@@ -469,7 +469,7 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 
 			if(err)
 			{
-				ANKI_LOGE("Error saving the script file: %s", file.m_diskFilepath.cstr());
+				ANKI_EDITOR_LOGE("Error saving the script file: {}", file.m_diskFilepath);
 			}
 			else
 			{
@@ -654,7 +654,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 							Scene* scene = nullptr;
 							if(SceneGraph::getSingleton().loadScene(file.m_resourceFilepath, scene))
 							{
-								ANKI_LOGE("Failed to load scene: %s", file.m_resourceFilepath.cstr());
+								ANKI_EDITOR_LOGE("Failed to load scene: {}", file.m_resourceFilepath);
 							}
 							else
 							{
@@ -683,7 +683,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						pushFontSize();
 						if(ImGui::Button(ICON_MDI_ANIMATION))
 						{
-							ANKI_LOGE("TODO");
+							ANKI_EDITOR_LOGE("TODO");
 						}
 
 						ImGui::PopFont();
@@ -776,7 +776,7 @@ void AssetBrowserUi::rightClickMenuDialog()
 		{
 			if(removeFile(selectedFile->m_diskFilepath))
 			{
-				ANKI_LOGE("Failed to remove file: %s", selectedFile->m_diskFilepath.cstr());
+				ANKI_EDITOR_LOGE("Failed to remove file: {}", selectedFile->m_diskFilepath);
 			}
 
 			m_refreshAssetsPathsNextTime = true;
@@ -796,10 +796,10 @@ void AssetBrowserUi::rightClickMenuDialog()
 				newFilepath += "/";
 				newFilepath += newName;
 
-				ANKI_LOGV("Will rename %s to %s", selectedFile->m_diskFilepath.cstr(), newFilepath.cstr());
+				ANKI_EDITOR_LOGV("Will rename {} to {}", selectedFile->m_diskFilepath, newFilepath);
 				if(renameFile(selectedFile->m_diskFilepath, newFilepath))
 				{
-					ANKI_LOGE("Renaming failed");
+					ANKI_EDITOR_LOGE("Renaming failed");
 				}
 				else
 				{
@@ -860,13 +860,13 @@ void AssetBrowserUi::drawMenu()
 
 				if(err)
 				{
-					ANKI_LOGE("Failed to create new file: %s", diskFilepath.cstr());
+					ANKI_EDITOR_LOGE("Failed to create new file: {}", diskFilepath);
 				}
 				else
 				{
 					outFilepath =
 						(m_runCtx.m_selectedDir->m_resourceFilepath) ? m_runCtx.m_selectedDir->m_resourceFilepath + "/" + filename : filename;
-					ANKI_LOGI("File created: %s", diskFilepath.cstr());
+					ANKI_EDITOR_LOGI("File created: {}", diskFilepath);
 				}
 
 				break;
@@ -877,7 +877,7 @@ void AssetBrowserUi::drawMenu()
 
 		if(index == 10)
 		{
-			ANKI_LOGE("Failed to create file: %s", suffix.cstr());
+			ANKI_EDITOR_LOGE("Failed to create file: {}", suffix);
 		}
 
 		return outFilepath;
@@ -935,21 +935,21 @@ void AssetBrowserUi::drawMenu()
 						Scene* tempScene;
 						if(SceneGraph::getSingleton().newEmptyScene(randomSceneName, tempScene))
 						{
-							ANKI_LOGE("Failed to create new scene: %s", diskFilepath.cstr());
+							ANKI_EDITOR_LOGE("Failed to create new scene: {}", diskFilepath);
 						}
 
 						tempScene->setCanBeSaved(true);
 
 						if(SceneGraph::getSingleton().saveScene(diskFilepath, *tempScene))
 						{
-							ANKI_LOGE("Failed to save new scene: %s", diskFilepath.cstr());
+							ANKI_EDITOR_LOGE("Failed to save new scene: {}", diskFilepath);
 						}
 						else
 						{
 							setResourceToLocate((m_runCtx.m_selectedDir->m_resourceFilepath)
 													? m_runCtx.m_selectedDir->m_resourceFilepath + "/" + filename
 													: filename);
-							ANKI_LOGI("File created: %s", diskFilepath.cstr());
+							ANKI_EDITOR_LOGI("File created: {}", diskFilepath);
 						}
 
 						SceneGraph::getSingleton().deleteScene(tempScene);
@@ -961,7 +961,7 @@ void AssetBrowserUi::drawMenu()
 
 				if(index == 10)
 				{
-					ANKI_LOGE("Failed to create scene");
+					ANKI_EDITOR_LOGE("Failed to create scene");
 				}
 
 				m_refreshAssetsPathsNextTime = true;

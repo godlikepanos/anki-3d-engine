@@ -43,7 +43,7 @@ void ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 	// Do the call (3 arguments, no result)
 	if(lua_pcall(lua, 3, 0, 0) != 0)
 	{
-		ANKI_SCENE_LOGE("Error running ScriptEvent's \"update\": %s", lua_tostring(lua, -1));
+		ANKI_SCENE_LOGE("Error running ScriptEvent's \"update\": {}", lua_tostring(lua, -1));
 		return;
 	}
 }
@@ -68,7 +68,7 @@ void ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 	// Do the call (3 arguments, no result)
 	if(lua_pcall(lua, 3, 0, 0) != 0)
 	{
-		ANKI_SCENE_LOGE("Error running ScriptEvent's \"onKilled\": %s", lua_tostring(lua, -1));
+		ANKI_SCENE_LOGE("Error running ScriptEvent's \"onKilled\": {}", lua_tostring(lua, -1));
 		return;
 	}
 }

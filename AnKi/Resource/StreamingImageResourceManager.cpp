@@ -383,7 +383,7 @@ Error StreamingImageResourceManager::loadNewImage(ResourceFilename filename, U32
 
 		if(minDimension < kImageDescriptorSmallestMipmapSize)
 		{
-			ANKI_RESOURCE_LOGE("Can't have images with a dimension less than %u", kImageDescriptorSmallestMipmapSize);
+			ANKI_RESOURCE_LOGE("Can't have images with a dimension less than {}", kImageDescriptorSmallestMipmapSize);
 			err = Error::kUserData;
 		}
 	}
@@ -402,7 +402,7 @@ Error StreamingImageResourceManager::loadNewImage(ResourceFilename filename, U32
 
 		if(it1.getArrayIndex() >= g_cvarRsrcMaxImageDescriptors)
 		{
-			ANKI_RESOURCE_LOGE("We are out of image descriptors. Increase: %s", g_cvarRsrcMaxImageDescriptors.getName().cstr());
+			ANKI_RESOURCE_LOGE("We are out of image descriptors. Increase: {}", g_cvarRsrcMaxImageDescriptors.getName());
 			err = Error::kOutOfMemory;
 		}
 

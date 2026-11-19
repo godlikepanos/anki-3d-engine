@@ -29,7 +29,7 @@ static inline int wraplogi(lua_State* l)
 	}
 
 	// Call the function
-	ANKI_SCRIPT_LOGI("%s", arg0);
+	ANKI_SCRIPT_LOGI("{}", arg0);
 
 	return 0;
 }
@@ -54,7 +54,7 @@ static inline int wraploge(lua_State* l)
 	}
 
 	// Call the function
-	ANKI_SCRIPT_LOGE("%s", arg0);
+	ANKI_SCRIPT_LOGE("{}", arg0);
 
 	return 0;
 }
@@ -79,7 +79,7 @@ static inline int wraplogw(lua_State* l)
 	}
 
 	// Call the function
-	ANKI_SCRIPT_LOGW("%s", arg0);
+	ANKI_SCRIPT_LOGW("{}", arg0);
 
 	return 0;
 }
@@ -104,7 +104,7 @@ static inline int wraplogv(lua_State* l)
 	}
 
 	// Call the function
-	ANKI_SCRIPT_LOGV("%s", arg0);
+	ANKI_SCRIPT_LOGV("{}", arg0);
 
 	return 0;
 }

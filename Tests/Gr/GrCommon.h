@@ -28,7 +28,7 @@ inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<CStri
 #endif
 	if(err)
 	{
-		ANKI_TEST_LOGE("Compile error:\n%s", errorLog.cstr());
+		ANKI_TEST_LOGE("Compile error:\n{}", errorLog);
 	}
 	ANKI_TEST_EXPECT_NO_ERR(err);
 
@@ -40,7 +40,7 @@ inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<CStri
 #endif
 	if(err)
 	{
-		ANKI_TEST_LOGE("Reflection error:\n%s", errorLog.cstr());
+		ANKI_TEST_LOGE("Reflection error:\n{}", errorLog);
 	}
 	ANKI_TEST_EXPECT_NO_ERR(err);
 

@@ -265,7 +265,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 				ANKI_ASSERT(0);
 			}
 
-			ANKI_RESOURCE_LOGE("GPU visibility went out of memory: %s", who.cstr());
+			ANKI_R_LOGE("GPU visibility went out of memory: {}", who);
 		}
 
 		m_outOfMemoryReadbackBuffer = getRenderer().getReadbackManager().allocateStructuredBuffer<U32>(m_outOfMemoryReadback, 1);

@@ -8,11 +8,11 @@
 namespace anki {
 
 #define ANKI_PP_ERROR_MALFORMED() \
-	ANKI_SHADER_COMPILER_LOGE("%s: Malformed expression: %s", fname.cstr(), line.cstr()); \
+	ANKI_SHADER_COMPILER_LOGE("{}: Malformed expression: {}", fname, line); \
 	return Error::kUserData
 
 #define ANKI_PP_ERROR_MALFORMED_MSG(msg_) \
-	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
+	ANKI_SHADER_COMPILER_LOGE("{}: " msg_ ": {}", fname, line); \
 	return Error::kUserData
 
 inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {{"VERTEX", "HULL", "DOMAIN", "GEOMETRY", "AMPLIFICATION", "MESH",

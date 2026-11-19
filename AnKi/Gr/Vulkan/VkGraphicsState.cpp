@@ -415,7 +415,7 @@ Error PipelineCache::init(CString cacheDir)
 		const PtrSize diskDumpSize = file.getSize();
 		if(diskDumpSize <= sizeof(U8) * VK_UUID_SIZE)
 		{
-			ANKI_VK_LOGI("Pipeline cache dump appears to be empty: %s", &m_dumpFilename[0]);
+			ANKI_VK_LOGI("Pipeline cache dump appears to be empty: {}", m_dumpFilename);
 		}
 		else
 		{
@@ -428,7 +428,7 @@ Error PipelineCache::init(CString cacheDir)
 
 			if(memcmp(&cacheUuid[0], &props.pipelineCacheUUID[0], VK_UUID_SIZE) != 0)
 			{
-				ANKI_VK_LOGI("Pipeline cache dump is not compatible with the current device: %s", &m_dumpFilename[0]);
+				ANKI_VK_LOGI("Pipeline cache dump is not compatible with the current device: {}", m_dumpFilename);
 			}
 			else
 			{
@@ -439,7 +439,7 @@ Error PipelineCache::init(CString cacheDir)
 	}
 	else
 	{
-		ANKI_VK_LOGI("Pipeline cache dump not found: %s", &m_dumpFilename[0]);
+		ANKI_VK_LOGI("Pipeline cache dump not found: {}", m_dumpFilename);
 	}
 
 	// Create the cache
@@ -447,7 +447,7 @@ Error PipelineCache::init(CString cacheDir)
 	ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 	if(diskDump.getSize())
 	{
-		ANKI_VK_LOGI("Will load %zu bytes of pipeline cache", diskDump.getSize());
+		ANKI_VK_LOGI("Will load {} bytes of pipeline cache", diskDump.getSize());
 		ci.initialDataSize = diskDump.getSize();
 		ci.pInitialData = &diskDump[0];
 	}
@@ -508,7 +508,7 @@ Error PipelineCache::destroyInternal()
 			ANKI_CHECK(file.write(&props.pipelineCacheUUID[0], VK_UUID_SIZE));
 			ANKI_CHECK(file.write(&cacheData[0], size));
 
-			ANKI_VK_LOGI("Dumped %zu bytes of the pipeline cache", size);
+			ANKI_VK_LOGI("Dumped {} bytes of the pipeline cache", size);
 		}
 
 		// Destroy cache

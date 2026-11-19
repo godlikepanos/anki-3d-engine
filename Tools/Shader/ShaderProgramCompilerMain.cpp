@@ -8,7 +8,7 @@
 using namespace anki;
 
 static constexpr const char* kUsage = R"(Compile an AnKi shader program
-Usage: %s [options] input_shader_program_file
+Usage: {} [options] input_shader_program_file
 Options:
 -o <name of output>  : The name of the output binary
 -j <thread count>    : Number of threads. Defaults to system's max
@@ -210,7 +210,7 @@ static Error work(const CmdLineArgs& info)
 			const Error err = readAllTextInternal(filename, txt);
 			if(err)
 			{
-				ANKI_LOGE("Failed to read file: %s", filename.cstr());
+				ANKI_LOGE("Failed to read file: {}", filename);
 			}
 
 			return err;

@@ -212,8 +212,8 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 		if(!!(result & TileAllocatorResult2::kAllocationFailed))
 		{
-			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. Increase the %s or decrease the scene's shadow casters",
-						g_cvarRenderSmTileCountPerRowOrColumn.getName().cstr());
+			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. Increase the {} or decrease the scene's shadow casters",
+						g_cvarRenderSmTileCountPerRowOrColumn.getName());
 
 			// Invalidate cache entries for what we already allocated
 			for(U32 j = 0; j < i; ++j)

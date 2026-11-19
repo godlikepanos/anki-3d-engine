@@ -104,7 +104,7 @@ static inline int pwrap__newindex(lua_State* l)
 	}
 	else
 	{
-		ANKI_SCRIPT_LOGE("Global variable not found: %s", varName.cstr());
+		ANKI_SCRIPT_LOGE("Global variable not found: {}", varName);
 		return -1;
 	}
 
@@ -175,7 +175,7 @@ static inline int pwrap__index(lua_State* l)
 	}
 	else
 	{
-		ANKI_SCRIPT_LOGE("Global variable not found: %s", varName.cstr());
+		ANKI_SCRIPT_LOGE("Global variable not found: {}", varName);
 		return -1;
 	}
 

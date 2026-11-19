@@ -53,7 +53,7 @@ void SkinComponent::registerAnimationInternal(U32 animId, CString animationFilep
 	AnimationResourcePtr rsrc;
 	if(ResourceManager::getSingleton().loadResource(animationFilepath, rsrc))
 	{
-		ANKI_SCENE_LOGE("Failed to load animation: %s", animationFilepath.cstr());
+		ANKI_SCENE_LOGE("Failed to load animation: {}", animationFilepath);
 	}
 	else
 	{
@@ -66,7 +66,7 @@ void SkinComponent::unregisterAnimationInternal(U32 animId)
 	auto it = m_idToAnimationResource.find(animId);
 	if(it == m_idToAnimationResource.getEnd())
 	{
-		ANKI_SCENE_LOGE("Failed to unregister animation: %u", animId);
+		ANKI_SCENE_LOGE("Failed to unregister animation: {}", animId);
 	}
 	else
 	{
@@ -84,7 +84,7 @@ AnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, S
 	auto rsrcIt = m_idToAnimationResource.find(animId);
 	if(rsrcIt == m_idToAnimationResource.getEnd())
 	{
-		ANKI_SCENE_LOGE("Animation ID not found: %u", animId);
+		ANKI_SCENE_LOGE("Animation ID not found: {}", animId);
 		return m_dummyState;
 	}
 
@@ -114,7 +114,7 @@ AnimationState& SkinComponent::playAnimationInternal(U32 trackIdx, U32 animId, S
 	Animation& anim = track.m_anims[(track.m_lastAnimationIdx + 1) % kMaxAnimationsPerTrack];
 	if(anim.m_resource)
 	{
-		ANKI_SCENE_LOGE("Can't queue more than %u animations", kMaxAnimationsPerTrack);
+		ANKI_SCENE_LOGE("Can't queue more than {} animations", kMaxAnimationsPerTrack);
 		return m_dummyState;
 	}
 
@@ -390,7 +390,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				const Bone* bone = m_resource->tryFindBone(channel.m_name.toCString());
 				if(!bone)
 				{
-					ANKI_SCENE_LOGW("Animation is referencing unknown bone \"%s\"", &channel.m_name[0]);
+					ANKI_SCENE_LOGW("Animation is referencing unknown bone \"{}\"", channel.m_name);
 					continue;
 				}
 				const U32 boneIdx = bone->getIndex();
@@ -613,7 +613,7 @@ void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	if(m_ragdollMode == RagdollMode::kDynamic && m_resource->getRootBone().getCapsuleRadius() == 0.0f) [[unlikely]]
 	{
-		ANKI_SCENE_LOGE("The skeleton has no capsules, can't create a ragdoll: %s", m_resource->getFilename().cstr());
+		ANKI_SCENE_LOGE("The skeleton has no capsules, can't create a ragdoll: {}", m_resource->getFilename());
 		m_ragdollMode = RagdollMode::kDisabled;
 	}
 
@@ -878,7 +878,7 @@ AnimationState& SkinComponent::getAnimationStateInternal(U32 trackIdx, U32 animI
 
 	if(!state)
 	{
-		ANKI_SCENE_LOGE("Couldn't find animation with ID: %u", animId);
+		ANKI_SCENE_LOGE("Couldn't find animation with ID: {}", animId);
 		state = &m_dummyState;
 	}
 

@@ -247,6 +247,6 @@ ANKI_TEST(Util, ThreadHiveBench)
 	const U64 serialFib = fib(FIB_N);
 	auto timeC = HighRezTimer::getCurrentTime();
 
-	ANKI_TEST_LOGI("Total time %fms. Ground truth %fms", (timeB - timeA) * 1000.0, (timeC - timeB) * 1000.0);
+	ANKI_TEST_LOGI("Total time {:f}ms. Ground truth {:f}ms", (timeB - timeA) * 1000.0, (timeC - timeB) * 1000.0);
 	ANKI_TEST_EXPECT_EQ(sum.getNonAtomically(), serialFib);
 }

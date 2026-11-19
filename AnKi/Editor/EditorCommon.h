@@ -11,6 +11,12 @@
 
 namespace anki {
 
+#define ANKI_EDITOR_LOGI(...) ANKI_LOG("EDTR", kNormal, __VA_ARGS__)
+#define ANKI_EDITOR_LOGE(...) ANKI_LOG("EDTR", kError, __VA_ARGS__)
+#define ANKI_EDITOR_LOGW(...) ANKI_LOG("EDTR", kWarning, __VA_ARGS__)
+#define ANKI_EDITOR_LOGF(...) ANKI_LOG("EDTR", kFatal, __VA_ARGS__)
+#define ANKI_EDITOR_LOGV(...) ANKI_LOG("EDTR", kVerbose, __VA_ARGS__)
+
 // The base class of all editor UI related classes
 class EditorUiBase
 {

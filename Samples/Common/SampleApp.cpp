@@ -18,7 +18,7 @@ Error SampleApp::userPreInit()
 
 	if(!directoryExists(assetsDataPath))
 	{
-		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository? I'll continue but expect issues", assetsDataPath.cstr());
+		ANKI_LOGE("Cannot find directory \"{}\". Have you moved the clone of the repository? I'll continue but expect issues", assetsDataPath);
 	}
 	else
 	{

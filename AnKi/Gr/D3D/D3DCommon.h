@@ -58,7 +58,7 @@ void invokeDred();
 			{ \
 				invokeDred(); \
 			} \
-			ANKI_D3D_LOGF("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGF("D3D function failed (HRESULT: {} message: {}): {}", rez, errorMessageToString(GetLastError()), #x); \
 		} \
 	} while(0)
 
@@ -68,7 +68,7 @@ void invokeDred();
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGE("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGE("D3D function failed (HRESULT: {} message: {}): {}", rez, errorMessageToString(GetLastError()), #x); \
 			if(rez == DXGI_ERROR_DEVICE_REMOVED) \
 			{ \
 				invokeDred(); \

@@ -58,6 +58,7 @@ namespace anki {
 #define ANKI_PHYS_LOGE(...) ANKI_LOG("PHYS", kError, __VA_ARGS__)
 #define ANKI_PHYS_LOGW(...) ANKI_LOG("PHYS", kWarning, __VA_ARGS__)
 #define ANKI_PHYS_LOGF(...) ANKI_LOG("PHYS", kFatal, __VA_ARGS__)
+#define ANKI_PHYS_LOGV(...) ANKI_LOG("PHYS", kVerbose, __VA_ARGS__)
 
 #define ANKI_PHYSICS_COMMON_FRIENDS \
 	friend class PhysicsWorld; \

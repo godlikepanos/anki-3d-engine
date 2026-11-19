@@ -207,7 +207,7 @@ static Error getAndroidApkName(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>&
 	const int fd = open(path.cstr(), O_RDONLY);
 	if(fd < 0)
 	{
-		ANKI_UTIL_LOGE("open() failed for: %s", path.cstr());
+		ANKI_UTIL_LOGE("open() failed for: {}", path);
 		return Error::kFunctionFailed;
 	}
 
@@ -216,7 +216,7 @@ static Error getAndroidApkName(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>&
 	if(readBytes < 0 || readBytes == 0)
 	{
 		close(fd);
-		ANKI_UTIL_LOGE("read() failed for: %s", path.cstr());
+		ANKI_UTIL_LOGE("read() failed for: {}", path);
 		return Error::kFunctionFailed;
 	}
 
@@ -400,7 +400,7 @@ static Error readPipeUntilEof(HANDLE pipe, String& out)
 				return Error::kNone;
 			}
 
-			ANKI_UTIL_LOGE("ReadFile() failed: %s", errorMessageToString(err).cstr());
+			ANKI_UTIL_LOGE("ReadFile() failed: {}", errorMessageToString(err));
 			return Error::kFunctionFailed;
 		}
 
@@ -453,7 +453,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 			// O_CLOEXEC so the child doesn't inherit the pipe ends, only the dup2'ed copies
 			if(pipe2(&pipes[i][0], O_CLOEXEC) != 0)
 			{
-				ANKI_UTIL_LOGE("pipe2() failed: %s", strerror(errno));
+				ANKI_UTIL_LOGE("pipe2() failed: {}", strerror(errno));
 				closeAllPipes();
 				return Error::kFunctionFailed;
 			}
@@ -497,7 +497,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 
 	if(spawnErr != 0)
 	{
-		ANKI_UTIL_LOGE("posix_spawnp() failed for %s: %s", executable.cstr(), strerror(spawnErr));
+		ANKI_UTIL_LOGE("posix_spawnp() failed for {}: {}", executable, strerror(spawnErr));
 		closeAllPipes();
 		return Error::kFunctionFailed;
 	}
@@ -528,7 +528,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 		{
 			if(errno != EINTR)
 			{
-				ANKI_UTIL_LOGE("poll() failed: %s", strerror(errno));
+				ANKI_UTIL_LOGE("poll() failed: {}", strerror(errno));
 				err = Error::kFunctionFailed;
 			}
 			continue;
@@ -554,7 +554,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 			}
 			else if(errno != EINTR)
 			{
-				ANKI_UTIL_LOGE("read() failed: %s", strerror(errno));
+				ANKI_UTIL_LOGE("read() failed: {}", strerror(errno));
 				err = Error::kFunctionFailed;
 			}
 		}
@@ -568,7 +568,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 	{
 		if(errno != EINTR)
 		{
-			ANKI_UTIL_LOGE("waitpid() failed: %s", strerror(errno));
+			ANKI_UTIL_LOGE("waitpid() failed: {}", strerror(errno));
 			return Error::kFunctionFailed;
 		}
 	}
@@ -581,7 +581,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 	{
 		// Same convention as the shells
 		exitCode = 128 + WTERMSIG(status);
-		ANKI_UTIL_LOGW("Process %s was terminated by signal %d", executable.cstr(), WTERMSIG(status));
+		ANKI_UTIL_LOGW("Process {} was terminated by signal {}", executable, WTERMSIG(status));
 	}
 
 	// A read error means the captured output is incomplete but the exit code is still valid
@@ -619,7 +619,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 	if(nullDevice == INVALID_HANDLE_VALUE)
 	{
 		nullDevice = nullptr;
-		ANKI_UTIL_LOGE("CreateFileA(NUL) failed: %s", errorMessageToString(GetLastError()).cstr());
+		ANKI_UTIL_LOGE("CreateFileA(NUL) failed: {}", errorMessageToString(GetLastError()));
 		return Error::kFunctionFailed;
 	}
 
@@ -635,7 +635,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 
 			if(!CreatePipe(&pipes[i][0], &pipes[i][1], nullptr, 0))
 			{
-				ANKI_UTIL_LOGE("CreatePipe() failed: %s", errorMessageToString(GetLastError()).cstr());
+				ANKI_UTIL_LOGE("CreatePipe() failed: {}", errorMessageToString(GetLastError()));
 				closeAllHandles();
 				return Error::kFunctionFailed;
 			}
@@ -648,7 +648,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 	{
 		if(!SetHandleInformation(inheritedHandles[i], HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT))
 		{
-			ANKI_UTIL_LOGE("SetHandleInformation() failed: %s", errorMessageToString(GetLastError()).cstr());
+			ANKI_UTIL_LOGE("SetHandleInformation() failed: {}", errorMessageToString(GetLastError()));
 			closeAllHandles();
 			return Error::kFunctionFailed;
 		}
@@ -662,7 +662,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 	const LPPROC_THREAD_ATTRIBUTE_LIST attribList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attribListStorage.getBegin());
 	if(!InitializeProcThreadAttributeList(attribList, 1, 0, &attribListSize))
 	{
-		ANKI_UTIL_LOGE("InitializeProcThreadAttributeList() failed: %s", errorMessageToString(GetLastError()).cstr());
+		ANKI_UTIL_LOGE("InitializeProcThreadAttributeList() failed: {}", errorMessageToString(GetLastError()));
 		closeAllHandles();
 		return Error::kFunctionFailed;
 	}
@@ -670,7 +670,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 	if(!UpdateProcThreadAttribute(attribList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inheritedHandles.getBegin(),
 								  inheritedHandleCount * sizeof(HANDLE), nullptr, nullptr))
 	{
-		ANKI_UTIL_LOGE("UpdateProcThreadAttribute() failed: %s", errorMessageToString(GetLastError()).cstr());
+		ANKI_UTIL_LOGE("UpdateProcThreadAttribute() failed: {}", errorMessageToString(GetLastError()));
 		DeleteProcThreadAttributeList(attribList);
 		closeAllHandles();
 		return Error::kFunctionFailed;
@@ -707,7 +707,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 
 	if(!created)
 	{
-		ANKI_UTIL_LOGE("CreateProcessA() failed for %s: %s", executable.cstr(), errorMessageToString(createErr).cstr());
+		ANKI_UTIL_LOGE("CreateProcessA() failed for {}: {}", executable, errorMessageToString(createErr));
 		closeAllHandles();
 		return Error::kFunctionFailed;
 	}
@@ -760,7 +760,7 @@ Error invokeProcess(CString executable, ConstWeakArray<CString> arguments, Strin
 	DWORD childExitCode;
 	if(WaitForSingleObject(procInfo.hProcess, INFINITE) != WAIT_OBJECT_0 || !GetExitCodeProcess(procInfo.hProcess, &childExitCode))
 	{
-		ANKI_UTIL_LOGE("Waiting for process %s failed: %s", executable.cstr(), errorMessageToString(GetLastError()).cstr());
+		ANKI_UTIL_LOGE("Waiting for process {} failed: {}", executable, errorMessageToString(GetLastError()));
 		CloseHandle(procInfo.hProcess);
 		return Error::kFunctionFailed;
 	}

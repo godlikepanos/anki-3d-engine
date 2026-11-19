@@ -53,14 +53,14 @@ static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGOR
 		{
 		case D3D12_MESSAGE_SEVERITY_CORRUPTION:
 		case D3D12_MESSAGE_SEVERITY_ERROR:
-			ANKI_D3D_LOGE("%s", pDescription);
+			ANKI_D3D_LOGE("{}", pDescription);
 			break;
 		case D3D12_MESSAGE_SEVERITY_WARNING:
-			ANKI_D3D_LOGW("%s", pDescription);
+			ANKI_D3D_LOGW("{}", pDescription);
 			break;
 		case D3D12_MESSAGE_SEVERITY_INFO:
 		case D3D12_MESSAGE_SEVERITY_MESSAGE:
-			ANKI_D3D_LOGI("%s", pDescription);
+			ANKI_D3D_LOGI("{}", pDescription);
 			break;
 		}
 	}
@@ -348,7 +348,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
 
-		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_cvarGrGpuValidation) ? "as well" : "no");
+		ANKI_D3D_LOGI("Validation is enabled (GPU validation {})", (g_cvarGrGpuValidation) ? "as well" : "no");
 	}
 
 	ComPtr<IDXGIFactory2> factory2;
@@ -380,7 +380,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_D3D_LOGI("Physical devices:");
 	for(U32 i = 0; i < adapters.getSize(); ++i)
 	{
-		ANKI_D3D_LOGI((i == chosenPhysDevIdx) ? "\t(Selected) %s" : "\t%s", ws2s(&adapters[i].m_descr.Description[0]).c_str());
+		ANKI_D3D_LOGI("\t{}{}", (i == chosenPhysDevIdx) ? "(Selected) " : "", ws2s(&adapters[i].m_descr.Description[0]));
 	}
 
 	// Find vendor
@@ -405,7 +405,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 	}
-	ANKI_D3D_LOGI("Vendor identified as %s", &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
+	ANKI_D3D_LOGI("Vendor identified as {}", kGPUVendorStrings[m_capabilities.m_gpuVendor]);
 
 	// Create device
 	ComPtr<ID3D12Device> dev;

@@ -213,7 +213,7 @@ Error App::init()
 	}
 #endif
 
-	ANKI_CORE_LOGI("Number of job threads: %u", U32(g_cvarCoreJobThreadCount));
+	ANKI_CORE_LOGI("Number of job threads: {}", U32(g_cvarCoreJobThreadCount));
 
 	GlobalFrameIndex::allocateSingleton();
 
@@ -285,7 +285,7 @@ Error App::init()
 	// Add the location of the executable where the shaders are supposed to be
 	String executableFname;
 	ANKI_CHECK(getApplicationPath(executableFname));
-	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
+	ANKI_CORE_LOGI("Executable path is: {}", executableFname);
 	String extraPaths = getParentFilepath(executableFname);
 	extraPaths += "|ankiprogbin"; // Shaders
 
@@ -360,12 +360,12 @@ Error App::initDirs()
 
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
-		ANKI_CORE_LOGI("Creating settings dir \"%s\"", &m_settingsDir[0]);
+		ANKI_CORE_LOGI("Creating settings dir \"{}\"", m_settingsDir);
 		ANKI_CHECK(createDirectory(m_settingsDir.toCString()));
 	}
 	else
 	{
-		ANKI_CORE_LOGI("Using settings dir \"%s\"", &m_settingsDir[0]);
+		ANKI_CORE_LOGI("Using settings dir \"{}\"", m_settingsDir);
 	}
 
 	// Cache
@@ -374,13 +374,13 @@ Error App::initDirs()
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
 	if(g_cvarCoreClearCaches && cacheDirExists)
 	{
-		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", m_cacheDir.cstr());
+		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: {}", m_cacheDir);
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 	else if(!cacheDirExists)
 	{
-		ANKI_CORE_LOGI("Will create cache dir: %s", m_cacheDir.cstr());
+		ANKI_CORE_LOGI("Will create cache dir: {}", m_cacheDir);
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 
@@ -389,7 +389,7 @@ Error App::initDirs()
 
 Error App::mainLoop()
 {
-	ANKI_CORE_LOGI("Starting application. Build config: %s", kAnKiBuildConfigString);
+	ANKI_CORE_LOGI("Starting application. Build config: {}", kAnKiBuildConfigString);
 
 	// Initialize the application
 	Error err = Error::kNone;
@@ -405,7 +405,7 @@ Error App::mainLoop()
 	CVarSet::getSingleton().iterateCVars([](CVar& cvar) {
 		Array<Char, 256> str;
 		cvar.toString(str);
-		ANKI_CORE_LOGV("\t%s", str.getBegin());
+		ANKI_CORE_LOGV("\t{}", str.getBegin());
 		return FunctorContinue::kContinue;
 	});
 
@@ -417,7 +417,7 @@ Error App::mainLoop()
 
 	if(CString(g_cvarCoreStartupScene) != "")
 	{
-		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreStartupScene).cstr());
+		ANKI_CORE_LOGI("Will load scene: {}", CString(g_cvarCoreStartupScene));
 		Scene* scene = nullptr;
 		ANKI_CHECK(SceneGraph::getSingleton().loadScene(g_cvarCoreStartupScene, scene));
 		SceneGraph::getSingleton().setActiveScene(scene);

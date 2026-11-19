@@ -286,7 +286,7 @@ Error ImageLoader::loadAnkiImageHeader(FileInterface& file)
 	if(header.m_type != ImageBinaryType::k3D
 	   && (header.m_mipmapCount > computeMaxMipmapCount2d(header.m_width, header.m_height, 4) || header.m_mipmapCount == 0))
 	{
-		ANKI_RESOURCE_LOGE("Incorrect mipmap count: %u", header.m_mipmapCount);
+		ANKI_RESOURCE_LOGE("Incorrect mipmap count: {}", header.m_mipmapCount);
 		return Error::kUserData;
 	}
 
@@ -294,7 +294,7 @@ Error ImageLoader::loadAnkiImageHeader(FileInterface& file)
 	   && (header.m_mipmapCount > computeMaxMipmapCount3d(header.m_width, header.m_height, header.m_depthOrLayerCount, 4)
 		   || header.m_mipmapCount == 0))
 	{
-		ANKI_RESOURCE_LOGE("Incorrect mipmap count: %u", header.m_mipmapCount);
+		ANKI_RESOURCE_LOGE("Incorrect mipmap count: {}", header.m_mipmapCount);
 		return Error::kUserData;
 	}
 
@@ -445,7 +445,7 @@ Error ImageLoader::loadHeaderFromResourceFile(CString filename, U32 maxSurfaceOr
 	const Error err = loadHeaderInternal(file, filename);
 	if(err)
 	{
-		ANKI_RESOURCE_LOGE("Failed to read image: %s", filename.cstr());
+		ANKI_RESOURCE_LOGE("Failed to read image: {}", filename);
 	}
 
 	return err;
@@ -460,7 +460,7 @@ Error ImageLoader::loadHeaderFromSystemFile(CString filename, U32 maxSurfaceOrVo
 	const Error err = loadHeaderInternal(file, filename);
 	if(err)
 	{
-		ANKI_RESOURCE_LOGE("Failed to read image: %s", filename.cstr());
+		ANKI_RESOURCE_LOGE("Failed to read image: {}", filename);
 	}
 
 	return err;
@@ -506,7 +506,7 @@ Error ImageLoader::loadHeaderInternal(FileInterface& file, const CString& filena
 	}
 	else
 	{
-		ANKI_RESOURCE_LOGE("Unsupported extension: %s", &ext[0]);
+		ANKI_RESOURCE_LOGE("Unsupported extension: {}", ext);
 		return Error::kUserData;
 	}
 

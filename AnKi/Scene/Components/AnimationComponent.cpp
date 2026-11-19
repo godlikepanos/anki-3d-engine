@@ -23,7 +23,7 @@ void AnimationComponent::registerAnimationInternal(U32 animId, CString animation
 	AnimationResourcePtr rsrc;
 	if(ResourceManager::getSingleton().loadResource(animationFilepath, rsrc))
 	{
-		ANKI_SCENE_LOGE("Failed to load animation: %s", animationFilepath.cstr());
+		ANKI_SCENE_LOGE("Failed to load animation: {}", animationFilepath);
 	}
 	else
 	{
@@ -36,7 +36,7 @@ void AnimationComponent::unregisterAnimationInternal(U32 animId)
 	auto it = m_idToAnimationResource.find(animId);
 	if(it == m_idToAnimationResource.getEnd())
 	{
-		ANKI_SCENE_LOGE("Failed to unregister animation: %u", animId);
+		ANKI_SCENE_LOGE("Failed to unregister animation: {}", animId);
 	}
 	else
 	{
@@ -49,7 +49,7 @@ AnimationState& AnimationComponent::playAnimationInternal(U32 trackIdx, U32 anim
 	auto rsrcIt = m_idToAnimationResource.find(animId);
 	if(rsrcIt == m_idToAnimationResource.getEnd())
 	{
-		ANKI_SCENE_LOGE("Animation ID not found: %u", animId);
+		ANKI_SCENE_LOGE("Animation ID not found: {}", animId);
 		return m_dummyState;
 	}
 
@@ -79,7 +79,7 @@ AnimationState& AnimationComponent::playAnimationInternal(U32 trackIdx, U32 anim
 	Animation& anim = track.m_anims[(track.m_lastAnimationIdx + 1) % kMaxAnimationsPerTrack];
 	if(anim.m_resource)
 	{
-		ANKI_SCENE_LOGE("Can't queue more than %u animations", kMaxAnimationsPerTrack);
+		ANKI_SCENE_LOGE("Can't queue more than {} animations", kMaxAnimationsPerTrack);
 		return m_dummyState;
 	}
 
@@ -98,7 +98,7 @@ AnimationState& AnimationComponent::playAnimationInternal(U32 trackIdx, U32 anim
 
 		if(channelIdx == kMaxU32)
 		{
-			ANKI_SCENE_LOGE("Channel \"%s\" not found in animation: %s", channelName.cstr(), rsrcIt->first->getFilename().cstr());
+			ANKI_SCENE_LOGE("Channel \"{}\" not found in animation: {}", channelName, rsrcIt->first->getFilename());
 			return m_dummyState;
 		}
 	}
@@ -149,7 +149,7 @@ AnimationState& AnimationComponent::getAnimationStateInternal(U32 trackIdx, U32 
 
 	if(!state)
 	{
-		ANKI_SCENE_LOGE("Couldn't find animation with ID: %u", animId);
+		ANKI_SCENE_LOGE("Couldn't find animation with ID: {}", animId);
 		state = &m_dummyState;
 	}
 
@@ -531,7 +531,7 @@ Error AnimationComponent::serialize(SceneSerializer& serializer)
 		if(serializer.isInReadMode()
 		   && (track.m_crntAnimationIdx > track.m_lastAnimationIdx || track.m_lastAnimationIdx - track.m_crntAnimationIdx >= kMaxAnimationsPerTrack))
 		{
-			ANKI_SCENE_LOGE("Animation track has wrong indices: current %u, last %u", track.m_crntAnimationIdx, track.m_lastAnimationIdx);
+			ANKI_SCENE_LOGE("Animation track has wrong indices: current {}, last {}", track.m_crntAnimationIdx, track.m_lastAnimationIdx);
 			return Error::kUserData;
 		}
 
@@ -549,7 +549,7 @@ Error AnimationComponent::serialize(SceneSerializer& serializer)
 
 			if(serializer.isInReadMode() && anim.m_resource && anim.m_channelIdx >= anim.m_resource->getChannels().getSize())
 			{
-				ANKI_SCENE_LOGE("Animation channel index is out of bounds: %u", anim.m_channelIdx);
+				ANKI_SCENE_LOGE("Animation channel index is out of bounds: {}", anim.m_channelIdx);
 				return Error::kUserData;
 			}
 		}
@@ -559,7 +559,7 @@ Error AnimationComponent::serialize(SceneSerializer& serializer)
 
 	if(serializer.isInReadMode() && m_motionMode >= NodeMotionMode::kCount)
 	{
-		ANKI_SCENE_LOGE("Wrong node motion mode: %u", U32(m_motionMode));
+		ANKI_SCENE_LOGE("Wrong node motion mode: {}", U32(m_motionMode));
 		return Error::kUserData;
 	}
 

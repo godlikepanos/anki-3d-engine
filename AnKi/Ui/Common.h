@@ -26,6 +26,7 @@ class GrManager;
 #define ANKI_UI_LOGE(...) ANKI_LOG("UI", kError, __VA_ARGS__)
 #define ANKI_UI_LOGW(...) ANKI_LOG("UI", kWarning, __VA_ARGS__)
 #define ANKI_UI_LOGF(...) ANKI_LOG("UI", kFatal, __VA_ARGS__)
+#define ANKI_UI_LOGV(...) ANKI_LOG("UI", kVerbose, __VA_ARGS__)
 
 class UiMemoryPool : public HeapMemoryPool, public MakeSingleton<UiMemoryPool>
 {

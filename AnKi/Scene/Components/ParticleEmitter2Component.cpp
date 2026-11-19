@@ -172,7 +172,7 @@ ParticleEmitter2Component& ParticleEmitter2Component::setParticleEmitterFilename
 	const Error err = ResourceManager::getSingleton().loadResource(fname, newRsrc);
 	if(err)
 	{
-		ANKI_SCENE_LOGE("Failed to load resource: %s", fname.cstr());
+		ANKI_SCENE_LOGE("Failed to load resource: {}", fname);
 	}
 	else
 	{

@@ -180,7 +180,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_postProcessResolution = setResolution(m_swapchainResolution, g_cvarRenderRenderScaling);
 	m_internalResolution = setResolution(m_postProcessResolution, g_cvarRenderInternalRenderScaling);
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Resolutions: Internal %ux%u, post-process %ux%u, swapchain %ux%u", m_internalResolution.x,
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolutions: Internal {}x{}, post-process {}x{}, swapchain {}x{}", m_internalResolution.x,
 				m_internalResolution.y, m_postProcessResolution.x, m_postProcessResolution.y, m_swapchainResolution.x, m_swapchainResolution.y);
 
 	if(g_cvarCoreMeshletRendering && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
@@ -579,7 +579,7 @@ RendererTexture Renderer::createAndClearRenderTarget(const TextureInitInfo& inf,
 	else
 	{
 		// Too big, prefer a dedicated allocation
-		ANKI_R_LOGV("Will force a dedicated allocation for RT: %s", inf.getName().cstr());
+		ANKI_R_LOGV("Will force a dedicated allocation for RT: {}", inf.getName());
 		m_dedicatedAllocationSize += memReq;
 	}
 
@@ -778,7 +778,7 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRe
 	}
 	else
 	{
-		ANKI_R_LOGE("Debug rendertarget doesn't exist: %s", m_currentDebugRtName.cstr());
+		ANKI_R_LOGE("Debug rendertarget doesn't exist: {}", m_currentDebugRtName);
 		m_currentDebugRtName = {};
 		return false;
 	}

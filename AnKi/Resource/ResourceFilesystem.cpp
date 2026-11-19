@@ -22,7 +22,7 @@ static Error tokenizePath(CString path, ResourceString& actualPath, ResourceStri
 	const PtrSize count = tokens.getSize();
 	if(count != 1 && count != 2)
 	{
-		ANKI_RESOURCE_LOGE("Tokenization of path failed: %s", path.cstr());
+		ANKI_RESOURCE_LOGE("Tokenization of path failed: {}", path);
 		return Error::kUserData;
 	}
 
@@ -254,7 +254,7 @@ Error ResourceFilesystem::addNewPath(CString filepath_, const ResourceStringList
 		filepath = filepath_;
 	}
 
-	ANKI_RESOURCE_LOGI("Adding new resource path: %s", filepath.cstr());
+	ANKI_RESOURCE_LOGI("Adding new resource path: {}", filepath);
 
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
 	ResourceStringList filenameList;
@@ -392,7 +392,7 @@ Error ResourceFilesystem::addNewPath(CString filepath_, const ResourceStringList
 	ANKI_ASSERT(filenameList.getSize() == fileCount);
 	if(fileCount == 0)
 	{
-		ANKI_RESOURCE_LOGW("Ignoring empty resource path: %s", &filepath[0]);
+		ANKI_RESOURCE_LOGW("Ignoring empty resource path: {}", filepath);
 	}
 	else
 	{
@@ -409,7 +409,7 @@ Error ResourceFilesystem::addNewPath(CString filepath_, const ResourceStringList
 
 		m_dataPaths.emplaceFront(std::move(path));
 
-		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
+		ANKI_RESOURCE_LOGI("Added new data path \"{}\" that contains {} files", filepath, fileCount);
 	}
 
 	if(false && m_dataPaths.getSize())
@@ -430,7 +430,7 @@ Error ResourceFilesystem::openFile(ResourceFilename filename, ResourceFilePtr& f
 
 	if(err)
 	{
-		ANKI_RESOURCE_LOGE("Resource file not found: %s", filename.cstr());
+		ANKI_RESOURCE_LOGE("Resource file not found: {}", filename);
 		deleteInstance(ResourceMemoryPool::getSingleton(), rfile);
 	}
 	else
@@ -444,7 +444,7 @@ Error ResourceFilesystem::openFile(ResourceFilename filename, ResourceFilePtr& f
 
 Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile) const
 {
-	ANKI_RESOURCE_LOGV("Opening resource file: %s", filename.cstr());
+	ANKI_RESOURCE_LOGV("Opening resource file: {}", filename);
 	rfile = nullptr;
 
 	const U64 filenameHash = filename.computeHash();
@@ -520,7 +520,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 #else
 	if(!rfile)
 	{
-		ANKI_RESOURCE_LOGE("Couldn't find file: %s", filename.cstr());
+		ANKI_RESOURCE_LOGE("Couldn't find file: {}", filename);
 		return Error::kFileNotFound;
 	}
 #endif
@@ -618,11 +618,11 @@ Error ResourceFilesystem::refreshAll()
 
 	if(paths.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("Config option \"%s\" is empty", g_cvarRsrcDataPaths.getName().cstr());
+		ANKI_RESOURCE_LOGE("Config option \"{}\" is empty", g_cvarRsrcDataPaths.getName());
 		return Error::kUserData;
 	}
 
-	ANKI_RESOURCE_LOGI("%s value: %s", g_cvarRsrcDataPaths.getName().cstr(), CString(g_cvarRsrcDataPaths).cstr());
+	ANKI_RESOURCE_LOGI("{} value: {}", g_cvarRsrcDataPaths.getName(), CString(g_cvarRsrcDataPaths));
 
 	for(const auto& path : paths)
 	{

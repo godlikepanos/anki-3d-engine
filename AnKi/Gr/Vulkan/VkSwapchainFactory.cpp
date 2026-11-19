@@ -85,7 +85,7 @@ Error MicroSwapchain::initInternal()
 				akFormat = Format::kNone;
 			}
 
-			ANKI_VK_LOGV("\t%s", (akFormat != Format::kNone) ? getFormatInfo(akFormat).m_name : "Unknown format");
+			ANKI_VK_LOGV("\t{}", (akFormat != Format::kNone) ? getFormatInfo(akFormat).m_name : "Unknown format");
 
 			if(surfaceFormat == VK_FORMAT_UNDEFINED
 			   && (vkFormat == VK_FORMAT_R8G8B8A8_UNORM || vkFormat == VK_FORMAT_B8G8R8A8_UNORM || vkFormat == VK_FORMAT_A8B8G8R8_UNORM_PACK32))
@@ -103,7 +103,7 @@ Error MicroSwapchain::initInternal()
 		}
 		else
 		{
-			ANKI_VK_LOGV("Selecting surface format %s", getFormatInfo(akSurfaceFormat).m_name);
+			ANKI_VK_LOGV("Selecting surface format {}", getFormatInfo(akSurfaceFormat).m_name);
 		}
 	}
 
@@ -207,13 +207,13 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, nullptr));
 		if(count != swapchainImages)
 		{
-			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", swapchainImages, count);
+			ANKI_VK_LOGI("Requested a swapchain with {} images but got one with {}", swapchainImages, count);
 		}
 
 		m_textures.resize(count);
 		m_renderSemaphores.resize(count);
 
-		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count, presentMode, surfaceWidth,
+		ANKI_VK_LOGI("Created a swapchain. Image count: {}, present mode: {}, size: {}x{}, vsync: {}", count, U32(presentMode), surfaceWidth,
 					 surfaceHeight, U32(SwapchainFactory::getSingleton().m_vsync));
 
 		Array<VkImage, 64> images;

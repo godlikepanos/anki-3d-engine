@@ -96,13 +96,13 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 		argsStr += a;
 		argsStr += " ";
 	}
-	ANKI_SHADER_COMPILER_LOGV("Calling RGA: %s %s", rgaExecutable.cstr(), argsStr.cstr());
+	ANKI_SHADER_COMPILER_LOGV("Calling RGA: {} {}", rgaExecutable, argsStr);
 
 	ANKI_CHECK(invokeProcess(rgaExecutable, args, nullptr, nullptr, exitCode));
 
 	if(exitCode != 0)
 	{
-		ANKI_SHADER_COMPILER_LOGE("RGA failed with exit code %d", exitCode);
+		ANKI_SHADER_COMPILER_LOGE("RGA failed with exit code {}", exitCode);
 		return Error::kFunctionFailed;
 	}
 

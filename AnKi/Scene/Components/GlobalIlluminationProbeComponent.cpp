@@ -22,7 +22,7 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(const SceneCo
 	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTextureProg);
 	if(err)
 	{
-		ANKI_LOGF("Failed to load shader");
+		ANKI_SCENE_LOGF("Failed to load shader");
 	}
 
 #if ANKI_WITH_EDITOR

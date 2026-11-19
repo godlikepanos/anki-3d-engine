@@ -351,7 +351,7 @@ Error GrManagerImpl::initInstance()
 			ANKI_VK_LOGV("Found the following instance layers:");
 			for(const VkLayerProperties& layer : layerProps)
 			{
-				ANKI_VK_LOGV("\t%s", layer.layerName);
+				ANKI_VK_LOGV("\t{}", layer.layerName);
 				CString layerName = layer.layerName;
 
 				Bool enableLayer = (g_cvarGrValidation || g_cvarGrDebugPrintf) && layerName == "VK_LAYER_KHRONOS_validation";
@@ -370,7 +370,7 @@ Error GrManagerImpl::initInstance()
 			ANKI_VK_LOGI("Will enable the following instance layers:");
 			for(const char* name : layersToEnable)
 			{
-				ANKI_VK_LOGI("\t%s", name);
+				ANKI_VK_LOGI("\t{}", name);
 			}
 
 			ci.enabledLayerCount = layersToEnable.getSize();
@@ -424,7 +424,7 @@ Error GrManagerImpl::initInstance()
 		ANKI_VK_LOGV("Found the following instance extensions:");
 		for(U32 i = 0; i < extCount; ++i)
 		{
-			ANKI_VK_LOGV("\t%s", instExtensionInf[i].extensionName);
+			ANKI_VK_LOGV("\t{}", instExtensionInf[i].extensionName);
 		}
 
 		U32 instExtensionCount = 0;
@@ -495,7 +495,7 @@ Error GrManagerImpl::initInstance()
 			ANKI_VK_LOGI("Will enable the following instance extensions:");
 			for(U32 i = 0; i < instExtensionCount; ++i)
 			{
-				ANKI_VK_LOGI("\t%s", instExtensions[i]);
+				ANKI_VK_LOGI("\t{}", instExtensions[i]);
 			}
 
 			ci.enabledExtensionCount = instExtensionCount;
@@ -597,7 +597,7 @@ Error GrManagerImpl::initInstance()
 		ANKI_VK_LOGI("Physical devices:");
 		for(U32 devIdx = 0; devIdx < count; ++devIdx)
 		{
-			ANKI_VK_LOGI((devIdx == chosenPhysDevIdx) ? "\t(Selected) %s" : "\t%s", devs[devIdx].m_vkProps.properties.deviceName);
+			ANKI_VK_LOGI("\t{}{}", (devIdx == chosenPhysDevIdx) ? "(Selected) " : "", devs[devIdx].m_vkProps.properties.deviceName);
 		}
 
 		m_capabilities.m_discreteGpu = devs[chosenPhysDevIdx].m_vkProps.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
@@ -616,10 +616,10 @@ Error GrManagerImpl::initInstance()
 
 			vkGetPhysicalDeviceToolPropertiesEXT(m_physicalDevice, &toolCount, toolProps.getBegin());
 
-			ANKI_GR_LOGV("Found the following %u Vulkan tools:", toolCount);
+			ANKI_VK_LOGV("Found the following {} Vulkan tools:", toolCount);
 			for(U32 i = 0; i < toolCount; ++i)
 			{
-				ANKI_GR_LOGV("\t %s", toolProps[i].name);
+				ANKI_VK_LOGV("\t {}", toolProps[i].name);
 			}
 
 			for(U32 i = 0; i < toolCount; ++i)
@@ -627,12 +627,12 @@ Error GrManagerImpl::initInstance()
 				if(!CString(toolProps[i].layer).isEmpty() && CString(toolProps[i].layer).find("gfxreconstruct") != CString::kNpos)
 				{
 					m_capabilities.m_gfxReconstruct = true;
-					ANKI_GR_LOGI("gfxreconstruct is enabled");
+					ANKI_VK_LOGI("gfxreconstruct is enabled");
 				}
 
 				if(!CString(toolProps[i].name).isEmpty() && CString(toolProps[i].name).find("RenderDoc") != CString::kNpos && !g_cvarGrDebugMarkers)
 				{
-					ANKI_GR_LOGE("Running in RenderDoc but debug markers are disabled");
+					ANKI_VK_LOGE("Running in RenderDoc but debug markers are disabled");
 				}
 			}
 		}
@@ -660,7 +660,7 @@ Error GrManagerImpl::initInstance()
 
 	if(props2.properties.limits.maxPushConstantsSize < kMaxFastConstantsSize)
 	{
-		ANKI_VK_LOGE("GPU doesn't support at least %u push constants size", kMaxFastConstantsSize);
+		ANKI_VK_LOGE("GPU doesn't support at least {} push constants size", kMaxFastConstantsSize);
 		return Error::kFunctionFailed;
 	}
 
@@ -686,7 +686,7 @@ Error GrManagerImpl::initInstance()
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 	}
-	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s, Driver %s", props2.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0],
+	ANKI_VK_LOGI("GPU is {}. Vendor identified as {}, Driver {}", props2.properties.deviceName, kGPUVendorStrings[m_capabilities.m_gpuVendor],
 				 props12.driverInfo);
 
 	// Set limits
@@ -716,7 +716,7 @@ Error GrManagerImpl::initDevice()
 {
 	uint32_t count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, nullptr);
-	ANKI_VK_LOGI("Number of queue families: %u", count);
+	ANKI_VK_LOGI("Number of queue families: {}", count);
 
 	GrDynamicArray<VkQueueFamilyProperties> queueInfos;
 	queueInfos.resize(count);
@@ -810,7 +810,7 @@ Error GrManagerImpl::initDevice()
 		ci.queueCreateInfoCount = 1;
 	}
 
-	ANKI_VK_LOGI("Async compute: %s", asyncComputeMsg.cstr());
+	ANKI_VK_LOGI("Async compute: {}", asyncComputeMsg);
 
 	// Extensions
 	U32 extCount = 0;
@@ -828,7 +828,7 @@ Error GrManagerImpl::initDevice()
 		ANKI_VK_LOGV("Found the following device extensions:");
 		for(U32 i = 0; i < extCount; ++i)
 		{
-			ANKI_VK_LOGV("\t%s", extensionInfos[i].extensionName);
+			ANKI_VK_LOGV("\t{}", extensionInfos[i].extensionName);
 		}
 
 		while(extCount-- != 0)
@@ -926,7 +926,7 @@ Error GrManagerImpl::initDevice()
 		ANKI_VK_LOGI("Will enable the following device extensions:");
 		for(U32 i = 0; i < extensionsToEnableCount; ++i)
 		{
-			ANKI_VK_LOGI("\t%s", extensionsToEnable[i]);
+			ANKI_VK_LOGI("\t{}", extensionsToEnable[i]);
 		}
 
 		ci.enabledExtensionCount = extensionsToEnableCount;
@@ -939,7 +939,7 @@ Error GrManagerImpl::initDevice()
 		devFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures);
 		devFeatures.features.robustBufferAccess = (g_cvarGrValidation && devFeatures.features.robustBufferAccess) ? true : false;
-		ANKI_VK_LOGI("Robust buffer access is %s", (devFeatures.features.robustBufferAccess) ? "enabled" : "disabled");
+		ANKI_VK_LOGI("Robust buffer access is {}", (devFeatures.features.robustBufferAccess) ? "enabled" : "disabled");
 
 		if(devFeatures.features.pipelineStatisticsQuery)
 		{
@@ -1150,7 +1150,7 @@ Error GrManagerImpl::initDevice()
 
 		if(meshShadersFeatures.taskShader == false)
 		{
-			ANKI_LOGE(VK_EXT_MESH_SHADER_EXTENSION_NAME " doesn't support task shaders");
+			ANKI_VK_LOGE(VK_EXT_MESH_SHADER_EXTENSION_NAME " doesn't support task shaders");
 			return Error::kFunctionFailed;
 		}
 
@@ -1235,12 +1235,12 @@ Error GrManagerImpl::initMemory()
 	ANKI_VK_LOGV("Vulkan memory info:");
 	for(U32 i = 0; i < m_memoryProperties.memoryHeapCount; ++i)
 	{
-		ANKI_VK_LOGV("\tHeap %u size %zu", i, m_memoryProperties.memoryHeaps[i].size);
+		ANKI_VK_LOGV("\tHeap {} size {}", i, m_memoryProperties.memoryHeaps[i].size);
 	}
 	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; ++i)
 	{
-		ANKI_VK_LOGV("\tMem type %u points to heap %u, flags %" ANKI_PRIb32, i, m_memoryProperties.memoryTypes[i].heapIndex,
-					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
+		ANKI_VK_LOGV("\tMem type {} points to heap {}, flags {:032b}", i, m_memoryProperties.memoryTypes[i].heapIndex,
+					 m_memoryProperties.memoryTypes[i].propertyFlags);
 	}
 
 	return Error::kNone;
@@ -1645,7 +1645,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 		LockGuard lock(m_shaderStatsMtx); // Lock so that all messages appear together
 
-		ANKI_VK_LOGV("Pipeline info \"%s\" (0x%016" PRIx64 "):", name.cstr(), hash);
+		ANKI_VK_LOGV("Pipeline info \"{}\" (0x{:016x}):", name, hash);
 		if(executableCount > 0)
 		{
 			executableProps.resize(executableCount);
@@ -1664,7 +1664,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		for(U32 i = 0; i < executableCount; ++i)
 		{
 			const VkPipelineExecutablePropertiesKHR& p = executableProps[i];
-			ANKI_VK_LOGV("\tDescription: %s, stages: 0x%X:", p.description, p.stages);
+			ANKI_VK_LOGV("\tDescription: {}, stages: 0x{:X}:", p.description, p.stages);
 
 			// Get stats
 			VkPipelineExecutableInfoKHR exeInf = {};
@@ -1689,23 +1689,23 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 				switch(ss.format)
 				{
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_BOOL32_KHR:
-					ANKI_VK_LOGV("\t\t%s: %u", ss.name, ss.value.b32);
+					ANKI_VK_LOGV("\t\t{}: {}", ss.name, ss.value.b32);
 					break;
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_INT64_KHR:
-					ANKI_VK_LOGV("\t\t%s: %" PRId64, ss.name, ss.value.i64);
+					ANKI_VK_LOGV("\t\t{}: {}", ss.name, ss.value.i64);
 					break;
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_UINT64_KHR:
-					ANKI_VK_LOGV("\t\t%s: %" PRIu64, ss.name, ss.value.u64);
+					ANKI_VK_LOGV("\t\t{}: {}", ss.name, ss.value.u64);
 					break;
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_FLOAT64_KHR:
-					ANKI_VK_LOGV("\t\t%s: %f", ss.name, ss.value.f64);
+					ANKI_VK_LOGV("\t\t{}: {}", ss.name, ss.value.f64);
 					break;
 				default:
 					ANKI_ASSERT(0);
 				}
 			}
 
-			ANKI_VK_LOGV("\t\tSubgroup size: %u", p.subgroupSize);
+			ANKI_VK_LOGV("\t\tSubgroup size: {}", p.subgroupSize);
 		}
 	}
 
@@ -1717,7 +1717,7 @@ Error GrManagerImpl::initSurface()
 #if ANKI_WINDOWING_SYSTEM_SDL
 	if(!SDL_Vulkan_CreateSurface(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, m_instance, nullptr, &m_surface))
 	{
-		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed: %s", SDL_GetError());
+		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed: {}", SDL_GetError());
 		return Error::kFunctionFailed;
 	}
 #elif ANKI_WINDOWING_SYSTEM_ANDROID
@@ -1919,15 +1919,15 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 
 	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		ANKI_VK_LOGE("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+		ANKI_VK_LOGE("VK debug report: {}. Affected objects: {}", pCallbackData->pMessage, objectNames);
 	}
 	else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
-		ANKI_VK_LOGW("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+		ANKI_VK_LOGW("VK debug report: {}. Affected objects: {}", pCallbackData->pMessage, objectNames);
 	}
 	else
 	{
-		ANKI_VK_LOGI("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+		ANKI_VK_LOGI("VK debug report: {}. Affected objects: {}", pCallbackData->pMessage, objectNames);
 	}
 
 	return false;

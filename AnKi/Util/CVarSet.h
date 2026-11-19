@@ -134,7 +134,7 @@ public:
 
 		if(!ok)
 		{
-			ANKI_UTIL_LOGW("Wrong value set for config var: %s", m_name.cstr());
+			ANKI_UTIL_LOGW("Wrong value set for config var: {}", m_name);
 		}
 
 		return *this;

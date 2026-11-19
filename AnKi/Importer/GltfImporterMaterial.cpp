@@ -123,7 +123,7 @@ static Error importImage(CString in, CString out, Bool alpha, U32 maxImageDimens
 
 	config.m_flipImage = false;
 
-	ANKI_IMPORTER_LOGV("Importing image \"%s\" as \"%s\"", in.cstr(), out.cstr());
+	ANKI_IMPORTER_LOGV("Importing image \"{}\" as \"{}\"", in, out);
 	ANKI_CHECK(importImage(config));
 
 	return Error::kNone;
@@ -142,7 +142,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	const Error err = writeMaterialInternal(mtl, writeRayTracing);
 	if(err)
 	{
-		ANKI_IMPORTER_LOGE("Failed to import material: %s", mtl.name);
+		ANKI_IMPORTER_LOGE("Failed to import material: {}", mtl.name);
 	}
 
 	return err;
@@ -156,7 +156,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	}
 	ImporterString fname;
 	fname.format("{}{}", m_outDir, computeMaterialResourceFilename(mtl));
-	ANKI_IMPORTER_LOGV("Importing material %s", fname.cstr());
+	ANKI_IMPORTER_LOGV("Importing material {}", fname);
 
 	if(!mtl.has_pbr_metallic_roughness)
 	{
@@ -222,7 +222,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			tokens.splitString(it->toCString(), ' ');
 			if(tokens.getSize() != 3)
 			{
-				ANKI_IMPORTER_LOGE("Wrong specular: %s", it->cstr());
+				ANKI_IMPORTER_LOGE("Wrong specular: {}", *it);
 				return Error::kUserData;
 			}
 
@@ -260,7 +260,7 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 			}
 			else
 			{
-				ANKI_IMPORTER_LOGE("Wrong value for extra named shadow: %s", val.cstr());
+				ANKI_IMPORTER_LOGE("Wrong value for extra named shadow: {}", val);
 				return Error::kUserData;
 			}
 		}

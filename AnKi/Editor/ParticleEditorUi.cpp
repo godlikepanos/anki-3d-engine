@@ -52,7 +52,7 @@ void ParticleEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			{
 				if(saveCache())
 				{
-					ANKI_LOGE("Unnable to save the particles file. Ignoring save");
+					ANKI_EDITOR_LOGE("Unnable to save the particles file. Ignoring save");
 				}
 				ResourceManager::getSingleton().refreshFileUpdateTimes();
 			}
@@ -169,7 +169,7 @@ void ParticleEditorUi::gatherParticlePrograms()
 			if(ResourceFilesystem::getSingleton().openFile(filepath, file)
 			   || deserializeShaderBinaryFromAnyFile(*file, binary, DefaultMemoryPool::getSingleton()))
 			{
-				ANKI_LOGE("Failed to load particles file. Ignoring this file: %s", filepath.cstr());
+				ANKI_EDITOR_LOGE("Failed to load particles file. Ignoring this file: {}", filepath);
 			}
 			else
 			{

@@ -221,7 +221,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 						ImGui::SameLine();
 						if(ImGui::Button(ICON_MDI_EYE))
 						{
-							ANKI_LOGW("TODO");
+							ANKI_EDITOR_LOGW("TODO");
 						}
 						ImGui::SetItemTooltip("Disable component");
 					}
@@ -425,7 +425,7 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 	{
 		if(textEditorWindow(String().format("ScriptComponent {}", comp.getUuid()), &m_textEditorOpen, nullptr, m_textEditorTxt))
 		{
-			ANKI_LOGV("Updating ScriptComponent");
+			ANKI_EDITOR_LOGV("Updating ScriptComponent");
 			comp.setScriptText(m_textEditorTxt);
 		}
 

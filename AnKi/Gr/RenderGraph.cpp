@@ -1281,7 +1281,7 @@ void RenderGraph::compileNewGraph(const RenderGraphBuilder& descr, StackMemoryPo
 #if ANKI_DBG_RENDER_GRAPH
 	if(dumpDependencyDotFile(descr, ctx, "./"))
 	{
-		ANKI_LOGF("Won't recover on debug code");
+		ANKI_GR_LOGF("Won't recover on debug code");
 	}
 #endif
 }
@@ -1562,7 +1562,7 @@ void RenderGraph::periodicCleanup()
 
 	if(rtsCleanedCount > 0)
 	{
-		ANKI_GR_LOGI("Cleaned %u render targets", rtsCleanedCount);
+		ANKI_GR_LOGI("Cleaned {} render targets", rtsCleanedCount);
 	}
 }
 

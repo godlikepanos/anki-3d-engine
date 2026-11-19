@@ -364,7 +364,7 @@ PhysicsWorld::~PhysicsWorld()
 
 Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 {
-	ANKI_PHYS_LOGI("Initializing physics. Jolt config: %s", JPH::GetConfigurationString());
+	ANKI_PHYS_LOGI("Initializing physics. Jolt config: {}", JPH::GetConfigurationString());
 
 	PhysicsMemoryPool::allocateSingleton(allocCb, allocCbData);
 

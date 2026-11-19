@@ -66,7 +66,7 @@ ANKI_TEST(Util, ThreadJobManagerBench)
 	}
 
 	const U64 timeDiff = HighRezTimer::getCurrentTimeUs() - time;
-	ANKI_TEST_LOGI("Time spent %" PRIu64 " us / %" PRId64 " ms. %f ops per ms", timeDiff, timeDiff / 1000, F64(kTaskCount) / F64(timeDiff / 1000));
+	ANKI_TEST_LOGI("Time spent {} us / {} ms. {:f} ops per ms", timeDiff, timeDiff / 1000, F64(kTaskCount) / F64(timeDiff / 1000));
 
 	DefaultMemoryPool::freeSingleton();
 }

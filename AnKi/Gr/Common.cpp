@@ -138,7 +138,7 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 				{
 					if(abinding != bbinding)
 					{
-						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Space %u binding %u", space, binding);
+						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Space {} binding {}", space, binding);
 						return Error::kFunctionFailed;
 					}
 					bindingFoundOnA = true;

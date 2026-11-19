@@ -162,7 +162,7 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 	ANKI_CHECK(invokeProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
 	if(exitCode != 0)
 	{
-		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
+		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code {}", exitCode);
 		return Error::kFunctionFailed;
 	}
 

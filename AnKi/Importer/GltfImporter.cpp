@@ -145,7 +145,7 @@ static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CS
 		const Error err = it->toNumber(val);
 		if(err)
 		{
-			ANKI_IMPORTER_LOGE("Failed to parse %s with value: %s", name.cstr(), it->cstr());
+			ANKI_IMPORTER_LOGE("Failed to parse {} with value: {}", name, *it);
 			return err;
 		}
 
@@ -190,7 +190,7 @@ static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CS
 			const Error err = it->toNumber(valu);
 			if(err || valu != 0 || valu != 1)
 			{
-				ANKI_IMPORTER_LOGE("Failed to parse %s with value: %s", name.cstr(), it->cstr());
+				ANKI_IMPORTER_LOGE("Failed to parse {} with value: {}", name, *it);
 				return err;
 			}
 
@@ -214,7 +214,7 @@ static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CS
 		tokens.splitString(*it, ' ');
 		if(tokens.getSize() != 3)
 		{
-			ANKI_IMPORTER_LOGE("Error parsing %s with value: %s", name.cstr(), it->cstr());
+			ANKI_IMPORTER_LOGE("Error parsing {} with value: {}", name, *it);
 			return Error::kUserData;
 		}
 
@@ -225,7 +225,7 @@ static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CS
 			const Error err = token.toNumber(f);
 			if(err)
 			{
-				ANKI_IMPORTER_LOGE("Error parsing %s with value: %s", name.cstr(), it->cstr());
+				ANKI_IMPORTER_LOGE("Error parsing {} with value: {}", name, *it);
 				return Error::kUserData;
 			}
 
@@ -291,7 +291,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	m_lodFactor = clamp(initInfo.m_lodFactor, 0.0f, 1.0f);
 	if(m_lodFactor * F32(m_lodCount - 1) > 0.7f)
 	{
-		ANKI_IMPORTER_LOGE("LOD factor is too high %f", m_lodFactor);
+		ANKI_IMPORTER_LOGE("LOD factor is too high {}", m_lodFactor);
 		return Error::kUserData;
 	}
 
@@ -301,20 +301,20 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 		m_lodFactor = 0.0f;
 	}
 
-	ANKI_IMPORTER_LOGV("Having %u LODs with LOD factor %f", m_lodCount, m_lodFactor);
+	ANKI_IMPORTER_LOGV("Having {} LODs with LOD factor {}", m_lodCount, m_lodFactor);
 
 	cgltf_options options = {};
 	cgltf_result res = cgltf_parse_file(&options, m_inputFname.cstr(), &m_gltf);
 	if(res != cgltf_result_success)
 	{
-		ANKI_IMPORTER_LOGE("Failed to open the GLTF file. Code: %d", res);
+		ANKI_IMPORTER_LOGE("Failed to open the GLTF file. Code: {}", U32(res));
 		return Error::kFunctionFailed;
 	}
 
 	res = cgltf_load_buffers(&options, m_gltf, m_inputFname.cstr());
 	if(res != cgltf_result_success)
 	{
-		ANKI_IMPORTER_LOGE("Failed to load GLTF data. Code: %d", res);
+		ANKI_IMPORTER_LOGE("Failed to load GLTF data. Code: {}", U32(res));
 		return Error::kFunctionFailed;
 	}
 
@@ -459,7 +459,7 @@ Error GltfImporter::appendExtras(const cgltf_extras& extras, ImporterHashMap<CSt
 	cgltf_result res = cgltf_copy_extras_json(m_gltf, &extras, &json[0], &extrasSize);
 	if(res != cgltf_result_success)
 	{
-		ANKI_IMPORTER_LOGE("cgltf_copy_extras_json failed: %d", res);
+		ANKI_IMPORTER_LOGE("cgltf_copy_extras_json failed: {}", U32(res));
 		return Error::kFunctionFailed;
 	}
 
@@ -496,7 +496,7 @@ Error GltfImporter::appendExtras(const cgltf_extras& extras, ImporterHashMap<CSt
 
 	if((tokenStrings.getSize() % 2) != 0)
 	{
-		ANKI_IMPORTER_LOGV("Ignoring: %s", jsonTxt.cstr());
+		ANKI_IMPORTER_LOGV("Ignoring: {}", jsonTxt);
 		return Error::kNone;
 	}
 
@@ -584,12 +584,12 @@ Error GltfImporter::parseArrayOfNumbers(CString str, ImporterDynamicArray<F64>& 
 
 	if(err)
 	{
-		ANKI_IMPORTER_LOGE("Failed to parse floats: %s", str.cstr());
+		ANKI_IMPORTER_LOGE("Failed to parse floats: {}", str);
 	}
 
 	if(expectedArraySize && *expectedArraySize != out.getSize())
 	{
-		ANKI_IMPORTER_LOGE("Failed to parse floats. Expecting %u floats got %u: %s", *expectedArraySize, out.getSize(), str.cstr());
+		ANKI_IMPORTER_LOGE("Failed to parse floats. Expecting {} floats got {}: {}", *expectedArraySize, out.getSize(), str);
 	}
 
 	return Error::kNone;
@@ -842,7 +842,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			if(err)
 			{
-				ANKI_IMPORTER_LOGE("Will skip node: %s", getNodeName(node).cstr());
+				ANKI_IMPORTER_LOGE("Will skip node: {}", getNodeName(node));
 			}
 			else
 			{
@@ -889,12 +889,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		}
 		else
 		{
-			ANKI_IMPORTER_LOGV("Ignoring invalid node: %s", getNodeName(node).cstr());
+			ANKI_IMPORTER_LOGV("Ignoring invalid node: {}", getNodeName(node));
 		}
 	}
 	else
 	{
-		ANKI_IMPORTER_LOGV("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
+		ANKI_IMPORTER_LOGV("Ignoring node {}. Assuming transform node", getNodeName(node));
 		ANKI_CHECK(appendExtras(node.extras, outExtras));
 	}
 
@@ -938,7 +938,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 {
 	ImporterString fname;
 	fname.format("{}{}", m_outDir, computeSkeletonResourceFilename(skin));
-	ANKI_IMPORTER_LOGV("Importing skeleton %s", fname.cstr());
+	ANKI_IMPORTER_LOGV("Importing skeleton {}", fname);
 
 	// Get matrices
 	ImporterDynamicArray<Mat4> boneMats;
@@ -1006,7 +1006,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 {
 	const cgltf_light& light = *node.light;
 	ImporterString nodeName = getNodeName(node);
-	ANKI_IMPORTER_LOGV("Importing light %s", nodeName.cstr());
+	ANKI_IMPORTER_LOGV("Importing light {}", nodeName);
 
 	ImporterHashMap<CString, ImporterString> extras(parentExtras);
 	ANKI_CHECK(appendExtras(light.extras, extras));
@@ -1025,7 +1025,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 		lightTypeStr = "Directional";
 		break;
 	default:
-		ANKI_IMPORTER_LOGE("Unsupporter light type %d", light.type);
+		ANKI_IMPORTER_LOGE("Unsupporter light type {}", U32(light.type));
 		return Error::kUserData;
 	}
 
@@ -1140,12 +1140,12 @@ Error GltfImporter::writeCamera(const cgltf_node& node, [[maybe_unused]] const I
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
-		ANKI_IMPORTER_LOGV("Unsupported camera type: %s", getNodeName(node).cstr());
+		ANKI_IMPORTER_LOGV("Unsupported camera type: {}", getNodeName(node));
 		return Error::kNone;
 	}
 
 	const cgltf_camera_perspective& cam = node.camera->data.perspective;
-	ANKI_IMPORTER_LOGV("Importing camera %s", getNodeName(node).cstr());
+	ANKI_IMPORTER_LOGV("Importing camera {}", getNodeName(node));
 
 	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node)\n"));
@@ -1159,7 +1159,7 @@ Error GltfImporter::writeCamera(const cgltf_node& node, [[maybe_unused]] const I
 
 Error GltfImporter::writeMeshMaterialNode(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras)
 {
-	ANKI_IMPORTER_LOGV("Importing mesh&material node %s", getNodeName(node).cstr());
+	ANKI_IMPORTER_LOGV("Importing mesh&material node {}", getNodeName(node));
 
 	ImporterHashMap<CString, ImporterString> extras(parentExtras);
 	ANKI_CHECK(appendExtras(node.extras, extras));

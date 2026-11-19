@@ -175,7 +175,7 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Do the call (1 argument, no result)
 		if(lua_pcall(lua, 1, 0, 0) != 0)
 		{
-			ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": %s", lua_tostring(lua, -1));
+			ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": {}", lua_tostring(lua, -1));
 			m_definedFuncsMask &= ~ScriptComponentFunctionMask::kUpdate;
 		}
 		else
@@ -204,7 +204,7 @@ void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Do the call (3 arguments, no result)
 		if(lua_pcall(lua, 3, 0, 0) != 0)
 		{
-			ANKI_SCENE_LOGE("Error running ScriptComponent's \"%s\": %s", funcName.cstr(), lua_tostring(lua, -1));
+			ANKI_SCENE_LOGE("Error running ScriptComponent's \"{}\": {}", funcName, lua_tostring(lua, -1));
 			m_definedFuncsMask &= ~mask;
 			return true;
 		}
@@ -372,7 +372,7 @@ void ScriptComponent::callOnTrigger(Bool onEnter, SceneNode& selfNode, SceneNode
 		// Do the call (2 argument, no result)
 		if(lua_pcall(lua, 2, 0, 0) != 0)
 		{
-			ANKI_SCENE_LOGE("Error running ScriptComponent's \"%s\": %s", funcName.cstr(), lua_tostring(lua, -1));
+			ANKI_SCENE_LOGE("Error running ScriptComponent's \"{}\": {}", funcName, lua_tostring(lua, -1));
 			m_definedFuncsMask &= ~mask;
 		}
 		else

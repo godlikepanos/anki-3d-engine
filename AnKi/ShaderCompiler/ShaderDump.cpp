@@ -266,7 +266,7 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 							   shaderType = ShaderType::kCallable;
 							   break;
 						   default:
-							   ANKI_SHADER_COMPILER_LOGE("Unrecognized SPIRV execution model: %u", instructions[0]);
+							   ANKI_SHADER_COMPILER_LOGE("Unrecognized SPIRV execution model: {}", instructions[0]);
 							   visitErr = Error::kFunctionFailed;
 						   }
 					   }
@@ -297,7 +297,7 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 				const Error err = runMaliOfflineCompiler(newSpirv, shaderType, maliocOut);
 				if(err)
 				{
-					ANKI_LOGE("Mali offline compiler failed");
+					ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed");
 					lines.pushBack("Mali: *malioc failed*  \n");
 				}
 				else
@@ -319,7 +319,7 @@ void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& bina
 				const Error err = runRadeonGpuAnalyzer(newSpirv, shaderType, rgaOut);
 				if(err)
 				{
-					ANKI_LOGE("RGA failed");
+					ANKI_SHADER_COMPILER_LOGE("RGA failed");
 					lines.pushBack("AMD: *RGA failed*  \n");
 				}
 				else

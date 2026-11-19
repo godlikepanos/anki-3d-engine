@@ -210,7 +210,7 @@ ANKI_TEST(Util, HashMap)
 			timer.stop();
 			Second stlTime = timer.getElapsedTime();
 
-			ANKI_TEST_LOGI("Inserting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
+			ANKI_TEST_LOGI("Inserting bench: STL {:f} AnKi {:f} | {:f}%", stlTime, akTime, stlTime / akTime * 100.0);
 		}
 
 		// Search
@@ -236,7 +236,7 @@ ANKI_TEST(Util, HashMap)
 			timer.stop();
 			Second stlTime = timer.getElapsedTime();
 
-			ANKI_TEST_LOGI("Find bench: STL %f AnKi %f | %f%% (%ld)", stlTime, akTime, stlTime / akTime * 100.0, count);
+			ANKI_TEST_LOGI("Find bench: STL {:f} AnKi {:f} | {:f}% ({})", stlTime, akTime, stlTime / akTime * 100.0, count);
 		}
 
 		// Delete
@@ -268,7 +268,7 @@ ANKI_TEST(Util, HashMap)
 				stlTime += timer.getElapsedTime();
 			}
 
-			ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
+			ANKI_TEST_LOGI("Deleting bench: STL {:f} AnKi {:f} | {:f}%", stlTime, akTime, stlTime / akTime * 100.0);
 		}
 
 		akMap.destroy();

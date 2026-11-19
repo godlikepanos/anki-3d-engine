@@ -103,7 +103,7 @@ static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, TIsIdenti
 		}
 	}
 
-	ANKI_IMPORTER_LOGV("Channel optimization iteration count: %u", iterationCount);
+	ANKI_IMPORTER_LOGV("Channel optimization iteration count: {}", iterationCount);
 }
 
 Error GltfImporter::writeAnimation(const cgltf_animation& anim)
@@ -112,7 +112,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	ImporterString animFname = computeAnimationResourceFilename(anim);
 	fname.format("{}{}", m_outDir, animFname);
 	fname = fixFilename(fname);
-	ANKI_IMPORTER_LOGV("Importing animation %s", fname.cstr());
+	ANKI_IMPORTER_LOGV("Importing animation {}", fname);
 
 	// Gather the channels
 	ImporterHashMap<CString, Array<const cgltf_animation_channel*, 3>> channelMap;
@@ -239,7 +239,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 				if(!scaleErrorReported && (absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon))
 				{
-					ANKI_IMPORTER_LOGW("Expecting uniform scale (%f %f %f)", scales[i].x, scales[i].y, scales[i].z);
+					ANKI_IMPORTER_LOGW("Expecting uniform scale ({} {} {})", scales[i].x, scales[i].y, scales[i].z);
 					scaleErrorReported = true;
 				}
 

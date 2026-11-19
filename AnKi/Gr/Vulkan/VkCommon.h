@@ -92,7 +92,7 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; // How many frames worth o
 		VkResult rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_VK_LOGF("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
+			ANKI_VK_LOGF("Vulkan function failed (VkResult: {}): {}", vkResultToString(rez), #x); \
 		} \
 	} while(0)
 
@@ -103,7 +103,7 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; // How many frames worth o
 		VkResult rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_VK_LOGE("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
+			ANKI_VK_LOGE("Vulkan function failed (VkResult: {}): {}", vkResultToString(rez), #x); \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)

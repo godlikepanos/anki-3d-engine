@@ -7,7 +7,7 @@
 
 using namespace anki;
 
-static const char* kUsage = R"(Usage: %s in_file out_dir [options]
+static constexpr const char* kUsage = R"(Usage: {} in_file out_dir [options]
 Options:
 -rpath <string>            : Replace all absolute paths of assets with that path
 -texrpath <string>         : Same as rpath but for textures
@@ -301,7 +301,7 @@ int myMain(int argc, char** argv)
 		return 1;
 	}
 
-	ANKI_IMPORTER_LOGI("File written: %s", cmdArgs.m_inputFname.cstr());
+	ANKI_IMPORTER_LOGI("File written: {}", cmdArgs.m_inputFname);
 
 	return 0;
 }

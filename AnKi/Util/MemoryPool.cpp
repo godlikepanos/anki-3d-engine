@@ -62,7 +62,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_UTIL_LOGE("memalign() failed, Size %zu, alignment %zu", size, alignmentBytes);
+		ANKI_UTIL_LOGE("memalign() failed, Size {}, alignment {}", size, alignmentBytes);
 	}
 
 	return out;
@@ -79,7 +79,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_UTIL_LOGE("posix_memalign() failed, Size %zu, alignment %zu", size, alignmentBytes);
+		ANKI_UTIL_LOGE("posix_memalign() failed, Size {}, alignment {}", size, alignmentBytes);
 	}
 
 	return out;
@@ -93,7 +93,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_UTIL_LOGE("_aligned_malloc() failed. Size %zu, alignment %zu", size, alignmentBytes);
+		ANKI_UTIL_LOGE("_aligned_malloc() failed. Size {}, alignment {}", size, alignmentBytes);
 	}
 
 	return out;
@@ -176,7 +176,7 @@ void HeapMemoryPool::destroy()
 	const U32 count = m_allocationCount.load();
 	if(count != 0)
 	{
-		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count, getName());
+		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released ({} deallocations missed): {}", count, getName());
 	}
 	BaseMemoryPool::destroy();
 }

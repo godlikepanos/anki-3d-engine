@@ -207,8 +207,7 @@ public:
 	}
 };
 
-#define ANKI_SERIALIZER_LOGE(...) \
-	ANKI_SCENE_LOGE("%s", (SceneString().format(__VA_ARGS__) + SceneString().format(". Line {}: ", m_read.m_lineno)).cstr())
+#define ANKI_SERIALIZER_LOGE(...) ANKI_SCENE_LOGE("{}", SceneString().format(__VA_ARGS__) + SceneString().format(". Line {}: ", m_read.m_lineno))
 #define ANKI_SERIALIZER_CHECK(expr) \
 	do \
 	{ \

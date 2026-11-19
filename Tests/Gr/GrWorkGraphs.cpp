@@ -99,7 +99,7 @@ static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, Boo
 
 	if(bBenchmark)
 	{
-		ANKI_TEST_LOGI("Benchmark: avg GPU time: %fms, avg CPU time: %fms", avgTimePerIterationMs, avgCpuTimePerIterationMs);
+		ANKI_TEST_LOGI("Benchmark: avg GPU time: {:f}ms, avg CPU time: {:f}ms", avgTimePerIterationMs, avgCpuTimePerIterationMs);
 	}
 }
 
@@ -113,7 +113,7 @@ void commonInitWg(Bool& bBenchmark, Bool& bWorkgraphs)
 
 	bWorkgraphs = getenv("WORKGRAPHS") && CString(getenv("WORKGRAPHS")) == "1" && GrManager::getSingleton().getDeviceCapabilities().m_workGraphs;
 
-	ANKI_TEST_LOGI("Testing with BENCHMARK=%u WORKGRAPHS=%u", bBenchmark, bWorkgraphs);
+	ANKI_TEST_LOGI("Testing with BENCHMARK={} WORKGRAPHS={}", U32(bBenchmark), U32(bWorkgraphs));
 }
 
 ANKI_TEST(Gr, WorkGraphHelloWorld)

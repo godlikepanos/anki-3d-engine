@@ -153,7 +153,7 @@ Error ResourceManager::loadResource(CString filename, IntrusiveNoDelPtr<T>& out,
 
 	if(err)
 	{
-		ANKI_RESOURCE_LOGE("Failed to load resource: %s", filename.cstr());
+		ANKI_RESOURCE_LOGE("Failed to load resource: {}", filename);
 		deleteInstance(ResourceMemoryPool::getSingleton(), ver);
 	}
 	else
@@ -250,7 +250,7 @@ void ResourceManager::refreshFileUpdateTimesInternal()
 		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_versions[0]->getFilename());
 		if(newTime != entry.m_fileUpdateTime)
 		{
-			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: %s", entry.m_versions[0]->getFilename().cstr());
+			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: {}", entry.m_versions[0]->getFilename());
 			entry.m_fileUpdateTime = newTime;
 
 			for(T* rsrc : entry.m_versions)

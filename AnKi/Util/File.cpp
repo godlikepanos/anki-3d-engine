@@ -113,7 +113,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	m_file = fopen(filename.cstr(), openMode);
 	if(m_file == nullptr)
 	{
-		ANKI_UTIL_LOGE("Failed to open file \"%s\", open mode \"%s\"", &filename[0], openMode);
+		ANKI_UTIL_LOGE("Failed to open file \"{}\", open mode \"{}\"", filename, openMode);
 		err = Error::kFileAccess;
 	}
 	else

@@ -350,7 +350,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			if((inLib.m_presentStages & requiredShaders) != requiredShaders
 			   || !(inLib.m_presentStages & (ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit)))
 			{
-				ANKI_RESOURCE_LOGE("The libray is missing shader types: %s", inLib.m_name.cstr());
+				ANKI_RESOURCE_LOGE("The libray is missing shader types: {}", inLib.m_name);
 				return Error::kUserData;
 			}
 
@@ -445,7 +445,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 		}
 	}
 
-	ANKI_RESOURCE_LOGI("Created %u ray tracing programs", rtProgramCount);
+	ANKI_RESOURCE_LOGI("Created {} ray tracing programs", rtProgramCount);
 
 	return Error::kNone;
 }

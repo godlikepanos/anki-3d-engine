@@ -94,12 +94,12 @@ BufferImpl::~BufferImpl()
 #if ANKI_ASSERTIONS_ENABLED
 	if(m_needsFlush && m_flushCount.load() == 0)
 	{
-		ANKI_VK_LOGW("Buffer needed flushing but you never flushed: %s", getName().cstr());
+		ANKI_VK_LOGW("Buffer needed flushing but you never flushed: {}", getName());
 	}
 
 	if(m_needsInvalidate && m_invalidateCount.load() == 0)
 	{
-		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
+		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: {}", getName());
 	}
 #endif
 
@@ -251,7 +251,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	if(memIdx == kMaxU32)
 	{
-		ANKI_VK_LOGE("Failed to find appropriate memory type for buffer: %s", getName().cstr());
+		ANKI_VK_LOGE("Failed to find appropriate memory type for buffer: {}", getName());
 		return Error::kFunctionFailed;
 	}
 

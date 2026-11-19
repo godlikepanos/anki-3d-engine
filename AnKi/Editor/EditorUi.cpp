@@ -944,7 +944,7 @@ void EditorUi::objectPicking()
 						m_selectedNode = sceneView.m_nodes[i];
 						m_selectedNodeUuid = sceneView.m_nodeUuids[i];
 						m_onNextUpdateFocusOnSelectedNode = 1;
-						ANKI_LOGV("Selecting scene node: %s", sceneView.m_nodes[i]->getName().cstr());
+						ANKI_EDITOR_LOGV("Selecting scene node: {}", sceneView.m_nodes[i]->getName());
 						done = true;
 						break;
 					}
@@ -1004,7 +1004,7 @@ void EditorUi::objectPicking()
 					collides = projectNdcToPlane(Input::getSingleton().getMousePositionNdc(), axisPlane, m_objectPicking.m_pivotPoint);
 					if(!collides)
 					{
-						ANKI_LOGW("Can't determin the pivot point");
+						ANKI_EDITOR_LOGW("Can't determin the pivot point");
 						m_objectPicking.m_pivotPoint = nodeOrigin;
 					}
 				}
@@ -1097,7 +1097,7 @@ void EditorUi::objectPicking()
 				collides = projectNdcToPlane(Input::getSingleton().getMousePositionNdc(), axisPlane, newPivotPoint);
 				if(!collides)
 				{
-					ANKI_LOGW("Can't determin the pivot point");
+					ANKI_EDITOR_LOGW("Can't determin the pivot point");
 					newPivotPoint = nodeOrigin;
 				}
 			}
@@ -1350,7 +1350,7 @@ void EditorUi::saveScenes(Bool onlyActive)
 		ImGui::BeginDisabled(!activeScene.canBeSaved());
 		if(SceneGraph::getSingleton().saveScene(activeScene.getFilepath(), activeScene))
 		{
-			ANKI_LOGE("Failed to save scene");
+			ANKI_EDITOR_LOGE("Failed to save scene");
 		}
 		else
 		{
@@ -1365,7 +1365,7 @@ void EditorUi::saveScenes(Bool onlyActive)
 			{
 				if(SceneGraph::getSingleton().saveScene(scene.getFilepath(), scene))
 				{
-					ANKI_LOGE("Failed to save scene");
+					ANKI_EDITOR_LOGE("Failed to save scene");
 				}
 				else
 				{
@@ -1374,13 +1374,13 @@ void EditorUi::saveScenes(Bool onlyActive)
 			}
 			else
 			{
-				ANKI_LOGV("Skip saving scene: %s", scene.getName().cstr());
+				ANKI_EDITOR_LOGV("Skip saving scene: {}", scene.getName());
 			}
 			return FunctorContinue::kContinue;
 		});
 	}
 
-	ANKI_LOGI("%u scenes saved", scenesSaved);
+	ANKI_EDITOR_LOGI("{} scenes saved", scenesSaved);
 }
 
 } // end namespace anki
