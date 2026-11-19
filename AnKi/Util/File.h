@@ -109,9 +109,12 @@ public:
 	// Write data to the file
 	Error write(const void* buff, PtrSize size);
 
-	// Write formated text
-	ANKI_CHECK_FORMAT(1, 2)
-	Error writeTextf(const Char* format, ...);
+	// Write text formatted with std::format syntax.
+	template<typename... TArgs>
+	Error writeTextf(std::format_string<TArgs...> fmt, TArgs&&... args)
+	{
+		return writeTextfInternal(fmt.get(), std::make_format_args(args...));
+	}
 
 	// Write plain text.
 	Error writeText(CString text);
@@ -143,6 +146,9 @@ private:
 
 	// Open a C file
 	Error openCFile(const CString& filename, FileOpenFlag flags);
+
+	// Takes type-erased args so the implementation can live in the .cpp
+	Error writeTextfInternal(std::string_view fmt, std::format_args args);
 
 #if ANKI_OS_ANDROID
 	// Open an Android file

@@ -231,7 +231,7 @@ void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
-	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", kLoggerMessageTypeText[info.m_type], info.m_msg, info.m_file, info.m_line, info.m_func);
+	Error err = file->writeTextf("[{}] {} ({}:{} {})\n", kLoggerMessageTypeText[info.m_type], info.m_msg, info.m_file, info.m_line, info.m_func);
 
 	if(!err)
 	{

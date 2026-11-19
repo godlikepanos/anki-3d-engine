@@ -542,32 +542,32 @@ Error SkeletonEditorUi::saveCache()
 	ANKI_CHECK(file.open(diskFilepath, FileOpenFlag::kWrite));
 
 	auto writeMatrix = [&](const Char* attribName, const Mat3x4& m) -> Error {
-		ANKI_CHECK(file.writeTextf("\t\t\t%s=\"", attribName));
+		ANKI_CHECK(file.writeTextf("\t\t\t{}=\"", attribName));
 		for(U32 i = 0; i < 12; ++i)
 		{
-			ANKI_CHECK(file.writeTextf((i < 11) ? "%f " : "%f", m[i]));
+			ANKI_CHECK(file.writeTextf("{}{}", m[i], (i < 11) ? " " : ""));
 		}
 		return file.writeText("\"\n");
 	};
 
 	auto writeAngles = [&](const Char* attribName, const Euler& angles) -> Error {
-		return file.writeTextf("\t\t\t%s=\"%f %f %f\"\n", attribName, toDegrees(angles.x), toDegrees(angles.y), toDegrees(angles.z));
+		return file.writeTextf("\t\t\t{}=\"{} {} {}\"\n", attribName, toDegrees(angles.x), toDegrees(angles.y), toDegrees(angles.z));
 	};
 
 	auto writeAngle = [&](const Char* attribName, F32 angle) -> Error {
-		return file.writeTextf("\t\t\t%s=\"%f\"\n", attribName, toDegrees(angle));
+		return file.writeTextf("\t\t\t{}=\"{}\"\n", attribName, toDegrees(angle));
 	};
 
-	ANKI_CHECK(file.writeTextf("%s\n<skeleton>\n", ResourceXmlDocument::kXmlHeader.cstr()));
+	ANKI_CHECK(file.writeTextf("{}\n<skeleton>\n", ResourceXmlDocument::kXmlHeader));
 	ANKI_CHECK(file.writeText("\t<bones>\n"));
 
 	// Keep the order of the bones because it's their index
 	for(const CachedBone& bone : m_bones)
 	{
-		ANKI_CHECK(file.writeTextf("\t\t<bone name=\"%s\"\n", bone.m_name.cstr()));
+		ANKI_CHECK(file.writeTextf("\t\t<bone name=\"{}\"\n", bone.m_name));
 		if(bone.m_parent)
 		{
-			ANKI_CHECK(file.writeTextf("\t\t\tparent=\"%s\"\n", bone.m_parent->m_name.cstr()));
+			ANKI_CHECK(file.writeTextf("\t\t\tparent=\"{}\"\n", bone.m_parent->m_name));
 		}
 
 		ANKI_CHECK(writeMatrix("boneTransform", bone.m_vertTrf));
@@ -577,9 +577,9 @@ Error SkeletonEditorUi::saveCache()
 		if(physics.m_capsuleRadius > 0.0f)
 		{
 			const Vec3& pos = physics.m_capsulePosition;
-			ANKI_CHECK(file.writeTextf("\t\t\tcapsuleRadius=\"%f\"\n", physics.m_capsuleRadius));
-			ANKI_CHECK(file.writeTextf("\t\t\tcapsuleHalfHeight=\"%f\"\n", physics.m_capsuleHalfHeight));
-			ANKI_CHECK(file.writeTextf("\t\t\tcapsulePosition=\"%f %f %f\"\n", pos.x, pos.y, pos.z));
+			ANKI_CHECK(file.writeTextf("\t\t\tcapsuleRadius=\"{}\"\n", physics.m_capsuleRadius));
+			ANKI_CHECK(file.writeTextf("\t\t\tcapsuleHalfHeight=\"{}\"\n", physics.m_capsuleHalfHeight));
+			ANKI_CHECK(file.writeTextf("\t\t\tcapsulePosition=\"{} {} {}\"\n", pos.x, pos.y, pos.z));
 			ANKI_CHECK(writeAngles("capsuleRotation", physics.m_capsuleRotation));
 		}
 

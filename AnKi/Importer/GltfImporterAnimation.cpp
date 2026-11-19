@@ -305,12 +305,12 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite));
 
-	ANKI_CHECK(file.writeTextf("%s\n<animation>\n", XmlDocument<MemoryPoolPtrWrapper<BaseMemoryPool>>::kXmlHeader.cstr()));
+	ANKI_CHECK(file.writeTextf("{}\n<animation>\n", XmlDocument<MemoryPoolPtrWrapper<BaseMemoryPool>>::kXmlHeader));
 	ANKI_CHECK(file.writeText("\t<channels>\n"));
 
 	for(const GltfAnimChannel& channel : tempChannels)
 	{
-		ANKI_CHECK(file.writeTextf("\t\t<channel name=\"%s\">\n", channel.m_name.cstr()));
+		ANKI_CHECK(file.writeTextf("\t\t<channel name=\"{}\">\n", channel.m_name));
 
 		// Positions
 		if(channel.m_positions.getSize())
@@ -318,7 +318,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
 			for(const GltfAnimKey<Vec3>& key : channel.m_positions)
 			{
-				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n", key.m_time, key.m_value.x, key.m_value.y, key.m_value.z));
+				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"{}\">{} {} {}</key>\n", key.m_time, key.m_value.x, key.m_value.y, key.m_value.z));
 			}
 			ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
 		}
@@ -329,7 +329,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
 			for(const GltfAnimKey<Quat>& key : channel.m_rotations)
 			{
-				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n", key.m_time, key.m_value.x, key.m_value.y, key.m_value.z,
+				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"{}\">{} {} {} {}</key>\n", key.m_time, key.m_value.x, key.m_value.y, key.m_value.z,
 										   key.m_value.w));
 			}
 			ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
@@ -341,7 +341,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			ANKI_CHECK(file.writeText("\t\t\t<scaleKeys>\n"));
 			for(const GltfAnimKey<F32>& key : channel.m_scales)
 			{
-				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f</key>\n", key.m_time, key.m_value));
+				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"{}\">{}</key>\n", key.m_time, key.m_value));
 			}
 			ANKI_CHECK(file.writeText("\t\t\t</scaleKeys>\n"));
 		}
@@ -367,11 +367,11 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		}
 
 		// No idea how to distinguise the bone nodes so wrap it in an if
-		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
+		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"{}\")\n", node.name));
 		ANKI_CHECK(m_sceneFile.writeText("if node ~= nil then\n"));
 		ANKI_CHECK(m_sceneFile.writeText("\tcomp = node:newAnimationComponent()\n"));
-		ANKI_CHECK(m_sceneFile.writeTextf("\tcomp:registerAnimation(0, \"%s%s\")\n", m_rpath.cstr(), animFname.cstr()));
-		ANKI_CHECK(m_sceneFile.writeTextf("\tstate = comp:playAnimation(0, 0, \"%s\", 0.2, AnimationStart.kNow)\n", channel.m_name.cstr()));
+		ANKI_CHECK(m_sceneFile.writeTextf("\tcomp:registerAnimation(0, \"{}{}\")\n", m_rpath, animFname));
+		ANKI_CHECK(m_sceneFile.writeTextf("\tstate = comp:playAnimation(0, 0, \"{}\", 0.2, AnimationStart.kNow)\n", channel.m_name));
 		ANKI_CHECK(m_sceneFile.writeText("\tstate.m_repeatTimes = -1\n"));
 		ANKI_CHECK(m_sceneFile.writeText("end\n"));
 	}

@@ -186,7 +186,6 @@
 #	define ANKI_HOT __attribute__ ((hot))
 #	define ANKI_UNREACHABLE() __builtin_unreachable()
 #	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
-#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__((format(printf, fmtArgIdx + 1, firstArgIdx + 1))) // On methods you need to include "this"
 #	define ANKI_PURE __attribute__((pure))
 #	define ANKI_NO_SANITIZE __attribute__((no_sanitize("address")))
 #elif ANKI_COMPILER_MSVC
@@ -198,7 +197,6 @@
 #	define ANKI_HOT
 #	define ANKI_UNREACHABLE() __assume(false)
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
-#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE
 #	define ANKI_NO_SANITIZE
 #else
@@ -210,7 +208,6 @@
 #	define ANKI_HOT
 #	define ANKI_UNREACHABLE()
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
-#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE
 #	define ANKI_NO_SANITIZE
 #endif

@@ -1860,7 +1860,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphBuilder& descr, const 
 	ANKI_CHECK(file.open(StringRaii(&pool).format("{}/rgraph_{:05}.dot", &path[0], m_version).toCString(), FileOpenFlag::kWrite));
 	for(const String& s : slist)
 	{
-		ANKI_CHECK(file.writeTextf("%s", &s[0]));
+		ANKI_CHECK(file.writeText(s));
 	}
 
 	return Error::kNone;
