@@ -115,7 +115,7 @@ public:
 	~RendererTexture()
 	{
 		m_texture.reset(nullptr);
-		m_allocation.free();
+		m_allocation.deferredFree();
 	}
 
 	RendererTexture& operator=(RendererTexture&& b)
@@ -180,6 +180,12 @@ public:
 		return loadInternal(filepath, mutators, technique, shaderTypes, nullptr, nullptr);
 	}
 
+	Error load(CString filepath, std::initializer_list<SubMutation> mutators, CString technique = "",
+			   ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
+	{
+		return load(filepath, ConstWeakArray<SubMutation>(mutators.begin(), U32(mutators.size())), technique, shaderTypes);
+	}
+
 protected:
 	Error loadInternal(CString filepath, ConstWeakArray<SubMutation> mutators, CString technique, ShaderTypeBit shaderTypes,
 					   U32* shaderGroupHandleIndex, BufferView* shaderGroupHandlesBuff);
@@ -229,6 +235,12 @@ public:
 	{
 		ANKI_ASSERT(!!(shaderTypes & ShaderTypeBit::kAllRayTracing));
 		return loadInternal(filepath, mutators, technique, shaderTypes, &m_shaderGroupHandleIndex, &m_shaderGroupHandlesBuff);
+	}
+
+	Error load(CString filepath, std::initializer_list<SubMutation> mutators, CString technique = "",
+			   ShaderTypeBit shaderTypes = ShaderTypeBit::kNone)
+	{
+		return load(filepath, ConstWeakArray<SubMutation>(mutators.begin(), U32(mutators.size())), technique, shaderTypes);
 	}
 
 private:

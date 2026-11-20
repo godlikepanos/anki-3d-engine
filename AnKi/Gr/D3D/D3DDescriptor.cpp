@@ -146,7 +146,7 @@ DescriptorHeapHandle RingDescriptorAllocator::allocate(U32 descriptorCount)
 
 	if(increment >= frameIncrementEnd)
 	{
-		ANKI_D3D_LOGW("Allocated too many descriptors from the ring buffer %s. Need to increase the limits", m_name.cstr());
+		ANKI_D3D_LOGW("Allocated too many descriptors from the ring buffer {}. Need to increase the limits", m_name);
 	}
 
 	DescriptorHeapHandle out;
@@ -377,7 +377,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	if(ret != S_OK)
 	{
 		const Char* errc = reinterpret_cast<const Char*>(errorBlob->GetBufferPointer());
-		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: %s", errc);
+		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: {}", errc);
 	}
 
 	ID3D12RootSignature* dxRootSig;
@@ -503,7 +503,7 @@ Error RootSignatureFactory::getOrCreateLocalRootSignature(const ShaderReflection
 	if(ret != S_OK)
 	{
 		const Char* errc = reinterpret_cast<const Char*>(errorBlob->GetBufferPointer());
-		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: %s", errc);
+		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: {}", errc);
 	}
 
 	ID3D12RootSignature* dxRootSig;

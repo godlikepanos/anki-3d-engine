@@ -12,8 +12,8 @@
 
 namespace anki {
 
-ANKI_SVAR(AliveFenceCount, StatCategory::kGr, "Current fence count", StatFlag::kNone)
-ANKI_SVAR(FencesCreatedCount, StatCategory::kGr, "Total fences created", StatFlag::kNone)
+ANKI_SVAR(Gr, AliveFenceCount, StatCategory::kGr, "Current fence count", StatFlag::kNone)
+ANKI_SVAR(Gr, FencesCreatedCount, StatCategory::kGr, "Total fences created", StatFlag::kNone)
 
 // Fence wrapper over VkFence.
 class MicroFence
@@ -24,15 +24,15 @@ public:
 		VkFenceCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		ANKI_VK_CHECKF(vkCreateFence(getVkDevice(), &ci, nullptr, &m_handle));
-		g_svarAliveFenceCount.increment(1u);
-		g_svarFencesCreatedCount.increment(1u);
+		g_svarGrAliveFenceCount.increment(1u);
+		g_svarGrFencesCreatedCount.increment(1u);
 	}
 
 	~MicroFence()
 	{
 		ANKI_ASSERT(m_handle);
 		vkDestroyFence(getVkDevice(), m_handle, nullptr);
-		g_svarAliveFenceCount.decrement(1u);
+		g_svarGrAliveFenceCount.decrement(1u);
 	}
 
 	void retain() const

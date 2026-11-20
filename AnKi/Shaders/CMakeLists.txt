@@ -4,7 +4,8 @@ ProcessorCount(proc_count)
 MATH(EXPR proc_count "${proc_count}-1")
 
 if(ANKI_OVERRIDE_SHADER_COMPILER STREQUAL "")
-	set(shader_compiler_bin "${CMAKE_BINARY_DIR}/Binaries/ShaderCompiler")
+	# When cross-compiling, the emulator (e.g. wine) runs the target's ShaderCompiler. Otherwise it's empty
+	set(shader_compiler_bin ${CMAKE_CROSSCOMPILING_EMULATOR} "${CMAKE_BINARY_DIR}/Binaries/ShaderCompiler${CMAKE_EXECUTABLE_SUFFIX}")
 	set(shader_compiler_dep "ShaderCompiler")
 else()
 	set(shader_compiler_bin ${ANKI_OVERRIDE_SHADER_COMPILER})

@@ -8,11 +8,11 @@
 
 namespace anki {
 
-ANKI_SVAR(GpuVisibleTransientMemory, StatCategory::kGpuMem, "GPU visible transient mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, GpuVisibleTransientMemory, StatCategory::kGpuMem, "GPU visible transient mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 void GpuVisibleTransientMemoryPool::endFrame()
 {
-	g_svarGpuVisibleTransientMemory.set(m_pool.getAllocatedMemory());
+	g_svarGpuMemGpuVisibleTransientMemory.set(m_pool.getAllocatedMemory());
 
 	// This is GPU only memory so next frame can start re-using immediately
 	m_pool.reset();

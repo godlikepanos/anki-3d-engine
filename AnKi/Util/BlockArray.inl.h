@@ -42,7 +42,7 @@ typename BlockArray<T, TConfig, TMemoryPool>::Iterator BlockArray<T, TConfig, TM
 	// Search for a block with free elements
 	for(U32 i = 0; i < m_blockStorages.getSize(); ++i)
 	{
-		if(m_blockMetadatas[i].m_elementsInUseMask.getSetBitCount() < kElementCountPerBlock)
+		if(m_blockMetadatas[i].m_elementsInUseMask.countSetBits() < kElementCountPerBlock)
 		{
 			// Found a block, allocate from it
 			auto unsetBits = ~m_blockMetadatas[i].m_elementsInUseMask;
@@ -101,7 +101,7 @@ void BlockArray<T, TConfig, TMemoryPool>::erase(Iterator it)
 	reinterpret_cast<T*>(&block->m_storage[localIdx * sizeof(T)])->~T();
 
 	inUseMask.unset(localIdx);
-	if(inUseMask.getSetBitCount() == 0)
+	if(inUseMask.countSetBits() == 0)
 	{
 		// Block is empty, delete it
 		getMemoryPool().free(block);
@@ -203,7 +203,7 @@ void BlockArray<T, TConfig, TMemoryPool>::validate() const
 	for(U32 i = 0; i < m_blockStorages.getSize(); ++i)
 	{
 		const Mask& mask = m_blockMetadatas[i].m_elementsInUseMask;
-		const U32 lcount = mask.getSetBitCount();
+		const U32 lcount = mask.countSetBits();
 		if(lcount == 0)
 		{
 			ANKI_ASSERT(m_blockStorages[i] == nullptr);

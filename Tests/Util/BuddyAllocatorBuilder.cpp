@@ -93,8 +93,8 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 		// Get the fragmentation
 		BuddyAllocatorBuilderStats stats;
 		buddy.getStats(stats);
-		ANKI_TEST_LOGI("Memory info: userAllocatedSize %zu, realAllocatedSize %zu, externalFragmentation %f, "
-					   "internalFragmentation %f",
+		ANKI_TEST_LOGI("Memory info: userAllocatedSize {}, realAllocatedSize {}, externalFragmentation {:f}, "
+					   "internalFragmentation {:f}",
 					   stats.m_userAllocatedSize, stats.m_realAllocatedSize, stats.m_externalFragmentation, stats.m_internalFragmentation);
 
 		// Remove the remaining

@@ -41,7 +41,7 @@ ANKI_CVAR(NumericCVar<U8>, Gr, Device, 0, 0, 16, "Choose an available device. De
 ANKI_CVAR(BoolCVar, Gr, RayTracing, false, "Try enabling ray tracing")
 ANKI_CVAR(BoolCVar, Gr, Vrs, false, "Enable or not VRS")
 ANKI_CVAR(BoolCVar, Gr, WorkGraphcs, false, "Enable or not WorkGraphs")
-ANKI_CVAR(NumericCVar<U32>, Gr, MaxBindlessSampledTextureCount, 512, 16, kMaxU16)
+ANKI_CVAR(NumericCVar<U32>, Gr, MaxBindlessSampledTextureCount, 4 * 1024, 16, kMaxU16)
 ANKI_CVAR(NumericCVar<Second>, Gr, GpuTimeout, 120.0, 0.0, 24.0 * 60.0,
 		  "Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout")
 ANKI_CVAR(NumericCVar<U8>, Gr, AsyncCompute, 0, 0, 2,
@@ -484,6 +484,7 @@ enum class TextureUsageBit : U32
 	kAllWrite = kAllUav | kRtvDsvWrite | kCopyDestination,
 	kAll = kAllRead | kAllWrite,
 	kAllShaderResource = kAllSrv | kAllUav,
+	kAllAsyncCompute = kSrvCompute | kUavCompute | kCopyDestination | kPresent
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
@@ -699,6 +700,9 @@ enum class BufferUsageBit : U64
 
 	kAllShaderResource = kAllConstant | kAllSrv | kAllUav,
 
+	kAllAsyncCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute | kCopySource | kCopyDestination | kAccelerationStructureBuild
+					   | kAccelerationStructureBuildScratch,
+
 	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
@@ -749,7 +753,8 @@ enum class AccelerationStructureUsageBit : U8
 	kAllGraphics = kSrvGeometry | kSrvPixel,
 	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
 	kAllRead = kAttach | kSrvGeometry | kSrvPixel | kSrvCompute | kSrvDispatchRays,
-	kAllWrite = kBuild
+	kAllWrite = kBuild,
+	kAllAsyncCompute = kBuild | kSrvCompute
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
 
@@ -1003,7 +1008,7 @@ public:
 						|| m_vertex.m_vkVertexAttributeLocations[semantic] != kMaxU8);
 		}
 
-		const U32 attachmentCount = m_pixel.m_colorRenderTargetWritemask.getSetBitCount();
+		const U32 attachmentCount = m_pixel.m_colorRenderTargetWritemask.countSetBits();
 		for(U32 i = 0; i < attachmentCount; ++i)
 		{
 			ANKI_ASSERT(m_pixel.m_colorRenderTargetWritemask.get(i) && "Should write to all attachments");

@@ -13,12 +13,12 @@ ANKI_TEST(Script, LuaBinder)
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 
 	{
-		ScriptEnvironment env;
+		ScriptEnvironmentPtr env = ScriptManager::getSingleton().newScriptEnvironment();
 
 		Vec3 v3(1.1f, 2.2f, 3.3f);
-		env.exposeVariable("v3", &v3);
+		env->exposeVariable("v3", &v3);
 
-		ANKI_TEST_EXPECT_NO_ERR(env.evalString(R"(
+		ANKI_TEST_EXPECT_NO_ERR(env->evalString(R"(
 v3.x = v3.x + 10.0
 )"));
 
@@ -26,12 +26,12 @@ v3.x = v3.x + 10.0
 	}
 
 	{
-		ScriptEnvironment env;
+		ScriptEnvironmentPtr env = ScriptManager::getSingleton().newScriptEnvironment();
 
 		Vec3 v3(1.1f, 2.2f, 3.3f);
-		env.exposeVariable("v3", &v3);
+		env->exposeVariable("v3", &v3);
 
-		ANKI_TEST_EXPECT_NO_ERR(env.evalString(R"(
+		ANKI_TEST_EXPECT_NO_ERR(env->evalString(R"(
 v3:copy(v3 + 10.0)
 v3:copy(v3 + Vec3.new(20))
 )"));

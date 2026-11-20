@@ -7,27 +7,31 @@
 
 using namespace anki;
 
+enum class DroidAnimation : U32
+{
+	kFloat,
+	kWave
+};
+
 class MyApp : public SampleApp
 {
 public:
 	using SampleApp::SampleApp;
 
-	AnimationResourcePtr m_floatAnim;
-	AnimationResourcePtr m_waveAnim;
+	Error userPreInit() final
+	{
+		ANKI_CHECK(SampleApp::userPreInit());
+		g_cvarCoreStartupScene = "Assets/Scene.lua";
+		return Error::kNone;
+	}
 
 	Error userPostInit() override
 	{
-		ScriptResourcePtr script;
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
-		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
+		SkinComponent& skinc = SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>();
+		skinc.registerAnimation(DroidAnimation::kFloat, "Assets/float.001_ccb9eb33e30c8fa4.ankianim");
+		skinc.registerAnimation(DroidAnimation::kWave, "Assets/wave_6cf284ed471bff3b.ankianim");
 
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/float.001_ccb9eb33e30c8fa4.ankianim", m_floatAnim));
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/wave_6cf284ed471bff3b.ankianim", m_waveAnim));
-
-		AnimationPlayInfo animInfo;
-		animInfo.m_startTime = 2.0;
-		animInfo.m_repeatTimes = -1.0;
-		SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>().playAnimation(0, m_floatAnim, animInfo);
+		skinc.playAnimation(0, DroidAnimation::kFloat, 0.0, AnimationStart::kNow).m_repeatTimes = -1.0f;
 
 		g_cvarRenderBloomThreshold = 5.0f;
 		return Error::kNone;
@@ -37,12 +41,10 @@ public:
 	{
 		if(Input::getSingleton().getKey(KeyCode::kZ) == 1)
 		{
-			AnimationPlayInfo animInfo;
-			animInfo.m_startTime = 0.5;
-			animInfo.m_repeatTimes = 3.0;
-			animInfo.m_blendInTime = 0.5;
-			animInfo.m_blendOutTime = 0.35;
-			SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>().playAnimation(1, m_waveAnim, animInfo);
+			SkinComponent& skinc = SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>();
+			AnimationState& state = skinc.playAnimation(1, DroidAnimation::kWave, 0.5, AnimationStart::kNow);
+			skinc.getAnimationTrackState(1).m_blendInTime = skinc.getAnimationTrackState(1).m_blendOutTime = 0.6;
+			state.m_repeatTimes = 3.0f;
 		}
 
 		return SampleApp::userMainLoop(quit, elapsedTime);

@@ -14,7 +14,7 @@
 
 namespace anki {
 
-ANKI_SVAR(BodiesCreated, StatCategory::kScene, "Bodies created", StatFlag::kNone)
+ANKI_SVAR(Scene, BodiesCreated, StatCategory::kScene, "Bodies created", StatFlag::kNone)
 
 BodyComponent::BodyComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
@@ -87,6 +87,7 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
+		init.m_friction = m_friction;
 		// The node ignores its parent so local == world. Use local: it's the fresh value here, because MoveComponent (which recomputes the world
 		// transform via updateTransform()) updates after us.
 		init.m_transform = m_node->getLocalTransform();
@@ -135,7 +136,7 @@ void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_body->setUserData(this);
 		m_creationScale = init.m_transform.getScale().xyz;
 
-		g_svarBodiesCreated.increment(1);
+		g_svarSceneBodiesCreated.increment(1);
 
 		// Adopt the body's current version so next frame's readback doesn't echo our own creation transform back into the node.
 		m_body->getTransform(&m_transformVersion);
@@ -219,6 +220,7 @@ Error BodyComponent::serialize(SceneSerializer& serializer)
 	ANKI_SERIALIZE(m_sphere.m_radius, 1);
 	ANKI_SERIALIZE(m_mass, 1);
 	ANKI_SERIALIZE(m_shapeType, 1);
+	ANKI_SERIALIZE(m_friction, 1);
 	return Error::kNone;
 }
 

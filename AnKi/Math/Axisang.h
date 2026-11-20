@@ -185,7 +185,7 @@ public:
 	/// @{
 	String toString() const requires(std::is_floating_point<T>::value)
 	{
-		return String().sprintf("%f %f %f | %f", m_axis.x, m_axis.y, m_axis.z, m_ang);
+		return String().format("{} {} {} | {}", m_axis.x, m_axis.y, m_axis.z, m_ang);
 	}
 	/// @}
 

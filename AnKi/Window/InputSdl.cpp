@@ -158,7 +158,7 @@ void InputSdl::openFirstGamepad()
 	SDL_JoystickID* ids = SDL_GetGamepads(&count);
 	if(!ids)
 	{
-		ANKI_WIND_LOGE("SDL_GetGamepads() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_GetGamepads() failed: {}", SDL_GetError());
 		return;
 	}
 
@@ -167,11 +167,11 @@ void InputSdl::openFirstGamepad()
 		m_gamepad = SDL_OpenGamepad(ids[i]);
 		if(m_gamepad)
 		{
-			ANKI_WIND_LOGI("Gamepad connected: %s", SDL_GetGamepadName(m_gamepad));
+			ANKI_WIND_LOGI("Gamepad connected: {}", SDL_GetGamepadName(m_gamepad));
 			break;
 		}
 
-		ANKI_WIND_LOGE("SDL_OpenGamepad() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_OpenGamepad() failed: {}", SDL_GetError());
 	}
 
 	SDL_free(ids);
@@ -208,7 +208,7 @@ Error InputSdl::initInternal()
 	{
 		if(!m_cursors[cursor])
 		{
-			ANKI_WIND_LOGE("Failed to create cursor: %u", U32(cursor));
+			ANKI_WIND_LOGE("Failed to create cursor: {}", U32(cursor));
 			return Error::kFunctionFailed;
 		}
 	}
@@ -262,7 +262,7 @@ Error InputSdl::handleEventsInternal()
 	KeyCode akkey = KeyCode::kCount;
 	if(!SDL_StartTextInput(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow))
 	{
-		ANKI_WIND_LOGE("SDL_StartTextInput() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_StartTextInput() failed: {}", SDL_GetError());
 	}
 
 	MouseButton scrollKeyEvent = MouseButton::kCount;
@@ -325,7 +325,7 @@ Error InputSdl::handleEventsInternal()
 		case SDL_EVENT_GAMEPAD_REMOVED:
 			if(m_gamepad && event.gdevice.which == SDL_GetGamepadID(m_gamepad))
 			{
-				ANKI_WIND_LOGI("Gamepad removed: %s", SDL_GetGamepadName(m_gamepad));
+				ANKI_WIND_LOGI("Gamepad removed: {}", SDL_GetGamepadName(m_gamepad));
 				closeGamepad();
 
 				// Fall back to another gamepad if one is still around
@@ -406,24 +406,24 @@ Error InputSdl::handleEventsInternal()
 		{
 			if(!SDL_HideCursor())
 			{
-				ANKI_WIND_LOGE("SDL_HideCursor() failed: %s", SDL_GetError());
+				ANKI_WIND_LOGE("SDL_HideCursor() failed: {}", SDL_GetError());
 			}
 
 			if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, true))
 			{
-				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
+				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: {}", SDL_GetError());
 			}
 		}
 		else
 		{
 			if(!SDL_ShowCursor())
 			{
-				ANKI_WIND_LOGE("SDL_ShowCursor() failed: %s", SDL_GetError());
+				ANKI_WIND_LOGE("SDL_ShowCursor() failed: {}", SDL_GetError());
 			}
 
 			if(!SDL_SetWindowRelativeMouseMode(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, false))
 			{
-				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: %s", SDL_GetError());
+				ANKI_WIND_LOGE("SDL_SetWindowRelativeMouseMode() failed: {}", SDL_GetError());
 			}
 		}
 

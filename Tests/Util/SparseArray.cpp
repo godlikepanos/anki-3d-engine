@@ -391,7 +391,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		timer.stop();
 		Second stlTime = timer.getElapsedTime();
 
-		ANKI_TEST_LOGI("Inserting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
+		ANKI_TEST_LOGI("Inserting bench: STL {:f} AnKi {:f} | {:f}%", stlTime, akTime, stlTime / akTime * 100.0);
 	}
 
 	// Search
@@ -421,13 +421,13 @@ ANKI_TEST(Util, SparseArrayBench)
 		Second stlTime = timer.getElapsedTime();
 
 		// Print the "count" so that the compiler won't optimize it
-		ANKI_TEST_LOGI("Find bench: STL %f AnKi %f | %f%% (r:%d)", stlTime, akTime, stlTime / akTime * 100.0, count);
+		ANKI_TEST_LOGI("Find bench: STL {:f} AnKi {:f} | {:f}% (r:{})", stlTime, akTime, stlTime / akTime * 100.0, count);
 	}
 
 	// Mem usage
 	const I64 stlMemUsage = stlMaxAllocSize + sizeof(stdMap);
 	const I64 akMemUsage = akMaxAllocSize + sizeof(akMap);
-	ANKI_TEST_LOGI("Max mem usage: STL %li AnKi %li | %f%% (At any given time what was the max mem usage)", stlMemUsage, akMemUsage,
+	ANKI_TEST_LOGI("Max mem usage: STL {} AnKi {} | {:f}% (At any given time what was the max mem usage)", stlMemUsage, akMemUsage,
 				   F64(stlMemUsage) / F32(akMemUsage) * 100.0f);
 
 	// Deletes
@@ -459,7 +459,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			stlTime += timer.getElapsedTime();
 		}
 
-		ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
+		ANKI_TEST_LOGI("Deleting bench: STL {:f} AnKi {:f} | {:f}%", stlTime, akTime, stlTime / akTime * 100.0);
 	}
 
 	akMap.destroy();

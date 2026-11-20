@@ -399,7 +399,7 @@ private:
 	class RenderTargetCacheEntry
 	{
 	public:
-		GrDynamicArray<TextureInternalPtr> m_textures;
+		GrDynamicArray<TexturePtr> m_textures;
 		GrDynamicArray<SegregatedListsGpuMemoryPoolAllocation> m_texAllocations;
 		U32 m_texturesInUse = 0;
 	};
@@ -422,8 +422,8 @@ private:
 	class StatsElement
 	{
 	public:
-		TimestampQueryInternalPtr m_frameStartTimestamp;
-		TimestampQueryInternalPtr m_frameEndTimestamp;
+		TimestampQueryPtr m_frameStartTimestamp;
+		TimestampQueryPtr m_frameEndTimestamp;
 		Second m_cpuStartTime;
 	};
 
@@ -448,7 +448,7 @@ private:
 	void minimizeSubchannelSwitches();
 	void sortBatchPasses();
 
-	TextureInternalPtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
+	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
 
 	// Every N number of frames clean unused cached items.
 	void periodicCleanup();

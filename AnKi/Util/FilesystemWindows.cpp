@@ -45,7 +45,7 @@ Error removeDirectory(const CString& dirname)
 	I result = SHFileOperationA(&fileOperation);
 	if(result != 0)
 	{
-		ANKI_UTIL_LOGE("Could not delete directory %s", &dirname[0]);
+		ANKI_UTIL_LOGE("Could not delete directory {}", dirname);
 		err = Error::kFunctionFailed;
 	}
 
@@ -57,7 +57,7 @@ Error createDirectory(const CString& dir)
 	Error err = Error::kNone;
 	if(CreateDirectoryA(dir.cstr(), NULL) == 0)
 	{
-		ANKI_UTIL_LOGE("Failed to create directory %s", dir.cstr());
+		ANKI_UTIL_LOGE("Failed to create directory {}", dir);
 		err = Error::kFunctionFailed;
 	}
 

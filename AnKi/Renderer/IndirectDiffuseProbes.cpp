@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Sky.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
@@ -20,8 +21,8 @@
 
 namespace anki {
 
-ANKI_SVAR(GiProbeRenderCount, StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(GiProbeCellsRenderCount, StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GiProbeRenderCount, StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GiProbeCellsRenderCount, StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates)
 
 static Vec3 computeCellCenter(U32 cellIdx, const GlobalIlluminationProbeComponent& probe)
 {
@@ -73,7 +74,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 		{
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("GI GBuff Col #%u", i).toCString());
+			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().format("GI GBuff Col #{}", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
@@ -161,7 +162,7 @@ void IndirectDiffuseProbes::populateRenderGraph()
 	const Bool probeTouchedFirstTime = probeToRefresh->getNextCellForRefresh() == 0;
 	if(probeTouchedFirstTime)
 	{
-		g_svarGiProbeRenderCount.increment(1);
+		g_svarRenderGiProbeRenderCount.increment(1);
 	}
 
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
@@ -240,6 +241,11 @@ void IndirectDiffuseProbes::populateRenderGraph()
 
 				pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
+
 				pass.setWork([this, visOut, viewProjMat = frustum.getViewProjectionMatrix(),
 							  viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseGBuffer);
@@ -305,6 +311,11 @@ void IndirectDiffuseProbes::populateRenderGraph()
 				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllRtvDsv,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 				pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
+
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 				pass.setWork([this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseShadows);
@@ -474,7 +485,7 @@ void IndirectDiffuseProbes::populateRenderGraph()
 		}
 
 		probeToRefresh->incrementRefreshedCells(1);
-		g_svarGiProbeCellsRenderCount.increment(1);
+		g_svarRenderGiProbeCellsRenderCount.increment(1);
 	}
 }
 

@@ -110,10 +110,10 @@ Error CoreTracer::init(CString directory)
 
 	std::tm tm = getLocalTime();
 	CoreString fname;
-	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
+	fname.format("{}/{}{:02}{:02}-{:02}{:02}_", directory, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
 
-	m_traceJsonFilename.sprintf("%strace.json", fname.cstr());
-	m_countersCsvFilename.sprintf("%scounters.csv", fname.cstr());
+	m_traceJsonFilename.format("{}trace.json", fname);
+	m_countersCsvFilename.format("{}counters.csv", fname);
 
 	return Error::kNone;
 }
@@ -175,7 +175,7 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 	{
 		ANKI_CHECK(m_traceJsonFile.open(m_traceJsonFilename, FileOpenFlag::kWrite));
 		ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
-		ANKI_CORE_LOGI("Trace file created: %s", m_traceJsonFilename.cstr());
+		ANKI_CORE_LOGI("Trace file created: {}", m_traceJsonFilename);
 	}
 
 	// First sort them to fix overlaping in chrome
@@ -192,9 +192,9 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 		// Do a hack
 		const ThreadId tid = (event.m_name == "GpuFrameTime") ? 1 : item.m_tid;
 
-		ANKI_CHECK(m_traceJsonFile.writeTextf("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
-											  "\"pid\": 1, \"tid\": %" PRIu64 ", \"ts\": %" PRIi64 ", \"dur\": %" PRIi64 "},\n",
-											  event.m_name.cstr(), tid, startMicroSec, durMicroSec));
+		ANKI_CHECK(
+			m_traceJsonFile.writeTextf("{{\"name\": \"{}\", \"cat\": \"PERF\", \"ph\": \"X\", \"pid\": 1, \"tid\": {}, \"ts\": {}, \"dur\": {}}},\n",
+									   event.m_name, tid, startMicroSec, durMicroSec));
 	}
 
 	// Store counters
@@ -351,20 +351,20 @@ Error CoreTracer::writeCountersOnShutdown()
 
 	File countersCsvFile;
 	ANKI_CHECK(countersCsvFile.open(m_countersCsvFilename, FileOpenFlag::kWrite));
-	ANKI_CORE_LOGI("Counter file created: %s", m_countersCsvFilename.cstr());
+	ANKI_CORE_LOGI("Counter file created: {}", m_countersCsvFilename);
 
 	// Write the header
 	ANKI_CHECK(countersCsvFile.writeText("Frame"));
 	for(U32 i = 0; i < m_counterNames.getSize(); ++i)
 	{
-		ANKI_CHECK(countersCsvFile.writeTextf(",%s", m_counterNames[i].cstr()));
+		ANKI_CHECK(countersCsvFile.writeTextf(",{}", m_counterNames[i]));
 	}
 	ANKI_CHECK(countersCsvFile.writeText("\n"));
 
 	// Write each frame
 	for(const PerFrameCounters& frame : m_frameCounters)
 	{
-		ANKI_CHECK(countersCsvFile.writeTextf("%" PRIu64, frame.m_frame));
+		ANKI_CHECK(countersCsvFile.writeTextf("{}", frame.m_frame));
 
 		for(U32 j = 0; j < m_counterNames.getSize(); ++j)
 		{
@@ -379,7 +379,7 @@ Error CoreTracer::writeCountersOnShutdown()
 				}
 			}
 
-			ANKI_CHECK(countersCsvFile.writeTextf(",%" PRIu64, value));
+			ANKI_CHECK(countersCsvFile.writeTextf(",{}", value));
 		}
 
 		ANKI_CHECK(countersCsvFile.writeText("\n"));
@@ -394,7 +394,7 @@ Error CoreTracer::writeCountersOnShutdown()
 		{
 			Array<char, 3> columnName;
 			getSpreadsheetColumnName(i + 1, columnName);
-			ANKI_CHECK(countersCsvFile.writeTextf(",=%s(%s2:%s%zu)", func, &columnName[0], &columnName[0], m_frameCounters.getSize() + 1));
+			ANKI_CHECK(countersCsvFile.writeTextf(",={}({}2:{}{})", func, &columnName[0], &columnName[0], m_frameCounters.getSize() + 1));
 		}
 
 		ANKI_CHECK(countersCsvFile.writeText("\n"));

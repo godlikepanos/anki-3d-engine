@@ -168,7 +168,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			{
 				Lod& lod = m_lods[lodIdx];
 
-				AccelerationStructureInitInfo inf(ResourceString().sprintf("%s_%s", "BLAS", basename.cstr()));
+				AccelerationStructureInitInfo inf(ResourceString().format("BLAS_{}", basename));
 				inf.m_type = AccelerationStructureType::kBottomLevel;
 
 				inf.m_bottomLevel.m_indexBuffer = BufferView(lod.m_indexBufferAllocationToken)
@@ -215,7 +215,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	const Bool bGfxreconstruct = gr.getDeviceCapabilities().m_gfxReconstruct;
 
 	Buffer* unifiedGeometryBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
-	const BufferUsageBit unifiedGeometryBufferNonTransferUsage = unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kCopyDestination;
+	const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
+		(unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kCopyDestination) & BufferUsageBit::kAllAsyncCompute;
 
 	// Set transfer to transfer barrier because of the clear that happened while sync loading
 	const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), unifiedGeometryBufferNonTransferUsage,
@@ -419,7 +420,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			{
 				asBarriers[lodIdx].m_as = submesh.m_blas[lodIdx].get();
 				asBarriers[lodIdx].m_previousUsage = AccelerationStructureUsageBit::kBuild;
-				asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kAllRead;
+				asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kAllAsyncCompute;
 			}
 
 			copyEngine.setPipelineBarrier({}, {}, {&asBarriers[0], m_lods.getSize()});

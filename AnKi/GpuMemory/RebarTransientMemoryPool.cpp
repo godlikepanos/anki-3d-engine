@@ -12,7 +12,7 @@
 
 namespace anki {
 
-ANKI_SVAR(RebarUserMemory, StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, RebarUsedMemory, StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 RebarTransientMemoryPool::~RebarTransientMemoryPool()
 {
@@ -87,8 +87,8 @@ BufferView RebarTransientMemoryPool::allocateInternal(PtrSize origSize, U32 alig
 
 		if(overlaps)
 		{
-			ANKI_GPUMEM_LOGW("ReBAR has to wait for a fence. This means that the ReBAR buffer is not big enough. Increase the %s CVAR",
-							 g_cvarGpuMemRebarGpuMemorySize.getName().cstr());
+			ANKI_GPUMEM_LOGW("ReBAR has to wait for a fence. This means that the ReBAR buffer is not big enough. Increase the {} CVAR",
+							 g_cvarGpuMemRebarGpuMemorySize.getName());
 
 			if(!m_sliceFences[sliceIdx]->clientWait(kMaxSecond))
 			{
@@ -182,7 +182,7 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 		m_sliceFrameIndices[m_crntActiveSlice] = m_frameIndex;
 		m_sliceFences[m_crntActiveSlice].reset(fence);
 
-		if(m_activeSliceMask.getSetBitCount() == kSliceCount)
+		if(m_activeSliceMask.countSetBits() == kSliceCount)
 		{
 			// We are out of slices, wait for the oldest slice to become available
 			ANKI_GPUMEM_LOGW("Out of slices. Need to wait for something to complete");
@@ -208,7 +208,7 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 		m_sliceFences[m_crntActiveSlice].reset(fence);
 	}
 
-	if(m_activeSliceMask.getSetBitCount() == kSliceCount)
+	if(m_activeSliceMask.countSetBits() == kSliceCount)
 	{
 		// Out of slices, need to wait for the oldest slice to become available
 		ANKI_GPUMEM_LOGW("Out of slices. Need to wait for something to complete");
@@ -229,7 +229,7 @@ void RebarTransientMemoryPool::endFrame(Fence* fence)
 	// Stats
 	const PtrSize usedMemory = range;
 	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);
-	g_svarRebarUserMemory.set(usedMemory);
+	g_svarGpuMemRebarUsedMemory.set(usedMemory);
 }
 
 void RebarTransientMemoryPool::validateSlices() const

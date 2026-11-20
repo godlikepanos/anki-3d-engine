@@ -23,7 +23,7 @@
 #include <d3dx12/d3dx12_state_object.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
-#include <D3Dcompiler.h>
+#include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <wrl.h>
 #include <pix3.h>
@@ -58,7 +58,7 @@ void invokeDred();
 			{ \
 				invokeDred(); \
 			} \
-			ANKI_D3D_LOGF("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGF("D3D function failed (HRESULT: {} message: {}): {}", rez, errorMessageToString(GetLastError()), #x); \
 		} \
 	} while(0)
 
@@ -68,7 +68,7 @@ void invokeDred();
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGE("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGE("D3D function failed (HRESULT: {} message: {}): {}", rez, errorMessageToString(GetLastError()), #x); \
 			if(rez == DXGI_ERROR_DEVICE_REMOVED) \
 			{ \
 				invokeDred(); \

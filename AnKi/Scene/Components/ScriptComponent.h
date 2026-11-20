@@ -11,6 +11,18 @@
 
 namespace anki {
 
+// The Lua callbacks that a script defines
+enum class ScriptComponentFunctionMask : U8
+{
+	kNone = 0,
+	kUpdate = 1 << 0,
+	kOnAnimationStarted = 1 << 1,
+	kOnAnimationEnded = 1 << 2,
+	kOnTriggerEnter = 1 << 3,
+	kOnTriggerExit = 1 << 4,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ScriptComponentFunctionMask)
+
 // Component of scripts. It can point to a resource with the script code or have the script code embedded to it.
 class ScriptComponent : public SceneComponent
 {
@@ -43,7 +55,7 @@ public:
 
 	Bool isValid() const
 	{
-		return m_env != nullptr;
+		return m_env.isCreated();
 	}
 
 	template<typename TFunc>
@@ -69,11 +81,14 @@ public:
 	}
 #endif
 
+	// Call the onTriggerEnter or onTriggerExit with some parameters
+	ANKI_INTERNAL void callOnTrigger(Bool onEnter, SceneNode& selfNode, SceneNode& otherNode);
+
 private:
 	ScriptResourcePtr m_resource;
 	SceneString m_text;
 
-	ScriptEnvironment* m_env = nullptr;
+	ScriptEnvironmentPtr m_env;
 
 	ScriptVariables m_vars;
 
@@ -82,9 +97,13 @@ private:
 	SceneNode* m_node = nullptr;
 #endif
 
+	ScriptComponentFunctionMask m_definedFuncsMask = ScriptComponentFunctionMask::kNone; // A callback is disabled after its 1st error until a reload
+
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	Error serialize(SceneSerializer& serializer) override;
+
+	void rebuildDefinedFunctionsMask();
 };
 
 } // end namespace anki

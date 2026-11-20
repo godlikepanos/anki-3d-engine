@@ -10,6 +10,7 @@
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/ShadowMapping.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Shaders/GpuScene.h>
@@ -18,6 +19,7 @@
 #include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Scene/RenderStateBucket.h>
+#include <AnKi/Resource/StreamingImageResourceManager.h>
 
 namespace anki {
 
@@ -49,6 +51,10 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, RenderPas
 
 		ANKI_ASSERT(args.m_viewport != UVec4(0u));
 		globalConstants->m_viewport = Vec4(args.m_viewport);
+
+		globalConstants->m_textureBias = args.m_textureBias;
+		ANKI_ASSERT(args.m_textureAnisotropy > 0);
+		globalConstants->m_textureAnisotropy = F32(args.m_textureAnisotropy);
 	}
 
 	// Space 0 globals

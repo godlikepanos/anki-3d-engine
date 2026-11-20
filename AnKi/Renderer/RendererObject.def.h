@@ -13,7 +13,11 @@ ANKI_RENDERER_OBJECT_DEF(LensFlare, lensFlare, 1)
 ANKI_RENDERER_OBJECT_DEF(Bloom, bloom2, 1)
 ANKI_RENDERER_OBJECT_DEF(Tonemapping, tonemapping, 1)
 ANKI_RENDERER_OBJECT_DEF(FinalComposite, finalComposite, 1)
-ANKI_RENDERER_OBJECT_DEF(Editor, editor, g_cvarCoreShowEditor&& ANKI_WITH_EDITOR)
+#if ANKI_WITH_EDITOR
+ANKI_RENDERER_OBJECT_DEF(Editor, editor, g_cvarCoreShowEditor)
+#else
+ANKI_RENDERER_OBJECT_DEF(Editor, editor, 0)
+#endif
 ANKI_RENDERER_OBJECT_DEF(ProbeReflections, probeReflections, 1)
 ANKI_RENDERER_OBJECT_DEF(ClusterBinning, clusterBinning, 1)
 ANKI_RENDERER_OBJECT_DEF(VolumetricFog, volumetricFog, 1)
@@ -25,6 +29,8 @@ ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseProbes, indirectDiffuseProbes,
 						 !(GrManager::getSingleton().getDeviceCapabilities().m_rayTracing && g_cvarRenderIdc))
 ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseClipmaps, indirectDiffuseClipmaps,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracing&& g_cvarRenderIdc)
+ANKI_RENDERER_OBJECT_DEF(IndirectDiffuse, indirectDiffuse,
+						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracing&& g_cvarRenderIndirectDiffuse&& g_cvarRenderIdc)
 ANKI_RENDERER_OBJECT_DEF(VolumetricLightingAccumulation, volumetricLightingAccumulation, 1)
 ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
@@ -44,6 +50,7 @@ ANKI_RENDERER_OBJECT_DEF(RtMaterialFetchDbg, rtMaterialFetchDbg,
 ANKI_RENDERER_OBJECT_DEF(Reflections, reflections, 1)
 ANKI_RENDERER_OBJECT_DEF(GpuParticles, gpuParticles, 1)
 ANKI_RENDERER_OBJECT_DEF(ScreenshotPass, screenshotPass, 1)
+ANKI_RENDERER_OBJECT_DEF(ImageStreaming, imageStreaming, 1)
 
 // Util objects
 ANKI_RENDERER_OBJECT_DEF(RenderableDrawer, drawer, 1)

@@ -12,28 +12,40 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
 #include <AnKi/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Physics/PhysicsRagdoll.h>
 
 namespace anki {
 
-// Passed to SkinComponent::playAnimation
-class AnimationPlayInfo
+enum class RootMotionMode : U8
 {
-public:
-	// The time the animation will start after being pushed in SkinComponent::playAnimation()
-	Second m_startTime = 0.0;
+	// Pose untouched and root motion delta will be 0
+	kDisabled,
 
-	// Negative means infinite
-	F32 m_repeatTimes = 1.0f;
+	// Horizontal root bone motion removed and returned as root motion delta. Vertical works as kDisabled. Used in locomotion where we want the root
+	// motion delta to not consider Y axis
+	kHorizontal,
 
-	// The time from when the animation starts until it fully replaces the animations of previous tracks
-	Second m_blendInTime = 0.0f;
+	// Same as kHorizontal plus it computes the root rotation. Useful in locomotion that contains turns
+	kHorizontalAndYaw,
 
-	// The time from when the animation ends until it until it has zero influence to the animations of previous tracks
-	Second m_blendOutTime = 0.0f;
+	// Root motion stays locked in pose. Useful in animations that have root motion that we want to cancel. For example, a jump animation moves the
+	// character up. But we want the physics to drive the motion upwards, not the animation. In this case we can disable root motion
+	kLockRoot,
 
-	// For example a value of 2.0 will play the animation in double speed
-	F32 m_animationSpeedScale = 1.0f;
+	kCount,
+	kFirst = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RootMotionMode)
+
+enum class RagdollMode : U8
+{
+	kDisabled, // No physics bodies. The animations drive the pose
+	kDynamic, // The physics drive the pose. The animations keep running (time, events) but their pose is ignored. Needs a skeleton with capsules
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RagdollMode)
 
 // Skin component
 class SkinComponent : public SceneComponent
@@ -42,6 +54,7 @@ class SkinComponent : public SceneComponent
 
 public:
 	static constexpr U32 kMaxAnimationTracks = 4;
+	static constexpr U32 kMaxAnimationsPerTrack = 4;
 
 	SkinComponent(const SceneComponentInitInfo& init);
 
@@ -56,11 +69,140 @@ public:
 		return !!m_resource;
 	}
 
-	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
+	// Loads an animation resource and associates it with the animId. Can be something like registerAnimation(kWalkAnimation, "Walk.ankianim")
+	template<typename T>
+	void registerAnimation(T animId, CString animationFilepath) requires(IsAnimationId<T>)
+	{
+		registerAnimationInternal(U32(animId), animationFilepath);
+	}
+
+	// Remove the ref of the loaded animation
+	template<typename T>
+	void unregisterAnimation(T animId) requires(IsAnimationId<T>)
+	{
+		unregisterAnimationInternal(U32(animId));
+	}
+
+	// animId: The same id passed in registerAnimation()
+	// blendInTime: The time from when the animation starts until it fully replaces the previous animation in the track
+	// Returns the state of the new animation. Don't keep it around: when the animation finishes its slot gets reused by other animations
+	template<typename T>
+	AnimationState& playAnimation(U32 track, T animId, Second blendInTime, AnimationStart animStart) requires(IsAnimationId<T>)
+	{
+		return playAnimationInternal(track, U32(animId), blendInTime, animStart);
+	}
+
+	// Get the animation state of the first queued animation with the given ID
+	template<typename T>
+	AnimationState& getAnimationState(U32 track, T animId) requires(IsAnimationId<T>)
+	{
+		return getAnimationStateInternal(track, U32(animId));
+	}
+
+	template<typename T>
+	const AnimationState& getAnimationState(U32 track, T animId) const requires(IsAnimationId<T>)
+	{
+		return const_cast<SkinComponent*>(this)->getAnimationState(track, animId);
+	}
+
+	AnimationTrackState& getAnimationTrackState(U32 track)
+	{
+		if(!ANKI_EXPECT(track < kMaxAnimationTracks))
+		{
+			track = kMaxAnimationTracks - 1;
+		}
+		return m_tracks[track].m_state;
+	}
+
+	const AnimationTrackState& getAnimationTrackState(U32 track) const
+	{
+		return const_cast<SkinComponent*>(this)->getAnimationTrackState(track);
+	}
+
+	// Returns the translation delta of the root bone since the last update. With a ragdoll it's the offset of the root bone's body from the node.
+	// Adding it every frame makes the node follow the body
+	Vec3 getRootMotionDelta() const
+	{
+		return (m_rootMotionMode == RootMotionMode::kHorizontal || m_rootMotionMode == RootMotionMode::kHorizontalAndYaw) ? m_rootMotionDelta
+																														  : Vec3(0.0f);
+	}
+
+	// Returns the yaw rotation of the root bone since the last update
+	Mat3 getRootYawDelta() const
+	{
+		if(m_rootMotionMode == RootMotionMode::kHorizontalAndYaw)
+		{
+			return Mat3(Axisang(m_rootYawDeltaAngle, m_skeletonUp));
+		}
+		else
+		{
+			return Mat3::getIdentity();
+		}
+	}
+
+	// Returns the yaw angle (around the skeleton's up) of the root bone since the last update. Similar to getRootYawDelta
+	F32 getRootYawDeltaAngle() const
+	{
+		return (m_rootMotionMode == RootMotionMode::kHorizontalAndYaw) ? m_rootYawDeltaAngle : 0.0f;
+	}
+
+	void setRootMotionMode(RootMotionMode mode)
+	{
+		if(ANKI_EXPECT(mode < RootMotionMode::kCount))
+		{
+			m_rootMotionMode = mode;
+		}
+	}
+
+	RootMotionMode getRootMotionMode() const
+	{
+		return m_rootMotionMode;
+	}
+
+	// The ragdoll exists only while the scene is not paused. Switching to kDynamic carries the momentum of the animation over to the ragdoll
+	void setRagdollMode(RagdollMode mode)
+	{
+		if(ANKI_EXPECT(mode < RagdollMode::kCount))
+		{
+			m_ragdollMode = mode;
+		}
+	}
+
+	RagdollMode getRagdollMode() const
+	{
+		return m_ragdollMode;
+	}
+
+	// The total mass in kg. Used the next time the ragdoll is created
+	void setRagdollMass(F32 mass)
+	{
+		if(ANKI_EXPECT(mass > 0.0f))
+		{
+			m_ragdollMass = mass;
+		}
+	}
+
+	F32 getRagdollMass() const
+	{
+		return m_ragdollMass;
+	}
+
+	void setRagdollFriction(F32 friction)
+	{
+		if(ANKI_EXPECT(friction >= 0.0f))
+		{
+			m_ragdollFriction = friction;
+		}
+	}
+
+	F32 getRagdollFriction() const
+	{
+		return m_ragdollFriction;
+	}
 
 	Bool isValid() const
 	{
-		return m_resource.isCreated();
+		return m_resource.isCreated() && m_boneTrfs[0].getSize() > 0;
 	}
 
 	ANKI_INTERNAL ConstWeakArray<Mat3x4> getBoneTransforms() const
@@ -75,7 +217,7 @@ public:
 		return m_boneTrfs[m_prevBoneTrfs];
 	}
 
-	ANKI_INTERNAL const SkeletonResourcePtr& getSkeleronResource() const
+	ANKI_INTERNAL const SkeletonResourcePtr& getSkeletonResource() const
 	{
 		ANKI_ASSERT(isValid());
 		return m_resource;
@@ -99,17 +241,60 @@ public:
 		return m_boneTransformsReallocatedThisFrame;
 	}
 
+	ANKI_INTERNAL SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+
+	ANKI_INTERNAL ConstWeakArray<std::pair<U32, U32>> getAnimationsStarted() const
+	{
+		return m_animationsStarted;
+	}
+
+	ANKI_INTERNAL ConstWeakArray<std::pair<U32, U32>> getAnimationsEnded() const
+	{
+		return m_animationsEnded;
+	}
+
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL Bool getPlayOnEditor() const
+	{
+		return m_playOnEditor;
+	}
+
+	ANKI_INTERNAL void setPlayOnEditor(Bool play)
+	{
+		m_playOnEditor = play;
+	}
+#endif
+
 private:
+	class Animation
+	{
+	public:
+		AnimationResourcePtr m_resource;
+		Second m_blendInTime = 0.0;
+		AnimationStart m_start = AnimationStart::kNow;
+		U32 m_animId = kMaxU32;
+
+		AnimationState m_state;
+
+		Second m_interpolationAnimTime = kMaxSecond; // Tracking the time passed to AnimationResource::interpolate()
+		Vec3 m_rootPosition = Vec3(0.0f); // The position of the root bone
+		Quat m_rootRotation = Quat::getIdentity(); // The rotation of the root bone
+
+		Bool m_started = false;
+	};
+
 	class Track
 	{
 	public:
-		AnimationResourcePtr m_anim;
-		Second m_absoluteStartTime = 0.0;
-		Second m_relativeTimePassed = 0.0;
-		Second m_blendInTime = 0.0;
-		Second m_blendOutTime = 0.0f;
-		F32 m_repeatTimes = 1.0f;
-		F32 m_animationSpeedScale = 1.0f;
+		Array<Animation, kMaxAnimationsPerTrack> m_anims;
+
+		AnimationTrackState m_state;
+
+		U32 m_crntAnimationIdx = 0; // The animation that plays now
+		U32 m_lastAnimationIdx = 0; // The last queued animation
 	};
 
 	class Trf
@@ -120,26 +305,71 @@ private:
 		F32 m_scale;
 	};
 
+	SceneNode* m_node = nullptr;
 	SkeletonResourcePtr m_resource;
 	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
-	SceneDynamicArray<Trf> m_animationTrfs;
+	SceneDynamicArray<Trf> m_trackPoseTrfs; // Scratch pose of a single track
+	Array<SceneDynamicArray<Trf>, 2> m_poseTrfs; // The final pose after all tracks are combined. In bone's local space
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Array<Track, kMaxAnimationTracks> m_tracks;
-	Second m_absoluteTime = 0.0;
-	U8 m_crntBoneTrfs = 0;
-	U8 m_prevBoneTrfs = 1;
+
+	SceneHashMap<U32, std::pair<AnimationResourcePtr, U32>> m_idToAnimationResource;
+
+	AnimationState m_dummyState;
+
+	// The events of the last update. Read by the callbacks
+	SceneDynamicArray<std::pair<U32, U32>> m_animationsStarted;
+	SceneDynamicArray<std::pair<U32, U32>> m_animationsEnded;
+
+	// The events gathered until the end of the update. Separate from the above so callbacks that call playAnimation() don't modify what they iterate
+	SceneDynamicArray<std::pair<U32, U32>> m_pendingAnimationsStarted;
+	SceneDynamicArray<std::pair<U32, U32>> m_pendingAnimationsEnded;
+
+	// For root motion calculation:
+	U32 m_rootBoneIdx = kMaxU32; // Cache it
+	Vec3 m_skeletonUp = Vec3(0.0f, 1.0f, 0.0f); // The up direction in skeleton space
+	Vec3 m_skeletonForward = Vec3(0.0f, 0.0f, 1.0f); // The forward direction in skeleton space
+	Vec3 m_rootRestPosition = Vec3(0.0f); // Rest translation of the root bone in skeleton space
+	Quat m_rootRestRot = Quat::getIdentity();
+	Vec3 m_rootMotionDelta = Vec3(0.0f);
+	F32 m_rootYawDeltaAngle = 0.0f;
+	RootMotionMode m_rootMotionMode = RootMotionMode::kDisabled;
+
+	PhysicsRagdollPtr m_ragdoll; // Exists while the ragdoll mode is kDynamic and the scene is not paused
+	F32 m_ragdollMass = 80.0f;
+	F32 m_ragdollFriction = 0.5f;
+	RagdollMode m_ragdollMode = RagdollMode::kDisabled;
+
+	U8 m_crntBoneTrfs : 1 = 0;
+	U8 m_prevBoneTrfs : 1 = 1;
+	U8 m_crntPoseTrfs : 1 = 0;
+	U8 m_prevPoseTrfs : 1 = 1;
 
 	Bool m_updatedLastFrame : 1 = true;
 	Bool m_resourceDirty : 1 = true;
 	Bool m_boneTransformsReallocatedThisFrame : 1 = false;
+#if ANKI_WITH_EDITOR
+	Bool m_playOnEditor : 1 = false;
+#endif
 
 	GpuSceneBufferAllocation m_gpuSceneBoneTransforms;
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
+	// prevPoseValid: m_poseTrfs[m_prevPoseTrfs] is the pose of the previous frame
+	void updateRagdoll(SceneComponentUpdateInfo& info, Bool prevPoseValid);
+
 	Error serialize(SceneSerializer& serializer) override;
 
-	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend);
+	void visitBones(const Bone& bone, const Mat3x4& parentTrf, Vec4& minExtend, Vec4& maxExtend);
+
+	void registerAnimationInternal(U32 animId, CString animationFilepath);
+
+	void unregisterAnimationInternal(U32 animId);
+
+	AnimationState& playAnimationInternal(U32 track, U32 animId, Second blendInTime, AnimationStart animStart);
+
+	AnimationState& getAnimationStateInternal(U32 trackIdx, U32 animId);
 };
 
 } // end namespace anki

@@ -7,7 +7,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Script/ScriptEnvironment.h>
+#include <AnKi/Script/ScriptManager.h>
 
 namespace anki {
 
@@ -78,6 +78,7 @@ enum class AssetFileType : U32
 	kParticleEmitter,
 	kScene,
 	kAnimation,
+	kSkeleton,
 };
 
 class AssetBrowserUi::AssetFile
@@ -253,6 +254,10 @@ void AssetBrowserUi::buildAssetStructure(DynamicArray<AssetDir>& dirs)
 			{
 				filetype = AssetFileType::kAnimation;
 			}
+			else if(extension == "ankiskel")
+			{
+				filetype = AssetFileType::kSkeleton;
+			}
 
 			if(filetype != AssetFileType::kNone)
 			{
@@ -374,7 +379,15 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
 		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
 
-		m_imageViewerWindow.drawWindow(initialPos, initialSize, 0);
+		m_texViewerWindow.drawWindow(initialPos, initialSize, 0);
+	}
+
+	{
+		const Vec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+		const Vec2 initialSize = Vec2(viewportSize.y * 0.75f);
+		const Vec2 initialPos = (viewportSize - initialSize) / 2.0f;
+
+		m_skeletonEditorWindow.drawWindow(initialPos, initialSize, 0);
 	}
 
 	{
@@ -456,7 +469,7 @@ void AssetBrowserUi::drawWindow(Vec2 initialPosition, Vec2 initialSize, CString 
 
 			if(err)
 			{
-				ANKI_LOGE("Error saving the script file: %s", file.m_diskFilepath.cstr());
+				ANKI_EDITOR_LOGE("Error saving the script file: {}", file.m_diskFilepath);
 			}
 			else
 			{
@@ -511,6 +524,7 @@ void AssetBrowserUi::drawDirPath()
 	if(ImGui::Button(ICON_MDI_FOLDER " /"))
 	{
 		m_rightClickSelectedFilepath.destroy();
+		m_selectedDirPath.destroy();
 	}
 
 	// Draw the buttons
@@ -518,7 +532,7 @@ void AssetBrowserUi::drawDirPath()
 	{
 		ImGui::SameLine();
 
-		if(ImGui::Button(String().sprintf("%s/", dir->m_dirname.cstr()).cstr()))
+		if(ImGui::Button(String().format("{}/", dir->m_dirname).cstr()))
 		{
 			m_selectedDirPath = dir->m_diskFilepath;
 		}
@@ -542,8 +556,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 	const F32 cellWidth = F32(m_cellSize) * 16;
 	const U32 columnCount = U32(ImGui::GetContentRegionAvail().x / cellWidth);
 	ImGui::SetNextItemWidth(-1.0f);
-	const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter
-								  | ImGuiTableFlags_BordersV | ImGuiTableFlags_ContextMenuInBody;
+	const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_ContextMenuInBody;
 
 	if(filteredItems.getSize() && columnCount && ImGui::BeginTable("Grid", columnCount, flags))
 	{
@@ -578,7 +591,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					if(isDir)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_FOLDER, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_FOLDER))
 						{
 							m_selectedDirPath = dir.m_diskFilepath;
 						}
@@ -614,8 +627,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 						id.m_textureSubresource = TextureSubresourceDesc::all();
 						if(ImGui::ImageButton("##", id, calcIconButtonSize()))
 						{
-							m_imageViewerWindow.m_image = img;
-							m_imageViewerWindow.m_open = true;
+							m_texViewerWindow.open(img.get());
 						}
 
 						dragDropSource(file, kTextureAssetDragDropPayload);
@@ -623,7 +635,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kParticleEmitter)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_CREATION, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_CREATION))
 						{
 							ParticleEmitterResource2Ptr rsrc;
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
@@ -636,12 +648,12 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kScene)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_CURTAINS, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_CURTAINS))
 						{
 							Scene* scene = nullptr;
 							if(SceneGraph::getSingleton().loadScene(file.m_resourceFilepath, scene))
 							{
-								ANKI_LOGE("Failed to load scene: %s", file.m_resourceFilepath.cstr());
+								ANKI_EDITOR_LOGE("Failed to load scene: {}", file.m_resourceFilepath);
 							}
 							else
 							{
@@ -653,7 +665,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kLua)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_LANGUAGE_LUA))
 						{
 							ScriptResourcePtr rsrc;
 							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
@@ -668,13 +680,25 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 					else if(file.m_type == AssetFileType::kAnimation)
 					{
 						pushFontSize();
-						if(ImGui::Button(ICON_MDI_ANIMATION, calcIconButtonSize()))
+						if(ImGui::Button(ICON_MDI_ANIMATION))
 						{
-							ANKI_LOGE("TODO");
+							ANKI_EDITOR_LOGE("TODO");
 						}
 
 						ImGui::PopFont();
 						dragDropSource(file, kAnimationAssetDragDropPayload);
+					}
+					else if(file.m_type == AssetFileType::kSkeleton)
+					{
+						pushFontSize();
+						if(ImGui::Button(ICON_MDI_BONE))
+						{
+							SkeletonResourcePtr rsrc;
+							ANKI_CHECKF(ResourceManager::getSingleton().loadResource(file.m_resourceFilepath, rsrc));
+							m_skeletonEditorWindow.open(*rsrc);
+						}
+						ImGui::PopFont();
+						dragDropSource(file, kSkeletonAssetDragDropPayload);
 					}
 
 					ImGui::PopID();
@@ -751,7 +775,7 @@ void AssetBrowserUi::rightClickMenuDialog()
 		{
 			if(removeFile(selectedFile->m_diskFilepath))
 			{
-				ANKI_LOGE("Failed to remove file: %s", selectedFile->m_diskFilepath.cstr());
+				ANKI_EDITOR_LOGE("Failed to remove file: {}", selectedFile->m_diskFilepath);
 			}
 
 			m_refreshAssetsPathsNextTime = true;
@@ -771,10 +795,10 @@ void AssetBrowserUi::rightClickMenuDialog()
 				newFilepath += "/";
 				newFilepath += newName;
 
-				ANKI_LOGV("Will rename %s to %s", selectedFile->m_diskFilepath.cstr(), newFilepath.cstr());
+				ANKI_EDITOR_LOGV("Will rename {} to {}", selectedFile->m_diskFilepath, newFilepath);
 				if(renameFile(selectedFile->m_diskFilepath, newFilepath))
 				{
-					ANKI_LOGE("Renaming failed");
+					ANKI_EDITOR_LOGE("Renaming failed");
 				}
 				else
 				{
@@ -795,8 +819,8 @@ void AssetBrowserUi::rightClickMenuDialog()
 					String text;
 					if(!file.readAllText(text))
 					{
-						ScriptEnvironment env;
-						[[maybe_unused]] const Error err = env.evalString(text);
+						ScriptEnvironmentPtr env = ScriptManager::getSingleton().newScriptEnvironment();
+						[[maybe_unused]] const Error err = env->evalString(text);
 					}
 				}
 			}
@@ -821,7 +845,7 @@ void AssetBrowserUi::drawMenu()
 		while(index < 10)
 		{
 			String filename;
-			filename.sprintf("%04u.%s", index, suffix.cstr());
+			filename.format("{:04}.{}", index, suffix);
 			String diskFilepath = m_runCtx.m_selectedDir->m_diskFilepath + "/" + filename;
 
 			if(!fileExists(diskFilepath))
@@ -835,13 +859,13 @@ void AssetBrowserUi::drawMenu()
 
 				if(err)
 				{
-					ANKI_LOGE("Failed to create new file: %s", diskFilepath.cstr());
+					ANKI_EDITOR_LOGE("Failed to create new file: {}", diskFilepath);
 				}
 				else
 				{
 					outFilepath =
 						(m_runCtx.m_selectedDir->m_resourceFilepath) ? m_runCtx.m_selectedDir->m_resourceFilepath + "/" + filename : filename;
-					ANKI_LOGI("File created: %s", diskFilepath.cstr());
+					ANKI_EDITOR_LOGI("File created: {}", diskFilepath);
 				}
 
 				break;
@@ -852,7 +876,7 @@ void AssetBrowserUi::drawMenu()
 
 		if(index == 10)
 		{
-			ANKI_LOGE("Failed to create file: %s", suffix.cstr());
+			ANKI_EDITOR_LOGE("Failed to create file: {}", suffix);
 		}
 
 		return outFilepath;
@@ -900,31 +924,31 @@ void AssetBrowserUi::drawMenu()
 				while(index < 10)
 				{
 					String filename;
-					filename.sprintf("%04u.NewScene.ankiscene", index);
+					filename.format("{:04}.NewScene.ankiscene", index);
 					const String diskFilepath = m_runCtx.m_selectedDir->m_diskFilepath + "/" + filename;
 
 					if(!fileExists(diskFilepath))
 					{
 						String randomSceneName;
-						randomSceneName.sprintf("%u", U32(getRandom() % kMaxU32));
+						randomSceneName.format("{}", U32(getRandom() % kMaxU32));
 						Scene* tempScene;
 						if(SceneGraph::getSingleton().newEmptyScene(randomSceneName, tempScene))
 						{
-							ANKI_LOGE("Failed to create new scene: %s", diskFilepath.cstr());
+							ANKI_EDITOR_LOGE("Failed to create new scene: {}", diskFilepath);
 						}
 
 						tempScene->setCanBeSaved(true);
 
 						if(SceneGraph::getSingleton().saveScene(diskFilepath, *tempScene))
 						{
-							ANKI_LOGE("Failed to save new scene: %s", diskFilepath.cstr());
+							ANKI_EDITOR_LOGE("Failed to save new scene: {}", diskFilepath);
 						}
 						else
 						{
 							setResourceToLocate((m_runCtx.m_selectedDir->m_resourceFilepath)
 													? m_runCtx.m_selectedDir->m_resourceFilepath + "/" + filename
 													: filename);
-							ANKI_LOGI("File created: %s", diskFilepath.cstr());
+							ANKI_EDITOR_LOGI("File created: {}", diskFilepath);
 						}
 
 						SceneGraph::getSingleton().deleteScene(tempScene);
@@ -936,7 +960,7 @@ void AssetBrowserUi::drawMenu()
 
 				if(index == 10)
 				{
-					ANKI_LOGE("Failed to create scene");
+					ANKI_EDITOR_LOGE("Failed to create scene");
 				}
 
 				m_refreshAssetsPathsNextTime = true;

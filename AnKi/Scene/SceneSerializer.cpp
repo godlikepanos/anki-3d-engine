@@ -121,7 +121,7 @@ Error TextSceneSerializer::parseCurrentLine(SceneStringList& tokens, CString fie
 
 	if(*tokens.getBegin() != fieldName)
 	{
-		ANKI_SERIALIZER_LOGE("Wrong token. Got: %s, expecting: %s", tokens.getBegin()->cstr(), fieldName.cstr());
+		ANKI_SERIALIZER_LOGE("Wrong token. Got: {}, expecting: {}", *tokens.getBegin(), fieldName);
 		return Error::kUserData;
 	}
 

@@ -104,18 +104,18 @@ ANKI_TEST(Util, String)
 #undef COMPARE
 	}
 
-	// sprintf
+	// format
 	{
 		String a;
 
 		// Simple
-		a.sprintf("12%c  %d", '3', 123);
+		a.format("12{}  {}", '3', 123);
 		ANKI_TEST_EXPECT_EQ(a, "123  123");
 		a.destroy();
 
 		// Extreme
 		const char* s = "1234567890ABCDEF!@#$%^&*()_+asfghjkl:,.;ljk\"><{}[]/";
-		a.sprintf("%s%s%s%s%s%s%s%s%s%s%s %d", s, s, s, s, s, s, s, s, s, s, s, 88);
+		a.format("{}{}{}{}{}{}{}{}{}{}{} {}", s, s, s, s, s, s, s, s, s, s, s, 88);
 
 		String b;
 		for(U i = 0; i < 11; i++)
@@ -128,18 +128,18 @@ ANKI_TEST(Util, String)
 		ANKI_TEST_EXPECT_EQ(a.getLength(), b.getLength());
 	}
 
-	// sprintf #2: Smaller result (will trigger another path)
+	// format #2: Smaller result
 	{
 		String a;
 
 		// Simple
-		a.sprintf("12%c  %d", '3', 123);
+		a.format("12{}  {}", '3', 123);
 		ANKI_TEST_EXPECT_EQ(a, "123  123");
 		a.destroy();
 
 		// Extreme
 		const char* s = "12345";
-		a.sprintf("%s%s %d", s, s, 88);
+		a.format("{}{} {}", s, s, 88);
 
 		String b;
 		for(U i = 0; i < 2; i++)

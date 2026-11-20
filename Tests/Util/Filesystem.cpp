@@ -96,7 +96,7 @@ ANKI_TEST(Util, WalkDir)
 		for(U32 i = 0; i < ctx.m_paths.getSize(); ++i)
 		{
 			String p;
-			p.sprintf("./data/%s", args.m_path.cstr());
+			p.format("./data/{}", args.m_path);
 			if(ctx.m_paths[i].m_path == p)
 			{
 				ANKI_TEST_EXPECT_EQ(ctx.m_paths[i].m_isDir, args.m_isDirectory);

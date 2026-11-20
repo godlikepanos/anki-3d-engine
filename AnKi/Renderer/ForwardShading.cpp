@@ -13,6 +13,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Core/App.h>
@@ -63,6 +64,8 @@ void ForwardShading::run(RenderPassWorkContext& rgraphCtx)
 		args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
 		args.m_renderingTechinuqe = RenderingTechnique::kForward;
 		args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
+		args.m_textureBias = getRenderer().getMainViewTextureBias();
+		args.m_textureAnisotropy = g_cvarRenderTextureAnisotropy;
 		args.fill(m_runCtx.m_visOut);
 
 		getRenderer().getRenderableDrawer().drawMdi(args, rgraphCtx);
@@ -78,7 +81,7 @@ void ForwardShading::run(RenderPassWorkContext& rgraphCtx)
 
 void ForwardShading::setDependencies(GraphicsRenderPass& pass)
 {
-	const Bool bForwardShading = true;
+#define ANKI_FORWARD_SHADING 1
 #define ANKI_DEPENDENCIES 1
 #define ANKI_RASTER_PATH 1
 #include <AnKi/Shaders/MaterialBindings.def.h>

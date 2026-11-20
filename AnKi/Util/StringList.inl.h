@@ -125,26 +125,20 @@ void BaseStringList<TMemoryPool>::splitString(const CString& s, const Char separ
 }
 
 template<typename TMemoryPool>
-void BaseStringList<TMemoryPool>::pushBackSprintf(const Char* fmt, ...)
+template<typename... TArgs>
+void BaseStringList<TMemoryPool>::pushBackFormat(std::format_string<TArgs...> fmt, TArgs&&... args)
 {
 	StringType str(Base::getMemoryPool());
-	va_list args;
-	va_start(args, fmt);
-	str.sprintfInternal(fmt, args);
-	va_end(args);
-
+	str.format(fmt, std::forward<TArgs>(args)...);
 	Base::emplaceBack(std::move(str));
 }
 
 template<typename TMemoryPool>
-void BaseStringList<TMemoryPool>::pushFrontSprintf(const Char* fmt, ...)
+template<typename... TArgs>
+void BaseStringList<TMemoryPool>::pushFrontFormat(std::format_string<TArgs...> fmt, TArgs&&... args)
 {
 	StringType str(Base::getMemoryPool());
-	va_list args;
-	va_start(args, fmt);
-	str.sprintfInternal(fmt, args);
-	va_end(args);
-
+	str.format(fmt, std::forward<TArgs>(args)...);
 	Base::emplaceFront(std::move(str));
 }
 

@@ -26,6 +26,7 @@ public:
 	Bool m_fogDensityVolumes : 1 = true;
 	Bool m_scripts : 1 = true;
 	Bool m_triggers : 1 = true;
+	Bool m_skeletons : 1 = true;
 	Bool m_physics : 1 = false;
 	Bool m_indirectDiffuseProbes : 1 = false;
 	Bool m_visibleRenderableBoundingVolumes : 1 = false;
@@ -222,6 +223,8 @@ private:
 		handles[DebugRenderTargetRegister::kUintTex] = m_runCtx.m_objectPickingRt;
 		drawStyle = DebugRenderTargetDrawStyle::kIntegerTexture;
 	}
+
+	void drawSkeletons(CommandBuffer& cmdb) const;
 #endif // ANKI_WITH_EDITOR
 };
 

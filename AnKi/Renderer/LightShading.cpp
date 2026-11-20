@@ -17,7 +17,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Reflections.h>
-#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/ReSTIRDI.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
@@ -30,10 +30,9 @@ Error LightShading::init()
 {
 	{
 		// Load shaders and programs
-		ANKI_CHECK(loadShaderProgram(
-			"ShaderBinaries/LightShading.ankiprogbin",
-			{{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseClipmapsEnabled()}, {"DIRECT_LIGHTING_TEX", getRenderer().isReSTIRDIEnabled()}},
-			m_lightShading.m_prog, m_lightShading.m_grProg));
+		ANKI_CHECK(
+			m_lightShading.m_prog.load("ShaderBinaries/LightShading.ankiprogbin", {{"INDIRECT_DIFFUSE_TEX", getRenderer().isIndirectDiffuseEnabled()},
+																				   {"DIRECT_LIGHTING_TEX", getRenderer().isReSTIRDIEnabled()}}));
 
 		// Create RT descr
 		const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -43,17 +42,14 @@ Error LightShading::init()
 	}
 
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
-
 		for(MutatorValue method = 0; method < 3; ++method)
 		{
-			ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}, m_skybox.m_prog,
-										 m_skybox.m_grProgs[method]));
+			ANKI_CHECK(m_skybox.m_progs[method].load("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}));
 		}
 	}
 
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog, m_applyFog.m_grProg));
+		ANKI_CHECK(m_applyFog.m_prog.load("ShaderBinaries/LightShadingApplyFog.ankiprogbin"));
 	}
 
 	return Error::kNone;
@@ -78,15 +74,15 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb.pushDebugMarker("LightShading", Vec3(0.0f, 1.0f, 1.0f));
 
-		cmdb.bindShaderProgram(m_lightShading.m_grProg.get());
+		cmdb.bindShaderProgram(m_lightShading.m_prog.get());
 		cmdb.setDepthWrite(false);
 
 		// Bind all
 		cmdb.bindConstantBuffer(0, 0, getRenderingContext().m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		if(getRenderer().isIndirectDiffuseClipmapsEnabled())
+		if(getRenderer().isIndirectDiffuseEnabled())
 		{
-			rgraphCtx.bindSrv(1, 0, getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance);
+			rgraphCtx.bindSrv(1, 0, getIndirectDiffuse().getRt());
 		}
 		else
 		{
@@ -100,13 +96,14 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindSrv(4, 0, getGBuffer().getColorRt(1));
 		rgraphCtx.bindSrv(5, 0, getGBuffer().getColorRt(2));
 		rgraphCtx.bindSrv(6, 0, getGBuffer().getDepthRt());
-		rgraphCtx.bindSrv(7, 0, getShadowmapsResolve().getRt());
-		rgraphCtx.bindSrv(8, 0, getSsao().getRt());
-		rgraphCtx.bindSrv(9, 0, getReflections().getRt());
-		cmdb.bindSrv(10, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
+		rgraphCtx.bindSrv(7, 0, getShadowmapsResolve().getPunctualLightsRt());
+		rgraphCtx.bindSrv(8, 0, getShadowmapsResolve().getDirLightRt());
+		rgraphCtx.bindSrv(9, 0, getSsao().getRt());
+		rgraphCtx.bindSrv(10, 0, getReflections().getRt());
+		cmdb.bindSrv(11, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 		if(isReSTIRDIEnabled())
 		{
-			rgraphCtx.bindSrv(11, 0, getReSTIRDI().getRt());
+			rgraphCtx.bindSrv(12, 0, getReSTIRDI().getRt());
 		}
 
 		// Draw
@@ -124,7 +121,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 		if(getGeneratedSky().isEnabled())
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
+			cmdb.bindShaderProgram(m_skybox.m_progs[2].get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGeneratedSky().getSkyLutRt());
@@ -132,7 +129,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		}
 		else if(sky && sky->getSkyboxComponentType() == SkyboxComponentType::kImage2D)
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[1].get());
+			cmdb.bindShaderProgram(m_skybox.m_progs[1].get());
 
 			class
 			{
@@ -156,12 +153,12 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
 			cmdb.bindSrv(0, 0, TextureView(&sky->getSkyTexture(), TextureSubresourceDesc::all()));
 		}
 		else
 		{
-			cmdb.bindShaderProgram(m_skybox.m_grProgs[0].get());
+			cmdb.bindShaderProgram(m_skybox.m_progs[0].get());
 
 			const Vec4 color((sky) ? sky->getSkySolidColor() : Vec3(0.0f), 0.0);
 			cmdb.setFastConstants(&color, sizeof(color));
@@ -179,7 +176,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb.pushDebugMarker("LightApplyFog", Vec3(0.0f, 1.0f, 1.0f));
 
-		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
+		cmdb.bindShaderProgram(m_applyFog.m_prog.get());
 
 		// Bind all
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
@@ -266,14 +263,15 @@ void LightShading::populateRenderGraph()
 	pass.newTextureDependency(getGBuffer().getColorRt(1), readUsage);
 	pass.newTextureDependency(getGBuffer().getColorRt(2), readUsage);
 	pass.newTextureDependency(getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
-	pass.newTextureDependency(getShadowmapsResolve().getRt(), readUsage);
+	pass.newTextureDependency(getShadowmapsResolve().getPunctualLightsRt(), readUsage);
+	pass.newTextureDependency(getShadowmapsResolve().getDirLightRt(), readUsage);
 	pass.newBufferDependency(getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 	pass.newTextureDependency(getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getReflections().getRt(), readUsage);
 
-	if(getRenderer().isIndirectDiffuseClipmapsEnabled())
+	if(getRenderer().isIndirectDiffuseEnabled())
 	{
-		pass.newTextureDependency(getIndirectDiffuseClipmaps().getRts().m_appliedIrradiance, TextureUsageBit::kSrvPixel);
+		pass.newTextureDependency(getIndirectDiffuse().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
 	if(getRenderer().isReSTIRDIEnabled())

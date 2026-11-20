@@ -51,7 +51,7 @@ ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Scene, SceneMemoryPool)
 		const Bool ok = !!(expression); \
 		if(!ok) [[unlikely]] \
 		{ \
-			ANKI_SCENE_LOGE("Expression failed: " #expression); \
+			ANKI_SCENE_LOGE("Expression failed: {}", #expression); \
 		} \
 		return ok; \
 	})

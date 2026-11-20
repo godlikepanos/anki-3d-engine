@@ -7,9 +7,9 @@
 #include <AnKi/Importer/TinyExr.h>
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Resource/Stb.h>
-#include <AnKi/Util/Process.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
+#include <AnKi/Util/System.h>
 
 namespace anki {
 
@@ -28,11 +28,11 @@ public:
 class Mipmap
 {
 public:
-	/// One surface for each layer ore one per face or a single volume if it's a 3D texture.
+	// One surface for each layer ore one per face or a single volume if it's a 3D texture.
 	ImporterDynamicArray<SurfaceOrVolumeData> m_surfacesOrVolume;
 };
 
-/// Image importer context.
+// Image importer context.
 class ImageImporterContext
 {
 public:
@@ -43,7 +43,8 @@ public:
 	U32 m_faceCount = 0;
 	U32 m_layerCount = 0;
 	U32 m_channelCount = 0;
-	U32 m_pixelSize = 0; ///< Texel size of an uncompressed image.
+	U32 m_pixelSize = 0; // Texel size of an uncompressed image.
+	U32 m_firstMip = 0;
 	Bool m_hdr = false;
 	Vec4 m_averageColor = Vec4(0.0f);
 };
@@ -90,7 +91,7 @@ enum D3D10ResourceDimension
 	D3D10_RESOURCE_DIMENSION_TEXTURE3D = 4
 };
 
-/// Extra header for some DDS formats.
+// Extra header for some DDS formats.
 class DdsHeaderDxt10
 {
 public:
@@ -141,7 +142,7 @@ static Error checkConfig(const ImageImporterConfig& config)
 	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 1 || config.m_type != ImageBinaryType::k2DArray,
 					"2D array images require more than one input image");
 	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 1 || config.m_type != ImageBinaryType::k3D, "3D images require more than one input image");
-	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 6 || config.m_type != ImageBinaryType::kCube, "Cube images require 6 input images");
+	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() == 6 || config.m_type != ImageBinaryType::kCube, "Cube images require 6 input images");
 
 	// Compressions
 	ANKI_CFG_ASSERT(config.m_compressions != ImageBinaryDataCompression::kNone, "Missing output compressions");
@@ -155,6 +156,7 @@ static Error checkConfig(const ImageImporterConfig& config)
 
 	// Mip size
 	ANKI_CFG_ASSERT(config.m_minMipmapDimension >= 4, "Mimpap min dimension can be less than 4");
+	ANKI_CFG_ASSERT(config.m_maxImageDimension >= config.m_minMipmapDimension, "Max image dimension can't be less than the min mipmap dimension");
 
 	// Color conversions
 	ANKI_CFG_ASSERT(!(config.m_linearToSRgb && config.m_sRgbToLinear), "Can't have a conversion to sRGB and to linear at the same time");
@@ -169,7 +171,7 @@ static Error identifyImage(CString filename, U32& width, U32& height, U32& chann
 	const I ok = stbi_info(filename.cstr(), &iwidth, &iheight, &ichannelCount);
 	if(!ok)
 	{
-		ANKI_IMPORTER_LOGE("STB failed to load file: %s", filename.cstr());
+		ANKI_IMPORTER_LOGE("STB failed to load file: {}", filename);
 		return Error::kFunctionFailed;
 	}
 
@@ -205,7 +207,7 @@ static Error checkInputImages(const ImageImporterConfig& config, U32& width, U32
 		}
 		else if(width != nwidth || height != nheight || channelCount != nchannelCount || isHdr != nhdr)
 		{
-			ANKI_IMPORTER_LOGE("Input image doesn't match previous input images: %s", config.m_inputFilenames[i].cstr());
+			ANKI_IMPORTER_LOGE("Input image doesn't match previous input images: {}", config.m_inputFilenames[i]);
 			return Error::kUserData;
 		}
 	}
@@ -241,7 +243,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 
 	if(!inPixels)
 	{
-		ANKI_IMPORTER_LOGE("STB load failed: %s", inImageFilename.cstr());
+		ANKI_IMPORTER_LOGE("STB load failed: {}", inImageFilename);
 		return Error::kFunctionFailed;
 	}
 
@@ -260,7 +262,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 		layout = STBIR_RGBA;
 		break;
 	default:
-		ANKI_IMPORTER_LOGE("Can't handle channel count of %d", channelCount);
+		ANKI_IMPORTER_LOGE("Can't handle channel count of {}", channelCount);
 		return Error::kUserData;
 	}
 
@@ -279,8 +281,8 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 	stbi_image_free(inPixels);
 
 	// Store
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
-	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
+	tmpFilename.format("{}/AnKiImageImporter_{}.{}", tempDirectory, g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
+	ANKI_IMPORTER_LOGV("Will store: {}", tmpFilename);
 
 	I32 ok = 1;
 	if(!hdr)
@@ -295,7 +297,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 
 	if(!ok)
 	{
-		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
+		ANKI_IMPORTER_LOGE("Failed to create: {}", tmpFilename);
 		return Error::kFunctionFailed;
 	}
 
@@ -405,11 +407,16 @@ static Vec4 computeAverageColor(WeakArray<TVec> pixels)
 	return (componentCount == 3) ? average.xyz1 : average;
 }
 
-static void applyScaleAndBias(WeakArray<Vec3> pixels, Vec3 scale, Vec3 bias)
+// Applied to RGB only. Alpha is left untouched
+template<typename TVec>
+static void applyScaleAndBias(WeakArray<TVec> pixels, Vec3 scale, Vec3 bias)
 {
-	for(Vec3& pixel : pixels)
+	for(TVec& pixel : pixels)
 	{
-		pixel = pixel * scale + bias;
+		const Vec3 rgb = Vec3(pixel.x, pixel.y, pixel.z) * scale + bias;
+		pixel.x = rgb.x;
+		pixel.y = rgb.y;
+		pixel.z = rgb.z;
 	}
 }
 
@@ -421,7 +428,7 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 	if(ctx.m_depth > 1)
 	{
 		mip0.m_surfacesOrVolume.resize(1);
-		mip0.m_surfacesOrVolume[0].m_pixels.resize(ctx.m_pixelSize * ctx.m_width * ctx.m_height * ctx.m_depth);
+		mip0.m_surfacesOrVolume[0].m_pixels.resize(PtrSize(ctx.m_pixelSize) * ctx.m_width * ctx.m_height * ctx.m_depth);
 	}
 	else
 	{
@@ -432,7 +439,7 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
-				mip0.m_surfacesOrVolume[l * ctx.m_faceCount + f].m_pixels.resize(ctx.m_pixelSize * ctx.m_width * ctx.m_height);
+				mip0.m_surfacesOrVolume[l * ctx.m_faceCount + f].m_pixels.resize(PtrSize(ctx.m_pixelSize) * ctx.m_width * ctx.m_height);
 			}
 		}
 	}
@@ -453,7 +460,7 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 
 		if(!data)
 		{
-			ANKI_IMPORTER_LOGE("STB load failed: %s", config.m_inputFilenames[i].cstr());
+			ANKI_IMPORTER_LOGE("STB load failed: {}", config.m_inputFilenames[i]);
 			return Error::kFunctionFailed;
 		}
 
@@ -520,7 +527,15 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 		if(ctx.m_hdr && (config.m_hdrScale != Vec3(1.0f) || config.m_hdrBias != Vec3(0.0f)))
 		{
 			ANKI_IMPORTER_LOGV("Will apply scale and/or bias to the image");
-			applyScaleAndBias(WeakArray(static_cast<Vec3*>(data), ctx.m_width * ctx.m_height), config.m_hdrScale, config.m_hdrBias);
+			if(ctx.m_channelCount == 3)
+			{
+				applyScaleAndBias(WeakArray<Vec3>(static_cast<Vec3*>(data), ctx.m_width * ctx.m_height), config.m_hdrScale, config.m_hdrBias);
+			}
+			else
+			{
+				ANKI_ASSERT(ctx.m_channelCount == 4);
+				applyScaleAndBias(WeakArray<Vec4>(static_cast<Vec4*>(data), ctx.m_width * ctx.m_height), config.m_hdrScale, config.m_hdrBias);
+			}
 		}
 
 		if(ctx.m_depth > 1)
@@ -618,8 +633,8 @@ static Error compressS3tc(CString tempDirectory, CString compressonatorFilename,
 
 	// Create a PNG image to feed to the compressor
 	ImporterString tmpFilename;
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
-	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
+	tmpFilename.format("{}/AnKiImageImporter_{}.{}", tempDirectory, g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
+	ANKI_IMPORTER_LOGV("Will store: {}", tmpFilename);
 	Bool saveTmpImageOk = false;
 	if(!hdr)
 	{
@@ -634,15 +649,14 @@ static Error compressS3tc(CString tempDirectory, CString compressonatorFilename,
 
 	if(!saveTmpImageOk)
 	{
-		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
+		ANKI_IMPORTER_LOGE("Failed to create: {}", tmpFilename);
 		return Error::kFunctionFailed;
 	}
 	CleanupFile tmpCleanup(tmpFilename);
 
 	// Invoke the compressor process
 	ImporterString ddsFilename;
-	ddsFilename.sprintf("%s/AnKiImageImporter_%u.dds", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
-	Process proc;
+	ddsFilename.format("{}/AnKiImageImporter_{}.dds", tempDirectory, g_tempFileIndex.fetchAdd(1));
 	Array<CString, 5> args;
 	U32 argCount = 0;
 	args[argCount++] = "-nomipmap";
@@ -651,28 +665,26 @@ static Error compressS3tc(CString tempDirectory, CString compressonatorFilename,
 	args[argCount++] = tmpFilename;
 	args[argCount++] = ddsFilename;
 
-	ANKI_IMPORTER_LOGV("Will invoke process: %s %s %s %s %s %s", compressonatorFilename.cstr(), args[0].cstr(), args[1].cstr(), args[2].cstr(),
-					   args[3].cstr(), args[4].cstr());
-	ANKI_CHECK(proc.start(compressonatorFilename, args));
-	CleanupFile ddsCleanup(ddsFilename);
-	ProcessStatus status;
+	ANKI_IMPORTER_LOGV("Will invoke process: {} {} {} {} {} {}", compressonatorFilename, args[0], args[1], args[2], args[3], args[4]);
 	I32 exitCode;
-	ANKI_CHECK(proc.wait(60.0_sec, &status, &exitCode));
+	String errStr;
+	String outStr;
+	const Error procError = invokeProcess(compressonatorFilename, args, &outStr, &errStr, exitCode);
+	CleanupFile ddsCleanup(ddsFilename);
 
-	if(!(status == ProcessStatus::kNotRunning && exitCode == 0))
+	if(procError || exitCode != 0)
 	{
-		String errStr;
-		if(exitCode != 0)
+		if(errStr.isEmpty())
 		{
-			ANKI_CHECK(proc.readFromStdout(errStr));
+			errStr = outStr;
 		}
 
 		if(errStr.isEmpty())
 		{
-			errStr = "Unknown error";
+			errStr.format("Unknown error. Exit code {}", exitCode);
 		}
 
-		ANKI_IMPORTER_LOGE("Invoking compressor process failed: %s", errStr.cstr());
+		ANKI_IMPORTER_LOGE("Invoking compressor process failed: {}", errStr);
 		return Error::kFunctionFailed;
 	}
 
@@ -727,8 +739,8 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 
 	// Create a BMP image to feed to the astcebc
 	ImporterString tmpFilename;
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
-	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
+	tmpFilename.format("{}/AnKiImageImporter_{}.{}", tempDirectory, g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
+	ANKI_IMPORTER_LOGV("Will store: {}", tmpFilename);
 	Bool saveTmpImageOk = false;
 	if(!hdr)
 	{
@@ -743,17 +755,16 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 
 	if(!saveTmpImageOk)
 	{
-		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
+		ANKI_IMPORTER_LOGE("Failed to create: {}", tmpFilename);
 		return Error::kFunctionFailed;
 	}
 	CleanupFile pngCleanup(tmpFilename);
 
 	// Invoke the compressor process
 	ImporterString astcFilename;
-	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
+	astcFilename.format("{}/AnKiImageImporter_{}.astc", tempDirectory, g_tempFileIndex.fetchAdd(1));
 	ImporterString blockStr;
-	blockStr.sprintf("%ux%u", blockSize.x, blockSize.y);
-	Process proc;
+	blockStr.format("{}x{}", blockSize.x, blockSize.y);
 	Array<CString, 5> args;
 	U32 argCount = 0;
 	args[argCount++] = (!hdr) ? "-cl" : "-ch";
@@ -762,29 +773,26 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 	args[argCount++] = blockStr;
 	args[argCount++] = "-fast";
 
-	ANKI_IMPORTER_LOGV("Will invoke process: %s %s %s %s %s %s", astcencFilename.cstr(), args[0].cstr(), args[1].cstr(), args[2].cstr(),
-					   args[3].cstr(), args[4].cstr());
-	ANKI_CHECK(proc.start(astcencFilename, args));
-
-	CleanupFile astcCleanup(astcFilename);
-	ProcessStatus status;
+	ANKI_IMPORTER_LOGV("Will invoke process: {} {} {} {} {} {}", astcencFilename, args[0], args[1], args[2], args[3], args[4]);
 	I32 exitCode;
-	ANKI_CHECK(proc.wait(60.0_sec, &status, &exitCode));
+	String errStr;
+	String outStr;
+	const Error procErr = invokeProcess(astcencFilename, args, &outStr, &errStr, exitCode);
+	CleanupFile astcCleanup(astcFilename);
 
-	if(!(status == ProcessStatus::kNotRunning && exitCode == 0))
+	if(procErr || exitCode != 0)
 	{
-		String errStr;
-		if(exitCode != 0)
+		if(errStr.isEmpty())
 		{
-			ANKI_CHECK(proc.readFromStdout(errStr));
+			errStr = outStr;
 		}
 
 		if(errStr.isEmpty())
 		{
-			errStr = "Unknown error";
+			errStr.format("Unknown error. Exit code {}", exitCode);
 		}
 
-		ANKI_IMPORTER_LOGE("Invoking astcenc-avx2 process failed: %s", errStr.cstr());
+		ANKI_IMPORTER_LOGE("Invoking astcenc-avx2 process failed: {}", errStr);
 		return Error::kFunctionFailed;
 	}
 
@@ -830,7 +838,7 @@ static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstW
 
 static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImporterContext& ctx)
 {
-	ANKI_IMPORTER_LOGV("Storing to %s", config.m_outFilename.cstr());
+	ANKI_IMPORTER_LOGV("Storing to {}", config.m_outFilename);
 
 	File outFile;
 	ANKI_CHECK(outFile.open(config.m_outFilename, FileOpenFlag::kBinary | FileOpenFlag::kWrite));
@@ -838,9 +846,9 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	// Header
 	ImageBinaryHeader header = {};
 	memcpy(&header.m_magic[0], &kImageMagic[0], sizeof(header.m_magic));
-	header.m_width = ctx.m_width;
-	header.m_height = ctx.m_height;
-	header.m_depthOrLayerCount = max(ctx.m_layerCount, ctx.m_depth);
+	header.m_width = ctx.m_width >> ctx.m_firstMip;
+	header.m_height = ctx.m_height >> ctx.m_firstMip;
+	header.m_depthOrLayerCount = (config.m_type == ImageBinaryType::k3D) ? ctx.m_depth >> ctx.m_firstMip : ctx.m_layerCount;
 	header.m_type = config.m_type;
 	if(ctx.m_hdr)
 	{
@@ -856,7 +864,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	}
 	header.m_compressionMask = config.m_compressions;
 	header.m_isNormal = false;
-	header.m_mipmapCount = U8(ctx.m_mipmaps.getSize());
+	header.m_mipmapCount = U8(ctx.m_mipmaps.getSize() - ctx.m_firstMip);
 	header.m_astcBlockSizeX = config.m_astcBlockSize.x;
 	header.m_astcBlockSizeY = config.m_astcBlockSize.y;
 	header.m_averageColor = {ctx.m_averageColor.x, ctx.m_averageColor.y, ctx.m_averageColor.z, ctx.m_averageColor.w};
@@ -867,8 +875,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	{
 		ANKI_IMPORTER_LOGV("Storing RAW");
 
-		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
-		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
+		for(U32 mip = ctx.m_firstMip; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
@@ -887,8 +894,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	{
 		ANKI_IMPORTER_LOGV("Storing S3TC");
 
-		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
-		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
+		for(U32 mip = ctx.m_firstMip; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
@@ -907,8 +913,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	{
 		ANKI_IMPORTER_LOGV("Storing ASTC");
 
-		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
-		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
+		for(U32 mip = ctx.m_firstMip; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
@@ -951,7 +956,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 		const U32 newWidth = max(width, config.m_minMipmapDimension);
 		const U32 newHeight = max(height, config.m_minMipmapDimension);
 
-		ANKI_IMPORTER_LOGV("Image is smaller than the min mipmap dimension. Will resize it to %ux%u", newWidth, newHeight);
+		ANKI_IMPORTER_LOGV("Image is smaller than the min mipmap dimension. Will resize it to {}x{}", newWidth, newHeight);
 
 		newFilenames.resize(config.m_inputFilenames.getSize());
 		newFilenamesCString.resize(config.m_inputFilenames.getSize());
@@ -1027,6 +1032,15 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	const U8 mipCount = min(config.m_mipmapCount, (config.m_type == ImageBinaryType::k3D)
 													  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
 													  : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
+	for(U32 mip = 0; mip < mipCount; ++mip)
+	{
+		if(max(ctx.m_width >> mip, ctx.m_height >> mip) <= config.m_maxImageDimension || mip == mipCount - 1)
+		{
+			ctx.m_firstMip = mip;
+			break;
+		}
+	}
+
 	for(U8 mip = 1; mip < mipCount; ++mip)
 	{
 		ctx.m_mipmaps.emplaceBack();
@@ -1041,7 +1055,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 					const U32 idx = l * ctx.m_faceCount + f;
 					const SurfaceOrVolumeData& inSurface = ctx.m_mipmaps[mip - 1].m_surfacesOrVolume[idx];
 					SurfaceOrVolumeData& outSurface = ctx.m_mipmaps[mip].m_surfacesOrVolume[idx];
-					outSurface.m_pixels.resize((ctx.m_width >> mip) * (ctx.m_height >> mip) * ctx.m_pixelSize);
+					outSurface.m_pixels.resize(PtrSize(ctx.m_width >> mip) * (ctx.m_height >> mip) * ctx.m_pixelSize);
 
 					if(ctx.m_channelCount == 3)
 					{
@@ -1085,7 +1099,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	{
 		ANKI_IMPORTER_LOGV("Will compress in S3TC");
 
-		for(U32 mip = 0; mip < mipCount; ++mip)
+		for(U32 mip = ctx.m_firstMip; mip < mipCount; ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
@@ -1112,7 +1126,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	{
 		ANKI_IMPORTER_LOGV("Will compress in ASTC");
 
-		for(U32 mip = 0; mip < mipCount; ++mip)
+		for(U32 mip = ctx.m_firstMip; mip < mipCount; ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
@@ -1152,7 +1166,7 @@ Error importImage(const ImageImporterConfig& config)
 	const Error err = importImageInternal(config);
 	if(err)
 	{
-		ANKI_IMPORTER_LOGE("Image importing failed: %s", config.m_inputFilenames[0].cstr());
+		ANKI_IMPORTER_LOGE("Image importing failed: {}", config.m_inputFilenames[0]);
 		return err;
 	}
 

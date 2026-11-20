@@ -73,13 +73,13 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 {
 	if(cgltfComponentCount(attrib.data->type) != T::kComponentCount)
 	{
-		ANKI_IMPORTER_LOGE("Wrong component count for attribute: %s", attrib.name);
+		ANKI_IMPORTER_LOGE("Wrong component count for attribute: {}", attrib.name);
 		return Error::kUserData;
 	}
 
 	if(cgltfComponentSize(attrib.data->component_type) != sizeof(typename T::Scalar))
 	{
-		ANKI_IMPORTER_LOGE("Incompatible type: %s", attrib.name);
+		ANKI_IMPORTER_LOGE("Incompatible type: {}", attrib.name);
 		return Error::kUserData;
 	}
 
@@ -456,7 +456,7 @@ static void generateMeshlets(SubMesh& submesh)
 
 	const F64 avgPrimCountPerMeshlet = F64(newIndexBuffer.getSize() / 3) / F64(meshletCount);
 	const F64 avgVertCountPerMeshlet = F64(newVertexBuffer.getSize()) / F64(meshletCount);
-	ANKI_IMPORTER_LOGV("Meshletization stats: %f%% more vertices, %u meshlets, primitive_count/meshlet %f, vert_count/meshlet %f",
+	ANKI_IMPORTER_LOGV("Meshletization stats: {}% more vertices, {} meshlets, primitive_count/meshlet {}, vert_count/meshlet {}",
 					   (F32(newVertexBuffer.getSize()) - F32(submesh.m_verts.getSize())) / F32(submesh.m_verts.getSize()) * 100.0f, meshletCount,
 					   avgPrimCountPerMeshlet, avgVertCountPerMeshlet);
 
@@ -495,7 +495,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	const Error err = writeMeshInternal(mesh);
 	if(err)
 	{
-		ANKI_IMPORTER_LOGE("Failed to write mesh: %s", mesh.name);
+		ANKI_IMPORTER_LOGE("Failed to write mesh: {}", mesh.name);
 	}
 
 	return err;
@@ -505,8 +505,8 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 {
 	const ImporterString meshName = computeMeshResourceFilename(mesh);
 	ImporterString fname;
-	fname.sprintf("%s%s", m_outDir.cstr(), meshName.cstr());
-	ANKI_IMPORTER_LOGV("Importing mesh (%s): %s", (m_optimizeMeshes) ? "optimize" : "WON'T optimize", fname.cstr());
+	fname.format("{}{}", m_outDir, meshName);
+	ANKI_IMPORTER_LOGV("Importing mesh ({}): {}", (m_optimizeMeshes) ? "optimize" : "WON'T optimize", fname);
 
 	Array<ImporterList<SubMesh>, kMaxLodCount> submeshes;
 	Vec3 aabbMin(kMaxF32);
@@ -519,7 +519,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 	{
 		if(primitive->type != cgltf_primitive_type_triangles)
 		{
-			ANKI_IMPORTER_LOGE("Expecting triangles got %d", primitive->type);
+			ANKI_IMPORTER_LOGE("Expecting triangles got {}", U32(primitive->type));
 			return Error::kUserData;
 		}
 
@@ -605,7 +605,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 			}
 			else
 			{
-				ANKI_IMPORTER_LOGV("Ignoring attribute: %s", attrib->name);
+				ANKI_IMPORTER_LOGV("Ignoring attribute: {}", attrib->name);
 			}
 		}
 
@@ -627,7 +627,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 			ANKI_ASSERT(primitive->indices);
 			if(primitive->indices->count == 0 || (primitive->indices->count % 3) != 0)
 			{
-				ANKI_IMPORTER_LOGE("Incorect index count: %lu", primitive->indices->count);
+				ANKI_IMPORTER_LOGE("Incorect index count: {}", primitive->indices->count);
 				return Error::kUserData;
 			}
 			submesh.m_indices.resize(U32(primitive->indices->count));
@@ -670,7 +670,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 		// Finalize
 		if(submesh.m_indices.getSize() == 0 || submesh.m_verts.getSize() == 0)
 		{
-			ANKI_UTIL_LOGE("Mesh degenerate: %s", meshName.cstr());
+			ANKI_IMPORTER_LOGE("Mesh degenerate: {}", meshName);
 			return Error::kUserData;
 		}
 	} // for all GLTF primitives
@@ -696,7 +696,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 		maxLod = lod;
 	}
 
-	ANKI_IMPORTER_LOGV("Mesh lod count: %s %u", fname.cstr(), maxLod + 1);
+	ANKI_IMPORTER_LOGV("Mesh lod count: {} {}", fname, maxLod + 1);
 
 	// Meshletize
 	for(U32 lod = 0; lod < m_lodCount; ++lod)
@@ -797,7 +797,7 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 				const U32 idx = submesh.m_indices[i] + vertCount;
 				if(idx > kMaxU16)
 				{
-					ANKI_IMPORTER_LOGE("Only supports 16bit indices for now (%u): %s", idx, fname.cstr());
+					ANKI_IMPORTER_LOGE("Only supports 16bit indices for now ({}): {}", idx, fname);
 					return Error::kUserData;
 				}
 

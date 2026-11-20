@@ -105,7 +105,7 @@ Error removeFile(const CString& filename)
 	const int err = std::remove(filename.cstr());
 	if(err)
 	{
-		ANKI_UTIL_LOGE("Couldn't delete file (%s): %s", strerror(errno), filename.cstr());
+		ANKI_UTIL_LOGE("Couldn't delete file ({}): {}", strerror(errno), filename);
 		return Error::kFunctionFailed;
 	}
 
@@ -118,7 +118,7 @@ Error renameFile(CString oldFilepath, CString newFilepath)
 	std::filesystem::rename(oldFilepath.cstr(), newFilepath.cstr(), err);
 	if(err)
 	{
-		ANKI_UTIL_LOGE("Renaming %s to %s failed", oldFilepath.cstr(), newFilepath.cstr());
+		ANKI_UTIL_LOGE("Renaming {} to {} failed", oldFilepath, newFilepath);
 		return Error::kFunctionFailed;
 	}
 

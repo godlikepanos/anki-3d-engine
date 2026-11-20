@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MiscRendererTypes.h>
 
 /// Flags to fine tune the probe selection in sampleClipmapCommon

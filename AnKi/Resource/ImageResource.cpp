@@ -336,7 +336,7 @@ Error ImageResource::loadAsync(LoadingContext& ctx) const
 			unflatten3dArrayIndex(m_tex->getLayerCount(), faceCount, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			barriers[barrierCount++] = {TextureView(m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
-										TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv};
+										TextureUsageBit::kCopyDestination, TextureUsageBit::kAllSrv & TextureUsageBit::kAllAsyncCompute};
 		}
 		CopyEngine::getSingleton().setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 	}

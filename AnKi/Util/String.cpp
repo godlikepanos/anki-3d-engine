@@ -21,7 +21,7 @@ Error CString::toNumber(F64& out) const
 	if(errno || endPtr != m_ptr + getLength())
 	{
 		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -55,7 +55,7 @@ Error CString::toNumber(I64& out) const
 	if(errno || endPtr != m_ptr + getLength())
 	{
 		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -69,7 +69,7 @@ Error CString::toNumber(I8& out) const
 
 	if(i64 < kMinI8 || i64 > kMaxI8)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -84,7 +84,7 @@ Error CString::toNumber(I32& out) const
 
 	if(i64 < kMinI32 || i64 > kMaxI32)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -103,7 +103,7 @@ Error CString::toNumber(U64& out) const
 	if(errno || endPtr != m_ptr + getLength())
 	{
 		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -117,7 +117,7 @@ Error CString::toNumber(U32& out) const
 
 	if(u64 > kMaxU32)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -132,7 +132,7 @@ Error CString::toNumber(U8& out) const
 
 	if(u64 > kMaxU8)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -147,7 +147,7 @@ Error CString::toNumber(I16& out) const
 
 	if(i64 < kMinI16 || i64 > kMaxI16)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: {}", m_ptr);
 		return Error::kUserData;
 	}
 
@@ -162,7 +162,7 @@ Error CString::toNumber(U16& out) const
 
 	if(u64 > kMaxU16)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: {}", m_ptr);
 		return Error::kUserData;
 	}
 

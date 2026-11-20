@@ -270,7 +270,7 @@ static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool deb
 			const Bool isFirstError = ctx.m_err->compareExchange(expectedErr, err._getCode());
 			if(isFirstError)
 			{
-				ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s", compilerErrorLog.cstr());
+				ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n{}", compilerErrorLog);
 				return;
 			}
 			return;
@@ -544,7 +544,7 @@ Error compileShaderProgram(CString fname, Bool spirv, Bool debugInfo, ShaderMode
 	const Error err = compileShaderProgramInternal(fname, spirv, debugInfo, sm, fsystem, postParseCallback, taskManager, defines, binary);
 	if(err)
 	{
-		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());
+		ANKI_SHADER_COMPILER_LOGE("Failed to compile: {}", fname);
 		freeShaderBinary(binary);
 	}
 

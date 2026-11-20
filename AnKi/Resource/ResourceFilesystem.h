@@ -174,7 +174,7 @@ public:
 		}
 		else
 		{
-			ANKI_RESOURCE_LOGE("Data path not found: %s", dataPath.cstr());
+			ANKI_RESOURCE_LOGE("Data path not found: {}", dataPath);
 		}
 
 		return cont;

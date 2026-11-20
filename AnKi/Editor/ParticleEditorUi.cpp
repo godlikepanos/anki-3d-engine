@@ -52,7 +52,7 @@ void ParticleEditorUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 			{
 				if(saveCache())
 				{
-					ANKI_LOGE("Unnable to save the particles file. Ignoring save");
+					ANKI_EDITOR_LOGE("Unnable to save the particles file. Ignoring save");
 				}
 				ResourceManager::getSingleton().refreshFileUpdateTimes();
 			}
@@ -169,7 +169,7 @@ void ParticleEditorUi::gatherParticlePrograms()
 			if(ResourceFilesystem::getSingleton().openFile(filepath, file)
 			   || deserializeShaderBinaryFromAnyFile(*file, binary, DefaultMemoryPool::getSingleton()))
 			{
-				ANKI_LOGE("Failed to load particles file. Ignoring this file: %s", filepath.cstr());
+				ANKI_EDITOR_LOGE("Failed to load particles file. Ignoring this file: {}", filepath);
 			}
 			else
 			{
@@ -275,11 +275,11 @@ Error ParticleEditorUi::saveCache()
 
 	ANKI_CHECK(file.writeText("<particleEmitter>\n"));
 
-	ANKI_CHECK(file.writeTextf("\t<shaderProgram name=\"%s\"/>\n", m_currentlySelectedProgram.cstr()));
+	ANKI_CHECK(file.writeTextf("\t<shaderProgram name=\"{}\"/>\n", m_currentlySelectedProgram));
 
-	ANKI_CHECK(file.writeTextf("\t<particleCount value=\"%u\"/>\n", m_commonProps.m_particleCount));
-	ANKI_CHECK(file.writeTextf("\t<emissionPeriod value=\"%f\"/>\n", m_commonProps.m_emissionPeriod));
-	ANKI_CHECK(file.writeTextf("\t<particlesPerEmission value=\"%u\"/>\n", m_commonProps.m_particlesPerEmission));
+	ANKI_CHECK(file.writeTextf("\t<particleCount value=\"{}\"/>\n", m_commonProps.m_particleCount));
+	ANKI_CHECK(file.writeTextf("\t<emissionPeriod value=\"{}\"/>\n", m_commonProps.m_emissionPeriod));
+	ANKI_CHECK(file.writeTextf("\t<particlesPerEmission value=\"{}\"/>\n", m_commonProps.m_particlesPerEmission));
 
 	ANKI_CHECK(file.writeText("\t<inputs>\n"));
 
@@ -316,7 +316,7 @@ Error ParticleEditorUi::saveCache()
 			ANKI_ASSERT(!"TODO");
 		}
 
-		ANKI_CHECK(file.writeTextf("\t\t<input name=\"%s\" value=\"%s\"/>\n", prop.m_name.cstr(), value.cstr()));
+		ANKI_CHECK(file.writeTextf("\t\t<input name=\"{}\" value=\"{}\"/>\n", prop.m_name, value));
 	}
 
 	ANKI_CHECK(file.writeText("\t</inputs>\n"));

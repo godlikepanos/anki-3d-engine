@@ -20,7 +20,7 @@ Error INotify::initInternal()
 	m_fd = inotify_init();
 	if(m_fd < 0)
 	{
-		ANKI_UTIL_LOGE("inotify_init() failed: %s", strerror(errno));
+		ANKI_UTIL_LOGE("inotify_init() failed: {}", strerror(errno));
 		err = Error::kFunctionFailed;
 	}
 
@@ -29,7 +29,7 @@ Error INotify::initInternal()
 		m_watch = inotify_add_watch(m_fd, &m_path[0], IN_MODIFY | IN_CREATE | IN_DELETE | IN_IGNORED | IN_DELETE_SELF);
 		if(m_watch < 0)
 		{
-			ANKI_UTIL_LOGE("inotify_add_watch() failed: %s", strerror(errno));
+			ANKI_UTIL_LOGE("inotify_add_watch() failed: {}", strerror(errno));
 			err = Error::kFunctionFailed;
 		}
 	}
@@ -49,7 +49,7 @@ void INotify::destroyInternal()
 		int err = inotify_rm_watch(m_fd, m_watch);
 		if(err < 0)
 		{
-			ANKI_UTIL_LOGE("inotify_rm_watch() failed: %s\n", strerror(errno));
+			ANKI_UTIL_LOGE("inotify_rm_watch() failed: {}\n", strerror(errno));
 		}
 		m_watch = -1;
 	}
@@ -59,7 +59,7 @@ void INotify::destroyInternal()
 		int err = close(m_fd);
 		if(err < 0)
 		{
-			ANKI_UTIL_LOGE("close() failed: %s\n", strerror(errno));
+			ANKI_UTIL_LOGE("close() failed: {}\n", strerror(errno));
 		}
 		m_fd = -1;
 	}
@@ -79,7 +79,7 @@ Error INotify::pollEvents(Bool& modified)
 
 		if(ret < 0)
 		{
-			ANKI_UTIL_LOGE("poll() failed: %s", strerror(errno));
+			ANKI_UTIL_LOGE("poll() failed: {}", strerror(errno));
 			err = Error::kFunctionFailed;
 			break;
 		}
@@ -118,7 +118,7 @@ Error INotify::pollEvents(Bool& modified)
 			}
 			else
 			{
-				ANKI_UTIL_LOGE("read() failed to read the expected size of data: %s", strerror(errno));
+				ANKI_UTIL_LOGE("read() failed to read the expected size of data: {}", strerror(errno));
 				err = Error::kFunctionFailed;
 				break;
 			}

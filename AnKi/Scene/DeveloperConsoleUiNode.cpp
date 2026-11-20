@@ -5,6 +5,7 @@
 
 #include <AnKi/Scene/DeveloperConsoleUiNode.h>
 #include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Ui.h>
 
 namespace anki {
@@ -19,6 +20,8 @@ DeveloperConsoleUiNode::DeveloperConsoleUiNode(const SceneNodeInitInfo& inf)
 		},
 		this);
 	uic->setEnabled(false);
+
+	m_scriptEnv = ScriptManager::getSingleton().newScriptEnvironment();
 
 	setSerialization(false);
 	setUpdateOnPause(true);
@@ -108,7 +111,7 @@ void DeveloperConsoleUiNode::draw(UiCanvas& canvas)
 	ImGui::SetWindowSize(canvas.getSizef() * Vec2(1.0f, 2.0f / 3.0f));
 
 	// Push the items
-	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetStyle().SeparatorSize + ImGui::GetFrameHeightWithSpacing();
 	ImGui::BeginChild("ScrollingRegion", Vec2(0, -footerHeightToPreserve), false,
 					  ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
 
@@ -155,7 +158,7 @@ void DeveloperConsoleUiNode::draw(UiCanvas& canvas)
 	ImGui::PushItemWidth(-1.0f); // Use the whole size
 	if(ImGui::InputText("##noname", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue, nullptr, nullptr))
 	{
-		const Error err = m_scriptEnv.evalString(&m_inputText[0]);
+		const Error err = m_scriptEnv->evalString(&m_inputText[0]);
 		if(!err)
 		{
 			ANKI_SCENE_LOGI("Script ran without errors");

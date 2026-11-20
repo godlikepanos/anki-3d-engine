@@ -204,7 +204,7 @@ private:
 #define ANKI_CHECKF(x_) \
 	if(x_) \
 	{ \
-		ANKI_LOGF("Failed and won't recover"); \
+		ANKI_UTIL_LOGF("Failed and won't recover"); \
 	}
 
 // Macro to check if a method/function returned an error.
@@ -270,7 +270,7 @@ inline constexpr PtrSize operator""_GB(unsigned long long int x)
 // Time user literals
 inline constexpr Second operator""_hour(long double x)
 {
-	return Second(x) * 60.0;
+	return Second(x) * 60.0 * 60.0;
 }
 
 inline constexpr Second operator""_sec(long double x)

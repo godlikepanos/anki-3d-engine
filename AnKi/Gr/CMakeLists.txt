@@ -56,7 +56,7 @@ elseif(DIRECTX)
 	set(extra_libs ${extra_libs} d3d12 dxgi dxguid ${PIX_LIB}) # dxguid for some debug layer stuff
 
 	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/include")
-	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/include/WinPixEventRuntime")
+	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/Include/WinPixEventRuntime")
 endif()
 
 # Have 2 libraries. The AnKiGrCommon is the bare minimum for the AnKiShaderCompiler to work. Don't have

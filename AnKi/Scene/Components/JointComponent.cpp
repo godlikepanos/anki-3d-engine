@@ -10,7 +10,7 @@
 
 namespace anki {
 
-ANKI_SVAR(JointsCreated, StatCategory::kScene, "Joints created", StatFlag::kNone)
+ANKI_SVAR(Scene, JointsCreated, StatCategory::kScene, "Joints created", StatFlag::kNone)
 
 JointComponent::JointComponent(const SceneComponentInitInfo& init)
 	: SceneComponent(kClassType, init)
@@ -122,7 +122,7 @@ void JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Boo
 			ANKI_ASSERT(0);
 		}
 
-		g_svarJointsCreated.increment(1);
+		g_svarSceneJointsCreated.increment(1);
 	}
 }
 

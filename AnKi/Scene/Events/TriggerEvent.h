@@ -25,20 +25,7 @@ public:
 	{
 	}
 
-	void update([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
-	{
-		ANKI_ASSERT(getAssociatedSceneNodes().getSize() == 2);
-		if(m_triggerEnter)
-		{
-			getAssociatedSceneNodes()[0]->onTriggerEnter(getAssociatedSceneNodes()[1]);
-		}
-		else
-		{
-			getAssociatedSceneNodes()[0]->onTriggerExit(getAssociatedSceneNodes()[1]);
-		}
-
-		markForDeletion();
-	}
+	void update([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override;
 
 	void setTriggerEnter()
 	{

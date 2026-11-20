@@ -46,14 +46,14 @@ namespace anki {
 android_app* g_androidApp = nullptr;
 #endif
 
-ANKI_SVAR(CpuAllocatedMem, StatCategory::kCpuMem, "Total", StatFlag::kBytes)
-ANKI_SVAR(CpuAllocationCount, StatCategory::kCpuMem, "Allocations/frame", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(CpuFreesCount, StatCategory::kCpuMem, "Frees/frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Core, CpuAllocatedMem, StatCategory::kCpuMem, "Total", StatFlag::kBytes)
+ANKI_SVAR(Core, CpuAllocationCount, StatCategory::kCpuMem, "Allocations/frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Core, CpuFreesCount, StatCategory::kCpuMem, "Frees/frame", StatFlag::kZeroEveryFrame)
 
 #if ANKI_PLATFORM_MOBILE
-ANKI_SVAR(MaliGpuActive, StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(MaliGpuReadBandwidth, StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(MaliGpuWriteBandwidth, StatCategory::kGpuMisc, "Mali write bandwidth", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, MaliGpuActive, StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, MaliGpuReadBandwidth, StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, MaliGpuWriteBandwidth, StatCategory::kGpuMisc, "Mali write bandwidth", StatFlag::kMainThreadUpdates)
 #endif
 
 void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_unused]] PtrSize alignment)
@@ -89,8 +89,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		out = static_cast<void*>(allocation);
 
 		// Update stats
-		g_svarCpuAllocatedMem.increment(size);
-		g_svarCpuAllocationCount.increment(1);
+		g_svarCoreCpuAllocatedMem.increment(size);
+		g_svarCoreCpuAllocationCount.increment(1);
 	}
 	else
 	{
@@ -103,8 +103,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		ANKI_ASSERT(allocation->m_allocatedSize > 0);
 
 		// Update stats
-		g_svarCpuAllocatedMem.decrement(allocation->m_allocatedSize);
-		g_svarCpuFreesCount.increment(1);
+		g_svarCoreCpuAllocatedMem.decrement(allocation->m_allocatedSize);
+		g_svarCoreCpuFreesCount.increment(1);
 
 		// Free
 		self->m_originalAllocCallback(self->m_originalAllocUserData, allocation, 0, 0);
@@ -115,6 +115,9 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 
 App::App(CString appName, U32 argc, Char** argv, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
+	ANKI_ASSERT(m_instance == nullptr);
+	m_instance = this;
+
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
 
@@ -150,6 +153,10 @@ App::App(CString appName, U32 argc, Char** argv, AllocAlignedCallback allocCb, v
 App::~App()
 {
 	ANKI_CORE_LOGI("Destroying application");
+
+	ANKI_ASSERT(m_instance != nullptr);
+	m_instance = nullptr;
+
 	cleanup();
 }
 
@@ -185,6 +192,12 @@ void App::cleanup()
 	m_cacheDir.destroy();
 	m_appName.destroy();
 
+	if(m_logFile.isOpen())
+	{
+		Logger::getSingleton().removeFileMessageHandler(&m_logFile);
+		m_logFile.close();
+	}
+
 	CoreMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 
@@ -204,15 +217,22 @@ Error App::init()
 
 	ANKI_CHECK(initDirs());
 
+	if(g_cvarCoreLogFile)
+	{
+		ANKI_CHECK(m_logFile.open(CoreString().format("{}/Log.txt", m_settingsDir), FileOpenFlag::kWrite));
+		Logger::getSingleton().addFileMessageHandler(&m_logFile);
+	}
+
 // Check SIMD support
-#if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
+#if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE \
+	&& !ANKI_OS_WINDOWS // __builtin_cpu_supports needs compiler-rt's __cpu_model, which isn't available when targeting MSVC
 	if(!__builtin_cpu_supports("sse4.2"))
 	{
 		ANKI_CORE_LOGF("AnKi is built with sse4.2 support but your CPU doesn't support it. Try bulding without SSE support");
 	}
 #endif
 
-	ANKI_CORE_LOGI("Number of job threads: %u", U32(g_cvarCoreJobThreadCount));
+	ANKI_CORE_LOGI("Number of job threads: {}", U32(g_cvarCoreJobThreadCount));
 
 	GlobalFrameIndex::allocateSingleton();
 
@@ -284,7 +304,7 @@ Error App::init()
 	// Add the location of the executable where the shaders are supposed to be
 	String executableFname;
 	ANKI_CHECK(getApplicationPath(executableFname));
-	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
+	ANKI_CORE_LOGI("Executable path is: {}", executableFname);
 	String extraPaths = getParentFilepath(executableFname);
 	extraPaths += "|ankiprogbin"; // Shaders
 
@@ -352,34 +372,34 @@ Error App::initDirs()
 	String home;
 	ANKI_CHECK(getHomeDirectory(home));
 
-	m_settingsDir.sprintf("%s/.anki", &home[0]);
+	m_settingsDir.format("{}/.anki", home);
 #else
-	m_settingsDir.sprintf("%s/.anki", g_androidApp->activity->internalDataPath);
+	m_settingsDir.format("{}/.anki", g_androidApp->activity->internalDataPath);
 #endif
 
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
-		ANKI_CORE_LOGI("Creating settings dir \"%s\"", &m_settingsDir[0]);
+		ANKI_CORE_LOGI("Creating settings dir \"{}\"", m_settingsDir);
 		ANKI_CHECK(createDirectory(m_settingsDir.toCString()));
 	}
 	else
 	{
-		ANKI_CORE_LOGI("Using settings dir \"%s\"", &m_settingsDir[0]);
+		ANKI_CORE_LOGI("Using settings dir \"{}\"", m_settingsDir);
 	}
 
 	// Cache
-	m_cacheDir.sprintf("%s/cache", &m_settingsDir[0]);
+	m_cacheDir.format("{}/cache", m_settingsDir);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
 	if(g_cvarCoreClearCaches && cacheDirExists)
 	{
-		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", m_cacheDir.cstr());
+		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: {}", m_cacheDir);
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 	else if(!cacheDirExists)
 	{
-		ANKI_CORE_LOGI("Will create cache dir: %s", m_cacheDir.cstr());
+		ANKI_CORE_LOGI("Will create cache dir: {}", m_cacheDir);
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 
@@ -388,7 +408,7 @@ Error App::initDirs()
 
 Error App::mainLoop()
 {
-	ANKI_CORE_LOGI("Starting application. Build config: %s", kAnKiBuildConfigString);
+	ANKI_CORE_LOGI("Starting application. Build config: {}", kAnKiBuildConfigString);
 
 	// Initialize the application
 	Error err = Error::kNone;
@@ -404,7 +424,7 @@ Error App::mainLoop()
 	CVarSet::getSingleton().iterateCVars([](CVar& cvar) {
 		Array<Char, 256> str;
 		cvar.toString(str);
-		ANKI_CORE_LOGV("\t%s", str.getBegin());
+		ANKI_CORE_LOGV("\t{}", str.getBegin());
 		return FunctorContinue::kContinue;
 	});
 
@@ -416,7 +436,7 @@ Error App::mainLoop()
 
 	if(CString(g_cvarCoreStartupScene) != "")
 	{
-		ANKI_LOGI("Will load scene: %s", CString(g_cvarCoreStartupScene).cstr());
+		ANKI_CORE_LOGI("Will load scene: {}", CString(g_cvarCoreStartupScene));
 		Scene* scene = nullptr;
 		ANKI_CHECK(SceneGraph::getSingleton().loadScene(g_cvarCoreStartupScene, scene));
 		SceneGraph::getSingleton().setActiveScene(scene);
@@ -469,11 +489,12 @@ Error App::mainLoop()
 		GpuVisibleTransientMemoryPool::getSingleton().endFrame();
 		GpuReadbackMemoryPool::getSingleton().endFrame(renderFence.get());
 		TextureMemoryPool::getSingleton().endFrame(renderFence.get());
+		ResourceManager::getSingleton().endFrame(renderFence.get());
 
 		// Sleep
 		const Second endTime = HighRezTimer::getCurrentTime();
 		const Second frameTime = endTime - crntTime;
-		g_svarCpuTotalTime.set((frameTime - grTime) * 1000.0);
+		g_svarCoreCpuTotalTime.set((frameTime - grTime) * 1000.0);
 
 		const Second timerTick = 1.0_sec / Second(g_cvarCoreTargetFps);
 		if(frameTime < timerTick)
@@ -488,9 +509,9 @@ Error App::mainLoop()
 		{
 			MaliHwCountersOut out;
 			MaliHwCounters::getSingleton().sample(out);
-			g_svarMaliGpuActive.set(out.m_gpuActive);
-			g_svarMaliGpuReadBandwidth.set(out.m_readBandwidth);
-			g_svarMaliGpuWriteBandwidth.set(out.m_writeBandwidth);
+			g_svarCoreMaliGpuActive.set(out.m_gpuActive);
+			g_svarCoreMaliGpuReadBandwidth.set(out.m_readBandwidth);
+			g_svarCoreMaliGpuWriteBandwidth.set(out.m_writeBandwidth);
 		}
 #endif
 

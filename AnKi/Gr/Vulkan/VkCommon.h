@@ -36,8 +36,8 @@ namespace anki {
 // Forward
 class GrManagerImpl;
 
-ANKI_SVAR(GpuDeviceMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (VRAM)", StatFlag::kBytes)
-ANKI_SVAR(GpuHostMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (CPU)", StatFlag::kBytes)
+ANKI_SVAR(Gr, GpuDeviceMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (VRAM)", StatFlag::kBytes)
+ANKI_SVAR(Gr, GpuHostMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (CPU)", StatFlag::kBytes)
 
 #define ANKI_VK_LOGI(...) ANKI_LOG("VK", kNormal, __VA_ARGS__)
 #define ANKI_VK_LOGE(...) ANKI_LOG("VK", kError, __VA_ARGS__)
@@ -74,6 +74,7 @@ enum class VulkanExtensions : U32
 	kKHR_ray_tracing_position_fetch = 1u << 18u,
 	kKHR_xcb_surface = 1u << 19u,
 	kKHR_xlib_surface = 1u << 20u,
+	kKHR_compute_shader_derivatives = 1u << 21u
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
@@ -91,7 +92,7 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; // How many frames worth o
 		VkResult rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_VK_LOGF("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
+			ANKI_VK_LOGF("Vulkan function failed (VkResult: {}): {}", vkResultToString(rez), #x); \
 		} \
 	} while(0)
 
@@ -102,7 +103,7 @@ constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; // How many frames worth o
 		VkResult rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_VK_LOGE("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
+			ANKI_VK_LOGE("Vulkan function failed (VkResult: {}): {}", vkResultToString(rez), #x); \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)

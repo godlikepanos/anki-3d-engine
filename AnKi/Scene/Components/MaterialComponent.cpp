@@ -32,7 +32,7 @@ MaterialComponent& MaterialComponent::setMaterialFilename(CString fname)
 	MaterialResourcePtr newRsrc;
 	if(ResourceManager::getSingleton().loadResource(fname, newRsrc))
 	{
-		ANKI_SCENE_LOGE("Failed to load resource: %s", fname.cstr());
+		ANKI_SCENE_LOGE("Failed to load resource: {}", fname);
 	}
 	else
 	{
@@ -122,11 +122,15 @@ Aabb MaterialComponent::computeAabb(const SceneNode& node) const
 	}
 	else
 	{
-		Aabb aabbLocal = m_meshComponent->getLocalAabb();
+		Aabb aabbLocal;
 
 		if(m_skinComponent && m_skinComponent->isValid())
 		{
-			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(aabbLocal);
+			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace();
+		}
+		else
+		{
+			aabbLocal = m_meshComponent->getLocalAabb();
 		}
 
 		aabbWorld = aabbLocal.getTransformed(node.getWorldTransform());
@@ -296,7 +300,7 @@ void MaterialComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 			else
 			{
-				ANKI_SCENE_LOGW("Couldn't extract a diffuse value for material: %s", mtl.getFilename().cstr());
+				ANKI_SCENE_LOGW("Couldn't extract a diffuse value for material: {}", mtl.getFilename());
 			}
 
 			// Search the material if it's alpha tested

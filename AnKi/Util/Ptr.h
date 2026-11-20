@@ -538,6 +538,13 @@ public:
 		}
 	}
 
+	// Move the ownership of the pointer outside.
+	void moveAndReset(T*& ptr)
+	{
+		ptr = m_ptr;
+		m_ptr = nullptr;
+	}
+
 private:
 	void destroy()
 	{

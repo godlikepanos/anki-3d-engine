@@ -74,16 +74,22 @@ VertOut main(VertIn input)
 #endif // ANKI_VERTEX_SHADER
 
 #if ANKI_PIXEL_SHADER
-PixelOut main(VertOut input)
+[earlydepthstencil] PixelOut main(VertOut input)
 {
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
+	initImageStreaming(input.m_svPosition);
+
+	const F32 texBias = g_globalConstants.m_textureBias;
+
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(input.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	const F32 randFactor = rand(randg);
+
 #	if ANIMATED_TEXTURE == 1
-	Vec4 texCol =
-		readAnimatedTextureRgba(getBindlessTexture2DArrayVec4(localConstants.m_diffuseTex), g_trilinearRepeatAnisoResolutionScalingBiasSampler,
-								localConstants.m_textureAnimationPeriod, input.m_uv, g_globalRendererConstants.m_time);
+	Vec4 texCol = readAnimatedTextureRgba(localConstants.m_diffuseTex, g_trilinearRepeatSampler, localConstants.m_textureAnimationPeriod, input.m_uv,
+										  g_globalRendererConstants.m_time, randFactor, texBias);
 #	else
-	Vec4 texCol = getBindlessTexture2DVec4(localConstants.m_diffuseTex).Sample(g_trilinearRepeatAnisoResolutionScalingBiasSampler, input.m_uv);
+	Vec4 texCol = sampleTexture2D(localConstants.m_diffuseTex, g_trilinearRepeatSampler, input.m_uv, randFactor, texBias);
 #	endif
 
 	const Vec3 albedo = texCol.xyz * localConstants.m_albedoScale + localConstants.m_albedoBias;

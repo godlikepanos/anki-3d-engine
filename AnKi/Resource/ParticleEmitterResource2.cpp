@@ -45,7 +45,7 @@ Error ParticleEmitterResource2::load(const ResourceFilename& filename, Bool asyn
 	ANKI_CHECK(particleCountEl.getAttributeNumber("value", m_commonProps.m_particleCount));
 	if(m_commonProps.m_particleCount == 0 || m_commonProps.m_particleCount > kMaxU16) // kMaxU16 is arbitary
 	{
-		ANKI_RESOURCE_LOGE("Can't accept particleCount of: %u", m_commonProps.m_particleCount);
+		ANKI_RESOURCE_LOGE("Can't accept particleCount of: {}", m_commonProps.m_particleCount);
 		return Error::kUserData;
 	}
 
@@ -60,7 +60,7 @@ Error ParticleEmitterResource2::load(const ResourceFilename& filename, Bool asyn
 	ANKI_CHECK(particlesPerEmissionEl.getAttributeNumber("value", m_commonProps.m_particlesPerEmission));
 	if(m_commonProps.m_particlesPerEmission == 0)
 	{
-		ANKI_RESOURCE_LOGE("Can't accept particlesPerEmission of: %u", m_commonProps.m_particlesPerEmission);
+		ANKI_RESOURCE_LOGE("Can't accept particlesPerEmission of: {}", m_commonProps.m_particlesPerEmission);
 		return Error::kUserData;
 	}
 
@@ -87,7 +87,7 @@ Error ParticleEmitterResource2::parseShaderProgram(XmlElement shaderProgramEl, B
 	ANKI_CHECK(shaderProgramEl.getAttributeText("name", shaderName));
 
 	ResourceString fname;
-	fname.sprintf("ShaderBinaries/%s.ankiprogbin", shaderName.cstr());
+	fname.format("ShaderBinaries/{}.ankiprogbin", shaderName);
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(fname, m_prog, async));
 
@@ -191,7 +191,7 @@ Error ParticleEmitterResource2::parseMutators(XmlElement mutatorsEl, ShaderProgr
 
 		if(mutatorName.find("ANKI_") == 0)
 		{
-			ANKI_RESOURCE_LOGE("Mutators can't start with ANKI_: %s", mutatorName.cstr());
+			ANKI_RESOURCE_LOGE("Mutators can't start with ANKI_: {}", mutatorName);
 			return Error::kUserData;
 		}
 
@@ -204,13 +204,13 @@ Error ParticleEmitterResource2::parseMutators(XmlElement mutatorsEl, ShaderProgr
 
 		if(!mutator)
 		{
-			ANKI_RESOURCE_LOGE("Mutator not found in program %s", &mutatorName[0]);
+			ANKI_RESOURCE_LOGE("Mutator not found in program {}", mutatorName);
 			return Error::kUserData;
 		}
 
 		if(!mutatorValueExists(*mutator, mval))
 		{
-			ANKI_RESOURCE_LOGE("Value %d is not part of the mutator %s", mval, mutatorName.cstr());
+			ANKI_RESOURCE_LOGE("Value {} is not part of the mutator {}", mval, mutatorName);
 			return Error::kUserData;
 		}
 
@@ -259,7 +259,7 @@ Error ParticleEmitterResource2::parseInput(XmlElement inputEl)
 
 	if(!foundMember)
 	{
-		ANKI_RESOURCE_LOGE("Input not found in AnKiParticleEmitterProperties: %s", varName.cstr());
+		ANKI_RESOURCE_LOGE("Input not found in AnKiParticleEmitterProperties: {}", varName);
 		return Error::kUserData;
 	}
 

@@ -207,7 +207,7 @@ public:
 		str += b;
 		str += "\n";
 
-		b = String().sprintf("scale: %f %f %f", m_scale.x, m_scale.y, m_scale.z);
+		b = String().format("scale: {} {} {}", m_scale.x, m_scale.y, m_scale.z);
 		str += b;
 
 		return str;

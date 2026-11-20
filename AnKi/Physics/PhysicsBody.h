@@ -42,6 +42,7 @@ public:
 
 	Transform m_transform = Transform::getIdentity();
 
+	// Usually 0 to 1, can go higher. E.g. ice 0.05, wood 0.4, cloth on stone 0.5, rubber on concrete 0.9
 	F32 m_friction = 0.5f;
 
 	PhysicsLayer m_layer = PhysicsLayer::kStatic;

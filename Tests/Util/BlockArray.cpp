@@ -164,7 +164,7 @@ ANKI_TEST(Util, BlockArray)
 		}
 		const U64 vecInsertionTime = HighRezTimer::getCurrentTimeUs() - begin;
 
-		ANKI_TEST_LOGI("Insertion time: BlockArray %luus, std::vector %luus, a/b %lu", arrInsertionTime, vecInsertionTime,
+		ANKI_TEST_LOGI("Insertion time: BlockArray {}us, std::vector {}us, a/b {}", arrInsertionTime, vecInsertionTime,
 					   arrInsertionTime / vecInsertionTime);
 
 		// Iterate
@@ -185,8 +185,7 @@ ANKI_TEST(Util, BlockArray)
 		const U64 vecIterateTime = HighRezTimer::getCurrentTimeUs() - begin;
 
 		ANKI_TEST_EXPECT_EQ(sum, sum2);
-		ANKI_TEST_LOGI("Iteration time: BlockArray %luus, std::vector %luus, a/b %lu", arrIterateTime, vecIterateTime,
-					   arrIterateTime / vecIterateTime);
+		ANKI_TEST_LOGI("Iteration time: BlockArray {}us, std::vector {}us, a/b {}", arrIterateTime, vecIterateTime, arrIterateTime / vecIterateTime);
 	}
 
 	DefaultMemoryPool::freeSingleton();

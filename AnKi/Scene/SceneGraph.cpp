@@ -43,9 +43,9 @@
 
 namespace anki {
 
-ANKI_SVAR(SceneUpdateTime, StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(SceneComponentsUpdated, StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(SceneNodesUpdated, StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Scene, UpdateTime, StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Scene, ComponentsUpdated, StatCategory::kScene, "Scene components updated per frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Scene, NodesUpdated, StatCategory::kScene, "Scene nodes updated per frame", StatFlag::kZeroEveryFrame)
 
 class SceneGraph::UpdateSceneNodesCtx
 {
@@ -668,13 +668,13 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 
 	if(!scene.m_canBeSaved)
 	{
-		ANKI_SCENE_LOGE("Scene can't be saved: %s", scene.m_name.cstr());
+		ANKI_SCENE_LOGE("Scene can't be saved: {}", scene.m_name);
 		return Error::kUserData;
 	}
 
 	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
-	ANKI_LOGI("Saving scene: %s", filename.cstr());
+	ANKI_SCENE_LOGI("Saving scene: {}", filename);
 
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
@@ -758,7 +758,7 @@ Error SceneGraph::saveScene(CString filename, Scene& scene)
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 	const F64 timeDiffMs = F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0;
-	ANKI_SCENE_LOGI("Saving scene finished. %fms", timeDiffMs);
+	ANKI_SCENE_LOGI("Saving scene finished. {:f}ms", timeDiffMs);
 
 	return Error::kNone;
 }
@@ -786,7 +786,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 
 	const U64 begin = HighRezTimer::getCurrentTimeUs();
 
-	ANKI_LOGI("Loading scene: %s", filepath.cstr());
+	ANKI_SCENE_LOGI("Loading scene: {}", filepath);
 
 	const String extension = getFileExtension(filepath);
 
@@ -802,7 +802,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 
 		scene->m_filepath = filepath;
 
-		ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
+		ANKI_SCENE_LOGI("Loading scene finished. {:f}ms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 		setActiveScene(&m_scenes[oldActiveScene]);
 
 		return Error::kNone;
@@ -818,7 +818,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 	ANKI_SERIALIZE(magic, 1);
 	if(magic != "ANKISCEN")
 	{
-		ANKI_LOGE("Wrong magic value");
+		ANKI_SCENE_LOGE("Wrong magic value");
 		return Error::kUserData;
 	}
 
@@ -826,7 +826,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 	ANKI_SERIALIZE(version, 1);
 	if(version > kSceneBinaryVersion)
 	{
-		ANKI_LOGE("Wrong version number");
+		ANKI_SCENE_LOGE("Wrong version number");
 		return Error::kUserData;
 	}
 	serializer.setBinaryVersion(version);
@@ -867,7 +867,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 			GlobalRegistryRecord* rec = GlobalRegistry::getSingleton().tryFindRecord(className);
 			if(!rec || rec->m_type != GlobalRegistryRecordType::kSceneNode)
 			{
-				ANKI_SCENE_LOGE("Can't load scene. Failed to find record for class: %s", className.cstr());
+				ANKI_SCENE_LOGE("Can't load scene. Failed to find record for class: {}", className);
 				return Error::kUserData;
 			}
 
@@ -936,7 +936,7 @@ Error SceneGraph::loadScene(CString filepath, Scene*& scene)
 	// Need to adjust the scene's UUID generator
 	scene->m_nodesUuid.setNonAtomically(maxNodesUuid + 1);
 
-	ANKI_SCENE_LOGI("Loading scene finished. %fms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
+	ANKI_SCENE_LOGI("Loading scene finished. {:f}ms", F64(HighRezTimer::getCurrentTimeUs() - begin) / 1000.0);
 	return Error::kNone;
 }
 
@@ -950,7 +950,7 @@ void SceneGraph::doDeferredOperations()
 		{
 			if(m_nodesDict.find(node->getName()) != m_nodesDict.getEnd())
 			{
-				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node->getName().cstr());
+				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: {}", node->getName());
 			}
 			else
 			{
@@ -996,7 +996,7 @@ void SceneGraph::doDeferredOperations()
 		{
 			if(m_nodesDict.find(node.getName()) != m_nodesDict.getEnd())
 			{
-				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node.getName().cstr());
+				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: {}", node.getName());
 			}
 			else
 			{
@@ -1024,8 +1024,7 @@ void SceneGraph::doDeferredOperations()
 		{
 			if(parent->m_sceneIndex != child->m_sceneIndex)
 			{
-				ANKI_SCENE_LOGE("Can't make %s the parent of %s. They don't belong in the same scene", parent->getName().cstr(),
-								child->getName().cstr());
+				ANKI_SCENE_LOGE("Can't make {} the parent of {}. They don't belong in the same scene", parent->getName(), child->getName());
 				continue;
 			}
 
@@ -1042,8 +1041,7 @@ void SceneGraph::doDeferredOperations()
 
 			if(createsCycle)
 			{
-				ANKI_SCENE_LOGE("Can't make %s the parent of %s. It would create a cycle in the hierarchy", parent->getName().cstr(),
-								child->getName().cstr());
+				ANKI_SCENE_LOGE("Can't make {} the parent of {}. It would create a cycle in the hierarchy", parent->getName(), child->getName());
 				continue;
 			}
 		}
@@ -1140,7 +1138,7 @@ Error SceneGraph::newEmptyScene(CString name, Scene*& scene)
 
 	if(tryFindScene(name))
 	{
-		ANKI_SCENE_LOGE("Scene found with the same name %s", name.cstr());
+		ANKI_SCENE_LOGE("Scene found with the same name {}", name);
 		return Error::kUserData;
 	}
 
@@ -1179,7 +1177,7 @@ void SceneGraph::deleteScene(Scene* scene)
 
 	if(!scene->m_canDelete)
 	{
-		ANKI_LOGE("Scene can't be deleted: %s", scene->m_name.cstr());
+		ANKI_SCENE_LOGE("Scene can't be deleted: {}", scene->m_name);
 		return;
 	}
 

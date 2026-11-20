@@ -94,12 +94,12 @@ BufferImpl::~BufferImpl()
 #if ANKI_ASSERTIONS_ENABLED
 	if(m_needsFlush && m_flushCount.load() == 0)
 	{
-		ANKI_VK_LOGW("Buffer needed flushing but you never flushed: %s", getName().cstr());
+		ANKI_VK_LOGW("Buffer needed flushing but you never flushed: {}", getName());
 	}
 
 	if(m_needsInvalidate && m_invalidateCount.load() == 0)
 	{
-		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
+		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: {}", getName());
 	}
 #endif
 
@@ -119,11 +119,11 @@ BufferImpl::~BufferImpl()
 
 		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			g_svarGpuDeviceMemoryAllocated.increment(m_actualSize);
+			g_svarGrGpuDeviceMemoryAllocated.increment(m_actualSize);
 		}
 		else
 		{
-			g_svarGpuHostMemoryAllocated.increment(m_actualSize);
+			g_svarGrGpuHostMemoryAllocated.increment(m_actualSize);
 		}
 	}
 }
@@ -251,7 +251,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	if(memIdx == kMaxU32)
 	{
-		ANKI_VK_LOGE("Failed to find appropriate memory type for buffer: %s", getName().cstr());
+		ANKI_VK_LOGE("Failed to find appropriate memory type for buffer: {}", getName());
 		return Error::kFunctionFailed;
 	}
 
@@ -284,11 +284,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	if(getGrManagerImpl().getMemoryProperties().memoryTypes[memIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
-		g_svarGpuDeviceMemoryAllocated.increment(size);
+		g_svarGrGpuDeviceMemoryAllocated.increment(size);
 	}
 	else
 	{
-		g_svarGpuHostMemoryAllocated.increment(size);
+		g_svarGrGpuHostMemoryAllocated.increment(size);
 	}
 
 	// Bind mem to buffer

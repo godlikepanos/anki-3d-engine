@@ -16,7 +16,7 @@
 
 namespace anki {
 
-static void setColorStyleAdia()
+[[maybe_unused]] static void setColorStyleAdia()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImVec4* colors = style.Colors;
@@ -199,6 +199,281 @@ static void setColorStyleAdia()
 	style.TabRounding = 0.0f;
 }
 
+[[maybe_unused]] static void setColorStyleSlate()
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	// Palette
+	auto hex = [](U32 rgb, F32 a) {
+		return Vec4(F32((rgb >> 16) & 0xFF) / 255.0f, F32((rgb >> 8) & 0xFF) / 255.0f, F32(rgb & 0xFF) / 255.0f, a);
+	};
+	auto alpha = [](Vec4 c, F32 a) {
+		c.w = a;
+		return c;
+	};
+	const Vec4 bgDeep = hex(0x242424, 1.0f); // Docking gaps, empty dock space
+	const Vec4 bgBar = hex(0x2A2A2A, 1.0f); // Title bars, tab bars
+	const Vec4 bgBarActive = hex(0x343434, 1.0f); // Title bar of the focused window
+	const Vec4 bgPopup = hex(0x2B2B2B, 1.0f); // Popups, menus, tooltips
+	const Vec4 bgWindow = hex(0x303030, 1.0f); // Window content
+	const Vec4 bgMenu = hex(0x333333, 1.0f); // Menu bar
+	const Vec4 surface = hex(0x3A3A3A, 1.0f); // Frames (inputs, checkboxes, combos)
+	const Vec4 surfaceHovered = hex(0x47423A, 1.0f); // Hovered/edited frames lean towards the interactive gold
+	const Vec4 surfaceActive = hex(0x4D473A, 1.0f);
+	const Vec4 header = hex(0x404040, 1.0f); // Table headers
+	const Vec4 border = hex(0x3C3C3C, 1.0f);
+	const Vec4 borderLight = hex(0x363636, 1.0f); // Inner table borders
+	const Vec4 borderHighlight = hex(0x626262, 1.0f);
+	const Vec4 text = hex(0xE8E8E8, 1.0f);
+	const Vec4 textMuted = hex(0x8C8C8C, 1.0f);
+	const Vec4 accent = hex(0xD6A94F, 1.0f); // Check marks, text cursor, links, tab overline
+	const Vec4 accentDim = hex(0xA78540, 1.0f); // Plots, progress bars (brighten to accent on hover)
+	const Vec4 clear = Vec4(0.0f);
+
+	// Interactive: one idle/hovered/active ramp shared by every gold control (buttons, grabs, menu items, selectables, tabs, grips, separators)
+	const Vec4 interactive = hex(0x856A33, 1.0f);
+	const Vec4 interactiveHovered = hex(0x977839, 1.0f);
+	const Vec4 interactiveActive = hex(0xA88540, 1.0f);
+	const Vec4 interactiveDim = hex(0x564D3A, 1.0f); // Selection at rest: selected rows, open menus, collapsing headers, unfocused selected tab
+
+	// Sizes
+	style.WindowPadding = Vec2(8.0f, 8.0f);
+	style.FramePadding = Vec2(8.0f, 3.0f);
+	style.CellPadding = Vec2(6.0f, 2.0f);
+	style.ItemSpacing = Vec2(8.0f, 4.0f);
+	style.ItemInnerSpacing = Vec2(6.0f, 4.0f);
+	style.IndentSpacing = 18.0f;
+	style.ScrollbarSize = 10.0f;
+	style.GrabMinSize = 10.0f;
+
+	style.WindowBorderSize = 1.0f;
+	style.ChildBorderSize = 1.0f;
+	style.PopupBorderSize = 1.0f;
+	style.FrameBorderSize = 0.0f;
+	style.TabBorderSize = 0.0f;
+	style.TabBarBorderSize = 1.0f;
+	style.TabBarOverlineSize = 1.0f;
+
+	style.WindowRounding = 4.0f;
+	style.ChildRounding = 4.0f;
+	style.FrameRounding = 3.0f;
+	style.PopupRounding = 4.0f;
+	style.ScrollbarRounding = 3.0f; // Match GrabRounding: scrollbar and slider grabs share colors and shape
+	style.GrabRounding = 3.0f;
+	style.TabRounding = 3.0f;
+
+	style.WindowTitleAlign = Vec2(0.0f, 0.5f);
+	style.WindowMenuButtonPosition = ImGuiDir_Left;
+	style.ColorButtonPosition = ImGuiDir_Left;
+	style.SeparatorTextBorderSize = 1.0f;
+	style.DisabledAlpha = 0.5f;
+	style.DockingSeparatorSize = 2.0f;
+
+	// Colors
+	ImVec4* colors = style.Colors;
+	colors[ImGuiCol_Text] = text;
+	colors[ImGuiCol_TextDisabled] = textMuted;
+	colors[ImGuiCol_WindowBg] = bgWindow;
+	colors[ImGuiCol_ChildBg] = clear;
+	colors[ImGuiCol_PopupBg] = bgPopup;
+	colors[ImGuiCol_Border] = border;
+	colors[ImGuiCol_BorderShadow] = clear;
+	colors[ImGuiCol_FrameBg] = surface;
+	colors[ImGuiCol_FrameBgHovered] = surfaceHovered;
+	colors[ImGuiCol_FrameBgActive] = surfaceActive;
+	colors[ImGuiCol_TitleBg] = bgBar;
+	colors[ImGuiCol_TitleBgActive] = bgBarActive;
+	colors[ImGuiCol_TitleBgCollapsed] = bgBar;
+	colors[ImGuiCol_MenuBarBg] = bgMenu;
+	colors[ImGuiCol_ScrollbarBg] = clear;
+	colors[ImGuiCol_ScrollbarGrab] = interactive;
+	colors[ImGuiCol_ScrollbarGrabHovered] = interactiveHovered;
+	colors[ImGuiCol_ScrollbarGrabActive] = interactiveActive;
+	colors[ImGuiCol_CheckMark] = accent;
+	colors[ImGuiCol_SliderGrab] = interactive;
+	colors[ImGuiCol_SliderGrabActive] = interactiveActive;
+	colors[ImGuiCol_Button] = interactive;
+	colors[ImGuiCol_ButtonHovered] = interactiveHovered;
+	colors[ImGuiCol_ButtonActive] = interactiveActive;
+	colors[ImGuiCol_Header] = interactiveDim;
+	colors[ImGuiCol_HeaderHovered] = interactiveHovered;
+	colors[ImGuiCol_HeaderActive] = interactiveActive;
+	colors[ImGuiCol_Separator] = border;
+	colors[ImGuiCol_SeparatorHovered] = interactiveHovered;
+	colors[ImGuiCol_SeparatorActive] = interactiveActive;
+	colors[ImGuiCol_ResizeGrip] = clear;
+	colors[ImGuiCol_ResizeGripHovered] = interactiveHovered;
+	colors[ImGuiCol_ResizeGripActive] = interactiveActive;
+	colors[ImGuiCol_InputTextCursor] = accent;
+	colors[ImGuiCol_Tab] = bgBar;
+	colors[ImGuiCol_TabHovered] = interactiveHovered;
+	colors[ImGuiCol_TabSelected] = interactive;
+	colors[ImGuiCol_TabSelectedOverline] = accent;
+	colors[ImGuiCol_TabDimmed] = bgBar;
+	colors[ImGuiCol_TabDimmedSelected] = interactiveDim;
+	colors[ImGuiCol_TabDimmedSelectedOverline] = clear;
+	colors[ImGuiCol_DockingPreview] = alpha(accent, 0.30f);
+	colors[ImGuiCol_DockingEmptyBg] = bgDeep;
+	colors[ImGuiCol_PlotLines] = accentDim;
+	colors[ImGuiCol_PlotLinesHovered] = accent;
+	colors[ImGuiCol_PlotHistogram] = accentDim;
+	colors[ImGuiCol_PlotHistogramHovered] = accent;
+	colors[ImGuiCol_TableHeaderBg] = header;
+	colors[ImGuiCol_TableBorderStrong] = border;
+	colors[ImGuiCol_TableBorderLight] = borderLight;
+	colors[ImGuiCol_TableRowBg] = clear;
+	colors[ImGuiCol_TableRowBgAlt] = hex(0xFFFFFF, 0.025f);
+	colors[ImGuiCol_TextLink] = accent;
+	colors[ImGuiCol_TextSelectedBg] = alpha(accent, 0.30f);
+	colors[ImGuiCol_TreeLines] = borderHighlight;
+	colors[ImGuiCol_DragDropTarget] = accent;
+	colors[ImGuiCol_NavCursor] = accent;
+	colors[ImGuiCol_NavWindowingHighlight] = alpha(accent, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg] = hex(0x000000, 0.50f);
+	colors[ImGuiCol_ModalWindowDimBg] = hex(0x000000, 0.50f);
+}
+
+// Catppuccin Mocha #2: https://github.com/ocornut/imgui/issues/707#issuecomment-3592676777 (brenocq, 2025)
+// - Palette: official Catppuccin Mocha (https://github.com/catppuccin/palette)
+// - Single accent: Sapphire. Links use Blue (Catppuccin style guide).
+// - Greys follow one ladder everywhere: normal surface0 -> hovered surface1 -> active/selected surface2.
+// - Requires Dear ImGui 1.92.9+ for MenuItemRounding/SelectableRounding (1.92.8+ for CheckboxSelectedBg); those lines are skipped on older versions.
+// - Sets every ImGuiCol_ explicitly, so it does not depend on StyleColorsDark().
+// -----------------------------------------------------------------------------
+[[maybe_unused]] static void setCatppuccinMochaStyle()
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImVec4* colors = style.Colors;
+
+	// Palette (official Catppuccin Mocha)
+	const ImVec4 mantle = ImVec4(0.094f, 0.094f, 0.145f, 1.0f); // #181825
+	const ImVec4 base = ImVec4(0.118f, 0.118f, 0.180f, 1.0f); // #1e1e2e
+	const ImVec4 surface0 = ImVec4(0.192f, 0.196f, 0.267f, 1.0f); // #313244
+	const ImVec4 surface1 = ImVec4(0.271f, 0.278f, 0.353f, 1.0f); // #45475a
+	const ImVec4 surface2 = ImVec4(0.345f, 0.357f, 0.439f, 1.0f); // #585b70
+	const ImVec4 overlay0 = ImVec4(0.424f, 0.439f, 0.525f, 1.0f); // #6c7086
+	const ImVec4 overlay2 = ImVec4(0.576f, 0.600f, 0.698f, 1.0f); // #9399b2
+	const ImVec4 subtext0 = ImVec4(0.651f, 0.678f, 0.784f, 1.0f); // #a6adc8
+	const ImVec4 text = ImVec4(0.804f, 0.839f, 0.957f, 1.0f); // #cdd6f4
+	const ImVec4 sapphire = ImVec4(0.455f, 0.780f, 0.925f, 1.0f); // #74c7ec  (the accent)
+	const ImVec4 blue = ImVec4(0.537f, 0.706f, 0.980f, 1.0f); // #89b4fa  (links)
+	const ImVec4 clear = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	const ImVec4 dim = ImVec4(0.0f, 0.0f, 0.0f, 0.35f);
+
+	// Text
+	colors[ImGuiCol_Text] = text;
+	colors[ImGuiCol_TextDisabled] = subtext0;
+	colors[ImGuiCol_TextLink] = blue;
+	colors[ImGuiCol_TextSelectedBg] = surface2;
+	colors[ImGuiCol_InputTextCursor] = sapphire;
+
+	// Backgrounds
+	colors[ImGuiCol_WindowBg] = base;
+	colors[ImGuiCol_ChildBg] = base;
+	colors[ImGuiCol_PopupBg] = mantle; // darker than inputs/selected rows so they show inside popups
+	colors[ImGuiCol_MenuBarBg] = mantle;
+	colors[ImGuiCol_Border] = surface1;
+	colors[ImGuiCol_BorderShadow] = clear;
+
+	// Title bars
+	colors[ImGuiCol_TitleBg] = mantle;
+	colors[ImGuiCol_TitleBgActive] = surface0;
+	colors[ImGuiCol_TitleBgCollapsed] = mantle;
+
+	// Frames (inputs, sliders, checkboxes), buttons, headers: one ladder
+	colors[ImGuiCol_FrameBg] = surface0;
+	colors[ImGuiCol_FrameBgHovered] = surface1;
+	colors[ImGuiCol_FrameBgActive] = surface2;
+	colors[ImGuiCol_Button] = surface0;
+	colors[ImGuiCol_ButtonHovered] = surface1;
+	colors[ImGuiCol_ButtonActive] = surface2;
+	colors[ImGuiCol_Header] = surface0;
+	colors[ImGuiCol_HeaderHovered] = surface1;
+	colors[ImGuiCol_HeaderActive] = surface2;
+
+	// Accent (sapphire)
+	colors[ImGuiCol_CheckMark] = sapphire;
+	colors[ImGuiCol_SliderGrab] = sapphire;
+	colors[ImGuiCol_SliderGrabActive] = sapphire;
+	colors[ImGuiCol_PlotLines] = sapphire;
+	colors[ImGuiCol_PlotLinesHovered] = text;
+	colors[ImGuiCol_PlotHistogram] = sapphire; // also progress bars
+	colors[ImGuiCol_PlotHistogramHovered] = text;
+	colors[ImGuiCol_NavCursor] = sapphire;
+	colors[ImGuiCol_NavWindowingHighlight] = sapphire;
+	colors[ImGuiCol_DragDropTarget] = sapphire;
+	colors[ImGuiCol_DragDropTargetBg] = clear;
+	colors[ImGuiCol_DockingPreview] = sapphire;
+	colors[ImGuiCol_DockingEmptyBg] = base;
+
+	// Separators, resize grips, scrollbars, tree lines
+	colors[ImGuiCol_Separator] = surface1;
+	colors[ImGuiCol_SeparatorHovered] = sapphire;
+	colors[ImGuiCol_SeparatorActive] = sapphire;
+	colors[ImGuiCol_ResizeGrip] = clear; // Hidden: child windows draw over the grip
+	colors[ImGuiCol_ResizeGripHovered] = clear; // Same as above
+	colors[ImGuiCol_ResizeGripActive] = clear; // Same as above
+	colors[ImGuiCol_ScrollbarBg] = clear; // no track, just the grab
+	colors[ImGuiCol_ScrollbarGrab] = surface2;
+	colors[ImGuiCol_ScrollbarGrabHovered] = overlay0;
+	colors[ImGuiCol_ScrollbarGrabActive] = overlay2;
+	colors[ImGuiCol_TreeLines] = surface1;
+
+	// Tabs (selected = brightest; accent line on focused docked tabs)
+	colors[ImGuiCol_Tab] = surface0;
+	colors[ImGuiCol_TabHovered] = surface1;
+	colors[ImGuiCol_TabSelected] = surface2;
+	colors[ImGuiCol_TabSelectedOverline] = sapphire;
+	colors[ImGuiCol_TabDimmed] = surface0;
+	colors[ImGuiCol_TabDimmedSelected] = surface1;
+	colors[ImGuiCol_TabDimmedSelectedOverline] = clear;
+
+	// Tables
+	colors[ImGuiCol_TableHeaderBg] = surface0;
+	colors[ImGuiCol_TableBorderStrong] = surface1;
+	colors[ImGuiCol_TableBorderLight] = surface0;
+	colors[ImGuiCol_TableRowBg] = clear;
+	colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.0f, 1.0f, 1.0f, 0.06f);
+
+	// Misc
+	colors[ImGuiCol_UnsavedMarker] = text;
+	colors[ImGuiCol_NavWindowingDimBg] = dim;
+	colors[ImGuiCol_ModalWindowDimBg] = dim;
+#if IMGUI_VERSION_NUM >= 19280
+	colors[ImGuiCol_CheckboxSelectedBg] = surface1; // checked checkbox background
+#endif
+
+	// Rounding
+	style.WindowRounding = 6.0f;
+	style.ChildRounding = 6.0f;
+	style.FrameRounding = 4.0f;
+	style.PopupRounding = 4.0f;
+	style.ScrollbarRounding = 9.0f;
+	style.GrabRounding = 4.0f;
+	style.TabRounding = 4.0f;
+#if IMGUI_VERSION_NUM >= 19290
+	style.MenuItemRounding = 4.0f;
+	style.SelectableRounding = 4.0f; // imgui discourages this: contiguous multi-selections render as separate pills. Set 0 if you use them.
+#endif
+
+	// Spacing
+	style.WindowPadding = ImVec2(8.0f, 8.0f);
+	style.FramePadding = ImVec2(5.0f, 3.0f);
+	style.ItemSpacing = ImVec2(8.0f, 4.0f);
+	style.ItemInnerSpacing = ImVec2(4.0f, 4.0f);
+	style.IndentSpacing = 21.0f;
+	style.ScrollbarSize = 14.0f;
+	style.GrabMinSize = 10.0f;
+
+	// Borders
+	style.WindowBorderSize = 1.0f;
+	style.ChildBorderSize = 1.0f;
+	style.PopupBorderSize = 1.0f;
+	style.FrameBorderSize = 0.0f;
+	style.TabBorderSize = 0.0f;
+	style.TabBarOverlineSize = 2.0f;
+}
+
 static MouseCursor imguiCursorToAnki(ImGuiMouseCursor imguiCursor)
 {
 #define ANKI_HANDLE(ak, imgui) \
@@ -285,8 +560,7 @@ Error UiCanvas::init(UVec2 size)
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	// ImGui::StyleColorsLight();
-	setColorStyleAdia();
-	// setStypeHalfLife();
+	setCatppuccinMochaStyle();
 
 	m_defaultFont = addFont("EngineAssets/UbuntuRegular.ttf");
 
@@ -387,6 +661,15 @@ void UiCanvas::handleInput()
 	else if(in.getMouseButton(MouseButton::kRight) < 0)
 	{
 		io.AddMouseButtonEvent(1, false);
+	}
+
+	if(in.getMouseButton(MouseButton::kMiddle) > 0)
+	{
+		io.AddMouseButtonEvent(2, true);
+	}
+	else if(in.getMouseButton(MouseButton::kMiddle) < 0)
+	{
+		io.AddMouseButtonEvent(2, false);
 	}
 
 	if(in.getMouseButton(MouseButton::kScrollUp) > 0)
@@ -593,7 +876,7 @@ void UiCanvas::appendGraphicsCommands(CommandBuffer& cmdb) const
 		ImDrawIdx* indices;
 		indicesToken = RebarTransientMemoryPool::getSingleton().allocate(drawData.TotalIdxCount * sizeof(ImDrawIdx), sizeof(ImDrawIdx), indices);
 
-		for(I32 n = 0; n < drawData.CmdListsCount; ++n)
+		for(I32 n = 0; n < drawData.CmdLists.Size; ++n)
 		{
 			const ImDrawList& cmdList = *drawData.CmdLists[n];
 			memcpy(verts, cmdList.VtxBuffer.Data, cmdList.VtxBuffer.Size * sizeof(ImDrawVert));
@@ -624,7 +907,7 @@ void UiCanvas::appendGraphicsCommands(CommandBuffer& cmdb) const
 	// Render
 	U32 vertOffset = 0;
 	U32 idxOffset = 0;
-	for(I32 n = 0; n < drawData.CmdListsCount; n++)
+	for(I32 n = 0; n < drawData.CmdLists.Size; n++)
 	{
 		const ImDrawList& cmdList = *drawData.CmdLists[n];
 		for(I32 i = 0; i < cmdList.CmdBuffer.Size; i++)

@@ -26,8 +26,7 @@ private:
 	Array<RendererTexture, 2> m_rtTextures;
 	Bool m_rtTexturesImportedOnce = false;
 
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	RendererShaderProgram m_prog;
 
 	class
 	{

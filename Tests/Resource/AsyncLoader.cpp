@@ -44,7 +44,7 @@ public:
 			{
 				if(m_id != static_cast<I32>(x))
 				{
-					ANKI_LOGE("Wrong excecution order");
+					ANKI_TEST_LOGE("Wrong excecution order");
 					return Error::kFunctionFailed;
 				}
 			}

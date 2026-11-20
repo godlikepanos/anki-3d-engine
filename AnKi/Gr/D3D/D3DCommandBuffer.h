@@ -55,7 +55,7 @@ private:
 
 	const ShaderProgramImpl* m_wgProg = nullptr;
 
-	class
+	class IndArgs
 	{
 	public:
 		ID3D12Resource* m_indirectBuff = nullptr;

@@ -22,7 +22,7 @@ Error XmlElement::getNumber(T& out) const
 	}
 	else
 	{
-		ANKI_UTIL_LOGE("Failed to return number. Element: %s", m_el->Value());
+		ANKI_UTIL_LOGE("Failed to return number. Element: {}", m_el->Value());
 		return Error::kUserData;
 	}
 
@@ -96,7 +96,7 @@ Error XmlElement::getAttributeNumberOptional(CString name, T& out, Bool& attribP
 	{
 		if(arr.getSize() != 1)
 		{
-			ANKI_UTIL_LOGE("Expecting one element for attrib: %s", &name[0]);
+			ANKI_UTIL_LOGE("Expecting one element for attrib: {}", name);
 			return Error::kUserData;
 		}
 
@@ -129,7 +129,7 @@ Error XmlElement::parseNumbers(CString txt, DynamicArray<T, TMemoryPool>& out) c
 
 	if(err)
 	{
-		ANKI_UTIL_LOGE("Failed to covert to numbers the element: %s", m_el->Value());
+		ANKI_UTIL_LOGE("Failed to covert to numbers the element: {}", m_el->Value());
 	}
 
 	return err;
@@ -147,7 +147,7 @@ Error XmlElement::parseNumbers(CString txt, TArray& out) const
 
 	if(listSize != out.getSize())
 	{
-		ANKI_UTIL_LOGE("Wrong number of elements for element: %s", m_el->Value());
+		ANKI_UTIL_LOGE("Wrong number of elements for element: {}", m_el->Value());
 		return Error::kUserData;
 	}
 
@@ -163,7 +163,7 @@ Error XmlElement::parseNumbers(CString txt, TArray& out) const
 
 	if(err)
 	{
-		ANKI_UTIL_LOGE("Failed to covert to numbers the element: %s", m_el->Value());
+		ANKI_UTIL_LOGE("Failed to covert to numbers the element: {}", m_el->Value());
 	}
 
 	return err;
@@ -188,7 +188,7 @@ Error XmlDocument<TMemoryPool>::parse(CString xmlText)
 {
 	if(m_doc.Parse(&xmlText[0]))
 	{
-		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s", ((m_doc.ErrorStr() == nullptr) ? "unknown" : m_doc.ErrorStr()));
+		ANKI_UTIL_LOGE("Cannot parse file. Reason: {}", ((m_doc.ErrorStr() == nullptr) ? "unknown" : m_doc.ErrorStr()));
 
 		return Error::kUserData;
 	}
@@ -210,7 +210,7 @@ Error XmlDocument<TMemoryPool>::getChildElement(CString name, XmlElement& out) c
 
 	if(!out)
 	{
-		ANKI_UTIL_LOGE("Cannot find tag \"%s\"", &name[0]);
+		ANKI_UTIL_LOGE("Cannot find tag \"{}\"", name);
 		return Error::kUserData;
 	}
 

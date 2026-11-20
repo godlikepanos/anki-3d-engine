@@ -58,7 +58,7 @@ Error XmlElement::getChildElement(CString name, XmlElement& out) const
 
 	if(!out)
 	{
-		ANKI_UTIL_LOGE("Cannot find tag: %s", &name[0]);
+		ANKI_UTIL_LOGE("Cannot find tag: {}", name);
 		err = Error::kUserData;
 	}
 

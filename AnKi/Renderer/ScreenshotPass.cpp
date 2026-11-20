@@ -179,16 +179,16 @@ Error ScreenshotPass::saveTexture(U64 frame, void* pixels)
 	ANKI_CHECK(getTempDirectory(tempDir));
 
 	RendererString filename;
-	filename.sprintf("%s/Screenshot%" PRIu64 ".png", tempDir.cstr(), frame);
+	filename.format("{}/Screenshot{}.png", tempDir, frame);
 
 	const I32 ok = stbi_write_png(filename.cstr(), width, height, 4, pixels, 0);
 	if(!ok)
 	{
-		ANKI_R_LOGE("Failed to write screenshot: %s", filename.cstr());
+		ANKI_R_LOGE("Failed to write screenshot: {}", filename);
 		return Error::kFunctionFailed;
 	}
 
-	ANKI_R_LOGI("Stored screenshot: %s", filename.cstr());
+	ANKI_R_LOGI("Stored screenshot: {}", filename);
 
 	return Error::kNone;
 }

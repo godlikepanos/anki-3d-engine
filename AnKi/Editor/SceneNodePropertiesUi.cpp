@@ -205,7 +205,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 					// Header
 					{
 						String label;
-						label.sprintf(" %s %s (%u)", icon.cstr(), kSceneComponentTypeInfos[comp.getType()].m_name, comp.getUuid());
+						label.format(" {} {} ({})", icon, kSceneComponentTypeInfos[comp.getType()].m_name, comp.getUuid());
 						ImGui::SeparatorText(label.cstr());
 
 						// Delete component
@@ -221,7 +221,7 @@ void SceneNodePropertiesUi::drawWindow(SceneNode* node, const SceneGraphView& sc
 						ImGui::SameLine();
 						if(ImGui::Button(ICON_MDI_EYE))
 						{
-							ANKI_LOGW("TODO");
+							ANKI_EDITOR_LOGW("TODO");
 						}
 						ImGui::SetItemTooltip("Disable component");
 					}
@@ -411,7 +411,7 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 	// Embeded script button
 	{
 		String buttonTxt;
-		buttonTxt.sprintf(ICON_MDI_LANGUAGE_LUA " Embedded Script (%s)", comp.hasScriptText() ? "Set" : "Unset");
+		buttonTxt.format(ICON_MDI_LANGUAGE_LUA " Embedded Script ({})", comp.hasScriptText() ? "Set" : "Unset");
 		const Bool showEditor = ImGui::Button(buttonTxt.cstr(), Vec2(-1.0f, 0.0f));
 		if(showEditor && (m_scriptComponentThatHasTheTextEditorOpen == 0 || m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid()))
 		{
@@ -423,9 +423,9 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 
 	if(m_textEditorOpen && m_scriptComponentThatHasTheTextEditorOpen == comp.getUuid())
 	{
-		if(textEditorWindow(String().sprintf("ScriptComponent %u", comp.getUuid()), &m_textEditorOpen, nullptr, m_textEditorTxt))
+		if(textEditorWindow(String().format("ScriptComponent {}", comp.getUuid()), &m_textEditorOpen, nullptr, m_textEditorTxt))
 		{
-			ANKI_LOGV("Updating ScriptComponent");
+			ANKI_EDITOR_LOGV("Updating ScriptComponent");
 			comp.setScriptText(m_textEditorTxt);
 		}
 
@@ -474,6 +474,17 @@ void SceneNodePropertiesUi::scriptComponent(ScriptComponent& comp)
 			if(ImGui::InputText(name, buff.getBegin(), buff.getSize(), ImGuiInputTextFlags_EnterReturnsTrue))
 			{
 				var.setString(&buff[0]);
+			}
+
+			// Drag and drop any asset
+			for(const Char* payload :
+				{kMeshAssetDragDropPayload, kTextureAssetDragDropPayload, kMaterialAssetDragDropPayload, kScriptAssetDragDropPayload,
+				 kParticleEmitterAssetDragDropPayload, kAnimationAssetDragDropPayload, kSkeletonAssetDragDropPayload})
+			{
+				if(String droppedFilename = acceptDragDrop(payload))
+				{
+					var.setString(droppedFilename);
+				}
 			}
 			break;
 		}
@@ -658,6 +669,18 @@ void SceneNodePropertiesUi::skinComponent(SkinComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
+	// Play or stop button
+	{
+		const Bool playing = comp.getPlayOnEditor();
+
+		ImGui::SameLine();
+		if(ImGui::Button((playing) ? ICON_MDI_STOP : ICON_MDI_PLAY))
+		{
+			comp.setPlayOnEditor(!playing);
+		}
+		ImGui::SetItemTooltip("Play/Stop animations");
+	}
+
 	drawLocateResourceButton((comp.hasSkeletonResource()) ? comp.getSkeletonFilename() : "");
 
 	// Filename
@@ -674,7 +697,32 @@ void SceneNodePropertiesUi::skinComponent(SkinComponent& comp)
 		{
 			comp.setSkeletonFilename(filenames[newSelectedFilename]);
 		}
+
+		// Drag and drop
+		if(String droppedFilename = acceptDragDrop(kSkeletonAssetDragDropPayload))
+		{
+			if(droppedFilename != currentFilename)
+			{
+				comp.setSkeletonFilename(droppedFilename);
+			}
+		}
 	}
+
+	// Ragdoll mass
+	F32 ragdollMass = comp.getRagdollMass();
+	if(ImGui::SliderFloat("Ragdoll Mass", &ragdollMass, 1.0f, 200.0f))
+	{
+		comp.setRagdollMass(ragdollMass);
+	}
+	ImGui::SetItemTooltip("The total mass in kg. Used the next time the ragdoll is created");
+
+	// Ragdoll friction
+	F32 ragdollFriction = comp.getRagdollFriction();
+	if(ImGui::SliderFloat("Ragdoll Friction", &ragdollFriction, 0.0f, 1.0f))
+	{
+		comp.setRagdollFriction(ragdollFriction);
+	}
+	ImGui::SetItemTooltip("Usually 0 to 1. E.g. ice 0.05, wood 0.4, cloth on stone 0.5, rubber on concrete 0.9");
 }
 
 void SceneNodePropertiesUi::particleEmitterComponent(ParticleEmitter2Component& comp)
@@ -994,6 +1042,14 @@ void SceneNodePropertiesUi::bodyComponent(BodyComponent& comp)
 		comp.setMass(mass);
 	}
 
+	// Friction
+	F32 friction = comp.getFriction();
+	if(ImGui::SliderFloat("Friction", &friction, 0.0f, 1.0f))
+	{
+		comp.setFriction(friction);
+	}
+	ImGui::SetItemTooltip("Usually 0 to 1. E.g. ice 0.05, wood 0.4, cloth on stone 0.5, rubber on concrete 0.9");
+
 	if(comp.getCollisionShapeType() == BodyComponentCollisionShapeType::kAabb)
 	{
 		Vec3 extend = comp.getBoxExtend();
@@ -1261,180 +1317,32 @@ void SceneNodePropertiesUi::animationComponent(AnimationComponent& comp)
 		ImGui::SetItemTooltip("Component not valid");
 	}
 
-	const DynamicArray<CString> filenames = gatherResourceFilenames(".ankianim");
+	// Playback button
+	{
+		ImGui::SameLine();
+		if(ImGui::Button((comp.getPlayOnEditor()) ? ICON_MDI_PAUSE : ICON_MDI_PLAY))
+		{
+			comp.setPlayOnEditor(!comp.getPlayOnEditor());
+		}
+		ImGui::SetItemTooltip("Play/Pause");
+	}
 
 	for(U32 i = 0; i < comp.kMaxAnimationTracks; ++i)
 	{
-		if(!ImGui::TreeNode(String().sprintf("Track #%u", i).cstr()))
+		const Bool hasAnim = comp.getTrackHasAnimations(i);
+
+		if(!ImGui::TreeNode(String().format("Track #{}{}", i, (hasAnim) ? " (*)" : "").cstr()))
 		{
 			continue;
 		}
 
-		// Playback buttons
+		ImGui::TextUnformatted((hasAnim) ? comp.getFilepathOfFirstAnimationPlaying(i).cstr() : "No animation");
+
+		if(ImGui::Button(ICON_MDI_DELETE))
 		{
-			if(ImGui::Button(ICON_MDI_PLAY))
-			{
-				comp.setEditorAnimationState(i, AnimationState::kPlaying);
-			}
-			ImGui::SetItemTooltip("Play");
-			ImGui::SameLine();
-
-			if(ImGui::Button(ICON_MDI_PAUSE))
-			{
-				comp.setEditorAnimationState(i, AnimationState::kPaused);
-			}
-			ImGui::SetItemTooltip("Pause");
-			ImGui::SameLine();
-
-			if(ImGui::Button(ICON_MDI_STOP))
-			{
-				comp.setEditorAnimationState(i, AnimationState::kStopped);
-			}
-			ImGui::SetItemTooltip("Stop");
-			ImGui::SameLine();
-
-			if(ImGui::Button(ICON_MDI_DELETE))
-			{
-				comp.resetTrack(i);
-			}
-			ImGui::SetItemTooltip("Clear track");
+			comp.resetTrack(i);
 		}
-
-		drawLocateResourceButton(comp.hasAnimationFilename(i) ? comp.getAnimationFilename(i) : "");
-
-		// Filename
-		{
-			const String currentFilename = comp.hasAnimationFilename(i) ? comp.getAnimationFilename(i) : "";
-			U32 newSelectedFilename = kMaxU32;
-
-			ImGui::SetNextItemWidth(-1.0f);
-			const Bool selected = comboWithFilter("##Filenames", filenames, currentFilename, newSelectedFilename, m_tempFilter);
-
-			if(selected && currentFilename != filenames[newSelectedFilename])
-			{
-				comp.setAnimationFilename(i, filenames[newSelectedFilename]);
-			}
-
-			// Drag and drop
-			if(String droppedFilename = acceptDragDrop(kAnimationAssetDragDropPayload))
-			{
-				if(droppedFilename != currentFilename)
-				{
-					comp.setAnimationFilename(i, droppedFilename);
-				}
-			}
-		}
-
-		// Channel
-		{
-			ImGui::BeginDisabled(!comp.hasAnimationFilename(i));
-
-			const CString currentChannel = comp.hasAnimationFilename(i) ? comp.getAnimationChannel(i) : "";
-			if(ImGui::BeginCombo("Channel", currentChannel.cstr()))
-			{
-				// Load the (cached) resource only while the dropdown is open, to enumerate its channels
-				AnimationResourcePtr anim;
-				if(!ResourceManager::getSingleton().loadResource(comp.getAnimationFilename(i), anim))
-				{
-					for(const AnimationChannel& channel : anim->getChannels())
-					{
-						const CString channelName = channel.m_name;
-						const Bool isSelected = channelName == currentChannel;
-						if(ImGui::Selectable(channelName.cstr(), isSelected))
-						{
-							comp.setAnimationChannel(i, channelName);
-						}
-
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if(isSelected)
-						{
-							ImGui::SetItemDefaultFocus();
-						}
-					}
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::EndDisabled();
-		}
-
-		// Blend weight
-		{
-			F32 blendWeight = comp.getAnimationBlendWeight(i);
-			if(ImGui::SliderFloat("Blend Weight", &blendWeight, 0.01f, 1.0f))
-			{
-				comp.setAnimationBlendWeight(i, blendWeight);
-			}
-		}
-
-		// Speed
-		{
-			F32 speed = comp.getAnimationSpeed(i);
-			if(ImGui::DragFloat("Speed", &speed, 0.01f, -100.0f, 100.0f, "%.3f"))
-			{
-				comp.setAnimationSpeed(i, speed);
-			}
-		}
-
-		// Wrap mode
-		if(ImGui::BeginCombo("Wrap Mode", kAnimationWrapModeNames[comp.getAnimationWrapMode(i)]))
-		{
-			for(AnimationWrapMode mode : EnumIterable<AnimationWrapMode>())
-			{
-				const Bool selected = mode == comp.getAnimationWrapMode(i);
-				if(ImGui::Selectable(kAnimationWrapModeNames[mode], selected))
-				{
-					comp.setAnimationWrapMode(i, mode);
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(selected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
-
-		// Blend mode
-		if(ImGui::BeginCombo("Blend Mode", kAnimationBlendModeNames[comp.getAnimationBlendMode(i)]))
-		{
-			for(AnimationBlendMode mode : EnumIterable<AnimationBlendMode>())
-			{
-				const Bool selected = mode == comp.getAnimationBlendMode(i);
-				if(ImGui::Selectable(kAnimationBlendModeNames[mode], selected))
-				{
-					comp.setAnimationBlendMode(i, mode);
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(selected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
-
-		// State
-		if(ImGui::BeginCombo("State", kAnimationStateNames[comp.getAnimationState(i)]))
-		{
-			for(AnimationState state : EnumIterable<AnimationState>())
-			{
-				const Bool selected = state == comp.getAnimationState(i);
-				if(ImGui::Selectable(kAnimationStateNames[state], selected))
-				{
-					comp.setAnimationState(i, state);
-				}
-
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if(selected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
+		ImGui::SetItemTooltip("Clear track");
 
 		ImGui::TreePop();
 	}

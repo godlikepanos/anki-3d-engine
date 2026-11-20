@@ -6,3 +6,4 @@ CMakeSettings.json
 AndroidProject_*
 *.diff
 *.patch
+ThirdParty/Xwin/

@@ -6,7 +6,6 @@
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/System.h>
-#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -93,48 +92,6 @@ void Logger::writeInternal(const Char* file, int line, const Char* func, const C
 		{
 			ANKI_DEBUG_BREAK();
 		}
-	}
-}
-
-void Logger::writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
-						   const Char* fmt, ...)
-{
-	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
-	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled)
-	{
-		return;
-	}
-
-	Array<Char, 256> buffer;
-	va_list args;
-
-	va_start(args, fmt);
-	I len = vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
-	if(len < 0)
-	{
-		fprintf(stderr, "Logger::writeFormated() failed. Will not recover");
-		abort();
-	}
-	else if(len < I(sizeof(buffer)))
-	{
-		writeInternal(file, line, func, subsystem, type, threadName, &buffer[0]);
-		va_end(args);
-	}
-	else
-	{
-		// Not enough space.
-
-		va_end(args);
-		va_start(args, fmt);
-
-		const PtrSize newSize = len + 1;
-		Char* newBuffer = static_cast<Char*>(malloc(newSize));
-		len = vsnprintf(newBuffer, newSize, fmt, args);
-
-		writeInternal(file, line, func, subsystem, type, threadName, newBuffer);
-
-		free(newBuffer);
-		va_end(args);
 	}
 }
 
@@ -272,9 +229,10 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
-	File* file = reinterpret_cast<File*>(pfile);
+	File* file = static_cast<File*>(pfile);
 
-	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", kLoggerMessageTypeText[info.m_type], info.m_msg, info.m_file, info.m_line, info.m_func);
+	Error err = file->writeTextf("[{}][{:<4}] {} [{}:{}][{}][{}]\n", kLoggerMessageTypeText[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A",
+								 info.m_msg, info.m_file, info.m_line, info.m_func, info.m_threadName);
 
 	if(!err)
 	{

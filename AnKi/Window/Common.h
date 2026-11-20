@@ -14,6 +14,7 @@ namespace anki {
 #define ANKI_WIND_LOGE(...) ANKI_LOG("WIND", kError, __VA_ARGS__)
 #define ANKI_WIND_LOGW(...) ANKI_LOG("WIND", kWarning, __VA_ARGS__)
 #define ANKI_WIND_LOGF(...) ANKI_LOG("WIND", kFatal, __VA_ARGS__)
+#define ANKI_WIND_LOGV(...) ANKI_LOG("WIND", kVerbose, __VA_ARGS__)
 
 class WindowMemoryPool : public HeapMemoryPool, public MakeSingleton<WindowMemoryPool>
 {

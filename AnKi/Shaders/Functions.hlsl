@@ -501,6 +501,13 @@ UVec2 getOptimalDispatchThreadId8x8Amd(U32 svGroupIndex, UVec2 svGroupId)
 	return svGroupId * 8u + localInvocationId;
 }
 
+// https://github.com/GPUOpen-Effects/FidelityFX-CAS/blob/master/ffx-cas/ffx_a.h
+UVec2 getOptimalGroupThreadId8x8Amd(U32 svGroupIndex)
+{
+	const UVec2 localInvocationId = _ARmpRed8x8(svGroupIndex);
+	return localInvocationId;
+}
+
 #if ANKI_COMPUTE_SHADER && ANKI_GLSL
 // https://github.com/LouisBavoil/ThreadGroupIDSwizzling/blob/master/ThreadGroupTilingX.hlsl
 UVec2 getOptimalGlobalInvocationId8x8Nvidia()

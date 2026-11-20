@@ -11,8 +11,8 @@
 
 using namespace anki;
 
-static const char* kUsage = R"(Dump the shader binary to stdout
-Usage: %s [options] input_shader_program_binary
+static constexpr const char* kUsage = R"(Dump the shader binary to stdout
+Usage: {} [options] input_shader_program_binary
 Options:
 -stats <0|1>   : Print performance statistics for all shaders. Default 0
 -binary <0|1>  : Print the whole shader program binary. Default 1

@@ -161,6 +161,12 @@ struct GlobalRendererConstants
 	IndirectDiffuseClipmapConstants m_indirectDiffuseClipmaps;
 
 	LocalLightsGridConstants m_localLightsGrid;
+
+	U32 m_imageStreamingFeedbackPixelX : 16;
+	U32 m_imageStreamingFeedbackPixelY : 16;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
 };
 
 struct SbtBuildConstants
@@ -303,6 +309,11 @@ struct MaterialGlobalConstants
 	Mat3x4 m_cameraTransform;
 
 	Vec4 m_viewport;
+
+	F32 m_textureBias;
+	F32 m_textureAnisotropy;
+	F32 m_padding1;
+	F32 m_padding2;
 };
 static_assert(sizeof(MaterialGlobalConstants) % sizeof(Vec4) == 0);
 

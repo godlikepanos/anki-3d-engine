@@ -85,6 +85,8 @@ Error getApplicationPath(String& path);
 // the file
 class CleanupFile
 {
+	ANKI_NON_COPYABLE(CleanupFile)
+
 public:
 	String m_fileToDelete;
 	U32 m_tries = 3 * 1000; // Number of times to try delete the file.
@@ -95,8 +97,23 @@ public:
 	{
 	}
 
+	CleanupFile(CleanupFile&& b)
+		: m_fileToDelete(std::move(b.m_fileToDelete))
+		, m_tries(b.m_tries)
+		, m_seepTimeBeforeNextTry(b.m_seepTimeBeforeNextTry)
+	{
+	}
+
 	// Deletes the file.
 	~CleanupFile();
+
+	CleanupFile& operator=(CleanupFile&& b)
+	{
+		m_fileToDelete = std::move(b.m_fileToDelete);
+		m_tries = b.m_tries;
+		m_seepTimeBeforeNextTry = b.m_seepTimeBeforeNextTry;
+		return *this;
+	}
 };
 
 } // end namespace anki

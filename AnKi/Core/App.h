@@ -10,6 +10,7 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/System.h>
+#include <AnKi/Util/File.h>
 #include <AnKi/Util/Functions.h>
 
 namespace anki {
@@ -19,6 +20,7 @@ ANKI_CVAR(NumericCVar<U32>, Core, JobThreadCount, clamp(getCpuCoresCount() / 2u,
 ANKI_CVAR(NumericCVar<U32>, Core, DisplayStats, 0, 0, 2, "Display stats, 0: None, 1: Simple, 2: Detailed")
 ANKI_CVAR(BoolCVar, Core, ClearCaches, false, "Clear all caches")
 ANKI_CVAR(BoolCVar, Core, VerboseLog, false, "Verbose logging")
+ANKI_CVAR(BoolCVar, Core, LogFile, false, "Log into <settings dir>/Log.txt")
 ANKI_CVAR(BoolCVar, Core, MeshletRendering, false, "Do meshlet culling and rendering")
 ANKI_CVAR(StringCVar, Core, StartupScene, "", "Load this scene at startup")
 #if ANKI_WITH_EDITOR
@@ -29,7 +31,7 @@ ANKI_CVAR(BoolCVar, Core, ShowEditor, false, "Show the editor")
 ANKI_CVAR(BoolCVar, Core, MaliHwCounters, false, "Enable Mali counters")
 #endif
 
-ANKI_SVAR(CpuTotalTime, StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Core, CpuTotalTime, StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 // The core class of the engine.
 class App
@@ -87,7 +89,17 @@ public:
 		return m_appName;
 	}
 
+	static App& getSingleton()
+	{
+		ANKI_ASSERT(m_instance);
+		return *m_instance;
+	}
+
 private:
+	inline static App* m_instance = nullptr;
+
+	File m_logFile;
+
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache

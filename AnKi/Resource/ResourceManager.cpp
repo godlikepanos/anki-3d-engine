@@ -6,6 +6,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Resource/ShaderProgramResourceSystem.h>
+#include <AnKi/Resource/StreamingImageResourceManager.h>
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/CVarSet.h>
@@ -21,6 +22,7 @@
 #include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Resource/SkeletonResource.h>
+#include <AnKi/Resource/StreamingImageResource.h>
 
 namespace anki {
 
@@ -41,6 +43,8 @@ ResourceManager::~ResourceManager()
 	static_cast<TypeData<className>&>(m_allTypes).m_map.destroy();
 #include <AnKi/Resource/Resources.def.h>
 
+	StreamingImageResourceManager::freeSingleton();
+
 	ResourceMemoryPool::freeSingleton();
 }
 
@@ -60,6 +64,8 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 	ShaderProgramResourceSystem::allocateSingleton();
 	ANKI_CHECK(ShaderProgramResourceSystem::getSingleton().init());
 
+	StreamingImageResourceManager::allocateSingleton();
+
 #if ANKI_WITH_EDITOR
 	m_trackFileUpdateTimes = g_cvarRsrcTrackFileUpdates;
 #endif
@@ -70,6 +76,12 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 template<typename T>
 Error ResourceManager::loadResource(CString filename, IntrusiveNoDelPtr<T>& out, Bool async)
 {
+	if(filename.isEmpty()) [[unlikely]]
+	{
+		ANKI_RESOURCE_LOGE("Can't load resource with empty filename");
+		return Error::kUserData;
+	}
+
 	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
 
 	// Try to find the resource
@@ -141,7 +153,7 @@ Error ResourceManager::loadResource(CString filename, IntrusiveNoDelPtr<T>& out,
 
 	if(err)
 	{
-		ANKI_RESOURCE_LOGE("Failed to load resource: %s", filename.cstr());
+		ANKI_RESOURCE_LOGE("Failed to load resource: {}", filename);
 		deleteInstance(ResourceMemoryPool::getSingleton(), ver);
 	}
 	else
@@ -207,6 +219,11 @@ void ResourceManager::freeResource(U32 uuid, U32 versionedResourceIdx)
 	deleteInstance(ResourceMemoryPool::getSingleton(), toDelete);
 }
 
+void ResourceManager::endFrame(Fence* fence)
+{
+	StreamingImageResourceManager::getSingleton().endFrame(fence);
+}
+
 // Instansiate
 #define ANKI_INSTANTIATE_RESOURCE(className) \
 	template Error ResourceManager::loadResource<className>(CString filename, IntrusiveNoDelPtr<className> & out, Bool async); \
@@ -233,7 +250,7 @@ void ResourceManager::refreshFileUpdateTimesInternal()
 		const U64 newTime = ResourceFilesystem::getSingleton().getFileUpdateTime(entry.m_versions[0]->getFilename());
 		if(newTime != entry.m_fileUpdateTime)
 		{
-			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: %s", entry.m_versions[0]->getFilename().cstr());
+			ANKI_RESOURCE_LOGV("File updated, loaded resource now obsolete: {}", entry.m_versions[0]->getFilename());
 			entry.m_fileUpdateTime = newTime;
 
 			for(T* rsrc : entry.m_versions)

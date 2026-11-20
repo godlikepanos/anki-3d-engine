@@ -192,7 +192,7 @@ public:
 	}
 
 	// Combine rotations
-	TQuat operator*(const TQuat& b)
+	TQuat operator*(const TQuat& b) const
 	{
 #if ANKI_SIMD_SSE
 		if constexpr(kSseEnabled)
@@ -395,6 +395,12 @@ public:
 	[[nodiscard]] TQuat normalize() const
 	{
 		return TQuat(m_vec.normalize());
+	}
+
+	// Create a new rotation from "from" to "to"
+	[[nodiscard]] static TQuat diff(TQuat from, TQuat to)
+	{
+		return from.conjugated() * to;
 	}
 
 	void setIdentity()

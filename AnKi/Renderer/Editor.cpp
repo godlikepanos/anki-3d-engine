@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Resource/SkeletonResource.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/LightComponent.h>
@@ -20,6 +21,7 @@
 #include <AnKi/Scene/Components/FogDensityComponent.h>
 #include <AnKi/Scene/Components/ScriptComponent.h>
 #include <AnKi/Scene/Components/TriggerComponent.h>
+#include <AnKi/Scene/Components/SkinComponent.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
@@ -823,6 +825,12 @@ void Editor::drawSceneComponentIcons(Bool objectPicking, RenderPassWorkContext& 
 			}
 		}
 	}
+
+	if(m_options.m_skeletons)
+	{
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		drawSkeletons(cmdb);
+	}
 }
 
 void Editor::drawPhysics(CommandBuffer& cmdb) const
@@ -1254,6 +1262,73 @@ void Editor::populateRenderObjectPicking()
 			cmdb.dispatchCompute(1, 1, 1);
 		});
 	}
+}
+
+void Editor::drawSkeletons(CommandBuffer& cmdb) const
+{
+	RendererDynamicArray<HVec4> positions;
+	RendererDynamicArray<Array<U8, 4>> colors;
+
+	for(const SkinComponent& skin : SceneGraph::getSingleton().getComponentArray<SkinComponent>())
+	{
+		if(!skin.isValid())
+		{
+			continue;
+		}
+
+		const Mat3x4 worldTrf(skin.getSceneNode().getWorldTransform());
+		const ConstWeakArray<Bone> bones = skin.getSkeletonResource()->getBones();
+		const ConstWeakArray<Mat3x4> boneTrfs = skin.getBoneTransforms();
+
+		// The bone transforms contain the inverse bind pose so remove it to get the bone's origin
+		auto computeBoneWorldPosition = [&](const Bone& bone) -> Vec3 {
+			const Mat3x4 boneModelTrf = boneTrfs[bone.getIndex()].combineTransformations(bone.getVertexTransform().invertTransformation());
+			return worldTrf * boneModelTrf.getTranslationPart().xyz1;
+		};
+
+		for(const Bone& bone : bones)
+		{
+			const Bone* parent = bone.getParent();
+			if(!parent)
+			{
+				continue;
+			}
+
+			positions.emplaceBack(HVec4(Vec4(computeBoneWorldPosition(*parent), 0.0f)));
+			positions.emplaceBack(HVec4(Vec4(computeBoneWorldPosition(bone), 0.0f)));
+			colors.emplaceBack(Array<U8, 4>{255, 0, 255, 255});
+			colors.emplaceBack(Array<U8, 4>{255, 255, 0, 255});
+		}
+	}
+
+	const U32 vertCount = positions.getSize();
+	if(vertCount == 0)
+	{
+		return;
+	}
+
+	HVec4* positionsOut;
+	const BufferView positionBuff = RebarTransientMemoryPool::getSingleton().allocate(positions.getSizeInBytes(), sizeof(HVec4), positionsOut);
+	memcpy(positionsOut, positions.getBegin(), positions.getSizeInBytes());
+
+	U8* colorsOut;
+	const BufferView colorBuff = RebarTransientMemoryPool::getSingleton().allocate(colors.getSizeInBytes(), sizeof(U8) * 4, colorsOut);
+	memcpy(colorsOut, colors.getBegin(), colors.getSizeInBytes());
+
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Lines");
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
+	cmdb.bindShaderProgram(&variant->getProgram());
+
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR16G16B16A16_Sfloat, 0);
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kColor, 1, Format::kR8G8B8A8_Unorm, 0);
+	cmdb.bindVertexBuffer(0, positionBuff, sizeof(HVec4));
+	cmdb.bindVertexBuffer(1, colorBuff, sizeof(U8) * 4);
+
+	cmdb.setFastConstants(&getRenderingContext().m_matrices.m_viewProjection, sizeof(getRenderingContext().m_matrices.m_viewProjection));
+
+	cmdb.draw(PrimitiveTopology::kLines, vertCount);
 }
 
 } // end namespace anki

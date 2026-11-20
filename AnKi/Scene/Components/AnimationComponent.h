@@ -6,43 +6,23 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Resource/Forward.h>
+#include <AnKi/Resource/AnimationResource.h>
 
 namespace anki {
 
-enum class AnimationWrapMode : U8
+enum class NodeMotionMode : U8
 {
-	kOnce,
-	kLoop,
+	// The animation plays its transform alters the local transform of the node. In that mode the animation moves the node in the world
+	kApplyToNode,
+
+	// The animation plays and the motion is returned in deltas, node's transform is not touched. The node doesn't move but the motion is returned
+	// instead
+	kExtract,
 
 	kCount,
 	kFirst = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AnimationWrapMode)
-inline constexpr Array<const Char*, U32(AnimationWrapMode::kCount)> kAnimationWrapModeNames = {"Once", "Loop"};
-
-enum class AnimationBlendMode : U8
-{
-	kBlend,
-	kAdditive,
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AnimationBlendMode)
-inline constexpr Array<const Char*, U32(AnimationBlendMode::kCount)> kAnimationBlendModeNames = {"Blend", "Additive"};
-
-enum class AnimationState : U8
-{
-	kStopped, // The track is like it doesn't exist
-	kPaused, // The track's animation is frozen but it's used
-	kPlaying, // Self explanatory
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AnimationState)
-inline constexpr Array<const Char*, U32(AnimationState::kCount)> kAnimationStateNames = {"Stopped", "Paused", "Playing"};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(NodeMotionMode)
 
 // Animation component. Plays animations that affect the attached node.
 class AnimationComponent final : public SceneComponent
@@ -51,150 +31,197 @@ class AnimationComponent final : public SceneComponent
 
 public:
 	static constexpr U32 kMaxAnimationTracks = 4;
+	static constexpr U32 kMaxAnimationsPerTrack = 4;
 
 	AnimationComponent(const SceneComponentInitInfo& init);
 
 	~AnimationComponent();
 
-	AnimationComponent& setAnimationFilename(U32 track, CString fname);
-
-	CString getAnimationFilename(U32 track) const;
-
-	Bool hasAnimationFilename(U32 track) const
+	// Loads an animation resource and associates it with the animId. Can be something like registerAnimation(kWalkAnimation, "Walk.ankianim")
+	template<typename T>
+	void registerAnimation(T animId, CString animationFilepath) requires(IsAnimationId<T>)
 	{
-		return ANKI_EXPECT(track < kMaxAnimationTracks) ? !!m_tracks[track].m_anim : false;
+		registerAnimationInternal(U32(animId), animationFilepath);
 	}
 
-	// Need to call this after you've set an animation filename.
-	AnimationComponent& setAnimationChannel(U32 track, CString channel);
+	// Remove the ref of the loaded animation
+	template<typename T>
+	void unregisterAnimation(T animId) requires(IsAnimationId<T>)
+	{
+		unregisterAnimationInternal(U32(animId));
+	}
 
-	CString getAnimationChannel(U32 track) const;
+	// animId: The same id passed in registerAnimation()
+	// channel: The name of the channel or empty for the 1st channel
+	// blendInTime: The time from when the animation starts until it fully replaces the previous animation in the track
+	// Returns the state of the new animation. Don't keep it around: when the animation finishes its slot gets reused by other animations
+	template<typename T>
+	AnimationState& playAnimation(U32 track, T animId, CString channel, Second blendInTime, AnimationStart animStart) requires(IsAnimationId<T>)
+	{
+		return playAnimationInternal(track, U32(animId), channel, blendInTime, animStart);
+	}
 
-	AnimationComponent& setAnimationBlendWeight(U32 track, F32 blend)
+	// Get the animation state of the first queued animation with the given ID
+	template<typename T>
+	AnimationState& getAnimationState(U32 track, T animId) requires(IsAnimationId<T>)
+	{
+		return getAnimationStateInternal(track, U32(animId));
+	}
+
+	template<typename T>
+	const AnimationState& getAnimationState(U32 track, T animId) const requires(IsAnimationId<T>)
+	{
+		return const_cast<AnimationComponent*>(this)->getAnimationState(track, animId);
+	}
+
+	AnimationTrackState& getAnimationTrackState(U32 track)
+	{
+		if(!ANKI_EXPECT(track < kMaxAnimationTracks))
+		{
+			track = kMaxAnimationTracks - 1;
+		}
+		return m_tracks[track].m_state;
+	}
+
+	const AnimationTrackState& getAnimationTrackState(U32 track) const
+	{
+		return const_cast<AnimationComponent*>(this)->getAnimationTrackState(track);
+	}
+
+	Bool getTrackHasAnimations(U32 track) const
 	{
 		if(ANKI_EXPECT(track < kMaxAnimationTracks))
 		{
-			m_tracks[track].m_blendWeight = clamp(blend, 0.01f, 1.0f);
+			return m_tracks[track].m_crntAnimationIdx != m_tracks[track].m_lastAnimationIdx
+				   || !!m_tracks[track].m_anims[m_tracks[track].m_crntAnimationIdx % kMaxAnimationsPerTrack].m_resource;
 		}
-		return *this;
-	}
-
-	F32 getAnimationBlendWeight(U32 track) const
-	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_blendWeight : 0.0f;
-	}
-
-	AnimationComponent& setAnimationWrapMode(U32 track, AnimationWrapMode mode)
-	{
-		if(ANKI_EXPECT(track < kMaxAnimationTracks && mode < AnimationWrapMode::kCount))
+		else
 		{
-			m_tracks[track].m_wrapMode = mode;
+			return false;
 		}
-		return *this;
-	}
-
-	AnimationWrapMode getAnimationWrapMode(U32 track) const
-	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_wrapMode : AnimationWrapMode::kFirst;
-	}
-
-	AnimationComponent& setAnimationBlendMode(U32 track, AnimationBlendMode mode)
-	{
-		if(ANKI_EXPECT(track < kMaxAnimationTracks && mode < AnimationBlendMode::kCount))
-		{
-			m_tracks[track].m_blendMode = mode;
-		}
-		return *this;
-	}
-
-	AnimationBlendMode getAnimationBlendMode(U32 track) const
-	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_blendMode : AnimationBlendMode::kFirst;
-	}
-
-	AnimationComponent& setAnimationSpeed(U32 track, F32 speed)
-	{
-		// Speed can be negative to play the animation in reverse, so no clamping
-		if(ANKI_EXPECT(track < kMaxAnimationTracks))
-		{
-			m_tracks[track].m_animationSpeedScale = speed;
-		}
-		return *this;
-	}
-
-	F32 getAnimationSpeed(U32 track) const
-	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_animationSpeedScale : 1.0f;
 	}
 
 	void resetTrack(U32 track);
 
-	AnimationComponent& setAnimationState(U32 track, AnimationState state)
+	// Returns the transform delta of the animation since the last update
+	Transform getNodeTransformDelta() const
 	{
-		if(ANKI_EXPECT(track < kMaxAnimationTracks) && m_tracks[track].m_state != state)
+		return (m_motionMode == NodeMotionMode::kExtract) ? m_nodeTransformDelta : Transform::getIdentity();
+	}
+
+	void setNodeMotionMode(NodeMotionMode mode)
+	{
+		if(ANKI_EXPECT(mode < NodeMotionMode::kCount))
 		{
-			m_tracks[track].m_state = state;
-			if(state == AnimationState::kStopped)
-			{
-				m_tracks[track].m_relativeTimePassed = 0.0;
-			}
+			m_motionMode = mode;
 		}
-		return *this;
 	}
 
-	AnimationState getAnimationState(U32 track) const
+	NodeMotionMode getNodeMotionMode() const
 	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_state : AnimationState::kFirst;
+		return m_motionMode;
 	}
-
-#if ANKI_WITH_EDITOR
-	AnimationComponent& setEditorAnimationState(U32 track, AnimationState state)
-	{
-		if(ANKI_EXPECT(track < kMaxAnimationTracks) && m_tracks[track].m_editorState != state)
-		{
-			m_tracks[track].m_editorState = state;
-			if(state == AnimationState::kStopped)
-			{
-				m_tracks[track].m_relativeTimePassed = 0.0;
-			}
-		}
-		return *this;
-	}
-
-	AnimationState getEditorAnimationState(U32 track) const
-	{
-		return (ANKI_EXPECT(track < kMaxAnimationTracks)) ? m_tracks[track].m_editorState : AnimationState::kFirst;
-	}
-#endif
 
 	Bool isValid() const
 	{
-		return m_validTracks.getAnySet();
+		return true;
 	}
 
+	ANKI_INTERNAL ConstWeakArray<std::pair<U32, U32>> getAnimationsStarted() const
+	{
+		return m_animationsStarted;
+	}
+
+	ANKI_INTERNAL ConstWeakArray<std::pair<U32, U32>> getAnimationsEnded() const
+	{
+		return m_animationsEnded;
+	}
+
+	ANKI_INTERNAL CString getFilepathOfFirstAnimationPlaying(U32 track) const;
+
+#if ANKI_WITH_EDITOR
+	ANKI_INTERNAL Bool getPlayOnEditor() const
+	{
+		return m_playOnEditor;
+	}
+
+	ANKI_INTERNAL void setPlayOnEditor(Bool play)
+	{
+		m_playOnEditor = play;
+	}
+#endif
+
 private:
+	class Trf
+	{
+	public:
+		Vec3 m_pos;
+		Quat m_rot;
+		F32 m_scale = 1.0f;
+	};
+
+	class Animation
+	{
+	public:
+		AnimationResourcePtr m_resource;
+		Second m_blendInTime = 0.0f;
+		AnimationStart m_start = AnimationStart::kNow;
+		U32 m_animId = kMaxU32;
+		U32 m_channelIdx = kMaxU32;
+
+		AnimationState m_state;
+
+		Second m_interpolationAnimTime = kMaxSecond; // Tracking the time passed to AnimationResource::interpolate()
+
+		Trf m_animTrf; // Tracking the transform of the animation
+
+		Bool m_started = false;
+	};
+
 	class Track
 	{
 	public:
-		Second m_relativeTimePassed = 0.0;
-		AnimationResourcePtr m_anim;
-		U32 m_channel = 0;
-		F32 m_animationSpeedScale = 1.0f;
-		F32 m_blendWeight = 1.0f;
-		AnimationState m_state = AnimationState::kStopped;
-#if ANKI_WITH_EDITOR
-		AnimationState m_editorState = AnimationState::kStopped;
-#endif
-		AnimationWrapMode m_wrapMode = AnimationWrapMode::kLoop;
-		AnimationBlendMode m_blendMode = AnimationBlendMode::kBlend;
+		Array<Animation, kMaxAnimationsPerTrack> m_anims;
+
+		AnimationTrackState m_state;
+
+		U32 m_crntAnimationIdx = 0; // The animation that plays now
+		U32 m_lastAnimationIdx = 0; // The last queued animation
 	};
 
 	Array<Track, kMaxAnimationTracks> m_tracks;
-	BitSet<kMaxAnimationTracks, U8> m_validTracks = {false};
+
+	SceneHashMap<U32, std::pair<AnimationResourcePtr, U32>> m_idToAnimationResource;
+
+	AnimationState m_dummyState;
+
+	// The events of the last update. Read by the callbacks
+	SceneDynamicArray<std::pair<U32, U32>> m_animationsStarted;
+	SceneDynamicArray<std::pair<U32, U32>> m_animationsEnded;
+
+	// The events gathered until the end of the update. Separate from the above so callbacks that call playAnimation() don't modify what they iterate
+	SceneDynamicArray<std::pair<U32, U32>> m_pendingAnimationsStarted;
+	SceneDynamicArray<std::pair<U32, U32>> m_pendingAnimationsEnded;
+
+	// For node motion calculation:
+	Transform m_nodeTransformDelta;
+	NodeMotionMode m_motionMode = NodeMotionMode::kApplyToNode;
+
+#if ANKI_WITH_EDITOR
+	Bool m_playOnEditor = false;
+#endif
 
 	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	Error serialize(SceneSerializer& serializer) override;
+
+	void registerAnimationInternal(U32 animId, CString animationFilepath);
+
+	void unregisterAnimationInternal(U32 animId);
+
+	AnimationState& playAnimationInternal(U32 track, U32 animId, CString channel, Second blendInTime, AnimationStart animStart);
+
+	AnimationState& getAnimationStateInternal(U32 trackIdx, U32 animId);
 };
 
 } // end namespace anki

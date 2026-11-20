@@ -98,7 +98,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(SLChunk*& newChunk, PtrSize& c
 {
 	if(m_chunksCreated == m_maxBufferCount)
 	{
-		ANKI_GPUMEM_LOGE("Reached the max limit of memory chunks. Incrase %u", m_maxBufferCount);
+		ANKI_GPUMEM_LOGE("Reached the max limit of memory chunks. Incrase {}", m_maxBufferCount);
 		return Error::kOutOfMemory;
 	}
 
@@ -257,7 +257,7 @@ void* SegregatedListsGpuMemoryPoolAllocation::getMappedMemory() const
 	return static_cast<U8*>(chunk.m_mappedMemory) + m_offset;
 }
 
-void SegregatedListsGpuMemoryPoolAllocation::free()
+void SegregatedListsGpuMemoryPoolAllocation::deferredFree()
 {
 	if(*this)
 	{

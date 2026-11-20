@@ -43,7 +43,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 		++i;
 		if(i >= arr.getSize())
 		{
-			ANKI_UTIL_LOGE("Expecting a value after %s", varName.cstr());
+			ANKI_UTIL_LOGE("Expecting a value after {}", varName);
 			return Error::kUserData;
 		}
 		ANKI_ASSERT(arr[i]);
@@ -101,12 +101,12 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 
 			if(err)
 			{
-				ANKI_UTIL_LOGE("Wrong value for %s. Value will not be set", foundCVar->m_name.cstr());
+				ANKI_UTIL_LOGE("Wrong value for {}. Value will not be set", foundCVar->m_name);
 			}
 		}
 		else
 		{
-			ANKI_UTIL_LOGE("Can't recognize command line argument: %s. Skipping", varName.cstr());
+			ANKI_UTIL_LOGE("Can't recognize command line argument: {}. Skipping", varName);
 		}
 	}
 

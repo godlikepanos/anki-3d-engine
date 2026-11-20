@@ -931,14 +931,14 @@ Error NativeWindowSdl::initSdl(CString title)
 
 	if(!SDL_Init(kInitSubsystems))
 	{
-		ANKI_WIND_LOGE("SDL_Init() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_Init() failed: {}", SDL_GetError());
 		return Error::kFunctionFailed;
 	}
 
 #if ANKI_GR_BACKEND_VULKAN
 	if(!SDL_Vulkan_LoadLibrary(nullptr))
 	{
-		ANKI_WIND_LOGE("SDL_Vulkan_LoadLibrary() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_Vulkan_LoadLibrary() failed: {}", SDL_GetError());
 		return Error::kFunctionFailed;
 	}
 #endif
@@ -946,7 +946,7 @@ Error NativeWindowSdl::initSdl(CString title)
 	//
 	// Set GL attributes
 	//
-	ANKI_WIND_LOGI("Creating SDL window. SDL version %u.%u. Display server %s", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_GetCurrentVideoDriver());
+	ANKI_WIND_LOGI("Creating SDL window. SDL version {}.{}. Display server {}", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_GetCurrentVideoDriver());
 
 	//
 	// Create window
@@ -978,7 +978,7 @@ Error NativeWindowSdl::initSdl(CString title)
 		SDL_DisplayID display = SDL_GetPrimaryDisplay();
 		if(!display)
 		{
-			ANKI_WIND_LOGE("SDL_GetPrimaryDisplay() failed: %s", SDL_GetError());
+			ANKI_WIND_LOGE("SDL_GetPrimaryDisplay() failed: {}", SDL_GetError());
 			return Error::kFunctionFailed;
 		}
 
@@ -986,7 +986,7 @@ Error NativeWindowSdl::initSdl(CString title)
 		const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
 		if(!mode)
 		{
-			ANKI_WIND_LOGE("SDL_GetCurrentDisplayMode() failed: %s", SDL_GetError());
+			ANKI_WIND_LOGE("SDL_GetCurrentDisplayMode() failed: {}", SDL_GetError());
 			return Error::kFunctionFailed;
 		}
 
@@ -1009,7 +1009,7 @@ Error NativeWindowSdl::initSdl(CString title)
 
 	if(!SDL_ShowWindow(m_sdlWindow))
 	{
-		ANKI_WIND_LOGE("SDL_ShowWindow() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_ShowWindow() failed: {}", SDL_GetError());
 	}
 
 	// Get the actual width and height

@@ -9,7 +9,7 @@
 
 namespace anki {
 
-ANKI_CVAR2(NumericCVar<F32>, Render, Tonemapping, MinLog2Luminance, -12.0f, -100.0f, 100.0f, "Used in tonemapping calculations");
+ANKI_CVAR2(NumericCVar<F32>, Render, Tonemapping, MinLog2Luminance, 2.0f, -100.0f, 100.0f, "Used in tonemapping calculations");
 ANKI_CVAR2(NumericCVar<F32>, Render, Tonemapping, MaxLog2Luminance, 20.0f, -100.0f, 100.0f, "Used in tonemapping calculations");
 ANKI_CVAR2(NumericCVar<F32>, Render, Tonemapping, AdaptationRate, 2.1f, 0.0f, 100.0f,
 		   "Eye adaptation rate in 1/seconds. Higher adapts faster. Zero freezes the exposure");

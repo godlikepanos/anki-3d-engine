@@ -3416,6 +3416,994 @@ static inline int wrapMat3setAt(lua_State* l)
 	return 0;
 }
 
+// Wrap method Mat3::operator*
+constexpr I64 kMat3__mul0ArgsSignatureArr[] = {LUA_TUSERDATA, -2795056434948159065, LUA_TUSERDATA, -2795056434948159065};
+constexpr U64 kMat3__mul0ArgsSignature = computeArrayHashConstexpr(kMat3__mul0ArgsSignatureArr, sizeof(kMat3__mul0ArgsSignatureArr) / sizeof(I64));
+static inline int wrapMat3__mul0(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* iarg0 = ud->getData<Mat3>();
+	const Mat3& arg0(*iarg0);
+
+	// Call the method
+	Mat3 ret = self->operator*(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::operator*
+constexpr I64 kMat3__mul1ArgsSignatureArr[] = {LUA_TUSERDATA, -2795056434948159065, LUA_TUSERDATA, 1527755477802711545};
+constexpr U64 kMat3__mul1ArgsSignature = computeArrayHashConstexpr(kMat3__mul1ArgsSignatureArr, sizeof(kMat3__mul1ArgsSignatureArr) / sizeof(I64));
+static inline int wrapMat3__mul1(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
+
+	// Call the method
+	Vec3 ret = self->operator*(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::getRow
+static inline int wrapMat3getRow(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec3 ret = self->getRow(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::setRow
+static inline int wrapMat3setRow(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg1 = ud->getData<Vec3>();
+	const Vec3& arg1(*iarg1);
+
+	// Call the method
+	self->setRow(arg0, arg1);
+
+	return 0;
+}
+
+// Wrap method Mat3::getColumn
+static inline int wrapMat3getColumn(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Vec3 ret = self->getColumn(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::setColumn
+static inline int wrapMat3setColumn(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	U32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 3, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg1 = ud->getData<Vec3>();
+	const Vec3& arg1(*iarg1);
+
+	// Call the method
+	self->setColumn(arg0, arg1);
+
+	return 0;
+}
+
+// Wrap method Mat3::getDiagonal
+static inline int wrapMat3getDiagonal(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	Vec3 ret = self->getDiagonal();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::setDiagonal
+static inline int wrapMat3setDiagonal(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
+
+	// Call the method
+	self->setDiagonal(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::getXAxis
+static inline int wrapMat3getXAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	Vec3 ret = self->getXAxis();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::getYAxis
+static inline int wrapMat3getYAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	Vec3 ret = self->getYAxis();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::getZAxis
+static inline int wrapMat3getZAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	Vec3 ret = self->getZAxis();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::setXAxis
+static inline int wrapMat3setXAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
+
+	// Call the method
+	self->setXAxis(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::setYAxis
+static inline int wrapMat3setYAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
+
+	// Call the method
+	self->setYAxis(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::setZAxis
+static inline int wrapMat3setZAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
+
+	// Call the method
+	self->setZAxis(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::setRotationX
+static inline int wrapMat3setRotationX(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->setRotationX(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::setRotationY
+static inline int wrapMat3setRotationY(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->setRotationY(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::setRotationZ
+static inline int wrapMat3setRotationZ(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->setRotationZ(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::rotateXAxis
+static inline int wrapMat3rotateXAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->rotateXAxis(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::rotateYAxis
+static inline int wrapMat3rotateYAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->rotateYAxis(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::rotateZAxis
+static inline int wrapMat3rotateZAxis(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, arg0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	self->rotateZAxis(arg0);
+
+	return 0;
+}
+
+// Wrap method Mat3::reorthogonalize
+static inline int wrapMat3reorthogonalize(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	Mat3 ret = self->reorthogonalize();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::transpose
+static inline int wrapMat3transpose(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	Mat3 ret = self->transpose();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::invert
+static inline int wrapMat3invert(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	Mat3 ret = self->invert();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::getDet
+static inline int wrapMat3getDet(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	F32 ret = self->getDet();
+
+	// Push return value
+	lua_pushnumber(l, lua_Number(ret));
+
+	return 1;
+}
+
+// Wrap method Mat3::setIdentity
+static inline int wrapMat3setIdentity(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoMat3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Mat3* self = ud->getData<Mat3>();
+
+	// Call the method
+	self->setIdentity();
+
+	return 0;
+}
+
+// Wrap static method Mat3::getIdentity
+static inline int wrapMat3getIdentity(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 0)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Call the method
+	Mat3 ret = Mat3::getIdentity();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap static method Mat3::rotationFromDirection
+static inline int wrapMat3rotationFromDirection(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
+
+	// Call the method
+	Mat3 ret = Mat3::rotationFromDirection(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Mat3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
+
+	return 1;
+}
+
+// Wrap overload selector for Mat3::operator*
+static inline int wrapMat3__mul(lua_State* l)
+{
+	const U64 argsSignature = LuaBinder::computeFunctionArgumentSignature(l);
+	int ret;
+	switch(argsSignature)
+	{
+	case kMat3__mul0ArgsSignature:
+		ret = wrapMat3__mul0(l);
+		break;
+	case kMat3__mul1ArgsSignature:
+		ret = wrapMat3__mul1(l);
+		break;
+	default:
+		lua_pushfstring(l, "Wrong arguments for method: Mat3::__mul");
+		ret = lua_error(l);
+	}
+	return ret;
+}
+
 // Wrap class Mat3.
 static inline void wrapMat3(lua_State* l)
 {
@@ -3425,6 +4413,32 @@ static inline void wrapMat3(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3copy);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapMat3getAt);
 	LuaBinder::pushLuaCFuncMethod(l, "setAt", wrapMat3setAt);
+	LuaBinder::pushLuaCFuncMethod(l, "__mul", wrapMat3__mul);
+	LuaBinder::pushLuaCFuncMethod(l, "getRow", wrapMat3getRow);
+	LuaBinder::pushLuaCFuncMethod(l, "setRow", wrapMat3setRow);
+	LuaBinder::pushLuaCFuncMethod(l, "getColumn", wrapMat3getColumn);
+	LuaBinder::pushLuaCFuncMethod(l, "setColumn", wrapMat3setColumn);
+	LuaBinder::pushLuaCFuncMethod(l, "getDiagonal", wrapMat3getDiagonal);
+	LuaBinder::pushLuaCFuncMethod(l, "setDiagonal", wrapMat3setDiagonal);
+	LuaBinder::pushLuaCFuncMethod(l, "getXAxis", wrapMat3getXAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "getYAxis", wrapMat3getYAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "getZAxis", wrapMat3getZAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "setXAxis", wrapMat3setXAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "setYAxis", wrapMat3setYAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "setZAxis", wrapMat3setZAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "setRotationX", wrapMat3setRotationX);
+	LuaBinder::pushLuaCFuncMethod(l, "setRotationY", wrapMat3setRotationY);
+	LuaBinder::pushLuaCFuncMethod(l, "setRotationZ", wrapMat3setRotationZ);
+	LuaBinder::pushLuaCFuncMethod(l, "rotateXAxis", wrapMat3rotateXAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "rotateYAxis", wrapMat3rotateYAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "rotateZAxis", wrapMat3rotateZAxis);
+	LuaBinder::pushLuaCFuncMethod(l, "reorthogonalize", wrapMat3reorthogonalize);
+	LuaBinder::pushLuaCFuncMethod(l, "transpose", wrapMat3transpose);
+	LuaBinder::pushLuaCFuncMethod(l, "invert", wrapMat3invert);
+	LuaBinder::pushLuaCFuncMethod(l, "getDet", wrapMat3getDet);
+	LuaBinder::pushLuaCFuncMethod(l, "setIdentity", wrapMat3setIdentity);
+	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoMat3.m_typeName, "getIdentity", wrapMat3getIdentity);
+	LuaBinder::pushLuaCFuncStaticMethod(l, g_luaUserDataTypeInfoMat3.m_typeName, "rotationFromDirection", wrapMat3rotationFromDirection);
 	lua_settop(l, 0);
 }
 
@@ -4168,6 +5182,51 @@ static inline int wrapTransformsetScale(lua_State* l)
 	return 0;
 }
 
+// Wrap method Transform::transform
+static inline int wrapTransformtransform(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 1, g_luaUserDataTypeInfoTransform, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Transform* self = ud->getData<Transform>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, ANKI_FILE, __LINE__, ANKI_FUNC, 2, g_luaUserDataTypeInfoVec3, ud)) [[unlikely]]
+	{
+		return lua_error(l);
+	}
+
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
+
+	// Call the method
+	Vec3 ret = self->transform(arg0);
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo g_luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&g_luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
+}
+
 // Wrap class Transform.
 static inline void wrapTransform(lua_State* l)
 {
@@ -4181,6 +5240,7 @@ static inline void wrapTransform(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "setRotation", wrapTransformsetRotation);
 	LuaBinder::pushLuaCFuncMethod(l, "getScale", wrapTransformgetScale);
 	LuaBinder::pushLuaCFuncMethod(l, "setScale", wrapTransformsetScale);
+	LuaBinder::pushLuaCFuncMethod(l, "transform", wrapTransformtransform);
 	lua_settop(l, 0);
 }
 
