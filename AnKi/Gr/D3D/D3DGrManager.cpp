@@ -42,27 +42,19 @@ static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGOR
 		return;
 	}
 
-	if(!Logger::isAllocated())
+	switch(severity)
 	{
-		printf("d3dDebugMessageCallback : %s", pDescription);
-		return;
-	}
-	else
-	{
-		switch(severity)
-		{
-		case D3D12_MESSAGE_SEVERITY_CORRUPTION:
-		case D3D12_MESSAGE_SEVERITY_ERROR:
-			ANKI_D3D_LOGE("{}", pDescription);
-			break;
-		case D3D12_MESSAGE_SEVERITY_WARNING:
-			ANKI_D3D_LOGW("{}", pDescription);
-			break;
-		case D3D12_MESSAGE_SEVERITY_INFO:
-		case D3D12_MESSAGE_SEVERITY_MESSAGE:
-			ANKI_D3D_LOGI("{}", pDescription);
-			break;
-		}
+	case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+	case D3D12_MESSAGE_SEVERITY_ERROR:
+		ANKI_D3D_LOGE("{}", pDescription);
+		break;
+	case D3D12_MESSAGE_SEVERITY_WARNING:
+		ANKI_D3D_LOGW("{}", pDescription);
+		break;
+	case D3D12_MESSAGE_SEVERITY_INFO:
+	case D3D12_MESSAGE_SEVERITY_MESSAGE:
+		ANKI_D3D_LOGI("{}", pDescription);
+		break;
 	}
 }
 
@@ -334,21 +326,28 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	if(g_cvarGrValidation || g_cvarGrGpuValidation)
 	{
 		ComPtr<ID3D12Debug> debugInterface;
-		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
+		const HRESULT err = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
 
-		debugInterface->EnableDebugLayer();
-
-		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-
-		if(g_cvarGrGpuValidation)
+		if(SUCCEDED(err))
 		{
-			ComPtr<ID3D12Debug1> debugInterface1;
-			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
+			debugInterface->EnableDebugLayer();
 
-			debugInterface1->SetEnableGPUBasedValidation(true);
+			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+
+			if(g_cvarGrGpuValidation)
+			{
+				ComPtr<ID3D12Debug1> debugInterface1;
+				ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
+
+				debugInterface1->SetEnableGPUBasedValidation(true);
+			}
+
+			ANKI_D3D_LOGI("Validation is enabled (GPU validation {})", (g_cvarGrGpuValidation) ? "as well" : "no");
 		}
-
-		ANKI_D3D_LOGI("Validation is enabled (GPU validation {})", (g_cvarGrGpuValidation) ? "as well" : "no");
+		else
+		{
+			ANKI_D3D_LOGE("Couldn't enable validation");
+		}
 	}
 
 	ComPtr<IDXGIFactory2> factory2;
@@ -626,8 +625,6 @@ void GrManagerImpl::destroy()
 
 void GrManagerImpl::invokeDred() const
 {
-	Bool error = false;
-
 	do
 	{
 		if(m_canInvokeDred)
@@ -635,21 +632,18 @@ void GrManagerImpl::invokeDred() const
 			ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
 			if(!SUCCEEDED(m_device->QueryInterface(IID_PPV_ARGS(&pDred))))
 			{
-				error = true;
 				break;
 			}
 
 			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
 			if(!SUCCEEDED(pDred->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)))
 			{
-				error = true;
 				break;
 			}
 
 			D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
 			if(!SUCCEEDED(pDred->GetPageFaultAllocationOutput(&dredPageFaultOutput)))
 			{
-				error = true;
 				break;
 			}
 		}

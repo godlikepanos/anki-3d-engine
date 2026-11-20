@@ -171,7 +171,7 @@ public:
 	}
 
 	/// @note Thread-safe.
-	DescriptorHeapHandle allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 descriptorCount, Bool gpuVisible)
+	DescriptorHeapHandle allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 descriptorCount, [[maybe_unused]] Bool gpuVisible)
 	{
 		ANKI_ASSERT(type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV || type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 		ANKI_ASSERT(gpuVisible);
@@ -486,9 +486,14 @@ private:
 			// No init for perf reasons
 		}
 
+		Descriptor(const Descriptor& b)
+		{
+			*this = b;
+		}
+
 		Descriptor& operator=(const Descriptor& b)
 		{
-			if(m_isHandle)
+			if(b.m_isHandle)
 			{
 				m_heapOffset = b.m_heapOffset;
 			}

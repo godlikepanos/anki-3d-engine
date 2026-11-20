@@ -229,9 +229,10 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
-	File* file = reinterpret_cast<File*>(pfile);
+	File* file = static_cast<File*>(pfile);
 
-	Error err = file->writeTextf("[{}] {} ({}:{} {})\n", kLoggerMessageTypeText[info.m_type], info.m_msg, info.m_file, info.m_line, info.m_func);
+	Error err = file->writeTextf("[{}][{:<4}] {} [{}:{}][{}][{}]\n", kLoggerMessageTypeText[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A",
+								 info.m_msg, info.m_file, info.m_line, info.m_func, info.m_threadName);
 
 	if(!err)
 	{

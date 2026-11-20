@@ -192,6 +192,12 @@ void App::cleanup()
 	m_cacheDir.destroy();
 	m_appName.destroy();
 
+	if(m_logFile.isOpen())
+	{
+		Logger::getSingleton().removeFileMessageHandler(&m_logFile);
+		m_logFile.close();
+	}
+
 	CoreMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 
@@ -210,6 +216,12 @@ Error App::init()
 #endif
 
 	ANKI_CHECK(initDirs());
+
+	if(g_cvarCoreLogFile)
+	{
+		ANKI_CHECK(m_logFile.open(CoreString().format("{}/Log.txt", m_settingsDir), FileOpenFlag::kWrite));
+		Logger::getSingleton().addFileMessageHandler(&m_logFile);
+	}
 
 // Check SIMD support
 #if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE \

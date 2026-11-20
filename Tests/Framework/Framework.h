@@ -13,10 +13,9 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Resource.h>
 #include <AnKi/Physics.h>
-#include <stdexcept>
 #include <vector>
 #include <string>
-#include <sstream>
+#include <fstream>
 
 namespace anki {
 
@@ -61,6 +60,29 @@ class Tester
 public:
 	std::vector<TestSuite*> suites;
 	std::string programName;
+	std::fstream m_logFile;
+
+	Tester()
+	{
+		m_logFile.open("TestsLog.txt", std::ios::out | std::ios::trunc);
+		if(m_logFile.is_open())
+		{
+			Logger::getSingleton().addMessageHandler(&m_logFile, logFileMessageHandler);
+		}
+	}
+
+	~Tester()
+	{
+		if(m_logFile.is_open())
+		{
+			Logger::getSingleton().removeMessageHandler(&m_logFile, logFileMessageHandler);
+		}
+
+		for(TestSuite* s : suites)
+		{
+			delete s;
+		}
+	}
 
 	void addTest(const char* name, const char* suite, TestCallback callback);
 
@@ -68,12 +90,13 @@ public:
 
 	int listTests();
 
-	~Tester()
+private:
+	static void logFileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 	{
-		for(TestSuite* s : suites)
-		{
-			delete s;
-		}
+		std::fstream& file = *static_cast<std::fstream*>(pfile);
+		file << std::format("[{}][{:<4}] {} [{}:{}][{}][{}]\n", kLoggerMessageTypeText[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A",
+							info.m_msg, info.m_file, info.m_line, info.m_func, info.m_threadName);
+		file.flush();
 	}
 };
 

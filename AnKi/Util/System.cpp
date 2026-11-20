@@ -311,7 +311,6 @@ void cleanupGetAndroidCommandLineArguments(void* ptr)
 // The 1st thing that executes before main
 void preMain()
 {
-	Logger::allocateSingleton();
 	ANKI_UTIL_LOGV("Pre main executed. This should be the 1st message");
 	Thread::setCurrentThreadName("AnKiMain");
 }
@@ -320,7 +319,6 @@ void preMain()
 void postMain()
 {
 	ANKI_UTIL_LOGV("Post main executed. This should be the last message");
-	Logger::freeSingleton();
 }
 
 #if ANKI_OS_WINDOWS

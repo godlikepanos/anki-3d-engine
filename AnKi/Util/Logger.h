@@ -46,10 +46,10 @@ using LoggerMessageHandlerCallback = void (*)(void*, const LoggerMessageInfo& in
 
 // The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. It's thread safe.
 // To add a new signal: logger.addMessageHandler((void*)obj, &function)
-class Logger : public MakeSingleton<Logger>
+class Logger : public MakeSingletonSimple<Logger>
 {
 	template<typename>
-	friend class MakeSingleton;
+	friend class MakeSingletonSimple;
 
 public:
 	// Add a new message handler.
@@ -59,7 +59,15 @@ public:
 	void removeMessageHandler(void* data, LoggerMessageHandlerCallback callback);
 
 	// Add file message handler.
-	void addFileMessageHandler(File* file);
+	void addFileMessageHandler(File* file)
+	{
+		addMessageHandler(file, fileMessageHandler);
+	}
+
+	void removeFileMessageHandler(File* file)
+	{
+		removeMessageHandler(file, fileMessageHandler);
+	}
 
 	// Send a message.
 	void write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName, const Char* msg)
@@ -123,7 +131,7 @@ private:
 	};
 
 	Mutex m_mutex;
-	Array<Handler, 4> m_handlers;
+	Array<Handler, 8> m_handlers;
 	U32 m_handlersCount = 0;
 	Bool m_verbosityEnabled = false;
 
