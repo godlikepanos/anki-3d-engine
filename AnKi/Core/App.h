@@ -87,7 +87,15 @@ public:
 		return m_appName;
 	}
 
+	static App& getSingleton()
+	{
+		ANKI_ASSERT(m_instance);
+		return *m_instance;
+	}
+
 private:
+	inline static App* m_instance = nullptr;
+
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache

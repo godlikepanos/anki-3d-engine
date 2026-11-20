@@ -111,7 +111,7 @@ void DeveloperConsoleUiNode::draw(UiCanvas& canvas)
 	ImGui::SetWindowSize(canvas.getSizef() * Vec2(1.0f, 2.0f / 3.0f));
 
 	// Push the items
-	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetStyle().SeparatorSize + ImGui::GetFrameHeightWithSpacing();
 	ImGui::BeginChild("ScrollingRegion", Vec2(0, -footerHeightToPreserve), false,
 					  ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
 

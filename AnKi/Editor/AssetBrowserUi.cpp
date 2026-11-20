@@ -556,8 +556,7 @@ void AssetBrowserUi::drawIcons(ConstWeakArray<AssetDirOrFile> filteredItems)
 	const F32 cellWidth = F32(m_cellSize) * 16;
 	const U32 columnCount = U32(ImGui::GetContentRegionAvail().x / cellWidth);
 	ImGui::SetNextItemWidth(-1.0f);
-	const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter
-								  | ImGuiTableFlags_BordersV | ImGuiTableFlags_ContextMenuInBody;
+	const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_ContextMenuInBody;
 
 	if(filteredItems.getSize() && columnCount && ImGui::BeginTable("Grid", columnCount, flags))
 	{

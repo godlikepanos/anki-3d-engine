@@ -19,6 +19,8 @@
 
 namespace anki {
 
+constexpr const Char* kSettingsFilename = "EditorSettings.ini";
+
 template<typename TFunc>
 class DeferredPop
 {
@@ -141,6 +143,17 @@ void EditorUi::draw(UiCanvas& canvas)
 {
 	// Setup style and stuff
 	m_canvas = &canvas;
+
+	if(!m_font)
+	{
+		ANKI_ASSERT(ImGui::GetFrameCount() == 1 && "Loading the layout inside a later frame frees dock nodes that windows still use");
+		const String settingsFilepath = String().format("{}/{}", App::getSingleton().getSettingsDirectory(), kSettingsFilename);
+		if(fileExists(settingsFilepath))
+		{
+			ImGui::LoadIniSettingsFromDisk(settingsFilepath.cstr());
+			ANKI_EDITOR_LOGI("Layout loaded: {}", settingsFilepath);
+		}
+	}
 
 	if(!m_font)
 	{
@@ -314,318 +327,342 @@ void EditorUi::deleteSelectedNodeDialog(Bool del)
 
 void EditorUi::mainMenu()
 {
-	// The menu and toolbox is based on the comments in https://github.com/ocornut/imgui/issues/3518
+	// The toolbox is based on the comments in https://github.com/ocornut/imgui/issues/3518
 
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+	// No border to avoid a line between the menu and the toolbox
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	const Bool menuOpen = ImGui::BeginMainMenuBar();
+	ImGui::PopStyleVar();
 
-	if(ImGui::BeginViewportSideBar("##MainMenu", viewport, ImGuiDir_Up, ImGui::GetFrameHeight(), windowFlags))
+	if(menuOpen)
 	{
-		if(ImGui::BeginMenuBar())
+		if(ImGui::BeginMenu(ICON_MDI_FOLDER_OUTLINE " File"))
 		{
-			if(ImGui::BeginMenu(ICON_MDI_FOLDER_OUTLINE " File"))
-			{
-				if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_ALL " Save All Scenes", "CTRL+ALT+S"))
-				{
-					saveScenes(false);
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE " Save Active Scene", "CTRL+S"))
-				{
-					saveScenes(true);
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_REFRESH " Refresh Filesystem", "F5"))
-				{
-					ResourceManager::getSingleton().refreshFileUpdateTimes();
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_CLOSE_CIRCLE " Quit", "CTRL+Q"))
-				{
-					m_quit = true;
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if(ImGui::BeginMenu(ICON_MDI_APPLICATION_OUTLINE " Windows"))
-			{
-				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Console"))
-				{
-					m_showConsoleWindow = true;
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " SceneNode Props"))
-				{
-					m_sceneNodePropertiesWindow.m_open = true;
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Scene Hierarchy"))
-				{
-					m_sceneHierarchyWindow.m_open = true;
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Assets"))
-				{
-					m_assetBrowserWindow.m_open = true;
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " CVars Editor"))
-				{
-					m_showCVarEditorWindow = true;
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_CHART_BAR_STACKED " Stats"))
-				{
-					m_statsWindow.m_open = true;
-				}
-
-				if(ImGui::MenuItem(ICON_MDI_TRANSFER " Streaming"))
-				{
-					m_streamingWindow.m_open = true;
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
-			{
-				if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
-				{
-					m_showDebugRtsWindow = true;
-				}
-
-				// Toggle the scene component icons
-				ImGui::SeparatorText("Component Icons");
-
-				EditorOptions& options = Renderer::getSingleton().getEditor().getEditorOptions();
-
-				// Draws an icon only toggle button that's highlighted when the option is on
-				auto iconToggle = [](SceneComponentType componentType, const Char* tooltip, Bool enabled) -> Bool {
-					const Bool wasEnabled = enabled;
-					if(wasEnabled)
-					{
-						ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-					}
-
-					if(ImGui::Button(kSceneComponentIcons[componentType]))
-					{
-						enabled = !enabled;
-					}
-
-					if(wasEnabled)
-					{
-						ImGui::PopStyleColor();
-					}
-
-					ImGui::SetItemTooltip("%s", tooltip);
-					ImGui::SameLine();
-
-					return enabled;
-				};
-
-				options.m_lights = iconToggle(SceneComponentType::kLight, "Lights", options.m_lights);
-				options.m_decals = iconToggle(SceneComponentType::kDecal, "Decals", options.m_decals);
-				options.m_particleEmitters = iconToggle(SceneComponentType::kParticleEmitter2, "Particle emitters", options.m_particleEmitters);
-				options.m_cameras = iconToggle(SceneComponentType::kCamera, "Cameras", options.m_cameras);
-				options.m_skyboxes = iconToggle(SceneComponentType::kSkybox, "Skyboxes", options.m_skyboxes);
-				options.m_reflectionProbes = iconToggle(SceneComponentType::kReflectionProbe, "Reflection probes", options.m_reflectionProbes);
-				options.m_giProbes = iconToggle(SceneComponentType::kGlobalIlluminationProbe, "Global illumination probes", options.m_giProbes);
-				options.m_fogDensityVolumes = iconToggle(SceneComponentType::kFogDensity, "Fog density volumes", options.m_fogDensityVolumes);
-				options.m_scripts = iconToggle(SceneComponentType::kScript, "Scripts", options.m_scripts);
-				options.m_triggers = iconToggle(SceneComponentType::kTrigger, "Triggers", options.m_triggers);
-				options.m_skeletons = iconToggle(SceneComponentType::kSkin, "Skeletons", options.m_skeletons);
-
-				ImGui::NewLine();
-				ImGui::SeparatorText("Misc");
-
-				Bool wireframe = Renderer::getSingleton().getGBuffer().getWireframeMode();
-				if(ImGui::Checkbox("GBuffer Wireframe", &wireframe))
-				{
-					Renderer::getSingleton().getGBuffer().setWireframeMode(wireframe);
-				}
-
-				Bool bBoundingBoxes = options.m_visibleRenderableBoundingVolumes;
-				if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))
-				{
-					options.m_visibleRenderableBoundingVolumes = bBoundingBoxes;
-				}
-
-				Bool bPhysics = options.m_physics;
-				if(ImGui::Checkbox("Physics Bodies", &bPhysics))
-				{
-					options.m_physics = bPhysics;
-				}
-
-				Bool bDepthTest = options.m_depthTest;
-				if(ImGui::Checkbox("Depth Test", &bDepthTest))
-				{
-					options.m_depthTest = bDepthTest;
-				}
-
-				ImGui::SeparatorText("Indirect Diffuse");
-				Bool bProbes = options.m_indirectDiffuseProbes;
-				if(ImGui::Checkbox("Indirect Probes", &bProbes))
-				{
-					options.m_indirectDiffuseProbes = bProbes;
-				}
-
-				ImGui::BeginDisabled(!bProbes);
-
-				// Clipmap
-				I32 clipmap = I32(options.m_indirectDiffuseProbesClipmap);
-				if(ImGui::InputInt("Clipmap", &clipmap))
-				{
-					options.m_indirectDiffuseProbesClipmap = clamp<U8>(U8(clipmap), 0, kIndirectDiffuseClipmapCount - 1);
-				}
-
-				// Clipmap type
-				if(ImGui::BeginCombo("Clipmap Type", kIndirectDiffuseClipmapsProbeTypeNames[options.m_indirectDiffuseProbesClipmapType]))
-				{
-					for(IndirectDiffuseClipmapsProbeType type : EnumIterable<IndirectDiffuseClipmapsProbeType>())
-					{
-						const Bool selected = type == options.m_indirectDiffuseProbesClipmapType;
-						if(ImGui::Selectable(kIndirectDiffuseClipmapsProbeTypeNames[type], selected))
-						{
-							options.m_indirectDiffuseProbesClipmapType = type;
-						}
-
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if(selected)
-						{
-							ImGui::SetItemDefaultFocus();
-						}
-					}
-					ImGui::EndCombo();
-				}
-
-				// Clipmap color scale
-				F32 scale = options.m_indirectDiffuseProbesClipmapColorScale;
-				if(ImGui::SliderFloat("Color Scale", &scale, 0.0f, 1.0f))
-				{
-					options.m_indirectDiffuseProbesClipmapColorScale = scale;
-				}
-
-				ImGui::EndDisabled();
-
-				ImGui::EndMenu();
-			} // Debug menu
-
-			if(ImGui::BeginMenu(ICON_MDI_PLUS_BOX " New"))
-			{
-				if(ImGui::MenuItem(ICON_MDI_RESISTOR_NODES " SceneNode"))
-				{
-					SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().format("NewNode.{}", m_newNodeNextIndex++));
-					if(node)
-					{
-						node->setLocalTransform(SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform());
-						node->moveLocalZ(-2.0f);
-						node->setLocalRotation(Mat3::getIdentity());
-						node->setLocalScale(Vec3(1.0f));
-						m_selectedNode = node;
-						m_selectedNodeUuid = node->getUuid();
-						m_onNextUpdateFocusOnSelectedNode = 2; // Will focus on the next frame
-					}
-				}
-
-				// Do the other node classes
-				GlobalRegistry::getSingleton().iterateRecords([&](const GlobalRegistryRecord& rec) {
-					if(rec.m_type != GlobalRegistryRecordType::kSceneNode)
-					{
-						return FunctorContinue::kContinue;
-					}
-
-					if(ImGui::MenuItem(rec.m_name))
-					{
-						// TODO
-					}
-
-					return FunctorContinue::kContinue;
-				});
-
-				ImGui::EndMenu();
-			}
-
-			// Title
-			{
-				CString text = "AnKi 3D Engine Editor";
-				const F32 menuBarWidth = ImGui::GetWindowWidth();
-				const F32 textWidth = ImGui::CalcTextSize(text.cstr()).x;
-				ImGui::SameLine(menuBarWidth - menuBarWidth / 2.0f - textWidth / 2.0f);
-
-				ImGui::TextUnformatted(text.cstr());
-			}
-
-			// Quit bnt
-			{
-				const Char* text = ICON_MDI_CLOSE_CIRCLE;
-				const Vec2 textSize = ImGui::CalcTextSize(text);
-
-				const F32 menuBarWidth = ImGui::GetWindowWidth();
-				ImGui::SameLine(menuBarWidth - textSize.x - ImGui::GetStyle().FramePadding.x * 2.0f - kMargin);
-
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-				if(ImGui::Button(text))
-				{
-					m_quit = true;
-				}
-
-				ImGui::PopStyleColor();
-			}
-
-			ImGui::EndMenuBar();
-		}
-	}
-	ImGui::End();
-
-	// Toolbox
-	if(ImGui::BeginViewportSideBar("##Toolbox", viewport, ImGuiDir_Up, ImGui::GetFrameHeight(), windowFlags))
-	{
-		if(ImGui::BeginMenuBar())
-		{
-			if(ImGui::Button(ICON_MDI_CONTENT_SAVE_ALL))
+			if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_ALL " Save All Scenes", "CTRL+ALT+S"))
 			{
 				saveScenes(false);
 			}
-			ImGui::SetItemTooltip("Save all scenes");
 
-			ImGui::SameLine();
-
-			ImGui::SetNextItemWidth(ImGui::CalcTextSize("00.000").x);
-
-			if(ImGui::SliderFloat(ICON_MDI_AXIS_ARROW "&" ICON_MDI_ARROW_EXPAND_ALL " Snapping", &m_toolbox.m_scaleTranslationSnapping, 0.0, 10.0f))
+			if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE " Save Active Scene", "CTRL+S"))
 			{
-				const F32 roundTo = 0.5f;
-				m_toolbox.m_scaleTranslationSnapping = round(m_toolbox.m_scaleTranslationSnapping / roundTo) * roundTo;
+				saveScenes(true);
 			}
 
-			ImGui::SameLine();
-
-			ImGui::SetNextItemWidth(ImGui::CalcTextSize("00.000").x);
-
-			if(ImGui::SliderFloat(ICON_MDI_ROTATE_ORBIT " Snapping", &m_toolbox.m_rotationSnappingDeg, 0.0, 90.0f))
+			if(ImGui::MenuItem(ICON_MDI_REFRESH " Refresh Filesystem", "F5"))
 			{
-				const F32 roundTo = 1.0f;
-				m_toolbox.m_rotationSnappingDeg = round(m_toolbox.m_rotationSnappingDeg / roundTo) * roundTo;
+				ResourceManager::getSingleton().refreshFileUpdateTimes();
 			}
 
-			// Play button
+			if(ImGui::MenuItem(ICON_MDI_CLOSE_CIRCLE " Quit", "CTRL+Q"))
 			{
-				const Bool bPaused = SceneGraph::getSingleton().isPaused();
+				m_quit = true;
+			}
 
-				CString text = (bPaused) ? ICON_MDI_PLAY_CIRCLE " Play" : ICON_MDI_STOP_CIRCLE "Stop (Esc)";
-				const F32 menuBarWidth = ImGui::GetWindowWidth();
-				const F32 textWidth = ImGui::CalcTextSize(text.cstr()).x;
-				ImGui::SameLine(menuBarWidth - menuBarWidth / 2.0f - textWidth / 2.0f);
+			ImGui::EndMenu();
+		}
 
-				if(ImGui::Button(text.cstr()))
+		if(ImGui::BeginMenu(ICON_MDI_APPLICATION_OUTLINE " Windows"))
+		{
+			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Console"))
+			{
+				m_showConsoleWindow = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " SceneNode Props"))
+			{
+				m_sceneNodePropertiesWindow.m_open = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Scene Hierarchy"))
+			{
+				m_sceneHierarchyWindow.m_open = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Assets"))
+			{
+				m_assetBrowserWindow.m_open = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " CVars Editor"))
+			{
+				m_showCVarEditorWindow = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_CHART_BAR_STACKED " Stats"))
+			{
+				m_statsWindow.m_open = true;
+			}
+
+			if(ImGui::MenuItem(ICON_MDI_TRANSFER " Streaming"))
+			{
+				m_streamingWindow.m_open = true;
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if(ImGui::BeginMenu(ICON_MDI_CUBE_SCAN " Debug"))
+		{
+			if(ImGui::MenuItem(ICON_MDI_APPLICATION_OUTLINE " Debug Render Targets"))
+			{
+				m_showDebugRtsWindow = true;
+			}
+
+			// Toggle the scene component icons
+			ImGui::SeparatorText("Component Icons");
+
+			EditorOptions& options = Renderer::getSingleton().getEditor().getEditorOptions();
+
+			// Draws an icon only toggle button that's highlighted when the option is on
+			auto iconToggle = [](SceneComponentType componentType, const Char* tooltip, Bool enabled) -> Bool {
+				const Bool wasEnabled = enabled;
+				if(wasEnabled)
 				{
-					SceneGraph::getSingleton().pause(!bPaused);
+					ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+				}
+
+				if(ImGui::Button(kSceneComponentIcons[componentType]))
+				{
+					enabled = !enabled;
+				}
+
+				if(wasEnabled)
+				{
+					ImGui::PopStyleColor();
+				}
+
+				ImGui::SetItemTooltip("%s", tooltip);
+				ImGui::SameLine();
+
+				return enabled;
+			};
+
+			options.m_lights = iconToggle(SceneComponentType::kLight, "Lights", options.m_lights);
+			options.m_decals = iconToggle(SceneComponentType::kDecal, "Decals", options.m_decals);
+			options.m_particleEmitters = iconToggle(SceneComponentType::kParticleEmitter2, "Particle emitters", options.m_particleEmitters);
+			options.m_cameras = iconToggle(SceneComponentType::kCamera, "Cameras", options.m_cameras);
+			options.m_skyboxes = iconToggle(SceneComponentType::kSkybox, "Skyboxes", options.m_skyboxes);
+			options.m_reflectionProbes = iconToggle(SceneComponentType::kReflectionProbe, "Reflection probes", options.m_reflectionProbes);
+			options.m_giProbes = iconToggle(SceneComponentType::kGlobalIlluminationProbe, "Global illumination probes", options.m_giProbes);
+			options.m_fogDensityVolumes = iconToggle(SceneComponentType::kFogDensity, "Fog density volumes", options.m_fogDensityVolumes);
+			options.m_scripts = iconToggle(SceneComponentType::kScript, "Scripts", options.m_scripts);
+			options.m_triggers = iconToggle(SceneComponentType::kTrigger, "Triggers", options.m_triggers);
+			options.m_skeletons = iconToggle(SceneComponentType::kSkin, "Skeletons", options.m_skeletons);
+
+			ImGui::NewLine();
+			ImGui::SeparatorText("Misc");
+
+			Bool wireframe = Renderer::getSingleton().getGBuffer().getWireframeMode();
+			if(ImGui::Checkbox("GBuffer Wireframe", &wireframe))
+			{
+				Renderer::getSingleton().getGBuffer().setWireframeMode(wireframe);
+			}
+
+			Bool bBoundingBoxes = options.m_visibleRenderableBoundingVolumes;
+			if(ImGui::Checkbox("Visible Renderables", &bBoundingBoxes))
+			{
+				options.m_visibleRenderableBoundingVolumes = bBoundingBoxes;
+			}
+
+			Bool bPhysics = options.m_physics;
+			if(ImGui::Checkbox("Physics Bodies", &bPhysics))
+			{
+				options.m_physics = bPhysics;
+			}
+
+			Bool bDepthTest = options.m_depthTest;
+			if(ImGui::Checkbox("Depth Test", &bDepthTest))
+			{
+				options.m_depthTest = bDepthTest;
+			}
+
+			ImGui::SeparatorText("Indirect Diffuse");
+			Bool bProbes = options.m_indirectDiffuseProbes;
+			if(ImGui::Checkbox("Indirect Probes", &bProbes))
+			{
+				options.m_indirectDiffuseProbes = bProbes;
+			}
+
+			ImGui::BeginDisabled(!bProbes);
+
+			// Clipmap
+			I32 clipmap = I32(options.m_indirectDiffuseProbesClipmap);
+			if(ImGui::InputInt("Clipmap", &clipmap))
+			{
+				options.m_indirectDiffuseProbesClipmap = clamp<U8>(U8(clipmap), 0, kIndirectDiffuseClipmapCount - 1);
+			}
+
+			// Clipmap type
+			if(ImGui::BeginCombo("Clipmap Type", kIndirectDiffuseClipmapsProbeTypeNames[options.m_indirectDiffuseProbesClipmapType]))
+			{
+				for(IndirectDiffuseClipmapsProbeType type : EnumIterable<IndirectDiffuseClipmapsProbeType>())
+				{
+					const Bool selected = type == options.m_indirectDiffuseProbesClipmapType;
+					if(ImGui::Selectable(kIndirectDiffuseClipmapsProbeTypeNames[type], selected))
+					{
+						options.m_indirectDiffuseProbesClipmapType = type;
+					}
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if(selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			// Clipmap color scale
+			F32 scale = options.m_indirectDiffuseProbesClipmapColorScale;
+			if(ImGui::SliderFloat("Color Scale", &scale, 0.0f, 1.0f))
+			{
+				options.m_indirectDiffuseProbesClipmapColorScale = scale;
+			}
+
+			ImGui::EndDisabled();
+
+			ImGui::EndMenu();
+		} // Debug menu
+
+		if(ImGui::BeginMenu(ICON_MDI_PLUS_BOX " New"))
+		{
+			if(ImGui::MenuItem(ICON_MDI_RESISTOR_NODES " SceneNode"))
+			{
+				SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().format("NewNode.{}", m_newNodeNextIndex++));
+				if(node)
+				{
+					node->setLocalTransform(SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform());
+					node->moveLocalZ(-2.0f);
+					node->setLocalRotation(Mat3::getIdentity());
+					node->setLocalScale(Vec3(1.0f));
+					m_selectedNode = node;
+					m_selectedNodeUuid = node->getUuid();
+					m_onNextUpdateFocusOnSelectedNode = 2; // Will focus on the next frame
 				}
 			}
 
-			ImGui::EndMenuBar();
+			// Do the other node classes
+			GlobalRegistry::getSingleton().iterateRecords([&](const GlobalRegistryRecord& rec) {
+				if(rec.m_type != GlobalRegistryRecordType::kSceneNode)
+				{
+					return FunctorContinue::kContinue;
+				}
+
+				if(ImGui::MenuItem(rec.m_name))
+				{
+					// TODO
+				}
+
+				return FunctorContinue::kContinue;
+			});
+
+			ImGui::EndMenu();
+		}
+
+		if(ImGui::BeginMenu(ICON_MDI_COG " Options"))
+		{
+			const String settingsFilepath = String().format("{}/{}", App::getSingleton().getSettingsDirectory(), kSettingsFilename);
+
+			if(ImGui::MenuItem("Save Layout"))
+			{
+				ImGui::SaveIniSettingsToDisk(settingsFilepath.cstr());
+				ANKI_EDITOR_LOGI("Layout saved: {}", settingsFilepath);
+			}
+
+			if(ImGui::MenuItem("Reset Layout (needs restart)"))
+			{
+				if(fileExists(settingsFilepath))
+				{
+					[[maybe_unused]] const Error err = removeFile(settingsFilepath);
+					ANKI_EDITOR_LOGI("Layout removed: {}", settingsFilepath);
+				}
+			}
+
+			ImGui::EndMenu();
+		}
+
+		// Title
+		{
+			CString text = "AnKi 3D Engine Editor";
+			const F32 menuBarWidth = ImGui::GetWindowWidth();
+			const F32 textWidth = ImGui::CalcTextSize(text.cstr()).x;
+			ImGui::SameLine(menuBarWidth - menuBarWidth / 2.0f - textWidth / 2.0f);
+
+			ImGui::TextUnformatted(text.cstr());
+		}
+
+		// Quit bnt
+		{
+			const Char* text = ICON_MDI_CLOSE_CIRCLE;
+			const Vec2 textSize = ImGui::CalcTextSize(text);
+
+			const F32 menuBarWidth = ImGui::GetWindowWidth();
+			ImGui::SameLine(menuBarWidth - textSize.x - ImGui::GetStyle().FramePadding.x * 2.0f - kMargin);
+
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+			if(ImGui::Button(text))
+			{
+				m_quit = true;
+			}
+
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+
+	// Toolbox. Zero vertical padding so the widgets fill the bar and the menu's background color so it looks like a 2nd menu bar
+	const ImGuiStyle& style = ImGui::GetStyle();
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, Vec2(style.WindowPadding.x, 0.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, style.Colors[ImGuiCol_MenuBarBg]);
+	const Bool toolboxOpen = ImGui::BeginViewportSideBar("##Toolbox", nullptr, ImGuiDir_Up, ImGui::GetFrameHeight(),
+														 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+
+	if(toolboxOpen)
+	{
+		if(ImGui::Button(ICON_MDI_CONTENT_SAVE_ALL))
+		{
+			saveScenes(false);
+		}
+		ImGui::SetItemTooltip("Save all scenes");
+
+		ImGui::SameLine();
+
+		ImGui::SetNextItemWidth(ImGui::CalcTextSize("00.000").x);
+
+		if(ImGui::SliderFloat(ICON_MDI_AXIS_ARROW "&" ICON_MDI_ARROW_EXPAND_ALL " Snapping", &m_toolbox.m_scaleTranslationSnapping, 0.0, 10.0f))
+		{
+			const F32 roundTo = 0.5f;
+			m_toolbox.m_scaleTranslationSnapping = round(m_toolbox.m_scaleTranslationSnapping / roundTo) * roundTo;
+		}
+
+		ImGui::SameLine();
+
+		ImGui::SetNextItemWidth(ImGui::CalcTextSize("00.000").x);
+
+		if(ImGui::SliderFloat(ICON_MDI_ROTATE_ORBIT " Snapping", &m_toolbox.m_rotationSnappingDeg, 0.0, 90.0f))
+		{
+			const F32 roundTo = 1.0f;
+			m_toolbox.m_rotationSnappingDeg = round(m_toolbox.m_rotationSnappingDeg / roundTo) * roundTo;
+		}
+
+		// Play button
+		{
+			const Bool bPaused = SceneGraph::getSingleton().isPaused();
+
+			CString text = (bPaused) ? ICON_MDI_PLAY_CIRCLE " Play" : ICON_MDI_STOP_CIRCLE "Stop (Esc)";
+			const F32 menuBarWidth = ImGui::GetWindowWidth();
+			const F32 textWidth = ImGui::CalcTextSize(text.cstr()).x;
+			ImGui::SameLine(menuBarWidth - menuBarWidth / 2.0f - textWidth / 2.0f);
+
+			if(ImGui::Button(text.cstr()))
+			{
+				SceneGraph::getSingleton().pause(!bPaused);
+			}
 		}
 	}
 	ImGui::End();
@@ -649,7 +686,7 @@ void EditorUi::cVarsWindow()
 		// Viewport is one frame delay so do that when frame >1
 		const Vec2 initialSize = Vec2(900.0f, m_canvas->getSizef().y * 0.8f);
 		ImGui::SetNextWindowSize(initialSize, ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once, Vec2(0.5f));
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, Vec2(0.5f));
 	}
 
 	if(ImGui::Begin("CVars Editor", &m_showCVarEditorWindow, 0))

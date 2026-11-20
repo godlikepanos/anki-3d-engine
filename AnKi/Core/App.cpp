@@ -115,6 +115,9 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 
 App::App(CString appName, U32 argc, Char** argv, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
+	ANKI_ASSERT(m_instance == nullptr);
+	m_instance = this;
+
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
 
@@ -150,6 +153,10 @@ App::App(CString appName, U32 argc, Char** argv, AllocAlignedCallback allocCb, v
 App::~App()
 {
 	ANKI_CORE_LOGI("Destroying application");
+
+	ANKI_ASSERT(m_instance != nullptr);
+	m_instance = nullptr;
+
 	cleanup();
 }
 

@@ -327,7 +327,7 @@ void SkeletonEditorUi::drawSkeleton()
 			const F32 angle = atan2(ab.y, ab.x);
 			drawList->PathArcTo(a, r, angle + kPi / 2.0f, angle + kPi * 1.5f); // Half circle around a
 			drawList->PathArcTo(b, r, angle - kPi / 2.0f, angle + kPi / 2.0f); // Half circle around b
-			drawList->PathStroke(kCapsuleColor, ImDrawFlags_Closed, 1.5f); // Closing the path draws the 2 straight lines
+			drawList->PathStroke(kCapsuleColor, 1.5f, ImDrawFlags_Closed); // Closing the path draws the 2 straight lines
 		}
 		else
 		{
@@ -424,7 +424,7 @@ void SkeletonEditorUi::drawSkeleton()
 	}
 
 	// Don't mix AddLine with PathLineTo because AddLine uses and clears the same path
-	drawList->AddPolyline(&rimPoints[0], kRimPointCount, kSwingConeColor, ImDrawFlags_Closed, 1.5f);
+	drawList->AddPolyline(&rimPoints[0], kRimPointCount, kSwingConeColor, 1.5f, ImDrawFlags_Closed);
 	for(U32 i = 0; i < kRimPointCount; i += kRimPointCount / 4)
 	{
 		drawList->AddLine(pos, rimPoints[i], kSwingConeColor, 1.0f);
@@ -439,7 +439,7 @@ void SkeletonEditorUi::drawSkeleton()
 		const Vec3 dir = parentPlaneAxis * cos(phi) + parentNormalAxis * sin(phi);
 		drawList->PathLineTo(toScreen(head + dir * size * 0.5f));
 	}
-	drawList->PathStroke(kTwistRangeColor, ImDrawFlags_Closed, 1.5f);
+	drawList->PathStroke(kTwistRangeColor, 1.5f, ImDrawFlags_Closed);
 }
 
 void SkeletonEditorUi::drawBoneTree(CachedBone& bone)
