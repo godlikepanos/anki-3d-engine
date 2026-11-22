@@ -34,30 +34,26 @@ private:
 	public:
 		RenderTargetDesc m_rtDescr;
 
-		// Light shaders
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
+		RendererShaderProgram m_prog;
 	} m_lightShading;
 
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
-		Array<ShaderProgramPtr, 3> m_grProgs;
+		Array<RendererShaderProgram, 3> m_progs;
 	} m_skybox;
 
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
+		RendererShaderProgram m_prog;
 	} m_applyFog;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_rt;
-	} m_runCtx; ///< Run context.
+	} m_runCtx;
 
 	void run(RenderPassWorkContext& rgraphCtx);
 

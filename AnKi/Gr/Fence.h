@@ -22,6 +22,16 @@ public:
 	// Return true if is signaled (signaled == GPU work is done).
 	Bool clientWait(Second seconds);
 
+	// Wait "forever" to the fence to signal. Won't actually wait forever because the GPU will timeout in a few seconds.
+	void clientWaitForever()
+	{
+		const Bool signaled = clientWait(kMaxSecond);
+		if(!signaled)
+		{
+			ANKI_GR_LOGF("GPU timeout detected");
+		}
+	}
+
 	Bool signaled()
 	{
 		return clientWait(0.0);

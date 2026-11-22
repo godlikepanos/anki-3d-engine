@@ -12,10 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup ui
-/// @{
-
-/// UI canvas. It's more of a context.
+// UI canvas. It's more of a context.
 class UiCanvas : public UiObject
 {
 	friend class UiManager;
@@ -25,7 +22,7 @@ public:
 
 	~UiCanvas();
 
-	/// Resize canvas.
+	// Resize canvas.
 	void resize(UVec2 size)
 	{
 		ANKI_ASSERT(size > 0);
@@ -42,15 +39,16 @@ public:
 		return Vec2(m_size);
 	}
 
-	/// @name building commands. The order matters.
-	/// @{
+	//
+	// Building commands. The order matters.
+	//
 	virtual void handleInput();
 
 	void beginBuilding();
 
 	ImFont* addFont(CString fname);
 
-	/// Merge fonts into one
+	// Merge fonts into one
 	ImFont* addFonts(ConstWeakArray<CString> fnames);
 
 	void endBuilding();
@@ -67,12 +65,15 @@ public:
 	void appendNonGraphicsCommands(CommandBuffer& cmdb) const;
 
 	void appendGraphicsCommands(CommandBuffer& cmdb) const;
-	/// @}
+	//
+	// End building commands
+	//
 
 private:
 	ImGuiContext* m_imCtx = nullptr;
 	ImFont* m_defaultFont = nullptr;
 	UVec2 m_size;
+	UiString m_iniFilepath; // ImGui only holds a pointer to it
 
 	enum ShaderType
 	{
@@ -108,6 +109,5 @@ private:
 
 	Error init(UVec2 size);
 };
-/// @}
 
 } // end namespace anki

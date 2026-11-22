@@ -45,7 +45,24 @@ Error MicroSwapchain::initInternal()
 		static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window.m_sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL));
 
 	ComPtr<IDXGIFactory2> factory2;
-	ANKI_D3D_CHECK(CreateDXGIFactory2((g_cvarGrValidation) ? DXGI_CREATE_FACTORY_DEBUG : 0, IID_PPV_ARGS(&factory2)));
+	ANKI_D3D_CHECK(CreateDXGIFactory2((g_cvarGrValidation || g_cvarGrGpuValidation) ? DXGI_CREATE_FACTORY_DEBUG : 0, IID_PPV_ARGS(&factory2)));
+
+	// Tearing needs to be supported by the system
+	if(!g_cvarGrVsync)
+	{
+		ComPtr<IDXGIFactory5> factory5;
+		BOOL tearingSupported = FALSE;
+		if(SUCCEEDED(factory2.As(&factory5))
+		   && SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearingSupported, sizeof(tearingSupported))))
+		{
+			m_allowTearing = tearingSupported;
+		}
+
+		if(!m_allowTearing)
+		{
+			ANKI_D3D_LOGW("Tearing is not supported, the swapchain will be created without it");
+		}
+	}
 
 	// Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -53,17 +70,17 @@ Error MicroSwapchain::initInternal()
 	swapChainDesc.Width = window.getWidth();
 	swapChainDesc.Height = window.getHeight();
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapChainDesc.SampleDesc.Count = 1;
-	swapChainDesc.Flags |= (!g_cvarGrVsync) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+	swapChainDesc.Flags |= (m_allowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	ComPtr<IDXGISwapChain1> swapChain;
 	// Swap chain needs the queue so that it can force a flush on it.
 	ANKI_D3D_CHECK(factory2->CreateSwapChainForHwnd(&getGrManagerImpl().getCommandQueue(GpuQueueType::kGeneral), hwnd, &swapChainDesc, nullptr,
 													nullptr, &swapChain));
 
-	swapChain->QueryInterface(IID_PPV_ARGS(&m_swapchain));
+	ANKI_D3D_CHECK(swapChain->QueryInterface(IID_PPV_ARGS(&m_swapchain)));
 
 	// Does not support fullscreen transitions.
 	factory2->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
@@ -80,7 +97,7 @@ Error MicroSwapchain::initInternal()
 		init.m_height = window.getHeight();
 		init.m_format = Format::kR8G8B8A8_Unorm;
 
-		init.m_usage = TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
+		init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
 		if(m_rtvResources[i]->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)
 		{
 			init.m_usage |= TextureUsageBit::kAllUav;

@@ -25,7 +25,6 @@
 #	pragma anki member Vec3 m_minStartingPosition 0.0 0.0 0.0
 #	pragma anki member Vec3 m_maxStartingPosition 0.0 0.0 0.0
 
-#	pragma anki member Vec3 m_forceDir 0 1 0
 #	pragma anki member F32 m_forceAngle 1.2
 #	pragma anki member F32 m_minForce 1
 #	pragma anki member F32 m_maxForce 2
@@ -53,7 +52,7 @@ struct ParticleInterface
 		const F32 randAng = getRandomRange(0.0, m_props.m_forceAngle);
 		const F32 adj = 10.0; // In meters. Something big
 		const F32 opposite = tan(randAng / 2.0) * adj; // Compute the opposite in the orthogonal triangle. tan(phi) = opposite/adj
-		const Vec3 sphereCenter = m_props.m_forceDir * adj;
+		const Vec3 sphereCenter = normalize(emitterTrf.getColumn(2)) * adj;
 		const F32 sphereRadius = opposite;
 		const Vec3 randomPointInSphere = sphereCenter + normalize(getRandomRange((Vec3)-1.0, (Vec3)1.0)) * sphereRadius;
 		const Vec3 forceDir = normalize(randomPointInSphere);

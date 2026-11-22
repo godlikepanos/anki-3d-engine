@@ -9,10 +9,7 @@
 
 namespace anki {
 
-/// @addtogroup directx
-/// @{
-
-/// Shader implementation.
+// Shader implementation.
 class ShaderImpl final : public Shader
 {
 public:
@@ -28,6 +25,5 @@ public:
 
 	Error init(const ShaderInitInfo& init);
 };
-/// @}
 
 } // end namespace anki

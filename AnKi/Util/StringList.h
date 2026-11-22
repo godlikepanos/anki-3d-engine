@@ -8,7 +8,6 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/List.h>
 #include <algorithm>
-#include <cstdarg>
 
 namespace anki {
 
@@ -75,13 +74,13 @@ public:
 	/// Sort the string list
 	void sortAll(const Sort method = Sort::kAscending);
 
-	/// Push at the end of the list a formated string.
-	ANKI_CHECK_FORMAT(1, 2)
-	void pushBackSprintf(const Char* fmt, ...);
+	// Push at the end of the list a string formatted with std::format syntax.
+	template<typename... TArgs>
+	void pushBackFormat(std::format_string<TArgs...> fmt, TArgs&&... args);
 
-	/// Push at the beginning of the list a formated string.
-	ANKI_CHECK_FORMAT(1, 2)
-	void pushFrontSprintf(const Char* fmt, ...);
+	// Push at the beginning of the list a string formatted with std::format syntax.
+	template<typename... TArgs>
+	void pushFrontFormat(std::format_string<TArgs...> fmt, TArgs&&... args);
 
 	/// Push back plain CString.
 	typename Base::Iterator pushBack(CString cstr)

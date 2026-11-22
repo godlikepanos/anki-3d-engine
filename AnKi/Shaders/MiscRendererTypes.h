@@ -161,6 +161,12 @@ struct GlobalRendererConstants
 	IndirectDiffuseClipmapConstants m_indirectDiffuseClipmaps;
 
 	LocalLightsGridConstants m_localLightsGrid;
+
+	U32 m_imageStreamingFeedbackPixelX : 16;
+	U32 m_imageStreamingFeedbackPixelY : 16;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
 };
 
 struct SbtBuildConstants
@@ -192,6 +198,10 @@ struct ReflectionConstants
 	U32 m_ssrMaxIterations;
 	U32 m_ssrStepIncrement;
 	Vec2 m_roughnessCutoffToGiEdges;
+
+	U64 m_rayGenShaderRecordAddress;
+	U32 m_shaderRecordSize;
+	U32 m_hitGroupCount;
 };
 
 struct PixelFailedSsr
@@ -200,7 +210,7 @@ struct PixelFailedSsr
 	U32 m_pixelY : 12u;
 	U32 m_roughness : 7u;
 
-	U32 m_reflectionDir;
+	U32 m_reflectionDir; // It also acts as a count in some cases
 
 	U32 m_pdf : 16u;
 	U32 m_rayDirT : 16u;
@@ -303,6 +313,11 @@ struct MaterialGlobalConstants
 	Mat3x4 m_cameraTransform;
 
 	Vec4 m_viewport;
+
+	F32 m_textureBias;
+	F32 m_textureAnisotropy;
+	F32 m_padding1;
+	F32 m_padding2;
 };
 static_assert(sizeof(MaterialGlobalConstants) % sizeof(Vec4) == 0);
 

@@ -368,7 +368,8 @@ public:
 
 			// Set the barriers
 			const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
-				UnifiedGeometryBuffer::getSingleton().getBuffer().getBufferUsage() ^ BufferUsageBit::kCopyDestination;
+				(UnifiedGeometryBuffer::getSingleton().getBuffer().getBufferUsage() ^ BufferUsageBit::kCopyDestination)
+				& BufferUsageBit::kAllAsyncCompute;
 
 			BufferBarrierInfo bufferBarrier;
 			bufferBarrier.m_bufferView = UnifiedGeometryBuffer::getSingleton().getBufferView();
@@ -421,7 +422,7 @@ MeshComponent& MeshComponent::setMeshFilename(CString fname)
 	const Error err = ResourceManager::getSingleton().loadResource(fname, newRsrc);
 	if(err)
 	{
-		ANKI_SCENE_LOGE("Failed to load resource: %s", fname.cstr());
+		ANKI_SCENE_LOGE("Failed to load resource: {}", fname);
 	}
 	else
 	{

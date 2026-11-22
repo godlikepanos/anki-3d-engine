@@ -41,13 +41,13 @@ Bool ScriptVariables::findVar(CString name, ScriptVariableType expectedType, U32
 	Bool found = idx < m_nameHashes.getSize();
 	if(!found)
 	{
-		ANKI_SCENE_LOGE("Unable to find LUA var: %s. Was that var created inside some function? Did you forget to use \"local\" on some temp vars?",
-						name.cstr());
+		ANKI_SCENE_LOGE("Unable to find LUA var: {}. Was that var created inside some function? Did you forget to use \"local\" on some temp vars?",
+						name);
 	}
 
 	if(found && expectedType != m_types[idx])
 	{
-		ANKI_SCENE_LOGE("Variable type mismatch: %s", name.cstr());
+		ANKI_SCENE_LOGE("Variable type mismatch: {}", name);
 		found = false;
 	}
 
@@ -96,7 +96,7 @@ void ScriptVariables::rebuildVarsFromLua(ScriptEnvironment& env)
 			}
 			else
 			{
-				ANKI_SCENE_LOGE("Script can't work with user data of type. Will ignore: %s", name.cstr());
+				ANKI_SCENE_LOGE("Script can't work with user data of type. Will ignore: {}", name);
 			}
 
 			return false;
@@ -227,7 +227,7 @@ void ScriptVariables::rebuildVarsFromLua(ScriptEnvironment& env)
 
 void ScriptVariables::flushDirtyVarsToLua(ScriptEnvironment& env)
 {
-	if(m_dirty.getSetBitCount() == 0)
+	if(m_dirty.countSetBits() == 0)
 	{
 		return;
 	}
@@ -438,7 +438,7 @@ Error ScriptVariables::serialize(SceneSerializer& serializer, ScriptEnvironment&
 		ANKI_SERIALIZE(varName, 1);
 		if(varName != m_names[i])
 		{
-			ANKI_SCENE_LOGE("Script var name doesn't match the serialized one: %s", varName.cstr());
+			ANKI_SCENE_LOGE("Script var name doesn't match the serialized one: {}", varName);
 			return Error::kUserData;
 		}
 
@@ -447,7 +447,7 @@ Error ScriptVariables::serialize(SceneSerializer& serializer, ScriptEnvironment&
 		ANKI_SERIALIZE(type, 1);
 		if(type != m_types[i])
 		{
-			ANKI_SCENE_LOGE("Script var type doesn't match the serialized one: %s", varName.cstr());
+			ANKI_SCENE_LOGE("Script var type doesn't match the serialized one: {}", varName);
 			return Error::kUserData;
 		}
 

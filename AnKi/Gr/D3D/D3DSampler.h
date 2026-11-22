@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup directx
-/// @{
-
-/// Vulkan implementation of Sampler.
+// D3D implementation of Sampler.
 class SamplerImpl final : public Sampler
 {
 public:
@@ -28,6 +25,5 @@ public:
 
 	Error init(const SamplerInitInfo& init);
 };
-/// @}
 
 } // end namespace anki

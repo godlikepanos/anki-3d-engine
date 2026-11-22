@@ -33,7 +33,7 @@ static void wrapModules(lua_State* l)
 
 static int luaPanic(lua_State* l)
 {
-	ANKI_SCRIPT_LOGF("Lua panic attack: %s", lua_tostring(l, -1));
+	ANKI_SCRIPT_LOGF("Lua panic attack: {}", lua_tostring(l, -1));
 	return 0;
 }
 
@@ -112,7 +112,7 @@ Error LuaBinder::evalString(lua_State* state, const CString& str)
 	int e = luaL_dostring(state, &str[0]);
 	if(e)
 	{
-		ANKI_SCRIPT_LOGE("%s", lua_tostring(state, -1));
+		ANKI_SCRIPT_LOGE("{}", lua_tostring(state, -1));
 		lua_pop(state, 1);
 		err = Error::kUserData;
 	}
@@ -465,7 +465,7 @@ void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback
 			}
 			else
 			{
-				ANKI_SCRIPT_LOGW("Can't serialize variable %s. No callback provided", keyString.cstr());
+				ANKI_SCRIPT_LOGW("Can't serialize variable {}. No callback provided", keyString);
 			}
 
 			break;

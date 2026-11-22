@@ -15,14 +15,15 @@ namespace anki {
 
 using StdMemoryOrderEnumUnderlyingType = std::underlying_type_t<std::memory_order>;
 
+// What the op guarantees about the thread's other memory. The atomic itself is always atomic
 enum class AtomicMemoryOrder : StdMemoryOrderEnumUnderlyingType
 {
-	kRelaxed = StdMemoryOrderEnumUnderlyingType(std::memory_order_relaxed),
-	kConsume = StdMemoryOrderEnumUnderlyingType(std::memory_order_consume),
-	kAcquire = StdMemoryOrderEnumUnderlyingType(std::memory_order_acquire),
-	kRelease = StdMemoryOrderEnumUnderlyingType(std::memory_order_release),
-	kAcqRel = StdMemoryOrderEnumUnderlyingType(std::memory_order_acq_rel),
-	kSeqCst = StdMemoryOrderEnumUnderlyingType(std::memory_order_seq_cst)
+	kRelaxed = StdMemoryOrderEnumUnderlyingType(std::memory_order_relaxed), // No ordering. For counters nothing else depends on
+	kConsume = StdMemoryOrderEnumUnderlyingType(std::memory_order_consume), // Weaker kAcquire, compilers treat it as kAcquire. Don't use
+	kAcquire = StdMemoryOrderEnumUnderlyingType(std::memory_order_acquire), // Loads. Nothing after this load moves before it
+	kRelease = StdMemoryOrderEnumUnderlyingType(std::memory_order_release), // Stores. Nothing before this store moves after it
+	kAcqRel = StdMemoryOrderEnumUnderlyingType(std::memory_order_acq_rel), // Read-modify-write. Both of the above, e.g. a refcount decrement
+	kSeqCst = StdMemoryOrderEnumUnderlyingType(std::memory_order_seq_cst) // kAcqRel plus a global order across different atomics. Rarely needed
 };
 
 /// Atomic template. At the moment it doesn't work well with pointers.

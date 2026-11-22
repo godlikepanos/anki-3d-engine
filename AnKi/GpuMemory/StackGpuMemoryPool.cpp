@@ -71,7 +71,7 @@ public:
 		Chunk* chunk = newInstance<Chunk>(DefaultMemoryPool::getSingleton());
 
 		String name;
-		name.sprintf("%s (chunk %u)", m_bufferName.cstr(), m_chunkCount);
+		name.format("{} (chunk {})", m_bufferName, m_chunkCount);
 
 		BufferInitInfo buffInit(name);
 		buffInit.m_size = size;

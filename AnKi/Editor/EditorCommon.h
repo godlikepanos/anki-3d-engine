@@ -11,6 +11,12 @@
 
 namespace anki {
 
+#define ANKI_EDITOR_LOGI(...) ANKI_LOG("EDTR", kNormal, __VA_ARGS__)
+#define ANKI_EDITOR_LOGE(...) ANKI_LOG("EDTR", kError, __VA_ARGS__)
+#define ANKI_EDITOR_LOGW(...) ANKI_LOG("EDTR", kWarning, __VA_ARGS__)
+#define ANKI_EDITOR_LOGF(...) ANKI_LOG("EDTR", kFatal, __VA_ARGS__)
+#define ANKI_EDITOR_LOGV(...) ANKI_LOG("EDTR", kVerbose, __VA_ARGS__)
+
 // The base class of all editor UI related classes
 class EditorUiBase
 {
@@ -24,6 +30,7 @@ protected:
 	static constexpr const Char* kScriptAssetDragDropPayload = "AnKiScriptRsrcFilename";
 	static constexpr const Char* kParticleEmitterAssetDragDropPayload = "AnKiPartEmitterRsrcFilename";
 	static constexpr const Char* kAnimationAssetDragDropPayload = "AnKiAnimRsrcFilename";
+	static constexpr const Char* kSkeletonAssetDragDropPayload = "AnKiSkelRsrcFilename";
 
 	static constexpr Array<const Char*, U32(SceneComponentType::kCount)> kSceneComponentIcons = {
 #define ANKI_DEFINE_SCENE_COMPONENT(name, weight, sceneNodeCanHaveMany, icon, serializable, canBeDeleted) ICON_MDI_##icon,
@@ -31,6 +38,7 @@ protected:
 	};
 
 	static constexpr const Char* kScriptComponentTemplateScript = R"(-- Add your global vars here. Eg: speed = Vec3.new(0, 0, 0)
+-- Globals that start with _ won't be exposed and will stay internal
 
 -- Component main update
 --- @param info SceneComponentUpdateInfo
@@ -39,15 +47,35 @@ function update(info)
 end
 
 --[[
---- @param node SceneNode
-function onTriggerEnter(node)
+--- @param selfNode SceneNode The node of this script. It can be the trigger or the node that entered it
+--- @param otherNode SceneNode
+function onTriggerEnter(selfNode, otherNode)
+    -- Your code here
+end
+]]
+
+--[[
+--- @param selfNode SceneNode The node of this script. It can be the trigger or the node that exited it
+--- @param otherNode SceneNode
+function onTriggerExit(selfNode, otherNode)
     -- Your code here
 end
 ]]
 
 --[[
 --- @param node SceneNode
-function onTriggerExit(node)
+--- @param trackIndex integer
+--- @param animId integer
+function onAnimationStarted(node, trackIndex, animId)
+    -- Your code here
+end
+]]
+
+--[[
+--- @param node SceneNode
+--- @param trackIndex integer
+--- @param animId integer
+function onAnimationEnded(node, trackIndex, animId)
     -- Your code here
 end
 ]]

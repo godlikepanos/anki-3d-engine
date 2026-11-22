@@ -12,10 +12,11 @@ namespace anki {
 // A sandboxed LUA environment.
 class ScriptEnvironment
 {
+	friend class ScriptManager;
+
 public:
 	ANKI_NON_COPYABLE(ScriptEnvironment)
-
-	ScriptEnvironment() = default;
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 	// Expose a variable to the scripting engine.
 	template<typename T>
@@ -45,8 +46,36 @@ public:
 		return *m_thread.getLuaState();
 	}
 
+	U32 getUuid() const
+	{
+		return m_uuid;
+	}
+
+	I32 retain() const
+	{
+		return m_refcount.fetchAdd(1) + 1;
+	}
+
+	void release()
+	{
+		if(m_refcount.fetchSub(1) == 1)
+		{
+			deleteInstance(ScriptMemoryPool::getSingleton(), this);
+		}
+	}
+
 private:
 	LuaBinder m_thread;
+	U32 m_uuid;
+	mutable Atomic<I32> m_refcount = {0};
+
+	ScriptEnvironment(U32 uuid)
+		: m_uuid(uuid)
+	{
+		ANKI_ASSERT(m_uuid > 0);
+	}
+
+	~ScriptEnvironment() = default;
 };
 
 } // end namespace anki

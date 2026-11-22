@@ -144,7 +144,7 @@ void main()
 	ShaderCompilerString dis;
 	ShaderDumpOptions options;
 	dumpShaderBinary(options, *binary, dis);
-	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
+	ANKI_TEST_LOGI("Binary disassembly:\n{}\n", dis);
 #endif
 }
 
@@ -339,6 +339,6 @@ void main()
 	ShaderCompilerString dis;
 	ShaderDumpOptions options;
 	dumpShaderBinary(options, *binary, dis);
-	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
+	ANKI_TEST_LOGI("Binary disassembly:\n{}\n", dis);
 #endif
 }

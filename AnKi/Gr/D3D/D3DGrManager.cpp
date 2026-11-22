@@ -11,7 +11,6 @@
 #include <AnKi/Gr/D3D/D3DCommandBuffer.h>
 #include <AnKi/Gr/D3D/D3DShader.h>
 #include <AnKi/Gr/D3D/D3DShaderProgram.h>
-#include <AnKi/Gr/D3D/D3DTexture.h>
 #include <AnKi/Gr/D3D/D3DPipelineQuery.h>
 #include <AnKi/Gr/D3D/D3DSampler.h>
 #include <AnKi/Gr/RenderGraph.h>
@@ -42,27 +41,19 @@ static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGOR
 		return;
 	}
 
-	if(!Logger::isAllocated())
+	switch(severity)
 	{
-		printf("d3dDebugMessageCallback : %s", pDescription);
-		return;
-	}
-	else
-	{
-		switch(severity)
-		{
-		case D3D12_MESSAGE_SEVERITY_CORRUPTION:
-		case D3D12_MESSAGE_SEVERITY_ERROR:
-			ANKI_D3D_LOGE("%s", pDescription);
-			break;
-		case D3D12_MESSAGE_SEVERITY_WARNING:
-			ANKI_D3D_LOGW("%s", pDescription);
-			break;
-		case D3D12_MESSAGE_SEVERITY_INFO:
-		case D3D12_MESSAGE_SEVERITY_MESSAGE:
-			ANKI_D3D_LOGI("%s", pDescription);
-			break;
-		}
+	case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+	case D3D12_MESSAGE_SEVERITY_ERROR:
+		ANKI_D3D_LOGE("{}", pDescription);
+		break;
+	case D3D12_MESSAGE_SEVERITY_WARNING:
+		ANKI_D3D_LOGW("{}", pDescription);
+		break;
+	case D3D12_MESSAGE_SEVERITY_INFO:
+	case D3D12_MESSAGE_SEVERITY_MESSAGE:
+		ANKI_D3D_LOGI("{}", pDescription);
+		break;
 	}
 }
 
@@ -212,7 +203,7 @@ void GrManagerImpl::endFrameInternal()
 {
 	ANKI_TRACE_FUNCTION();
 
-	m_crntSwapchain->m_swapchain->Present((g_cvarGrVsync) ? 1 : 0, (g_cvarGrVsync) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+	m_crntSwapchain->m_swapchain->Present((g_cvarGrVsync) ? 1 : 0, (m_crntSwapchain->m_allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
 	MicroFencePtr presentFence = FenceFactory::getSingleton().newFence("Present");
 	presentFence->gpuSignal(GpuQueueType::kGeneral); // Only general can present
@@ -255,6 +246,8 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		impl.postSubmitWork(fence.get());
 	}
 
+	LockGuard lock(m_globalMtx);
+
 	// Wait for fences
 	for(Fence* fence : waitFences)
 	{
@@ -274,8 +267,6 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		fenceImpl->m_fence = fence;
 		signalFence->reset(fenceImpl);
 	}
-
-	LockGuard lock(m_globalMtx);
 
 	// New submit so we need to finalize all groups. Following deletes will create a new group with the newely created fence
 	for(CleanupGroup& group : m_cleanupGroups)
@@ -334,21 +325,28 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	if(g_cvarGrValidation || g_cvarGrGpuValidation)
 	{
 		ComPtr<ID3D12Debug> debugInterface;
-		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
+		const HRESULT err = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
 
-		debugInterface->EnableDebugLayer();
-
-		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-
-		if(g_cvarGrGpuValidation)
+		if(SUCCEEDED(err))
 		{
-			ComPtr<ID3D12Debug1> debugInterface1;
-			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
+			debugInterface->EnableDebugLayer();
 
-			debugInterface1->SetEnableGPUBasedValidation(true);
+			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+
+			if(g_cvarGrGpuValidation)
+			{
+				ComPtr<ID3D12Debug1> debugInterface1;
+				ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
+
+				debugInterface1->SetEnableGPUBasedValidation(true);
+			}
+
+			ANKI_D3D_LOGI("Validation is enabled (GPU validation {})", (g_cvarGrGpuValidation) ? "as well" : "no");
 		}
-
-		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_cvarGrGpuValidation) ? "as well" : "no");
+		else
+		{
+			ANKI_D3D_LOGE("Couldn't enable validation");
+		}
 	}
 
 	ComPtr<IDXGIFactory2> factory2;
@@ -380,7 +378,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_D3D_LOGI("Physical devices:");
 	for(U32 i = 0; i < adapters.getSize(); ++i)
 	{
-		ANKI_D3D_LOGI((i == chosenPhysDevIdx) ? "\t(Selected) %s" : "\t%s", ws2s(&adapters[i].m_descr.Description[0]).c_str());
+		ANKI_D3D_LOGI("\t{}{}", (i == chosenPhysDevIdx) ? "(Selected) " : "", ws2s(&adapters[i].m_descr.Description[0]));
 	}
 
 	// Find vendor
@@ -405,7 +403,21 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 	}
-	ANKI_D3D_LOGI("Vendor identified as %s", &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
+	ANKI_D3D_LOGI("Vendor identified as {}", kGPUVendorStrings[m_capabilities.m_gpuVendor]);
+
+	// DRED needs to be configured before the device is created
+	if(g_cvarGrDred)
+	{
+		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
+		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
+
+		// Turn on AutoBreadcrumbs and Page Fault reporting
+		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+
+		ANKI_D3D_LOGI("DRED is enabled");
+		m_canInvokeDred = true;
+	}
 
 	// Create device
 	ComPtr<ID3D12Device> dev;
@@ -441,19 +453,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	if(g_cvarGrDred)
-	{
-		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
-		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
-
-		// Turn on AutoBreadcrumbs and Page Fault reporting
-		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-
-		ANKI_D3D_LOGI("DRED is enabled");
-		m_canInvokeDred = true;
-	}
-
 	// Create queues
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -478,6 +477,50 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture)));
 		D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21;
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options3, sizeof(options3)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS6 options6;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &options6, sizeof(options6)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12)));
+		D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {.HighestShaderModel = D3D_SHADER_MODEL_6_7};
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)));
+
+		// Required features
+		if(shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_7)
+		{
+			ANKI_D3D_LOGE("Shader model 6.7 is required");
+			return Error::kFunctionFailed;
+		}
+
+		if(!options12.EnhancedBarriersSupported)
+		{
+			ANKI_D3D_LOGE("Enhanced barriers are required");
+			return Error::kFunctionFailed;
+		}
+
+		// Optional features
+		if(g_cvarGrVrs && options6.VariableShadingRateTier < D3D12_VARIABLE_SHADING_RATE_TIER_2)
+		{
+			ANKI_D3D_LOGW("VRS can't be enabled. Not supported");
+		}
+		else if(g_cvarGrVrs)
+		{
+			m_capabilities.m_vrs = true;
+		}
+
+		if(g_cvarGrMeshShaders && options7.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+		{
+			ANKI_D3D_LOGW("Mesh shaders can't be enabled. Not supported");
+		}
+		else if(g_cvarGrMeshShaders)
+		{
+			m_capabilities.m_meshShaders = true;
+		}
+
+		m_capabilities.m_barycentrics = options3.BarycentricsSupported;
 
 		if(g_cvarGrWorkGraphcs && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
@@ -495,12 +538,12 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			ANKI_D3D_LOGW("ReBAR not supported");
 		}
 
-		if(g_cvarGrRayTracing && options5.RaytracingTier != D3D12_RAYTRACING_TIER_1_1)
+		if(g_cvarGrRayTracing && options5.RaytracingTier < D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGW("Raytracing can't be enabled. Not supported");
 			m_capabilities.m_rayTracing = false;
 		}
-		else if(g_cvarGrRayTracing && options5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
+		else if(g_cvarGrRayTracing && options5.RaytracingTier >= D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGV("Raytracing supported");
 			m_capabilities.m_rayTracing = true;
@@ -518,16 +561,12 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
 		m_capabilities.m_fastConstantsSize = kMaxFastConstantsSize;
 		m_capabilities.m_computeSharedMemorySize = D3D12_CS_TGSM_REGISTER_COUNT * sizeof(F32);
-		m_capabilities.m_sbtRecordAlignment = 32; // ?
 		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
 		m_capabilities.m_discreteGpu = !architecture.UMA;
 		m_capabilities.m_majorApiVersion = 12;
-		m_capabilities.m_vrs = g_cvarGrVrs;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;
-		m_capabilities.m_meshShaders = g_cvarGrMeshShaders;
 		m_capabilities.m_pipelineQuery = true;
-		m_capabilities.m_barycentrics = true;
 		m_capabilities.m_shaderGroupHandleSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
 
 		// It should be D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT but anki uses a single SBT for raygen, miss and hit groups so the non raygen
@@ -626,39 +665,67 @@ void GrManagerImpl::destroy()
 
 void GrManagerImpl::invokeDred() const
 {
-	Bool error = false;
-
-	do
+	if(!m_canInvokeDred)
 	{
-		if(m_canInvokeDred)
+		return;
+	}
+
+	ComPtr<ID3D12DeviceRemovedExtendedData> dred;
+	if(!SUCCEEDED(m_device->QueryInterface(IID_PPV_ARGS(&dred))))
+	{
+		ANKI_D3D_LOGE("DRED: Failed to get the interface");
+		return;
+	}
+
+	// Print the command lists that didn't finish
+	D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs;
+	if(SUCCEEDED(dred->GetAutoBreadcrumbsOutput(&breadcrumbs)))
+	{
+		for(const D3D12_AUTO_BREADCRUMB_NODE* node = breadcrumbs.pHeadAutoBreadcrumbNode; node; node = node->pNext)
 		{
-			ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
-			if(!SUCCEEDED(m_device->QueryInterface(IID_PPV_ARGS(&pDred))))
+			const U32 completedOpCount = (node->pLastBreadcrumbValue) ? *node->pLastBreadcrumbValue : 0;
+			if(completedOpCount >= node->BreadcrumbCount)
 			{
-				error = true;
-				break;
+				continue;
 			}
 
-			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
-			if(!SUCCEEDED(pDred->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)))
-			{
-				error = true;
-				break;
-			}
-
-			D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
-			if(!SUCCEEDED(pDred->GetPageFaultAllocationOutput(&dredPageFaultOutput)))
-			{
-				error = true;
-				break;
-			}
+			const std::string cmdListName = (node->pCommandListDebugNameW) ? ws2s(node->pCommandListDebugNameW) : "?";
+			const std::string queueName = (node->pCommandQueueDebugNameW) ? ws2s(node->pCommandQueueDebugNameW) : "?";
+			ANKI_D3D_LOGE("DRED: Command list \"{}\" on queue \"{}\" didn't finish. Completed {} of {} ops. Faulting op: {}", cmdListName, queueName,
+						  completedOpCount, node->BreadcrumbCount, U32(node->pCommandHistory[completedOpCount]));
 		}
-	} while(false);
+	}
+	else
+	{
+		ANKI_D3D_LOGE("DRED: Failed to get the breadcrumbs");
+	}
+
+	// Print the page fault
+	D3D12_DRED_PAGE_FAULT_OUTPUT pageFault;
+	if(SUCCEEDED(dred->GetPageFaultAllocationOutput(&pageFault)))
+	{
+		ANKI_D3D_LOGE("DRED: Page fault GPU VA: 0x{:x}", pageFault.PageFaultVA);
+
+		for(const D3D12_DRED_ALLOCATION_NODE* node = pageFault.pHeadExistingAllocationNode; node; node = node->pNext)
+		{
+			ANKI_D3D_LOGE("DRED: \tExisting allocation at the VA: {}", (node->ObjectNameW) ? ws2s(node->ObjectNameW) : "?");
+		}
+
+		for(const D3D12_DRED_ALLOCATION_NODE* node = pageFault.pHeadRecentFreedAllocationNode; node; node = node->pNext)
+		{
+			ANKI_D3D_LOGE("DRED: \tRecently freed allocation at the VA: {}", (node->ObjectNameW) ? ws2s(node->ObjectNameW) : "?");
+		}
+	}
+	else
+	{
+		ANKI_D3D_LOGE("DRED: Failed to get the page fault info");
+	}
 }
 
 void GrManagerImpl::releaseObjectDeleteLoop(GrObject* object)
 {
 	ANKI_ASSERT(object);
+	ANKI_ASSERT(object->getType() != GrObjectType::kRenderGraph && "RenderGraph should bypass deferred deletion");
 	CleanupGroup* group;
 	if(m_activeCleanupGroup == kMaxU32)
 	{

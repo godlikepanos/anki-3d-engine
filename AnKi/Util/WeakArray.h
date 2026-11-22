@@ -275,7 +275,7 @@ public:
 
 	ConstWeakArray(T* begin, T* end)
 		: m_data(begin)
-		, m_size(end - begin)
+		, m_size(Size(end - begin))
 	{
 		ANKI_ASSERT(begin && end);
 		ANKI_ASSERT(end >= begin);

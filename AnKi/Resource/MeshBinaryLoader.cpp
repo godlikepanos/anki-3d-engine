@@ -100,51 +100,51 @@ Error MeshBinaryLoader::checkFormat(VertexStreamId stream, Bool isOptional, Bool
 
 	if(attrib.m_format != kMeshRelatedVertexStreamFormats[stream])
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u has unsupported format %s", vertexAttribIdx, getFormatInfo(attrib.m_format).m_name);
+		ANKI_RESOURCE_LOGE("Vertex attribute {} has unsupported format {}", vertexAttribIdx, getFormatInfo(attrib.m_format).m_name);
 		return Error::kUserData;
 	}
 
 	if(attrib.m_bufferIndex != vertexBufferIdx)
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should belong to the %u vertex buffer", vertexAttribIdx, vertexBufferIdx);
+		ANKI_RESOURCE_LOGE("Vertex attribute {} should belong to the {} vertex buffer", vertexAttribIdx, vertexBufferIdx);
 		return Error::kUserData;
 	}
 
 	if(attrib.m_relativeOffset != 0)
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should have relative vertex offset equal to 0", vertexAttribIdx);
+		ANKI_RESOURCE_LOGE("Vertex attribute {} should have relative vertex offset equal to 0", vertexAttribIdx);
 		return Error::kUserData;
 	}
 
 	if(!canBeTransformed && Vec4(attrib.m_scale) != Vec4(1.0f))
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 1.0 scale", vertexAttribIdx);
+		ANKI_RESOURCE_LOGE("Vertex attribute {} should have 1.0 scale", vertexAttribIdx);
 		return Error::kUserData;
 	}
 
 	if(canBeTransformed && Vec4(attrib.m_scale) <= kEpsilonf)
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should have positive scale", vertexAttribIdx);
+		ANKI_RESOURCE_LOGE("Vertex attribute {} should have positive scale", vertexAttribIdx);
 		return Error::kUserData;
 	}
 
 	if(canBeTransformed
 	   && (attrib.m_scale[0] != attrib.m_scale[1] || attrib.m_scale[0] != attrib.m_scale[2] || attrib.m_scale[0] != attrib.m_scale[3]))
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should have uniform scale", vertexAttribIdx);
+		ANKI_RESOURCE_LOGE("Vertex attribute {} should have uniform scale", vertexAttribIdx);
 		return Error::kUserData;
 	}
 
 	if(!canBeTransformed && Vec4(attrib.m_translation) != Vec4(0.0f))
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 0.0 translation", vertexAttribIdx);
+		ANKI_RESOURCE_LOGE("Vertex attribute {} should have 0.0 translation", vertexAttribIdx);
 		return Error::kUserData;
 	}
 
 	const U32 vertexBufferStride = getFormatInfo(attrib.m_format).m_texelSize;
 	if(m_header.m_vertexBuffers[vertexBufferIdx].m_vertexStride != vertexBufferStride)
 	{
-		ANKI_RESOURCE_LOGE("Vertex buffer %u doesn't have the expected stride of %u", vertexBufferIdx, vertexBufferStride);
+		ANKI_RESOURCE_LOGE("Vertex buffer {} doesn't have the expected stride of {}", vertexBufferIdx, vertexBufferStride);
 		return Error::kUserData;
 	}
 

@@ -28,7 +28,7 @@ private:
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
 		};
 
-		ImageResourcePtr m_image;
+		StreamingImageResourcePtr m_image;
 		String m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::kCount;
 		Bool m_isTexture = false;

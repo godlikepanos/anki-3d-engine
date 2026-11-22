@@ -385,6 +385,127 @@ namespace anki {]]></head>
 						<arg>F32</arg>
 					</args>
 				</method>
+				<method name="operator*">
+					<args>
+						<arg>const Mat3&amp;</arg>
+					</args>
+					<return>Mat3</return>
+				</method>
+				<method name="operator*">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="getRow">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="setRow">
+					<args>
+						<arg>U32</arg>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="getColumn">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="setColumn">
+					<args>
+						<arg>U32</arg>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="getDiagonal">
+					<return>Vec3</return>
+				</method>
+				<method name="setDiagonal">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="getXAxis">
+					<return>Vec3</return>
+				</method>
+				<method name="getYAxis">
+					<return>Vec3</return>
+				</method>
+				<method name="getZAxis">
+					<return>Vec3</return>
+				</method>
+				<method name="setXAxis">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="setYAxis">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="setZAxis">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="setRotationX">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setRotationY">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setRotationZ">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="rotateXAxis">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="rotateYAxis">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="rotateZAxis">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="reorthogonalize">
+					<return>Mat3</return>
+				</method>
+				<method name="transpose">
+					<return>Mat3</return>
+				</method>
+				<method name="invert">
+					<return>Mat3</return>
+				</method>
+				<method name="getDet">
+					<return>F32</return>
+				</method>
+				<method name="setIdentity">
+				</method>
+				<method name="getIdentity" static="1">
+					<return>Mat3</return>
+				</method>
+				<method name="rotationFromDirection" static="1">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Mat3</return>
+				</method>
 			</methods>
 		</class>
 		<class name="Mat3x4">
@@ -479,6 +600,12 @@ namespace anki {]]></head>
 					<args>
 						<arg>const Vec3&amp;</arg>
 					</args>
+				</method>
+				<method name="transform">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
 				</method>
 			</methods>
 		</class>

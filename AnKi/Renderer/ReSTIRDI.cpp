@@ -10,6 +10,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki {
 
@@ -33,6 +34,8 @@ Error ReSTIRDI::init()
 	ANKI_CHECK(m_groundTruthGrProg.load("ShaderBinaries/ReSTIRDI.ankiprogbin", {}, "GroundTruth"));
 	ANKI_CHECK(m_phase1GrProg.load("ShaderBinaries/ReSTIRDI.ankiprogbin", {}, "Phase1"));
 	ANKI_CHECK(m_phase2GrProg.load("ShaderBinaries/ReSTIRDI.ankiprogbin", {}, "Phase2"));
+
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/STBN_Vec2_2Dx1D_128x128x64.png", m_blueNoiseImg));
 
 	return Error::kNone;
 }
@@ -88,9 +91,10 @@ void ReSTIRDI::populateRenderGraph()
 			rgraphCtx.bindSrv(5, 0, getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(6, 0, getGBuffer().getColorRt(2));
 			rgraphCtx.bindSrv(7, 0, getGBuffer().getDepthRt());
+			cmdb.bindSrv(8, 0, TextureView(&m_blueNoiseImg->getTexture()));
 
-			rgraphCtx.bindSrv(8, 0, getMotionVectors().getAdjustedMotionVectorsRt());
-			rgraphCtx.bindSrv(9, 0, historyReservoirHandle);
+			rgraphCtx.bindSrv(9, 0, getMotionVectors().getAdjustedMotionVectorsRt());
+			rgraphCtx.bindSrv(10, 0, historyReservoirHandle);
 			rgraphCtx.bindUav(0, 0, phase1ReservoirsHandle);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y);
@@ -132,8 +136,9 @@ void ReSTIRDI::populateRenderGraph()
 			rgraphCtx.bindSrv(5, 0, getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(6, 0, getGBuffer().getColorRt(2));
 			rgraphCtx.bindSrv(7, 0, getGBuffer().getDepthRt());
+			cmdb.bindSrv(8, 0, TextureView(&m_blueNoiseImg->getTexture()));
 
-			rgraphCtx.bindSrv(8, 0, phase1ReservoirsHandle);
+			rgraphCtx.bindSrv(9, 0, phase1ReservoirsHandle);
 			rgraphCtx.bindUav(0, 0, finalReservoirHandle);
 			rgraphCtx.bindUav(1, 0, m_runCtx.m_rt);
 

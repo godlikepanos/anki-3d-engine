@@ -49,7 +49,7 @@ private:
 	Atomic<U32> m_logItemsTimestamp = {1};
 	U32 m_logItemsTimestampConsumed = 0;
 
-	ScriptEnvironment m_scriptEnv;
+	ScriptEnvironmentPtr m_scriptEnv;
 
 	Bool m_enabled = false;
 

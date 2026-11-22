@@ -24,7 +24,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
 			if(set >= kMaxRegisterSpaces && set != ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET)
 			{
-				errorStr.sprintf("Exceeded set for: %s", r.name.c_str());
+				errorStr.format("Exceeded set for: {}", r.name);
 				return Error::kUserData;
 			}
 
@@ -34,13 +34,13 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			{
 				if(typeInfo.array.size() != 1)
 				{
-					errorStr.sprintf("Only 1D arrays are supported: %s", r.name.c_str());
+					errorStr.format("Only 1D arrays are supported: {}", r.name);
 					return Error::kUserData;
 				}
 
 				if(set == ANKI_VK_BINDLESS_TEXTURES_DESCRIPTOR_SET && typeInfo.array[0] != 0)
 				{
-					errorStr.sprintf("Only the bindless descriptor set can be an unbound array: %s", r.name.c_str());
+					errorStr.format("Only the bindless descriptor set can be an unbound array: {}", r.name);
 					return Error::kUserData;
 				}
 
@@ -68,12 +68,12 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 
 				if(arraySize != 0)
 				{
-					errorStr.sprintf("Unexpected unbound array for bindless: %s", r.name.c_str());
+					errorStr.format("Unexpected unbound array for bindless: {}", r.name);
 				}
 
 				if(type != DescriptorType::kSrvTexture)
 				{
-					errorStr.sprintf("Unexpected bindless binding: %s", r.name.c_str());
+					errorStr.format("Unexpected bindless binding: {}", r.name);
 					return Error::kUserData;
 				}
 
@@ -94,7 +94,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 				const HlslResourceType hlslResourceType = descriptorTypeToHlslResourceType(type);
 				if(binding < kDxcVkBindingShifts[set][hlslResourceType] || binding >= kDxcVkBindingShifts[set][hlslResourceType] + 1000)
 				{
-					errorStr.sprintf("Unexpected binding: %s", r.name.c_str());
+					errorStr.format("Unexpected binding: {}", r.name);
 					return Error::kUserData;
 				}
 
@@ -170,7 +170,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 		const U32 blockSize = U32(spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id)));
 		if(blockSize == 0 || (blockSize % 16) != 0 || blockSize > kMaxFastConstantsSize)
 		{
-			errorStr.sprintf("Incorrect push constants size");
+			errorStr = "Incorrect push constants size";
 			return Error::kUserData;
 		}
 
@@ -218,7 +218,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			}
 			else
 			{
-				errorStr.sprintf("Unexpected attribute name: %s", r.name.c_str());
+				errorStr.format("Unexpected attribute name: {}", r.name);
 				return Error::kUserData;
 			}
 #undef ANKI_ATTRIB_NAME
@@ -229,7 +229,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
 			if(location > kMaxU8)
 			{
-				errorStr.sprintf("Too high location value for attribute: %s", r.name.c_str());
+				errorStr.format("Too high location value for attribute: {}", r.name);
 				return Error::kUserData;
 			}
 

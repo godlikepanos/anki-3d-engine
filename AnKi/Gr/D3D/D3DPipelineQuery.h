@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup d3d
-/// @{
-
-/// Pipeline query.
+// Pipeline query.
 class PipelineQueryImpl final : public PipelineQuery
 {
 public:
@@ -26,9 +23,8 @@ public:
 
 	~PipelineQueryImpl();
 
-	/// Create the query.
+	// Create the query.
 	Error init(PipelineQueryType type);
 };
-/// @}
 
 } // end namespace anki

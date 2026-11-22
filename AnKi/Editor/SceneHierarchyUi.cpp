@@ -87,7 +87,7 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 				const ResourceString diskFilepath = ResourceFilesystem::getSingleton().getDiskFilepath(activeScene.getFilepath());
 				if(SceneGraph::getSingleton().saveScene(diskFilepath, activeScene))
 				{
-					ANKI_LOGE("Failed to save scene");
+					ANKI_EDITOR_LOGE("Failed to save scene");
 				}
 			}
 
@@ -106,7 +106,7 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 					const ResourceString diskFilepath = ResourceFilesystem::getSingleton().getDiskFilepath(scene.getFilepath());
 					if(SceneGraph::getSingleton().saveScene(diskFilepath, scene))
 					{
-						ANKI_LOGE("Failed to save scene");
+						ANKI_EDITOR_LOGE("Failed to save scene");
 					}
 					else
 					{
@@ -115,12 +115,12 @@ void SceneHierarchyUi::drawWindow(Vec2 initialPos, Vec2 initialSize, ImGuiWindow
 				}
 				else
 				{
-					ANKI_LOGV("Skip saving scene: %s", scene.getName().cstr());
+					ANKI_EDITOR_LOGV("Skip saving scene: {}", scene.getName());
 				}
 				return FunctorContinue::kContinue;
 			});
 
-			ANKI_LOGI("%u scenes saved", scenesSaved);
+			ANKI_EDITOR_LOGI("{} scenes saved", scenesSaved);
 		}
 		ImGui::SetItemTooltip("Save all scenes");
 

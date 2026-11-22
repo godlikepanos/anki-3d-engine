@@ -45,7 +45,7 @@ Error removeDirectory(const CString& dirname)
 	I result = SHFileOperationA(&fileOperation);
 	if(result != 0)
 	{
-		ANKI_UTIL_LOGE("Could not delete directory %s", &dirname[0]);
+		ANKI_UTIL_LOGE("Could not delete directory {}", dirname);
 		err = Error::kFunctionFailed;
 	}
 
@@ -57,7 +57,7 @@ Error createDirectory(const CString& dir)
 	Error err = Error::kNone;
 	if(CreateDirectoryA(dir.cstr(), NULL) == 0)
 	{
-		ANKI_UTIL_LOGE("Failed to create directory %s", dir.cstr());
+		ANKI_UTIL_LOGE("Failed to create directory {}", dir);
 		err = Error::kFunctionFailed;
 	}
 
@@ -135,7 +135,11 @@ static Error walkDirectoryTreeRecursive(CString dir,
 	{
 		CString filename(find.cFileName);
 
-		if(filename != "." && filename != "..")
+		// Don't follow symlinks/junctions, same as FTW_PHYS on Linux. Other reparse points (eg OneDrive files) are fine
+		const Bool isLink = (find.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+							&& (find.dwReserved0 == IO_REPARSE_TAG_SYMLINK || find.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT);
+
+		if(filename != "." && filename != ".." && !isLink)
 		{
 			Bool isDir = find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 

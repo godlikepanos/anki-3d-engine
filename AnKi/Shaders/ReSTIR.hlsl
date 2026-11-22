@@ -5,33 +5,6 @@
 
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
-// ===========================================================================
-// Random                                                                    =
-// ===========================================================================
-
-struct RandomGenerator
-{
-	U32 m_state;
-};
-
-RandomGenerator createRandomGenerator(UVec2 pixelCoords, U32 frame)
-{
-	RandomGenerator r;
-	r.m_state = hashPcg(pixelCoords.x + hashPcg(pixelCoords.y + hashPcg(frame)));
-	return r;
-}
-
-// Returns a value in [0, 1). Uses 24 bits so the result can never round up to exactly 1.0
-F32 rand(inout RandomGenerator r)
-{
-	r.m_state = hashPcg(r.m_state);
-	return F32(r.m_state >> 8u) / 16777216.0;
-}
-
-// ===========================================================================
-// Reservoir                                                                 =
-// ===========================================================================
-
 template<typename T>
 struct Reservoir
 {
@@ -42,8 +15,8 @@ struct Reservoir
 };
 
 // Algorithm 2, lines 5 to 9
-template<typename T>
-Bool updateReservoir(inout Reservoir<T> r, T sample, F32 risWeight, inout RandomGenerator randg)
+template<typename T, typename TRandGenerator>
+Bool updateReservoir(inout Reservoir<T> r, T sample, F32 risWeight, inout TRandGenerator randg)
 {
 	r.m_weightSum += risWeight;
 	r.m_sampleCount += 1.0;
@@ -77,8 +50,8 @@ void finalizeReservoirBiased(inout Reservoir<T> r, F32 pHatq)
 // pHatqr1: It's the p_hat of the 1st reservoir's sample
 // pHatqr2: It's the p_hat of the 2nd reservoir's sample
 // pHatqs: This is the pHat of the selected candidate
-template<typename T>
-Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F32 pHatqr2, out F32 pHatqs, inout RandomGenerator randg)
+template<typename T, typename TRandGenerator>
+Reservoir<T> combineReservoirs(Reservoir<T> r1, Reservoir<T> r2, F32 pHatqr1, F32 pHatqr2, out F32 pHatqs, inout TRandGenerator randg)
 {
 	Reservoir<T> s = (Reservoir<T>)0;
 	pHatqs = 0.0; // The p^q(s.y)

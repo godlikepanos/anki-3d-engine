@@ -399,6 +399,7 @@ public:
 		}
 #else
 		ANKI_ASSERT(width == 1.0f && "DX only accepts 1.0 line width");
+		(void)width;
 #endif
 	}
 

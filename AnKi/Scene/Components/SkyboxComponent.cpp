@@ -16,7 +16,7 @@ SkyboxComponent& SkyboxComponent::setSkyImageFilename(CString filename)
 	ImageResourcePtr img;
 	if(ResourceManager::getSingleton().loadResource(filename, img))
 	{
-		ANKI_SCENE_LOGE("Setting skybox image failed: %s", filename.cstr());
+		ANKI_SCENE_LOGE("Setting skybox image failed: {}", filename);
 	}
 	else
 	{

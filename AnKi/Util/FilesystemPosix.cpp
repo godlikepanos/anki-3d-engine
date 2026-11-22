@@ -3,11 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// Some defines for extra posix features
-#define _XOPEN_SOURCE 700
-#define _LARGEFILE64_SOURCE
-#define _FILE_OFFSET_BITS 64
-
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Thread.h>
@@ -159,7 +154,7 @@ static Error removeDirectoryInternal(const CString& dirname)
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
 			String path;
-			path.sprintf("%s/%s", dirname.cstr(), entry->d_name);
+			path.format("{}/{}", dirname, entry->d_name);
 
 			if(entry->d_type == DT_DIR)
 			{
@@ -197,7 +192,7 @@ Error createDirectory(const CString& dir)
 	Error err = Error::kNone;
 	if(mkdir(dir.cstr(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		ANKI_UTIL_LOGE("%s : %s", strerror(errno), dir.cstr());
+		ANKI_UTIL_LOGE("{} : {}", strerror(errno), dir);
 		err = Error::kFunctionFailed;
 	}
 

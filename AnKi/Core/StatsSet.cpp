@@ -81,7 +81,7 @@ void StatsSet::registerCounter(StatCounter* counter)
 
 	for(U32 i = 0; i < m_statCounterArrSize; ++i)
 	{
-		ANKI_ASSERT(m_statCounterArr[i]->m_name != counter->m_name);
+		ANKI_ASSERT(CString(m_statCounterArr[i]->m_descr) != counter->m_descr);
 	}
 
 	// Try grow the array
@@ -109,7 +109,7 @@ void StatsSet::registerCounter(StatCounter* counter)
 		}
 		else
 		{
-			return strcmp(a->m_name, b->m_name) < 0;
+			return strcmp(a->m_descr, b->m_descr) < 0;
 		}
 	});
 }

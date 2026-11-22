@@ -8,7 +8,6 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Assert.h>
 #include <cstring>
-#include <cstdarg>
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #	include <android/asset_manager.h>
@@ -113,7 +112,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	m_file = fopen(filename.cstr(), openMode);
 	if(m_file == nullptr)
 	{
-		ANKI_UTIL_LOGE("Failed to open file \"%s\", open mode \"%s\"", &filename[0], openMode);
+		ANKI_UTIL_LOGE("Failed to open file \"{}\", open mode \"{}\"", filename, openMode);
 		err = Error::kFileAccess;
 	}
 	else
@@ -346,31 +345,80 @@ Error File::write(const void* buff, PtrSize size)
 	return err;
 }
 
-Error File::writeTextf(const Char* format, ...)
+Error File::writeTextfInternal(std::string_view fmt, std::format_args args)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != FileOpenFlag::kNone);
 	ANKI_ASSERT((m_flags & FileOpenFlag::kWrite) != FileOpenFlag::kNone);
 	ANKI_ASSERT((m_flags & FileOpenFlag::kBinary) == FileOpenFlag::kNone);
 
-	Error err = Error::kNone;
-	va_list args;
-	va_start(args, format);
-
 #if ANKI_OS_ANDROID
 	if(!!(m_flags & FileOpenFlag::kSpecial))
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
-		err = Error::kFileAccess;
+		return Error::kFileAccess;
 	}
-	else
 #endif
-	{
-		std::vfprintf(ANKI_CFILE, format, args);
-	}
 
-	va_end(args);
-	return err;
+	// Output iterator for std::vformat_to
+	class BatchOutputIterator
+	{
+	public:
+		using difference_type = std::ptrdiff_t;
+
+		FILE* m_file = nullptr;
+		Array<Char, 512> m_buffer;
+		U32 m_count = 0;
+		Error m_error = Error::kNone;
+
+		BatchOutputIterator& operator*()
+		{
+			return *this;
+		}
+
+		BatchOutputIterator& operator++()
+		{
+			return *this;
+		}
+
+		BatchOutputIterator& operator++(int)
+		{
+			return *this;
+		}
+
+		BatchOutputIterator& operator=(Char c)
+		{
+			if(m_count == m_buffer.getSize())
+			{
+				flush();
+			}
+
+			m_buffer[m_count++] = c;
+			return *this;
+		}
+
+		void flush()
+		{
+			if(!m_error && m_count)
+			{
+				const PtrSize writenSize = fwrite(&m_buffer[0], 1, m_count, m_file);
+				if(writenSize != m_count)
+				{
+					ANKI_UTIL_LOGE("Writing formatted text failed");
+					m_error = Error::kFileAccess;
+				}
+			}
+
+			m_count = 0;
+		}
+	};
+
+	BatchOutputIterator it;
+	it.m_file = ANKI_CFILE;
+	it = std::vformat_to(it, fmt, args);
+	it.flush();
+
+	return it.m_error;
 }
 
 Error File::writeText(CString text)

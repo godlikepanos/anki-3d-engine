@@ -84,9 +84,9 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 		} while(inputEl);
 	}
 
-	if(varsSet.getSetBitCount() != m_vars.getSize())
+	if(varsSet.countSetBits() != m_vars.getSize())
 	{
-		ANKI_RESOURCE_LOGV("Material doesn't contain default value for %u input variables", U32(m_vars.getSize() - varsSet.getSetBitCount()));
+		ANKI_RESOURCE_LOGV("Material doesn't contain default value for {} input variables", U32(m_vars.getSize() - varsSet.countSetBits()));
 
 		// Remove unreferenced variables
 		ResourceDynamicArray<MaterialVariable> newVars;
@@ -113,7 +113,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	ANKI_CHECK(shaderProgramEl.getAttributeText("name", shaderName));
 
 	ResourceString fname;
-	fname.sprintf("ShaderBinaries/%s.ankiprogbin", shaderName.cstr());
+	fname.format("ShaderBinaries/{}.ankiprogbin", shaderName);
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(fname, m_prog, async));
 
@@ -174,7 +174,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 		}
 		else
 		{
-			ANKI_RESOURCE_LOGE("Found unneeded technique in the shader: %s", t.m_name.getBegin());
+			ANKI_RESOURCE_LOGE("Found unneeded technique in the shader: {}", t.m_name.getBegin());
 			return Error::kUserData;
 		}
 	}
@@ -230,14 +230,14 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 
 			if(mutatorName == kBuiltinMutatorNames[id])
 			{
-				ANKI_RESOURCE_LOGE("Materials shouldn't list builtin mutators: %s", mutatorName.cstr());
+				ANKI_RESOURCE_LOGE("Materials shouldn't list builtin mutators: {}", mutatorName);
 				return Error::kUserData;
 			}
 		}
 
 		if(mutatorName.find("ANKI_") == 0)
 		{
-			ANKI_RESOURCE_LOGE("Mutators can't start with ANKI_: %s", mutatorName.cstr());
+			ANKI_RESOURCE_LOGE("Mutators can't start with ANKI_: {}", mutatorName);
 			return Error::kUserData;
 		}
 
@@ -249,13 +249,13 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 
 		if(!pmutation.m_mutator)
 		{
-			ANKI_RESOURCE_LOGE("Mutator not found in program %s", &mutatorName[0]);
+			ANKI_RESOURCE_LOGE("Mutator not found in program {}", mutatorName);
 			return Error::kUserData;
 		}
 
 		if(!mutatorValueExists(*pmutation.m_mutator, pmutation.m_value))
 		{
-			ANKI_RESOURCE_LOGE("Value %d is not part of the mutator %s", pmutation.m_value, mutatorName.cstr());
+			ANKI_RESOURCE_LOGE("Value {} is not part of the mutator {}", pmutation.m_value, mutatorName);
 			return Error::kUserData;
 		}
 
@@ -280,7 +280,7 @@ Error MaterialResource::findBuiltinMutators()
 	{
 		if(bonesMutator->m_values.getSize() != 2)
 		{
-			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program", bonesMutatorName.cstr());
+			ANKI_RESOURCE_LOGE("Mutator {} should have 2 values in the program", bonesMutatorName);
 			return Error::kUserData;
 		}
 
@@ -288,7 +288,7 @@ Error MaterialResource::findBuiltinMutators()
 		{
 			if(bonesMutator->m_values[i] != MutatorValue(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected", bonesMutatorName.cstr());
+				ANKI_RESOURCE_LOGE("Values of the {} mutator in the program are not the expected", bonesMutatorName);
 				return Error::kUserData;
 			}
 		}
@@ -306,7 +306,7 @@ Error MaterialResource::findBuiltinMutators()
 	{
 		if(velocityMutator->m_values.getSize() != 2)
 		{
-			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program", velocityMutatorName.cstr());
+			ANKI_RESOURCE_LOGE("Mutator {} should have 2 values in the program", velocityMutatorName);
 			return Error::kUserData;
 		}
 
@@ -314,7 +314,7 @@ Error MaterialResource::findBuiltinMutators()
 		{
 			if(velocityMutator->m_values[i] != MutatorValue(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected", velocityMutatorName.cstr());
+				ANKI_RESOURCE_LOGE("Values of the {} mutator in the program are not the expected", velocityMutatorName);
 				return Error::kUserData;
 			}
 		}
@@ -375,7 +375,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	MaterialVariable* foundVar = tryFindVariable(varName);
 	if(!foundVar)
 	{
-		ANKI_RESOURCE_LOGE("Input name is wrong, variable not found: %s", varName.cstr());
+		ANKI_RESOURCE_LOGE("Input name is wrong, variable not found: {}", varName);
 		return Error::kUserData;
 	}
 
@@ -383,7 +383,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	const U32 idx = U32(foundVar - m_vars.getBegin());
 	if(varsSet.get(idx))
 	{
-		ANKI_RESOURCE_LOGE("Input already has a value: %s", varName.cstr());
+		ANKI_RESOURCE_LOGE("Input already has a value: {}", varName);
 		return Error::kUserData;
 	}
 	varsSet.set(idx);
@@ -397,7 +397,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		ANKI_CHECK(inputEl.getAttributeText("value", value));
 
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
-		foundVar->m_U32 = foundVar->m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
+		foundVar->m_U32 = foundVar->m_image->getImageDescriptorIndex();
 	}
 	else
 	{
@@ -597,7 +597,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 	if(!progVariant)
 	{
-		ANKI_RESOURCE_LOGF("Fetched skipped mutation on program %s", getFilename().cstr());
+		ANKI_RESOURCE_LOGF("Fetched skipped mutation on program {}", getFilename());
 	}
 
 	variant.m_prog.reset(&progVariant->getProgram());

@@ -88,17 +88,34 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<enumerant name="kBox"/>
 			<enumerant name="kCount"/>
 		</enum>
-		<enum name="AnimationWrapMode">
-			<enumerant name="kOnce"/>
-			<enumerant name="kLoop"/>
-			<enumerant name="kCount"/>
+
+		<enum name="AnimationStart">
+			<enumerant name="kNow"/>
+			<enumerant name="kQueued"/>
 		</enum>
 		<enum name="AnimationBlendMode">
-			<enumerant name="kBlend"/>
+			<enumerant name="kOverride"/>
 			<enumerant name="kAdditive"/>
 			<enumerant name="kCount"/>
 		</enum>
-		<enum name="AnimationState">
+		<enum name="RootMotionMode">
+			<enumerant name="kDisabled"/>
+			<enumerant name="kHorizontal"/>
+			<enumerant name="kHorizontalAndYaw"/>
+			<enumerant name="kLockRoot"/>
+			<enumerant name="kCount"/>
+		</enum>
+		<enum name="RagdollMode">
+			<enumerant name="kDisabled"/>
+			<enumerant name="kDynamic"/>
+			<enumerant name="kCount"/>
+		</enum>
+		<enum name="NodeMotionMode">
+			<enumerant name="kApplyToNode"/>
+			<enumerant name="kExtract"/>
+			<enumerant name="kCount"/>
+		</enum>
+		<enum name="AnimationPlayState">
 			<enumerant name="kStopped"/>
 			<enumerant name="kPaused"/>
 			<enumerant name="kPlaying"/>
@@ -119,6 +136,23 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<return>SceneNode*</return>
 				</method>
 			</methods>
+		</class>
+
+		<class name="AnimationState">
+			<vars>
+				<var name="m_animationTime">F64</var>
+				<var name="m_animationTimeBias">F64</var>
+				<var name="m_animationSpeedScale">F32</var>
+				<var name="m_repeatTimes">F32</var>
+			</vars>
+		</class>
+
+		<class name="AnimationTrackState">
+			<vars>
+				<var name="m_blendMode">AnimationBlendMode</var>
+				<var name="m_blendInTime">F64</var>
+				<var name="m_blendOutTime">F64</var>
+			</vars>
 		</class>
 
 		<!-- Components -->
@@ -336,6 +370,15 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getMass">
 					<return>F32</return>
 				</method>
+				<method name="setFriction">
+					<args>
+						<arg>F32</arg>
+					</args>
+					<return>BodyComponent&amp;</return>
+				</method>
+				<method name="getFriction">
+					<return>F32</return>
+				</method>
 				<method name="applyForce">
 					<args>
 						<arg>Vec3</arg>
@@ -537,112 +580,140 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					</args>
 					<return>SkinComponent&amp;</return>
 				</method>
+				<method name="registerAnimation">
+					<args>
+						<arg>U32</arg>
+						<arg>CString</arg>
+					</args>
+				</method>
+				<method name="unregisterAnimation">
+					<args>
+						<arg>U32</arg>
+					</args>
+				</method>
+				<method name="playAnimation">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+						<arg>F64</arg>
+						<arg>AnimationStart</arg>
+					</args>
+					<return>AnimationState&amp;</return>
+				</method>
+				<method name="getAnimationState">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationState&amp;</return>
+				</method>
+				<method name="getAnimationTrackState">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationTrackState&amp;</return>
+				</method>
+				<method name="getRootMotionDelta">
+					<return>Vec3</return>
+				</method>
+				<method name="getRootYawDelta">
+					<return>Mat3</return>
+				</method>
+				<method name="getRootYawDeltaAngle">
+					<return>F32</return>
+				</method>
+				<method name="setRootMotionMode">
+					<args>
+						<arg>RootMotionMode</arg>
+					</args>
+				</method>
+				<method name="getRootMotionMode">
+					<return>RootMotionMode</return>
+				</method>
+				<method name="setRagdollMode">
+					<args>
+						<arg>RagdollMode</arg>
+					</args>
+				</method>
+				<method name="getRagdollMode">
+					<return>RagdollMode</return>
+				</method>
+				<method name="setRagdollMass">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getRagdollMass">
+					<return>F32</return>
+				</method>
+				<method name="setRagdollFriction">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getRagdollFriction">
+					<return>F32</return>
+				</method>
 			</methods>
 		</class>
 
 		<class name="AnimationComponent">
 			<methods>
-				<method name="setAnimationFilename">
+				<method name="registerAnimation">
 					<args>
 						<arg>U32</arg>
 						<arg>CString</arg>
 					</args>
-					<return>AnimationComponent&amp;</return>
 				</method>
-				<method name="getAnimationFilename">
+				<method name="unregisterAnimation">
 					<args>
 						<arg>U32</arg>
 					</args>
-					<return>CString</return>
 				</method>
-				<method name="hasAnimationFilename">
+				<method name="playAnimation">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+						<arg>CString</arg>
+						<arg>F64</arg>
+						<arg>AnimationStart</arg>
+					</args>
+					<return>AnimationState&amp;</return>
+				</method>
+				<method name="getAnimationState">
+					<args>
+						<arg>U32</arg>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationState&amp;</return>
+				</method>
+				<method name="getAnimationTrackState">
+					<args>
+						<arg>U32</arg>
+					</args>
+					<return>AnimationTrackState&amp;</return>
+				</method>
+				<method name="getTrackHasAnimations">
 					<args>
 						<arg>U32</arg>
 					</args>
 					<return>Bool</return>
-				</method>
-				<method name="setAnimationChannel">
-					<args>
-						<arg>U32</arg>
-						<arg>CString</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationChannel">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>CString</return>
-				</method>
-				<method name="setAnimationBlendWeight">
-					<args>
-						<arg>U32</arg>
-						<arg>F32</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationBlendWeight">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>F32</return>
-				</method>
-				<method name="setAnimationWrapMode">
-					<args>
-						<arg>U32</arg>
-						<arg>AnimationWrapMode</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationWrapMode">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>AnimationWrapMode</return>
-				</method>
-				<method name="setAnimationBlendMode">
-					<args>
-						<arg>U32</arg>
-						<arg>AnimationBlendMode</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationBlendMode">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>AnimationBlendMode</return>
-				</method>
-				<method name="setAnimationSpeed">
-					<args>
-						<arg>U32</arg>
-						<arg>F32</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
-				</method>
-				<method name="getAnimationSpeed">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>F32</return>
 				</method>
 				<method name="resetTrack">
 					<args>
 						<arg>U32</arg>
 					</args>
 				</method>
-				<method name="setAnimationState">
-					<args>
-						<arg>U32</arg>
-						<arg>AnimationState</arg>
-					</args>
-					<return>AnimationComponent&amp;</return>
+				<method name="getNodeTransformDelta">
+					<return>Transform</return>
 				</method>
-				<method name="getAnimationState">
+				<method name="setNodeMotionMode">
 					<args>
-						<arg>U32</arg>
+						<arg>NodeMotionMode</arg>
 					</args>
-					<return>AnimationState</return>
+				</method>
+				<method name="getNodeMotionMode">
+					<return>NodeMotionMode</return>
 				</method>
 				<method name="isValid">
 					<return>Bool</return>
@@ -833,65 +904,65 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<overrideCall><![CDATA[JointComponent* ret = self->newComponent<JointComponent>();]]></overrideCall>
 				</method>
 
-				<method name="getFirstLightComponent">
-					<return>LightComponent&amp;</return>
-					<overrideCall><![CDATA[LightComponent& ret = self->getFirstComponentOfType<LightComponent>();]]></overrideCall>
+				<method name="tryGetFirstLightComponent">
+					<return canBeNullptr="1">LightComponent*</return>
+					<overrideCall><![CDATA[LightComponent* ret = self->tryGetFirstComponentOfType<LightComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstLensFlareComponent">
-					<return>LensFlareComponent&amp;</return>
-					<overrideCall><![CDATA[LensFlareComponent& ret = self->getFirstComponentOfType<LensFlareComponent>();]]></overrideCall>
+				<method name="tryGetFirstLensFlareComponent">
+					<return canBeNullptr="1">LensFlareComponent*</return>
+					<overrideCall><![CDATA[LensFlareComponent* ret = self->tryGetFirstComponentOfType<LensFlareComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstDecalComponent">
-					<return>DecalComponent&amp;</return>
-					<overrideCall><![CDATA[DecalComponent& ret = self->getFirstComponentOfType<DecalComponent>();]]></overrideCall>
+				<method name="tryGetFirstDecalComponent">
+					<return canBeNullptr="1">DecalComponent*</return>
+					<overrideCall><![CDATA[DecalComponent* ret = self->tryGetFirstComponentOfType<DecalComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstTriggerComponent">
-					<return>TriggerComponent&amp;</return>
-					<overrideCall><![CDATA[TriggerComponent& ret = self->getFirstComponentOfType<TriggerComponent>();]]></overrideCall>
+				<method name="tryGetFirstTriggerComponent">
+					<return canBeNullptr="1">TriggerComponent*</return>
+					<overrideCall><![CDATA[TriggerComponent* ret = self->tryGetFirstComponentOfType<TriggerComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstFogDensityComponent">
-					<return>FogDensityComponent&amp;</return>
-					<overrideCall><![CDATA[FogDensityComponent& ret = self->getFirstComponentOfType<FogDensityComponent>();]]></overrideCall>
+				<method name="tryGetFirstFogDensityComponent">
+					<return canBeNullptr="1">FogDensityComponent*</return>
+					<overrideCall><![CDATA[FogDensityComponent* ret = self->tryGetFirstComponentOfType<FogDensityComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstCameraComponent">
-					<return>CameraComponent&amp;</return>
-					<overrideCall><![CDATA[CameraComponent& ret = self->getFirstComponentOfType<CameraComponent>();]]></overrideCall>
+				<method name="tryGetFirstCameraComponent">
+					<return canBeNullptr="1">CameraComponent*</return>
+					<overrideCall><![CDATA[CameraComponent* ret = self->tryGetFirstComponentOfType<CameraComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstGlobalIlluminationProbeComponent">
-					<return>GlobalIlluminationProbeComponent&amp;</return>
-					<overrideCall><![CDATA[GlobalIlluminationProbeComponent& ret = self->getFirstComponentOfType<GlobalIlluminationProbeComponent>();]]></overrideCall>
+				<method name="tryGetFirstGlobalIlluminationProbeComponent">
+					<return canBeNullptr="1">GlobalIlluminationProbeComponent*</return>
+					<overrideCall><![CDATA[GlobalIlluminationProbeComponent* ret = self->tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstReflectionProbeComponent">
-					<return>ReflectionProbeComponent&amp;</return>
-					<overrideCall><![CDATA[ReflectionProbeComponent& ret = self->getFirstComponentOfType<ReflectionProbeComponent>();]]></overrideCall>
+				<method name="tryGetFirstReflectionProbeComponent">
+					<return canBeNullptr="1">ReflectionProbeComponent*</return>
+					<overrideCall><![CDATA[ReflectionProbeComponent* ret = self->tryGetFirstComponentOfType<ReflectionProbeComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstBodyComponent">
-					<return>BodyComponent&amp;</return>
-					<overrideCall><![CDATA[BodyComponent& ret = self->getFirstComponentOfType<BodyComponent>();]]></overrideCall>
+				<method name="tryGetFirstBodyComponent">
+					<return canBeNullptr="1">BodyComponent*</return>
+					<overrideCall><![CDATA[BodyComponent* ret = self->tryGetFirstComponentOfType<BodyComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstMeshComponent">
-					<return>MeshComponent&amp;</return>
-					<overrideCall><![CDATA[MeshComponent& ret = self->getFirstComponentOfType<MeshComponent>();]]></overrideCall>
+				<method name="tryGetFirstMeshComponent">
+					<return canBeNullptr="1">MeshComponent*</return>
+					<overrideCall><![CDATA[MeshComponent* ret = self->tryGetFirstComponentOfType<MeshComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstMaterialComponent">
-					<return>MaterialComponent&amp;</return>
-					<overrideCall><![CDATA[MaterialComponent& ret = self->getFirstComponentOfType<MaterialComponent>();]]></overrideCall>
+				<method name="tryGetFirstMaterialComponent">
+					<return canBeNullptr="1">MaterialComponent*</return>
+					<overrideCall><![CDATA[MaterialComponent* ret = self->tryGetFirstComponentOfType<MaterialComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstSkinComponent">
-					<return>SkinComponent&amp;</return>
-					<overrideCall><![CDATA[SkinComponent& ret = self->getFirstComponentOfType<SkinComponent>();]]></overrideCall>
+				<method name="tryGetFirstSkinComponent">
+					<return canBeNullptr="1">SkinComponent*</return>
+					<overrideCall><![CDATA[SkinComponent* ret = self->tryGetFirstComponentOfType<SkinComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstAnimationComponent">
-					<return>AnimationComponent&amp;</return>
-					<overrideCall><![CDATA[AnimationComponent& ret = self->getFirstComponentOfType<AnimationComponent>();]]></overrideCall>
+				<method name="tryGetFirstAnimationComponent">
+					<return canBeNullptr="1">AnimationComponent*</return>
+					<overrideCall><![CDATA[AnimationComponent* ret = self->tryGetFirstComponentOfType<AnimationComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstSkyboxComponent">
-					<return>SkyboxComponent&amp;</return>
-					<overrideCall><![CDATA[SkyboxComponent& ret = self->getFirstComponentOfType<SkyboxComponent>();]]></overrideCall>
+				<method name="tryGetFirstSkyboxComponent">
+					<return canBeNullptr="1">SkyboxComponent*</return>
+					<overrideCall><![CDATA[SkyboxComponent* ret = self->tryGetFirstComponentOfType<SkyboxComponent>();]]></overrideCall>
 				</method>
-				<method name="getFirstJointComponent">
-					<return>JointComponent&amp;</return>
-					<overrideCall><![CDATA[JointComponent& ret = self->getFirstComponentOfType<JointComponent>();]]></overrideCall>
+				<method name="tryGetFirstJointComponent">
+					<return canBeNullptr="1">JointComponent*</return>
+					<overrideCall><![CDATA[JointComponent* ret = self->tryGetFirstComponentOfType<JointComponent>();]]></overrideCall>
 				</method>
 			</methods>
 		</class>

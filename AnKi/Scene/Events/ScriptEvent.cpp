@@ -6,7 +6,6 @@
 #include <AnKi/Scene/Events/ScriptEvent.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Resource/ScriptResource.h>
-#include <AnKi/Script/ScriptEnvironment.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -29,9 +28,9 @@ void ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 		return;
 	}
 
-	m_vars.flushDirtyVarsToLua(m_env);
+	m_vars.flushDirtyVarsToLua(*m_env);
 
-	lua_State* lua = &m_env.getLuaState();
+	lua_State* lua = &m_env->getLuaState();
 
 	// Push function name
 	lua_getglobal(lua, "update");
@@ -44,7 +43,7 @@ void ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 	// Do the call (3 arguments, no result)
 	if(lua_pcall(lua, 3, 0, 0) != 0)
 	{
-		ANKI_SCENE_LOGE("Error running ScriptEvent's \"update\": %s", lua_tostring(lua, -1));
+		ANKI_SCENE_LOGE("Error running ScriptEvent's \"update\": {}", lua_tostring(lua, -1));
 		return;
 	}
 }
@@ -56,7 +55,7 @@ void ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 		return;
 	}
 
-	lua_State* lua = &m_env.getLuaState();
+	lua_State* lua = &m_env->getLuaState();
 
 	// Push function name
 	lua_getglobal(lua, "onKilled");
@@ -69,7 +68,7 @@ void ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 	// Do the call (3 arguments, no result)
 	if(lua_pcall(lua, 3, 0, 0) != 0)
 	{
-		ANKI_SCENE_LOGE("Error running ScriptEvent's \"onKilled\": %s", lua_tostring(lua, -1));
+		ANKI_SCENE_LOGE("Error running ScriptEvent's \"onKilled\": {}", lua_tostring(lua, -1));
 		return;
 	}
 }
@@ -86,13 +85,16 @@ ScriptEvent& ScriptEvent::setScriptResourceFilename(CString fname)
 		return *this;
 	}
 
-	if(!ANKI_EXPECT(!m_env.evalString(m_scriptRsrc->getSource())))
+	m_env.reset(nullptr);
+	m_env = ScriptManager::getSingleton().newScriptEnvironment();
+
+	if(!ANKI_EXPECT(!m_env->evalString(m_scriptRsrc->getSource())))
 	{
 		markForDeletion();
 		return *this;
 	}
 
-	m_vars.rebuildVarsFromLua(m_env);
+	m_vars.rebuildVarsFromLua(*m_env);
 
 	m_initialized = true;
 	return *this;
@@ -105,13 +107,16 @@ ScriptEvent& ScriptEvent::setScriptText(CString text)
 		return *this;
 	}
 
-	if(!ANKI_EXPECT(!m_env.evalString(text)))
+	m_env.reset(nullptr);
+	m_env = ScriptManager::getSingleton().newScriptEnvironment();
+
+	if(!ANKI_EXPECT(!m_env->evalString(text)))
 	{
 		markForDeletion();
 		return *this;
 	}
 
-	m_vars.rebuildVarsFromLua(m_env);
+	m_vars.rebuildVarsFromLua(*m_env);
 
 	m_initialized = true;
 	return *this;

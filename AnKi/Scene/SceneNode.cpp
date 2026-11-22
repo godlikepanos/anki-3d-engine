@@ -35,7 +35,7 @@ T* SceneNode::newComponent()
 {
 	if(hasComponent<T>() && !kSceneComponentTypeInfos[T::kClassType].m_sceneNodeCanHaveMany)
 	{
-		ANKI_SCENE_LOGE("Can't have many %s components in scene node %s", kSceneComponentTypeInfos[T::kClassType].m_name, getName().cstr());
+		ANKI_SCENE_LOGE("Can't have many {} components in scene node {}", kSceneComponentTypeInfos[T::kClassType].m_name, getName());
 		return nullptr;
 	}
 	SceneComponentInitInfo compInit;
@@ -55,7 +55,7 @@ void SceneNode::deleteComponent(TComponent* comp)
 
 	if(!kSceneComponentTypeInfos[compType].m_canBeDeleted)
 	{
-		ANKI_SCENE_LOGE("Can't delete component of type: %s", kSceneComponentTypeInfos[compType].m_name);
+		ANKI_SCENE_LOGE("Can't delete component of type: {}", kSceneComponentTypeInfos[compType].m_name);
 		return;
 	}
 
@@ -323,7 +323,7 @@ Error SceneNode::serializeCommon(SceneSerializer& serializer, SerializeCommonArg
 		auto it = args.m_read.m_nodeUuidToNode.find(parentUuid);
 		if(it == args.m_read.m_nodeUuidToNode.getEnd())
 		{
-			ANKI_SCENE_LOGE("Failed to find parent UUID: %u", parentUuid);
+			ANKI_SCENE_LOGE("Failed to find parent UUID: {}", parentUuid);
 			return Error::kUserData;
 		}
 

@@ -856,3 +856,19 @@ UVec2 computeShadowCascadeIndex2(F32 distance, Vec4 cascadeDistances, U32 shadow
 
 	return UVec2(cascade, nextCascade);
 }
+
+// Geometric specular AA (Tokuyoshi & Kaplanyan 2019). Widens the GGX lobe by the screen space variance of the normal so a lobe narrower than the
+// pixel can't alias
+F32 geometricSpecularAa(F32 roughness, Vec3 normal)
+{
+	constexpr F32 kSpecularAaVariance = 0.15; // Pixel filter kernel variance (sigma^2)
+	constexpr F32 kSpecularAaThreshold = 0.2; // Max alpha^2 the kernel can add
+
+	const Vec3 du = ddx(normal);
+	const Vec3 dv = ddy(normal);
+	const F32 kernelA2 = min(2.0 * kSpecularAaVariance * (dot(du, du) + dot(dv, dv)), kSpecularAaThreshold);
+
+	const F32 a = roughness * roughness;
+	const F32 filteredA2 = saturate(a * a + kernelA2);
+	return sqrt(sqrt(filteredA2)); // Back to perceptual roughness
+}

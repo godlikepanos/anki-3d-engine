@@ -7,9 +7,11 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Resource/StreamingImageResourceManager.h>
 
 namespace anki {
 
@@ -28,7 +30,7 @@ Error RtMaterialFetchDbg::init()
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
 	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x, getRenderer().getInternalResolution().y,
-															 Format::kR8G8B8A8_Unorm, "RtMaterialFetch");
+															 getRenderer().getHdrFormat(), "RtMaterialFetch");
 	m_rtDesc.bake();
 
 	return Error::kNone;

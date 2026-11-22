@@ -55,24 +55,43 @@ ReparentFlag = {}
 ---@field kCount integer
 TriggerComponentShapeType = {}
 
----@class AnimationWrapMode
----@field kOnce integer
----@field kLoop integer
----@field kCount integer
-AnimationWrapMode = {}
+---@class AnimationStart
+---@field kNow integer
+---@field kQueued integer
+AnimationStart = {}
 
 ---@class AnimationBlendMode
----@field kBlend integer
+---@field kOverride integer
 ---@field kAdditive integer
 ---@field kCount integer
 AnimationBlendMode = {}
 
----@class AnimationState
+---@class RootMotionMode
+---@field kDisabled integer
+---@field kHorizontal integer
+---@field kHorizontalAndYaw integer
+---@field kLockRoot integer
+---@field kCount integer
+RootMotionMode = {}
+
+---@class RagdollMode
+---@field kDisabled integer
+---@field kDynamic integer
+---@field kCount integer
+RagdollMode = {}
+
+---@class NodeMotionMode
+---@field kApplyToNode integer
+---@field kExtract integer
+---@field kCount integer
+NodeMotionMode = {}
+
+---@class AnimationPlayState
 ---@field kStopped integer
 ---@field kPaused integer
 ---@field kPlaying integer
 ---@field kCount integer
-AnimationState = {}
+AnimationPlayState = {}
 
 ---@class WeakArraySceneNodePtr
 WeakArraySceneNodePtr = {}
@@ -83,6 +102,19 @@ function WeakArraySceneNodePtr:getSize() end
 ---@param num number
 ---@return SceneNode
 function WeakArraySceneNodePtr:getAt(num) end
+
+---@class AnimationState
+---@field m_animationTime number
+---@field m_animationTimeBias number
+---@field m_animationSpeedScale number
+---@field m_repeatTimes number
+AnimationState = {}
+
+---@class AnimationTrackState
+---@field m_blendMode integer
+---@field m_blendInTime number
+---@field m_blendOutTime number
+AnimationTrackState = {}
 
 ---@class SceneComponentUpdateInfo
 SceneComponentUpdateInfo = {}
@@ -249,6 +281,13 @@ function BodyComponent:setMass(num) end
 ---@return number
 function BodyComponent:getMass() end
 
+---@param num number
+---@return BodyComponent
+function BodyComponent:setFriction(num) end
+
+---@return number
+function BodyComponent:getFriction() end
+
 ---@param vec3 Vec3
 ---@param vec32 Vec3
 function BodyComponent:applyForce(vec3, vec32) end
@@ -393,78 +432,104 @@ SkinComponent = {}
 ---@return SkinComponent
 function SkinComponent:setSkeletonFilename(str) end
 
+---@param num number
+---@param str string
+function SkinComponent:registerAnimation(num, str) end
+
+---@param num number
+function SkinComponent:unregisterAnimation(num) end
+
+---@param num number
+---@param num2 number
+---@param num3 number
+---@param animationStart integer
+---@return AnimationState
+function SkinComponent:playAnimation(num, num2, num3, animationStart) end
+
+---@param num number
+---@param num2 number
+---@return AnimationState
+function SkinComponent:getAnimationState(num, num2) end
+
+---@param num number
+---@return AnimationTrackState
+function SkinComponent:getAnimationTrackState(num) end
+
+---@return Vec3
+function SkinComponent:getRootMotionDelta() end
+
+---@return Mat3
+function SkinComponent:getRootYawDelta() end
+
+---@return number
+function SkinComponent:getRootYawDeltaAngle() end
+
+---@param rootMotionMode integer
+function SkinComponent:setRootMotionMode(rootMotionMode) end
+
+---@return integer
+function SkinComponent:getRootMotionMode() end
+
+---@param ragdollMode integer
+function SkinComponent:setRagdollMode(ragdollMode) end
+
+---@return integer
+function SkinComponent:getRagdollMode() end
+
+---@param num number
+function SkinComponent:setRagdollMass(num) end
+
+---@return number
+function SkinComponent:getRagdollMass() end
+
+---@param num number
+function SkinComponent:setRagdollFriction(num) end
+
+---@return number
+function SkinComponent:getRagdollFriction() end
+
 ---@class AnimationComponent
 AnimationComponent = {}
 
 ---@param num number
 ---@param str string
----@return AnimationComponent
-function AnimationComponent:setAnimationFilename(num, str) end
+function AnimationComponent:registerAnimation(num, str) end
 
 ---@param num number
----@return string
-function AnimationComponent:getAnimationFilename(num) end
+function AnimationComponent:unregisterAnimation(num) end
+
+---@param num number
+---@param num2 number
+---@param str string
+---@param num3 number
+---@param animationStart integer
+---@return AnimationState
+function AnimationComponent:playAnimation(num, num2, str, num3, animationStart) end
+
+---@param num number
+---@param num2 number
+---@return AnimationState
+function AnimationComponent:getAnimationState(num, num2) end
+
+---@param num number
+---@return AnimationTrackState
+function AnimationComponent:getAnimationTrackState(num) end
 
 ---@param num number
 ---@return boolean
-function AnimationComponent:hasAnimationFilename(num) end
-
----@param num number
----@param str string
----@return AnimationComponent
-function AnimationComponent:setAnimationChannel(num, str) end
-
----@param num number
----@return string
-function AnimationComponent:getAnimationChannel(num) end
-
----@param num number
----@param num2 number
----@return AnimationComponent
-function AnimationComponent:setAnimationBlendWeight(num, num2) end
-
----@param num number
----@return number
-function AnimationComponent:getAnimationBlendWeight(num) end
-
----@param num number
----@param animationWrapMode integer
----@return AnimationComponent
-function AnimationComponent:setAnimationWrapMode(num, animationWrapMode) end
-
----@param num number
----@return integer
-function AnimationComponent:getAnimationWrapMode(num) end
-
----@param num number
----@param animationBlendMode integer
----@return AnimationComponent
-function AnimationComponent:setAnimationBlendMode(num, animationBlendMode) end
-
----@param num number
----@return integer
-function AnimationComponent:getAnimationBlendMode(num) end
-
----@param num number
----@param num2 number
----@return AnimationComponent
-function AnimationComponent:setAnimationSpeed(num, num2) end
-
----@param num number
----@return number
-function AnimationComponent:getAnimationSpeed(num) end
+function AnimationComponent:getTrackHasAnimations(num) end
 
 ---@param num number
 function AnimationComponent:resetTrack(num) end
 
----@param num number
----@param animationState integer
----@return AnimationComponent
-function AnimationComponent:setAnimationState(num, animationState) end
+---@return Transform
+function AnimationComponent:getNodeTransformDelta() end
 
----@param num number
+---@param nodeMotionMode integer
+function AnimationComponent:setNodeMotionMode(nodeMotionMode) end
+
 ---@return integer
-function AnimationComponent:getAnimationState(num) end
+function AnimationComponent:getNodeMotionMode() end
 
 ---@return boolean
 function AnimationComponent:isValid() end
@@ -603,49 +668,49 @@ function SceneNode:newSkyboxComponent() end
 function SceneNode:newJointComponent() end
 
 ---@return LightComponent
-function SceneNode:getFirstLightComponent() end
+function SceneNode:tryGetFirstLightComponent() end
 
 ---@return LensFlareComponent
-function SceneNode:getFirstLensFlareComponent() end
+function SceneNode:tryGetFirstLensFlareComponent() end
 
 ---@return DecalComponent
-function SceneNode:getFirstDecalComponent() end
+function SceneNode:tryGetFirstDecalComponent() end
 
 ---@return TriggerComponent
-function SceneNode:getFirstTriggerComponent() end
+function SceneNode:tryGetFirstTriggerComponent() end
 
 ---@return FogDensityComponent
-function SceneNode:getFirstFogDensityComponent() end
+function SceneNode:tryGetFirstFogDensityComponent() end
 
 ---@return CameraComponent
-function SceneNode:getFirstCameraComponent() end
+function SceneNode:tryGetFirstCameraComponent() end
 
 ---@return GlobalIlluminationProbeComponent
-function SceneNode:getFirstGlobalIlluminationProbeComponent() end
+function SceneNode:tryGetFirstGlobalIlluminationProbeComponent() end
 
 ---@return ReflectionProbeComponent
-function SceneNode:getFirstReflectionProbeComponent() end
+function SceneNode:tryGetFirstReflectionProbeComponent() end
 
 ---@return BodyComponent
-function SceneNode:getFirstBodyComponent() end
+function SceneNode:tryGetFirstBodyComponent() end
 
 ---@return MeshComponent
-function SceneNode:getFirstMeshComponent() end
+function SceneNode:tryGetFirstMeshComponent() end
 
 ---@return MaterialComponent
-function SceneNode:getFirstMaterialComponent() end
+function SceneNode:tryGetFirstMaterialComponent() end
 
 ---@return SkinComponent
-function SceneNode:getFirstSkinComponent() end
+function SceneNode:tryGetFirstSkinComponent() end
 
 ---@return AnimationComponent
-function SceneNode:getFirstAnimationComponent() end
+function SceneNode:tryGetFirstAnimationComponent() end
 
 ---@return SkyboxComponent
-function SceneNode:getFirstSkyboxComponent() end
+function SceneNode:tryGetFirstSkyboxComponent() end
 
 ---@return JointComponent
-function SceneNode:getFirstJointComponent() end
+function SceneNode:tryGetFirstJointComponent() end
 
 ---@class SceneGraph
 SceneGraph = {}
@@ -809,6 +874,8 @@ function Vec4:normalize() end
 function Vec4:dot(vec4) end
 
 ---@class Mat3
+---@operator mul(Mat3): Mat3
+---@operator mul(Vec3): Vec3
 Mat3 = {}
 
 ---@overload fun(num: number): Mat3
@@ -837,6 +904,85 @@ function Mat3:getAt(num, num2) end
 ---@param num2 number
 ---@param num3 number
 function Mat3:setAt(num, num2, num3) end
+
+---@param num number
+---@return Vec3
+function Mat3:getRow(num) end
+
+---@param num number
+---@param vec3 Vec3
+function Mat3:setRow(num, vec3) end
+
+---@param num number
+---@return Vec3
+function Mat3:getColumn(num) end
+
+---@param num number
+---@param vec3 Vec3
+function Mat3:setColumn(num, vec3) end
+
+---@return Vec3
+function Mat3:getDiagonal() end
+
+---@param vec3 Vec3
+function Mat3:setDiagonal(vec3) end
+
+---@return Vec3
+function Mat3:getXAxis() end
+
+---@return Vec3
+function Mat3:getYAxis() end
+
+---@return Vec3
+function Mat3:getZAxis() end
+
+---@param vec3 Vec3
+function Mat3:setXAxis(vec3) end
+
+---@param vec3 Vec3
+function Mat3:setYAxis(vec3) end
+
+---@param vec3 Vec3
+function Mat3:setZAxis(vec3) end
+
+---@param num number
+function Mat3:setRotationX(num) end
+
+---@param num number
+function Mat3:setRotationY(num) end
+
+---@param num number
+function Mat3:setRotationZ(num) end
+
+---@param num number
+function Mat3:rotateXAxis(num) end
+
+---@param num number
+function Mat3:rotateYAxis(num) end
+
+---@param num number
+function Mat3:rotateZAxis(num) end
+
+---@return Mat3
+function Mat3:reorthogonalize() end
+
+---@return Mat3
+function Mat3:transpose() end
+
+---@return Mat3
+function Mat3:invert() end
+
+---@return number
+function Mat3:getDet() end
+
+function Mat3:setIdentity() end
+
+---@return Mat3
+function Mat3.getIdentity() end
+
+---@param vec3 Vec3
+---@return Mat3
+function Mat3.rotationFromDirection(vec3) end
 
 ---@class Mat3x4
 Mat3x4 = {}
@@ -901,6 +1047,10 @@ function Transform:getScale() end
 
 ---@param vec3 Vec3
 function Transform:setScale(vec3) end
+
+---@param vec3 Vec3
+---@return Vec3
+function Transform:transform(vec3) end
 
 ---@class Renderer
 Renderer = {}

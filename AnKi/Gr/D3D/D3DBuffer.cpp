@@ -51,6 +51,7 @@ void* Buffer::map(PtrSize offset, PtrSize range)
 void Buffer::unmap()
 {
 	ANKI_D3D_SELF(BufferImpl);
+	(void)self;
 
 	ANKI_ASSERT(self.m_mapped);
 
@@ -72,6 +73,19 @@ void Buffer::invalidate([[maybe_unused]] PtrSize offset, [[maybe_unused]] PtrSiz
 BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
+
+	if(m_resource)
+	{
+		if(m_deviceLocal)
+		{
+			g_svarGrGpuDeviceMemoryAllocated.decrement(m_actualSize);
+		}
+		else
+		{
+			g_svarGrGpuHostMemoryAllocated.decrement(m_actualSize);
+		}
+	}
+
 	safeRelease(m_resource);
 }
 
@@ -145,10 +159,6 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	{
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	}
-	if(!(m_usage & BufferUsageBit::kAllShaderResource) && !(m_usage & BufferUsageBit::kAccelerationStructure))
-	{
-		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-	}
 
 	// Create resource
 	D3D12_RESOURCE_STATES initialState;
@@ -161,6 +171,17 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		initialState = D3D12_RESOURCE_STATE_COMMON;
 	}
 	ANKI_D3D_CHECK(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &resourceDesc, initialState, nullptr, IID_PPV_ARGS(&m_resource)));
+
+	m_actualSize = resourceDesc.Width;
+	m_deviceLocal = heapProperties.Type == D3D12_HEAP_TYPE_DEFAULT || heapProperties.MemoryPoolPreference == D3D12_MEMORY_POOL_L1;
+	if(m_deviceLocal)
+	{
+		g_svarGrGpuDeviceMemoryAllocated.increment(m_actualSize);
+	}
+	else
+	{
+		g_svarGrGpuHostMemoryAllocated.increment(m_actualSize);
+	}
 
 	GrDynamicArray<WChar> wstr;
 	wstr.resize(getName().getLength() + 1);

@@ -14,9 +14,9 @@
 
 namespace anki {
 
-ANKI_SVAR(PhysicsBodiesCreated, StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(PhysicsJointsCreated, StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame)
-ANKI_SVAR(PhysicsUpdateTime, StatCategory::kTime, "Phys update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Physics, BodiesCreated, StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Physics, JointsCreated, StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Physics, UpdateTime, StatCategory::kTime, "Phys update", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 class BroadphaseLayer
 {
@@ -190,13 +190,15 @@ public:
 
 		if(obj1->getType() == PhysicsObjectType::kBody && static_cast<PhysicsBody*>(obj1)->m_triggerCallbacks)
 		{
-			ANKI_ASSERT(obj2->getType() == PhysicsObjectType::kBody || obj2->getType() == PhysicsObjectType::kPlayerController);
+			ANKI_ASSERT(obj2->getType() == PhysicsObjectType::kBody || obj2->getType() == PhysicsObjectType::kPlayerController
+						|| obj2->getType() == PhysicsObjectType::kRagdoll);
 			trigger = static_cast<PhysicsBody*>(obj1);
 			receiver = obj2;
 		}
 		else if(obj2->getType() == PhysicsObjectType::kBody && static_cast<PhysicsBody*>(obj2)->m_triggerCallbacks)
 		{
-			ANKI_ASSERT(obj1->getType() == PhysicsObjectType::kBody || obj1->getType() == PhysicsObjectType::kPlayerController);
+			ANKI_ASSERT(obj1->getType() == PhysicsObjectType::kBody || obj1->getType() == PhysicsObjectType::kPlayerController
+						|| obj1->getType() == PhysicsObjectType::kRagdoll);
 			trigger = static_cast<PhysicsBody*>(obj2);
 			receiver = obj1;
 		}
@@ -301,6 +303,16 @@ void PhysicsPlayerControllerPtrDeleter::operator()(PhysicsPlayerController* ptr)
 	world.m_characters.m_array.erase(ptr->m_blockArrayIndex);
 }
 
+void PhysicsRagdollPtrDeleter::operator()(PhysicsRagdoll* ptr)
+{
+	ANKI_ASSERT(ptr);
+	PhysicsWorld& world = PhysicsWorld::getSingleton();
+
+	LockGuard lock(world.m_ragdolls.m_mtx);
+	world.m_ragdolls.m_array.erase(ptr->m_blockArrayIndex);
+	world.m_optimizeBroadphase = true;
+}
+
 class PhysicsWorld::MyDebugRenderer final : public JPH::DebugRendererSimple
 {
 public:
@@ -336,6 +348,7 @@ PhysicsWorld::~PhysicsWorld()
 	ANKI_ASSERT(m_bodies.m_array.getSize() == 0);
 	ANKI_ASSERT(m_joints.m_array.getSize() == 0);
 	ANKI_ASSERT(m_characters.m_array.getSize() == 0);
+	ANKI_ASSERT(m_ragdolls.m_array.getSize() == 0);
 
 	m_jobSystem.destroy();
 	m_jphPhysicsSystem.destroy();
@@ -351,7 +364,7 @@ PhysicsWorld::~PhysicsWorld()
 
 Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 {
-	ANKI_PHYS_LOGI("Initializing physics. Jolt config: %s", JPH::GetConfigurationString());
+	ANKI_PHYS_LOGI("Initializing physics. Jolt config: {}", JPH::GetConfigurationString());
 
 	PhysicsMemoryPool::allocateSingleton(allocCb, allocCbData);
 
@@ -655,6 +668,23 @@ PhysicsPlayerControllerPtr PhysicsWorld::newPlayerController(const PhysicsPlayer
 
 	newChar->init(init);
 	return PhysicsPlayerControllerPtr(newChar);
+}
+
+PhysicsRagdollPtr PhysicsWorld::newRagdoll(const PhysicsRagdollInitInfo& init)
+{
+	PhysicsRagdoll* ragdoll;
+	{
+		LockGuard lock(m_ragdolls.m_mtx);
+
+		m_optimizeBroadphase = true;
+		auto it = m_ragdolls.m_array.emplace();
+		ragdoll = &(*it);
+		ragdoll->setBlockArrayIndex(it.getArrayIndex()); // Before init() because it's the collision group ID
+	}
+
+	ragdoll->init(init);
+	g_svarPhysicsBodiesCreated.increment(U32(ragdoll->m_ragdoll->GetBodyCount()));
+	return PhysicsRagdollPtr(ragdoll);
 }
 
 RayHitResult PhysicsWorld::jphToAnKi(const JPH::RRayCast& ray, const JPH::RayCastResult& hit)

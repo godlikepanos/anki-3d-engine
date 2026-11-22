@@ -155,8 +155,16 @@ public:
 	void releaseObject(GrObject* object)
 	{
 		ANKI_ASSERT(object);
-		LockGuard lock(m_globalMtx);
-		releaseObjectDeleteLoop(object);
+		if(object->getType() == GrObjectType::kRenderGraph)
+		{
+			// RenderGraph is special. It's a collection of GR objects and it doesn't benefit from deferred cleanup
+			deleteInstance(GrMemoryPool::getSingleton(), object);
+		}
+		else
+		{
+			LockGuard lock(m_globalMtx);
+			releaseObjectDeleteLoop(object);
+		}
 	}
 
 	void releaseObjectDeleteLoop(GrObject* object);

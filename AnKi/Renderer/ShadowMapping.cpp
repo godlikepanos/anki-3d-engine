@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/HzbGenerator.h>
@@ -20,8 +21,9 @@
 
 namespace anki {
 
-ANKI_SVAR(TilesAllocated, StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates)
-ANKI_SVAR(ShadowLightsProcessed, StatCategory::kRenderer, "Lights processed by shadows", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Render, TilesAllocated, StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, ShadowLightsProcessed, StatCategory::kRenderer, "Lights processed by shadows",
+		  StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
 
 class LightHash
 {
@@ -85,7 +87,7 @@ Error ShadowMapping::init()
 	for(U32 i = 0; i < kMaxShadowCascades; ++i)
 	{
 		RendererString name;
-		name.sprintf("DirLight HZB #%d", i);
+		name.format("DirLight HZB #{}", i);
 
 		const U32 cascadeResolution = (m_tileResolution * (1 << (kTileAllocHierarchyCount - 1))) >> chooseDirectionalLightShadowCascadeDetail(i);
 		UVec2 size(min(cascadeResolution, 1024u));
@@ -210,8 +212,8 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 		if(!!(result & TileAllocatorResult2::kAllocationFailed))
 		{
-			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. Increase the %s or decrease the scene's shadow casters",
-						g_cvarRenderSmTileCountPerRowOrColumn.getName().cstr());
+			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. Increase the {} or decrease the scene's shadow casters",
+						g_cvarRenderSmTileCountPerRowOrColumn.getName());
 
 			// Invalidate cache entries for what we already allocated
 			for(U32 j = 0; j < i; ++j)
@@ -224,7 +226,7 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 		if(!(result & TileAllocatorResult2::kTileCached))
 		{
-			g_svarTilesAllocated.increment(1);
+			g_svarRenderTilesAllocated.increment(1);
 		}
 
 		goodResult &= result;
@@ -273,7 +275,7 @@ void ShadowMapping::processLights()
 
 	// Process the point lights first
 	WeakArray<LightComponent*> lights = getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_shadowLights;
-	g_svarShadowLightsProcessed.increment(lights.getSize() + (dirLight != 0));
+	g_svarRenderShadowLightsProcessed.increment(lights.getSize() + (dirLight != 0));
 	for(LightComponent* lightc : lights)
 	{
 		if(lightc->getLightComponentType() != LightComponentType::kPoint || !lightc->getShadowEnabled())
@@ -613,6 +615,11 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 		pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	}
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
+
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 	pass.setWork([this, visOut, subpasses](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);

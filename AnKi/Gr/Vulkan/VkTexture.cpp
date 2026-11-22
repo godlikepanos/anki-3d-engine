@@ -72,9 +72,9 @@ static Bool isAstcSrgbFormat(const VkFormat format)
 TextureImpl::~TextureImpl()
 {
 #if ANKI_ASSERTIONS_ENABLED
-	if(m_usage != m_usedFor)
+	if(!!(m_usage & TextureUsageBit::kAllUav) && !(m_usedFor & TextureUsageBit::kAllUav))
 	{
-		ANKI_VK_LOGW("Texture %s hasn't been used in all types of usages", getName().cstr());
+		ANKI_VK_LOGW("Texture has created as UAV but it was never used as one: {}", getName());
 	}
 #endif
 
@@ -111,11 +111,11 @@ TextureImpl::~TextureImpl()
 
 		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			g_svarGpuDeviceMemoryAllocated.decrement(m_deviceMemSize);
+			g_svarGrGpuDeviceMemoryAllocated.decrement(m_deviceMemSize);
 		}
 		else
 		{
-			g_svarGpuHostMemoryAllocated.decrement(m_deviceMemSize);
+			g_svarGrGpuHostMemoryAllocated.decrement(m_deviceMemSize);
 		}
 	}
 }
@@ -279,7 +279,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	if(!imageSupported(init))
 	{
 		ANKI_VK_LOGE("TextureInitInfo contains a combination of parameters that it's not supported by the device. "
-					 "Texture format is %s",
+					 "Texture format is {}",
 					 getFormatInfo(init.m_format).m_name);
 		return Error::kFunctionFailed;
 	}
@@ -346,11 +346,11 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			g_svarGpuDeviceMemoryAllocated.increment(m_deviceMemSize);
+			g_svarGrGpuDeviceMemoryAllocated.increment(m_deviceMemSize);
 		}
 		else
 		{
-			g_svarGpuHostMemoryAllocated.increment(m_deviceMemSize);
+			g_svarGrGpuHostMemoryAllocated.increment(m_deviceMemSize);
 		}
 
 		ANKI_VK_CHECK(vkBindImageMemory(getVkDevice(), m_imageHandle, m_deviceMem, 0));

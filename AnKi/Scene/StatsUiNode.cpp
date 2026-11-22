@@ -30,19 +30,19 @@ static void labelBytes(PtrSize val, CString name)
 	UiString timestamp;
 	if(gb)
 	{
-		timestamp.sprintf("%s: %zu,%04zu,%04zu,%04zu", name.cstr(), gb, mb, kb, b);
+		timestamp.format("{}: {},{:04},{:04},{:04}", name, gb, mb, kb, b);
 	}
 	else if(mb)
 	{
-		timestamp.sprintf("%s: %zu,%04zu,%04zu", name.cstr(), mb, kb, b);
+		timestamp.format("{}: {},{:04},{:04}", name, mb, kb, b);
 	}
 	else if(kb)
 	{
-		timestamp.sprintf("%s: %zu,%04zu", name.cstr(), kb, b);
+		timestamp.format("{}: {},{:04}", name, kb, b);
 	}
 	else
 	{
-		timestamp.sprintf("%s: %zu", name.cstr(), b);
+		timestamp.format("{}: {}", name, b);
 	}
 	ImGui::TextUnformatted(timestamp.cstr());
 }
@@ -203,9 +203,9 @@ void StatsUiNode::draw(UiCanvas& canvas)
 
 		if(ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			const Second maxTime = max(g_svarCpuTotalTime.getValue<F64>(), g_svarRendererGpuTime.getValue<F64>()) / 1000.0;
+			const Second maxTime = max(g_svarCoreCpuTotalTime.getValue<F64>(), g_svarRenderGpuTime.getValue<F64>()) / 1000.0;
 			const F32 fps = F32(1.0 / maxTime);
-			const Bool cpuBound = g_svarCpuTotalTime.getValue<F64>() > g_svarRendererGpuTime.getValue<F64>();
+			const Bool cpuBound = g_svarCoreCpuTotalTime.getValue<F64>() > g_svarRenderGpuTime.getValue<F64>();
 			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f", fps);
 		}
 		ImGui::End();

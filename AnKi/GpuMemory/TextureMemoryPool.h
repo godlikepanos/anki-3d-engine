@@ -18,8 +18,8 @@ namespace anki {
 ANKI_CVAR2(NumericCVar<PtrSize>, GpuMem, TextureMemoryPool, ChunkSize, 256_MB, 16_MB, 1_GB, "Texture memory pool is allocated in chunks of this size")
 ANKI_CVAR2(NumericCVar<U32>, GpuMem, TextureMemoryPool, MaxChunks, 4, 1, 32, "Max number of chunks")
 
-ANKI_SVAR(TextureMemoryPoolCapacity, StatCategory::kGpuMem, "Texture mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(TextureMemoryPoolUsedMemory, StatCategory::kGpuMem, "Texture mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, TextureMemoryPoolCapacity, StatCategory::kGpuMem, "Texture mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(GpuMem, TextureMemoryPoolUsedMemory, StatCategory::kGpuMem, "Texture mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 using TextureMemoryPoolAllocation = SegregatedListsGpuMemoryPoolAllocation;
 
@@ -32,7 +32,7 @@ public:
 		const Array<PtrSize, 8> memoryClasses = {256_KB, 1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 256_MB};
 		m_pool.init(g_cvarGpuMemTextureMemoryPoolChunkSize, g_cvarGpuMemTextureMemoryPoolMaxChunks, "TexPool", memoryClasses,
 					BufferUsageBit::kTexture | BufferUsageBit::kAllSrv | BufferUsageBit::kAllCopy | BufferUsageBit::kVertexOrIndex
-						| BufferUsageBit::kAllIndirect | BufferUsageBit::kAllUav);
+						| BufferUsageBit::kAllIndirect | BufferUsageBit::kAllUav | BufferUsageBit::kCopyDestination);
 	}
 
 	~TextureMemoryPool() = default;
@@ -78,12 +78,26 @@ public:
 		PtrSize allocatedSize;
 		PtrSize memoryCapacity;
 		m_pool.getStats(allocatedSize, memoryCapacity);
-		g_svarTextureMemoryPoolCapacity.set(memoryCapacity);
-		g_svarTextureMemoryPoolUsedMemory.set(allocatedSize);
+		g_svarGpuMemTextureMemoryPoolCapacity.set(memoryCapacity);
+		g_svarGpuMemTextureMemoryPoolUsedMemory.set(allocatedSize);
+		m_allocatedSize = allocatedSize;
+		m_totalCapacity = memoryCapacity;
+	}
+
+	PtrSize getAllocatedSize() const
+	{
+		return m_allocatedSize;
+	}
+
+	PtrSize getTotalCapacity() const
+	{
+		return m_totalCapacity;
 	}
 
 private:
 	SegregatedListsGpuMemoryPool m_pool;
+	PtrSize m_allocatedSize = 0;
+	PtrSize m_totalCapacity = 0;
 };
 
 } // end namespace anki

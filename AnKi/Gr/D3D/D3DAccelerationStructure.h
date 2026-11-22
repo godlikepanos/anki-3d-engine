@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup vulkan
-/// @{
-
-/// AccelerationStructure implementation.
+// AccelerationStructure implementation.
 class AccelerationStructureImpl final : public AccelerationStructure
 {
 	friend class AccelerationStructure;
@@ -41,7 +38,7 @@ public:
 									 Bool alignSizes = true);
 
 private:
-	/// Spec doesn't say anything about scratch buffer alignment but validation complains.
+	// Spec doesn't say anything about scratch buffer alignment but validation complains.
 	static constexpr U32 kScratchBufferAlignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
 
 	BufferInternalPtr m_asBuffer;
@@ -68,6 +65,5 @@ private:
 
 	static D3D12_BARRIER_ACCESS computeBarrierAccess(AccelerationStructureUsageBit usage);
 };
-/// @}
 
 } // end namespace anki

@@ -94,7 +94,7 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 		ANKI_UTIL_LOGF("SetThreadAffinityMask() failed");
 	}
 
-	if(affinityTest.getSetBitCount() > 0)
+	if(affinityTest.countSetBits() > 0)
 	{
 		ANKI_UTIL_LOGE("Couldn't set affinity for all cores. Need to refactor the code");
 	}

@@ -12,8 +12,8 @@
 
 namespace anki {
 
-ANKI_SVAR(AliveFenceCount, StatCategory::kGr, "Current fence count", StatFlag::kNone)
-ANKI_SVAR(FencesCreatedCount, StatCategory::kGr, "Total fences created", StatFlag::kNone)
+ANKI_SVAR(Gr, AliveFenceCount, StatCategory::kGr, "Current fence count", StatFlag::kNone)
+ANKI_SVAR(Gr, FencesCreatedCount, StatCategory::kGr, "Total fences created", StatFlag::kNone)
 
 // Fence wrapper over D3D fence.
 class MicroFence
@@ -27,8 +27,8 @@ public:
 		{
 			ANKI_D3D_LOGF("CreateEvent() failed");
 		}
-		g_svarAliveFenceCount.increment(1u);
-		g_svarFencesCreatedCount.increment(1u);
+		g_svarGrAliveFenceCount.increment(1u);
+		g_svarGrFencesCreatedCount.increment(1u);
 	}
 
 	~MicroFence()
@@ -41,15 +41,31 @@ public:
 		m_fence = nullptr;
 		m_event = 0;
 
-		g_svarAliveFenceCount.decrement(1u);
+		g_svarGrAliveFenceCount.decrement(1u);
 	}
 
 	Bool clientWait(Second seconds)
 	{
 		ANKI_ASSERT(m_fence && m_event);
+
+		if(signaled())
+		{
+			return true;
+		}
+
+		if(seconds <= 0.0)
+		{
+			return false;
+		}
+
+		seconds = min<Second>(seconds, g_cvarGrGpuTimeout);
+		const DWORD msec = DWORD(seconds * 1000.0);
+
+		// When the event will be set it will wake only one of many concurrent waiters, so serialize the waiters
+		LockGuard lock(m_waitLock);
+
 		ANKI_D3D_CHECKF(m_fence->SetEventOnCompletion(m_value.load(), m_event));
 
-		const DWORD msec = DWORD(seconds * 1000.0);
 		const DWORD result = WaitForSingleObjectEx(m_event, msec, FALSE);
 
 		Bool signaled = false;
@@ -63,7 +79,7 @@ public:
 		}
 		else
 		{
-			ANKI_D3D_LOGF("WaitForSingleObjectEx() returned %u", result);
+			ANKI_D3D_LOGF("WaitForSingleObjectEx() returned {}", result);
 		}
 
 		return signaled;
@@ -96,14 +112,22 @@ public:
 		return signaled();
 	}
 
-	void setName(CString)
+	void setName(CString name)
 	{
-		// TODO
+		ANKI_ASSERT(m_fence);
+		GrDynamicArray<WChar> wstr;
+		wstr.resize(name.getLength() + 1);
+		name.toWideChars(wstr.getBegin(), wstr.getSize());
+		ANKI_D3D_CHECKF(m_fence->SetName(wstr.getBegin()));
 	}
 
 	void reset()
 	{
-		// To nothing
+		// Clear the event because a timed out wait of the previous use might have left it set
+		if(!ResetEvent(m_event))
+		{
+			ANKI_D3D_LOGF("ResetEvent() failed");
+		}
 	}
 
 	void gpuSignal(GpuQueueType queue);
@@ -114,6 +138,7 @@ private:
 	ID3D12Fence* m_fence = nullptr;
 	Atomic<U64> m_value = 0;
 	HANDLE m_event = 0;
+	Mutex m_waitLock;
 	mutable Atomic<I32> m_refcount = {0};
 };
 

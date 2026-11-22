@@ -100,9 +100,9 @@ endif()
 set(X86 FALSE)
 set(ARM FALSE)
 if(GCC OR CLANG)
-	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE target_arch)
+	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE target_arch ERROR_QUIET)
 
-	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch" OR ${target_arch} MATCHES "aarch")
+	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch" OR "${target_arch}" MATCHES "aarch")
 		set(ARM TRUE)
 	elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86.*" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64.*")
 		set(X86 TRUE)
@@ -267,9 +267,12 @@ else()
 	string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
 	add_compile_options(
-		/MP
 		/EHsc # Disable exceptions
 		/GR-) # Disable RTTI
+
+	if(NOT CLANG_WINDOWS)
+		add_compile_options(/MP) # Parallel compilation in Visual Studio. clang-cl doesn't support it
+	endif()
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		add_compile_options(/GS-) # Disable "Control stack checking calls"
@@ -282,6 +285,14 @@ else()
 
 	# Full paths in compiler diagnostics else you can't click on visual studio have it open the file+line
 	add_compile_options(/FC)
+
+	if(CLANG_WINDOWS AND X86)
+		add_compile_options(-msse4.2) # Same as -msse4 above. Unlike MSVC, clang-cl needs it to use the SSE4 intrinsics
+	endif()
+
+	if(CLANG_WINDOWS)
+		add_compile_options(-Wno-nontrivial-memcall) # Same as the non-MSVC branch
+	endif()
 endif()
 
 # Use LLD or mold linker
@@ -327,7 +338,7 @@ endif()
 if(SDL)
 	message("++ Configuring SDL3")
 	option(SDL_STATIC "Build a static version of the library" ON)
-	option(SDL_DYNAMIC "Build a static version of the library" OFF)
+	set(SDL_SHARED OFF CACHE BOOL "Build a shared version of the library" FORCE) # AnKi only links SDL3-static
 	add_subdirectory(ThirdParty/Sdl3)
 	message("++ End configuring SDL3")
 
@@ -339,13 +350,6 @@ endif()
 message("++ Configuring SPIRV-tools")
 add_subdirectory(ThirdParty/SpirvTools)
 message("++ End configuring SPIRV-tools")
-
-if(LINUX OR WINDOWS)
-	message("++ Configuring reproc")
-	set(REPROC++ OFF)
-	add_subdirectory(ThirdParty/Reproc)
-	message("++ End configuring reproc")
-endif()
 
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(ThirdParty/${TMP})

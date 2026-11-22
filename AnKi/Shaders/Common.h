@@ -258,6 +258,30 @@ struct DispatchIndirectArgs
 	U32 m_threadGroupCountZ;
 };
 
+// Mirrors D3D12_DISPATCH_RAYS_DESC and VkTraceRaysIndirectCommand2KHR
+struct DispatchRaysIndirectArgs
+{
+	U64 m_rayGenShaderRecordAddress;
+	U64 m_rayGenShaderRecordSize;
+
+	U64 m_missShaderTableAddress;
+	U64 m_missShaderTableSize;
+	U64 m_missShaderTableStride;
+
+	U64 m_hitGroupTableAddress;
+	U64 m_hitGroupTableSize;
+	U64 m_hitGroupTableStride;
+
+	U64 m_callableShaderTableAddress;
+	U64 m_callableShaderTableSize;
+	U64 m_callableShaderTableStride;
+
+	U32 m_width;
+	U32 m_height;
+	U32 m_depth;
+	U32 m_padding; // The 64bit members make the D3D and VK structs 8 byte aligned
+};
+
 /// Mirrors VkGeometryInstanceFlagBitsKHR
 enum AccellerationStructureFlag : U32
 {

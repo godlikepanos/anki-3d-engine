@@ -234,7 +234,7 @@ public:
 	}
 
 	// Count bits.
-	U32 getSetBitCount() const
+	U32 countSetBits() const
 	{
 		U32 count = 0;
 		for(U i = 0; i < kChunkCount; ++i)

@@ -55,7 +55,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	{
 		const PtrSize alignedOffset = getAlignedRoundUp(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, asBuff.getOffset());
 		asBuff = asBuff.incrementOffset(alignedOffset - asBuff.getOffset());
-		ANKI_ASSERT(asBuff.getRange() <= asBufferSize);
+		ANKI_ASSERT(asBuff.getRange() >= asBufferSize);
 
 		m_asBuffer.reset(&asBuff.getBuffer());
 		m_asBufferOffset = asBuff.getOffset();
@@ -83,8 +83,11 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	}
 	else
 	{
-		m_tlas.m_instancesBuff.reset(&inf.m_topLevel.m_instancesBuffer.getBuffer());
-		m_tlas.m_instancesBuffOffset = inf.m_topLevel.m_instancesBuffer.getOffset();
+		if(inf.m_topLevel.m_instancesBuffer.isValid())
+		{
+			m_tlas.m_instancesBuff.reset(&inf.m_topLevel.m_instancesBuffer.getBuffer());
+			m_tlas.m_instancesBuffOffset = inf.m_topLevel.m_instancesBuffer.getOffset();
+		}
 		m_tlas.m_instanceCount = inf.m_topLevel.m_instanceCount;
 	}
 
@@ -117,7 +120,7 @@ void AccelerationStructureImpl::fillBuildInfo(BufferView scratchBuff, D3D12_BUIL
 		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
 		inputs.NumDescs = m_tlas.m_instanceCount;
 		inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-		inputs.InstanceDescs = m_tlas.m_instancesBuff->getGpuAddress() + m_tlas.m_instancesBuffOffset;
+		inputs.InstanceDescs = (m_tlas.m_instancesBuff) ? m_tlas.m_instancesBuff->getGpuAddress() + m_tlas.m_instancesBuffOffset : 0;
 	}
 }
 
@@ -137,7 +140,7 @@ D3D12_BARRIER_SYNC AccelerationStructureImpl::computeBarrierSync(AccelerationStr
 
 	if(!!(usage & (AccelerationStructureUsageBit::kAllSrv)))
 	{
-		out |= D3D12_BARRIER_SYNC_ALL_SHADING;
+		out |= D3D12_BARRIER_SYNC_ALL_SHADING | D3D12_BARRIER_SYNC_RAYTRACING;
 	}
 
 	return out;
@@ -202,8 +205,6 @@ void AccelerationStructureImpl::getMemoryRequirement(const AccelerationStructure
 		inputs.NumDescs = 1;
 		inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 		inputs.pGeometryDescs = &geomDesc;
-
-		getDevice().GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
 	}
 	else
 	{

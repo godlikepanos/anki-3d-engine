@@ -79,7 +79,7 @@ Error MyApp::userPostInit()
 
 		for(U32 i = 0; i < linkCount; ++i)
 		{
-			SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("monkey_chain%u", i).toCString());
+			SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().format("monkey_chain{}", i).toCString());
 
 			const MeshComponent& meshc = monkey->newComponent<MeshComponent>()->setMeshFilename("Assets/Suzanne_e3526e1428c0763c.ankimesh");
 			monkey->newComponent<MaterialComponent>()->setMaterialFilename("Assets/dynamic_f238b379a41079ff.ankimtl");

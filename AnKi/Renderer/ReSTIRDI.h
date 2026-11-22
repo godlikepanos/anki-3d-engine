@@ -49,6 +49,8 @@ private:
 	Array<RendererTexture, 2> m_reservoirTextures;
 	Bool m_texturesFirstImport = true;
 
+	ImageResourcePtr m_blueNoiseImg;
+
 	class
 	{
 	public:

@@ -397,7 +397,7 @@ float4 main(VertOut input) : SV_TARGET0
 		Second endTime;
 		ANKI_TEST_EXPECT_EQ(endTimestamp->getResult(endTime), TimestampQueryResult::kAvailable);
 
-		ANKI_TEST_LOGI("GPU time %f\n", endTime - min(startTime[0], startTime[1]));
+		ANKI_TEST_LOGI("GPU time {:f}\n", endTime - min(startTime[0], startTime[1]));
 	}
 
 	Input::freeSingleton();

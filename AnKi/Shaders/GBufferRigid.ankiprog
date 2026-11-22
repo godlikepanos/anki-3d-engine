@@ -29,6 +29,12 @@
 #define GBUFFER (ANKI_TECHNIQUE_GBufferLegacy)
 #define SHADOWS (ANKI_TECHNIQUE_ShadowsLegacy)
 
+#if ALPHA_TEST
+#	define EARLYZ
+#else
+#	define EARLYZ [earlydepthstencil]
+#endif
+
 #pragma anki struct AnKiLocalConstants
 
 #pragma anki member tex U32 m_diffuseTex 0
@@ -240,29 +246,31 @@ VertOut main(VertIn input)
 // ===========================================================================
 #if ANKI_PIXEL_SHADER
 
-#	define BINDLESS(x) getBindlessTexture2DVec4(x)
+#	if SHADOWS
+#		if TRIPLANAR_UV_MAPPING
+#			define SAMPLE_TEX(descIdx) sampleTexture2DGrad(descIdx, g_trilinearRepeatSampler, uv, ddx, ddy, randFactor, texBias)
+#		else
+#			define SAMPLE_TEX(descIdx) sampleTexture2D(descIdx, g_trilinearRepeatSampler, uv, randFactor, texBias)
+#		endif
+#	else
+#		if TRIPLANAR_UV_MAPPING
+#			define SAMPLE_TEX(descIdx) sampleTexture2DAnisoGrad(descIdx, g_trilinearRepeatSampler, uv, ddx, ddy, texAniso, randFactor, texBias)
+#		else
+#			define SAMPLE_TEX(descIdx) sampleTexture2DAniso(descIdx, g_trilinearRepeatSampler, uv, texAniso, randFactor, texBias)
+#		endif
+#	endif // SHADOWS
 
 #	if SHADOWS
-#		define SAMPLER g_trilinearRepeatSampler
+EARLYZ void main(VertOut vertOut)
 #	else
-#		define SAMPLER g_trilinearRepeatAnisoResolutionScalingBiasSampler
-#	endif
-
-#	if TRIPLANAR_UV_MAPPING
-#		define SAMPLE_TEX(bindlessIdx) BINDLESS(bindlessIdx).SampleGrad(SAMPLER, uv, ddx, ddy)
-#	else
-#		define SAMPLE_TEX(bindlessIdx) BINDLESS(bindlessIdx).Sample(SAMPLER, uv)
-#	endif
-
-#	if SHADOWS
-void main(VertOut vertOut)
-#	else
-GBufferPixelOut main(VertOut vertOut)
+EARLYZ GBufferPixelOut main(VertOut vertOut)
 #	endif
 {
 #	if CONST_OFFSET_DEF
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, vertOut.m_constantsOffset);
 #	endif
+
+	initImageStreaming(vertOut.m_svPosition);
 
 #	if GBUFFER || ALPHA_TEST
 	Vec2 uv;
@@ -307,6 +315,12 @@ GBufferPixelOut main(VertOut vertOut)
 	uv = vertOut.m_uv;
 #		endif
 #	endif // GBUFFER || ALPHA_TEST
+
+	const F32 texBias = g_globalConstants.m_textureBias;
+	const F32 texAniso = g_globalConstants.m_textureAnisotropy;
+
+	WhiteNoiseRandomGenerator randg = createWhiteNoiseRandomGenerator(vertOut.m_svPosition.xy, g_globalRendererConstants.m_frame);
+	const F32 randFactor = rand(randg);
 
 	// Diffuse
 #	if GBUFFER || ALPHA_TEST
@@ -388,8 +402,7 @@ GBufferPixelOut main(VertOut vertOut)
 
 ANKI_SHADER_RECORD_CONSTANTS(GpuScenePerDraw, g_record)
 
-#	define SAMPLE_TEX(bindlessIdx) \
-		getBindlessTextureNonUniformIndex2DVec4(bindlessIdx).SampleLevel(g_trilinearRepeatSampler, uv, payload.m_textureLod)
+#	define SAMPLE_TEX(bindlessIdx) sampleTexture2DLod(SBUFF(g_imageDescriptors, bindlessIdx), g_trilinearRepeatSampler, uv, payload.m_textureLod)
 
 [shader("closesthit")] void main(inout RtMaterialFetchRayPayload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
 {

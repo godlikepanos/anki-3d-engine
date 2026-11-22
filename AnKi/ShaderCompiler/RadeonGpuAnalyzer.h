@@ -22,7 +22,7 @@ public:
 
 	String toString() const
 	{
-		return String().sprintf("VGPRs %u SGPRs %u ISA size %u", m_vgprCount, m_sgprCount, m_isaSize);
+		return String().format("VGPRs {} SGPRs {} ISA size {}", m_vgprCount, m_sgprCount, m_isaSize);
 	}
 };
 

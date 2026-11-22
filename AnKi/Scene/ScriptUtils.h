@@ -6,11 +6,11 @@
 #pragma once
 
 #include <AnKi/Scene/Common.h>
+#include <AnKi/Script/ScriptEnvironment.h>
 #include <AnKi/Util/DynamicBitSet.h>
 
 namespace anki {
 
-class ScriptEnvironment;
 class ScriptVariables;
 class SceneSerializer;
 

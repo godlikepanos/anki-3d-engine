@@ -17,6 +17,7 @@
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/GpuMemory/CopyEngine.h>
+#include <AnKi/Shaders/ImageStreaming.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -48,10 +49,12 @@
 #include <AnKi/Renderer/RtMaterialFetchDbg.h>
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/HistoryLength.h>
 #include <AnKi/Renderer/GpuParticles.h>
 #include <AnKi/Renderer/ScreenshotPass.h>
 #include <AnKi/Renderer/ReSTIRDI.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -60,12 +63,12 @@
 
 namespace anki {
 
-ANKI_SVAR(PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
-ANKI_SVAR(RendererCpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RenderGraphMemoryPoolCapacity, StatCategory::kGpuMem, "RenderGraph mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RenderGraphMemoryPoolUsedMemory, StatCategory::kGpuMem, "RenderGraph mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RendererMemoryPoolCapacity, StatCategory::kGpuMem, "Renderer mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
-ANKI_SVAR(RendererMemoryPoolUsedMemory, StatCategory::kGpuMem, "Renderer mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, PrimitivesDrawn, StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Render, CpuTime, StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GraphMemoryPoolCapacity, StatCategory::kGpuMem, "RenderGraph mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GraphMemoryPoolUsedMemory, StatCategory::kGpuMem, "RenderGraph mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, MemoryPoolCapacity, StatCategory::kGpuMem, "Renderer mem pool total size", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, MemoryPoolUsedMemory, StatCategory::kGpuMem, "Renderer mem in use", StatFlag::kBytes | StatFlag::kMainThreadUpdates)
 
 constexpr Array<PtrSize, 7> kGpuMemoryPoolClasses = {1_MB, 4_MB, 8_MB, 16_MB, 32_MB, 128_MB, 288_MB};
 
@@ -177,7 +180,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_postProcessResolution = setResolution(m_swapchainResolution, g_cvarRenderRenderScaling);
 	m_internalResolution = setResolution(m_postProcessResolution, g_cvarRenderInternalRenderScaling);
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Resolutions: Internal %ux%u, post-process %ux%u, swapchain %ux%u", m_internalResolution.x,
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolutions: Internal {}x{}, post-process {}x{}, swapchain {}x{}", m_internalResolution.x,
 				m_internalResolution.y, m_postProcessResolution.x, m_postProcessResolution.y, m_swapchainResolution.x, m_swapchainResolution.y);
 
 	if(g_cvarCoreMeshletRendering && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
@@ -260,6 +263,13 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
 
+	m_mainViewTextureBias = log2(F32(m_internalResolution.x) / F32(m_postProcessResolution.x));
+	if(getTemporalUpscaler().getEnabled())
+	{
+		// DLSS wants more bias
+		m_mainViewTextureBias -= 1.0f;
+	}
+
 	// Init samplers
 	{
 		SamplerInitInfo sinit("NearestNearestClamp");
@@ -294,17 +304,6 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 			sinit.m_anisotropyLevel = g_cvarRenderTextureAnisotropy;
 			m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 		}
-
-		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
-		F32 scalingMipBias = log2(F32(m_internalResolution.x) / F32(m_postProcessResolution.x));
-		if(getTemporalUpscaler().getEnabled())
-		{
-			// DLSS wants more bias
-			scalingMipBias -= 1.0f;
-		}
-
-		sinit.m_lodBias = scalingMipBias;
-		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = GrManager::getSingleton().newSampler(sinit);
 
 		sinit = {};
 		sinit.setName("TrilinearClampShadow");
@@ -349,6 +348,7 @@ Error Renderer::populateRenderGraph()
 	{
 		m_accelerationStructureBuilder->populateRenderGraph();
 	}
+	m_imageStreaming->populateRenderGraphPreRendering();
 	m_gbuffer->populateRenderGraph();
 	m_gpuParticles->populateRenderGraph();
 	m_motionVectors->populateRenderGraph();
@@ -365,6 +365,10 @@ Error Renderer::populateRenderGraph()
 	if(m_indirectDiffuseClipmaps)
 	{
 		m_indirectDiffuseClipmaps->populateRenderGraph();
+	}
+	if(m_indirectDiffuse)
+	{
+		m_indirectDiffuse->populateRenderGraph();
 	}
 	m_probeReflections->populateRenderGraph();
 	m_volumetricLightingAccumulation->populateRenderGraph();
@@ -383,6 +387,7 @@ Error Renderer::populateRenderGraph()
 		m_reSTIRDI->populateRenderGraph();
 	}
 	m_lightShading->populateRenderGraph();
+	m_imageStreaming->populateRenderGraphPostRendering();
 	if(getTemporalUpscaler().getEnabled())
 	{
 		m_temporalUpscaler->populateRenderGraph();
@@ -495,6 +500,15 @@ void Renderer::writeGlobalRendererConstants(GlobalRendererConstants& outConsts)
 		memcpy(&consts.m_localLightsGrid, &m_accelerationStructureBuilder->getLocalLightsGridConstants(), sizeof(consts.m_localLightsGrid));
 	}
 
+	// Image streaming feedback
+	{
+		Vec2 jitter = generateJitter(m_frameCount % 128);
+		jitter += 0.5; // To [0, 1]
+		jitter *= F32(kImageStreamingTileSize - 1);
+		consts.m_imageStreamingFeedbackPixelX = U32(jitter.x);
+		consts.m_imageStreamingFeedbackPixelY = U32(jitter.y);
+	}
+
 	outConsts = consts;
 }
 
@@ -565,7 +579,7 @@ RendererTexture Renderer::createAndClearRenderTarget(const TextureInitInfo& inf,
 	else
 	{
 		// Too big, prefer a dedicated allocation
-		ANKI_R_LOGV("Will force a dedicated allocation for RT: %s", inf.getName().cstr());
+		ANKI_R_LOGV("Will force a dedicated allocation for RT: {}", inf.getName());
 		m_dedicatedAllocationSize += memReq;
 	}
 
@@ -716,7 +730,7 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 }
 
 Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
-										   DebugRenderTargetDrawStyle& drawStyle)
+										   DebugRenderTargetDrawStyle& drawStyle, Vec4& colorScale)
 {
 	handles = {};
 	drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
@@ -758,17 +772,19 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRe
 			drawStyle = DebugRenderTargetDrawStyle::kPassthrough;
 		}
 
+		colorScale = m_debugRtColorScale;
+
 		return true;
 	}
 	else
 	{
-		ANKI_R_LOGE("Debug rendertarget doesn't exist: %s", m_currentDebugRtName.cstr());
+		ANKI_R_LOGE("Debug rendertarget doesn't exist: {}", m_currentDebugRtName);
 		m_currentDebugRtName = {};
 		return false;
 	}
 }
 
-void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping)
+void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping, Vec4 colorScale)
 {
 	m_currentDebugRtName.destroy();
 
@@ -778,6 +794,7 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName, Bool disableTonemappi
 	}
 
 	m_disableDebugRtTonemapping = disableTonemapping;
+	m_debugRtColorScale = colorScale;
 }
 
 Format Renderer::getHdrFormat() const
@@ -852,7 +869,7 @@ void Renderer::updatePipelineStats()
 
 		if(queriesCompleted)
 		{
-			g_svarPrimitivesDrawn.set(sum);
+			g_svarRenderPrimitivesDrawn.set(sum);
 			m_pipelineQueries.erase(m_pipelineQueries.getBegin());
 		}
 	}
@@ -1011,11 +1028,11 @@ Error Renderer::render(FencePtr& fence, Second prevTime, Second crntTime)
 	// Stats
 	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
 	{
-		g_svarRendererCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+		g_svarRenderCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
-		g_svarRendererGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
+		g_svarRenderGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
 		g_svarRenderGraphMemoryPoolCapacity.set(rgraphStats.m_gpuMemoryPoolCapacity);
 		g_svarRenderGraphMemoryPoolUsedMemory.set(rgraphStats.m_gpuMemoryUsed);
 
@@ -1028,8 +1045,8 @@ Error Renderer::render(FencePtr& fence, Second prevTime, Second crntTime)
 		PtrSize allocatedSize;
 		PtrSize memoryCapacity;
 		m_gpuMemPool.getStats(allocatedSize, memoryCapacity);
-		g_svarRendererMemoryPoolCapacity.set(memoryCapacity + m_dedicatedAllocationSize);
-		g_svarRendererMemoryPoolUsedMemory.set(allocatedSize + m_dedicatedAllocationSize);
+		g_svarRenderMemoryPoolCapacity.set(memoryCapacity + m_dedicatedAllocationSize);
+		g_svarRenderMemoryPoolUsedMemory.set(allocatedSize + m_dedicatedAllocationSize);
 	}
 
 	return Error::kNone;

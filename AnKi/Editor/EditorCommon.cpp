@@ -49,7 +49,7 @@ Bool EditorUiBase::textEditorWindow(CString windowTitle, Bool* pOpen, ImFont* te
 	ImGui::SetNextWindowSize(windowSize, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowPos(Vec2(ImGui::GetMainViewport()->WorkSize) / 2.0f - windowSize / 2.0f, ImGuiCond_FirstUseEver);
 
-	const String title = String().sprintf("Text Editor: %s", windowTitle.cstr());
+	const String title = String().format("Text Editor: {}", windowTitle);
 	if(ImGui::Begin(title.cstr(), pOpen))
 	{
 		if(ImGui::Button(ICON_MDI_CONTENT_SAVE " Save"))

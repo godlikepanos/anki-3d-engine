@@ -7,16 +7,18 @@
 
 using namespace anki;
 
-static const char* kUsage = R"(Usage: %s in_file out_dir [options]
+static constexpr const char* kUsage = R"(Usage: {} in_file out_dir [options]
 Options:
 -rpath <string>            : Replace all absolute paths of assets with that path
 -texrpath <string>         : Same as rpath but for textures
 -optimize-meshes <0|1>     : Optimize meshes. Default is 1
 -optimize-animations <0|1> : Optimize animations. Default is 1
+-bake-skin-scale <0|1>     : Move the scale of skinned mesh nodes into their skeleton and animations. Default is 0
 -j <thread_count>          : Number of threads. Defaults to system's max
 -lod-count <1|2|3>         : The number of geometry LODs to generate. Default is 1
 -lod-factor <float>        : The decimate factor for each LOD. Default 0.25
 -import-textures <0|1>     : Import textures. Default is 0
+-max-image-dimension <num> : Max image dimension. Default is max U32
 -v                         : Enable verbose log
 )";
 
@@ -29,10 +31,12 @@ public:
 	String m_texRpath;
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
+	Bool m_bakeSkinScale = false;
 	Bool m_importTextures = false;
 	U32 m_threadCount = kMaxU32;
 	U32 m_lodCount = 1;
 	F32 m_lodFactor = 0.25f;
+	U32 m_maxImageDimension = kMaxU32;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -47,7 +51,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 	}
 
 	info.m_inputFname = argv[1];
-	info.m_outDir.sprintf("%s/", argv[2]);
+	info.m_outDir.format("{}/", argv[2]);
 
 	for(I i = 3; i < argc; i++)
 	{
@@ -60,7 +64,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				if(std::strlen(argv[i]) > 0)
 				{
-					info.m_texRpath.sprintf("%s/", argv[i]);
+					info.m_texRpath.format("{}/", argv[i]);
 				}
 				else
 				{
@@ -85,7 +89,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				if(std::strlen(argv[i]) > 0)
 				{
-					info.m_rpath.sprintf("%s/", argv[i]);
+					info.m_rpath.format("{}/", argv[i]);
 				}
 				else
 				{
@@ -168,6 +172,21 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::kUserData;
 			}
 		}
+		else if(strcmp(argv[i], "-bake-skin-scale") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				I bake = 0;
+				ANKI_CHECK(CString(argv[i]).toNumber(bake));
+				info.m_bakeSkinScale = bake != 0;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
+		}
 		else if(strcmp(argv[i], "-import-textures") == 0)
 		{
 			++i;
@@ -177,6 +196,19 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				I val = 1;
 				ANKI_CHECK(CString(argv[i]).toNumber(val));
 				info.m_importTextures = val != 0;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
+		}
+		else if(strcmp(argv[i], "-max-image-dimension") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				ANKI_CHECK(CString(argv[i]).toNumber(info.m_maxImageDimension));
 			}
 			else
 			{
@@ -250,11 +282,13 @@ int myMain(int argc, char** argv)
 	initInfo.m_texrpath = cmdArgs.m_texRpath;
 	initInfo.m_optimizeMeshes = cmdArgs.m_optimizeMeshes;
 	initInfo.m_optimizeAnimations = cmdArgs.m_optimizeAnimations;
+	initInfo.m_bakeSkinScale = cmdArgs.m_bakeSkinScale;
 	initInfo.m_lodFactor = cmdArgs.m_lodFactor;
 	initInfo.m_lodCount = cmdArgs.m_lodCount;
 	initInfo.m_threadCount = cmdArgs.m_threadCount;
 	initInfo.m_comment = comment;
 	initInfo.m_importTextures = cmdArgs.m_importTextures;
+	initInfo.m_maxImageDimension = cmdArgs.m_maxImageDimension;
 
 	GltfImporter importer;
 	if(importer.init(initInfo))
@@ -267,7 +301,7 @@ int myMain(int argc, char** argv)
 		return 1;
 	}
 
-	ANKI_IMPORTER_LOGI("File written: %s", cmdArgs.m_inputFname.cstr());
+	ANKI_IMPORTER_LOGI("File written: {}", cmdArgs.m_inputFname);
 
 	return 0;
 }

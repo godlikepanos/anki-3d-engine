@@ -28,7 +28,7 @@ inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<CStri
 #endif
 	if(err)
 	{
-		ANKI_TEST_LOGE("Compile error:\n%s", errorLog.cstr());
+		ANKI_TEST_LOGE("Compile error:\n{}", errorLog);
 	}
 	ANKI_TEST_EXPECT_NO_ERR(err);
 
@@ -40,7 +40,7 @@ inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<CStri
 #endif
 	if(err)
 	{
-		ANKI_TEST_LOGE("Reflection error:\n%s", errorLog.cstr());
+		ANKI_TEST_LOGE("Reflection error:\n{}", errorLog);
 	}
 	ANKI_TEST_EXPECT_NO_ERR(err);
 
@@ -282,6 +282,132 @@ inline void validateBuffer2(BufferPtr buff, T value)
 {
 	const Array<T, 1> arr = {value};
 	validateBuffer(buff, ConstWeakArray(arr));
+}
+
+class TextureReadback
+{
+public:
+	BufferPtr m_buffer; // Read it with readBuffer() once the cmdb is done
+	ShaderProgramPtr m_prog; // Keep it alive until the cmdb is submitted
+};
+
+// Record a copy of all texels of a 2D texture (row major) into a buffer. The texture needs to be in kSrvCompute usage. T is what the shader
+// loads, eg Vec4 for UNORM formats
+template<typename T>
+inline TextureReadback recordTextureReadback(CommandBuffer& cmdb, Texture& tex)
+{
+	CString hlslType;
+	if constexpr(std::is_same_v<T, Vec4>)
+	{
+		hlslType = "float4";
+	}
+	else if constexpr(std::is_same_v<T, UVec4>)
+	{
+		hlslType = "uint4";
+	}
+	else if constexpr(std::is_same_v<T, IVec4>)
+	{
+		hlslType = "int4";
+	}
+	else if constexpr(std::is_same_v<T, Vec2>)
+	{
+		hlslType = "float2";
+	}
+	else if constexpr(std::is_same_v<T, UVec2>)
+	{
+		hlslType = "uint2";
+	}
+	else if constexpr(std::is_same_v<T, IVec2>)
+	{
+		hlslType = "int2";
+	}
+	else if constexpr(std::is_same_v<T, F32>)
+	{
+		hlslType = "float";
+	}
+	else if constexpr(std::is_same_v<T, U32>)
+	{
+		hlslType = "uint";
+	}
+	else if constexpr(std::is_same_v<T, I32>)
+	{
+		hlslType = "int";
+	}
+	else
+	{
+		static_assert(!sizeof(T), "Unsupported type");
+	}
+
+	constexpr const Char* kSrc = R"(
+Texture2D<TEXEL_TYPE> g_tex : register(t0);
+RWStructuredBuffer<TEXEL_TYPE> g_buff : register(u0);
+
+[numthreads(8, 8, 1)]
+void main(uint2 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	uint2 size;
+	g_tex.GetDimensions(size.x, size.y);
+	if(any(svDispatchThreadId >= size))
+	{
+		return;
+	}
+
+	g_buff[svDispatchThreadId.y * size.x + svDispatchThreadId.x] = g_tex.Load(int3(svDispatchThreadId, 0));
+})";
+
+	String src;
+	src.format("#define TEXEL_TYPE {}\n{}", hlslType, kSrc);
+	ShaderProgramPtr prog = createComputeProg(src);
+
+	const U32 texelCount = tex.getWidth() * tex.getHeight();
+	T zero;
+	if constexpr(std::is_arithmetic_v<T>)
+	{
+		zero = T(0);
+	}
+	else
+	{
+		zero = T(typename T::Scalar(0));
+	}
+	BufferPtr buff = createBuffer(BufferUsageBit::kAllUav, zero, texelCount, "TextureReadback");
+
+	cmdb.bindShaderProgram(prog.get());
+	cmdb.bindSrv(0, 0, TextureView(&tex, TextureSubresourceDesc::firstSurface()));
+	cmdb.bindUav(0, 0, BufferView(buff.get()));
+	cmdb.dispatchCompute((tex.getWidth() + 7) / 8, (tex.getHeight() + 7) / 8, 1);
+
+	return {buff, prog};
+}
+
+// Read back all texels of a 2D texture (row major). The texture needs to be in kSrvCompute usage
+template<typename T>
+inline void readTexture2d(TexturePtr tex, DynamicArray<T>& out)
+{
+	CommandBufferInitInfo cmdbInit;
+	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+	const TextureReadback readback = recordTextureReadback<T>(*cmdb, *tex);
+	cmdb->endRecording();
+
+	FencePtr fence;
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+	fence->clientWait(kMaxSecond);
+
+	readBuffer<T>(readback.m_buffer, out);
+}
+
+// Check that all texels of a texture are equal to a value. The texture needs to be in kSrvCompute usage
+template<typename T>
+inline void validateTexture2d(TexturePtr tex, T value)
+{
+	DynamicArray<T> texels;
+	readTexture2d<T>(tex, texels);
+
+	for(U32 i = 0; i < texels.getSize(); ++i)
+	{
+		ANKI_TEST_EXPECT_EQ(texels[i], value);
+	}
 }
 
 } // end namespace anki

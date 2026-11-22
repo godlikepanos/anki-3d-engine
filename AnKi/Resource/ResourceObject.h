@@ -39,9 +39,9 @@ public:
 
 	virtual ~ResourceObject() = default;
 
-	void retain() const
+	I32 retain() const
 	{
-		m_refcount.fetchAdd(1);
+		return m_refcount.fetchAdd(1) + 1;
 	}
 
 	void release();

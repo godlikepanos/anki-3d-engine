@@ -8,7 +8,8 @@
 #include <AnKi/Editor/EditorCommon.h>
 #include <AnKi/Editor/ParticleEditorUi.h>
 #include <AnKi/Editor/MaterialEditorUi.h>
-#include <AnKi/Editor/ImageViewerUi.h>
+#include <AnKi/Editor/TextureViewerUi.h>
+#include <AnKi/Editor/SkeletonEditorUi.h>
 
 namespace anki {
 
@@ -63,7 +64,8 @@ private:
 
 	ParticleEditorUi m_particleEditorWindow;
 	MaterialEditorUi m_materialEditorWindow;
-	ImageViewerUi m_imageViewerWindow;
+	TextureViewerUi m_texViewerWindow;
+	SkeletonEditorUi m_skeletonEditorWindow;
 
 	class
 	{

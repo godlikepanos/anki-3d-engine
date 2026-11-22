@@ -8,7 +8,7 @@
 using namespace anki;
 
 static constexpr const char* kUsage = R"(Compile an AnKi shader program
-Usage: %s [options] input_shader_program_file
+Usage: {} [options] input_shader_program_file
 Options:
 -o <name of output>  : The name of the output binary
 -j <thread count>    : Number of threads. Defaults to system's max
@@ -53,7 +53,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				if(std::strlen(argv[i]) > 0)
 				{
-					info.m_outFname.sprintf("%s", argv[i]);
+					info.m_outFname = argv[i];
 				}
 				else
 				{
@@ -86,7 +86,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				if(std::strlen(argv[i]) > 0)
 				{
-					info.m_includePath.sprintf("%s", argv[i]);
+					info.m_includePath = argv[i];
 				}
 				else
 				{
@@ -191,11 +191,11 @@ static Error work(const CmdLineArgs& info)
 			// The first file is the input file. Don't append the include path to it
 			if(m_fileReadCount == 0)
 			{
-				fname.sprintf("%s", filename.cstr());
+				fname = filename;
 			}
 			else
 			{
-				fname.sprintf("%s/%s", m_includePath.cstr(), filename.cstr());
+				fname.format("{}/{}", m_includePath, filename);
 			}
 			++m_fileReadCount;
 
@@ -210,7 +210,7 @@ static Error work(const CmdLineArgs& info)
 			const Error err = readAllTextInternal(filename, txt);
 			if(err)
 			{
-				ANKI_LOGE("Failed to read file: %s", filename.cstr());
+				ANKI_LOGE("Failed to read file: {}", filename);
 			}
 
 			return err;

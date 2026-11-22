@@ -39,7 +39,7 @@ ANKI_CVAR(NumericCVar<F32>, Render, Lod0MaxDistance, 20.0f, 1.0f, kMaxF32, "Dist
 ANKI_CVAR(NumericCVar<F32>, Render, Lod1MaxDistance, 40.0f, 2.0f, kMaxF32, "Distance that will be used to calculate the LOD 1")
 ANKI_CVAR(StringCVar, Render, DebugRt, "", "Set the current debug render target")
 
-ANKI_SVAR(RendererGpuTime, StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, GpuTime, StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates)
 
 // Renderer statistics.
 class RendererPrecreatedSamplers
@@ -50,7 +50,6 @@ public:
 	SamplerPtr m_trilinearClamp;
 	SamplerPtr m_trilinearRepeat;
 	SamplerPtr m_trilinearRepeatAniso;
-	SamplerPtr m_trilinearRepeatAnisoResolutionScalingBias;
 	SamplerPtr m_trilinearClampShadow;
 };
 
@@ -175,7 +174,7 @@ public:
 	void registerDebugRenderTarget(RendererObject* obj, CString rtName);
 
 	// Set the render target you want to show.
-	void setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping = false);
+	void setCurrentDebugRenderTarget(CString rtName, Bool disableTonemapping = false, Vec4 colorScale = Vec4(1.0f));
 
 	// Get the render target currently showing.
 	CString getCurrentDebugRenderTarget() const
@@ -185,7 +184,7 @@ public:
 
 	// Need to call it after the handle is set by the RenderGraph.
 	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, U32(DebugRenderTargetRegister::kCount)>& handles,
-									 DebugRenderTargetDrawStyle& drawStyle);
+									 DebugRenderTargetDrawStyle& drawStyle, Vec4& colorStalce);
 
 	StackMemoryPool& getFrameMemoryPool()
 	{
@@ -223,6 +222,11 @@ public:
 	{
 		ANKI_ASSERT(m_runCtx.m_currentCtx);
 		return *m_runCtx.m_currentCtx;
+	}
+
+	ANKI_INTERNAL F32 getMainViewTextureBias() const
+	{
+		return m_mainViewTextureBias;
 	}
 
 private:
@@ -269,6 +273,7 @@ private:
 	RendererDynamicArray<DebugRtInfo> m_debugRts;
 	RendererString m_currentDebugRtName;
 	Bool m_disableDebugRtTonemapping = false;
+	Vec4 m_debugRtColorScale = Vec4(1.0f);
 
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;
@@ -277,6 +282,8 @@ private:
 	ShaderProgramPtr m_fillBufferGrProg;
 
 	RenderGraphPtr m_rgraph;
+
+	F32 m_mainViewTextureBias = 0.0;
 
 	class
 	{

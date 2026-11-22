@@ -40,7 +40,7 @@ public:
 private:
 	ScriptResourcePtr m_scriptRsrc;
 
-	ScriptEnvironment m_env;
+	ScriptEnvironmentPtr m_env;
 
 	ScriptVariables m_vars;
 

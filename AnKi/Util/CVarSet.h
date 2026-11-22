@@ -53,6 +53,11 @@ public:
 
 	virtual void toString(WeakArray<Char> str) = 0;
 
+	CString getDescription() const
+	{
+		return m_descr;
+	}
+
 protected:
 	CString m_name;
 	CString m_descr;
@@ -129,7 +134,7 @@ public:
 
 		if(!ok)
 		{
-			ANKI_UTIL_LOGW("Wrong value set for config var: %s", m_name.cstr());
+			ANKI_UTIL_LOGW("Wrong value set for config var: {}", m_name);
 		}
 
 		return *this;
@@ -138,6 +143,16 @@ public:
 	operator TNumber() const
 	{
 		return m_value;
+	}
+
+	TNumber getMin() const
+	{
+		return m_min;
+	}
+
+	TNumber getMax() const
+	{
+		return m_max;
 	}
 
 private:

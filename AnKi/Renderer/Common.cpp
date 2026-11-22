@@ -120,7 +120,7 @@ void RendererShaderProgram::refresh()
 	{
 		const RendererString filepath = m_resource->getFilename();
 
-		ANKI_R_LOGI("Will refresh shader from: %s", filepath.cstr());
+		ANKI_R_LOGI("Will refresh shader from: {}", filepath);
 
 		RendererDynamicArray<SubMutation> mutation;
 		RendererDynamicArray<RendererString> mutatorNames;

@@ -138,7 +138,7 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 				{
 					if(abinding != bbinding)
 					{
-						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Space %u binding %u", space, binding);
+						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Space {} binding {}", space, binding);
 						return Error::kFunctionFailed;
 					}
 					bindingFoundOnA = true;
@@ -195,13 +195,13 @@ StringList ShaderReflectionDescriptorRelated::toString() const
 	{
 		for(U32 i = 0; i < m_bindingCounts[s]; ++i)
 		{
-			list.pushBackSprintf("space: %u, register: %u, type: %u", s, m_bindings[s][i].m_registerBindingPoint, U32(m_bindings[s][i].m_type));
+			list.pushBackFormat("space: {}, register: {}, type: {}", s, m_bindings[s][i].m_registerBindingPoint, U32(m_bindings[s][i].m_type));
 		}
 	}
 
-	list.pushBackSprintf("Fast constants: %u", m_fastConstantsSize);
-	list.pushBackSprintf("Has VK bindless sets: %u", m_hasVkBindlessDescriptorSet);
-	list.pushBackSprintf("Has D3D DrawID: %u", m_d3dHasDrawId);
+	list.pushBackFormat("Fast constants: {}", m_fastConstantsSize);
+	list.pushBackFormat("Has VK bindless sets: {}", U32(m_hasVkBindlessDescriptorSet));
+	list.pushBackFormat("Has D3D DrawID: {}", U32(m_d3dHasDrawId));
 
 	return list;
 }
@@ -212,11 +212,11 @@ StringList ShaderReflection::toString() const
 
 	for(VertexAttributeSemantic attrib : EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(m_vertex.m_vertexAttributeMask))
 	{
-		list.pushBackSprintf("Vert attrib: %s", g_vertexAttributeSemanticNames[attrib].cstr());
+		list.pushBackFormat("Vert attrib: {}", g_vertexAttributeSemanticNames[attrib]);
 	}
 
-	list.pushBackSprintf("Color RT mask: %u", m_pixel.m_colorRenderTargetWritemask.getData()[0]);
-	list.pushBackSprintf("Discards: %u", m_pixel.m_discards);
+	list.pushBackFormat("Color RT mask: {}", m_pixel.m_colorRenderTargetWritemask.getData()[0]);
+	list.pushBackFormat("Discards: {}", U32(m_pixel.m_discards));
 
 	return list;
 }

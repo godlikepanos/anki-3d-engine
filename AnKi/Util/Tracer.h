@@ -90,7 +90,7 @@ public:
 
 	void setEnabled(Bool enabled)
 	{
-		ANKI_UTIL_LOGI("Tracing %s", (enabled) ? "enabled" : "disabled");
+		ANKI_UTIL_LOGI("Tracing {}", (enabled) ? "enabled" : "disabled");
 		m_enabled = enabled;
 	}
 
@@ -102,7 +102,7 @@ public:
 
 	void setStreamlineEnabled(Bool enabled)
 	{
-		ANKI_UTIL_LOGI("Streamline annotations %s", (enabled) ? "enabled" : "disabled");
+		ANKI_UTIL_LOGI("Streamline annotations {}", (enabled) ? "enabled" : "disabled");
 		m_streamlineEnabled = enabled;
 	}
 #	endif
@@ -115,7 +115,7 @@ public:
 
 	void setPixEnabled(Bool enabled)
 	{
-		ANKI_UTIL_LOGI("PIX CPU annotations %s", (enabled) ? "enabled" : "disabled");
+		ANKI_UTIL_LOGI("PIX CPU annotations {}", (enabled) ? "enabled" : "disabled");
 		m_pixEnabled = enabled;
 	}
 #	endif

@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
-#include <AnKi/Util/Process.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/System.h>
 #include <regex>
 
 namespace anki {
@@ -78,11 +78,11 @@ static CString hwUnitToStr(MaliOfflineCompilerHwUnit u)
 String MaliOfflineCompilerOut::toString() const
 {
 	String str;
-	str.sprintf("Regs %u Spilling %u "
-				"FMA %f CVT %f SFU %f LS %f VAR %f TEX %f Bound %s "
-				"FP16 %f%%",
-				m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture, hwUnitToStr(m_boundUnit).cstr(),
-				m_fp16ArithmeticPercentage);
+	str.format("Regs {} Spilling {} "
+			   "FMA {} CVT {} SFU {} LS {} VAR {} TEX {} Bound {} "
+			   "FP16 {}%",
+			   m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture, hwUnitToStr(m_boundUnit),
+			   m_fp16ArithmeticPercentage);
 	return str;
 }
 
@@ -93,13 +93,13 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 	// The counter alone only makes the filename unique within this process and the temp dir is shared by every process on the machine. Keep the two
 	// as separate components, adding them together makes different processes collide
 	String fileId;
-	fileId.sprintf("%u_%u", getCurrentProcessId(), g_nextFileId.fetchAdd(1));
+	fileId.format("{}_{}", getCurrentProcessId(), g_nextFileId.fetchAdd(1));
 
 	// Create temp file to dump the spirv
 	String tmpDir;
 	ANKI_CHECK(getTempDirectory(tmpDir));
 	String spirvFilename;
-	spirvFilename.sprintf("%s/AnKiMaliocInputSpirv_%s.spv", tmpDir.cstr(), fileId.cstr());
+	spirvFilename.format("{}/AnKiMaliocInputSpirv_{}.spv", tmpDir, fileId);
 
 	File spirvFile;
 	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
@@ -110,7 +110,7 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 
 	// Tmp filename
 	String analysisFilename;
-	analysisFilename.sprintf("%s/AnKiMaliocOut_%s.txt", tmpDir.cstr(), fileId.cstr());
+	analysisFilename.format("{}/AnKiMaliocOut_{}.txt", tmpDir, fileId);
 
 	// Set the arguments
 	Array<CString, 6> args;
@@ -159,10 +159,10 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 	CString maliocExecutable = "nothing";
 	ANKI_ASSERT(0);
 #endif
-	ANKI_CHECK(Process::callProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
+	ANKI_CHECK(invokeProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
 	if(exitCode != 0)
 	{
-		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
+		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code {}", exitCode);
 		return Error::kFunctionFailed;
 	}
 

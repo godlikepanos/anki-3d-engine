@@ -176,8 +176,8 @@ static void fuzzyTest()
 	{
 		const Second end = HighRezTimer::getCurrentTime();
 		const Second dt = end - start;
-		ANKI_TEST_LOGI("Operations/sec %f. Avg external fragmentation %f. Max external fragmentation %f", F64(kIterationCount) / dt, avgFragmentation,
-					   maxFragmetation);
+		ANKI_TEST_LOGI("Operations/sec {:f}. Avg external fragmentation {:f}. Max external fragmentation {:f}", F64(kIterationCount) / dt,
+					   avgFragmentation, maxFragmetation);
 	}
 }
 

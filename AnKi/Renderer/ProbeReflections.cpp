@@ -15,6 +15,7 @@
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
+#include <AnKi/Renderer/ImageStreaming.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
@@ -28,7 +29,7 @@
 
 namespace anki {
 
-ANKI_SVAR(ProbeReflectionCount, StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates)
+ANKI_SVAR(Render, ProbeReflectionCount, StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates)
 
 // 32-bit radical inverse (Van der Corput), matching Unreal's ReverseBits.
 static U32 reverseBits32(U32 b)
@@ -56,7 +57,7 @@ Error ProbeReflections::initIntegrationLut()
 	texInit.m_width = kWidth;
 	texInit.m_height = kHeight;
 	texInit.m_format = Format::kR16G16_Unorm;
-	texInit.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kCopyDestination;
+	texInit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kCopyDestination;
 	const PtrSize memReq = GrManager::getSingleton().getTextureMemoryRequirement(texInit);
 	m_integrationLut.m_allocation = getRenderer().getRendedererGpuMemoryPool().allocate(memReq, 1);
 	texInit.m_memoryBuffer = m_integrationLut.m_allocation;
@@ -130,7 +131,8 @@ Error ProbeReflections::initIntegrationLut()
 		memcpy(mappedMem.getBegin(), data.getBegin(), data.getSizeInBytes());
 	}
 
-	const TextureBarrierInfo toSrv = {view, TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvPixel};
+	const TextureBarrierInfo toSrv = {view, TextureUsageBit::kCopyDestination,
+									  m_integrationLut->getTextureUsage() & TextureUsageBit::kAllAsyncCompute & TextureUsageBit::kAllSrv};
 	CopyEngine::getSingleton().setPipelineBarrier({&toSrv, 1}, {}, {});
 
 	FencePtr fence;
@@ -160,7 +162,7 @@ Error ProbeReflections::init()
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			texinit.m_type = TextureType::kCube;
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("CubeRefl GBuff Col #%u", i));
+			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().format("CubeRefl GBuff Col #{}", i));
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
@@ -220,7 +222,7 @@ void ProbeReflections::populateRenderGraph()
 		return;
 	}
 
-	g_svarProbeReflectionCount.increment(1);
+	g_svarRenderProbeReflectionCount.increment(1);
 	probeToRefresh->setEnvironmentTextureAsRefreshed();
 
 	RenderGraphBuilder& rgraph = getRenderingContext().m_renderGraphDescr;
@@ -293,6 +295,11 @@ void ProbeReflections::populateRenderGraph()
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllRtvDsv, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
+
 			pass.setWork(
 				[this, visOut, viewProjMat = frustum.getViewProjectionMatrix(), viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
@@ -356,6 +363,11 @@ void ProbeReflections::populateRenderGraph()
 
 			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllRtvDsv, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
+
+#define ANKI_FORWARD_SHADING 0
+#define ANKI_DEPENDENCIES 1
+#define ANKI_RASTER_PATH 1
+#include <AnKi/Shaders/MaterialBindings.def.h>
 
 			pass.setWork([this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);

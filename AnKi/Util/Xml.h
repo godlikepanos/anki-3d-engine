@@ -178,7 +178,7 @@ private:
 	{
 		if(!found)
 		{
-			ANKI_UTIL_LOGE("Attribute not found \"%s\"", &attrib[0]);
+			ANKI_UTIL_LOGE("Attribute not found \"{}\"", attrib);
 			return Error::kUserData;
 		}
 		else

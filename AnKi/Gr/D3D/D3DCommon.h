@@ -9,6 +9,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Gr/BackendCommon/Common.h>
 #include <AnKi/Util/System.h>
+#include <AnKi/Core/StatsSet.h>
 #include <string>
 #include <locale>
 #include <codecvt>
@@ -23,10 +24,17 @@
 #include <d3dx12/d3dx12_state_object.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
-#include <D3Dcompiler.h>
+#include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <wrl.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #include <pix3.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 #include <atlcomcli.h>
 #include <AnKi/Util/CleanupWindows.h>
 
@@ -36,6 +44,9 @@ namespace anki {
 
 /// @addtogroup directx
 /// @{
+
+ANKI_SVAR(Gr, GpuDeviceMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (VRAM)", StatFlag::kBytes)
+ANKI_SVAR(Gr, GpuHostMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (CPU)", StatFlag::kBytes)
 
 #define ANKI_D3D_LOGI(...) ANKI_LOG("D3D", kNormal, __VA_ARGS__)
 #define ANKI_D3D_LOGE(...) ANKI_LOG("D3D", kError, __VA_ARGS__)
@@ -58,7 +69,7 @@ void invokeDred();
 			{ \
 				invokeDred(); \
 			} \
-			ANKI_D3D_LOGF("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGF("D3D function failed (HRESULT: {} message: {}): {}", rez, errorMessageToString(GetLastError()), #x); \
 		} \
 	} while(0)
 
@@ -68,7 +79,7 @@ void invokeDred();
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGE("D3D function failed (HRESULT: %ld message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGE("D3D function failed (HRESULT: {} message: {}): {}", rez, errorMessageToString(GetLastError()), #x); \
 			if(rez == DXGI_ERROR_DEVICE_REMOVED) \
 			{ \
 				invokeDred(); \

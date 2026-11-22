@@ -237,7 +237,7 @@ public:
 		}
 		else
 		{
-			ANKI_SCENE_LOGE("Can't rename scene %s to %s. Scene with the same name exists", scene.m_name.cstr(), name.cstr());
+			ANKI_SCENE_LOGE("Can't rename scene {} to {}. Scene with the same name exists", scene.m_name, name);
 		}
 	}
 #endif
@@ -288,7 +288,7 @@ public:
 		}
 		else
 		{
-			ANKI_SCENE_LOGE("Can't create new nodes to the immutable scene: %s", m_scenes[m_activeSceneIndex].m_name.cstr());
+			ANKI_SCENE_LOGE("Can't create new nodes to the immutable scene: {}", m_scenes[m_activeSceneIndex].m_name);
 		}
 		return node;
 	}

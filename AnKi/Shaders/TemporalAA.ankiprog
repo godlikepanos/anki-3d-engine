@@ -28,9 +28,17 @@ Vec3 computeTaa(Vec2 coord)
 	const Vec2 uv = (Vec2(coord) + 0.5f) / viewportSize;
 	const Vec2 historyUv = uv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xy;
 
+	// History is off-screen so there is nothing to reuse. Sampling it would smear the clamped edge texels
+	if(any(historyUv < 0.0) || any(historyUv > 1.0))
+	{
+		return TEX(g_inputRt, UVec2(coord)).xyz;
+	}
+
 	const Vec3 history = g_historyRt.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0);
 
-	const Vec3 outColor = computeTemporalAA<F32>(g_inputRt, g_linearAnyClampSampler, history, coord);
+	const F32 temporalSourceWeight = 0.01;
+	const F32 temporalGamma = 1.0;
+	const Vec3 outColor = computeTemporalAA<F32>(g_inputRt, g_linearAnyClampSampler, history, coord, temporalSourceWeight, temporalGamma);
 
 	return outColor;
 }

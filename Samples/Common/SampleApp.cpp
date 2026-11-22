@@ -14,15 +14,15 @@ Error SampleApp::userPreInit()
 
 #if !ANKI_OS_ANDROID
 	String assetsDataPath;
-	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, getApplicationName().cstr());
+	assetsDataPath.format("{}/Samples/{}", ANKI_SOURCE_DIRECTORY, getApplicationName());
 
 	if(!directoryExists(assetsDataPath))
 	{
-		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository? I'll continue but expect issues", assetsDataPath.cstr());
+		ANKI_LOGE("Cannot find directory \"{}\". Have you moved the clone of the repository? I'll continue but expect issues", assetsDataPath);
 	}
 	else
 	{
-		g_cvarRsrcDataPaths = String().sprintf("%s|.anki,lua", assetsDataPath.cstr());
+		g_cvarRsrcDataPaths = String().format("{}|.anki,lua", assetsDataPath);
 	}
 #endif
 
@@ -57,7 +57,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmaps") ? "" : "IndirectDiffuseClipmaps");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
 		// g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
 	}
 

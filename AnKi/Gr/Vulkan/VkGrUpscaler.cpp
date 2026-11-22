@@ -63,7 +63,7 @@ Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
 			const NVSDK_NGX_Result result = x_; \
 			if(NVSDK_NGX_FAILED(result)) \
 			{ \
-				ANKI_VK_LOGE("DLSS failed to initialize %ls", GetNGXResultAsString(result)); \
+				ANKI_VK_LOGE("DLSS failed to initialize. Code 0x{:08x}", U32(result)); \
 				return Error::kFunctionFailed; \
 			} \
 		} while(0)

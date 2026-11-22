@@ -15,7 +15,6 @@ set(sources
 	Serializer.cpp
 	Xml.cpp
 	F16.cpp
-	Process.cpp
 	Thread.cpp
 	Singleton.cpp
 	ThreadJobManager.cpp
@@ -45,10 +44,10 @@ file(GLOB_RECURSE headers *.h)
 add_library(AnKiUtil ${sources} ${headers})
 target_compile_definitions(AnKiUtil PRIVATE -DANKI_SOURCE_FILE)
 
+# PUBLIC so every target that links AnKiUtil gets its own PCH. Absolute path because it propagates to other targets
+target_precompile_headers(AnKiUtil PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/PchHeaders.h)
+
 set(libs AnKiTinyXml2)
-if(LINUX OR WINDOWS)
-	set(libs ${libs} reproc)
-endif()
 
 if(ANDROID)
 	set(libs ${libs} AnKiStreamlineAnnotate)
@@ -67,7 +66,7 @@ if(DIRECTX AND ANKI_TRACE)
 	find_library(PIX_LIB WinPixEventRuntime HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/${cpu_arch}")
 	set(libs ${libs} ${PIX_LIB})
 
-	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/include/WinPixEventRuntime")
+	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/Include/WinPixEventRuntime")
 endif()
 
 target_link_libraries(AnKiUtil ${libs})

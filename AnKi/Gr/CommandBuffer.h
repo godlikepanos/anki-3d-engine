@@ -302,8 +302,8 @@ public:
 	// depth: Depth
 	void dispatchRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
-	// Same as dispatchRays but indirect.
-	void dispatchRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, BufferView argsBuffer);
+	// Same as dispatchRays but indirect. argsBuffer holds a DispatchRaysIndirectArgs.
+	void dispatchRaysIndirect(const BufferView& argsBuffer);
 
 	// Blit from surface to surface.
 	void blitTexture(const TextureView& srcView, const TextureView& destView);

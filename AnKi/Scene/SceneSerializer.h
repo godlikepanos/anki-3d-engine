@@ -207,15 +207,14 @@ public:
 	}
 };
 
-#define ANKI_SERIALIZER_LOGE(...) \
-	ANKI_SCENE_LOGE("%s", (SceneString().sprintf(__VA_ARGS__) + SceneString().sprintf(". Line %u: ", m_read.m_lineno)).cstr())
+#define ANKI_SERIALIZER_LOGE(...) ANKI_SCENE_LOGE("{}", SceneString().format(__VA_ARGS__) + SceneString().format(". Line {}: ", m_read.m_lineno))
 #define ANKI_SERIALIZER_CHECK(expr) \
 	do \
 	{ \
 		const Error retError = expr; \
 		if(retError) \
 		{ \
-			ANKI_SERIALIZER_LOGE("Expression failed: " ANKI_STRINGIZE(expr)); \
+			ANKI_SERIALIZER_LOGE("Expression failed: {}", ANKI_STRINGIZE(expr)); \
 			return retError; \
 		} \
 	} while(0)
@@ -246,14 +245,14 @@ public:
 	{
 		if(values.getSize() == 1)
 		{
-			ANKI_CHECK(m_write.m_file->writeTextf("%s %u\n", name.cstr(), values[0]));
+			ANKI_CHECK(m_write.m_file->writeTextf("{} {}\n", name, values[0]));
 		}
 		else
 		{
-			ANKI_CHECK(m_write.m_file->writeTextf("%s %u ", name.cstr(), values[0]));
+			ANKI_CHECK(m_write.m_file->writeTextf("{} {} ", name, values[0]));
 			for(U32 i = 1; i < values.getSize(); ++i)
 			{
-				ANKI_CHECK(m_write.m_file->writeTextf((i < values.getSize() - 1) ? "%u " : "%u\n", values[i]));
+				ANKI_CHECK(m_write.m_file->writeTextf("{}{}", values[i], (i < values.getSize() - 1) ? " " : "\n"));
 			}
 		}
 		return Error::kNone;
@@ -277,14 +276,14 @@ public:
 	{
 		if(values.getSize() == 1)
 		{
-			ANKI_CHECK(m_write.m_file->writeTextf("%s %d\n", name.cstr(), values[0]));
+			ANKI_CHECK(m_write.m_file->writeTextf("{} {}\n", name, values[0]));
 		}
 		else
 		{
-			ANKI_CHECK(m_write.m_file->writeTextf("%s %d ", name.cstr(), values[0]));
+			ANKI_CHECK(m_write.m_file->writeTextf("{} {} ", name, values[0]));
 			for(U32 i = 1; i < values.getSize(); ++i)
 			{
-				ANKI_CHECK(m_write.m_file->writeTextf((i < values.getSize() - 1) ? "%d " : "%d\n", values[i]));
+				ANKI_CHECK(m_write.m_file->writeTextf("{}{}", values[i], (i < values.getSize() - 1) ? " " : "\n"));
 			}
 		}
 		return Error::kNone;
@@ -308,14 +307,14 @@ public:
 	{
 		if(values.getSize() == 1)
 		{
-			ANKI_CHECK(m_write.m_file->writeTextf("%s %f\n", name.cstr(), values[0]));
+			ANKI_CHECK(m_write.m_file->writeTextf("{} {}\n", name, values[0]));
 		}
 		else
 		{
-			ANKI_CHECK(m_write.m_file->writeTextf("%s %f ", name.cstr(), values[0]));
+			ANKI_CHECK(m_write.m_file->writeTextf("{} {} ", name, values[0]));
 			for(U32 i = 1; i < values.getSize(); ++i)
 			{
-				ANKI_CHECK(m_write.m_file->writeTextf((i < values.getSize() - 1) ? "%f " : "%f\n", values[i]));
+				ANKI_CHECK(m_write.m_file->writeTextf("{}{}", values[i], (i < values.getSize() - 1) ? " " : "\n"));
 			}
 		}
 		return Error::kNone;
@@ -341,7 +340,7 @@ public:
 		newValue.replaceAll(" ", "<sp>");
 		newValue.replaceAll("\n", "<nl>");
 		newValue.replaceAll("\t", "<tab>");
-		return m_write.m_file->writeTextf("%s %s\n", name.cstr(), newValue.cstr());
+		return m_write.m_file->writeTextf("{} {}\n", name, newValue);
 	}
 
 	Error read(CString name, SceneString& value) final
