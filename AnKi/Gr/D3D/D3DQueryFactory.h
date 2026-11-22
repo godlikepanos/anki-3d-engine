@@ -12,10 +12,6 @@
 
 namespace anki {
 
-/// @addtogroup d3d
-/// @{
-
-/// @memberof QueryFactory
 class QueryHandle
 {
 	friend class QueryFactory;
@@ -33,7 +29,6 @@ private:
 	}
 };
 
-/// @memberof QueryFactory
 class QueryInfo
 {
 public:
@@ -44,7 +39,7 @@ public:
 	U32 m_indexInHeap;
 };
 
-/// Query allocator.
+// Query allocator.
 class QueryFactory
 {
 public:
@@ -64,10 +59,10 @@ public:
 		ANKI_ASSERT(m_chunkArray.isEmpty() && "Forgot to free some queries");
 	}
 
-	/// @note It's thread-safe.
+	// It's thread-safe.
 	Error newQuery(QueryHandle& handle);
 
-	/// @note It's thread-safe.
+	// It's thread-safe.
 	void deleteQuery(QueryHandle& handle);
 
 	Bool getResult(QueryHandle handle, U64& result);
@@ -76,16 +71,19 @@ public:
 	{
 		QueryInfo info;
 		ANKI_ASSERT(handle.isValid() && handle.m_type == m_type);
+
+		LockGuard lock(m_mtx);
+
 		auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 
 		info.m_resultsBuffer = &static_cast<const BufferImpl&>(*it->m_resultsBuffer).getD3DResource();
-		info.m_resultsBufferOffset = handle.m_queryIndex * m_resultStructSize + m_resultMemberOffset;
+		info.m_resultsBufferOffset = handle.m_queryIndex * m_resultStructSize;
 		info.m_queryHeap = it->m_heap;
 		info.m_indexInHeap = handle.m_queryIndex;
 		return info;
 	}
 
-	/// Call this on submit if the query was written.
+	// Call this on submit if the query was written.
 	void postSubmitWork(QueryHandle handle, MicroFence* fence);
 
 private:
@@ -118,7 +116,7 @@ private:
 	using BlockArray = GrBlockArray<Chunk, BlockArrayConfig<8>>;
 
 	BlockArray m_chunkArray;
-	Mutex m_mtx;
+	mutable Mutex m_mtx;
 
 	D3D12_QUERY_HEAP_TYPE m_type;
 	U32 m_resultStructSize;
@@ -152,6 +150,5 @@ public:
 	{
 	}
 };
-/// @}
 
 } // end namespace anki

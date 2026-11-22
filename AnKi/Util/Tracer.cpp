@@ -16,7 +16,14 @@
 #	endif
 #	include <windows.h>
 #	define USE_PIX ANKI_TRACING_ENABLED
+#	if ANKI_COMPILER_GCC_COMPATIBLE
+#		pragma GCC diagnostic push
+#		pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#	endif
 #	include <pix3.h>
+#	if ANKI_COMPILER_GCC_COMPATIBLE
+#		pragma GCC diagnostic pop
+#	endif
 #endif
 
 namespace anki {

@@ -275,7 +275,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 
 	const ShaderProgramImpl& progImpl = static_cast<const ShaderProgramImpl&>(*prog);
 	const Bool isCompute = !!(progImpl.getShaderTypes() & ShaderTypeBit::kCompute);
-	const Bool isGraphics = !!(progImpl.getShaderTypes() & ShaderTypeBit::kAllGraphics);
+	[[maybe_unused]] const Bool isGraphics = !!(progImpl.getShaderTypes() & ShaderTypeBit::kAllGraphics);
 	const Bool isWg = !!(progImpl.getShaderTypes() & ShaderTypeBit::kWorkGraph);
 	const Bool isRt = !!(progImpl.getShaderTypes() & ShaderTypeBit::kAllRayTracing);
 
@@ -913,11 +913,20 @@ void CommandBuffer::setFastConstants(const void* data, U32 dataSize)
 
 void CommandBuffer::setLineWidth(F32 width)
 {
-	ANKI_D3D_SELF(CommandBufferImpl);
-	if(width != 1.0f && !self.m_lineWidthWarningAlreadyShown)
+	if(width != 1.0f)
 	{
-		ANKI_D3D_LOGW("D3D doesn't support line widths other than 1.0. This warning will not show up again");
-		self.m_lineWidthWarningAlreadyShown = true;
+		static Atomic<U32> errorShownCount(0);
+		const U32 count = errorShownCount.fetchAdd(1) + 1;
+		const U32 maxCount = 10;
+
+		if(count < maxCount - 1)
+		{
+			ANKI_D3D_LOGW("D3D doesn't support line widths other than 1.0");
+		}
+		else if(count == maxCount)
+		{
+			ANKI_D3D_LOGW("D3D doesn't support line widths other than 1.0. This warning will not show up again");
+		}
 	}
 }
 

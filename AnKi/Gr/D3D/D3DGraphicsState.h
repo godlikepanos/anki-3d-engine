@@ -12,22 +12,17 @@
 
 namespace anki {
 
-/// @addtogroup d3d
-/// @{
-
 class GraphicsPipelineFactory
 {
 public:
 	~GraphicsPipelineFactory();
 
-	/// Write state to the command buffer.
-	/// @note It's thread-safe.
+	// Write state to the command buffer. It's thread-safe.
 	void flushState(GraphicsStateTracker& state, D3D12GraphicsCommandListX& cmdList);
 
 private:
 	GrHashMap<U64, ID3D12PipelineState*> m_map;
 	RWMutex m_mtx;
 };
-/// @}
 
 } // end namespace anki

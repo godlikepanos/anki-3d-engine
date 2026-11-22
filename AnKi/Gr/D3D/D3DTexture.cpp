@@ -74,6 +74,11 @@ TextureImpl::~TextureImpl()
 
 	if(!isExternal())
 	{
+		if(m_resource)
+		{
+			g_svarGrGpuDeviceMemoryAllocated.decrement(m_actualSize);
+		}
+
 		safeRelease(m_resource);
 	}
 }
@@ -122,6 +127,10 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		const D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 		ANKI_D3D_CHECK(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &desc, initialState, nullptr, IID_PPV_ARGS(&m_resource)));
 
+		// Textures always live in the default heap
+		m_actualSize = getDevice().GetResourceAllocationInfo(0, 1, &desc).SizeInBytes;
+		g_svarGrGpuDeviceMemoryAllocated.increment(m_actualSize);
+
 		GrDynamicArray<WChar> wstr;
 		wstr.resize(getName().getLength() + 1);
 		getName().toWideChars(wstr.getBegin(), wstr.getSize());
@@ -168,7 +177,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 		{
 			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 			desc.Texture2DArray.ArraySize = 1;
-			desc.Texture2DArray.FirstArraySlice = subresource.m_layer * m_layerCount + subresource.m_face;
+			desc.Texture2DArray.FirstArraySlice = subresource.m_layer * (textureTypeIsCube(m_texType) ? 6 : 1) + subresource.m_face;
 			desc.Texture2DArray.MipSlice = subresource.m_mipmap;
 		}
 
@@ -200,7 +209,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 		{
 			desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 			desc.Texture2DArray.ArraySize = 1;
-			desc.Texture2DArray.FirstArraySlice = subresource.m_layer * m_layerCount + subresource.m_face;
+			desc.Texture2DArray.FirstArraySlice = subresource.m_layer * (textureTypeIsCube(m_texType) ? 6 : 1) + subresource.m_face;
 			desc.Texture2DArray.MipSlice = subresource.m_mipmap;
 		}
 
@@ -248,7 +257,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 				}
 				else
 				{
-					desc.Format = DXGI_FORMAT_R32G8X24_TYPELESS;
+					desc.Format = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
 				}
 				break;
 			default:
@@ -397,6 +406,13 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 		else
 		{
 			ANKI_ASSERT(0);
+		}
+
+		// Whole texture views of arrays and cubes cover all the slices
+		if(desc.ViewDimension == D3D12_UAV_DIMENSION_TEXTURE2DARRAY && subresource.m_allSurfacesOrVolumes)
+		{
+			desc.Texture2DArray.FirstArraySlice = 0;
+			desc.Texture2DArray.ArraySize = m_layerCount * (textureTypeIsCube(m_texType) ? 6 : 1);
 		}
 
 		view.m_handle = DescriptorFactory::getSingleton().allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, false);
@@ -641,7 +657,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 
 		if(!!(usage & TextureUsageBit::kUavDispatchRays) && rt)
 		{
-			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+			stages |= D3D12_BARRIER_SYNC_RAYTRACING;
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 		}
 

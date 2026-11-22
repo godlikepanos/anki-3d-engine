@@ -13,10 +13,7 @@ namespace anki {
 // Forward
 class GraphicsPipelineFactory;
 
-/// @addtogroup directx
-/// @{
-
-/// Shader program implementation.
+// Shader program implementation.
 class ShaderProgramImpl final : public ShaderProgram
 {
 public:
@@ -61,6 +58,5 @@ public:
 private:
 	GrDynamicArray<ShaderInternalPtr> m_shaders;
 };
-/// @}
 
 } // end namespace anki

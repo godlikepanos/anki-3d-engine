@@ -57,7 +57,6 @@ private:
 
 	Bool m_descriptorHeapsBound = false;
 	Bool m_debugMarkersEnabled = false;
-	Bool m_lineWidthWarningAlreadyShown = false;
 
 	void commandCommon()
 	{

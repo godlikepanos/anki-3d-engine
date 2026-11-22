@@ -11,7 +11,6 @@
 #include <AnKi/Gr/D3D/D3DCommandBuffer.h>
 #include <AnKi/Gr/D3D/D3DShader.h>
 #include <AnKi/Gr/D3D/D3DShaderProgram.h>
-#include <AnKi/Gr/D3D/D3DTexture.h>
 #include <AnKi/Gr/D3D/D3DPipelineQuery.h>
 #include <AnKi/Gr/D3D/D3DSampler.h>
 #include <AnKi/Gr/RenderGraph.h>
@@ -204,7 +203,7 @@ void GrManagerImpl::endFrameInternal()
 {
 	ANKI_TRACE_FUNCTION();
 
-	m_crntSwapchain->m_swapchain->Present((g_cvarGrVsync) ? 1 : 0, (g_cvarGrVsync) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+	m_crntSwapchain->m_swapchain->Present((g_cvarGrVsync) ? 1 : 0, (m_crntSwapchain->m_allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
 	MicroFencePtr presentFence = FenceFactory::getSingleton().newFence("Present");
 	presentFence->gpuSignal(GpuQueueType::kGeneral); // Only general can present
@@ -247,6 +246,8 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		impl.postSubmitWork(fence.get());
 	}
 
+	LockGuard lock(m_globalMtx);
+
 	// Wait for fences
 	for(Fence* fence : waitFences)
 	{
@@ -266,8 +267,6 @@ void GrManagerImpl::submitInternal(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fe
 		fenceImpl->m_fence = fence;
 		signalFence->reset(fenceImpl);
 	}
-
-	LockGuard lock(m_globalMtx);
 
 	// New submit so we need to finalize all groups. Following deletes will create a new group with the newely created fence
 	for(CleanupGroup& group : m_cleanupGroups)
@@ -406,6 +405,20 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	}
 	ANKI_D3D_LOGI("Vendor identified as {}", kGPUVendorStrings[m_capabilities.m_gpuVendor]);
 
+	// DRED needs to be configured before the device is created
+	if(g_cvarGrDred)
+	{
+		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
+		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
+
+		// Turn on AutoBreadcrumbs and Page Fault reporting
+		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+
+		ANKI_D3D_LOGI("DRED is enabled");
+		m_canInvokeDred = true;
+	}
+
 	// Create device
 	ComPtr<ID3D12Device> dev;
 	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dev)));
@@ -440,19 +453,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	if(g_cvarGrDred)
-	{
-		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
-		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
-
-		// Turn on AutoBreadcrumbs and Page Fault reporting
-		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-
-		ANKI_D3D_LOGI("DRED is enabled");
-		m_canInvokeDred = true;
-	}
-
 	// Create queues
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -477,6 +477,50 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture)));
 		D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21;
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options3, sizeof(options3)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS6 options6;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &options6, sizeof(options6)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12)));
+		D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {.HighestShaderModel = D3D_SHADER_MODEL_6_7};
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)));
+
+		// Required features
+		if(shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_7)
+		{
+			ANKI_D3D_LOGE("Shader model 6.7 is required");
+			return Error::kFunctionFailed;
+		}
+
+		if(!options12.EnhancedBarriersSupported)
+		{
+			ANKI_D3D_LOGE("Enhanced barriers are required");
+			return Error::kFunctionFailed;
+		}
+
+		// Optional features
+		if(g_cvarGrVrs && options6.VariableShadingRateTier < D3D12_VARIABLE_SHADING_RATE_TIER_2)
+		{
+			ANKI_D3D_LOGW("VRS can't be enabled. Not supported");
+		}
+		else if(g_cvarGrVrs)
+		{
+			m_capabilities.m_vrs = true;
+		}
+
+		if(g_cvarGrMeshShaders && options7.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+		{
+			ANKI_D3D_LOGW("Mesh shaders can't be enabled. Not supported");
+		}
+		else if(g_cvarGrMeshShaders)
+		{
+			m_capabilities.m_meshShaders = true;
+		}
+
+		m_capabilities.m_barycentrics = options3.BarycentricsSupported;
 
 		if(g_cvarGrWorkGraphcs && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
@@ -517,16 +561,12 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
 		m_capabilities.m_fastConstantsSize = kMaxFastConstantsSize;
 		m_capabilities.m_computeSharedMemorySize = D3D12_CS_TGSM_REGISTER_COUNT * sizeof(F32);
-		m_capabilities.m_sbtRecordAlignment = 32; // ?
 		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
 		m_capabilities.m_discreteGpu = !architecture.UMA;
 		m_capabilities.m_majorApiVersion = 12;
-		m_capabilities.m_vrs = g_cvarGrVrs;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;
-		m_capabilities.m_meshShaders = g_cvarGrMeshShaders;
 		m_capabilities.m_pipelineQuery = true;
-		m_capabilities.m_barycentrics = true;
 		m_capabilities.m_shaderGroupHandleSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
 
 		// It should be D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT but anki uses a single SBT for raygen, miss and hit groups so the non raygen
@@ -625,29 +665,61 @@ void GrManagerImpl::destroy()
 
 void GrManagerImpl::invokeDred() const
 {
-	do
+	if(!m_canInvokeDred)
 	{
-		if(m_canInvokeDred)
+		return;
+	}
+
+	ComPtr<ID3D12DeviceRemovedExtendedData> dred;
+	if(!SUCCEEDED(m_device->QueryInterface(IID_PPV_ARGS(&dred))))
+	{
+		ANKI_D3D_LOGE("DRED: Failed to get the interface");
+		return;
+	}
+
+	// Print the command lists that didn't finish
+	D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs;
+	if(SUCCEEDED(dred->GetAutoBreadcrumbsOutput(&breadcrumbs)))
+	{
+		for(const D3D12_AUTO_BREADCRUMB_NODE* node = breadcrumbs.pHeadAutoBreadcrumbNode; node; node = node->pNext)
 		{
-			ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
-			if(!SUCCEEDED(m_device->QueryInterface(IID_PPV_ARGS(&pDred))))
+			const U32 completedOpCount = (node->pLastBreadcrumbValue) ? *node->pLastBreadcrumbValue : 0;
+			if(completedOpCount >= node->BreadcrumbCount)
 			{
-				break;
+				continue;
 			}
 
-			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
-			if(!SUCCEEDED(pDred->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)))
-			{
-				break;
-			}
-
-			D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
-			if(!SUCCEEDED(pDred->GetPageFaultAllocationOutput(&dredPageFaultOutput)))
-			{
-				break;
-			}
+			const std::string cmdListName = (node->pCommandListDebugNameW) ? ws2s(node->pCommandListDebugNameW) : "?";
+			const std::string queueName = (node->pCommandQueueDebugNameW) ? ws2s(node->pCommandQueueDebugNameW) : "?";
+			ANKI_D3D_LOGE("DRED: Command list \"{}\" on queue \"{}\" didn't finish. Completed {} of {} ops. Faulting op: {}", cmdListName, queueName,
+						  completedOpCount, node->BreadcrumbCount, U32(node->pCommandHistory[completedOpCount]));
 		}
-	} while(false);
+	}
+	else
+	{
+		ANKI_D3D_LOGE("DRED: Failed to get the breadcrumbs");
+	}
+
+	// Print the page fault
+	D3D12_DRED_PAGE_FAULT_OUTPUT pageFault;
+	if(SUCCEEDED(dred->GetPageFaultAllocationOutput(&pageFault)))
+	{
+		ANKI_D3D_LOGE("DRED: Page fault GPU VA: 0x{:x}", pageFault.PageFaultVA);
+
+		for(const D3D12_DRED_ALLOCATION_NODE* node = pageFault.pHeadExistingAllocationNode; node; node = node->pNext)
+		{
+			ANKI_D3D_LOGE("DRED: \tExisting allocation at the VA: {}", (node->ObjectNameW) ? ws2s(node->ObjectNameW) : "?");
+		}
+
+		for(const D3D12_DRED_ALLOCATION_NODE* node = pageFault.pHeadRecentFreedAllocationNode; node; node = node->pNext)
+		{
+			ANKI_D3D_LOGE("DRED: \tRecently freed allocation at the VA: {}", (node->ObjectNameW) ? ws2s(node->ObjectNameW) : "?");
+		}
+	}
+	else
+	{
+		ANKI_D3D_LOGE("DRED: Failed to get the page fault info");
+	}
 }
 
 void GrManagerImpl::releaseObjectDeleteLoop(GrObject* object)

@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup directx
-/// @{
-
-/// Timestamp query.
+// Timestamp query.
 class TimestampQueryImpl final : public TimestampQuery
 {
 public:
@@ -26,9 +23,8 @@ public:
 
 	~TimestampQueryImpl();
 
-	/// Create the query.
+	// Create the query.
 	Error init();
 };
-/// @}
 
 } // end namespace anki

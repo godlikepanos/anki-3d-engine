@@ -135,7 +135,11 @@ static Error walkDirectoryTreeRecursive(CString dir,
 	{
 		CString filename(find.cFileName);
 
-		if(filename != "." && filename != "..")
+		// Don't follow symlinks/junctions, same as FTW_PHYS on Linux. Other reparse points (eg OneDrive files) are fine
+		const Bool isLink = (find.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+							&& (find.dwReserved0 == IO_REPARSE_TAG_SYMLINK || find.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT);
+
+		if(filename != "." && filename != ".." && !isLink)
 		{
 			Bool isDir = find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 

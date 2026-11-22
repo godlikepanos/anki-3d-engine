@@ -11,10 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup directx
-/// @{
-
-/// A wrapper for the swapchain.
+// A wrapper for the swapchain.
 class MicroSwapchain
 {
 	friend class MicroSwapchainPtrDeleter;
@@ -28,6 +25,8 @@ public:
 	Array<TextureInternalPtr, kMaxFramesInFlight> m_textures;
 
 	U32 m_backbufferIdx = 0;
+
+	Bool m_allowTearing = false; // Vsync is off and the system supports tearing
 
 	MicroSwapchain();
 
@@ -56,7 +55,7 @@ public:
 		return true;
 	}
 
-	/// Interface method.
+	// Interface method.
 	void onFenceDone()
 	{
 		// Do nothing
@@ -70,10 +69,10 @@ private:
 	void releaseInternal();
 };
 
-/// MicroSwapchain smart pointer.
+// MicroSwapchain smart pointer.
 using MicroSwapchainPtr = IntrusiveNoDelPtr<MicroSwapchain>;
 
-/// Swapchain factory.
+// Swapchain factory.
 class SwapchainFactory : public MakeSingleton<SwapchainFactory>
 {
 	friend class MicroSwapchain;
@@ -91,6 +90,5 @@ public:
 private:
 	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };
-/// @}
 
 } // end namespace anki

@@ -66,7 +66,7 @@ public:
 	{
 		const TextureView view(const_cast<TextureImpl*>(this), subresource);
 
-		const U32 faceCount = textureTypeIsCube(m_texType);
+		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
 		const U32 arraySize = faceCount * m_layerCount;
 		const U32 arraySlice = view.getFirstLayer() * faceCount + view.getFirstFace();
 		const U32 planeSlice =
@@ -128,6 +128,7 @@ private:
 	};
 
 	ID3D12Resource* m_resource = nullptr;
+	PtrSize m_actualSize = 0; // The size of the D3D resource
 
 	mutable GrHashMap<U64, View> m_viewsMap;
 	mutable RWMutex m_viewsMapMtx;

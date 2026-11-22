@@ -25,6 +25,7 @@ ShaderImpl::~ShaderImpl()
 
 Error ShaderImpl::init(const ShaderInitInfo& inf)
 {
+	inf.validate();
 	m_shaderType = inf.m_shaderType;
 	m_shaderBinarySize = U32(inf.m_binary.getSizeInBytes());
 	m_hasDiscard = inf.m_reflection.m_pixel.m_discards;

@@ -105,6 +105,8 @@ Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 {
 	ANKI_ASSERT(handle.isValid() && handle.m_type == m_type);
 
+	LockGuard lock(m_mtx);
+
 	auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 	ANKI_ASSERT(it->m_queryWritten.get(handle.m_queryIndex) && "Trying to get the result of a query that wasn't written");
 
@@ -125,6 +127,8 @@ Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 void QueryFactory::postSubmitWork(QueryHandle handle, MicroFence* fence)
 {
 	ANKI_ASSERT(handle.isValid() && handle.m_type == m_type && fence);
+
+	LockGuard lock(m_mtx);
 
 	auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 

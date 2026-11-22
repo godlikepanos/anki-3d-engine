@@ -112,9 +112,13 @@ public:
 		return signaled();
 	}
 
-	void setName(CString)
+	void setName(CString name)
 	{
-		// TODO
+		ANKI_ASSERT(m_fence);
+		GrDynamicArray<WChar> wstr;
+		wstr.resize(name.getLength() + 1);
+		name.toWideChars(wstr.getBegin(), wstr.getSize());
+		ANKI_D3D_CHECKF(m_fence->SetName(wstr.getBegin()));
 	}
 
 	void reset()

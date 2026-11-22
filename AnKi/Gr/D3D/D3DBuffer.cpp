@@ -51,6 +51,7 @@ void* Buffer::map(PtrSize offset, PtrSize range)
 void Buffer::unmap()
 {
 	ANKI_D3D_SELF(BufferImpl);
+	(void)self;
 
 	ANKI_ASSERT(self.m_mapped);
 

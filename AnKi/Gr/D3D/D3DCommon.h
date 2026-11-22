@@ -27,7 +27,14 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <wrl.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #include <pix3.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 #include <atlcomcli.h>
 #include <AnKi/Util/CleanupWindows.h>
 

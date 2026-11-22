@@ -8,6 +8,9 @@
 
 namespace anki {
 
+ANKI_SVAR(Gr, TransientDescriptorsAllocated, StatCategory::kGr, "Transient descriptors allocated this frame", StatFlag::kZeroEveryFrame)
+ANKI_SVAR(Gr, DescriptorTablesWritten, StatCategory::kGr, "Descriptor tables written this frame", StatFlag::kZeroEveryFrame)
+
 static Error createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, U32 descriptorCount, CString name,
 								  ID3D12DescriptorHeap*& heap, D3D12_CPU_DESCRIPTOR_HANDLE& cpuHeapStart, D3D12_GPU_DESCRIPTOR_HANDLE& gpuHeapStart,
 								  U32& descriptorSize)
@@ -149,6 +152,8 @@ DescriptorHeapHandle RingDescriptorAllocator::allocate(U32 descriptorCount)
 		ANKI_D3D_LOGW("Allocated too many descriptors from the ring buffer {}. Need to increase the limits", m_name);
 	}
 
+	g_svarGrTransientDescriptorsAllocated.increment(descriptorCount);
+
 	DescriptorHeapHandle out;
 	out.m_cpuHandle.ptr = (m_cpuHeapStart.ptr) ? (m_cpuHeapStart.ptr + firstDescriptor * m_descriptorSize) : 0;
 	out.m_gpuHandle.ptr = (m_gpuHeapStart.ptr) ? (m_gpuHeapStart.ptr + firstDescriptor * m_descriptorSize) : 0;
@@ -260,7 +265,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	GrDynamicArray<D3D12_ROOT_PARAMETER1> rootParameters;
 
 	// Create the tables
-	Array<GrDynamicArray<D3D12_DESCRIPTOR_RANGE1>, kMaxBindingsPerRegisterSpace * 2> tableRanges; // One per descriptor table
+	Array<GrDynamicArray<D3D12_DESCRIPTOR_RANGE1>, kMaxRegisterSpaces * 2> tableRanges; // One per descriptor table
 	U32 tableRangesCount = 0;
 	for(U32 space = 0; space < kMaxRegisterSpaces; ++space)
 	{
@@ -378,6 +383,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	{
 		const Char* errc = reinterpret_cast<const Char*>(errorBlob->GetBufferPointer());
 		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: {}", errc);
+		return Error::kFunctionFailed;
 	}
 
 	ID3D12RootSignature* dxRootSig;
@@ -504,6 +510,7 @@ Error RootSignatureFactory::getOrCreateLocalRootSignature(const ShaderReflection
 	{
 		const Char* errc = reinterpret_cast<const Char*>(errorBlob->GetBufferPointer());
 		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: {}", errc);
+		return Error::kFunctionFailed;
 	}
 
 	ID3D12RootSignature* dxRootSig;
@@ -534,7 +541,7 @@ void DescriptorState::bindRootSignature(const RootSignature* rootSignature, Bool
 {
 	ANKI_ASSERT(rootSignature);
 
-	if(m_rootSignature && rootSignature->m_hash == m_rootSignature->m_hash)
+	if(m_rootSignature && rootSignature->m_hash == m_rootSignature->m_hash && isCompute == m_rootSignatureIsCompute)
 	{
 		ANKI_ASSERT(m_rootSignatureNeedsRebinding == false);
 		return;
@@ -607,12 +614,14 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 			{
 				stateSpace.m_cbvSrvUavHeapHandle = DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 																									   rootSignatureSpace.m_cbvSrvUavCount, true);
+				g_svarGrDescriptorTablesWritten.increment(1);
 			}
 
 			if(rootSignatureSpace.m_samplerCount)
 			{
 				stateSpace.m_samplerHeapHandle =
 					DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, rootSignatureSpace.m_samplerCount, true);
+				g_svarGrDescriptorTablesWritten.increment(1);
 			}
 		}
 
@@ -872,6 +881,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 	if(m_rootSignature->m_rootConstantsSize && (m_rootConstsDirty || rootSignatureNeedsRebinding))
 	{
 		ANKI_ASSERT(m_rootSignature->m_rootConstantsParameterIdx != kMaxU8);
+		ANKI_ASSERT(m_rootSignature->m_rootConstantsSize == m_rootConstSize && "Possibly forgot to set root constants");
 
 		if(m_rootSignatureIsCompute)
 		{

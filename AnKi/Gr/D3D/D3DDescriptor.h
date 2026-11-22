@@ -10,9 +10,6 @@
 
 namespace anki {
 
-/// @addtogroup directx
-/// @{
-
 class DescriptorHeapHandle
 {
 	friend class PersistentDescriptorAllocator;
@@ -69,7 +66,7 @@ private:
 	}
 };
 
-/// Descriptor allocator with persistent allocations.
+// Descriptor allocator with persistent allocations.
 class PersistentDescriptorAllocator
 {
 	friend class DescriptorFactory;
@@ -84,10 +81,10 @@ public:
 
 	void init(D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart, D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart, U32 descriptorSize, U16 descriptorCount);
 
-	/// @note Thread-safe.
+	// Thread-safe.
 	DescriptorHeapHandle allocate();
 
-	/// @note Thread-safe.
+	// Thread-safe.
 	void free(DescriptorHeapHandle& handle);
 
 private:
@@ -102,18 +99,17 @@ private:
 	Mutex m_mtx;
 };
 
-/// Ring-buffer-like descriptor allocator.
+// Ring-buffer-like descriptor allocator.
 class RingDescriptorAllocator
 {
 public:
 	void init(D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart, D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart, U32 descriptorSize, U32 descriptorCount,
 			  CString name);
 
-	/// Allocate for this frame. Memory will be reclaimed a few frames in the future.
-	/// @note Thread-safe.
+	// Allocate for this frame. Memory will be reclaimed a few frames in the future. Thread-safe.
 	DescriptorHeapHandle allocate(U32 descriptorCount);
 
-	/// @note Thread-safe with allocate().
+	// Thread-safe with allocate().
 	void endFrame();
 
 private:
@@ -130,7 +126,7 @@ private:
 	GrString m_name;
 };
 
-/// A container of all descriptor heaps.
+// A container of all descriptor heaps.
 class DescriptorFactory : public MakeSingleton<DescriptorFactory>
 {
 public:
@@ -138,7 +134,7 @@ public:
 
 	Error init();
 
-	/// @note Thread-safe.
+	// Thread-safe.
 	DescriptorHeapHandle allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE type, Bool gpuVisible)
 	{
 		DescriptorHeapHandle out;
@@ -155,7 +151,7 @@ public:
 		return out;
 	}
 
-	/// @note Thread-safe.
+	// Thread-safe.
 	void freePersistent(DescriptorHeapHandle& handle)
 	{
 		const Bool gpuVisible = handle.m_gpuHandle.ptr != 0;
@@ -170,7 +166,7 @@ public:
 		}
 	}
 
-	/// @note Thread-safe.
+	// Thread-safe.
 	DescriptorHeapHandle allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 descriptorCount, [[maybe_unused]] Bool gpuVisible)
 	{
 		ANKI_ASSERT(type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV || type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
@@ -203,7 +199,7 @@ public:
 		return U32(idx);
 	}
 
-	/// @note Thread-safe.
+	// Thread-safe.
 	void endFrame()
 	{
 		m_gpuRing.m_cbvSrvUav.endFrame();
@@ -214,16 +210,16 @@ private:
 	class
 	{
 	public:
-		PersistentDescriptorAllocator m_cbvSrvUav; ///< Holds a CPU view that will be copied into a GPU heap at runtime.
-		PersistentDescriptorAllocator m_sampler; ///< Same as m_cbvSrvUav
-		PersistentDescriptorAllocator m_rtv; ///< Holds RTVs that the application needs.
-		PersistentDescriptorAllocator m_dsv; ///< Holds DSVs that the application needs.
+		PersistentDescriptorAllocator m_cbvSrvUav; // Holds a CPU view that will be copied into a GPU heap at runtime.
+		PersistentDescriptorAllocator m_sampler; // Same as m_cbvSrvUav
+		PersistentDescriptorAllocator m_rtv; // Holds RTVs that the application needs.
+		PersistentDescriptorAllocator m_dsv; // Holds DSVs that the application needs.
 	} m_cpuPersistent;
 
 	class
 	{
 	public:
-		PersistentDescriptorAllocator m_cbvSrvUav; ///< For bindless resources.
+		PersistentDescriptorAllocator m_cbvSrvUav; // For bindless resources.
 	} m_gpuPersistent;
 
 	class
@@ -261,7 +257,6 @@ private:
 	}
 };
 
-/// @memberof RootSignatureFactory
 class RootSignature
 {
 	friend class RootSignatureFactory;
@@ -289,13 +284,13 @@ private:
 	class Space
 	{
 	public:
-		U32 m_cbvSrvUavCount = 0; ///< Doesn't count holes.
-		U32 m_samplerCount = 0; ///< Doesn't count holes.
+		U32 m_cbvSrvUavCount = 0; // Doesn't count holes.
+		U32 m_samplerCount = 0; // Doesn't count holes.
 
-		U8 m_cbvSrvUavDescriptorTableRootParameterIdx = kMaxU8; ///< The index of the root parameter of the CBV/SRV/UAV table.
-		U8 m_samplersDescriptorTableRootParameterIdx = kMaxU8; ///< The index of the root parameter of the sampler table.
+		U8 m_cbvSrvUavDescriptorTableRootParameterIdx = kMaxU8; // The index of the root parameter of the CBV/SRV/UAV table.
+		U8 m_samplersDescriptorTableRootParameterIdx = kMaxU8; // The index of the root parameter of the sampler table.
 
-		Array<GrDynamicArray<Descriptor>, U32(HlslResourceType::kCount)> m_descriptors; ///< Arrays are unrolled. May have holes.
+		Array<GrDynamicArray<Descriptor>, U32(HlslResourceType::kCount)> m_descriptors; // Arrays are unrolled. May have holes.
 
 		Bool isEmpty() const
 		{
@@ -315,7 +310,7 @@ private:
 	U64 m_hash = 0;
 };
 
-/// Creator of root signatures.
+// Creator of root signatures.
 class RootSignatureFactory : public MakeSingleton<RootSignatureFactory>
 {
 public:
@@ -323,7 +318,7 @@ public:
 
 	Error getOrCreateRootSignature(const ShaderReflection& refl, RootSignature*& signature);
 
-	/// Local root signature for hit shaders.
+	// Local root signature for hit shaders.
 	Error getOrCreateLocalRootSignature(const ShaderReflection& refl, RootSignature*& signature);
 
 private:
@@ -331,7 +326,7 @@ private:
 	Mutex m_mtx;
 };
 
-/// Part of the command buffer that deals with descriptors.
+// Part of the command buffer that deals with descriptors.
 class DescriptorState
 {
 public:
@@ -471,8 +466,8 @@ private:
 	public:
 		union
 		{
-			BufferView m_bufferView; ///< For buffers
-			D3D12_CPU_DESCRIPTOR_HANDLE m_heapOffset; ///< For samplers and texture SRVs/UAVs
+			BufferView m_bufferView; // For buffers
+			D3D12_CPU_DESCRIPTOR_HANDLE m_heapOffset; // For samplers and texture SRVs/UAVs
 			D3D12_GPU_VIRTUAL_ADDRESS m_asAddress;
 		};
 
@@ -544,6 +539,5 @@ inline void DescriptorHeapHandle::increment(U32 descriptorCount)
 {
 	m_cpuHandle.ptr += DescriptorFactory::getSingleton().getDescriptorHandleIncrementSize(m_heapType) * descriptorCount;
 }
-/// @}
 
 } // end namespace anki
