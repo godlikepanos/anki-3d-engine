@@ -55,15 +55,6 @@ private:
 
 	const ShaderProgramImpl* m_wgProg = nullptr;
 
-	class IndArgs
-	{
-	public:
-		ID3D12Resource* m_indirectBuff = nullptr;
-		static constexpr U32 kMaxDescriptorCount = 8;
-		WeakArray<D3D12_DISPATCH_RAYS_DESC> m_mappedMem;
-		U8 m_crntDescriptor = 0;
-	} m_indirectDispatchRays;
-
 	Bool m_descriptorHeapsBound = false;
 	Bool m_debugMarkersEnabled = false;
 	Bool m_lineWidthWarningAlreadyShown = false;

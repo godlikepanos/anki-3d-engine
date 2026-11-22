@@ -921,6 +921,11 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_compute_shader_derivatives;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_ray_tracing_maintenance1;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -1016,6 +1021,7 @@ Error GrManagerImpl::initDevice()
 	VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeatures = {};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = {};
 	VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR positionFetchFeatures = {};
+	VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR rtMaintenance1Features = {};
 	if(!!(m_extensions & VulkanExtensions::kKHR_ray_tracing))
 	{
 		if(!(m_extensions & VulkanExtensions::kKHR_ray_tracing_position_fetch))
@@ -1024,10 +1030,17 @@ Error GrManagerImpl::initDevice()
 			return Error::kFunctionFailed;
 		}
 
+		if(!(m_extensions & VulkanExtensions::kKHR_ray_tracing_maintenance1))
+		{
+			ANKI_VK_LOGE(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME " is required");
+			return Error::kFunctionFailed;
+		}
+
 		rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
 		rayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
 		accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
 		positionFetchFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR;
+		rtMaintenance1Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR;
 
 		VkPhysicalDeviceFeatures2 features = {};
 		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -1035,6 +1048,7 @@ Error GrManagerImpl::initDevice()
 		rtPipelineFeatures.pNext = &rayQueryFeatures;
 		rayQueryFeatures.pNext = &accelerationStructureFeatures;
 		accelerationStructureFeatures.pNext = &positionFetchFeatures;
+		positionFetchFeatures.pNext = &rtMaintenance1Features;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
 		if(!rtPipelineFeatures.rayTracingPipeline || !rayQueryFeatures.rayQuery || !accelerationStructureFeatures.accelerationStructure)
@@ -1046,6 +1060,12 @@ Error GrManagerImpl::initDevice()
 		if(!positionFetchFeatures.rayTracingPositionFetch)
 		{
 			ANKI_VK_LOGE(VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME " should be really really supported");
+			return Error::kFunctionFailed;
+		}
+
+		if(!rtMaintenance1Features.rayTracingMaintenance1 || !rtMaintenance1Features.rayTracingPipelineTraceRaysIndirect2)
+		{
+			ANKI_VK_LOGE(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME " should be really really supported and indirect commands as well");
 			return Error::kFunctionFailed;
 		}
 
@@ -1061,6 +1081,7 @@ Error GrManagerImpl::initDevice()
 		appendPNextList(ci, &rayQueryFeatures);
 		appendPNextList(ci, &rtPipelineFeatures);
 		appendPNextList(ci, &positionFetchFeatures);
+		appendPNextList(ci, &rtMaintenance1Features);
 
 		// Get some more stuff
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};

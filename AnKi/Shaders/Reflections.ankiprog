@@ -99,7 +99,9 @@ Texture2D<Vec4> g_gbufferRt1 : register(t0);
 Texture2D<Vec4> g_depthTex : register(t1); // Could be in quarter rez
 
 RWTexture2D<UVec4> g_classTileMap : register(u0);
-RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
+RWStructuredBuffer<DispatchIndirectArgs> g_dispatchIndirectArgs : register(u1);
+RWStructuredBuffer<DispatchRaysIndirectArgs> g_dispatchRaysIndirectArgs : register(u2);
+RWStructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(u3);
 
 ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 
@@ -112,9 +114,25 @@ groupshared U32 g_allSky;
 {
 	if(all(svDispatchThreadId.xy == 0u))
 	{
-		// Reset the value for the next job (SSR)
-		g_indirectArgs[0].m_threadGroupCountX = 0;
-		g_indirectArgs[1].m_threadGroupCountX = 0;
+		// Reset stuff for the next job (SSR)
+
+		const DispatchIndirectArgs args2 = {0, 1, 1};
+		g_dispatchIndirectArgs[0] = args2;
+
+		DispatchRaysIndirectArgs args = (DispatchRaysIndirectArgs)0;
+		args.m_rayGenShaderRecordAddress = g_consts.m_rayGenShaderRecordAddress;
+		args.m_rayGenShaderRecordSize = g_consts.m_shaderRecordSize;
+		args.m_missShaderTableAddress = args.m_rayGenShaderRecordAddress + g_consts.m_shaderRecordSize;
+		args.m_missShaderTableSize = 1 * g_consts.m_shaderRecordSize;
+		args.m_missShaderTableStride = g_consts.m_shaderRecordSize;
+		args.m_hitGroupTableAddress = args.m_missShaderTableAddress + g_consts.m_shaderRecordSize;
+		args.m_hitGroupTableSize = g_consts.m_hitGroupCount * g_consts.m_shaderRecordSize;
+		args.m_hitGroupTableStride = g_consts.m_shaderRecordSize;
+		args.m_height = 1;
+		args.m_depth = 1;
+		g_dispatchRaysIndirectArgs[0] = args;
+
+		SBUFF(g_pixelsFailedSsr, 0).m_reflectionDir = 0; // 1st element is a count
 	}
 
 	if(svGroupIndex == 0)
@@ -204,7 +222,8 @@ StructuredBuffer<GpuSceneLight> g_lights : register(t11);
 RWTexture2D<Vec4> g_colorAndDepthUav : register(u0);
 RWTexture2D<Vec4> g_hitPosAndPdfUav : register(u1);
 RWStructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(u2);
-RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u3);
+RWStructuredBuffer<DispatchIndirectArgs> g_dispatchIndirectArgs : register(u3);
+RWStructuredBuffer<DispatchRaysIndirectArgs> g_dispatchRaysIndirectArgs : register(u4);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -615,11 +634,14 @@ U32 dominantAxis(Vec3 d)
 
 		// Set the RTP indirect command
 		const U32 pixelsFailedSsrCountInGroup = GS1(g_directionBins, kDirectionDirBinCount - 1);
-		InterlockedAdd(SBUFF(g_indirectArgs, 0).m_threadGroupCountX, pixelsFailedSsrCountInGroup, g_pixelsFailedSsrOffset);
+		InterlockedAdd(SBUFF(g_dispatchRaysIndirectArgs, 0).m_width, pixelsFailedSsrCountInGroup, g_pixelsFailedSsrOffset);
 
-		// Set the threadgroup count for Z for ReflectionProbeFallback
-		const U32 totalFailedCount = g_pixelsFailedSsrOffset + 1;
-		InterlockedMax(SBUFF(g_indirectArgs, 1).m_threadGroupCountX, (totalFailedCount + (64 - 1)) / 64);
+		// Set the threadgroup count for ReflectionProbeFallback
+		const U32 totalFailedCount = g_pixelsFailedSsrOffset + pixelsFailedSsrCountInGroup;
+		InterlockedMax(SBUFF(g_dispatchIndirectArgs, 0).m_threadGroupCountX, (totalFailedCount + (64 - 1)) / 64);
+
+		// 1st element is the count
+		InterlockedMax(SBUFF(g_pixelsFailedSsr, 0).m_reflectionDir, totalFailedCount);
 	}
 
 	GroupMemoryBarrierWithGroupSync();
@@ -636,7 +658,7 @@ U32 dominantAxis(Vec3 d)
 
 		U32 writeOffset = g_pixelsFailedSsrOffset + offsetInPixelsFailedSsr;
 		writeOffset += (directionBin == 0) ? 0 : GS1(g_directionBins, directionBin - 1);
-		SBUFF(g_pixelsFailedSsr, writeOffset) = failedPixel;
+		SBUFF(g_pixelsFailedSsr, writeOffset + 1) = failedPixel;
 	}
 	else if(!ssrSuccess && kDebugSsr)
 	{
@@ -672,7 +694,6 @@ Texture2D<Vec4> g_depthTex : register(t0); // Can be in quarter resolution
 StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t1);
 StructuredBuffer<GpuSceneReflectionProbe> g_reflectionProbes : register(t2);
 StructuredBuffer<Cluster> g_clusters : register(t3);
-StructuredBuffer<U32> g_pixelsFailedSsrCount : register(t4);
 Texture2D<Vec4> g_envMap : register(t5);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
@@ -684,7 +705,7 @@ RWTexture2D<Vec4> g_hitPosAndPdfUav : register(u1);
 
 [numthreads(64, 1, 1)] void main(COMPUTE_ARGS)
 {
-	if(svDispatchThreadId.x >= SBUFF(g_pixelsFailedSsrCount, 0))
+	if(svDispatchThreadId.x >= SBUFF(g_pixelsFailedSsr, 0).m_reflectionDir)
 	{
 		return;
 	}
@@ -696,7 +717,7 @@ RWTexture2D<Vec4> g_hitPosAndPdfUav : register(u1);
 	F32 roughness;
 	F32 pdf;
 	F32 unused;
-	unpackPixelFailedSsr(SBUFF(g_pixelsFailedSsr, svDispatchThreadId.x), quarterCoord, reflDir, roughness, pdf, unused);
+	unpackPixelFailedSsr(SBUFF(g_pixelsFailedSsr, svDispatchThreadId.x + 1), quarterCoord, reflDir, roughness, pdf, unused);
 
 #	if QUARTER_REZ
 	const UVec2 fullCoord = quarterCoord * 2u;
@@ -785,7 +806,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 {
 #	if ANKI_COMPUTE_SHADER
 	const U32 gtid = svDispatchThreadId.x;
-	if(gtid >= getStructuredBufferElementCount(g_pixelsFailedSsr))
+	if(gtid >= SBUFF(g_pixelsFailedSsr, 0).m_reflectionDir)
 	{
 		return;
 	}
@@ -800,7 +821,7 @@ vector<T, 3> getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
 	F32 roughness;
 	F32 pdf;
 	F32 tmin;
-	unpackPixelFailedSsr(SBUFF(g_pixelsFailedSsr, gtid), quarterCoord, reflDir, roughness, pdf, tmin);
+	unpackPixelFailedSsr(SBUFF(g_pixelsFailedSsr, gtid + 1), quarterCoord, reflDir, roughness, pdf, tmin);
 
 #	if QUARTER_REZ
 	const UVec2 fullCoord = quarterCoord * 2u;

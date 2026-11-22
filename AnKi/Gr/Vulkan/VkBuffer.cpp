@@ -119,11 +119,11 @@ BufferImpl::~BufferImpl()
 
 		if(getGrManagerImpl().getMemoryProperties().memoryTypes[m_memoryTypeIdx].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		{
-			g_svarGrGpuDeviceMemoryAllocated.increment(m_actualSize);
+			g_svarGrGpuDeviceMemoryAllocated.decrement(m_actualSize);
 		}
 		else
 		{
-			g_svarGrGpuHostMemoryAllocated.increment(m_actualSize);
+			g_svarGrGpuHostMemoryAllocated.decrement(m_actualSize);
 		}
 	}
 }

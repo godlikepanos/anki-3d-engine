@@ -117,7 +117,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		m_rangeInfo.primitiveCount = inf.m_bottomLevel.m_indexCount / 3;
 
 		m_blas.m_positionsBuffer.reset(&inf.m_bottomLevel.m_positionBuffer.getBuffer());
-		m_blas.m_indexBuffer.reset(&inf.m_bottomLevel.m_positionBuffer.getBuffer());
+		m_blas.m_indexBuffer.reset(&inf.m_bottomLevel.m_indexBuffer.getBuffer());
 	}
 	else
 	{

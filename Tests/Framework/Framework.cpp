@@ -8,17 +8,8 @@
 #include <iostream>
 #include <cstring>
 #include <malloc.h>
-#if ANKI_OS_ANDROID
-#	include <android/log.h>
-#endif
 
 namespace anki {
-
-#if !ANKI_OS_ANDROID
-#	define ANKI_TEST_LOG(fmt, ...) printf(fmt "\n", __VA_ARGS__)
-#else
-#	define ANKI_TEST_LOG(fmt, ...) __android_log_print(ANDROID_LOG_INFO, "AnKi Tests", fmt, __VA_ARGS__)
-#endif
 
 TestSuite::~TestSuite()
 {
@@ -30,7 +21,7 @@ TestSuite::~TestSuite()
 
 void Test::run()
 {
-	ANKI_TEST_LOG("========\nRunning %s %s\n========", suite->name.c_str(), name.c_str());
+	ANKI_TEST_LOGI("======== Running {} {} ========", suite->name, name);
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -49,7 +40,7 @@ void Test::run()
 	int diff = b.uordblks - a.uordblks;
 	if(diff > 0)
 	{
-		ANKI_TEST_LOG("Test leaks memory: %d", diff);
+		ANKI_TEST_LOGE("Test leaks memory: {}", diff);
 	}
 #endif
 
@@ -88,7 +79,7 @@ void Tester::addTest(const char* name, const char* suiteName, TestCallback callb
 	{
 		if((*it)->name == name)
 		{
-			ANKI_TEST_LOG("Test already exists: %s", name);
+			ANKI_TEST_LOGE("Test already exists: {}", name);
 			return;
 		}
 	}
@@ -127,7 +118,7 @@ Options:
 		}
 		else if(strcmp(arg, "--help") == 0)
 		{
-			ANKI_TEST_LOG("%s", helpMessage.c_str());
+			ANKI_TEST_LOGI("{}", helpMessage);
 			return 0;
 		}
 		else if(strcmp(arg, "--suite") == 0)
@@ -135,7 +126,7 @@ Options:
 			++i;
 			if(i >= argc)
 			{
-				ANKI_TEST_LOG("%s", "<name> is missing after --suite");
+				ANKI_TEST_LOGE("<name> is missing after --suite");
 				return 1;
 			}
 			suiteName = argv[i];
@@ -145,7 +136,7 @@ Options:
 			++i;
 			if(i >= argc)
 			{
-				ANKI_TEST_LOG("%s", "<name> is missing after --test");
+				ANKI_TEST_LOGE("<name> is missing after --test");
 				return 1;
 			}
 			testName = argv[i];
@@ -159,7 +150,7 @@ Options:
 	// Sanity check
 	if(testName.length() > 0 && suiteName.length() == 0)
 	{
-		ANKI_TEST_LOG("%s", "Specify --suite as well");
+		ANKI_TEST_LOGE("Specify --suite as well");
 		return 1;
 	}
 
@@ -200,15 +191,15 @@ Options:
 	}
 
 	int failed = run - passed;
-	ANKI_TEST_LOG("========\nRun %d tests, failed %d", run, failed);
+	ANKI_TEST_LOGI("======== Run {} tests, failed {} ========", run, failed);
 
 	if(failed == 0)
 	{
-		ANKI_TEST_LOG("%s", "SUCCESS!");
+		ANKI_TEST_LOGI("SUCCESS!");
 	}
 	else
 	{
-		ANKI_TEST_LOG("%s", "FAILURE");
+		ANKI_TEST_LOGE("FAILURE");
 	}
 
 	return run - passed;
@@ -220,7 +211,7 @@ int Tester::listTests()
 	{
 		for(Test* test : suite->tests)
 		{
-			ANKI_TEST_LOG("%s --suite %s --test %s", programName.c_str(), suite->name.c_str(), test->name.c_str());
+			ANKI_TEST_LOGI("{} --suite {} --test {}", programName, suite->name, test->name);
 		}
 	}
 

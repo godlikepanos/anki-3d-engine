@@ -49,7 +49,7 @@ public:
 class TopLevelAccelerationStructureInitInfo
 {
 public:
-	U32 m_instanceCount = 0;
+	U32 m_instanceCount = 0; // Can be zero
 	BufferView m_instancesBuffer; // Filled with AccelerationStructureInstance structs.
 
 	Bool isValid(Bool validateBuffers) const

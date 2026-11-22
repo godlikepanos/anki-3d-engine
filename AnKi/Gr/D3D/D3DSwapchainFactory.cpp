@@ -53,7 +53,7 @@ Error MicroSwapchain::initInternal()
 	swapChainDesc.Width = window.getWidth();
 	swapChainDesc.Height = window.getHeight();
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapChainDesc.SampleDesc.Count = 1;
 	swapChainDesc.Flags |= (!g_cvarGrVsync) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
@@ -80,7 +80,7 @@ Error MicroSwapchain::initInternal()
 		init.m_height = window.getHeight();
 		init.m_format = Format::kR8G8B8A8_Unorm;
 
-		init.m_usage = TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
+		init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
 		if(m_rtvResources[i]->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)
 		{
 			init.m_usage |= TextureUsageBit::kAllUav;

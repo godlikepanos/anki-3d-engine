@@ -9,6 +9,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Gr/BackendCommon/Common.h>
 #include <AnKi/Util/System.h>
+#include <AnKi/Core/StatsSet.h>
 #include <string>
 #include <locale>
 #include <codecvt>
@@ -36,6 +37,9 @@ namespace anki {
 
 /// @addtogroup directx
 /// @{
+
+ANKI_SVAR(Gr, GpuDeviceMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (VRAM)", StatFlag::kBytes)
+ANKI_SVAR(Gr, GpuHostMemoryAllocated, StatCategory::kGpuMem, "GPU mem allocated (CPU)", StatFlag::kBytes)
 
 #define ANKI_D3D_LOGI(...) ANKI_LOG("D3D", kNormal, __VA_ARGS__)
 #define ANKI_D3D_LOGE(...) ANKI_LOG("D3D", kError, __VA_ARGS__)

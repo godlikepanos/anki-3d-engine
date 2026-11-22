@@ -47,9 +47,25 @@ public:
 	Bool clientWait(Second seconds)
 	{
 		ANKI_ASSERT(m_fence && m_event);
+
+		if(signaled())
+		{
+			return true;
+		}
+
+		if(seconds <= 0.0)
+		{
+			return false;
+		}
+
+		seconds = min<Second>(seconds, g_cvarGrGpuTimeout);
+		const DWORD msec = DWORD(seconds * 1000.0);
+
+		// When the event will be set it will wake only one of many concurrent waiters, so serialize the waiters
+		LockGuard lock(m_waitLock);
+
 		ANKI_D3D_CHECKF(m_fence->SetEventOnCompletion(m_value.load(), m_event));
 
-		const DWORD msec = DWORD(seconds * 1000.0);
 		const DWORD result = WaitForSingleObjectEx(m_event, msec, FALSE);
 
 		Bool signaled = false;
@@ -103,7 +119,11 @@ public:
 
 	void reset()
 	{
-		// To nothing
+		// Clear the event because a timed out wait of the previous use might have left it set
+		if(!ResetEvent(m_event))
+		{
+			ANKI_D3D_LOGF("ResetEvent() failed");
+		}
 	}
 
 	void gpuSignal(GpuQueueType queue);
@@ -114,6 +134,7 @@ private:
 	ID3D12Fence* m_fence = nullptr;
 	Atomic<U64> m_value = 0;
 	HANDLE m_event = 0;
+	Mutex m_waitLock;
 	mutable Atomic<I32> m_refcount = {0};
 };
 

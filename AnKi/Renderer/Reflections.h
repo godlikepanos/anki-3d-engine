@@ -64,9 +64,6 @@ public:
 
 	BufferView m_shaderGroupHandlesBuff;
 
-	// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
-	SegregatedListsGpuMemoryPoolAllocation m_indirectArgsBuffer;
-
 	RendererTexture m_tex;
 	Array<RendererTexture, 2> m_momentsTex;
 	Bool m_texImportedOnce = false;

@@ -10,10 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup directx
-/// @{
-
-/// Buffer implementation
+// Buffer implementation
 class BufferImpl final : public Buffer
 {
 	friend class Buffer;
@@ -37,6 +34,8 @@ public:
 
 private:
 	ID3D12Resource* m_resource = nullptr;
+	PtrSize m_actualSize = 0; // The size of the D3D resource
+	Bool m_deviceLocal = false;
 
 #if ANKI_ASSERTIONS_ENABLED
 	Bool m_mapped = false;
@@ -46,6 +45,5 @@ private:
 
 	D3D12_BARRIER_ACCESS computeAccess(BufferUsageBit usage) const;
 };
-/// @}
 
 } // end namespace anki

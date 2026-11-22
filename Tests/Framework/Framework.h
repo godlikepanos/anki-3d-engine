@@ -128,9 +128,7 @@ extern void deleteTesterSingleton();
 	{ \
 		if((x) != (y)) \
 		{ \
-			std::stringstream ss; \
-			ss << "FAILURE: " << #x << " != " << #y << " (" << file_ << ":" << line_ << ")"; \
-			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			ANKI_TEST_LOGE("FAILURE: {} != {} ({}:{})", #x, #y, file_, line_); \
 			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
@@ -141,9 +139,7 @@ extern void deleteTesterSingleton();
 	{ \
 		if((x) == (y)) \
 		{ \
-			std::stringstream ss; \
-			ss << "FAILURE: " << #x << " == " << #y << " (" << file_ << ":" << line_ << ")"; \
-			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			ANKI_TEST_LOGE("FAILURE: {} == {} ({}:{})", #x, #y, file_, line_); \
 			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
@@ -154,9 +150,7 @@ extern void deleteTesterSingleton();
 	{ \
 		if((x) <= (y)) \
 		{ \
-			std::stringstream ss; \
-			ss << "FAILURE: " << #x << " > " << #y << " (" << file_ << ":" << line_ << ")"; \
-			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			ANKI_TEST_LOGE("FAILURE: {} > {} ({}:{})", #x, #y, file_, line_); \
 			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
@@ -167,9 +161,7 @@ extern void deleteTesterSingleton();
 	{ \
 		if((x) < (y)) \
 		{ \
-			std::stringstream ss; \
-			ss << "FAILURE: " << #x << " >= " << #y << " (" << file_ << ":" << line_ << ")"; \
-			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			ANKI_TEST_LOGE("FAILURE: {} >= {} ({}:{})", #x, #y, file_, line_); \
 			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
@@ -180,9 +172,7 @@ extern void deleteTesterSingleton();
 	{ \
 		if((x) >= (y)) \
 		{ \
-			std::stringstream ss; \
-			ss << "FAILURE: " << #x << " < " << #y << " (" << file_ << ":" << line_ << ")"; \
-			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			ANKI_TEST_LOGE("FAILURE: {} < {} ({}:{})", #x, #y, file_, line_); \
 			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
@@ -193,9 +183,7 @@ extern void deleteTesterSingleton();
 	{ \
 		if((x) > (y)) \
 		{ \
-			std::stringstream ss; \
-			ss << "FAILURE: " << #x << " <= " << #y << " (" << file_ << ":" << line_ << ")"; \
-			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			ANKI_TEST_LOGE("FAILURE: {} <= {} ({}:{})", #x, #y, file_, line_); \
 			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
@@ -208,9 +196,7 @@ extern void deleteTesterSingleton();
 		auto minVal = ((x) < (y)) ? (x) : (y); \
 		if((maxVal - minVal) > (epsilon_)) \
 		{ \
-			std::stringstream ss; \
-			ss << "FAILURE: " << #x << " != " << #y << " (" << file_ << ":" << line_ << ")"; \
-			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			ANKI_TEST_LOGE("FAILURE: {} != {} ({}:{})", #x, #y, file_, line_); \
 			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);

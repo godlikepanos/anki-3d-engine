@@ -198,6 +198,10 @@ struct ReflectionConstants
 	U32 m_ssrMaxIterations;
 	U32 m_ssrStepIncrement;
 	Vec2 m_roughnessCutoffToGiEdges;
+
+	U64 m_rayGenShaderRecordAddress;
+	U32 m_shaderRecordSize;
+	U32 m_hitGroupCount;
 };
 
 struct PixelFailedSsr
@@ -206,7 +210,7 @@ struct PixelFailedSsr
 	U32 m_pixelY : 12u;
 	U32 m_roughness : 7u;
 
-	U32 m_reflectionDir;
+	U32 m_reflectionDir; // It also acts as a count in some cases
 
 	U32 m_pdf : 16u;
 	U32 m_rayDirT : 16u;

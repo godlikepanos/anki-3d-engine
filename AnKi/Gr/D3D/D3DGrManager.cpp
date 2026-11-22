@@ -328,7 +328,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ComPtr<ID3D12Debug> debugInterface;
 		const HRESULT err = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
 
-		if(SUCCEDED(err))
+		if(SUCCEEDED(err))
 		{
 			debugInterface->EnableDebugLayer();
 
@@ -494,12 +494,12 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			ANKI_D3D_LOGW("ReBAR not supported");
 		}
 
-		if(g_cvarGrRayTracing && options5.RaytracingTier != D3D12_RAYTRACING_TIER_1_1)
+		if(g_cvarGrRayTracing && options5.RaytracingTier < D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGW("Raytracing can't be enabled. Not supported");
 			m_capabilities.m_rayTracing = false;
 		}
-		else if(g_cvarGrRayTracing && options5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
+		else if(g_cvarGrRayTracing && options5.RaytracingTier >= D3D12_RAYTRACING_TIER_1_1)
 		{
 			ANKI_D3D_LOGV("Raytracing supported");
 			m_capabilities.m_rayTracing = true;

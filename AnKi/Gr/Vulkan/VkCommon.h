@@ -74,7 +74,8 @@ enum class VulkanExtensions : U32
 	kKHR_ray_tracing_position_fetch = 1u << 18u,
 	kKHR_xcb_surface = 1u << 19u,
 	kKHR_xlib_surface = 1u << 20u,
-	kKHR_compute_shader_derivatives = 1u << 21u
+	kKHR_compute_shader_derivatives = 1u << 21u,
+	kKHR_ray_tracing_maintenance1 = 1u << 22u
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
